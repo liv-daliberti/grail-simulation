@@ -2,7 +2,7 @@
 
 Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounded human behavior simulation that unifies language, agent, and world models. The system retrieves realistic action slates, reasons about them with a ReAct-style language agent, predicts counterfactual outcomes, and aligns to real trajectories through adversarial training.
 
-![GRAIL overview](docs/simulation.drawio.png)
+![GRAIL overview](docs/Simulation.drawio.png)
 
 ## Key Components
 

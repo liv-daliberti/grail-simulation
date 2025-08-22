@@ -8,7 +8,7 @@ dataset_name: od2961/grail-interactions     # <— replace with your repo id
 dataset_train_split: train
 dataset_test_split:  validation
 dataset_prompt_column: state_text
-dataset_solution_column: video_id
+dataset_solution_column: next_video_id
 system_prompt: |
   You are choosing EXACTLY ONE item from a short slate for a specific viewer.
 
@@ -83,7 +83,6 @@ reward_funcs:
   - pure_accuracy_reward
 reward_weights:
   - 1.0
-
 # ===== KL / PPO knobs =====
 kl_target:        0.07
 init_kl_coeff:    0.2

@@ -15,7 +15,6 @@ set -euo pipefail
 CONFIG="/n/fs/similarity/trees/recipes/Qwen2.5-1.5B-Instruct/grpo/config_grail.yaml"
 ACCEL_CONFIG="/n/fs/similarity/trees/recipes/accelerate_configs/zero3.yaml"
 MAIN_SCRIPT="/n/fs/similarity/trees/src/open_r1/grpo.py"   # updated entry with GAIL+ReAct
-
 RUN_NAME="Qwen1.5B-GRAIL"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 SERVER_LOG="logs/vllm_${RUN_NAME}_${TIMESTAMP}.log"
@@ -36,6 +35,8 @@ echo "✅ Conda: $(which python)"; python --version
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 export PIP_USER=false
+export HUGGING_FACE_HUB_TOKEN="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"
+
 
 # ensure pip installs go into the env (not ~/.local)
 python -m pip install --no-user -U huggingface_hub yq
@@ -101,11 +102,15 @@ python -m yq -y --in-place ".num_processes = $NUM_TRAINING" "$ACCEL_CONFIG"
 echo "→ accelerate num_processes set to $NUM_TRAINING in $ACCEL_CONFIG"
 
 # provide the new token
+export HUGGING_FACE_HUB_TOKEN="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"
 
 # ──────────────────────────────────────────────────────────────────────
 # GAIL env toggles (slate-aware discriminator)
 # ──────────────────────────────────────────────────────────────────────
 export GAIL_USE=1
+export GAIL_TRAIN=1
+export GAIL_WEIGHT=0.5      # optional
+export GAIL_ALPHA=1.0       # optional scaling inside the GAIL reward
 export GAIL_DISC_MODEL="distilbert-base-uncased"
 export GAIL_LR="2e-5"
 export GAIL_ALPHA="1.0"
@@ -127,10 +132,8 @@ export WANDB_CACHE_DIR=/n/fs/similarity/wandb-cache
 mkdir -p "$WANDB_DIR" "$WANDB_CACHE_DIR"
 
 # keep GAIL off the GPUs to avoid any chance of DS hooks
-export GAIL_DEVICE=cuda
-export GAIL_OWNER_RANK=$(( NUM_TRAINING - 1 ))   # → 6
-export GAIL_DEVICE=cuda:$(( NUM_TRAINING - 1 ))  # → cuda:6 given 7 training GPUs
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export GAIL_DEVICE=cuda:$LOCAL_RANK
+
 # ──────────────────────────────────────────────────────────────────────
 # Launch vLLM (GPU 0) + GRPO training (remaining GPUs)
 # ──────────────────────────────────────────────────────────────────────

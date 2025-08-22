@@ -1,0 +1,11 @@
+digraph GRAIL {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+  env [label="Environment\nModel"];
+  act [label="Action\nModel (ReAct)"];
+  pred [label="Predictor\nWorld Model"];
+  disc [label="Sequential\nDiscriminator", style="dashed"];
+
+  env -> act -> pred;
+  disc -> act;
+}

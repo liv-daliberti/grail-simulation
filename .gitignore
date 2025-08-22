@@ -30,3 +30,11 @@ outputs/
 .gitattributes
 .gitattributes
 logs/
+# dataset artifacts & caches
+*.arrow
+src/gpt-4o/od2961___grail-interactions/
+.cache/
+.hf_cache/
+.huggingface/
+data/
+

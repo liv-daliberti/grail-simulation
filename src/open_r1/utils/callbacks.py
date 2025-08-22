@@ -111,7 +111,11 @@ class SuccessCachingCallback(TrainerCallback):
 
         for prompt, acc in zip(txt_logs["prompt"], txt_logs["rewards"][acc_key]):
             if acc >= self.thr:
-                self.buf.add(prompt)
+                # ``ReplayBuffer.add`` expects a reward associated with the
+                # stored sample.  Previously we only passed the prompt which
+                # raised a ``TypeError`` at runtime.  Use the accuracy score as
+                # the reward so higher‑accuracy prompts are prioritised.
+                self.buf.add(prompt, float(acc))
 
 # ---------------------------------------------------------------------------
 #  Replay-buffer callback (fast path – uses training_step outputs) ----------
@@ -150,7 +154,8 @@ class ReplayBufferCallback(TrainerCallback):
         for acc, ids in zip(acc_vec.tolist(), ids_vec):
             if acc >= self.thr:
                 prompt = self.tok.decode(ids, skip_special_tokens=True)
-                self.buf.add(prompt)
+                # pass the accuracy as the reward when storing in the buffer
+                self.buf.add(prompt, float(acc))
                 added += 1
 
         # diagnostics

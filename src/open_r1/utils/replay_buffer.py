@@ -10,9 +10,6 @@ import torch.distributed as dist
 def _prompt_key(prompt: list[dict[str, str]]) -> tuple:
     return tuple((m["role"], " ".join(m["content"].split())) for m in prompt)
 
-def _is_full_example(x: Any) -> bool:
-    return isinstance(x, dict) and "prompt" in x
-
 def _finite_float(x: Any, default: float = 0.0) -> float:
     try:
         v = float(x)
@@ -22,6 +19,17 @@ def _finite_float(x: Any, default: float = 0.0) -> float:
 
 
 def _is_full_example(x: Any) -> bool:
+    """Return True if ``x`` looks like a fully specified example.
+
+    The replay buffer stores items that are either individual examples or
+    groups of examples.  In either case we consider an example "full" only if
+    both the prompt and the corresponding answer are present.  Earlier versions
+    of this module accidentally defined ``_is_full_example`` twice with
+    different semantics (once requiring only a prompt and once requiring both
+    prompt and answer).  The second definition overwrote the first, but having
+    duplicate definitions was confusing and error-prone.  Consolidating the
+    logic here makes the intent explicit and avoids future regressions.
+    """
     return isinstance(x, dict) and "prompt" in x and "answer" in x
 
 

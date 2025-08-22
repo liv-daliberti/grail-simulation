@@ -1,0 +1,31 @@
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# envs & secrets
+.env
+*.secret
+*.token
+*.key
+
+# logs & local runs
+logs/
+*.log
+
+# caches / temp
+.cache/
+.hf_cache/
+.huggingface/
+.tmp/
+.torchinductor/
+.triton/
+wandb/
+**/.DS_Store
+
+# datasets / big outputs (adjust as needed)
+data/
+checkpoints/
+outputs/
+.gitattributes
+.gitattributes

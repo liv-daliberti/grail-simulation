@@ -1,0 +1,116 @@
+{
+  "model": "gpt-4o",
+  "dataset": "od2961/grail-interactions",
+  "split": "validation",
+  "n_total": 1000,
+  "n_eligible": 1000,
+  "accuracy_overall": 0.426,
+  "parsed_rate": 0.927,
+  "format_rate": 0.915,
+  "position_stats": {
+    "1": {
+      "n_seen": 242,
+      "n_eligible": 242,
+      "correct": 100,
+      "accuracy": 0.4132231404958678
+    },
+    "2": {
+      "n_seen": 201,
+      "n_eligible": 201,
+      "correct": 60,
+      "accuracy": 0.29850746268656714
+    },
+    "3": {
+      "n_seen": 197,
+      "n_eligible": 197,
+      "correct": 63,
+      "accuracy": 0.3197969543147208
+    },
+    "4": {
+      "n_seen": 187,
+      "n_eligible": 187,
+      "correct": 113,
+      "accuracy": 0.6042780748663101
+    },
+    "5+": {
+      "n_seen": 173,
+      "n_eligible": 173,
+      "correct": 90,
+      "accuracy": 0.5202312138728323
+    },
+    "unknown": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    }
+  },
+  "by_n_options": {
+    "hist_seen": {
+      "1": 43,
+      "2": 8,
+      "3": 7,
+      "4": 23,
+      "5+": 919
+    },
+    "hist_eligible": {
+      "1": 43,
+      "2": 8,
+      "3": 7,
+      "4": 23,
+      "5+": 919
+    },
+    "hist_correct": {
+      "1": 43,
+      "2": 7,
+      "3": 2,
+      "4": 11,
+      "5+": 363
+    },
+    "accuracy": {
+      "1": 1.0,
+      "2": 0.875,
+      "3": 0.2857142857142857,
+      "4": 0.4782608695652174,
+      "5+": 0.39499455930359084
+    },
+    "parsed_rate": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 0.9565217391304348,
+      "5+": 0.9216539717083787
+    },
+    "format_rate": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 0.9130434782608695,
+      "5+": 0.9096844396082698
+    }
+  },
+  "split_single_vs_multi": {
+    "n_single": 43,
+    "n_multi": 957,
+    "eligible_single": 43,
+    "eligible_multi": 957,
+    "accuracy_single": 1.0,
+    "accuracy_multi": 0.400208986415883,
+    "parsed_rate_multi": 0.9237199582027168,
+    "format_rate_multi": 0.9111807732497388
+  },
+  "gold_index_distribution": {
+    "1": 242,
+    "2": 201,
+    "3": 197,
+    "4": 187,
+    "5": 173
+  },
+  "baseline_most_frequent_gold_index": {
+    "top_index": 1,
+    "count": 242,
+    "accuracy": 0.242
+  },
+  "random_baseline_expected_accuracy": 0.2388833333333334,
+  "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown."
+}

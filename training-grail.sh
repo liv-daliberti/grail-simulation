@@ -101,7 +101,6 @@ python -m yq -y --in-place ".num_processes = $NUM_TRAINING" "$ACCEL_CONFIG"
 echo "→ accelerate num_processes set to $NUM_TRAINING in $ACCEL_CONFIG"
 
 # provide the new token
-export HUGGING_FACE_HUB_TOKEN="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"
 
 # ──────────────────────────────────────────────────────────────────────
 # GAIL env toggles (slate-aware discriminator)

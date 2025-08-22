@@ -132,7 +132,7 @@ export WANDB_CACHE_DIR=/n/fs/similarity/wandb-cache
 mkdir -p "$WANDB_DIR" "$WANDB_CACHE_DIR"
 
 # keep GAIL off the GPUs to avoid any chance of DS hooks
-export GAIL_DEVICE=cuda:$LOCAL_RANK
+export GAIL_DEVICE=cuda
 
 # ──────────────────────────────────────────────────────────────────────
 # Launch vLLM (GPU 0) + GRPO training (remaining GPUs)

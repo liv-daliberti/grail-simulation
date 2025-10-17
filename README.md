@@ -32,18 +32,21 @@ reproduce the experiments without re-running the CodeOcean extraction workflow.
 
 ## Pull the Data
 
-All data comes from ```https://codeocean.com/capsule/5416997/tree/v1``` and is associated with the paper [Short-term exposure to filter-bubble recommendation systems has limited polarization effects: Naturalistic experiments on YouTube](https://www.pnas.org/doi/10.1073/pnas.2318127122).
+All data comes from ```https://codeocean.com/capsule/5416997/tree/v1``` and is associated with the paper [Short-term exposure to filter-bubble recommendation systems has limited polarization effects: Naturalistic experiments on YouTube](https://www.pnas.org/doi/10.1073/pnas.2318127122). Should you want to manully reconstruct our data pull, you can pull the data using the following commands:
 ```
 git clone https://git.codeocean.com/capsule-5416997.git
-cd capsule-5416997 
+cd capsule-5416997
+mkdir results
+cd results
 curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/4644338a-0384-44ee-9ca5-7567a7a4afb8/5aa4b399-b9a3-4b37-bec9-f2a606ba4dbd?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJCBIX6WBZE5OXDDQ%2F20251017%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251017T144620Z&X-Amz-Expires=21600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dresults-8447a699-902e-4f7b-ab6f-26fdb9726670.zip&X-Amz-Signature=47f190731d0d09dbc7218c2b480e5db9cf69d72457e47ba65626eadd185c2e9b'
 unzip results-8447a699-902e-4f7b-ab6f-26fdb9726670.zip
+cd ..
+mkdir data
+cd data
 curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/4644338a-0384-44ee-9ca5-7567a7a4afb8/2a642045-95ce-46a7-971f-c27f7d2ca15a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJCBIX6WBZE5OXDDQ%2F20251017%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251017T153912Z&X-Amz-Expires=21600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dcapsule-5416997-data.zip&X-Amz-Signature=008cdfa585998a2ce6c88c79d92c1ba0698bb78b02874a944cc1f05dd69b1e93'
 ```
 
-This will give you a clean copy of the exact data used for the both the original paper and the data used for this study. We include a copy of the data within this repo too for full transparency /reproducibility. 
-
-We then reformat the data for our study / move it to a huggingface dataset for ease of use.
+This will give you a clean copy of the exact data used for the both the original paper and the data used for this study. We then reformat the data for our study / move it to a huggingface dataset for ease of use.
 
 ## Clean the Dataset
 

@@ -19,7 +19,7 @@ TIMESTAMP=${TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}
 
 CONFIG=${CONFIG:-"$ROOT_DIR/recipes/Qwen2.5-1.5B-Instruct/grpo/config_grail.yaml"}
 ACCEL_CONFIG=${ACCEL_CONFIG:-"$ROOT_DIR/recipes/accelerate_configs/zero3.yaml"}
-MAIN_SCRIPT=${MAIN_SCRIPT:-"$ROOT_DIR/src/open_r1/grail.py"}
+MAIN_SCRIPT=${MAIN_SCRIPT:-"$ROOT_DIR/src/open_r1/grpo.py"}
 
 mkdir -p "$LOG_DIR"
 

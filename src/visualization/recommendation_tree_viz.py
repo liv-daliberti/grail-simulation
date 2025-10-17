@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 import math
+import sys
 from collections import Counter, deque
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,6 +49,35 @@ def _wrap_text(text: str, width: Optional[int]) -> str:
     import textwrap
 
     return "\n".join(textwrap.wrap(text, width))
+
+
+def parse_issue_counts(spec: str) -> Dict[str, int]:
+    """Parse comma-separated issue=count specifications."""
+    result: Dict[str, int] = {}
+    if not spec:
+        return result
+    for chunk in spec.split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if "=" not in chunk:
+            raise ValueError(
+                f"Invalid issue specification '{chunk}'. Expected format issue=count."
+            )
+        issue, count_str = chunk.split("=", 1)
+        issue = issue.strip()
+        if not issue:
+            raise ValueError(f"Missing issue name in specification '{chunk}'.")
+        try:
+            count = int(count_str)
+        except ValueError as exc:  # pragma: no cover - defensive guard
+            raise ValueError(f"Invalid count in specification '{chunk}'.") from exc
+        if count <= 0:
+            raise ValueError(f"Count must be positive in specification '{chunk}'.")
+        result[issue] = count
+    if not result:
+        raise ValueError("Provided issue specification did not contain any pairs.")
+    return result
 
 
 def load_tree_csv(
@@ -265,6 +295,18 @@ def aggregate_counts(sequences: Iterable[Sequence[str]]) -> Tuple[Counter, Count
             node_counts[child] += 1
             edge_counts[(parent, child)] += 1
     return node_counts, edge_counts
+
+
+def _group_rows_by_session(rows: Sequence[Mapping[str, object]]) -> Dict[str, List[Mapping[str, object]]]:
+    sessions: Dict[str, List[Mapping[str, object]]] = {}
+    for row in rows:
+        session_id = str(row.get("session_id") or "")
+        if not session_id:
+            continue
+        sessions.setdefault(session_id, []).append(row)
+    for session_rows in sessions.values():
+        session_rows.sort(key=lambda r: (r.get("step_index") or 0, r.get("display_step") or 0))
+    return sessions
 
 
 def build_graph(
@@ -527,6 +569,23 @@ def build_session_graph(
     return graph
 
 
+def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[str]) -> Path:
+    """Render a Graphviz graph to disk, normalising the output path."""
+    format_to_use = output_format or output_path.suffix.lstrip(".")
+    if not format_to_use:
+        format_to_use = "png"
+    output_stem = output_path.with_suffix("")
+    graph.format = format_to_use
+    rendered_path = graph.render(filename=str(output_stem), cleanup=True)
+    final_expected = output_stem.with_suffix(f".{format_to_use}")
+    if output_path != final_expected and final_expected.exists():
+        final_expected.rename(output_path)
+        return output_path
+    if rendered_path and rendered_path != str(output_path):
+        Path(rendered_path).rename(output_path)
+    return output_path
+
+
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tree", type=Path, help="Path to a tree CSV file.")
@@ -553,9 +612,26 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Limit the number of recommendation steps rendered for the selected session.",
     )
     parser.add_argument(
+        "--batch-output-dir",
+        type=Path,
+        help="Directory to emit multiple session visualisations (requires --cleaned-data).",
+    )
+    parser.add_argument(
+        "--batch-issues",
+        default="minimum_wage=2,gun_control=2",
+        help=(
+            "Comma separated list of issue=count pairs when using --batch-output-dir. "
+            "Defaults to minimum_wage=2,gun_control=2."
+        ),
+    )
+    parser.add_argument(
+        "--batch-prefix",
+        default="session",
+        help="Filename prefix when writing batch visualisations.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
-        required=True,
         help="Output path (extension selects the format, e.g. .png or .svg).",
     )
     parser.add_argument(
@@ -637,6 +713,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if not args.tree and not args.cleaned_data:
         parser.error("Please provide either --tree or --cleaned-data.")
+    if not args.batch_output_dir and not args.output:
+        parser.error("Please provide --output or --batch-output-dir.")
     return args
 
 
@@ -646,8 +724,58 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     if args.highlight:
         highlight_path = [token.strip() for token in args.highlight.split(",") if token.strip()]
 
+    dataset = _load_cleaned_dataset(args.cleaned_data) if args.cleaned_data else None
+
+    if args.batch_output_dir:
+        if args.tree:
+            raise SystemExit("--batch-output-dir currently supports --cleaned-data only.")
+        if not dataset:
+            raise SystemExit("--batch-output-dir requires --cleaned-data.")
+        if args.issue:
+            raise SystemExit("--batch-output-dir is incompatible with --issue. Use --batch-issues instead.")
+        try:
+            issue_targets = parse_issue_counts(args.batch_issues)
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        if not issue_targets:
+            raise SystemExit("No issue counts provided for batch rendering.")
+        output_dir = args.batch_output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_format = args.format or "svg"
+
+        emitted = 0
+        for issue, count in issue_targets.items():
+            if count <= 0:
+                continue
+            rows = _collect_rows(dataset, split=args.split, issue=issue)
+            sessions = _group_rows_by_session(rows)
+            if len(sessions) < count:
+                raise SystemExit(
+                    f"Requested {count} session(s) for issue '{issue}', but only {len(sessions)} found."
+                )
+            for idx, session_id in enumerate(sorted(sessions)[:count], start=1):
+                session_rows = sessions[session_id]
+                if args.max_steps and args.max_steps > 0:
+                    session_rows = session_rows[: args.max_steps]
+                graph = build_session_graph(
+                    session_rows,
+                    label_template=args.label_template,
+                    wrap_width=args.wrap_width,
+                    rankdir=args.rankdir,
+                    engine=args.engine,
+                    highlight_path=highlight_path,
+                )
+                filename = f"{args.batch_prefix}_{issue}_{idx}.{output_format}"
+                output_path = output_dir / filename
+                render_graph(graph, output_path, output_format=output_format)
+                print(f"Wrote {output_path}", file=sys.stderr)
+                emitted += 1
+        if emitted == 0:
+            raise SystemExit("No sessions rendered. Check --batch-issues counts and dataset filters.")
+        return
+
     if args.cleaned_data:
-        dataset = _load_cleaned_dataset(args.cleaned_data)
+        assert dataset is not None  # for type checkers
         session_id, session_rows = _extract_session_rows(
             dataset,
             session_id=args.session_id,
@@ -685,17 +813,8 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             engine=args.engine,
             show_rank_labels=not args.hide_rank_labels,
         )
-    output_format = args.format or args.output.suffix.lstrip(".")
-    if not output_format:
-        output_format = "png"
-    output_stem = args.output.with_suffix("")
-    graph.format = output_format
-    rendered_path = graph.render(filename=str(output_stem), cleanup=True)
-    final_expected = output_stem.with_suffix(f".{output_format}")
-    if args.output != final_expected and final_expected.exists():
-        final_expected.rename(args.output)
-    elif rendered_path and rendered_path != str(args.output):
-        Path(rendered_path).rename(args.output)
+    output_format = args.format or (args.output.suffix.lstrip(".") if args.output else "")
+    render_graph(graph, args.output, output_format=output_format)
 
 
 if __name__ == "__main__":

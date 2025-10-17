@@ -96,13 +96,6 @@ Public Hugging Face copies of the cleaned splits:
 
 The repository ships with `src/visualization/recommendation_tree_viz.py`, a small CLI for turning the Gun Rights & Minimum Wage recommendation tree CSVs into Graphviz diagrams. Supply a single tree CSV, optionally merge in per-video metadata for nicer labels, and the tool will emit a `.png`, `.svg`, or any other Graphviz-supported format.
 
-```bash
-python src/visualization/recommendation_tree_viz.py \
-  --tree "capsule-5416997/data/recommendation trees/trees_gun/same3dif1_PnpltPDEa3(pilot_a_31_1).csv" \
-  --metadata "capsule-5416997/data/supplemental/metadata and ratings/metadata_w_label_June_2021_NLversion.csv" \
-  --output docs/gun_tree_example.svg
-```
-
 Additional options let you highlight a specific viewing path (`--highlight`), overlay aggregated trajectories to annotate edges with viewer counts (`--trajectories`), limit the depth of the render, or switch the layout direction.
 
 To render a real viewer session from the cleaned dataset (showing the slate at each step and the chosen path):
@@ -123,9 +116,22 @@ The session visualization highlights the core RL structure:
 
 For gun-control sessions the structure is identical:
 
-![Gun session example](docs/session_gun_control_1.svg)
+![Gun session example](docs/batch_sessions/grail_session_gun_control_1.svg)
 
 Each dataset row also carries the viewer profile that accompanies the decision. The `viewer_profile` field distills age, gender, race, media habits, and gun/wage attitudes, while `state_text` expands that information alongside the full watch history. These columns can be surfaced in the visualization template when you want demographic context next to the state nodes—e.g. a row might read “44-year-old, man, Black or African-American (non-Hispanic), democrat liberal, $150,000 or more, college-educated, watches YouTube weekly.”
+
+To export multiple session trajectories at once, point the CLI at the cleaned dataset and a destination directory. The tool will emit distinct session graphs grouped by issue, defaulting to two minimum-wage and two gun-control trajectories:
+
+```bash
+python src/visualization/recommendation_tree_viz.py \
+  --cleaned-data data/cleaned_grail \
+  --max-steps 5 \
+  --batch-output-dir docs/batch_sessions \
+  --batch-prefix grail_session \
+  --format svg
+```
+
+The command above produces four `.svg` files such as `grail_session_minimum_wage_1.svg` and `grail_session_gun_control_2.svg`. Override `--batch-issues` (e.g. `minimum_wage=3,gun_control=1`) to customise the mix or file counts.
 
 ## Training
 

@@ -36,11 +36,13 @@ Env (optional):
 """
 
 from __future__ import annotations
-import os, sys, re, json, logging, argparse
-from typing import Any, List, Optional, Tuple
+import os, sys, re, json, logging, argparse, random
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import datasets
 from datasets import DatasetDict
+import pandas as pd
 
 # ---------- logging ----------
 log = logging.getLogger("clean_grail")
@@ -54,6 +56,29 @@ log.setLevel(logging.INFO)
 ANS_RE   = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r'^\s*(?:option\s*)?(\d+)\s*$', re.I)
 YTID_RE  = re.compile(r'([A-Za-z0-9_-]{11})')
+
+TOPIC_TO_ISSUE = {
+    "min_wage": "minimum_wage",
+    "gun_control": "gun_control",
+}
+
+LABEL_OPTIONS: Dict[str, List[Dict[str, str]]] = {
+    "minimum_wage": [
+        {"id": "min_wage_raise", "title": "WANTS to raise the minimum wage"},
+        {"id": "min_wage_no_raise", "title": "Does NOT WANT to raise the minimum wage"},
+        {"id": "min_wage_unknown", "title": "Not enough information"},
+    ],
+    "gun_control": [
+        {"id": "gun_more_restrictions", "title": "WANTS MORE gun restrictions"},
+        {"id": "gun_fewer_restrictions", "title": "WANTS FEWER gun restrictions"},
+        {"id": "gun_unknown", "title": "Not enough information"},
+    ],
+}
+
+LABEL_INDEX_TO_ID: Dict[str, Dict[str, str]] = {
+    "minimum_wage": {"1": "min_wage_raise", "2": "min_wage_no_raise", "3": "min_wage_unknown"},
+    "gun_control": {"1": "gun_more_restrictions", "2": "gun_fewer_restrictions", "3": "gun_unknown"},
+}
 
 def _canon(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", (s or "").lower().strip())
@@ -84,6 +109,197 @@ def _as_list_json(x: Any, default="[]") -> list:
     except Exception:
         pass
     return []
+
+
+def _strip_session_video_id(vid: str) -> str:
+    if not isinstance(vid, str):
+        return ""
+    vid = vid.strip()
+    if not vid:
+        return ""
+    if len(vid) <= 11:
+        return vid
+    base = vid[:11]
+    if YTID_RE.fullmatch(base):
+        return base
+    m = YTID_RE.search(vid)
+    return m.group(1) if m else vid
+
+
+def _resolve_capsule_data_root(path: Path) -> Optional[Path]:
+    if not path.exists():
+        return None
+    if (path / "platform session data" / "sessions.json").exists():
+        return path
+    if (path / "data" / "platform session data" / "sessions.json").exists():
+        return path / "data"
+    return None
+
+
+def _read_csv_if_exists(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        log.warning("Survey file missing: %s", path)
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path, dtype=str)
+    except Exception as exc:
+        log.error("Failed to read %s: %s", path, exc)
+        return pd.DataFrame()
+
+
+def _build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
+    index: Dict[str, List[Dict[str, Any]]] = {}
+    if df.empty:
+        return index
+    cols = list(df.columns)
+    if "urlid" not in cols:
+        log.warning("Survey frame missing urlid column; columns=%s", cols)
+        return index
+    for _, row in df.iterrows():
+        urlid = str(row.get("urlid") or "").strip()
+        if not urlid:
+            continue
+        cleaned = {}
+        for k, v in row.items():
+            if pd.isna(v):
+                cleaned[k] = None
+            else:
+                cleaned[k] = v
+        index.setdefault(urlid, []).append(cleaned)
+    return index
+
+
+def _select_survey_row(rows: List[Dict[str, Any]], topic_id: str) -> Dict[str, Any]:
+    if not rows:
+        return {}
+    topic_id = (topic_id or "").strip()
+    if topic_id:
+        for row in rows:
+            r_topic = str(row.get("topic_id") or row.get("topicID") or "").strip()
+            if r_topic and r_topic == topic_id:
+                return row
+    return rows[0]
+
+
+def _load_video_metadata(base_dir: Path) -> Dict[str, str]:
+    meta: Dict[str, str] = {}
+    meta_dir = base_dir / "supplemental" / "metadata and ratings"
+    if not meta_dir.exists():
+        return meta
+    for csv_path in meta_dir.glob("*.csv"):
+        try:
+            df = pd.read_csv(csv_path)
+        except Exception:
+            continue
+        id_col = None
+        for cand in ("originID", "originId", "video_id", "videoId", "id"):
+            if cand in df.columns:
+                id_col = cand
+                break
+        if not id_col:
+            continue
+        title_col = None
+        for cand in ("title", "video_title", "name"):
+            if cand in df.columns:
+                title_col = cand
+                break
+        for _, row in df.iterrows():
+            vid = row.get(id_col)
+            if pd.isna(vid):
+                continue
+            vid_str = str(vid).strip()
+            if not vid_str:
+                continue
+            base = _strip_session_video_id(vid_str)
+            if title_col and not pd.isna(row.get(title_col)):
+                title = str(row.get(title_col))
+            else:
+                title = ""
+            meta.setdefault(base, title)
+    return meta
+
+
+def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
+    sessions_path = data_root / "platform session data" / "sessions.json"
+    with open(sessions_path, "r", encoding="utf-8") as fp:
+        sessions = json.load(fp)
+
+    capsule_root = data_root.parent
+    survey_gun = _read_csv_if_exists(
+        capsule_root / "intermediate data" / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv"
+    )
+    survey_wage = _read_csv_if_exists(
+        capsule_root / "intermediate data" / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv"
+    )
+
+    surveys = {
+        "gun_control": _build_survey_index(survey_gun),
+        "minimum_wage": _build_survey_index(survey_wage),
+    }
+
+    video_meta = _load_video_metadata(data_root)
+
+    rows: List[Dict[str, Any]] = []
+    for sess in sessions:
+        topic = sess.get("topicID")
+        issue = TOPIC_TO_ISSUE.get(topic)
+        if not issue:
+            continue
+        ratings = sess.get("ratingResults") or []
+        if not ratings:
+            continue
+        urlid = str(sess.get("urlid") or "").strip()
+        survey_row = _select_survey_row(surveys.get(issue, {}).get(urlid, []), topic or "")
+        option_template = LABEL_OPTIONS[issue]
+        index_map = LABEL_INDEX_TO_ID[issue]
+        for rating in ratings:
+            idx = str(rating.get("index") or "").strip()
+            gold_id = index_map.get(idx)
+            if not gold_id:
+                continue
+            vid = str(rating.get("vid") or "").strip()
+            base_vid = _strip_session_video_id(vid)
+            title = video_meta.get(base_vid) or video_meta.get(vid) or ""
+            row: Dict[str, Any] = {
+                "issue": issue,
+                "urlid": urlid,
+                "topic_id": topic,
+                "current_video_id": base_vid or vid,
+                "current_video_title": title or str(rating.get("copy") or ""),
+                "slate_items_json": [dict(opt) for opt in option_template],
+                "n_options": len(option_template),
+                "next_video_id": gold_id,
+                "rating_copy": rating.get("copy"),
+                "rating_index": idx,
+                "rating_video_id": base_vid or vid,
+                "watched_detailed_json": [{"id": base_vid or vid, "title": title}],
+                "watched_vids_json": [base_vid or vid],
+            }
+            if survey_row:
+                for k, v in survey_row.items():
+                    if k not in row and v is not None:
+                        row[k] = v
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+    return df
+
+
+def _split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[str, pd.DataFrame]:
+    if df.empty:
+        return {}
+    if not 0 < validation_ratio < 1:
+        validation_ratio = 0.1
+    indices = list(range(len(df)))
+    random.Random(2024).shuffle(indices)
+    val_size = max(1, int(len(indices) * validation_ratio)) if len(indices) > 1 else 0
+    val_idx = set(indices[:val_size]) if val_size else set()
+    splits = {
+        "train": df.iloc[[i for i in indices if i not in val_idx]].reset_index(drop=True),
+    }
+    if val_idx:
+        splits["validation"] = df.iloc[[i for i in indices if i in val_idx]].reset_index(drop=True)
+    return splits
 
 def _load_slate_items(ex: dict) -> List[dict]:
     arr = _as_list_json(ex.get("slate_items_json"))
@@ -394,12 +610,41 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
         "task": "GRAIL",
         "is_replay": False, "accuracy": 0.0, "mix_group_id": -1, "mix_copy_idx": -1,
     }
+    for extra in ("issue", "rating_copy", "rating_index", "rating_video_id", "urlid", "topic_id"):
+        if extra in ex:
+            out[extra] = ex.get(extra)
     return out
 
 # ---------- driver ----------
-def load_raw(dataset_name: str) -> DatasetDict:
+def _load_codeocean_dataset(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
+    root = Path(dataset_name).expanduser()
+    data_root = _resolve_capsule_data_root(root)
+    if not data_root:
+        raise ValueError(f"CodeOcean capsule data not found under {dataset_name}")
+    log.info("Building dataset from CodeOcean capsule at %s", data_root)
+    df = _build_codeocean_rows(data_root)
+    if df.empty:
+        raise ValueError("No usable rows found in CodeOcean sessions")
+    split_frames = _split_dataframe(df, validation_ratio=validation_ratio)
+    ds = {
+        name: datasets.Dataset.from_pandas(frame, preserve_index=False)
+        for name, frame in split_frames.items()
+        if not frame.empty
+    }
+    log.info("CodeOcean rows: %s", {name: len(frame) for name, frame in split_frames.items()})
+    return DatasetDict(ds)
+
+
+def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
     """Load from a HF hub id, a load_from_disk folder, or a single-split file."""
     if os.path.isdir(dataset_name):
+        resolved = _resolve_capsule_data_root(Path(dataset_name))
+        if resolved is not None:
+            try:
+                return _load_codeocean_dataset(str(resolved), validation_ratio=validation_ratio)
+            except Exception as exc:
+                log.error("Failed to build CodeOcean dataset: %s", exc)
+                raise
         log.info("Loading dataset from disk: %s", dataset_name)
         ds = datasets.load_from_disk(dataset_name)
         if isinstance(ds, DatasetDict): return ds
@@ -425,9 +670,18 @@ def main():
     ap.add_argument("--output-dir",  required=True)
     ap.add_argument("--system-prompt", default=None)
     ap.add_argument("--max-history", type=int, default=int(os.environ.get("GRAIL_MAX_HISTORY", "12")))
+    ap.add_argument("--validation-ratio", type=float, default=0.1, help="Validation share for CodeOcean data")
+    ap.add_argument(
+        "--issue-repo",
+        action="append",
+        default=[],
+        help="Optional issue=repo mapping for pushing cleaned splits to the Hugging Face hub.",
+    )
+    ap.add_argument("--push-to-hub", action="store_true", help="Push cleaned datasets to the hub")
+    ap.add_argument("--hub-token", default=None, help="Token for authenticated Hugging Face pushes")
     args = ap.parse_args()
 
-    raw = load_raw(args.dataset_name)
+    raw = load_raw(args.dataset_name, validation_ratio=args.validation_ratio)
     log.info("Splits available: %s", list(raw.keys()))
 
     sol_key = None  # can be wired to your config if you keep a named solution column
@@ -459,7 +713,8 @@ def main():
         "viewer_profile","state_text","state_disc_text","slate_text","slate_items",
         "watched_detailed_json","watched_vids_json",
         "current_video_id","current_video_title",
-        "task","is_replay","accuracy","mix_group_id","mix_copy_idx"
+        "task","is_replay","accuracy","mix_group_id","mix_copy_idx",
+        "issue","rating_copy","rating_index","rating_video_id","urlid","topic_id"
     }
     for split in list(mapped.keys()):
         drop = [c for c in mapped[split].column_names if c not in keep_cols]
@@ -482,6 +737,43 @@ def main():
     log.info("Saving cleaned dataset to %s", args.output_dir)
     final.save_to_disk(args.output_dir)
     log.info("Done. Rows: %s", {k: len(v) for k, v in final.items()})
+
+    # Optional per-issue exports / pushes
+    issue_repo_map: Dict[str, str] = {}
+    for spec in args.issue_repo:
+        if "=" not in spec:
+            raise ValueError(f"Invalid --issue-repo format: {spec!r}; expected issue=repo")
+        issue, repo = spec.split("=", 1)
+        issue_repo_map[issue.strip()] = repo.strip()
+
+    if issue_repo_map or args.push_to_hub:
+        has_issue = all("issue" in split.column_names for split in final.values())
+        if not has_issue:
+            log.warning("Issue-level exports requested, but 'issue' column missing in dataset")
+        else:
+            issues_in_data: set[str] = set(issue_repo_map.keys())
+            for split in final.values():
+                if "issue" in split.column_names:
+                    issues_in_data.update(split.unique("issue"))
+            for issue_name in sorted(issues_in_data):
+                if not issue_name:
+                    continue
+                issue_ds = DatasetDict()
+                for split_name, split_ds in final.items():
+                    subset = split_ds.filter(lambda row, name=issue_name: row.get("issue") == name)
+                    if len(subset):
+                        issue_ds[split_name] = subset
+                if not issue_ds:
+                    log.warning("No rows for issue %s; skipping", issue_name)
+                    continue
+                issue_dir = os.path.join(args.output_dir, issue_name)
+                os.makedirs(issue_dir, exist_ok=True)
+                log.info("Saving issue '%s' dataset to %s", issue_name, issue_dir)
+                issue_ds.save_to_disk(issue_dir)
+                repo_id = issue_repo_map.get(issue_name)
+                if args.push_to_hub and repo_id:
+                    log.info("Pushing issue '%s' dataset to %s", issue_name, repo_id)
+                    issue_ds.push_to_hub(repo_id, token=args.hub_token)
 
 if __name__ == "__main__":
     main()

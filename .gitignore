@@ -22,3 +22,8 @@ logs/
 .triton/
 wandb/
 **/.DS_Store
+/capsule-5416997/
+/data/
+/clean_data/
+/.venv/
+/__pycache__/

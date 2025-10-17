@@ -112,6 +112,10 @@ CodeOcean capsule, and validates that every output split is compatible with
 python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
+mkdir -p .cache/pip .cache/pip/build .tmp
+export PIP_CACHE_DIR="$(pwd)/.cache/pip"
+export PIP_BUILD_DIR="$(pwd)/.cache/pip/build"
+export TMPDIR="$(pwd)/.tmp"
 pip install -e .
 
 # 2) Generate the cleaned dataset

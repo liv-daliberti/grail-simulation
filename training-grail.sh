@@ -64,8 +64,8 @@ echo "Python: $(which python)"
 python --version
 
 python -m pip install --upgrade pip
-python -m pip install --no-cache-dir -e "$ROOT_DIR"
-python -m pip install --no-cache-dir yq
+python -m pip install -e "$ROOT_DIR"
+python -m pip install yq
 
 python - <<'PY'
 import torch, site, sys
@@ -82,11 +82,15 @@ export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$ROOT_DIR/.cache/huggingface/tr
 export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
 export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
 export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
+export PIP_CACHE_DIR=${PIP_CACHE_DIR:-"$ROOT_DIR/.cache/pip"}
+export PIP_BUILD_DIR=${PIP_BUILD_DIR:-"$ROOT_DIR/.cache/pip/build"}
+export PYTHONPYCACHEPREFIX=${PYTHONPYCACHEPREFIX:-"$ROOT_DIR/.cache/pyc"}
 export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-"$ROOT_DIR/.torchinductor"}
 export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
 
 for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
-           "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR"; do
+           "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR" \
+           "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX"; do
   mkdir -p "$dir"
 done
 

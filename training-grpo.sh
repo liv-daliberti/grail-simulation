@@ -17,7 +17,7 @@ LOG_DIR=${LOG_DIR:-"$ROOT_DIR/logs"}
 RUN_NAME=${RUN_NAME:-Qwen1.5B-GRAIL}
 TIMESTAMP=${TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}
 
-CONFIG=${CONFIG:-"$ROOT_DIR/recipes/Qwen2.5-1.5B-Instruct/grpo/config_grail.yaml"}
+CONFIG=${CONFIG:-"$ROOT_DIR/recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo.yaml"}
 ACCEL_CONFIG=${ACCEL_CONFIG:-"$ROOT_DIR/recipes/accelerate_configs/zero3.yaml"}
 MAIN_SCRIPT=${MAIN_SCRIPT:-"$ROOT_DIR/src/open_r1/grpo.py"}
 

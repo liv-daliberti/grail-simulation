@@ -30,6 +30,23 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
    - GPT‑4o: `python src/gpt-4o/gpt-4o-baseline.py`
    - KNN: `python src/knn/knn-baseline.py`
 
+
+## Pull the Data
+
+All data comes from ```https://codeocean.com/capsule/5416997/tree/v1``` and is associated with the paper [Short-term exposure to filter-bubble recommendation systems has limited polarization effects: Naturalistic experiments on YouTube](https://www.pnas.org/doi/10.1073/pnas.2318127122).
+```
+git clone https://git.codeocean.com/capsule-5416997.git
+cd capsule-5416997 
+curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/4644338a-0384-44ee-9ca5-7567a7a4afb8/5aa4b399-b9a3-4b37-bec9-f2a606ba4dbd?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJCBIX6WBZE5OXDDQ%2F20251017%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251017T144620Z&X-Amz-Expires=21600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3Dresults-8447a699-902e-4f7b-ab6f-26fdb9726670.zip&X-Amz-Signature=47f190731d0d09dbc7218c2b480e5db9cf69d72457e47ba65626eadd185c2e9b'
+unzip results-8447a699-902e-4f7b-ab6f-26fdb9726670.zip
+```
+
+This will give you a clean copy of the exact data used for the both the original paper and the data used for this study. We include a copy of the data within this repo too for full transparency /reproducibility. 
+
+We then reformat the data for our study / move it to a huggingface dataset for ease of use. 
+
+We follow these directions to accomplish the data cleaning task
+
 ## Citation
 
 

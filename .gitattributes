@@ -14,3 +14,4 @@
 *.bz2 filter=lfs diff=lfs merge=lfs -text
 data/** filter=lfs diff=lfs merge=lfs -text
 results/** filter=lfs diff=lfs merge=lfs -text
+capsule-5416997/data/** filter=lfs diff=lfs merge=lfs -text

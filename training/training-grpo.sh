@@ -109,6 +109,16 @@ for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOM
 done
 
 # ────────────────────────────────────────────────────────────────
+# Hugging Face credentials
+# ────────────────────────────────────────────────────────────────
+if [ -n "${HF_TOKEN:-}" ]; then
+  export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
+fi
+if [ -z "${HUGGINGFACE_HUB_TOKEN:-}" ]; then
+  echo "WARNING: HUGGINGFACE_HUB_TOKEN not set. Push-to-hub will fail." >&2
+fi
+
+# ────────────────────────────────────────────────────────────────
 # WandB (optional)
 # ────────────────────────────────────────────────────────────────
 export WANDB_MODE=${WANDB_MODE:-online}

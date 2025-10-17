@@ -71,6 +71,9 @@ export PIP_CACHE_DIR="$(pwd)/.cache/pip"
 export PIP_BUILD_DIR="$(pwd)/.cache/pip/build"
 export TMPDIR="$(pwd)/.tmp"
 pip install -e .
+# Hugging Face write access (required if you push checkpoints to the Hub)
+export HF_TOKEN="hf_your_personal_token"
+export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
 
 # 2) Generate the cleaned dataset
 python clean_data/clean_data.py \

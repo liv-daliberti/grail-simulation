@@ -74,8 +74,8 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 │   ├── gpt-4o/               # GPT-4o evaluation scripts for slate prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline implementation
 │   └── visualization/        # Graphviz-based recommendation tree and session visualisation tools
-├── training-grail.sh         # Convenience launcher for GRAIL experiments
-├── training-grail.sh         # Convenience launcher for GRPO experiments
+├── training/                 # SLURM launchers for GRPO (baseline) and GRAIL (with discriminator)
+├── setup.py                  # Editable package definition (pip install -e .)
 └── README.md                 # Project overview and setup instructions (this file)
 ```
 
@@ -198,14 +198,16 @@ The command above produces four `.svg` files such as `grail_session_minimum_wage
 
 ## Training
 
-1. Install Python dependencies and system packages (e.g. `graphviz` for diagram generation).
-2. Choose a model recipe from `recipes/` and launch training:
+1. Ensure the editable package and cache directories are set up (see “Clean the dataset” instructions).
+2. Submit training jobs via SLURM:
    ```bash
-   bash training-grail.sh recipes/Qwen2.5-1.5B-Instruct/grpo/config_grail.yaml
+   sbatch training/training-grail.sh    # GRPO + discriminator shaping (uses src/open_r1/grail.py)
+   sbatch training/training-grpo.sh     # Vanilla GRPO baseline (uses src/open_r1/grpo.py)
    ```
-3. Evaluate baselines:
-   - GPT‑4o: `python src/gpt-4o/gpt-4o-baseline.py`
-   - KNN: `python src/knn/knn-baseline.py`
+   Update the scripts or recipe paths if you place custom configs under `recipes/`.
+3. Evaluate baselines locally:
+   - GPT‑4o slate baseline: `python src/gpt-4o/gpt-4o-baseline.py`
+   - KNN slate baseline: `python src/knn/knn-baseline.py`
 
 ## Citation
 

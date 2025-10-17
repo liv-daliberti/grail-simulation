@@ -21,6 +21,19 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 
 ## Quick Start
 
+## Visualize recommendation trees
+
+The repository ships with `src/visualization/recommendation_tree_viz.py`, a small CLI for turning the Guns & GRAIL recommendation tree CSVs into Graphviz diagrams. Supply a single tree CSV, optionally merge in per-video metadata for nicer labels, and the tool will emit a `.png`, `.svg`, or any other Graphviz-supported format.
+
+```bash
+python src/visualization/recommendation_tree_viz.py \
+  --tree "capsule-5416997/data/recommendation trees/trees_gun/same3dif1_PnpltPDEa3(pilot_a_31_1).csv" \
+  --metadata "capsule-5416997/data/supplemental/metadata and ratings/metadata_w_label_June_2021_NLversion.csv" \
+  --output docs/gun_tree_example.svg
+```
+
+Additional options let you highlight a specific viewing path (`--highlight`), overlay aggregated trajectories to annotate edges with viewer counts (`--trajectories`), limit the depth of the render, or switch the layout direction.
+
 1. Install Python dependencies and system packages (e.g. `graphviz` for diagram generation).
 2. Choose a model recipe from `recipes/` and launch training:
    ```bash

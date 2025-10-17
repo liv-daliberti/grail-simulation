@@ -43,18 +43,29 @@ if [ -f "$CONDA_SH" ]; then
   source "$CONDA_SH"
 fi
 
-if [ -n "${ENV_DIR:-}" ]; then
-  conda activate "$ENV_DIR"
-fi
-
-echo "Python: $(which python)"
-python --version
-
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 export PIP_USER=false
 
-python -m pip install --no-user --upgrade huggingface_hub yq
+ENV_DIR=${ENV_DIR:-"$ROOT_DIR/.conda/envs/grail-training"}
+PYTHON_VERSION=${PYTHON_VERSION:-3.10}
+
+if [ -d "$ENV_DIR" ]; then
+  echo "Removing existing conda env at $ENV_DIR"
+  conda env remove -p "$ENV_DIR" -y >/dev/null 2>&1 || rm -rf "$ENV_DIR"
+fi
+
+mkdir -p "$(dirname "$ENV_DIR")"
+echo "Creating fresh conda env at $ENV_DIR (python $PYTHON_VERSION)"
+conda create -y -p "$ENV_DIR" "python=$PYTHON_VERSION"
+conda activate "$ENV_DIR"
+
+echo "Python: $(which python)"
+python --version
+
+python -m pip install --upgrade pip
+python -m pip install --no-cache-dir -e "$ROOT_DIR"
+python -m pip install --no-cache-dir yq
 
 python - <<'PY'
 import torch, site, sys

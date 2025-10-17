@@ -13,11 +13,22 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 
 ## Repository Structure
 
-- `src/open_r1/` – training utilities for supervised fine-tuning and GRPO-style reinforcement learning, including a simplified GRPO trainer specialised for GRAIL.
-- `src/gpt-4o/` – baseline script to evaluate GPT‑4o on next‑video choice using the same prompts as the GRPO setup.
-- `src/knn/` – non‑generative k‑nearest neighbours baseline for slate‑constrained prediction.
-- `recipes/` – configuration files for different model sizes and training modes.
-- `training-grail.sh` – convenience script to launch GRPO training with preset configs.
+```
+.
+├── clean_data/               # Utilities to convert the CodeOcean dump into tidy Hugging Face datasets
+├── docs/                     # Figures used in the paper and README
+├── recipes/                  # Training configuration files organised by model family
+├── src/
+│   ├── open_r1/              # Supervised fine-tuning + GRPO reinforcement learning trainers and helpers
+│   ├── gpt-4o/               # GPT-4o evaluation scripts for slate prediction baselines
+│   ├── knn/                  # Non-generative k-nearest-neighbour baseline implementation
+│   └── visualization/        # Graphviz-based recommendation tree and session visualisation tools
+├── training-grail.sh         # Convenience launcher for GRPO experiments
+└── README.md                 # Project overview and setup instructions (this file)
+```
+
+The repository ships with the cleaned datasets referenced in the paper so you can
+reproduce the experiments without re-running the CodeOcean extraction workflow.
 
 ## Pull the Data
 

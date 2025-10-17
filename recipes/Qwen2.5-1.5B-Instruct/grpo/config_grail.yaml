@@ -4,7 +4,7 @@ torch_dtype: bfloat16
 attn_implementation: sdpa
 
 # ===== Data (HUB) =====
-dataset_name: od2961/grail-interactions     # <— replace with your repo id
+dataset_name: od2961/grail-wage     # <— replace with your repo id
 dataset_train_split: train
 dataset_test_split:  validation
 dataset_prompt_column: state_text
@@ -64,7 +64,7 @@ num_generations: 4
 num_train_epochs: 3
 max_steps: -1
 
-output_dir: data/Qwen2.5-1.5B-OpenR1-GRAIL
+output_dir: models/Qwen2.5-1.5B-OpenR1-GRAIL
 save_strategy: steps
 save_steps: 10
 save_total_limit: 500

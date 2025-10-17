@@ -62,6 +62,10 @@ python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 mkdir -p .cache/pip .cache/pip/build .tmp
+export CONDA_ENVS_PATH="$(pwd)/.conda/envs"
+export CONDA_PKGS_DIRS="$(pwd)/.conda/pkgs"
+export CONDA_CACHE_DIR="$(pwd)/.cache/conda"
+mkdir -p "$CONDA_ENVS_PATH" "$CONDA_PKGS_DIRS" "$CONDA_CACHE_DIR"
 export PIP_CACHE_DIR="$(pwd)/.cache/pip"
 export PIP_BUILD_DIR="$(pwd)/.cache/pip/build"
 export TMPDIR="$(pwd)/.tmp"

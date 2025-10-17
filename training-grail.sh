@@ -43,11 +43,25 @@ if [ -f "$CONDA_SH" ]; then
   source "$CONDA_SH"
 fi
 
+export CONDA_ENVS_PATH=${CONDA_ENVS_PATH:-"$ROOT_DIR/.conda/envs"}
+export CONDA_PKGS_DIRS=${CONDA_PKGS_DIRS:-"$ROOT_DIR/.conda/pkgs"}
+export CONDA_CACHE_DIR=${CONDA_CACHE_DIR:-"$ROOT_DIR/.cache/conda"}
+export CONDARC=${CONDARC:-"$ROOT_DIR/.condarc"}
+
+mkdir -p "$CONDA_ENVS_PATH" "$CONDA_PKGS_DIRS" "$CONDA_CACHE_DIR"
+cat >"$CONDARC" <<EOF
+envs_dirs:
+  - $CONDA_ENVS_PATH
+pkgs_dirs:
+  - $CONDA_PKGS_DIRS
+cache_dir: $CONDA_CACHE_DIR
+EOF
+
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 export PIP_USER=false
 
-ENV_DIR=${ENV_DIR:-"$ROOT_DIR/.conda/envs/grail-training"}
+ENV_DIR=${ENV_DIR:-"$CONDA_ENVS_PATH/grail-training"}
 PYTHON_VERSION=${PYTHON_VERSION:-3.10}
 
 if [ -d "$ENV_DIR" ]; then
@@ -90,7 +104,7 @@ export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
 
 for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
            "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR" \
-           "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX"; do
+           "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX" "$CONDA_CACHE_DIR"; do
   mkdir -p "$dir"
 done
 

@@ -1,0 +1,34 @@
+metadata_version: 1
+name: Short-term exposure to filter-bubble algorithmic recommendations have limited
+  effects on polarization
+description: An enormous literature argues that recommendation algorithms drive political
+  polarization by creating "filter bubbles" and "rabbit holes." Using four experiments
+  with nearly 9,000 participants, we show that manipulating algorithmic recommendations
+  to create these conditions has limited effects on opinions. Our experiments employ
+  a custom-built video platform with a naturalistic, YouTube-like interface presenting
+  real YouTube videos and recommendations. We experimentally manipulate YouTube's
+  actual recommendation algorithm to simulate "filter bubbles" and "rabbit holes"
+  by presenting ideologically balanced and slanted choices. Our design allows us to
+  intervene in a feedback loop that has confounded the study of algorithmic polarization—the
+  complex interplay between *supply* of recommendations and user *demand* for content—to
+  examine downstream effects on policy attitudes. We use over 130,000 experimentally
+  manipulated recommendations and 31,000 platform interactions to estimate how recommendation
+  algorithms alter users' media consumption decisions and, indirectly, their political
+  attitudes. Our results cast doubt on widely circulating theories of algorithmic
+  polarization by showing that even heavy-handed (although short-term) perturbations
+  of real-world recommendations have limited causal effects on policy attitudes. Given
+  our inability to detect consistent evidence for algorithmic effects, we argue the
+  burden of proof for claims about algorithm-induced polarization has shifted. Our
+  methodology, which captures and modifies the output of real-world recommendation
+  algorithms, offers a path forward for future investigations of black-box artificial
+  intelligence systems. Our findings reveal practical limits to effect sizes that
+  are feasibly detectable in academic experiments.
+authors:
+- name: Naijia Liu, Xinlan Emily Hu, Yasemin Savas, Matthew Baum, Adam Berinsky, Allison
+    Chaney, Christopher Lucas, Rei Mariman, Justin de Benedictis-Kessner, Andrew Guess,
+    Dean Knox, and Brandon Stewart
+  affiliations:
+  - name: Multiple
+corresponding_contributor:
+  name: Dean Knox
+  email: dcknox@upenn.edu

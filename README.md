@@ -79,6 +79,9 @@ python clean_data/clean_data.py \
 
 The script logs the number of rows kept per split, along with the per-issue
 distribution, and raises an error if any required GRPO columns are missing.
+When a validation split is requested, the builder assigns entire viewers
+(`urlid`/`session_id`) to a single split, so no person appears in both train and
+validation.
 
 Public Hugging Face copies of the cleaned splits:
 - Minimum wage: https://huggingface.co/datasets/od2961/grail-wage

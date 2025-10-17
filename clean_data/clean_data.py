@@ -977,15 +977,30 @@ def _split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[st
         return {}
     if not 0 < validation_ratio < 1:
         validation_ratio = 0.1
-    indices = list(range(len(df)))
-    random.Random(2024).shuffle(indices)
-    val_size = max(1, int(len(indices) * validation_ratio)) if len(indices) > 1 else 0
-    val_idx = set(indices[:val_size]) if val_size else set()
-    splits = {
-        "train": df.iloc[[i for i in indices if i not in val_idx]].reset_index(drop=True),
+
+    def _pick_group(row_idx: int) -> str:
+        urlid = str(df.iloc[row_idx].get("urlid") or "").strip()
+        session = str(df.iloc[row_idx].get("session_id") or "").strip()
+        if urlid and urlid.lower() != "nan":
+            return f"urlid::{urlid}"
+        if session and session.lower() != "nan":
+            return f"session::{session}"
+        return f"row::{row_idx}"
+
+    group_keys = [_pick_group(i) for i in range(len(df))]
+    unique_groups = list(dict.fromkeys(group_keys))
+    rng = random.Random(2024)
+    rng.shuffle(unique_groups)
+
+    val_group_count = max(1, int(len(unique_groups) * validation_ratio)) if len(unique_groups) > 1 else 0
+    val_groups = set(unique_groups[:val_group_count]) if val_group_count else set()
+    is_val = pd.Series(group_keys).isin(val_groups)
+
+    splits: Dict[str, pd.DataFrame] = {
+        "train": df.loc[~is_val].reset_index(drop=True),
     }
-    if val_idx:
-        splits["validation"] = df.iloc[[i for i in indices if i in val_idx]].reset_index(drop=True)
+    if val_groups:
+        splits["validation"] = df.loc[is_val].reset_index(drop=True)
     return splits
 
 def _load_slate_items(ex: dict) -> List[dict]:

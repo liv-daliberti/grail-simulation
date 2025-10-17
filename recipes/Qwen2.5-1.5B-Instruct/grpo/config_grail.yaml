@@ -40,7 +40,7 @@ system_prompt: |
     <answer>Option 3</answer>           ← extra words
     <answer>Parkland …</answer>         ← name instead of number
 
-max_prompt_length:     1024
+max_prompt_length:     2024
 max_completion_length: 256
 
 # ===== GRPO trainer =====

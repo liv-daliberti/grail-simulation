@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -ex
+
+## Study 1
+Rscript 'gun control (issue 1)/01_trt_assign.R'
+Rscript 'gun control (issue 1)/02_clean_merge.R'
+Rscript 'gun control (issue 1)/03_analysis_multipletesting.R'
+
+## Study 2
+Rscript 'minimum wage (issue 2)/01_trt_assign.R'  # also covers study 3
+Rscript 'minimum wage (issue 2)/02_clean_merge.R'
+Rscript 'minimum wage (issue 2)/03_analysis_multipletesting.R'
+
+## Study 3 (YouGov)
+Rscript 'minimum wage (issue 2)/02b_clean_merge_yg.R'
+Rscript 'minimum wage (issue 2)/03b_analysis_multipletesting_yg.R'
+
+## Combined results from Studies 1-3
+Rscript '04_postprocessing_exploration_issues12.R'
+
+## Study 4
+Rscript 'shorts/05_clean_shorts_data.R' # returns demographics for the shorts (SI Fig1)
+Rscript 'shorts/06_analysis_multipletesting.R'
+Rscript 'shorts/07_postprocessing_exploration.R' # -- may not need the figure plotting section
+Rscript 'shorts/08_plot_shorts_figure.R' # returns the main figure for the Shorts exp
+
+## Supplementary analyses
+
+# (1) Experiment durations
+# SI Fig S2 comes from this code.
+python3 'supplemental/experiment durations/09_experiment_times.py' 
+
+# (2) Increasingly extreme recommendations 
+# SI Table S11, Fig S15 comes from this code
+python3 'supplemental/increasingly extreme recommendations/10_partisanship_increase.py'
+
+# SI Fig S12-13 comes from this code
+python3 'supplemental/increasingly extreme recommendations/11_gpt_rating_plots.py'
+
+# (3) Thumbnail ("First Impressions") analysis
+python3 'supplemental/thumbnails (first impressions)/12_thumbnail_analysis.py'
+python3 'supplemental/thumbnails (first impressions)/13_thumbnail_null_comparison.py'
+
+# SI Fig S3 comes from this code.
+Rscript 'supplemental/14_api_browser_comparison.R'

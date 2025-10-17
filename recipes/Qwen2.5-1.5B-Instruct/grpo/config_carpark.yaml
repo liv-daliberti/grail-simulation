@@ -1,0 +1,139 @@
+# -------------------------------
+# Model arguments
+# -------------------------------
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+model_revision: main
+torch_dtype: bfloat16
+attn_implementation: sdpa
+
+# -------------------------------
+# Data training arguments
+# -------------------------------
+# Dataset columns (match your HF dataset)
+dataset_name: od2961/rush4-5-6-balanced
+dataset_prompt_column: messages        # <-- your dataset has messages as a dict-of-arrays
+dataset_solution_column: solution      # <-- list of tokens; trainer will join with commas
+dataset_train_split: train
+dataset_validation_split: validation
+dataset_test_split: test
+
+# A compact, task-specific system prompt (the per-row `messages` already includes this,
+# so this is only used if your trainer prepends a global system prompt).
+system_prompt: |-
+  You are an expert Rush Hour ({N}×{N}) solver.
+
+  TASK
+  • Input fields are provided in the user message:
+    - Board (row-major string with 'o', 'A', 'B'..'Z', optional 'x')
+    - Board size (e.g., 4x4 or 5x5 or 6x6)
+    - Minimal moves to solve (ground-truth optimum), shown for training
+  • OUTPUT exactly ONE optimal solution as a comma-separated list of moves.
+    - Move token = <PIECE><DIR><STEPS> (e.g., A>2,B<1,Cv3)
+    - Directions: '<' left, '>' right, '^' up, 'v' down
+    - No spaces, no prose, no extra punctuation or lines.
+
+  GOAL
+  • The right end of 'A' must reach the right edge.
+
+  OPTIMALITY & TIE-BREAKS
+  • Your list must have the minimal possible number of moves.
+  • If multiple optimal sequences exist, return the lexicographically smallest
+    comma-separated sequence (ASCII order) after normalizing tokens.
+
+  VALIDATION (do silently)
+  • Tokens must match: ^[A-Z][<>^v]\d+(,[A-Z][<>^v]\d+)*$
+  • Each move respects vehicle axes and avoids overlaps with walls/pieces.
+  • Applying the full sequence reaches the goal with exactly {moves} moves.
+
+  FORMAT
+  • Answer in the following way:
+  <think>
+  Your reasoning
+  </think>
+  <answer>
+  A>2,B<1,Cv3
+  </answer>
+
+# -------------------------------
+# GRPO trainer config
+# -------------------------------
+bf16: true
+use_vllm: true
+do_eval: false
+gradient_accumulation_steps: 64
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# New run IDs/paths
+hub_model_id: od2961/Qwen2.5-1.5B-Open-R1-GRPO-carpark-v1
+output_dir: data/Qwen2.5-1.5B-Open-R1-GRPO-carpark-v1
+
+hub_strategy: every_save
+learning_rate: 5e-6
+adam_beta2: 0.99
+adam_epsilon: 1e-06
+
+log_completions: true
+log_level: info
+logging_first_step: true
+logging_steps: 1
+logging_strategy: steps
+
+lr_scheduler_type: cosine
+
+# Rush Hour prompts are short → shrink token budgets a bit
+max_reason_tokens: 240
+return_reason: true
+max_prompt_length: 400
+max_completion_length: 400
+
+max_steps: -1
+num_generations: 4
+num_train_epochs: 3
+
+overwrite_output_dir: true
+per_device_eval_batch_size:  4
+per_device_train_batch_size: 4
+push_to_hub: false
+report_to: [wandb]
+
+# Rewards: exact solution match (+ optional format check)
+reward_funcs:
+  - rush_solution_exact       # checks canonicalized CSV matches gold (order + counts)
+reward_weights:
+  - 1.0
+
+# KL control (carry over your tuned values)
+kl_target:        0.07
+init_kl_coeff:    3.00
+kl_horizon:       50000
+kl_ctl_step_size: 0.15
+
+max_grad_norm: 0.15
+vf_coef: 0.25
+advantage_normalization: running
+horizon: 1024
+
+save_strategy: steps
+save_steps: 20
+evaluation_strategy: steps
+eval_steps: 100
+save_total_limit: 1000
+
+seed: 42
+warmup_ratio: 0.2
+reward_normalization: true
+gamma: 0.99
+gae_lambda: 0.95
+log_grad_norm_after_clip: true
+log_kl_per_token: true
+reward_clip: [-6.0, 6.0]
+advantage_clip: [-2.5, 2.5]
+clip_range: 0.05
+clip_range_vf: 0.5
+
+callbacks:
+  - replay_buffer_callback
+  - caching_callback
+  - push_to_hub_revision

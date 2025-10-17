@@ -92,6 +92,10 @@ def _is_nanlike(x: Any) -> bool:
     return s in {"", "nan", "none", "null", "n/a", "na"}
 
 
+def is_nanlike(value: Any) -> bool:
+    return _is_nanlike(value)
+
+
 def _truncate_text(text: str, limit: int = 160) -> str:
     text = text.strip()
     if limit and limit > 3 and len(text) > limit:
@@ -599,6 +603,7 @@ __all__ = [
     "as_list_json",
     "build_user_prompt",
     "clean_text",
+    "is_nanlike",
     "secs",
     "synthesize_viewer_sentence",
     "truthy",

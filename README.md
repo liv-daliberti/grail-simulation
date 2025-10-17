@@ -44,9 +44,39 @@ curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeo
 
 This will give you a clean copy of the exact data used for the both the original paper and the data used for this study. We include a copy of the data within this repo too for full transparency /reproducibility. 
 
-We then reformat the data for our study / move it to a huggingface dataset for ease of use. 
+We then reformat the data for our study / move it to a huggingface dataset for ease of use.
 
-We follow these directions to accomplish the data cleaning task
+## Clean the Dataset for GRPO
+
+The GRPO training loop expects a tidy Hugging Face dataset containing prompts,
+gold labels, and metadata for both policy domains (gun control and minimum wage).
+The ``clean_data/clean_data.py`` utility produces exactly that schema from the
+CodeOcean capsule, and validates that every output split is compatible with
+``src/open_r1/grpo.py``.
+
+```bash
+# 1) Create a virtual environment with the repository requirements
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 2) Generate the cleaned dataset
+python clean_data/clean_data.py \
+    --dataset-name capsule-5416997/data \
+    --output-dir data/cleaned_grail
+
+# Optional: push per-issue subsets (split by domain) to the Hub
+python clean_data/clean_data.py \
+    --dataset-name capsule-5416997/data \
+    --output-dir data/cleaned_grail \
+    --issue-repo gun_control=my-org/grail-gun \
+    --issue-repo minimum_wage=my-org/grail-wage \
+    --push-to-hub --hub-token $HF_TOKEN
+```
+
+The script logs the number of rows kept per split, along with the per-issue
+distribution, and raises an error if any required GRPO columns are missing.
 
 ## Citation
 

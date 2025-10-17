@@ -2,33 +2,51 @@
 # -*- coding: utf-8 -*-
 
 """
-Clean & prepare GRAIL rows for GRPO (+optional GAIL).
+Clean & prepare GRAIL rows for ``src/open_r1/grpo.py`` (plus optional GAIL).
 
 Outputs (per row):
-  - prompt:      chat-format messages [{role, content}, ...]
-  - answer:      str gold index (1..N)
-  - gold_index:  int (1..N)
-  - gold_id:     str (next chosen id)
-  - n_options:   int
-  - viewer_profile: str (one-liner)
-  - state_text:      str (LM-facing tidy state shown in prompt)
-  - state_disc_text: str (disc-facing, richer state: full history + prior slates)
-  - slate_items:     list[{"title","id"}]
-  - slate_text:      enumerated names (optional; built if missing)
-  - watched_detailed_json, watched_vids_json (passthrough if present)
+  - prompt:      chat-format messages ``[{role, content}, ...]``
+  - answer:      ``str`` gold index (``1..N``)
+  - gold_index:  ``int`` (``1..N``)
+  - gold_id:     ``str`` (next chosen id)
+  - n_options:   ``int``
+  - viewer_profile: ``str`` one-liner
+  - state_text:      ``str`` LM-facing tidy state shown in prompt
+  - state_disc_text: ``str`` discriminator-facing state (full history + prior slates)
+  - slate_items:     ``list[{"title","id"}]``
+  - slate_text:      enumerated names (built if missing)
+  - watched_detailed_json / watched_vids_json passthroughs
   - current_video_id, current_video_title
-  - task/is_replay/accuracy/mix_group_id/mix_copy_idx defaults
+  - task / is_replay / accuracy / mix_group_id / mix_copy_idx defaults
 
 Only rows with:
-  - non-empty slate_items_json
+  - non-empty ``slate_items_json``
   - resolvable gold "next id" that exists in the slate
-are kept.
+are kept. Both GRAIL issues (``gun_control`` and ``minimum_wage``) are preserved
+when present in the source data.
 
-CLI:
-  python clean_grail.py \
-    --dataset-name <hf-hub-id | /path/to/load_from_disk> \
-    --train-split train --test-split validation \
-    --output-dir /path/to/cleaned
+Linux CLI quickstart::
+
+    # 1) Create the Python environment
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+
+    # 2) Fetch the CodeOcean capsule data (see README for full commands)
+    git clone https://git.codeocean.com/capsule-5416997.git
+    # ...download the two zip payloads, then unzip...
+
+    # 3) Build the cleaned HF dataset for GRPO
+    python clean_data/clean_data.py \
+        --dataset-name capsule-5416997/data \
+        --output-dir data/cleaned_grail
+
+    # 4) (Optional) push per-issue subsets to the Hub
+    python clean_data/clean_data.py \
+        --dataset-name capsule-5416997/data \
+        --output-dir data/cleaned_grail \
+        --issue-repo gun_control=my-org/grail-gun --issue-repo minimum_wage=my-org/grail-wage \
+        --push-to-hub --hub-token $HF_TOKEN
 
 Env (optional):
   GRAIL_MAX_HISTORY (default 12)
@@ -39,6 +57,7 @@ from __future__ import annotations
 import os, sys, re, json, logging, argparse, random
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from collections import Counter
 
 import datasets
 from datasets import DatasetDict
@@ -78,6 +97,27 @@ LABEL_OPTIONS: Dict[str, List[Dict[str, str]]] = {
 LABEL_INDEX_TO_ID: Dict[str, Dict[str, str]] = {
     "minimum_wage": {"1": "min_wage_raise", "2": "min_wage_no_raise", "3": "min_wage_unknown"},
     "gun_control": {"1": "gun_more_restrictions", "2": "gun_fewer_restrictions", "3": "gun_unknown"},
+}
+
+REQUIRED_FOR_GRPO = {
+    "prompt",
+    "answer",
+    "gold_index",
+    "gold_id",
+    "n_options",
+    "viewer_profile",
+    "state_text",
+    "slate_items",
+    "slate_text",
+    "watched_detailed_json",
+    "watched_vids_json",
+    "current_video_id",
+    "current_video_title",
+    "task",
+    "is_replay",
+    "accuracy",
+    "mix_group_id",
+    "mix_copy_idx",
 }
 
 def _canon(s: str) -> str:
@@ -697,6 +737,16 @@ def main():
     raw = raw.filter(_ok)
     log.info("Counts after filter: %s", {k: len(v) for k, v in raw.items()})
 
+    # Domain coverage diagnostics for GRPO
+    issue_counts: Dict[str, Dict[str, int]] = {}
+    for split_name, split_ds in raw.items():
+        if "issue" not in split_ds.column_names:
+            continue
+        counter = Counter(str(x or "").strip() for x in split_ds["issue"])  # type: ignore[index]
+        issue_counts[split_name] = {k or "(missing)": v for k, v in counter.items()}
+    if issue_counts:
+        log.info("Issue distribution per split: %s", issue_counts)
+
     # Map to cleaned schema
     mapped = raw.map(
         lambda ex: _row_to_example(ex, args.system_prompt, sol_key, max_hist=args.max_history),
@@ -735,6 +785,12 @@ def main():
     final = DatasetDict(desired)
     os.makedirs(args.output_dir, exist_ok=True)
     log.info("Saving cleaned dataset to %s", args.output_dir)
+
+    for split_name, split_ds in final.items():
+        missing = sorted(REQUIRED_FOR_GRPO - set(split_ds.column_names))
+        if missing:
+            raise ValueError(f"Split '{split_name}' is missing required columns for GRPO: {missing}")
+
     final.save_to_disk(args.output_dir)
     log.info("Done. Rows: %s", {k: len(v) for k, v in final.items()})
 

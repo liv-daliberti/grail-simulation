@@ -1,14 +1,3 @@
-layer1,layer2,layer3,p.adj,est,se
-mwpolicy,overall,overall,1.40992540491495e-10,,
-mwpolicy,attitude.pro:recsys.pi.vs.attitude.pro:recsys.pc,overall,0.55502699665063,,
-mwpolicy,attitude.pro:recsys.pi.vs.attitude.pro:recsys.pc,mw_index,,-0.00582976987409375,0.00650006128759399
-mwpolicy,attitude.anti:recsys.ai.vs.attitude.anti:recsys.ac,overall,0.235147507272064,,
-mwpolicy,attitude.anti:recsys.ai.vs.attitude.anti:recsys.ac,mw_index,,0.0215699663149517,0.0137694635219023
-mwpolicy,attitude.neutral:recsys.pi.vs.attitude.neutral:recsys.pc,overall,0.574939353549043,,
-mwpolicy,attitude.neutral:recsys.pi.vs.attitude.neutral:recsys.pc,mw_index,,-0.0100464013259987,0.0141895593500853
-mwpolicy,attitude.neutral:recsys.ai.vs.attitude.neutral:recsys.ac,overall,0.948808012117464,,
-mwpolicy,attitude.neutral:recsys.ai.vs.attitude.neutral:recsys.ac,mw_index,,0.00154006059313289,0.0239805471051232
-mwpolicy,attitude.neutral:recsys.ai.vs.attitude.neutral:recsys.pi,overall,1.40992540491495e-10,,
-mwpolicy,attitude.neutral:recsys.ai.vs.attitude.neutral:recsys.pi,mw_index,7.04962702457475e-11,0.128796934991057,0.0190352428429005
-mwpolicy,attitude.neutral:recsys.ac.vs.attitude.neutral:recsys.pc,overall,3.54638090067638e-08,,
-mwpolicy,attitude.neutral:recsys.ac.vs.attitude.neutral:recsys.pc,mw_index,3.54638090067638e-08,0.117210473071926,0.0203680355431278
+version https://git-lfs.github.com/spec/v1
+oid sha256:adb58cf414053ef60254c8b65f2cc5720982820018c04088eb279c74f3aaa4a0
+size 1350

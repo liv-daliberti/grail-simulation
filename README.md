@@ -23,6 +23,7 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 │   ├── gpt-4o/               # GPT-4o evaluation scripts for slate prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline implementation
 │   └── visualization/        # Graphviz-based recommendation tree and session visualisation tools
+├── training-grail.sh         # Convenience launcher for GRAIL experiments
 ├── training-grail.sh         # Convenience launcher for GRPO experiments
 └── README.md                 # Project overview and setup instructions (this file)
 ```

@@ -881,6 +881,10 @@
       "4": 4
     }
   },
+  "profile_fallback_counts": {
+    "train": 0,
+    "validation": 0
+  },
   "profile_summary": {
     "train": {
       "missing_profile": 0.0,

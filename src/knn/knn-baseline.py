@@ -1410,7 +1410,7 @@ def main():
     ap.add_argument("--save_index", default="", help="Directory to save KNN index (npz files).")
     ap.add_argument("--load_index", default="", help="Directory to load KNN index from (npz files).")
     ap.add_argument("--knn_k", type=int, default=25, help="K neighbors.")
-    ap.add_argument("--knn_k_sweep", default="5,10,25,50",
+    ap.add_argument("--knn_k_sweep", default="1,2,3,4,5,10,25,50",
                     help="Comma-separated list of alternative k values to evaluate in addition to --knn_k.")
     ap.add_argument("--knn_metric", default="l2", choices=["l2","cosine"], help="Distance metric.")
     ap.add_argument("--knn_max_train", type=int, default=200000, help="Cap training rows.")

@@ -35,6 +35,13 @@
 | 7 | 1 | 0 |
 | 8 | 1 | 0 |
 
+## Fallback profile usage
+
+| Split | Count | Share of rows |
+|-------|-------|---------------|
+| train | 0 | 0.00% |
+| validation | 0 | 0.00% |
+
 ## Unique content counts
 
 | Split | Current videos | Gold videos | Unique slates | Unique state texts |
@@ -78,3 +85,4 @@
 - `Supports stricter gun laws` → `reports/prompt_stats/figures/stricter_laws.png`
 - `prior_history_counts` → `reports/prompt_stats/figures/prior_history_counts.png`
 - `slate_size_counts` → `reports/prompt_stats/figures/slate_size_counts.png`
+- `profile_fallback_counts` → `reports/prompt_stats/figures/profile_fallback_counts.png`

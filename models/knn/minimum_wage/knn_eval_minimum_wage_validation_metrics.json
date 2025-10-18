@@ -1,20 +1,20 @@
 {
   "model": "knn",
   "dataset": "/n/fs/similarity/grail-simulation/data/cleaned_grail",
-  "issue": "gun_control",
+  "issue": "minimum_wage",
   "split": "validation",
-  "n_total": 982,
-  "n_eligible": 982,
-  "accuracy_overall": 0.48268839103869654,
+  "n_total": 2350,
+  "n_eligible": 2350,
+  "accuracy_overall": 0.2782978723404255,
   "accuracy_by_k": {
-    "1": 0.48268839103869654,
-    "2": 0.48268839103869654,
-    "3": 0.48268839103869654,
-    "4": 0.48268839103869654,
-    "5": 0.48268839103869654,
-    "10": 0.48268839103869654,
-    "25": 0.48268839103869654,
-    "50": 0.48268839103869654
+    "1": 0.2782978723404255,
+    "2": 0.2782978723404255,
+    "3": 0.2782978723404255,
+    "4": 0.2782978723404255,
+    "5": 0.2782978723404255,
+    "10": 0.2782978723404255,
+    "25": 0.2782978723404255,
+    "50": 0.2782978723404255
   },
   "best_k": 2,
   "position_stats": {
@@ -49,63 +49,63 @@
       "accuracy": 0.0
     },
     "unknown": {
-      "n_seen": 982,
-      "n_eligible": 982,
-      "correct": 474,
-      "accuracy": 0.48268839103869654
+      "n_seen": 2350,
+      "n_eligible": 2350,
+      "correct": 654,
+      "accuracy": 0.2782978723404255
     }
   },
   "by_n_options": {
     "hist_seen": {
-      "1": 127,
-      "2": 308,
-      "3": 12,
-      "4": 114,
-      "5+": 421
+      "1": 1,
+      "2": 48,
+      "3": 133,
+      "4": 2112,
+      "5+": 56
     },
     "hist_eligible": {
-      "1": 127,
-      "2": 308,
-      "3": 12,
-      "4": 114,
-      "5+": 421
+      "1": 1,
+      "2": 48,
+      "3": 133,
+      "4": 2112,
+      "5+": 56
     },
     "hist_correct": {
-      "1": 127,
-      "2": 205,
-      "3": 3,
-      "4": 8,
-      "5+": 131
+      "1": 1,
+      "2": 11,
+      "3": 48,
+      "4": 581,
+      "5+": 13
     },
     "accuracy": {
       "1": 1.0,
-      "2": 0.6655844155844156,
-      "3": 0.25,
-      "4": 0.07017543859649122,
-      "5+": 0.31116389548693585
+      "2": 0.22916666666666666,
+      "3": 0.3609022556390977,
+      "4": 0.27509469696969696,
+      "5+": 0.23214285714285715
     }
   },
   "split_single_vs_multi": {
-    "n_single": 127,
-    "n_multi": 855,
-    "eligible_single": 127,
-    "eligible_multi": 855,
+    "n_single": 1,
+    "n_multi": 2349,
+    "eligible_single": 1,
+    "eligible_multi": 2349,
     "accuracy_single": 1.0,
-    "accuracy_multi": 0.4058479532163743
+    "accuracy_multi": 0.2779906343124734
   },
   "gold_index_distribution": {
-    "1": 160,
-    "2": 326,
-    "3": 11,
-    "4": 7,
-    "5": 478
+    "1": 968,
+    "2": 508,
+    "3": 423,
+    "4": 395,
+    "5": 56
   },
   "baseline_most_frequent_gold_index": {
-    "top_index": 5,
-    "count": 478,
-    "accuracy": 0.48676171079429736
+    "top_index": 1,
+    "count": 968,
+    "accuracy": 0.41191489361702127
   },
-  "random_baseline_expected_accuracy": 0.40498981670061107,
+  "random_baseline_expected_accuracy": 0.25895035460992905,
   "knn_hparams": {
     "k": 25,
     "k_sweep": [
@@ -124,6 +124,6 @@
     "load_index": "",
     "text_fields": []
   },
-  "elbow_plot": "/n/fs/similarity/grail-simulation/reports/knn/elbow_gun_control.png",
+  "elbow_plot": "/n/fs/similarity/grail-simulation/reports/knn/elbow_minimum_wage.png",
   "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown."
 }

@@ -16,6 +16,7 @@ python "$ROOT_DIR/src/knn/knn-baseline.py" \
   --dataset "$DATASET" \
   --fit_index \
   --knn_k "${KNN_K:-25}" \
+  --knn_k_sweep "${KNN_K_SWEEP:-1,2,3,4,5,5,6,7,8,9,10,15,20,25,50}" \
   --knn_metric "${KNN_METRIC:-cosine}" \
   --knn_max_train "${KNN_MAX_TRAIN:-200000}" \
   --eval_max "${EVAL_MAX:-0}" \

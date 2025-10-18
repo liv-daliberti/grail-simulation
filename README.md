@@ -78,9 +78,10 @@ export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
 # 2) Generate the cleaned dataset
 python clean_data/clean_data.py \
     --dataset-name capsule-5416997/data \
-    --output-dir data/cleaned_grail
+    --output-dir data/cleaned_grail \
+    --prompt-stats-dir reports/prompt_stats
 
-# 3b) (Optional) generate prompt feature histograms to compare train vs validation
+# (Optional) regenerate the prompt feature report later without re-cleaning
 python clean_data/prompt_stats.py \
     --dataset data/cleaned_grail \
     --output-dir reports/prompt_stats

@@ -209,6 +209,25 @@ def _read_survey_with_fallback(*candidates: Path) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def _normalize_urlid(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return ""
+    try:
+        num = float(text)
+        if math.isfinite(num):
+            if num.is_integer():
+                return str(int(num))
+            return text
+    except Exception:
+        pass
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    return text
+
+
 def _build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
     index: Dict[str, List[Dict[str, Any]]] = {}
     if df.empty:
@@ -218,7 +237,7 @@ def _build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
         log.warning("Survey frame missing urlid column; columns=%s", cols)
         return index
     for _, row in df.iterrows():
-        urlid = str(row.get("urlid") or "").strip()
+        urlid = _normalize_urlid(row.get("urlid"))
         if not urlid:
             continue
         cleaned = {}
@@ -738,7 +757,7 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
         watched_vids_json = list(base_vids)
 
         topic = str(sess.get("topicID") or "")
-        urlid = str(sess.get("urlid") or "").strip()
+        urlid = _normalize_urlid(sess.get("urlid"))
         session_id = str(sess.get("sessionID") or "").strip()
 
         issue = None
@@ -1471,7 +1490,10 @@ def main():
 
     if args.prompt_stats_dir:
         if {"train", "validation"}.issubset(final.keys()):
-            from clean_data.prompt_stats import generate_prompt_feature_report
+            try:
+                from clean_data.prompt_stats import generate_prompt_feature_report  # type: ignore
+            except ModuleNotFoundError:
+                from prompt_stats import generate_prompt_feature_report  # type: ignore
 
             log.info("Generating prompt feature report under %s", args.prompt_stats_dir)
             generate_prompt_feature_report(

@@ -351,6 +351,9 @@ def _viewer_profile_sentence(ex: dict) -> str:
 
 
 def _prompt_from_builder(ex: dict) -> str:
+    existing = ex.get("state_text") or ex.get("prompt")
+    if isinstance(existing, str) and existing.strip():
+        return existing.strip()
     try:
         return build_user_prompt(ex, max_hist=PROMPT_MAX_HISTORY)
     except Exception:

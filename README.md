@@ -165,7 +165,7 @@ The command above produces four `.svg` files such as `grail_session_minimum_wage
    Update the scripts or recipe paths if you place custom configs under `recipes/`.
 3. Evaluate baselines locally:
    - GPT‑4o slate baseline: `python src/gpt-4o/gpt-4o-baseline.py`
-   - KNN slate baseline: `python src/knn/knn-baseline.py`
+   - KNN slate baseline: `bash training/training-knn.sh`
 
 ## Citation
 

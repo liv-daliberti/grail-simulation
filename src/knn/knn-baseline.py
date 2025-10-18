@@ -37,10 +37,12 @@ from __future__ import annotations
 import os, re, sys, json, time, argparse, logging, csv
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from itertools import islice
 from collections import defaultdict, Counter
 
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from datasets import DatasetDict, load_dataset, load_from_disk
 
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
@@ -50,7 +52,7 @@ DEFAULT_DATASET_SOURCE = "data/cleaned_grail"
 TRAIN_SPLIT = "train"
 EVAL_SPLIT = "validation"
 PROMPT_COLUMN   = "state_text"                 # optional; becomes CONTEXT:
-SOLUTION_COLUMN = "video_id"                   # gold “current” video id for this row
+SOLUTION_COLUMN = "gold_id"                    # gold next-video id (matches GRPO prompt pipeline)
 
 # ---------- title index (optional) ----------
 # Add this near the top of the "Title index" section
@@ -83,6 +85,76 @@ def _issues_in_dataset(ds: DatasetDict) -> List[str]:
 def _filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
     if issue == "all" or "issue" not in ds[TRAIN_SPLIT].column_names:
         return ds
+
+
+def _parse_k_values(args) -> List[int]:
+    values = {int(args.knn_k)} if getattr(args, "knn_k", None) is not None else set()
+    sweep_raw = getattr(args, "knn_k_sweep", "")
+    for token in sweep_raw.split(','):
+        token = token.strip()
+        if not token:
+            continue
+        try:
+            values.add(int(token))
+        except ValueError:
+            continue
+    k_vals = sorted(k for k in values if k > 0)
+    if not k_vals:
+        fallback = int(args.knn_k) if getattr(args, "knn_k", None) else 25
+        k_vals = [fallback]
+    return k_vals
+
+
+def _select_best_k(k_values: List[int], accuracy_by_k: Dict[int, float]) -> int:
+    if len(k_values) <= 2:
+        return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
+    accuracies = [accuracy_by_k.get(k, 0.0) for k in k_values]
+    slopes = []
+    for i in range(1, len(k_values)):
+        delta_acc = accuracies[i] - accuracies[i - 1]
+        delta_k = k_values[i] - k_values[i - 1]
+        slopes.append(delta_acc / delta_k if delta_k else 0.0)
+    if not slopes:
+        return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
+    first_slope = slopes[0]
+    threshold = max(first_slope * 0.5, 0.001)
+    for i, slope in enumerate(slopes[1:], start=1):
+        if slope <= threshold:
+            return k_values[i]
+    return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
+
+
+def _resolve_reports_dir(out_dir: Path) -> Path:
+    resolved = out_dir.resolve()
+    parents = list(resolved.parents)
+    if len(parents) >= 1 and parents[0].name == 'knn':
+        resolved = parents[0]
+        parents = list(resolved.parents)
+    if len(parents) >= 1 and parents[0].name == 'models':
+        root_dir = parents[0].parent
+    elif len(parents) >= 2 and parents[1].name == 'models':
+        root_dir = parents[1].parent
+    else:
+        root_dir = resolved.parent
+    return root_dir / 'reports'
+
+
+def _plot_elbow(k_values: List[int], accuracy_by_k: Dict[int, float], best_k: int, output_path: Path) -> None:
+    plt.figure(figsize=(6, 4))
+    ys = [accuracy_by_k.get(k, 0.0) for k in k_values]
+    plt.plot(k_values, ys, marker='o', label='Accuracy')
+    if best_k in accuracy_by_k:
+        plt.scatter([best_k], [accuracy_by_k[best_k]], color='red', label=f'Best k={best_k}')
+    plt.title('KNN accuracy vs k')
+    plt.xlabel('k')
+    plt.ylabel('Accuracy')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150)
+    plt.close()
+
 
     def _match_issue(row):
         value = row.get("issue")
@@ -660,24 +732,24 @@ def knn_predict(x: np.ndarray, nopts: int, knn_idx: Dict[str, Dict[str, Any]],
     return max(vote.items(), key=lambda kv: kv[1])[0]
 
 # ───────────────────────────── Index I/O ─────────────────────────────
-def knn_predict_among_slate(
+def knn_predict_among_slate_multi(
     knn_index: dict,
     ex: dict,
-    k: int = 25,
+    k_values: List[int],
     text_fields: list[str] | None = None,
     lowercase: bool = True,
-) -> int:
+) -> Dict[int, Optional[int]]:
     """
-    Candidate-aware TF-IDF kNN over the *current slate*.
-    A) The query includes: viewer profile, state_text, extra fields,
-       CURRENTLY WATCHING (title+id), and the *entire current slate* surfaces.
-    B) For each option j, we add that option's surface again and *mask neighbors*
-       to rows whose gold label == this option (by id OR canonicalized title),
-       then score using the sum of top-k masked sims. Argmax over options (1..N).
+    Candidate-aware TF-IDF kNN over the *current slate* for multiple ``k`` values.
+    Returns a mapping ``{k: predicted_option_index}`` (1-based). When no index is
+    available the value is ``None``.
     """
     import numpy as np
 
-    # -------- helpers --------
+    unique_k = sorted({int(k) for k in k_values if int(k) > 0})
+    if not unique_k:
+        return {}
+
     def _safe_str(x) -> str:
         try:
             s = "" if x is None else str(x)
@@ -686,21 +758,17 @@ def knn_predict_among_slate(
         s = s.strip()
         return s.lower() if lowercase else s
 
-    # -------- slate --------
-    slate_pairs = _extract_slate_items(ex)  # [(title, vid), ...]
+    slate_pairs = _extract_slate_items(ex)
     if not slate_pairs:
-        return 1  # no slate → pick first by convention
+        return {k: 1 for k in unique_k}
 
-    # -------- base query parts (profile + state + extras) --------
     parts_base: list[str] = []
-
     prompt_text = _prompt_from_builder(ex)
     prompt_added = False
     if prompt_text:
         parts_base.append(_safe_str(prompt_text))
         prompt_added = True
 
-    # viewer profile (humanized)
     if (not prompt_added) and "_humanize_profile" in globals() and callable(globals()["_humanize_profile"]):
         try:
             vp = _humanize_profile(ex)
@@ -709,20 +777,17 @@ def knn_predict_among_slate(
         except Exception:
             pass
 
-    # state/context text
     if (not prompt_added) and PROMPT_COLUMN in ex and ex[PROMPT_COLUMN] is not None:
         st = _safe_str(ex[PROMPT_COLUMN])
         if st:
             parts_base.append(st)
 
-    # extra textual fields (optional)
     for col in (text_fields or []):
         if col in ex and ex[col] is not None:
             val = _safe_str(ex[col])
             if val:
                 parts_base.append(val)
 
-    # CURRENTLY WATCHING (title + id)
     now = _extract_now_watching(ex)
     if now:
         now_title, now_id = now
@@ -731,46 +796,39 @@ def knn_predict_among_slate(
         if now_id and now_id.strip():
             parts_base.append(_safe_str(now_id))
 
-    # ENTIRE SLATE (as seen in training)
     opt_surfaces = []
     for (t, vid) in slate_pairs:
-        surf = (t if t and t.strip() and t != "(untitled)"
-                else (_title_for(vid) or vid or ""))
+        surf = (t if t and t.strip() and t != "(untitled)" else (_title_for(vid) or vid or ""))
         if surf and surf.strip():
             opt_surfaces.append(_safe_str(surf))
     if opt_surfaces:
-        # keep it compact; one long line helps TF-IDF ngrams
         parts_base.append(" ".join(opt_surfaces))
 
-    # -------- index access --------
     if not knn_index or ("vectorizer" not in knn_index):
-        return 1
+        return {k: None for k in unique_k}
+
     vec = knn_index["vectorizer"]
-    X   = knn_index["X"]                # CSR [N,V]
-    lab_id    = knn_index["labels_id"]  # list[str]
+    X = knn_index["X"]
+    lab_id = knn_index["labels_id"]
     lab_title = knn_index["labels_title"]
 
-    # canonical labels for fast matching
     lab_id_canon = np.asarray([_canon_vid(x) for x in lab_id], dtype=object)
     lab_ti_canon = np.asarray([_canon(x or "") for x in lab_title], dtype=object)
 
-    # -------- score each option (candidate-aware) --------
-    scores: list[float] = []
+    scores_by_k = {k: [] for k in unique_k}
+
     for (t, vid) in slate_pairs:
-        # candidate surface (append AGAIN to emphasize this option)
-        surf = (t if t and t.strip() and t != "(untitled)"
-                else (_title_for(vid) or vid or ""))
+        surf = (t if t and t.strip() and t != "(untitled)" else (_title_for(vid) or vid or ""))
         parts = list(parts_base)
         if surf and surf.strip():
             parts.append(_safe_str(surf))
 
         q_text = "\n".join(p for p in parts if p)
-        q = vec.transform([q_text])               # [1, V], TF-IDF (L2-normed)
-        sims = (q @ X.T).toarray().ravel()        # cosine similarity
+        q = vec.transform([q_text])
+        sims = (q @ X.T).toarray().ravel()
 
-        # mask train docs whose GOLD label == THIS option (by id OR title)
         vid_c = _canon_vid(vid or "")
-        ti_c  = _canon(t or "")
+        ti_c = _canon(t or "")
         mask = np.zeros_like(sims, dtype=bool)
         if vid_c:
             mask |= (lab_id_canon == vid_c)
@@ -778,24 +836,30 @@ def knn_predict_among_slate(
             mask |= (lab_ti_canon == ti_c)
 
         if not mask.any():
-            # no exact label matches in train; tiny backoff from global similarity
-            # so profile/state still nudges a preference instead of collapsing to 1
-            scores.append(float(sims.max() * 0.01))
+            fallback = float(sims.max() * 0.01)
+            for k in unique_k:
+                scores_by_k[k].append(fallback)
             continue
 
         sims_m = sims[mask]
         if sims_m.size == 0:
-            scores.append(0.0)
+            for k in unique_k:
+                scores_by_k[k].append(0.0)
             continue
 
-        kk = int(min(max(1, k), sims_m.size))
-        topk = np.partition(sims_m, -kk)[-kk:]
-        scores.append(float(topk.sum()))  # sum beats mean slightly in practice
+        sorted_sims = np.sort(sims_m)[::-1]
+        cumsum = np.cumsum(sorted_sims)
+        for k in unique_k:
+            kk = int(min(max(1, k), sorted_sims.size))
+            scores_by_k[k].append(float(cumsum[kk - 1]))
 
-    # -------- pick best option --------
-    if not any(np.isfinite(scores)):
-        return 1
-    return int(np.argmax(scores)) + 1
+    predictions: Dict[int, Optional[int]] = {}
+    for k, scores in scores_by_k.items():
+        if not scores or not any(np.isfinite(scores)):
+            predictions[k] = None
+        else:
+            predictions[k] = int(np.argmax(scores)) + 1
+    return predictions
 
 from scipy import sparse
 import joblib
@@ -1099,6 +1163,7 @@ def run_eval_for_issue(
     if not knn_idx:
         logging.warning("[KNN] No index available for issue '%s'; predictions will be None.", issue_slug)
 
+    k_values = _parse_k_values(args)
     indices = list(range(len(eval_ds)))
     if args.eval_max and args.eval_max > 0:
         indices = indices[: min(args.eval_max, len(indices))]
@@ -1112,34 +1177,29 @@ def run_eval_for_issue(
         print(f"[SKIP] Output exists (use --overwrite): {out_jsonl}")
         return
 
-    w = open(out_jsonl, "w", encoding="utf-8")
-
-    correct_overall = 0
-    eligible_overall = 0
-
     buckets = ["1", "2", "3", "4", "5+", "unknown"]
     seen_b = {b: 0 for b in buckets}
     elig_b = {b: 0 for b in buckets}
-    corr_b = {b: 0 for b in buckets}
 
     opts_buckets = ["1", "2", "3", "4", "5+"]
     seen_opts_b = {b: 0 for b in opts_buckets}
     elig_opts_b = {b: 0 for b in opts_buckets}
-    corr_opts_b = {b: 0 for b in opts_buckets}
 
     seen_single = seen_multi = 0
     elig_single = elig_multi = 0
-    corr_single = corr_multi = 0
 
     gold_hist: Dict[int, int] = {}
     all_gold_indices: List[int] = []
     all_n_options: List[int] = []
 
+    eligible_by_k = {k: 0 for k in k_values}
+    correct_by_k = {k: 0 for k in k_values}
+
+    rows: List[Dict[str, Any]] = []
+
     t0 = time.time()
-    n_seen = 0
     for idx in indices:
         ex = eval_ds[int(idx)]
-        n_seen += 1
 
         slate_pairs = _extract_slate_items(ex)
         nopts = len(slate_pairs)
@@ -1161,75 +1221,99 @@ def run_eval_for_issue(
                     gold_idx = i
                     break
 
-        knn_idx_pred = None
-        if nopts > 0 and gold_idx > 0 and knn_idx:
-            try:
-                knn_idx_pred = knn_predict_among_slate(
-                    knn_index=knn_idx,
-                    ex=ex,
-                    k=args.knn_k,
-                    text_fields=extra_fields,
-                )
-            except Exception as e:
-                logging.warning("[KNN] prediction failed on row %d: %s", n_seen, e)
+        predictions = knn_predict_among_slate_multi(
+            knn_index=knn_idx,
+            ex=ex,
+            k_values=k_values,
+            text_fields=extra_fields,
+        )
 
         eligible = (gold_idx > 0 and nopts > 0)
         if eligible:
-            eligible_overall += 1
             elig_b[pbucket] += 1
             elig_opts_b[nbucket] += 1
-
             gold_hist[gold_idx] = gold_hist.get(gold_idx, 0) + 1
             all_gold_indices.append(gold_idx)
             all_n_options.append(nopts)
-
-        is_correct = eligible and (knn_idx_pred is not None) and (int(knn_idx_pred) == int(gold_idx))
-        if is_correct:
-            correct_overall += 1
-            corr_b[pbucket] += 1
-            corr_opts_b[nbucket] += 1
-
-        if eligible:
             if nopts == 1:
-                seen_single += 1
                 elig_single += 1
-                if is_correct:
-                    corr_single += 1
             else:
-                seen_multi += 1
                 elig_multi += 1
-                if is_correct:
-                    corr_multi += 1
-        else:
-            if nopts == 1:
-                seen_single += 1
-            elif nopts > 1:
-                seen_multi += 1
+        if nopts == 1:
+            seen_single += 1
+        elif nopts > 1:
+            seen_multi += 1
 
-        out_row = {
-            "knn_pred_index": int(knn_idx_pred) if knn_idx_pred is not None else None,
-            "gold_index": int(gold_idx),
-            "n_options": int(nopts),
-            "correct": bool(is_correct),
-            "eligible": bool(eligible),
-            "position_index": int(pos_idx),
-            "position_bucket": pbucket,
-            "issue": issue_slug if issue_slug != "all" else ex.get("issue"),
-        }
-        w.write(json.dumps(out_row, ensure_ascii=False) + "\n")
+        for k, pred in predictions.items():
+            if eligible:
+                eligible_by_k[k] += 1
+                if pred is not None and int(pred) == int(gold_idx):
+                    correct_by_k[k] += 1
 
-        if n_seen % 25 == 0:
+        rows.append(
+            {
+                "predictions_by_k": predictions,
+                "gold_index": int(gold_idx),
+                "n_options": int(nopts),
+                "n_options_bucket": nbucket,
+                "eligible": bool(eligible),
+                "position_index": int(pos_idx),
+                "position_bucket": pbucket,
+                "issue_value": ex.get("issue"),
+            }
+        )
+
+        if len(rows) % 25 == 0:
             elapsed = time.time() - t0
-            acc = safe_div(correct_overall, eligible_overall)
-            denom = len(indices)
-            print(f"[eval][{issue_slug}] {n_seen}/{denom}  acc={acc:.3f}  {elapsed:.1f}s")
+            acc_progress = max(
+                (safe_div(correct_by_k[k], eligible_by_k[k]) for k in k_values if eligible_by_k[k]),
+                default=0.0,
+            )
+            print(f"[eval][{issue_slug}] {len(rows)}/{len(indices)}  interim-best-acc={acc_progress:.3f}  {elapsed:.1f}s")
 
-    w.close()
+    accuracy_by_k = {k: safe_div(correct_by_k[k], eligible_by_k[k]) for k in k_values}
+    best_k = _select_best_k(k_values, accuracy_by_k)
+    best_accuracy = accuracy_by_k.get(best_k, 0.0)
+    eligible_overall = int(eligible_by_k.get(best_k, 0))
+    correct_overall = int(correct_by_k.get(best_k, 0))
 
-    n_eval_final = n_seen
-    overall_acc = safe_div(correct_overall, eligible_overall)
+    corr_b = {b: 0 for b in buckets}
+    corr_opts_b = {b: 0 for b in opts_buckets}
+    corr_single = corr_multi = 0
 
-    buckets = ["1", "2", "3", "4", "5+", "unknown"]
+    for row in rows:
+        if not row["eligible"]:
+            continue
+        pred = row["predictions_by_k"].get(best_k)
+        if pred is None:
+            continue
+        if int(pred) == row["gold_index"]:
+            corr_b[row["position_bucket"]] += 1
+            corr_opts_b[row["n_options_bucket"]] += 1
+            if row["n_options"] == 1:
+                corr_single += 1
+            else:
+                corr_multi += 1
+
+    with open(out_jsonl, "w", encoding="utf-8") as w:
+        for row in rows:
+            preds_serializable = {str(k): (int(v) if v is not None else None) for k, v in row["predictions_by_k"].items()}
+            best_pred = row["predictions_by_k"].get(best_k)
+            out_row = {
+                "knn_pred_index": int(best_pred) if best_pred is not None else None,
+                "gold_index": row["gold_index"],
+                "n_options": row["n_options"],
+                "correct": bool(best_pred is not None and int(best_pred) == row["gold_index"]),
+                "eligible": row["eligible"],
+                "position_index": row["position_index"],
+                "position_bucket": row["position_bucket"],
+                "issue": issue_slug if issue_slug != "all" else row.get("issue_value"),
+                "predictions_by_k": preds_serializable,
+            }
+            w.write(json.dumps(out_row, ensure_ascii=False) + "\n")
+
+    n_eval_final = len(rows)
+
     pos_stats = {
         b: {
             "n_seen": int(seen_b[b]),
@@ -1239,7 +1323,6 @@ def run_eval_for_issue(
         }
         for b in buckets
     }
-    opts_buckets = ["1", "2", "3", "4", "5+"]
     by_n_options = {
         "hist_seen": {b: int(seen_opts_b[b]) for b in opts_buckets},
         "hist_eligible": {b: int(elig_opts_b[b]) for b in opts_buckets},
@@ -1266,6 +1349,13 @@ def run_eval_for_issue(
 
     random_baseline_expected_accuracy = float(np.mean([1.0 / n for n in all_n_options])) if all_n_options else 0.0
 
+    accuracy_by_k_serializable = {str(k): float(accuracy_by_k[k]) for k in k_values}
+
+    reports_dir = _resolve_reports_dir(Path(args.out_dir)) / "knn"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    elbow_path = reports_dir / f"elbow_{issue_slug}.png"
+    _plot_elbow(k_values, accuracy_by_k, best_k, elbow_path)
+
     metrics = {
         "model": "knn",
         "dataset": dataset_source,
@@ -1273,7 +1363,9 @@ def run_eval_for_issue(
         "split": eval_split_name,
         "n_total": int(n_eval_final),
         "n_eligible": int(eligible_overall),
-        "accuracy_overall": overall_acc,
+        "accuracy_overall": best_accuracy,
+        "accuracy_by_k": accuracy_by_k_serializable,
+        "best_k": int(best_k),
         "position_stats": pos_stats,
         "by_n_options": by_n_options,
         "split_single_vs_multi": split_single_vs_multi,
@@ -1286,12 +1378,14 @@ def run_eval_for_issue(
         "random_baseline_expected_accuracy": random_baseline_expected_accuracy,
         "knn_hparams": {
             "k": int(args.knn_k),
+            "k_sweep": [int(k) for k in k_values],
             "metric": args.knn_metric,
             "fit_index": bool(args.fit_index),
             "save_index": args.save_index or "",
             "load_index": args.load_index or "",
             "text_fields": extra_fields,
         },
+        "elbow_plot": str(elbow_path),
         "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown.",
     }
 
@@ -1300,12 +1394,10 @@ def run_eval_for_issue(
 
     print(
         f"[DONE][{issue_slug}] split={eval_split_name}  n={n_eval_final}  eligible={eligible_overall}  "
-        f"knn_acc={overall_acc:.4f}"
+        f"knn_acc={best_accuracy:.4f} (best_k={best_k})"
     )
     print(f"[WROTE] per-example: {out_jsonl}")
     print(f"[WROTE] metrics:     {metrics_json}")
-
-
 
 # ─────────────────────────────────── CLI ───────────────────────────────────────
 def main():
@@ -1315,12 +1407,14 @@ def main():
     ap.add_argument("--save_index", default="", help="Directory to save KNN index (npz files).")
     ap.add_argument("--load_index", default="", help="Directory to load KNN index from (npz files).")
     ap.add_argument("--knn_k", type=int, default=25, help="K neighbors.")
+    ap.add_argument("--knn_k_sweep", default="5,10,25,50",
+                    help="Comma-separated list of alternative k values to evaluate in addition to --knn_k.")
     ap.add_argument("--knn_metric", default="l2", choices=["l2","cosine"], help="Distance metric.")
     ap.add_argument("--knn_max_train", type=int, default=200000, help="Cap training rows.")
     ap.add_argument("--knn_seed", type=int, default=42, help="Shuffle seed for train cap.")
 
     ap.add_argument("--eval_max", type=int, default=0, help="Limit eval examples (0=all).")
-    ap.add_argument("--out_dir", default="knn_eval", help="Output directory.")
+    ap.add_argument("--out_dir", default=str(Path("models") / "knn"), help="Output directory.")
     ap.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs.")
     ap.add_argument("--cache_dir", default=os.path.join(os.getcwd(), "hf_cache"), help="HF datasets cache dir.")
     ap.add_argument("--knn_text_fields", default="", help="Comma-separated extra textual columns to include in TF-IDF query (e.g. 'extra1,extra2').")

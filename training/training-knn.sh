@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DATASET="${DATASET:-$ROOT_DIR/data/cleaned_grail}"
-OUT_DIR="${OUT_DIR:-$ROOT_DIR/outputs/knn}"
+OUT_DIR="${OUT_DIR:-$ROOT_DIR/models/knn}"
 CACHE_DIR="${CACHE_DIR:-$ROOT_DIR/.cache/huggingface/knn}"  # separate cache for TF-IDF runs
 
 mkdir -p "$OUT_DIR" "$CACHE_DIR"

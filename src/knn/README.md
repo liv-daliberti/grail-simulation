@@ -12,6 +12,7 @@ This directory contains a light-weight, non-generative baseline that selects the
 4. **Evaluation outputs** – The script produces per-example JSONL with predictions, along with overall accuracy and option-level metrics. The file layout mirrors the GPT-4o evaluation artifacts.
 
 Because we share the prompt builder and watched-history depth (`GRAIL_MAX_HISTORY` / `KNN_PROMPT_MAX_HISTORY`), this baseline remains aligned with whatever prompt tweaks we make in the main training pipeline.
+During evaluation the script sweeps a configurable list of `k` values (default `5,10,25,50` plus `--knn_k`), selects an elbow point automatically, and writes an accuracy-vs-k plot to `reports/knn/` for each issue.
 
 ## Quickstart
 
@@ -23,7 +24,7 @@ python src/knn/knn-baseline.py \
   --knn_metric cosine \
   --knn_max_train 200000 \
   --eval_max 500 \
-  --out_dir outputs/knn \
+  --out_dir models/knn \
   --overwrite
 ```
 
@@ -38,6 +39,7 @@ Key flags:
 
 - `--fit_index` builds a new TF-IDF model from the train split (respecting `--knn_max_train` for subsampling). Use `--load_index path` to reuse a previously saved index.
 - `--knn_k` and `--knn_metric` control neighbour search parameters. Supported metrics are `cosine` and `l2`.
+- `--knn_k_sweep` evaluates additional k values (default `5,10,25,50`) and selects an elbow point automatically.
 - `--knn_text_fields` lets you append additional columns (e.g. `viewer_profile`) onto the prompt text if desired.
 - `--eval_max` caps the number of validation rows evaluated, useful for smoke tests.
 - `--out_dir` stores the index, predictions, and metrics JSON.

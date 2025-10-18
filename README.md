@@ -116,7 +116,19 @@ Our work only considers Gun Control and Minimum Wage issues; therefore, we autom
 Gun rights (Study 1): 1,650 participants in the final analytic sample.
 Minimum wage (Studies 2–4): 1,679 (Study 2, MTurk) + 2,715 (Study 3, YouGov) + 932 (Study 4) = 5,326 participants in the final analytic sample.
 
-Our work includes 
+Our work includes the following unique participants per issue:
+
+| Split | Issue | Participants |
+|-------|-------|--------------|
+| train | gun_control | 1579 |
+| train | minimum_wage | 4052 |
+| train | all | 5631 |
+| validation | gun_control | 178 |
+| validation | minimum_wage | 447 |
+| validation | all | 625 |
+| total | gun_control | 1,757 |
+| total | minimum_wage | 4,499  |
+
 
 ### What Each Row Contains
 

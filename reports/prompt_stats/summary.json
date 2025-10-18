@@ -1,4 +1,8 @@
 {
+  "demographic_missing_counts": {
+    "train": 18248,
+    "validation": 1969
+  },
   "feature_summary": {
     "age": {
       "train": {

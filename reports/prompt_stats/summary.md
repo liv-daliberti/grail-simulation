@@ -42,6 +42,13 @@
 | train | 0 | 0.00% |
 | validation | 0 | 0.00% |
 
+## Rows missing all demographic fields
+
+| Split | Count | Share of rows |
+|-------|-------|---------------|
+| train | 18248 | 59.77% |
+| validation | 1969 | 59.09% |
+
 ## Unique content counts
 
 | Split | Current videos | Gold videos | Unique slates | Unique state texts |
@@ -86,3 +93,4 @@
 - `prior_history_counts` → `reports/prompt_stats/figures/prior_history_counts.png`
 - `slate_size_counts` → `reports/prompt_stats/figures/slate_size_counts.png`
 - `profile_fallback_counts` → `reports/prompt_stats/figures/profile_fallback_counts.png`
+- `demographic_missing_counts` → `reports/prompt_stats/figures/demographic_missing_counts.png`

@@ -10,7 +10,7 @@ src/open_r1/configs.py
 src/open_r1/generate.py
 src/open_r1/grail.py
 src/open_r1/grpo.py
-src/open_r1/prompt_builder.py
+src/prompt_builder.py
 src/open_r1/rewards.py
 src/open_r1/sft.py
 src/open_r1/utils/__init__.py

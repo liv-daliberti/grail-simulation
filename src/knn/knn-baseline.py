@@ -43,6 +43,8 @@ from collections import defaultdict, Counter
 import numpy as np
 from datasets import load_dataset, DownloadConfig
 
+from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
+
 # ─────────────────────────── Data config (no YAML) ─────────────────────────────
 DATASET_NAME    = "od2961/grail-interactions"  # HF dataset repo id
 TRAIN_SPLIT     = "train"
@@ -56,6 +58,8 @@ DEFAULT_TITLE_DIRS = [
     "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_gun",
     "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_wage",
 ]
+
+PROMPT_MAX_HISTORY = int(os.environ.get("KNN_PROMPT_MAX_HISTORY", os.environ.get("GRAIL_MAX_HISTORY", "12")))
 
 # ───────────────────────────── Helpers / canon ─────────────────────────────────
 ANS_TAG   = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
@@ -222,6 +226,29 @@ def _extract_race(ex: dict) -> Optional[str]:
             if norm and not _is_nanlike(norm):
                 return norm
     return None
+
+
+def _viewer_profile_sentence(ex: dict) -> str:
+    sentence = clean_text(ex.get("viewer_profile_sentence"))
+    if not sentence:
+        sentence = clean_text(ex.get("viewer_profile"))
+    if not sentence:
+        try:
+            sentence = synthesize_viewer_sentence(ex)
+        except Exception:
+            sentence = ""
+    return sentence or ""
+
+
+def _prompt_from_builder(ex: dict) -> str:
+    try:
+        return build_user_prompt(ex, max_hist=PROMPT_MAX_HISTORY)
+    except Exception:
+        return ""
+
+
+def _humanize_profile(ex: dict) -> str:
+    return _viewer_profile_sentence(ex)
 
 # ───────────────────────────── Title index (optional) ──────────────────────────
 def _split_env_list(s: str | None) -> list[str]:
@@ -632,8 +659,14 @@ def knn_predict_among_slate(
     # -------- base query parts (profile + state + extras) --------
     parts_base: list[str] = []
 
+    prompt_text = _prompt_from_builder(ex)
+    prompt_added = False
+    if prompt_text:
+        parts_base.append(_safe_str(prompt_text))
+        prompt_added = True
+
     # viewer profile (humanized)
-    if "_humanize_profile" in globals() and callable(globals()["_humanize_profile"]):
+    if (not prompt_added) and "_humanize_profile" in globals() and callable(globals()["_humanize_profile"]):
         try:
             vp = _humanize_profile(ex)
             if vp and vp.strip():
@@ -642,7 +675,7 @@ def knn_predict_among_slate(
             pass
 
     # state/context text
-    if PROMPT_COLUMN in ex and ex[PROMPT_COLUMN] is not None:
+    if (not prompt_added) and PROMPT_COLUMN in ex and ex[PROMPT_COLUMN] is not None:
         st = _safe_str(ex[PROMPT_COLUMN])
         if st:
             parts_base.append(st)
@@ -818,18 +851,25 @@ def build_knn_index(
         ex = ds[int(i)]  # ensure plain int indexing
 
         parts: list[str] = []
+        used_prompt = False
+
+        prompt_text = _prompt_from_builder(ex)
+        if _good(prompt_text):
+            parts.append(prompt_text)
+            used_prompt = True
 
         # humanized viewer profile (if available in this file)
-        try:
-            if "_humanize_profile" in globals() and callable(globals()["_humanize_profile"]):
-                vp = _humanize_profile(ex)
-                if _good(vp):
-                    parts.append(vp)
-        except Exception:
-            pass
+        if not used_prompt:
+            try:
+                if "_humanize_profile" in globals() and callable(globals()["_humanize_profile"]):
+                    vp = _humanize_profile(ex)
+                    if _good(vp):
+                        parts.append(vp)
+            except Exception:
+                pass
 
         # state/context text
-        if PROMPT_COLUMN in ex:
+        if (not used_prompt) and PROMPT_COLUMN in ex:
             st = _safe_str(ex[PROMPT_COLUMN])
             if _good(st):
                 parts.append(st)

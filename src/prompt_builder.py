@@ -17,6 +17,21 @@ YT_FREQ_MAP = {
     "5": "daily",
 }
 
+GUN_FIELD_LABELS: Dict[str, str] = {
+    "right_to_own_importance": "Right-to-own importance",
+    "assault_ban": "Supports assault weapons ban",
+    "handgun_ban": "Supports handgun ban",
+    "concealed_safe": "Believes concealed carry is safe",
+    "stricter_laws": "Supports stricter gun laws",
+    "gun_index": "Gun index",
+    "gun_index_2": "Gun index (alt)",
+    "gun_enthusiasm": "Gun enthusiasm",
+    "gun_importance": "Gun importance",
+    "gun_priority": "Gun policy priority",
+    "gun_policy": "Gun policy stance",
+    "gun_identity": "Gun identity",
+}
+
 MIN_WAGE_FIELD_LABELS: Dict[str, str] = {
     "minwage_text_r_w1": "Minimum wage stance (wave 1, inferred)",
     "minwage_text_r_w2": "Minimum wage stance (wave 2, inferred)",
@@ -380,6 +395,51 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     politics_sentence = _sentencize("Politics include", politics)
     if politics_sentence:
         profile_sentences.append(politics_sentence)
+
+    gun_section: List[str] = []
+    gun_own_val = _first_raw("gun_own", "gunowner", "owns_gun")
+    if gun_own_val is not None:
+        gun_own_text = _format_yes_no(gun_own_val, yes="owns a gun", no="does not own a gun")
+        if gun_own_text:
+            gun_section.append(f"Gun ownership: {gun_own_text}")
+        else:
+            custom = clean_text(gun_own_val)
+            if custom:
+                gun_section.append(f"Gun ownership: {custom}")
+
+    known_gun_keys = {"gun_own", "gunowner", "owns_gun"}
+    for key, label in GUN_FIELD_LABELS.items():
+        value = _first_raw(key)
+        if value is None:
+            continue
+        known_gun_keys.add(key.lower())
+        text = _format_yes_no(value)
+        if text is None:
+            text = clean_text(value, limit=200)
+        if text:
+            gun_section.append(f"{label}: {text}")
+
+    for key in sorted(ex.keys()):
+        low = key.lower()
+        if not low.startswith("gun_"):
+            continue
+        if low in known_gun_keys:
+            continue
+        value = ex.get(key)
+        if _is_nanlike(value):
+            continue
+        text = clean_text(value, limit=200)
+        if not text:
+            continue
+        label = low[4:].replace("_", " ").strip().capitalize()
+        if not label:
+            continue
+        gun_section.append(f"{label}: {text}")
+        known_gun_keys.add(low)
+
+    gun_sentence = _sentencize("Gun policy views include", gun_section)
+    if gun_sentence:
+        profile_sentences.append(gun_sentence)
 
     wage_section: List[str] = []
     for key, label in MIN_WAGE_FIELD_LABELS.items():

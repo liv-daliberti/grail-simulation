@@ -25,7 +25,7 @@ from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
-from open_r1.prompt_builder import (
+from prompt_builder import (
     as_list_json,
     build_user_prompt,
     clean_text,

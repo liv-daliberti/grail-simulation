@@ -1402,6 +1402,11 @@ def main():
     )
     ap.add_argument("--push-to-hub", action="store_true", help="Push cleaned datasets to the hub")
     ap.add_argument("--hub-token", default=None, help="Token for authenticated Hugging Face pushes")
+    ap.add_argument(
+        "--prompt-stats-dir",
+        default=None,
+        help="If set, generate prompt feature histograms and summary statistics into this directory.",
+    )
     args = ap.parse_args()
 
     raw = load_raw(args.dataset_name, validation_ratio=args.validation_ratio)
@@ -1463,6 +1468,23 @@ def main():
 
     final.save_to_disk(args.output_dir)
     log.info("Done. Rows: %s", {k: len(v) for k, v in final.items()})
+
+    if args.prompt_stats_dir:
+        if {"train", "validation"}.issubset(final.keys()):
+            from clean_data.prompt_stats import generate_prompt_feature_report
+
+            log.info("Generating prompt feature report under %s", args.prompt_stats_dir)
+            generate_prompt_feature_report(
+                final,
+                output_dir=Path(args.prompt_stats_dir),
+                train_split="train",
+                validation_split="validation",
+            )
+        else:
+            log.warning(
+                "Prompt stats requested (dir=%s) but dataset lacks both 'train' and 'validation' splits; skipping.",
+                args.prompt_stats_dir,
+            )
 
     # Optional per-issue exports / pushes
     issue_repo_map: Dict[str, str] = {}

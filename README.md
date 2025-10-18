@@ -80,6 +80,11 @@ python clean_data/clean_data.py \
     --dataset-name capsule-5416997/data \
     --output-dir data/cleaned_grail
 
+# 3b) (Optional) generate prompt feature histograms to compare train vs validation
+python clean_data/prompt_stats.py \
+    --dataset data/cleaned_grail \
+    --output-dir reports/prompt_stats
+
 # Optional: push per-issue subsets (split by domain) to the Hub
 python clean_data/clean_data.py \
     --dataset-name capsule-5416997/data \

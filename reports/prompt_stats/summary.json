@@ -6,26 +6,26 @@
   "feature_summary": {
     "age": {
       "train": {
-        "count": 23915.0,
-        "mean": 45.91014007944805,
-        "std": 15.266960100493003
+        "count": 5630.0,
+        "mean": 45.582060390763765,
+        "std": 15.237734712387267
       },
       "validation": {
-        "count": 2657.0,
-        "mean": 45.39969890854347,
-        "std": 15.040173523960231
+        "count": 625.0,
+        "mean": 45.0912,
+        "std": 15.008893448885564
       }
     },
     "assault_ban": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.30108506256930145,
-        "std": 0.33754339057808946
+        "count": 1579.0,
+        "mean": 0.30177327422419253,
+        "std": 0.33759105902892517
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.33556338028169014,
-        "std": 0.35774041388892414
+        "count": 178.0,
+        "mean": 0.33848314606741575,
+        "std": 0.358828387274053
       }
     },
     "biden_approval": {
@@ -50,26 +50,26 @@
     },
     "college": {
       "train": {
-        "count": 23919.0,
-        "mean": 0.541326978552615,
-        "std": 0.49828915384915984
+        "count": 5631.0,
+        "mean": 0.5560291244894335,
+        "std": 0.4968508198734783
       },
       "validation": {
-        "count": 2657.0,
-        "mean": 0.499059089198344,
-        "std": 0.49999911468607966
+        "count": 625.0,
+        "mean": 0.5072,
+        "std": 0.4999481573123357
       }
     },
     "concealed_safe": {
       "train": {
-        "count": 6309.0,
-        "mean": 0.4684577587573308,
-        "std": 0.27333208482158894
+        "count": 1578.0,
+        "mean": 0.47069074778200254,
+        "std": 0.27384039078063016
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.4415492957746479,
-        "std": 0.2791443055922411
+        "count": 178.0,
+        "mean": 0.4452247191011236,
+        "std": 0.2782210847028595
       }
     },
     "county": {
@@ -78,14 +78,14 @@
     },
     "education": {
       "train": {
-        "count": 11620.0,
-        "mean": 3.7626506024096384,
-        "std": 1.4662992852512098
+        "count": 2539.0,
+        "mean": 3.7967703820401733,
+        "std": 1.4649822887643917
       },
       "validation": {
-        "count": 1311.0,
-        "mean": 3.801678108314264,
-        "std": 1.4631075431451785
+        "count": 286.0,
+        "mean": 3.8181818181818183,
+        "std": 1.458691643082763
       }
     },
     "employment_status": {
@@ -94,50 +94,50 @@
     },
     "favorite_channels": {
       "train": {
-        "count": 84.0,
-        "mean": 0.047619047619047616,
-        "std": 0.21295885499997996
+        "count": 22.0,
+        "mean": 0.045454545454545456,
+        "std": 0.20829889522526548
       },
       "validation": {
-        "count": 12.0,
+        "count": 3.0,
         "mean": 0.0,
         "std": 0.0
       }
     },
     "freq_youtube": {
       "train": {
-        "count": 23919.0,
-        "mean": 2.864835486433379,
-        "std": 1.7286321038689298
+        "count": 5631.0,
+        "mean": 2.8831468655656187,
+        "std": 1.721772917053158
       },
       "validation": {
-        "count": 2657.0,
-        "mean": 2.8272487768159578,
-        "std": 1.714656778843925
+        "count": 625.0,
+        "mean": 2.8608,
+        "std": 1.7143580022854037
       }
     },
     "gender": {
       "train": {
-        "Man": 5844,
-        "Other (please specify)": 83,
-        "Woman": 6372
+        "Man": 1458,
+        "Other (please specify)": 21,
+        "Woman": 1613
       },
       "validation": {
-        "Man": 677,
-        "Other (please specify)": 28,
-        "Woman": 641
+        "Man": 172,
+        "Other (please specify)": 7,
+        "Woman": 160
       }
     },
     "gun_enthusiasm": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.4379851100902899,
-        "std": 0.616316910550901
+        "count": 1579.0,
+        "mean": 0.4357188093730209,
+        "std": 0.6144891137360903
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.45492957746478874,
-        "std": 0.623549298319734
+        "count": 178.0,
+        "mean": 0.4438202247191011,
+        "std": 0.6177987483991408
       }
     },
     "gun_identity": {
@@ -146,50 +146,50 @@
     },
     "gun_importance": {
       "train": {
-        "count": 6309.0,
-        "mean": 2.8866698367411634,
-        "std": 0.9491734550566124
+        "count": 1578.0,
+        "mean": 2.884664131812421,
+        "std": 0.9502880865271062
       },
       "validation": {
-        "count": 710.0,
-        "mean": 2.907042253521127,
-        "std": 0.9222330437297475
+        "count": 178.0,
+        "mean": 2.898876404494382,
+        "std": 0.9185350307428014
       }
     },
     "gun_index": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.4138286076350388,
-        "std": 0.2793404529156346
+        "count": 1579.0,
+        "mean": 0.4140120329322356,
+        "std": 0.2800333699143637
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.4183802816901408,
-        "std": 0.2838930499968965
+        "count": 178.0,
+        "mean": 0.4199438202247191,
+        "std": 0.28538067852483207
       }
     },
     "gun_index_2": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.44283951106183006,
-        "std": 0.27855388461441793
+        "count": 1579.0,
+        "mean": 0.4430546759552459,
+        "std": 0.2789250877856149
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.44172535211267605,
-        "std": 0.28394885584828844
+        "count": 178.0,
+        "mean": 0.44452247191011235,
+        "std": 0.28617154643569176
       }
     },
     "gun_ownership": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.3253603674956439,
-        "std": 0.4685093368960147
+        "count": 1579.0,
+        "mean": 0.32108929702343253,
+        "std": 0.4668950207064008
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.3267605633802817,
-        "std": 0.4690288878093572
+        "count": 178.0,
+        "mean": 0.3202247191011236,
+        "std": 0.46656280217965307
       }
     },
     "gun_policy": {
@@ -202,50 +202,50 @@
     },
     "handgun_ban": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.6534135910026928,
-        "std": 0.33282196992459
+        "count": 1579.0,
+        "mean": 0.6499366687777074,
+        "std": 0.33297267199528463
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.668661971830986,
-        "std": 0.3139709972997628
+        "count": 178.0,
+        "mean": 0.6685393258426966,
+        "std": 0.31416753049531243
       }
     },
     "household_income": {
       "train": {
-        "$10,000-$14,999": 397,
-        "$100,000-$119,999": 744,
-        "$120,000-$149,999": 759,
-        "$15,000-$19,999": 418,
-        "$150,000 or more": 827,
-        "$20,000-$24,999": 647,
-        "$25,000-$29,999": 705,
-        "$30,000-$39,999": 1348,
-        "$40,000-$49,999": 1102,
-        "$50,000-$59,999": 1259,
-        "$60,000-$69,999": 1028,
-        "$70,000-$79,999": 938,
-        "$80,000-$99,999": 1398,
-        "Less than $10,000": 482,
-        "Prefer not to say": 247
+        "$10,000-$14,999": 102,
+        "$100,000-$119,999": 188,
+        "$120,000-$149,999": 189,
+        "$15,000-$19,999": 101,
+        "$150,000 or more": 200,
+        "$20,000-$24,999": 163,
+        "$25,000-$29,999": 174,
+        "$30,000-$39,999": 338,
+        "$40,000-$49,999": 278,
+        "$50,000-$59,999": 320,
+        "$60,000-$69,999": 260,
+        "$70,000-$79,999": 239,
+        "$80,000-$99,999": 354,
+        "Less than $10,000": 122,
+        "Prefer not to say": 64
       },
       "validation": {
-        "$10,000-$14,999": 41,
-        "$100,000-$119,999": 74,
-        "$120,000-$149,999": 87,
-        "$15,000-$19,999": 50,
-        "$150,000 or more": 82,
-        "$20,000-$24,999": 90,
-        "$25,000-$29,999": 70,
-        "$30,000-$39,999": 128,
-        "$40,000-$49,999": 181,
-        "$50,000-$59,999": 116,
-        "$60,000-$69,999": 93,
-        "$70,000-$79,999": 123,
-        "$80,000-$99,999": 128,
-        "Less than $10,000": 55,
-        "Prefer not to say": 28
+        "$10,000-$14,999": 10,
+        "$100,000-$119,999": 19,
+        "$120,000-$149,999": 21,
+        "$15,000-$19,999": 12,
+        "$150,000 or more": 21,
+        "$20,000-$24,999": 23,
+        "$25,000-$29,999": 17,
+        "$30,000-$39,999": 34,
+        "$40,000-$49,999": 46,
+        "$50,000-$59,999": 29,
+        "$60,000-$69,999": 22,
+        "$70,000-$79,999": 31,
+        "$80,000-$99,999": 34,
+        "Less than $10,000": 13,
+        "Prefer not to say": 7
       }
     },
     "household_size": {
@@ -254,16 +254,16 @@
     },
     "ideology": {
       "train": {
-        "Conservative": 2771,
-        "Haven't thought much about it": 318,
-        "Liberal": 6006,
-        "Moderate": 3196
+        "Conservative": 700,
+        "Haven't thought much about it": 85,
+        "Liberal": 1508,
+        "Moderate": 797
       },
       "validation": {
-        "Conservative": 327,
-        "Haven't thought much about it": 40,
-        "Liberal": 636,
-        "Moderate": 343
+        "Conservative": 83,
+        "Haven't thought much about it": 9,
+        "Liberal": 161,
+        "Moderate": 86
       }
     },
     "marital_status": {
@@ -276,26 +276,26 @@
     },
     "minwage15_w1": {
       "train": {
-        "count": 17606.0,
-        "mean": 0.30810519141201864,
-        "std": 0.3640942998191899
+        "count": 4052.0,
+        "mean": 0.30824284304047384,
+        "std": 0.3642561586603934
       },
       "validation": {
-        "count": 1947.0,
-        "mean": 0.2940421160760144,
-        "std": 0.3595215165695473
+        "count": 447.0,
+        "mean": 0.2958612975391499,
+        "std": 0.36039949062417426
       }
     },
     "minwage15_w2": {
       "train": {
-        "count": 17509.0,
-        "mean": 0.3419384316637158,
-        "std": 0.37735228382691866
+        "count": 4015.0,
+        "mean": 0.34153175591531754,
+        "std": 0.3768229513482356
       },
       "validation": {
-        "count": 1942.0,
-        "mean": 0.32582389289392377,
-        "std": 0.37734671270841685
+        "count": 443.0,
+        "mean": 0.3244920993227991,
+        "std": 0.37910063680633643
       }
     },
     "minwage_importance": {
@@ -308,26 +308,26 @@
     },
     "minwage_text_r_w1": {
       "train": {
-        "count": 17493.0,
-        "mean": 0.43742790830617967,
-        "std": 0.2014527664136307
+        "count": 4025.0,
+        "mean": 0.43890563975155283,
+        "std": 0.2014985108105676
       },
       "validation": {
-        "count": 1943.0,
-        "mean": 0.4273751930005147,
-        "std": 0.20251177949930874
+        "count": 446.0,
+        "mean": 0.42302690582959646,
+        "std": 0.2007777125555423
       }
     },
     "minwage_text_r_w2": {
       "train": {
-        "count": 17474.0,
-        "mean": 0.4561059173629393,
-        "std": 0.2057623669146719
+        "count": 4008.0,
+        "mean": 0.4575443113772456,
+        "std": 0.20694087098590758
       },
       "validation": {
-        "count": 1942.0,
-        "mean": 0.4491287332646756,
-        "std": 0.19879727681521991
+        "count": 443.0,
+        "mean": 0.4455079006772009,
+        "std": 0.20160346347187266
       }
     },
     "minwage_text_r_w3": {
@@ -336,74 +336,74 @@
     },
     "minwage_text_w1": {
       "train": {
-        "count": 5986.0,
-        "mean": 14.181284664216507,
-        "std": 4.538359551732752
+        "count": 1513.0,
+        "mean": 14.153364177131527,
+        "std": 4.513349954288207
       },
       "validation": {
-        "count": 636.0,
-        "mean": 15.050314465408805,
-        "std": 4.610819231889472
+        "count": 161.0,
+        "mean": 14.99223602484472,
+        "std": 4.65138915670893
       }
     },
     "minwage_text_w2": {
       "train": {
-        "count": 5884.0,
-        "mean": 14.692695445275325,
-        "std": 39.07948606941671
+        "count": 1475.0,
+        "mean": 14.68975593220339,
+        "std": 39.028928118027096
       },
       "validation": {
-        "count": 631.0,
-        "mean": 14.529793977812995,
-        "std": 5.063036846879933
+        "count": 157.0,
+        "mean": 14.52452229299363,
+        "std": 5.081863649055551
       }
     },
     "mw_index_w1": {
       "train": {
-        "count": 17606.0,
-        "mean": 0.29661136593946147,
-        "std": 0.25197597722194387
+        "count": 4052.0,
+        "mean": 0.29615034198279505,
+        "std": 0.25348522771721693
       },
       "validation": {
-        "count": 1947.0,
-        "mean": 0.29119363530380477,
-        "std": 0.24930378721697172
+        "count": 447.0,
+        "mean": 0.28833075885089304,
+        "std": 0.24733927709805342
       }
     },
     "mw_index_w2": {
       "train": {
-        "count": 17512.0,
-        "mean": 0.32412949968094434,
-        "std": 0.27872662915568613
+        "count": 4016.0,
+        "mean": 0.3234772807579207,
+        "std": 0.2793774389046532
       },
       "validation": {
-        "count": 1942.0,
-        "mean": 0.31371489872983177,
-        "std": 0.27567369694238203
+        "count": 443.0,
+        "mean": 0.30977207173313265,
+        "std": 0.274776486123336
       }
     },
     "mw_support_w1": {
       "train": {
-        "count": 17599.0,
-        "mean": 0.21194386044661628,
-        "std": 0.30547027014804873
+        "count": 4051.0,
+        "mean": 0.21210812145149346,
+        "std": 0.30584433056754884
       },
       "validation": {
-        "count": 1947.0,
-        "mean": 0.21199280945043658,
-        "std": 0.3070499056011959
+        "count": 447.0,
+        "mean": 0.20749440715883669,
+        "std": 0.30310619271582007
       }
     },
     "mw_support_w2": {
       "train": {
-        "count": 17509.0,
-        "mean": 0.25187046661716833,
-        "std": 0.3358346683285202
+        "count": 4015.0,
+        "mean": 0.24987546699875468,
+        "std": 0.33492250650450867
       },
       "validation": {
-        "count": 1942.0,
-        "mean": 0.2321060762100927,
-        "std": 0.32800985748253986
+        "count": 443.0,
+        "mean": 0.23081264108352145,
+        "std": 0.3255899575034686
       }
     },
     "news_consumption": {
@@ -432,26 +432,26 @@
     },
     "party_identification": {
       "train": {
-        "Democrat": 5918,
-        "Independent": 3471,
-        "Other Party": 328,
-        "Republican": 2570
+        "Democrat": 1489,
+        "Independent": 870,
+        "Other Party": 82,
+        "Republican": 648
       },
       "validation": {
-        "Democrat": 631,
-        "Independent": 369,
-        "Other Party": 65,
-        "Republican": 281
+        "Democrat": 157,
+        "Independent": 93,
+        "Other Party": 16,
+        "Republican": 73
       }
     },
     "party_lean": {
       "train": {
-        "Not very strong Democrat": 2683,
-        "Strong Democrat": 3235
+        "Not very strong Democrat": 672,
+        "Strong Democrat": 817
       },
       "validation": {
-        "Not very strong Democrat": 339,
-        "Strong Democrat": 292
+        "Not very strong Democrat": 84,
+        "Strong Democrat": 73
       }
     },
     "platform_use": {
@@ -460,283 +460,280 @@
     },
     "political_interest": {
       "train": {
-        "count": 23681.0,
-        "mean": 2.060512647269963,
-        "std": 1.4704310134273637
+        "count": 5585.0,
+        "mean": 2.1425246195165624,
+        "std": 1.4733209079077014
       },
       "validation": {
-        "count": 2649.0,
-        "mean": 2.0470617843211274,
-        "std": 1.4654157568347863
+        "count": 623.0,
+        "mean": 2.1380417335473516,
+        "std": 1.4670238692796607
       }
     },
     "popular_channels_followed": {
       "train": {
-        "AJ+": 8,
-        "America Uncovered": 5,
-        "America Uncovered,Colion Noir": 4,
-        "America Uncovered,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News": 4,
-        "America Uncovered,JRE Clips,Vox,VICE News": 4,
-        "America Uncovered,NowThis World": 4,
-        "America Uncovered,VICE News": 4,
-        "America Uncovered,VICE News,NowThis World": 4,
-        "America Uncovered,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN": 398,
-        "CNN,America Uncovered": 4,
-        "CNN,America Uncovered,NowThis World": 4,
-        "CNN,America Uncovered,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News,AJ+": 4,
-        "CNN,America Uncovered,Vox,VICE News,MSNBC": 4,
-        "CNN,Colion Noir": 4,
-        "CNN,Good Morning Britain": 4,
-        "CNN,Good Morning Britain,MSNBC": 7,
-        "CNN,Good Morning Britain,The Daily Wire": 4,
-        "CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,Good Morning Britain,The Young Turks": 4,
-        "CNN,Good Morning Britain,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN,JRE Clips": 38,
-        "CNN,JRE Clips,MSNBC": 4,
-        "CNN,JRE Clips,The Daily Wire,The Young Turks,VICE News,NowThis World,MSNBC": 4,
-        "CNN,JRE Clips,VICE News": 11,
-        "CNN,JRE Clips,VICE News,AJ+,MSNBC": 4,
-        "CNN,JRE Clips,Vox,MSNBC": 4,
-        "CNN,JRE Clips,Vox,The Daily Wire,AJ+": 3,
-        "CNN,JRE Clips,Vox,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,JRE Clips,Vox,VICE News": 4,
-        "CNN,MSNBC": 276,
-        "CNN,NowThis World": 4,
-        "CNN,NowThis World,MSNBC": 4,
-        "CNN,The Daily Wire": 24,
-        "CNN,The Daily Wire,MSNBC": 16,
-        "CNN,The Daily Wire,NowThis World": 4,
-        "CNN,The Daily Wire,The Young Turks,MSNBC": 8,
-        "CNN,The Daily Wire,VICE News": 4,
-        "CNN,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,The Daily Wire,VICE News,NowThis World": 4,
-        "CNN,The Daily Wire,VICE News,NowThis World,MSNBC": 4,
-        "CNN,The Young Turks": 16,
-        "CNN,The Young Turks,MSNBC": 64,
-        "CNN,The Young Turks,NowThis World,MSNBC": 8,
-        "CNN,The Young Turks,VICE News": 16,
-        "CNN,The Young Turks,VICE News,AJ+": 4,
-        "CNN,The Young Turks,VICE News,MSNBC": 7,
-        "CNN,VICE News": 80,
-        "CNN,VICE News,AJ+": 4,
-        "CNN,VICE News,MSNBC": 44,
-        "CNN,VICE News,NowThis World": 4,
-        "CNN,VICE News,NowThis World,MSNBC": 4,
-        "CNN,Vox": 31,
-        "CNN,Vox,MSNBC": 18,
-        "CNN,Vox,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,VICE News,MSNBC": 8,
-        "CNN,Vox,The Daily Wire,VICE News,NowThis World": 4,
-        "CNN,Vox,The Daily Wire,VICE News,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Young Turks": 8,
-        "CNN,Vox,The Young Turks,AJ+,MSNBC": 4,
-        "CNN,Vox,The Young Turks,AJ+,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Young Turks,MSNBC": 8,
-        "CNN,Vox,The Young Turks,VICE News": 8,
-        "CNN,Vox,The Young Turks,VICE News,MSNBC": 12,
-        "CNN,Vox,VICE News": 32,
-        "CNN,Vox,VICE News,MSNBC": 14,
-        "CNN,Vox,VICE News,NowThis World,MSNBC": 8,
-        "Fox News": 314,
-        "Fox News,America Uncovered": 8,
-        "Fox News,America Uncovered,Good Morning Britain,JRE Clips": 4,
-        "Fox News,America Uncovered,MSNBC": 2,
-        "Fox News,America Uncovered,The Young Turks": 4,
-        "Fox News,America Uncovered,The Young Turks,MSNBC": 4,
-        "Fox News,CNN": 125,
-        "Fox News,CNN,AJ+,MSNBC": 4,
-        "Fox News,CNN,America Uncovered,JRE Clips,Vox,The Young Turks,VICE News,AJ+,MSNBC": 4,
-        "Fox News,CNN,America Uncovered,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,Colion Noir": 2,
-        "Fox News,CNN,Good Morning Britain": 8,
-        "Fox News,CNN,Good Morning Britain,JRE Clips,Colion Noir,VICE News,MSNBC": 6,
-        "Fox News,CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,Good Morning Britain,VICE News,NowThis World": 4,
-        "Fox News,CNN,JRE Clips": 18,
-        "Fox News,CNN,JRE Clips,The Daily Wire,Colion Noir": 4,
-        "Fox News,CNN,JRE Clips,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,MSNBC": 87,
+        "AJ+": 2,
+        "America Uncovered": 2,
+        "America Uncovered,Colion Noir": 1,
+        "America Uncovered,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News": 1,
+        "America Uncovered,JRE Clips,Vox,VICE News": 1,
+        "America Uncovered,NowThis World": 1,
+        "America Uncovered,VICE News": 1,
+        "America Uncovered,VICE News,NowThis World": 1,
+        "America Uncovered,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 1,
+        "CNN": 101,
+        "CNN,America Uncovered": 1,
+        "CNN,America Uncovered,NowThis World": 1,
+        "CNN,America Uncovered,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News,AJ+": 1,
+        "CNN,America Uncovered,Vox,VICE News,MSNBC": 1,
+        "CNN,Colion Noir": 1,
+        "CNN,Good Morning Britain": 1,
+        "CNN,Good Morning Britain,MSNBC": 2,
+        "CNN,Good Morning Britain,The Daily Wire": 1,
+        "CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 1,
+        "CNN,Good Morning Britain,The Young Turks": 1,
+        "CNN,Good Morning Britain,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 1,
+        "CNN,JRE Clips": 8,
+        "CNN,JRE Clips,MSNBC": 1,
+        "CNN,JRE Clips,The Daily Wire,The Young Turks,VICE News,NowThis World,MSNBC": 1,
+        "CNN,JRE Clips,VICE News": 3,
+        "CNN,JRE Clips,VICE News,AJ+,MSNBC": 1,
+        "CNN,JRE Clips,Vox,MSNBC": 1,
+        "CNN,JRE Clips,Vox,The Daily Wire,AJ+": 1,
+        "CNN,JRE Clips,Vox,The Daily Wire,VICE News,MSNBC": 1,
+        "CNN,JRE Clips,Vox,VICE News": 1,
+        "CNN,MSNBC": 69,
+        "CNN,NowThis World": 1,
+        "CNN,NowThis World,MSNBC": 1,
+        "CNN,The Daily Wire": 6,
+        "CNN,The Daily Wire,MSNBC": 4,
+        "CNN,The Daily Wire,NowThis World": 1,
+        "CNN,The Daily Wire,The Young Turks,MSNBC": 2,
+        "CNN,The Daily Wire,VICE News": 1,
+        "CNN,The Daily Wire,VICE News,MSNBC": 1,
+        "CNN,The Daily Wire,VICE News,NowThis World": 1,
+        "CNN,The Daily Wire,VICE News,NowThis World,MSNBC": 1,
+        "CNN,The Young Turks": 4,
+        "CNN,The Young Turks,MSNBC": 16,
+        "CNN,The Young Turks,NowThis World,MSNBC": 1,
+        "CNN,The Young Turks,VICE News": 4,
+        "CNN,The Young Turks,VICE News,AJ+": 1,
+        "CNN,The Young Turks,VICE News,MSNBC": 2,
+        "CNN,VICE News": 18,
+        "CNN,VICE News,AJ+": 1,
+        "CNN,VICE News,MSNBC": 11,
+        "CNN,VICE News,NowThis World": 1,
+        "CNN,VICE News,NowThis World,MSNBC": 1,
+        "CNN,Vox": 8,
+        "CNN,Vox,MSNBC": 5,
+        "CNN,Vox,NowThis World,MSNBC": 1,
+        "CNN,Vox,The Daily Wire,VICE News,MSNBC": 2,
+        "CNN,Vox,The Daily Wire,VICE News,NowThis World": 1,
+        "CNN,Vox,The Daily Wire,VICE News,NowThis World,MSNBC": 1,
+        "CNN,Vox,The Young Turks": 2,
+        "CNN,Vox,The Young Turks,AJ+,MSNBC": 1,
+        "CNN,Vox,The Young Turks,AJ+,NowThis World,MSNBC": 1,
+        "CNN,Vox,The Young Turks,MSNBC": 1,
+        "CNN,Vox,The Young Turks,VICE News": 2,
+        "CNN,Vox,The Young Turks,VICE News,MSNBC": 3,
+        "CNN,Vox,VICE News": 8,
+        "CNN,Vox,VICE News,MSNBC": 4,
+        "CNN,Vox,VICE News,NowThis World,MSNBC": 2,
+        "Fox News": 79,
+        "Fox News,America Uncovered": 2,
+        "Fox News,America Uncovered,Good Morning Britain,JRE Clips": 1,
+        "Fox News,America Uncovered,MSNBC": 1,
+        "Fox News,America Uncovered,The Young Turks": 1,
+        "Fox News,America Uncovered,The Young Turks,MSNBC": 1,
+        "Fox News,CNN": 31,
+        "Fox News,CNN,AJ+,MSNBC": 1,
+        "Fox News,CNN,America Uncovered,JRE Clips,Vox,The Young Turks,VICE News,AJ+,MSNBC": 1,
+        "Fox News,CNN,America Uncovered,The Young Turks,MSNBC": 1,
+        "Fox News,CNN,Colion Noir": 1,
+        "Fox News,CNN,Good Morning Britain": 2,
+        "Fox News,CNN,Good Morning Britain,JRE Clips,Colion Noir,VICE News,MSNBC": 1,
+        "Fox News,CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 1,
+        "Fox News,CNN,Good Morning Britain,VICE News,NowThis World": 1,
+        "Fox News,CNN,JRE Clips": 5,
+        "Fox News,CNN,JRE Clips,The Daily Wire,Colion Noir": 1,
+        "Fox News,CNN,JRE Clips,The Young Turks,VICE News,MSNBC": 1,
+        "Fox News,CNN,JRE Clips,VICE News,MSNBC": 1,
+        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,MSNBC": 1,
+        "Fox News,CNN,MSNBC": 21,
         "Fox News,CNN,NowThis World": 1,
-        "Fox News,CNN,The Daily Wire": 37,
-        "Fox News,CNN,The Daily Wire,MSNBC": 12,
-        "Fox News,CNN,The Daily Wire,The Young Turks": 4,
-        "Fox News,CNN,The Daily Wire,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,The Daily Wire,VICE News": 11,
-        "Fox News,CNN,The Daily Wire,VICE News,MSNBC": 4,
-        "Fox News,CNN,The Young Turks": 7,
-        "Fox News,CNN,The Young Turks,MSNBC": 20,
-        "Fox News,CNN,The Young Turks,NowThis World,MSNBC": 4,
-        "Fox News,CNN,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,VICE News": 35,
-        "Fox News,CNN,VICE News,MSNBC": 8,
-        "Fox News,CNN,Vox,AJ+,NowThis World,MSNBC": 4,
-        "Fox News,CNN,Vox,MSNBC": 8,
-        "Fox News,CNN,Vox,The Daily Wire": 19,
-        "Fox News,CNN,Vox,The Daily Wire,MSNBC": 4,
-        "Fox News,CNN,Vox,The Daily Wire,VICE News,MSNBC": 10,
-        "Fox News,CNN,Vox,The Young Turks,MSNBC": 8,
-        "Fox News,CNN,Vox,VICE News": 10,
-        "Fox News,CNN,Vox,VICE News,MSNBC": 16,
-        "Fox News,JRE Clips": 16,
-        "Fox News,JRE Clips,The Daily Wire": 4,
-        "Fox News,JRE Clips,The Daily Wire,VICE News,MSNBC": 4,
-        "Fox News,JRE Clips,VICE News,MSNBC": 8,
-        "Fox News,JRE Clips,Vox,VICE News": 4,
-        "Fox News,MSNBC": 29,
-        "Fox News,The Daily Wire": 61,
-        "Fox News,The Daily Wire,MSNBC": 19,
-        "Fox News,The Daily Wire,NowThis World": 4,
-        "Fox News,The Daily Wire,VICE News": 4,
-        "Fox News,VICE News": 12,
-        "Fox News,Vox,The Daily Wire": 4,
+        "Fox News,CNN,The Daily Wire": 7,
+        "Fox News,CNN,The Daily Wire,MSNBC": 3,
+        "Fox News,CNN,The Daily Wire,The Young Turks": 1,
+        "Fox News,CNN,The Daily Wire,The Young Turks,MSNBC": 1,
+        "Fox News,CNN,The Daily Wire,VICE News": 3,
+        "Fox News,CNN,The Daily Wire,VICE News,MSNBC": 1,
+        "Fox News,CNN,The Young Turks": 1,
+        "Fox News,CNN,The Young Turks,MSNBC": 5,
+        "Fox News,CNN,The Young Turks,NowThis World,MSNBC": 1,
+        "Fox News,CNN,The Young Turks,VICE News,MSNBC": 1,
+        "Fox News,CNN,VICE News": 9,
+        "Fox News,CNN,VICE News,MSNBC": 2,
+        "Fox News,CNN,Vox,AJ+,NowThis World,MSNBC": 1,
+        "Fox News,CNN,Vox,MSNBC": 2,
+        "Fox News,CNN,Vox,The Daily Wire": 3,
+        "Fox News,CNN,Vox,The Daily Wire,MSNBC": 1,
+        "Fox News,CNN,Vox,The Daily Wire,VICE News,MSNBC": 2,
+        "Fox News,CNN,Vox,The Young Turks,MSNBC": 2,
+        "Fox News,CNN,Vox,VICE News": 3,
+        "Fox News,CNN,Vox,VICE News,MSNBC": 4,
+        "Fox News,JRE Clips": 4,
+        "Fox News,JRE Clips,The Daily Wire": 1,
+        "Fox News,JRE Clips,The Daily Wire,VICE News,MSNBC": 1,
+        "Fox News,JRE Clips,VICE News,MSNBC": 2,
+        "Fox News,JRE Clips,Vox,VICE News": 1,
+        "Fox News,MSNBC": 8,
+        "Fox News,The Daily Wire": 14,
+        "Fox News,The Daily Wire,MSNBC": 3,
+        "Fox News,The Daily Wire,NowThis World": 1,
+        "Fox News,The Daily Wire,VICE News": 1,
+        "Fox News,VICE News": 3,
+        "Fox News,Vox,The Daily Wire": 1,
         "Fox News,Vox,The Daily Wire,NowThis World": 1,
-        "Fox News,Vox,VICE News": 8,
-        "Good Morning Britain": 4,
-        "Good Morning Britain,The Daily Wire,The Young Turks": 4,
-        "Good Morning Britain,VICE News": 4,
-        "JRE Clips": 82,
-        "JRE Clips,MSNBC": 2,
-        "JRE Clips,The Daily Wire": 8,
-        "JRE Clips,The Daily Wire,AJ+,NowThis World": 4,
-        "JRE Clips,The Daily Wire,VICE News": 4,
-        "JRE Clips,The Young Turks": 4,
-        "JRE Clips,The Young Turks,VICE News": 4,
-        "JRE Clips,VICE News": 42,
-        "JRE Clips,VICE News,NowThis World,MSNBC": 4,
-        "JRE Clips,Vox": 4,
-        "JRE Clips,Vox,The Young Turks": 4,
-        "JRE Clips,Vox,VICE News": 12,
-        "MSNBC": 99,
-        "Steven Crowder": 42,
-        "Steven Crowder,America Uncovered,Good Morning Britain,The Young Turks,MSNBC": 4,
+        "Fox News,Vox,VICE News": 2,
+        "Good Morning Britain": 1,
+        "Good Morning Britain,The Daily Wire,The Young Turks": 1,
+        "Good Morning Britain,VICE News": 1,
+        "JRE Clips": 21,
+        "JRE Clips,MSNBC": 1,
+        "JRE Clips,The Daily Wire": 2,
+        "JRE Clips,The Daily Wire,AJ+,NowThis World": 1,
+        "JRE Clips,The Daily Wire,VICE News": 1,
+        "JRE Clips,The Young Turks": 1,
+        "JRE Clips,The Young Turks,VICE News": 1,
+        "JRE Clips,VICE News": 11,
+        "JRE Clips,VICE News,NowThis World,MSNBC": 1,
+        "JRE Clips,Vox": 1,
+        "JRE Clips,Vox,The Young Turks": 1,
+        "JRE Clips,Vox,VICE News": 3,
+        "MSNBC": 24,
+        "Steven Crowder": 10,
+        "Steven Crowder,America Uncovered,Good Morning Britain,The Young Turks,MSNBC": 1,
         "Steven Crowder,America Uncovered,The Daily Wire": 1,
-        "Steven Crowder,CNN,Good Morning Britain,MSNBC": 4,
-        "Steven Crowder,CNN,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,CNN,Vox,NowThis World": 4,
-        "Steven Crowder,Fox News": 4,
-        "Steven Crowder,Fox News,CNN": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,JRE Clips,Vox,The Daily Wire,VICE News": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,The Daily Wire,VICE News": 2,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,VICE News,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,The Daily Wire,VICE News,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,VICE News,MSNBC": 8,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News,MSNBC": 5,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,VICE News": 4,
-        "Steven Crowder,Fox News,CNN,The Daily Wire,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,The Daily Wire,VICE News,AJ+,NowThis World": 4,
-        "Steven Crowder,Fox News,JRE Clips": 4,
-        "Steven Crowder,Fox News,JRE Clips,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,Fox News,JRE Clips,Vox,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,Fox News,MSNBC": 4,
-        "Steven Crowder,Fox News,The Daily Wire": 10,
-        "Steven Crowder,Fox News,The Daily Wire,MSNBC": 4,
-        "Steven Crowder,Fox News,The Young Turks,MSNBC": 4,
-        "Steven Crowder,Good Morning Britain": 4,
-        "Steven Crowder,Good Morning Britain,The Daily Wire,VICE News": 4,
-        "Steven Crowder,JRE Clips": 4,
-        "Steven Crowder,JRE Clips,The Daily Wire": 8,
-        "Steven Crowder,JRE Clips,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,The Daily Wire": 8,
-        "Steven Crowder,The Daily Wire,Colion Noir": 4,
+        "Steven Crowder,CNN,Good Morning Britain,MSNBC": 1,
+        "Steven Crowder,CNN,The Daily Wire,The Young Turks": 1,
+        "Steven Crowder,CNN,Vox,NowThis World": 1,
+        "Steven Crowder,Fox News": 1,
+        "Steven Crowder,Fox News,CNN": 1,
+        "Steven Crowder,Fox News,CNN,Good Morning Britain,JRE Clips,Vox,The Daily Wire,VICE News": 1,
+        "Steven Crowder,Fox News,CNN,Good Morning Britain,MSNBC": 1,
+        "Steven Crowder,Fox News,CNN,Good Morning Britain,The Daily Wire,VICE News": 1,
+        "Steven Crowder,Fox News,CNN,Good Morning Britain,VICE News,MSNBC": 1,
+        "Steven Crowder,Fox News,CNN,JRE Clips,The Daily Wire,VICE News,MSNBC": 1,
+        "Steven Crowder,Fox News,CNN,JRE Clips,VICE News,MSNBC": 2,
+        "Steven Crowder,Fox News,CNN,JRE Clips,Vox": 1,
+        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News,MSNBC": 2,
+        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,VICE News": 1,
+        "Steven Crowder,Fox News,CNN,The Daily Wire,MSNBC": 1,
+        "Steven Crowder,Fox News,CNN,The Daily Wire,VICE News,AJ+,NowThis World": 1,
+        "Steven Crowder,Fox News,JRE Clips": 1,
+        "Steven Crowder,Fox News,JRE Clips,The Daily Wire,The Young Turks": 1,
+        "Steven Crowder,Fox News,JRE Clips,Vox,The Daily Wire,The Young Turks": 1,
+        "Steven Crowder,Fox News,MSNBC": 1,
+        "Steven Crowder,Fox News,The Daily Wire": 3,
+        "Steven Crowder,Fox News,The Daily Wire,MSNBC": 1,
+        "Steven Crowder,Fox News,The Young Turks,MSNBC": 1,
+        "Steven Crowder,Good Morning Britain": 1,
+        "Steven Crowder,Good Morning Britain,The Daily Wire,VICE News": 1,
+        "Steven Crowder,JRE Clips": 1,
+        "Steven Crowder,JRE Clips,The Daily Wire": 2,
+        "Steven Crowder,JRE Clips,The Daily Wire,The Young Turks": 1,
+        "Steven Crowder,The Daily Wire": 2,
+        "Steven Crowder,The Daily Wire,Colion Noir": 1,
         "Steven Crowder,The Daily Wire,MSNBC": 1,
-        "Steven Crowder,The Young Turks": 8,
-        "Steven Crowder,VICE News": 4,
-        "Steven Crowder,Vox,The Daily Wire,Colion Noir": 4,
-        "Steven Crowder,Vox,The Young Turks,NowThis World,MSNBC": 4,
-        "Steven Crowder,Vox,VICE News": 4,
-        "The Daily Wire": 25,
-        "The Daily Wire,MSNBC": 12,
-        "The Daily Wire,NowThis World": 4,
-        "The Daily Wire,The Young Turks": 4,
-        "The Daily Wire,The Young Turks,VICE News": 4,
-        "The Daily Wire,VICE News": 20,
-        "The Daily Wire,VICE News,MSNBC": 8,
-        "The Daily Wire,VICE News,NowThis World": 4,
-        "The Young Turks": 41,
-        "The Young Turks,MSNBC": 32,
-        "The Young Turks,VICE News": 8,
-        "The Young Turks,VICE News,AJ+": 4,
-        "The Young Turks,VICE News,MSNBC": 4,
-        "VICE News": 99,
-        "VICE News,AJ+": 12,
-        "VICE News,MSNBC": 28,
-        "VICE News,NowThis World": 16,
-        "Vox": 95,
-        "Vox,AJ+": 4,
-        "Vox,MSNBC": 8,
-        "Vox,NowThis World,MSNBC": 4,
-        "Vox,The Daily Wire,VICE News": 5,
-        "Vox,The Daily Wire,VICE News,AJ+": 2,
-        "Vox,The Daily Wire,VICE News,NowThis World": 4,
-        "Vox,The Young Turks": 8,
-        "Vox,The Young Turks,VICE News": 4,
-        "Vox,VICE News": 79,
-        "Vox,VICE News,AJ+": 4,
-        "Vox,VICE News,MSNBC": 19,
+        "Steven Crowder,The Young Turks": 2,
+        "Steven Crowder,VICE News": 1,
+        "Steven Crowder,Vox,The Daily Wire,Colion Noir": 1,
+        "Steven Crowder,Vox,The Young Turks,NowThis World,MSNBC": 1,
+        "Steven Crowder,Vox,VICE News": 1,
+        "The Daily Wire": 6,
+        "The Daily Wire,MSNBC": 3,
+        "The Daily Wire,NowThis World": 1,
+        "The Daily Wire,The Young Turks": 1,
+        "The Daily Wire,The Young Turks,VICE News": 1,
+        "The Daily Wire,VICE News": 5,
+        "The Daily Wire,VICE News,MSNBC": 2,
+        "The Daily Wire,VICE News,NowThis World": 1,
+        "The Young Turks": 11,
+        "The Young Turks,MSNBC": 9,
+        "The Young Turks,VICE News": 2,
+        "The Young Turks,VICE News,AJ+": 1,
+        "The Young Turks,VICE News,MSNBC": 1,
+        "VICE News": 24,
+        "VICE News,AJ+": 3,
+        "VICE News,MSNBC": 6,
+        "VICE News,NowThis World": 4,
+        "Vox": 24,
+        "Vox,AJ+": 1,
+        "Vox,MSNBC": 2,
+        "Vox,The Daily Wire,VICE News": 2,
+        "Vox,The Daily Wire,VICE News,AJ+": 1,
+        "Vox,The Daily Wire,VICE News,NowThis World": 1,
+        "Vox,The Young Turks": 2,
+        "Vox,The Young Turks,VICE News": 1,
+        "Vox,VICE News": 18,
+        "Vox,VICE News,AJ+": 1,
+        "Vox,VICE News,MSNBC": 5,
         "Vox,VICE News,NowThis World": 1,
-        "Vox,VICE News,NowThis World,MSNBC": 6
+        "Vox,VICE News,NowThis World,MSNBC": 2
       },
       "validation": {
-        "CNN": 43,
-        "CNN,America Uncovered,VICE News,MSNBC": 4,
-        "CNN,Good Morning Britain,Vox,The Daily Wire,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN,MSNBC": 37,
-        "CNN,NowThis World": 8,
-        "CNN,The Daily Wire": 5,
-        "CNN,The Young Turks": 3,
-        "CNN,The Young Turks,MSNBC": 15,
-        "CNN,The Young Turks,VICE News": 4,
-        "CNN,VICE News": 4,
-        "CNN,VICE News,MSNBC": 4,
-        "CNN,Vox": 6,
-        "CNN,Vox,The Daily Wire,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,Vox,VICE News": 4,
-        "Fox News": 24,
-        "Fox News,America Uncovered,Vox,The Daily Wire,The Young Turks,VICE News,AJ+": 4,
-        "Fox News,CNN": 8,
-        "Fox News,CNN,JRE Clips,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,NowThis World,MSNBC": 4,
-        "Fox News,CNN,MSNBC": 24,
-        "Fox News,CNN,VICE News": 4,
-        "Fox News,CNN,Vox": 4,
-        "Fox News,CNN,Vox,The Daily Wire,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,MSNBC": 8,
-        "Fox News,The Daily Wire": 10,
-        "Fox News,The Young Turks,VICE News,MSNBC": 5,
-        "JRE Clips": 12,
-        "JRE Clips,Colion Noir,The Young Turks,VICE News": 4,
-        "JRE Clips,The Young Turks,VICE News": 4,
-        "JRE Clips,VICE News": 4,
-        "MSNBC": 11,
-        "NowThis World": 4,
-        "Steven Crowder": 8,
-        "Steven Crowder,Fox News": 8,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,Vox,NowThis World": 4,
-        "Steven Crowder,Fox News,The Daily Wire,The Young Turks": 4,
-        "The Daily Wire": 3,
-        "The Young Turks": 8,
-        "VICE News": 18,
-        "Vox,AJ+": 4,
-        "Vox,VICE News": 12
+        "CNN": 11,
+        "CNN,America Uncovered,VICE News,MSNBC": 1,
+        "CNN,MSNBC": 8,
+        "CNN,NowThis World": 2,
+        "CNN,The Daily Wire": 2,
+        "CNN,The Young Turks": 1,
+        "CNN,The Young Turks,MSNBC": 4,
+        "CNN,VICE News": 1,
+        "CNN,VICE News,MSNBC": 1,
+        "CNN,Vox": 2,
+        "CNN,Vox,The Daily Wire,MSNBC": 1,
+        "CNN,Vox,The Daily Wire,The Young Turks,MSNBC": 1,
+        "CNN,Vox,VICE News": 1,
+        "Fox News": 6,
+        "Fox News,America Uncovered,Vox,The Daily Wire,The Young Turks,VICE News,AJ+": 1,
+        "Fox News,CNN": 2,
+        "Fox News,CNN,JRE Clips,VICE News,MSNBC": 1,
+        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,NowThis World,MSNBC": 1,
+        "Fox News,CNN,MSNBC": 6,
+        "Fox News,CNN,VICE News": 1,
+        "Fox News,CNN,Vox": 1,
+        "Fox News,CNN,Vox,The Daily Wire,The Young Turks,VICE News,MSNBC": 1,
+        "Fox News,MSNBC": 2,
+        "Fox News,The Daily Wire": 3,
+        "Fox News,The Young Turks,VICE News,MSNBC": 1,
+        "JRE Clips": 3,
+        "JRE Clips,Colion Noir,The Young Turks,VICE News": 1,
+        "JRE Clips,The Young Turks,VICE News": 1,
+        "JRE Clips,VICE News": 1,
+        "MSNBC": 3,
+        "NowThis World": 1,
+        "Steven Crowder": 2,
+        "Steven Crowder,Fox News": 2,
+        "Steven Crowder,Fox News,CNN,Good Morning Britain,Vox,NowThis World": 1,
+        "Steven Crowder,Fox News,The Daily Wire,The Young Turks": 1,
+        "The Daily Wire": 1,
+        "The Young Turks": 2,
+        "VICE News": 5,
+        "Vox,AJ+": 1,
+        "Vox,VICE News": 3
       }
     },
     "race_ethnicity": {
       "train": {
-        "count": 11620.0,
-        "mean": 1.7621342512908778,
-        "std": 1.4093534079315209
+        "count": 2539.0,
+        "mean": 1.739661283970067,
+        "std": 1.401753825884885
       },
       "validation": {
-        "count": 1311.0,
-        "mean": 1.7528604118993134,
-        "std": 1.5081590389763964
+        "count": 286.0,
+        "mean": 1.7342657342657342,
+        "std": 1.4863060181991292
       }
     },
     "religion": {
@@ -749,14 +746,14 @@
     },
     "right_to_own_importance": {
       "train": {
-        "count": 6301.0,
-        "mean": 0.3481986986192668,
-        "std": 0.4763993754184779
+        "count": 1576.0,
+        "mean": 0.3496192893401015,
+        "std": 0.4768497057369585
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.3211267605633803,
-        "std": 0.46690937473288086
+        "count": 178.0,
+        "mean": 0.3258426966292135,
+        "std": 0.4686888452722295
       }
     },
     "social_media_use": {
@@ -769,14 +766,14 @@
     },
     "stricter_laws": {
       "train": {
-        "count": 6313.0,
-        "mean": 0.2977585933787423,
-        "std": 0.3329841895241292
+        "count": 1579.0,
+        "mean": 0.29781507283090564,
+        "std": 0.3337562925629638
       },
       "validation": {
-        "count": 710.0,
-        "mean": 0.325,
-        "std": 0.33292081281535074
+        "count": 178.0,
+        "mean": 0.32162921348314605,
+        "std": 0.3311897817054792
       }
     },
     "trump_approval": {
@@ -807,54 +804,87 @@
   "figures_dir": "reports/prompt_stats/figures",
   "n_options_counts": {
     "train": {
-      "1": 1281,
-      "2": 2081,
-      "3": 1009,
-      "4": 16706,
-      "5": 2841,
-      "8": 1
+      "1": 482,
+      "2": 302,
+      "3": 303,
+      "4": 3813,
+      "5": 731
     },
     "validation": {
-      "1": 144,
-      "2": 245,
-      "3": 109,
-      "4": 1854,
-      "5": 305
+      "1": 46,
+      "2": 37,
+      "3": 35,
+      "4": 416,
+      "5": 91
     }
   },
   "participant_counts": {
     "overall": {
-      "all": 6256,
-      "gun_control": 1757,
-      "minimum_wage": 4499
+      "by_issue": {
+        "gun_control": 1757,
+        "minimum_wage": 4499
+      },
+      "by_issue_study": {
+        "gun_control": {
+          "study1": 1757
+        },
+        "minimum_wage": {
+          "study3": 4499
+        }
+      },
+      "by_study": {
+        "study1": 1757,
+        "study3": 4499
+      },
+      "overall": 6256
     },
     "train": {
-      "all": 5631,
-      "gun_control": 1579,
-      "minimum_wage": 4052
+      "by_issue": {
+        "gun_control": 1579,
+        "minimum_wage": 4052
+      },
+      "by_issue_study": {
+        "gun_control": {
+          "study1": 1579
+        },
+        "minimum_wage": {
+          "study3": 4052
+        }
+      },
+      "by_study": {
+        "study1": 1579,
+        "study3": 4052
+      },
+      "overall": 5631
     },
     "validation": {
-      "all": 625,
-      "gun_control": 178,
-      "minimum_wage": 447
+      "by_issue": {
+        "gun_control": 178,
+        "minimum_wage": 447
+      },
+      "by_issue_study": {
+        "gun_control": {
+          "study1": 178
+        },
+        "minimum_wage": {
+          "study3": 447
+        }
+      },
+      "by_study": {
+        "study1": 178,
+        "study3": 447
+      },
+      "overall": 625
     }
   },
   "prior_history_counts": {
     "train": {
-      "0": 6454,
-      "1": 6124,
-      "2": 5851,
-      "3": 5470,
-      "4": 18,
-      "5": 1,
-      "6": 1
+      "0": 5630,
+      "1": 1
     },
     "validation": {
-      "0": 709,
-      "1": 685,
-      "2": 649,
-      "3": 613,
-      "4": 1
+      "0": 624,
+      "1": 1
     }
   },
   "profile_fallback_counts": {
@@ -864,25 +894,25 @@
   "profile_summary": {
     "train": {
       "missing_profile": 0.0,
-      "rows": 23919.0
+      "rows": 5631.0
     },
     "validation": {
       "missing_profile": 0.0,
-      "rows": 2657.0
+      "rows": 625.0
     }
   },
   "unique_counts": {
     "train": {
-      "current_video_ids": 249,
-      "gold_video_ids": 410,
-      "slate_texts": 15124,
-      "state_texts": 23820
+      "current_video_ids": 18,
+      "gold_video_ids": 126,
+      "slate_texts": 2718,
+      "state_texts": 5630
     },
     "validation": {
-      "current_video_ids": 196,
-      "gold_video_ids": 275,
-      "slate_texts": 2207,
-      "state_texts": 2647
+      "current_video_ids": 16,
+      "gold_video_ids": 94,
+      "slate_texts": 493,
+      "state_texts": 625
     }
   }
 }

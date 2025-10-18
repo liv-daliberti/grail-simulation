@@ -554,6 +554,34 @@ def _infer_issue_from_topic(topic_id: str) -> Optional[str]:
     return None
 
 
+def _infer_participant_study(
+    issue: str,
+    survey_row: Optional[Dict[str, Any]],
+    topic_id: str,
+    session: Dict[str, Any],
+) -> str:
+    issue_norm = (issue or "").strip().lower()
+    topic_norm = (topic_id or "").strip().lower()
+    survey_keys = {str(k).strip().lower() for k in (survey_row or {}).keys()}
+
+    if issue_norm == "gun_control":
+        return "study1"
+
+    if issue_norm == "minimum_wage":
+        if survey_keys:
+            if any(key in survey_keys for key in {"caseid", "sample", "weight"}):
+                return "study3"
+            if any(key in survey_keys for key in {"worker_id", "workerid", "assignment_id", "assignmentid", "hit_id", "hitid"}):
+                return "study2"
+        session_keys = {str(k).strip().lower() for k in session.keys()}
+        if "shorts" in topic_norm or "2024" in topic_norm or "rabbit" in topic_norm:
+            return "study4"
+        if any(key.startswith("short") for key in session_keys):
+            return "study4"
+
+    return "unknown"
+
+
 def _coerce_session_value(value: Any) -> Any:
     if isinstance(value, (int, float)):
         return value
@@ -1054,6 +1082,13 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 "start_time_ms": sess.get("startTime"),
                 "end_time_ms": sess.get("endTime"),
             }
+
+            row["participant_study"] = _infer_participant_study(
+                issue_value,
+                survey_row or {},
+                topic,
+                sess,
+            )
 
             if survey_row:
                 for k, v in survey_row.items():

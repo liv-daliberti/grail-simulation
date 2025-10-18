@@ -126,6 +126,27 @@ def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
     return text
 
 
+def _format_count(value: Any) -> Optional[str]:
+    if _is_nanlike(value):
+        return None
+    try:
+        if isinstance(value, str):
+            text = value.replace(",", "").strip()
+            if not text:
+                return None
+            num = float(text)
+        else:
+            num = float(value)
+        if math.isnan(num):
+            return None
+        if abs(num - int(round(num))) < 1e-6:
+            return f"{int(round(num)):,}"
+        return f"{num:,.2f}"
+    except Exception:
+        text = clean_text(value)
+        return text or None
+
+
 def truthy(value: Any) -> Optional[bool]:
     if value is None:
         return None
@@ -632,6 +653,20 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
                 parts.append(f"channel: {channel}")
             if duration_text:
                 parts.append(f"duration: {duration_text}")
+            stat_labels = [
+                ("view_count", "views"),
+                ("like_count", "likes"),
+                ("dislike_count", "dislikes"),
+                ("favorite_count", "favorites"),
+                ("comment_count", "comments"),
+            ]
+            stat_parts: List[str] = []
+            for key, label in stat_labels:
+                formatted = _format_count(it.get(key))
+                if formatted is not None:
+                    stat_parts.append(f"{label}: {formatted}")
+            if stat_parts:
+                parts.extend(stat_parts)
             if show_ids and option_id:
                 parts.append(f"id: {option_id}")
             elif not title and option_id:

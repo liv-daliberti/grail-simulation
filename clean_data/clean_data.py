@@ -597,10 +597,37 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
         capsule_root / "intermediate data" / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv",
         capsule_root / "results" / "intermediate data" / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv",
     )
-    survey_wage = _read_survey_with_fallback(
+    survey_wage_sources: List[pd.DataFrame] = []
+
+    survey_wage_qualtrics = _read_survey_with_fallback(
         capsule_root / "intermediate data" / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv",
         capsule_root / "results" / "intermediate data" / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv",
     )
+    if not survey_wage_qualtrics.empty:
+        survey_wage_sources.append(survey_wage_qualtrics)
+
+    yougov_dirs = [
+        capsule_root / "intermediate data" / "minimum wage (issue 2)",
+        capsule_root / "results" / "intermediate data" / "minimum wage (issue 2)",
+    ]
+    for folder in yougov_dirs:
+        if not folder.exists():
+            continue
+        for csv_path in sorted(folder.glob("yg_*_clean.csv")):
+            yougov_df = _read_csv_if_exists(csv_path)
+            if yougov_df.empty:
+                continue
+            survey_wage_sources.append(yougov_df)
+
+    if survey_wage_sources:
+        survey_wage = pd.concat(survey_wage_sources, ignore_index=True, sort=False)
+        if "urlid" in survey_wage.columns:
+            dedupe_subset = ["urlid"]
+            if "topic_id" in survey_wage.columns:
+                dedupe_subset.append("topic_id")
+            survey_wage = survey_wage.drop_duplicates(subset=dedupe_subset, keep="first").reset_index(drop=True)
+    else:
+        survey_wage = pd.DataFrame()
 
     surveys = {
         "gun_control": _build_survey_index(survey_gun),
@@ -642,6 +669,41 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
         if channel:
             return channel, False
         return "(channel missing)", True
+
+    def _attach_recommendation_stats(
+        target: Dict[str, Any],
+        meta: Optional[Dict[str, Any]],
+        raw: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Populate slate item stats such as view/like counts and duration."""
+        stat_fields = ("view_count", "like_count", "dislike_count", "favorite_count", "comment_count")
+        for field in stat_fields:
+            value = None
+            if raw and raw.get(field) not in (None, ""):
+                value = raw.get(field)
+            elif meta and meta.get(field) not in (None, ""):
+                value = meta.get(field)
+            if value is None:
+                continue
+            coerced = _coerce_session_value(value)
+            if coerced is not None:
+                target[field] = coerced
+
+        duration_value = None
+        duration_candidates = ("duration", "duration_seconds", "length_seconds", "total_length")
+        if raw:
+            for cand in duration_candidates:
+                raw_val = raw.get(cand)
+                if raw_val not in (None, ""):
+                    duration_value = raw_val
+                    break
+        if duration_value is None and meta and meta.get("duration") not in (None, ""):
+            duration_value = meta.get("duration")
+        if duration_value is not None:
+            coerced_duration = _coerce_session_value(duration_value)
+            if coerced_duration is not None:
+                target["duration"] = coerced_duration
+                target.setdefault("duration_seconds", coerced_duration)
 
     def _tree_slate_items(base_id: str) -> List[Dict[str, Any]]:
         """Return recommendation slate items stored alongside the tree metadata for ``base_id``."""
@@ -687,6 +749,8 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 rec_info["channel_title"] = rec_channel
             if rec_meta.get("channel_id"):
                 _assign_if_missing(rec_info, "channel_id", rec_meta.get("channel_id"))
+            raw_dict = rec if isinstance(rec, dict) else None
+            _attach_recommendation_stats(item, rec_meta, raw_dict)
             items.append(item)
         return items
 
@@ -820,6 +884,7 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 }
                 if meta.get("channel_id"):
                     item["channel_id"] = meta["channel_id"]
+                _attach_recommendation_stats(item, meta)
                 items.append(item)
             if items:
                 key_str = str(key)
@@ -875,6 +940,7 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                     continue
                 seen_ids.add(vid)
                 raw_id = str(it.get("raw_id") or vid)
+                meta_for_norm = _video_meta(vid, raw_id)
                 norm = {
                     "id": vid,
                     "raw_id": raw_id,
@@ -883,13 +949,9 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 title_missing = bool(it.get("title_missing"))
                 channel_val = str(it.get("channel_title") or "").strip()
                 channel_missing = bool(it.get("channel_missing"))
-                meta_for_norm: Optional[Dict[str, Any]] = None
                 if not title_val:
-                    meta_for_norm = _video_meta(vid, raw_id)
                     title_val, title_missing = _resolve_title(meta_for_norm, vid)
                 if not channel_val:
-                    if meta_for_norm is None:
-                        meta_for_norm = _video_meta(vid, raw_id)
                     channel_val, channel_missing = _resolve_channel(meta_for_norm)
                 norm["title"] = title_val
                 norm["title_missing"] = title_missing
@@ -899,6 +961,7 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                     norm["channel_id"] = it["channel_id"]
                 elif meta_for_norm and meta_for_norm.get("channel_id"):
                     norm["channel_id"] = meta_for_norm["channel_id"]
+                _attach_recommendation_stats(norm, meta_for_norm, it)
                 normalized_items.append(norm)
 
             if next_base and next_base not in seen_ids:
@@ -915,6 +978,7 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 }
                 if next_meta.get("channel_id"):
                     norm["channel_id"] = next_meta["channel_id"]
+                _attach_recommendation_stats(norm, next_meta)
                 normalized_items.append(norm)
                 seen_ids.add(next_base)
 

@@ -1,19 +1,19 @@
 {
   "demographic_missing_counts": {
-    "train": 18248,
-    "validation": 1969
+    "train": 6592,
+    "validation": 694
   },
   "feature_summary": {
     "age": {
       "train": {
-        "count": 12278.0,
-        "mean": 40.771135364065806,
-        "std": 12.252704108539238
+        "count": 23934.0,
+        "mean": 45.77663574830785,
+        "std": 15.265763393704942
       },
       "validation": {
-        "count": 1363.0,
-        "mean": 42.2993396918562,
-        "std": 12.975960317155762
+        "count": 2638.0,
+        "mean": 46.607278241091734,
+        "std": 15.036739695118277
       }
     },
     "assault_ban": {
@@ -50,14 +50,14 @@
     },
     "college": {
       "train": {
-        "count": 12282.0,
-        "mean": 0.6847418987135646,
-        "std": 0.4646185864337619
+        "count": 23938.0,
+        "mean": 0.5365109867156822,
+        "std": 0.49866516606741973
       },
       "validation": {
-        "count": 1363.0,
-        "mean": 0.6654438738077769,
-        "std": 0.4718350608204909
+        "count": 2638.0,
+        "mean": 0.5424564063684609,
+        "std": 0.4981941926179751
       }
     },
     "concealed_safe": {
@@ -77,8 +77,16 @@
       "validation": {}
     },
     "education": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 11656.0,
+        "mean": 3.7581503088538093,
+        "std": 1.4719764364391017
+      },
+      "validation": {
+        "count": 1275.0,
+        "mean": 3.843921568627451,
+        "std": 1.4080832172814561
+      }
     },
     "employment_status": {
       "train": {},
@@ -98,14 +106,14 @@
     },
     "freq_youtube": {
       "train": {
-        "count": 12282.0,
-        "mean": 3.1568962709656407,
-        "std": 1.6243611569981007
+        "count": 23938.0,
+        "mean": 2.8625198429275627,
+        "std": 1.7301510653097578
       },
       "validation": {
-        "count": 1363.0,
-        "mean": 3.1151870873074103,
-        "std": 1.6081495559634273
+        "count": 2638.0,
+        "mean": 2.847990902198635,
+        "std": 1.7009167077253597
       }
     },
     "gender": {
@@ -268,26 +276,26 @@
     },
     "minwage15_w1": {
       "train": {
-        "count": 5971.0,
-        "mean": 0.27533076536593537,
-        "std": 0.34892979950195235
+        "count": 17627.0,
+        "mean": 0.30597946332331083,
+        "std": 0.36383965028516385
       },
       "validation": {
-        "count": 651.0,
-        "mean": 0.25460829493087556,
-        "std": 0.3368353103382143
+        "count": 1926.0,
+        "mean": 0.31334371754932505,
+        "std": 0.3620045340724113
       }
     },
     "minwage15_w2": {
       "train": {
-        "count": 5889.0,
-        "mean": 0.3198760400747156,
-        "std": 0.3652171931202897
+        "count": 17545.0,
+        "mean": 0.34075235109717866,
+        "std": 0.3781818233787615
       },
       "validation": {
-        "count": 631.0,
-        "mean": 0.31695721077654515,
-        "std": 0.3515497900787641
+        "count": 1906.0,
+        "mean": 0.3364375655823715,
+        "std": 0.3699223643560048
       }
     },
     "minwage_importance": {
@@ -300,26 +308,26 @@
     },
     "minwage_text_r_w1": {
       "train": {
-        "count": 5971.0,
-        "mean": 0.4286356054262268,
-        "std": 0.18250638429895766
+        "count": 17514.0,
+        "mean": 0.43660280918122646,
+        "std": 0.20141092750575182
       },
       "validation": {
-        "count": 651.0,
-        "mean": 0.4365130568356375,
-        "std": 0.17820397984239741
+        "count": 1922.0,
+        "mean": 0.43478397502601457,
+        "std": 0.20312128144862446
       }
     },
     "minwage_text_r_w2": {
       "train": {
-        "count": 5876.0,
-        "mean": 0.4499699115044247,
-        "std": 0.19019978710028623
+        "count": 17514.0,
+        "mean": 0.456090784515245,
+        "std": 0.20552979644830474
       },
       "validation": {
-        "count": 631.0,
-        "mean": 0.4649318541996831,
-        "std": 0.17989433449766865
+        "count": 1902.0,
+        "mean": 0.4491213459516299,
+        "std": 0.20085522478000695
       }
     },
     "minwage_text_r_w3": {
@@ -352,50 +360,50 @@
     },
     "mw_index_w1": {
       "train": {
-        "count": 5971.0,
-        "mean": 0.2650199315208694,
-        "std": 0.2334636678607201
+        "count": 17627.0,
+        "mean": 0.29634197546872987,
+        "std": 0.25244927127171296
       },
       "validation": {
-        "count": 651.0,
-        "mean": 0.2496112817887011,
-        "std": 0.22699582630760318
+        "count": 1926.0,
+        "mean": 0.29360005975044917,
+        "std": 0.24489328298498178
       }
     },
     "mw_index_w2": {
       "train": {
-        "count": 5889.0,
-        "mean": 0.3009551408733528,
-        "std": 0.2649073585818224
+        "count": 17545.0,
+        "mean": 0.3230867182799784,
+        "std": 0.278980669034441
       },
       "validation": {
-        "count": 634.0,
-        "mean": 0.29568322818086223,
-        "std": 0.2591765747088977
+        "count": 1909.0,
+        "mean": 0.3231187320711416,
+        "std": 0.2734299147797513
       }
     },
     "mw_support_w1": {
       "train": {
-        "count": 5964.0,
-        "mean": 0.17081656606304493,
-        "std": 0.2718235002946213
+        "count": 17620.0,
+        "mean": 0.21204597048808171,
+        "std": 0.30584364841169154
       },
       "validation": {
-        "count": 651.0,
-        "mean": 0.14938556067588327,
-        "std": 0.2548598428842963
+        "count": 1926.0,
+        "mean": 0.21105919003115264,
+        "std": 0.3036464434897865
       }
     },
     "mw_support_w2": {
       "train": {
-        "count": 5889.0,
-        "mean": 0.22151468840210561,
-        "std": 0.31326291529221423
+        "count": 17545.0,
+        "mean": 0.24977201481903677,
+        "std": 0.33471374464678494
       },
       "validation": {
-        "count": 631.0,
-        "mean": 0.20443740095087162,
-        "std": 0.30675846070303636
+        "count": 1906.0,
+        "mean": 0.25104931794333685,
+        "std": 0.33877433342022784
       }
     },
     "news_consumption": {
@@ -452,14 +460,14 @@
     },
     "political_interest": {
       "train": {
-        "count": 12282.0,
-        "mean": 3.2702328610975413,
-        "std": 1.005444271875714
+        "count": 23725.0,
+        "mean": 2.055398665261679,
+        "std": 1.4677801584549397
       },
       "validation": {
-        "count": 1363.0,
-        "mean": 3.3206162876008802,
-        "std": 0.99481070373066
+        "count": 2605.0,
+        "mean": 2.093410108765195,
+        "std": 1.4889574611969876
       }
     },
     "popular_channels_followed": {
@@ -729,57 +737,14 @@
     },
     "race_ethnicity": {
       "train": {
-        "Asian/Pacific Islanders": 921,
-        "Asian/Pacific Islanders,Caucasian/White (non-Hispanic)": 133,
-        "Asian/Pacific Islanders,Caucasian/White (non-Hispanic),Latino or Hispanic,Native American or Aleut": 4,
-        "Asian/Pacific Islanders,Caucasian/White (non-Hispanic),Middle Eastern": 4,
-        "Asian/Pacific Islanders,Caucasian/White (non-Hispanic),Other": 4,
-        "Asian/Pacific Islanders,Latino or Hispanic": 25,
-        "Asian/Pacific Islanders,Native American or Aleut": 1,
-        "Asian/Pacific Islanders,Other": 4,
-        "Black or African-American (non-Hispanic)": 1150,
-        "Black or African-American (non-Hispanic),Asian/Pacific Islanders": 15,
-        "Black or African-American (non-Hispanic),Asian/Pacific Islanders,Caucasian/White (non-Hispanic),Native American or Aleut,Middle Eastern": 6,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic)": 68,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic),Latino or Hispanic": 6,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic),Latino or Hispanic,Native American or Aleut": 8,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic),Latino or Hispanic,Native American or Aleut,Other": 4,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic),Native American or Aleut": 22,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic),Other": 8,
-        "Black or African-American (non-Hispanic),Latino or Hispanic": 23,
-        "Black or African-American (non-Hispanic),Native American or Aleut": 20,
-        "Caucasian/White (non-Hispanic)": 8794,
-        "Caucasian/White (non-Hispanic),Latino or Hispanic": 198,
-        "Caucasian/White (non-Hispanic),Latino or Hispanic,Native American or Aleut": 28,
-        "Caucasian/White (non-Hispanic),Latino or Hispanic,Other": 4,
-        "Caucasian/White (non-Hispanic),Middle Eastern": 41,
-        "Caucasian/White (non-Hispanic),Native American or Aleut": 98,
-        "Caucasian/White (non-Hispanic),Native American or Aleut,Middle Eastern": 4,
-        "Caucasian/White (non-Hispanic),Other": 19,
-        "Latino or Hispanic": 510,
-        "Latino or Hispanic,Middle Eastern": 4,
-        "Latino or Hispanic,Middle Eastern,Other": 4,
-        "Latino or Hispanic,Native American or Aleut": 8,
-        "Latino or Hispanic,Other": 4,
-        "Middle Eastern": 25,
-        "Native American or Aleut": 49,
-        "Other": 66
+        "count": 11656.0,
+        "mean": 1.7679306794783802,
+        "std": 1.420788049960003
       },
       "validation": {
-        "Asian/Pacific Islanders": 106,
-        "Asian/Pacific Islanders,Caucasian/White (non-Hispanic)": 5,
-        "Black or African-American (non-Hispanic)": 95,
-        "Black or African-American (non-Hispanic),Asian/Pacific Islanders": 8,
-        "Black or African-American (non-Hispanic),Asian/Pacific Islanders,Caucasian/White (non-Hispanic)": 4,
-        "Black or African-American (non-Hispanic),Caucasian/White (non-Hispanic)": 8,
-        "Black or African-American (non-Hispanic),Latino or Hispanic": 4,
-        "Caucasian/White (non-Hispanic)": 998,
-        "Caucasian/White (non-Hispanic),Latino or Hispanic": 26,
-        "Caucasian/White (non-Hispanic),Middle Eastern": 8,
-        "Caucasian/White (non-Hispanic),Native American or Aleut": 8,
-        "Latino or Hispanic": 77,
-        "Middle Eastern": 8,
-        "Other": 8
+        "count": 1275.0,
+        "mean": 1.699607843137255,
+        "std": 1.4080858384934978
       }
     },
     "religion": {
@@ -904,13 +869,13 @@
       "current_video_ids": 277,
       "gold_video_ids": 452,
       "slate_texts": 17248,
-      "state_texts": 27045
+      "state_texts": 28446
     },
     "validation": {
       "current_video_ids": 215,
       "gold_video_ids": 290,
       "slate_texts": 2650,
-      "state_texts": 3223
+      "state_texts": 3251
     }
   }
 }

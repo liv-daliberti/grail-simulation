@@ -54,6 +54,21 @@
 | train | 249 | 410 | 15124 | 23820 |
 | validation | 196 | 275 | 2207 | 2647 |
 
+## Unique participants per issue
+
+| Split | Issue | Participants |
+|-------|-------|--------------|
+| train | gun_control | 1579 |
+| train | minimum_wage | 4052 |
+| train | all | 5631 |
+| validation | gun_control | 178 |
+| validation | minimum_wage | 447 |
+| validation | all | 625 |
+
+- Overall participants (all issues): 6256
+- Overall participants (gun_control): 1757
+- Overall participants (minimum_wage): 4499
+
 ## Feature figures
 
 - `Viewer age` → `reports/prompt_stats/figures/age.png`

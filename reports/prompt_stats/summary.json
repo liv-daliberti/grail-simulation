@@ -822,6 +822,23 @@
       "5": 305
     }
   },
+  "participant_counts": {
+    "overall": {
+      "all": 6256,
+      "gun_control": 1757,
+      "minimum_wage": 4499
+    },
+    "train": {
+      "all": 5631,
+      "gun_control": 1579,
+      "minimum_wage": 4052
+    },
+    "validation": {
+      "all": 625,
+      "gun_control": 178,
+      "minimum_wage": 447
+    }
+  },
   "prior_history_counts": {
     "train": {
       "0": 6454,

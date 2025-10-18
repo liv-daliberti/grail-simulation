@@ -12,6 +12,18 @@
         "std": 12.975960317155762
       }
     },
+    "assault_ban": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.29884328949453337,
+        "std": 0.3359752171513551
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.3553370786516854,
+        "std": 0.36810080274936124
+      }
+    },
     "biden_approval": {
       "train": {},
       "validation": {}
@@ -42,6 +54,18 @@
         "count": 1363.0,
         "mean": 0.6654438738077769,
         "std": 0.4718350608204909
+      }
+    },
+    "concealed_safe": {
+      "train": {
+        "count": 6307.0,
+        "mean": 0.4652766767084192,
+        "std": 0.2742216140462647
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.46980337078651685,
+        "std": 0.27244928523001427
       }
     },
     "county": {
@@ -90,6 +114,90 @@
         "Man": 626,
         "Other (please specify)": 12,
         "Woman": 725
+      }
+    },
+    "gun_enthusiasm": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.4411345270163207,
+        "std": 0.6161459169433988
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.42696629213483145,
+        "std": 0.6250867885708371
+      }
+    },
+    "gun_identity": {
+      "train": {},
+      "validation": {}
+    },
+    "gun_importance": {
+      "train": {
+        "count": 6307.0,
+        "mean": 2.8810845092754085,
+        "std": 0.9315236901331612
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 2.956460674157303,
+        "std": 1.0676882783328818
+      }
+    },
+    "gun_index": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.41039454919980983,
+        "std": 0.27811220391675845
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.4488061797752808,
+        "std": 0.2921467069620616
+      }
+    },
+    "gun_index_2": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.4393222151798447,
+        "std": 0.27759601213912094
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.47290496254681647,
+        "std": 0.2903928172578459
+      }
+    },
+    "gun_ownership": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.326889557914752,
+        "std": 0.4690765127791521
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.31320224719101125,
+        "std": 0.4637958597761648
+      }
+    },
+    "gun_policy": {
+      "train": {},
+      "validation": {}
+    },
+    "gun_priority": {
+      "train": {},
+      "validation": {}
+    },
+    "handgun_ban": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.6485105371573443,
+        "std": 0.3330120194202008
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.7120786516853933,
+        "std": 0.30670440055455733
       }
     },
     "household_income": {
@@ -678,6 +786,18 @@
       "train": {},
       "validation": {}
     },
+    "right_to_own_importance": {
+      "train": {
+        "count": 6303.0,
+        "mean": 0.3444391559574806,
+        "std": 0.47518504164249414
+      },
+      "validation": {
+        "count": 708.0,
+        "mean": 0.3545197740112994,
+        "std": 0.4783675405441684
+      }
+    },
     "social_media_use": {
       "train": {},
       "validation": {}
@@ -685,6 +805,18 @@
     "state": {
       "train": {},
       "validation": {}
+    },
+    "stricter_laws": {
+      "train": {
+        "count": 6311.0,
+        "mean": 0.29468388527967043,
+        "std": 0.330451342470137
+      },
+      "validation": {
+        "count": 712.0,
+        "mean": 0.35217696629213485,
+        "std": 0.3513199942301218
+      }
     },
     "trump_approval": {
       "train": {},

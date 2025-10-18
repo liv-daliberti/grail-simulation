@@ -41,14 +41,14 @@ from itertools import islice
 from collections import defaultdict, Counter
 
 import numpy as np
-from datasets import load_dataset, DownloadConfig
+from datasets import DatasetDict, load_dataset, load_from_disk
 
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
 
 # ─────────────────────────── Data config (no YAML) ─────────────────────────────
-DATASET_NAME    = "od2961/grail-interactions"  # HF dataset repo id
-TRAIN_SPLIT     = "train"
-EVAL_SPLIT      = "validation"
+DEFAULT_DATASET_SOURCE = "data/cleaned_grail"
+TRAIN_SPLIT = "train"
+EVAL_SPLIT = "validation"
 PROMPT_COLUMN   = "state_text"                 # optional; becomes CONTEXT:
 SOLUTION_COLUMN = "video_id"                   # gold “current” video id for this row
 
@@ -60,6 +60,41 @@ DEFAULT_TITLE_DIRS = [
 ]
 
 PROMPT_MAX_HISTORY = int(os.environ.get("KNN_PROMPT_MAX_HISTORY", os.environ.get("GRAIL_MAX_HISTORY", "12")))
+
+
+def _load_dataset_source(source: str, cache_dir: str) -> DatasetDict:
+    """Load a cleaned dataset from disk or from the Hub."""
+    if os.path.isdir(source):
+        return load_from_disk(source)
+    ds = load_dataset(source, cache_dir=cache_dir)
+    if isinstance(ds, DatasetDict):
+        return ds
+    raise ValueError(f"Dataset {source!r} did not return splits in a DatasetDict")
+
+
+def _issues_in_dataset(ds: DatasetDict) -> List[str]:
+    train_split = ds.get(TRAIN_SPLIT) or next(iter(ds.values()))
+    if "issue" not in train_split.column_names:
+        return ["all"]
+    issues = sorted({str(x).strip() for x in train_split["issue"] if str(x).strip()})
+    return issues or ["all"]
+
+
+def _filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
+    if issue == "all" or "issue" not in ds[TRAIN_SPLIT].column_names:
+        return ds
+
+    def _match_issue(row):
+        value = row.get("issue")
+        return str(value).strip() == issue
+
+    filtered: Dict[str, Any] = {}
+    for split_name, split_ds in ds.items():
+        if "issue" not in split_ds.column_names:
+            filtered[split_name] = split_ds
+        else:
+            filtered[split_name] = split_ds.filter(_match_issue)
+    return DatasetDict(filtered)
 
 # ───────────────────────────── Helpers / canon ─────────────────────────────────
 ANS_TAG   = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
@@ -801,7 +836,7 @@ def load_tfidf_index(in_dir: str) -> Dict[str, Any]:
 
 # ───────────────────────────── Training KNN ─────────────────────────────
 def build_knn_index(
-    cache_dir: str,
+    train_ds,
     max_train: int = 100_000,
     seed: int = 42,
     max_features: int | None = 200_000,
@@ -811,8 +846,6 @@ def build_knn_index(
     Returns: {"vectorizer", "X", "labels_id", "labels_title"}.
     """
 
-    import numpy as np
-    from datasets import load_dataset
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     def _safe_str(x) -> str:
@@ -829,9 +862,7 @@ def build_knn_index(
         sl = s.lower()
         return sl not in {"", "nan", "none", "(none)"}
 
-    # ------------- load train -------------
-    ds = load_dataset(DATASET_NAME, split=TRAIN_SPLIT, cache_dir=cache_dir)
-    n = len(ds)
+    n = len(train_ds)
     if n == 0:
         raise RuntimeError("Train split is empty.")
 
@@ -848,7 +879,7 @@ def build_knn_index(
 
     # ------------- assemble documents -------------
     for i in order:
-        ex = ds[int(i)]  # ensure plain int indexing
+        ex = train_ds[int(i)]  # ensure plain int indexing
 
         parts: list[str] = []
         used_prompt = False
@@ -918,7 +949,7 @@ def build_knn_index(
     kept = sum(mask)
     if kept == 0:
         # Helpful diagnostics: show which fields exist in train
-        sample_cols = sorted(list(ds.features.keys()))
+        sample_cols = sorted(list(train_ds.features.keys()))
         raise RuntimeError(
             "All training documents are empty. Check columns on TRAIN split.\n"
             f"Seen columns: {sample_cols}\n"
@@ -969,139 +1000,155 @@ def _bucket_from_pos(pos_idx: int) -> str:
 def safe_div(n, d): return (n / d) if d else 0.0
 
 def run_eval(args):
-    """
-    Evaluate TF-IDF kNN constrained to the current slate:
-      • Parses --knn_text_fields and passes them into the TF-IDF query builder
-      • Can fit+save or load an index
-      • Computes the same diagnostics you capture for GPT-4o
-    """
-    logging.info("Loading dataset %s", DATASET_NAME)
+    """Evaluate the TF-IDF kNN baseline for each issue in the dataset."""
+    os.environ.setdefault("HF_DATASETS_CACHE", args.cache_dir)
+    os.environ.setdefault("HF_HOME", args.cache_dir)
 
-    # Normalize extra text fields once
+    dataset_source = args.dataset or DEFAULT_DATASET_SOURCE
+    base_ds = _load_dataset_source(dataset_source, args.cache_dir)
+    available_issues = _issues_in_dataset(base_ds)
+
+    if args.issues:
+        requested = [s.strip() for s in args.issues.split(",") if s.strip()]
+        issues = requested if requested else available_issues
+    else:
+        issues = available_issues
+
     extra_fields = []
     if getattr(args, "knn_text_fields", ""):
         extra_fields = [s.strip() for s in args.knn_text_fields.split(",") if s.strip()]
 
-    # Make sure HF caches go somewhere you control
-    os.environ.setdefault("HF_DATASETS_CACHE", args.cache_dir)
-    os.environ.setdefault("HF_HOME", args.cache_dir)
+    for issue in issues:
+        ds_issue = _filter_dataset_for_issue(base_ds, issue)
 
-    # Build/load TF-IDF kNN index
-    knn_idx = {}
+        if TRAIN_SPLIT not in ds_issue:
+            logging.warning("[KNN] train split missing for issue '%s'; skipping.", issue)
+            continue
+        train_ds = ds_issue[TRAIN_SPLIT]
+        if len(train_ds) == 0:
+            logging.warning("[KNN] train split empty for issue '%s'; skipping.", issue)
+            continue
+
+        if EVAL_SPLIT in ds_issue:
+            eval_split_name = EVAL_SPLIT
+        else:
+            for alt in ("validation", "eval", "test"):
+                if alt in ds_issue:
+                    eval_split_name = alt
+                    break
+            else:
+                logging.warning("[KNN] no eval split for issue '%s'; skipping.", issue)
+                continue
+
+        eval_ds = ds_issue[eval_split_name]
+        if len(eval_ds) == 0:
+            logging.warning("[KNN] evaluation split empty for issue '%s'; skipping.", issue)
+            continue
+
+        run_eval_for_issue(
+            dataset_source=dataset_source,
+            issue=issue,
+            train_ds=train_ds,
+            eval_ds=eval_ds,
+            eval_split_name=eval_split_name,
+            args=args,
+            extra_fields=extra_fields,
+        )
+
+
+def run_eval_for_issue(
+    *,
+    dataset_source: str,
+    issue: str,
+    train_ds,
+    eval_ds,
+    eval_split_name: str,
+    args,
+    extra_fields: List[str],
+) -> None:
+    issue_slug = issue if issue != "all" else "all"
+    logging.info(
+        "[KNN] Evaluating issue=%s (train=%d, eval=%d)",
+        issue_slug,
+        len(train_ds),
+        len(eval_ds),
+    )
+
+    knn_idx: Dict[str, Any] = {}
     if args.fit_index:
-        knn_idx = build_knn_index(args.cache_dir, max_train=args.knn_max_train, seed=args.knn_seed)
+        knn_idx = build_knn_index(
+            train_ds,
+            max_train=args.knn_max_train,
+            seed=args.knn_seed,
+        )
         if args.save_index:
-            try:
-                save_tfidf_index(knn_idx, args.save_index)
-            except NameError:
-                logging.warning("[KNN] save_tfidf_index not found; skipping index save.")
+            save_dir = Path(args.save_index)
+            if issue_slug:
+                save_dir = save_dir / issue_slug
+            save_tfidf_index(knn_idx, str(save_dir))
 
     if args.load_index:
-        try:
-            knn_idx = load_tfidf_index(args.load_index)
-        except NameError:
-            logging.warning("[KNN] load_tfidf_index not found; cannot load index from %s", args.load_index)
+        load_dir = Path(args.load_index)
+        if issue_slug:
+            load_dir = load_dir / issue_slug
+        if load_dir.exists():
+            knn_idx = load_tfidf_index(str(load_dir))
+        else:
+            logging.warning("[KNN] Index directory %s not found for issue '%s'.", load_dir, issue_slug)
 
     if not knn_idx:
-        logging.warning("[KNN] No index available; evaluation will still run but predictions will be None.")
+        logging.warning("[KNN] No index available for issue '%s'; predictions will be None.", issue_slug)
 
-    # Try normal (cached) mode first; fall back to streaming on disk error
-    use_streaming = False
-    try:
-        ds = load_dataset(
-            DATASET_NAME,
-            cache_dir=args.cache_dir,
-            download_config=DownloadConfig(resume_download=True, max_retries=2),
-        )
-    except Exception as e:
-        msg = str(e)
-        if "Not enough disk space" in msg or "Insufficient space" in msg:
-            logging.warning("Low disk space detected; falling back to streaming mode.")
-            use_streaming = True
-        else:
-            raise
+    indices = list(range(len(eval_ds)))
+    if args.eval_max and args.eval_max > 0:
+        indices = indices[: min(args.eval_max, len(indices))]
 
-    # pick eval split
-    if use_streaming:
-        eval_split = EVAL_SPLIT
-        try:
-            data_iter = load_dataset(DATASET_NAME, split=eval_split, streaming=True)
-        except Exception:
-            for alt in ("validation", "eval", "test"):
-                try:
-                    data_iter = load_dataset(DATASET_NAME, split=alt, streaming=True)
-                    eval_split = alt
-                    break
-                except Exception:
-                    continue
-            else:
-                raise RuntimeError("No eval split available for streaming.")
-        if args.eval_max and args.eval_max > 0:
-            data_iter = islice(data_iter, args.eval_max)
-        n_eval_target = None
-    else:
-        if EVAL_SPLIT in ds:
-            eval_split = EVAL_SPLIT
-        else:
-            for alt in ("validation", "eval", "test"):
-                if alt in ds:
-                    eval_split = alt
-                    break
-            else:
-                raise ValueError(f"No eval split found in {list(ds.keys())}")
-        full = ds[eval_split]
-        if args.eval_max and args.eval_max > 0:
-            data = full.select(range(min(args.eval_max, len(full))))
-        else:
-            data = full
-        data_iter = iter(data)
-        n_eval_target = len(data)
+    out_dir = Path(args.out_dir) / issue_slug
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    out_dir = Path(args.out_dir); out_dir.mkdir(parents=True, exist_ok=True)
-    out_jsonl    = out_dir / f"knn_eval_{eval_split}.jsonl"
-    metrics_json = out_dir / f"knn_eval_{eval_split}_metrics.json"
+    out_jsonl = out_dir / f"knn_eval_{issue_slug}_{eval_split_name}.jsonl"
+    metrics_json = out_dir / f"knn_eval_{issue_slug}_{eval_split_name}_metrics.json"
     if out_jsonl.exists() and not args.overwrite:
         print(f"[SKIP] Output exists (use --overwrite): {out_jsonl}")
+        return
+
     w = open(out_jsonl, "w", encoding="utf-8")
 
-    # -------------------- counters --------------------
     correct_overall = 0
     eligible_overall = 0
 
-    # position buckets
-    buckets = ["1","2","3","4","5+","unknown"]
+    buckets = ["1", "2", "3", "4", "5+", "unknown"]
     seen_b = {b: 0 for b in buckets}
     elig_b = {b: 0 for b in buckets}
     corr_b = {b: 0 for b in buckets}
 
-    # n_options buckets + single/multi split
-    opts_buckets   = ["1","2","3","4","5+"]
-    seen_opts_b    = {b: 0 for b in opts_buckets}
-    elig_opts_b    = {b: 0 for b in opts_buckets}
-    corr_opts_b    = {b: 0 for b in opts_buckets}
+    opts_buckets = ["1", "2", "3", "4", "5+"]
+    seen_opts_b = {b: 0 for b in opts_buckets}
+    elig_opts_b = {b: 0 for b in opts_buckets}
+    corr_opts_b = {b: 0 for b in opts_buckets}
 
     seen_single = seen_multi = 0
     elig_single = elig_multi = 0
     corr_single = corr_multi = 0
 
-    # gold index distribution / baselines
-    gold_hist = {}
-    all_gold_indices = []
-    all_n_options    = []
+    gold_hist: Dict[int, int] = {}
+    all_gold_indices: List[int] = []
+    all_n_options: List[int] = []
 
-    # -------------------- loop --------------------
     t0 = time.time()
     n_seen = 0
-    for ex in data_iter:
+    for idx in indices:
+        ex = eval_ds[int(idx)]
         n_seen += 1
 
-        # Build slate + gold index
         slate_pairs = _extract_slate_items(ex)
         nopts = len(slate_pairs)
         nbucket = _bin_nopts(nopts)
-        pos_idx = ex.get("video_index")
-        try: pos_idx = int(pos_idx) if pos_idx is not None else -1
-        except: pos_idx = -1
+        pos_idx_raw = ex.get("video_index")
+        try:
+            pos_idx = int(pos_idx_raw) if pos_idx_raw is not None else -1
+        except Exception:
+            pos_idx = -1
         pbucket = _bucket_from_pos(pos_idx)
         seen_b[pbucket] += 1
         seen_opts_b[nbucket] += 1
@@ -1111,9 +1158,9 @@ def run_eval(args):
         if slate_pairs:
             for i, (t, vid) in enumerate(slate_pairs, start=1):
                 if gold_raw and (gold_raw == vid or _canon(gold_raw) == _canon(t)):
-                    gold_idx = i; break
+                    gold_idx = i
+                    break
 
-        # KNN prediction (restricted to current slate)
         knn_idx_pred = None
         if nopts > 0 and gold_idx > 0 and knn_idx:
             try:
@@ -1126,7 +1173,6 @@ def run_eval(args):
             except Exception as e:
                 logging.warning("[KNN] prediction failed on row %d: %s", n_seen, e)
 
-        # eligibility & correctness
         eligible = (gold_idx > 0 and nopts > 0)
         if eligible:
             eligible_overall += 1
@@ -1145,16 +1191,21 @@ def run_eval(args):
 
         if eligible:
             if nopts == 1:
-                seen_single += 1; elig_single += 1
-                if is_correct: corr_single += 1
+                seen_single += 1
+                elig_single += 1
+                if is_correct:
+                    corr_single += 1
             else:
-                seen_multi  += 1; elig_multi += 1
-                if is_correct: corr_multi  += 1
+                seen_multi += 1
+                elig_multi += 1
+                if is_correct:
+                    corr_multi += 1
         else:
-            if nopts == 1: seen_single += 1
-            elif nopts > 1: seen_multi += 1
+            if nopts == 1:
+                seen_single += 1
+            elif nopts > 1:
+                seen_multi += 1
 
-        # write row
         out_row = {
             "knn_pred_index": int(knn_idx_pred) if knn_idx_pred is not None else None,
             "gold_index": int(gold_idx),
@@ -1163,22 +1214,22 @@ def run_eval(args):
             "eligible": bool(eligible),
             "position_index": int(pos_idx),
             "position_bucket": pbucket,
+            "issue": issue_slug if issue_slug != "all" else ex.get("issue"),
         }
         w.write(json.dumps(out_row, ensure_ascii=False) + "\n")
 
-        # progress
         if n_seen % 25 == 0:
             elapsed = time.time() - t0
             acc = safe_div(correct_overall, eligible_overall)
-            denom = n_eval_target if n_eval_target is not None else n_seen
-            print(f"[eval] {n_seen}/{denom}  acc={acc:.3f}  {elapsed:.1f}s")
+            denom = len(indices)
+            print(f"[eval][{issue_slug}] {n_seen}/{denom}  acc={acc:.3f}  {elapsed:.1f}s")
 
     w.close()
 
-    # -------------------- aggregate metrics --------------------
     n_eval_final = n_seen
-    overall_acc  = safe_div(correct_overall, eligible_overall)
+    overall_acc = safe_div(correct_overall, eligible_overall)
 
+    buckets = ["1", "2", "3", "4", "5+", "unknown"]
     pos_stats = {
         b: {
             "n_seen": int(seen_b[b]),
@@ -1188,11 +1239,12 @@ def run_eval(args):
         }
         for b in buckets
     }
+    opts_buckets = ["1", "2", "3", "4", "5+"]
     by_n_options = {
-        "hist_seen":      {b: int(seen_opts_b[b])   for b in opts_buckets},
-        "hist_eligible":  {b: int(elig_opts_b[b])   for b in opts_buckets},
-        "hist_correct":   {b: int(corr_opts_b[b])   for b in opts_buckets},
-        "accuracy":       {b: safe_div(corr_opts_b[b], elig_opts_b[b]) for b in opts_buckets},
+        "hist_seen": {b: int(seen_opts_b[b]) for b in opts_buckets},
+        "hist_eligible": {b: int(elig_opts_b[b]) for b in opts_buckets},
+        "hist_correct": {b: int(corr_opts_b[b]) for b in opts_buckets},
+        "accuracy": {b: safe_div(corr_opts_b[b], elig_opts_b[b]) for b in opts_buckets},
     }
     split_single_vs_multi = {
         "n_single": int(seen_single),
@@ -1200,7 +1252,7 @@ def run_eval(args):
         "eligible_single": int(elig_single),
         "eligible_multi": int(elig_multi),
         "accuracy_single": safe_div(corr_single, elig_single),
-        "accuracy_multi":  safe_div(corr_multi,  elig_multi),
+        "accuracy_multi": safe_div(corr_multi, elig_multi),
     }
 
     gold_index_distribution = {str(k): int(v) for k, v in sorted(gold_hist.items())}
@@ -1212,12 +1264,13 @@ def run_eval(args):
         top_idx = None
         baseline_acc = 0.0
 
-    random_baseline_expected_accuracy = float(np.mean([1.0/n for n in all_n_options])) if all_n_options else 0.0
+    random_baseline_expected_accuracy = float(np.mean([1.0 / n for n in all_n_options])) if all_n_options else 0.0
 
     metrics = {
         "model": "knn",
-        "dataset": DATASET_NAME,
-        "split": eval_split,
+        "dataset": dataset_source,
+        "issue": issue_slug,
+        "split": eval_split_name,
         "n_total": int(n_eval_final),
         "n_eligible": int(eligible_overall),
         "accuracy_overall": overall_acc,
@@ -1245,10 +1298,14 @@ def run_eval(args):
     with open(metrics_json, "w", encoding="utf-8") as mj:
         json.dump(metrics, mj, ensure_ascii=False, indent=2)
 
-    print(f"[DONE] split={eval_split}  n={n_eval_final}  eligible={eligible_overall}  "
-          f"knn_acc={overall_acc:.4f}")
+    print(
+        f"[DONE][{issue_slug}] split={eval_split_name}  n={n_eval_final}  eligible={eligible_overall}  "
+        f"knn_acc={overall_acc:.4f}"
+    )
     print(f"[WROTE] per-example: {out_jsonl}")
     print(f"[WROTE] metrics:     {metrics_json}")
+
+
 
 # ─────────────────────────────────── CLI ───────────────────────────────────────
 def main():
@@ -1267,6 +1324,10 @@ def main():
     ap.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs.")
     ap.add_argument("--cache_dir", default=os.path.join(os.getcwd(), "hf_cache"), help="HF datasets cache dir.")
     ap.add_argument("--knn_text_fields", default="", help="Comma-separated extra textual columns to include in TF-IDF query (e.g. 'extra1,extra2').")
+    ap.add_argument("--dataset", default=DEFAULT_DATASET_SOURCE,
+                    help="Cleaned dataset path (load_from_disk) or HF dataset id. Defaults to data/cleaned_grail.")
+    ap.add_argument("--issues", default="",
+                    help="Comma-separated issue names to evaluate (e.g. 'minimum_wage,gun_control'). Defaults to all issues found.")
     args = ap.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")

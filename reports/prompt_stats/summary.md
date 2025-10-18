@@ -45,10 +45,18 @@
 ## Feature figures
 
 - `Viewer age` → `reports/prompt_stats/figures/age.png`
+- `Supports assault weapons ban` → `reports/prompt_stats/figures/assault_ban.png`
 - `College graduate flag` → `reports/prompt_stats/figures/college.png`
+- `Believes concealed carry is safe` → `reports/prompt_stats/figures/concealed_safe.png`
 - `Favorite channels text` → `reports/prompt_stats/figures/favorite_channels.png`
 - `YouTube watch frequency code` → `reports/prompt_stats/figures/freq_youtube.png`
 - `Gender` → `reports/prompt_stats/figures/gender.png`
+- `Gun enthusiasm` → `reports/prompt_stats/figures/gun_enthusiasm.png`
+- `Gun importance` → `reports/prompt_stats/figures/gun_importance.png`
+- `Gun index` → `reports/prompt_stats/figures/gun_index.png`
+- `Gun index (alternate)` → `reports/prompt_stats/figures/gun_index_2.png`
+- `Gun ownership flag` → `reports/prompt_stats/figures/gun_ownership.png`
+- `Supports handgun ban` → `reports/prompt_stats/figures/handgun_ban.png`
 - `Household income bracket` → `reports/prompt_stats/figures/household_income.png`
 - `Political ideology` → `reports/prompt_stats/figures/ideology.png`
 - `$15 minimum wage support (wave 1)` → `reports/prompt_stats/figures/minwage15_w1.png`
@@ -66,5 +74,7 @@
 - `Political interest` → `reports/prompt_stats/figures/political_interest.png`
 - `Popular channels followed` → `reports/prompt_stats/figures/popular_channels_followed.png`
 - `Race / ethnicity` → `reports/prompt_stats/figures/race_ethnicity.png`
+- `Right to own importance` → `reports/prompt_stats/figures/right_to_own_importance.png`
+- `Supports stricter gun laws` → `reports/prompt_stats/figures/stricter_laws.png`
 - `prior_history_counts` → `reports/prompt_stats/figures/prior_history_counts.png`
 - `slate_size_counts` → `reports/prompt_stats/figures/slate_size_counts.png`

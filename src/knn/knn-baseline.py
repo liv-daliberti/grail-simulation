@@ -40,9 +40,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from collections import defaultdict, Counter
 
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 from datasets import DatasetDict, load_dataset, load_from_disk
 
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
@@ -85,6 +82,17 @@ def _issues_in_dataset(ds: DatasetDict) -> List[str]:
 def _filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
     if issue == "all" or "issue" not in ds[TRAIN_SPLIT].column_names:
         return ds
+    def _match_issue(row):
+        value = row.get("issue")
+        return str(value).strip() == issue
+
+    filtered: Dict[str, Any] = {}
+    for split_name, split_ds in ds.items():
+        if "issue" not in split_ds.column_names:
+            filtered[split_name] = split_ds
+        else:
+            filtered[split_name] = split_ds.filter(_match_issue)
+    return DatasetDict(filtered)
 
 
 def _parse_k_values(args) -> List[int]:
@@ -140,6 +148,14 @@ def _resolve_reports_dir(out_dir: Path) -> Path:
 
 
 def _plot_elbow(k_values: List[int], accuracy_by_k: Dict[int, float], best_k: int, output_path: Path) -> None:
+    try:
+        import matplotlib
+        matplotlib.use("Agg", force=True)
+        import matplotlib.pyplot as plt
+    except Exception as exc:
+        logging.warning("[KNN] Skipping elbow plot (%s)", exc)
+        return
+
     plt.figure(figsize=(6, 4))
     ys = [accuracy_by_k.get(k, 0.0) for k in k_values]
     plt.plot(k_values, ys, marker='o', label='Accuracy')
@@ -154,19 +170,6 @@ def _plot_elbow(k_values: List[int], accuracy_by_k: Dict[int, float], best_k: in
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()
-
-
-    def _match_issue(row):
-        value = row.get("issue")
-        return str(value).strip() == issue
-
-    filtered: Dict[str, Any] = {}
-    for split_name, split_ds in ds.items():
-        if "issue" not in split_ds.column_names:
-            filtered[split_name] = split_ds
-        else:
-            filtered[split_name] = split_ds.filter(_match_issue)
-    return DatasetDict(filtered)
 
 # ───────────────────────────── Helpers / canon ─────────────────────────────────
 ANS_TAG   = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
@@ -1213,9 +1216,9 @@ def run_eval_for_issue(
         seen_b[pbucket] += 1
         seen_opts_b[nbucket] += 1
 
+        gold_idx = int(ex.get("gold_index") or -1)
         gold_raw = str(ex.get(SOLUTION_COLUMN, "")).strip()
-        gold_idx = -1
-        if slate_pairs:
+        if gold_idx < 1 and slate_pairs:
             for i, (t, vid) in enumerate(slate_pairs, start=1):
                 if gold_raw and (gold_raw == vid or _canon(gold_raw) == _canon(t)):
                     gold_idx = i

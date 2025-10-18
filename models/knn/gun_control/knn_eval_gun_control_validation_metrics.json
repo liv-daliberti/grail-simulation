@@ -1,0 +1,115 @@
+{
+  "model": "knn",
+  "dataset": "/n/fs/similarity/grail-simulation/data/cleaned_grail",
+  "issue": "gun_control",
+  "split": "validation",
+  "n_total": 982,
+  "n_eligible": 0,
+  "accuracy_overall": 0.0,
+  "accuracy_by_k": {
+    "5": 0.0,
+    "10": 0.0,
+    "25": 0.0,
+    "50": 0.0
+  },
+  "best_k": 10,
+  "position_stats": {
+    "1": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "2": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "3": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "4": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "5+": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "unknown": {
+      "n_seen": 982,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0
+    }
+  },
+  "by_n_options": {
+    "hist_seen": {
+      "1": 127,
+      "2": 308,
+      "3": 12,
+      "4": 114,
+      "5+": 421
+    },
+    "hist_eligible": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5+": 0
+    },
+    "hist_correct": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5+": 0
+    },
+    "accuracy": {
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5+": 0.0
+    }
+  },
+  "split_single_vs_multi": {
+    "n_single": 127,
+    "n_multi": 855,
+    "eligible_single": 0,
+    "eligible_multi": 0,
+    "accuracy_single": 0.0,
+    "accuracy_multi": 0.0
+  },
+  "gold_index_distribution": {},
+  "baseline_most_frequent_gold_index": {
+    "top_index": null,
+    "count": 0,
+    "accuracy": 0.0
+  },
+  "random_baseline_expected_accuracy": 0.0,
+  "knn_hparams": {
+    "k": 25,
+    "k_sweep": [
+      5,
+      10,
+      25,
+      50
+    ],
+    "metric": "cosine",
+    "fit_index": true,
+    "save_index": "",
+    "load_index": "",
+    "text_fields": []
+  },
+  "elbow_plot": "/n/fs/similarity/grail-simulation/reports/knn/elbow_gun_control.png",
+  "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown."
+}

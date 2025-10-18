@@ -56,6 +56,7 @@ setup(
         # Critical bug fix for tokenizer revisions
         "lighteval @ git+https://github.com/huggingface/lighteval.git@d3da6b9bbf38104c8b5e1acc86f83541f9a502d1",
         "math-verify==0.5.2",
+        "matplotlib>=3.7.0",
         "morphcloud==0.1.67",
         "numpy>=1.24.0",
         "packaging>=23.0",

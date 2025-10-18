@@ -105,6 +105,19 @@ Public Hugging Face copies of the cleaned splits:
 - Minimum wage: https://huggingface.co/datasets/od2961/grail-wage
 - Gun control: https://huggingface.co/datasets/od2961/grail-gun
 
+Builder note: rows missing all survey demographics (age, gender, race, income, etc.) are dropped during cleaning so every retained interaction has viewer context for the prompt builder. Expect the cleaned splits to be smaller than the raw session logs. (~22% of ~33k rows do not have any demographic data and were thusly excluded). After discussion with original data collection team, it was noted that:
+
+"The short answer is that sessions.json contains EVERYTHING. Every test run, every study. In addition to the studies that involved watching videos on the platform, it also contains sessions from the “First Impressions” study, which involved only rating thumbnails, and the “Shorts” study (Study 4 in the paper, I believe), which involved no user decisions (instead playing a sequence of predetermined videos that were either constant or increasing in their extremeness). All of these are differentiated by the topicId.
+
+Therefore, I wouldn’t be surprised that the number of sessions greatly outstrips the actual amount of data present in sessions.json. I would check that the sessions match the number of participants per study reported in the paper" -- Emily Hu at UPenn 
+
+Our work only considers Gun Control and Minimum Wage issues; therefore, we automatically exclude everything else. The original paper includes:
+
+Gun rights (Study 1): 1,650 participants in the final analytic sample.
+Minimum wage (Studies 2–4): 1,679 (Study 2, MTurk) + 2,715 (Study 3, YouGov) + 932 (Study 4) = 5,326 participants in the final analytic sample.
+
+Our work includes 
+
 ### What Each Row Contains
 
 - Viewer survey attributes from the underlying PNAS study (three waves, 300+ columns) merged by `urlid`/`topic_id`.

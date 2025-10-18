@@ -318,6 +318,22 @@ NUMERIC_SUFFIXES = {
     "duration": ["Duration", "duration", "DurationSeconds", "duration_seconds"],
 }
 
+DEMOGRAPHIC_COLUMNS = [
+    "age",
+    "gender",
+    "q26",
+    "q29",
+    "race",
+    "ethnicity",
+    "q31",
+    "income",
+    "household_income",
+    "pid1",
+    "ideo1",
+    "freq_youtube",
+    "college",
+]
+
 
 def _assign_if_missing(info: Dict[str, Any], key: str, value: Any) -> None:
     """Populate ``info[key]`` with ``value`` when the destination field is empty."""
@@ -1051,6 +1067,20 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
     if not df.empty:
         sample_rows = df.head(2).to_dict(orient="records")
         log.info("Sample cleaned rows (first 2): %s", json.dumps(sample_rows, ensure_ascii=False))
+        demographic_cols = [c for c in DEMOGRAPHIC_COLUMNS if c in df.columns]
+        if demographic_cols:
+            has_demo_mask = df[demographic_cols].apply(
+                lambda row: any(not _is_nanlike(row.get(col)) for col in demographic_cols),
+                axis=1,
+            )
+            dropped = int((~has_demo_mask).sum())
+            if dropped:
+                log.info(
+                    "Dropping %d rows missing demographic fields (checked columns=%s)",
+                    dropped,
+                    demographic_cols,
+                )
+            df = df.loc[has_demo_mask].reset_index(drop=True)
     log.info("Interaction statistics: %s", dict(interaction_stats))
     return df
 

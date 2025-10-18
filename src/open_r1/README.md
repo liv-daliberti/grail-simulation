@@ -1,4 +1,4 @@
-# Open R1 Reinforcement Trainers
+# Open-R1 Reinforcement Learning Trainers
 
 This submodule contains the reinforcement-learning tooling used in the GRAIL simulation project. It ships:
 
@@ -111,4 +111,6 @@ Both trainers consume the same YAML schema (see `recipes/Qwen2.5-1.5B-Instruct/g
 4. **Launch via SLURM** (`training/training-grpo.sh` or `training/training-grail.sh`) or run the Python entrypoint directly for small-scale tests.
 5. **Monitor logs** in `logs/train_*` (trainer metrics) and `.wandb/` if Weights & Biases logging is enabled. The scripts also log the resolved reward functions and weights at startup.
 
-With this workflow you can iterate on prompt design, reward shaping, and GAIL hyper-parameters without modifying the core trainers—most behaviour is driven by the YAML recipes and environment variables described above. For a concrete run-through featuring both trainers, refer to the accompanying Weights & Biases report: https://wandb.ai/ogd3-princeton-university/grail/reports/GRAIL--VmlldzoxNDc2NDk2Mw?accessToken=t4hs02nleorgeuklpjtzganan4pizwxry6ld2c44t09nfxrmv1woks2xiy6fh0zy.
+With this workflow you can iterate on prompt design, reward shaping, and GAIL hyper-parameters without modifying the core trainers—most behaviour is driven by the YAML recipes and environment variables described above. 
+
+For a concrete run-through featuring both trainers, refer to the accompanying [Weights & Biases report](https://wandb.ai/ogd3-princeton-university/grail/reports/GRAIL--VmlldzoxNDc2NDk2Mw?accessToken=t4hs02nleorgeuklpjtzganan4pizwxry6ld2c44t09nfxrmv1woks2xiy6fh0zy)

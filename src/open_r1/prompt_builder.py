@@ -17,21 +17,6 @@ YT_FREQ_MAP = {
     "5": "daily",
 }
 
-GUN_FIELD_LABELS: Dict[str, str] = {
-    "right_to_own_importance": "Right-to-own importance",
-    "assault_ban": "Supports assault weapons ban",
-    "handgun_ban": "Supports handgun ban",
-    "concealed_safe": "Believes concealed carry is safe",
-    "stricter_laws": "Supports stricter gun laws",
-    "gun_index": "Gun index",
-    "gun_index_2": "Gun index (alt)",
-    "gun_enthusiasm": "Gun enthusiasm",
-    "gun_importance": "Gun importance",
-    "gun_priority": "Gun policy priority",
-    "gun_policy": "Gun policy stance",
-    "gun_identity": "Gun identity",
-}
-
 MIN_WAGE_FIELD_LABELS: Dict[str, str] = {
     "minwage_text_r_w1": "Minimum wage stance (wave 1, inferred)",
     "minwage_text_r_w2": "Minimum wage stance (wave 2, inferred)",
@@ -220,15 +205,52 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     if not viewer:
         viewer = synthesize_viewer_sentence(ex)
     lines.append("PROFILE:")
-    lines.append(viewer or "(no profile provided)")
 
-    def _append_section(title: str, entries: List[str]) -> None:
-        if not entries:
-            return
-        lines.append("")
-        lines.append(f"{title}:")
-        for entry in entries:
-            lines.append(f"- {entry}")
+    def _ensure_sentence(text: str) -> str:
+        text = (text or "").strip()
+        if not text:
+            return ""
+        if text[-1] in ".!?":
+            return text
+        return text + "."
+
+    def _phrases_from_items(items: List[str]) -> List[str]:
+        phrases: List[str] = []
+        for item in items:
+            item = item.strip()
+            if not item:
+                continue
+            if ":" in item:
+                label, value = item.split(":", 1)
+                label_clean = label.strip()
+                value_clean = value.strip()
+                if not label_clean and not value_clean:
+                    continue
+                if not value_clean:
+                    phrases.append(label_clean)
+                    continue
+                label_phrase = label_clean
+                if label_phrase and label_phrase[1:].lower() == label_phrase[1:]:
+                    label_phrase = label_phrase[0].lower() + label_phrase[1:]
+                label_lower = label_clean.lower()
+                value_lower = value_clean.lower()
+                if label_lower and label_lower in value_lower:
+                    phrases.append(value_clean)
+                elif value_lower in {"yes", "no"}:
+                    phrases.append(f"{label_phrase} {value_lower}")
+                else:
+                    phrases.append(f"{label_phrase} {value_clean}")
+            else:
+                phrases.append(item)
+        return phrases
+
+    def _sentencize(prefix: str, items: List[str]) -> str:
+        phrases = _phrases_from_items(items)
+        if not phrases:
+            return ""
+        if len(phrases) == 1:
+            return f"{prefix} {phrases[0]}."
+        return f"{prefix} {', '.join(phrases[:-1])}, and {phrases[-1]}."
 
     def _first_raw(*keys: str):
         for key in keys:
@@ -241,6 +263,16 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         if value is None:
             return ""
         return clean_text(value, limit=limit)
+
+    profile_sentences: List[str] = []
+    viewer_placeholder = False
+    if viewer:
+        normalized_viewer = viewer.strip().lower()
+        if normalized_viewer in {"(no profile provided)", "no profile provided"}:
+            viewer_placeholder = True
+        ensured = _ensure_sentence(viewer)
+        if ensured:
+            profile_sentences.append(ensured)
 
     demographics: List[str] = []
     age_text = _format_age(_first_raw("age"))
@@ -309,7 +341,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     if veteran_text:
         demographics.append(f"Veteran: {veteran_text}")
 
-    _append_section("DEMOGRAPHICS", demographics)
+    demo_sentence = _sentencize("Demographics include", demographics)
+    if demo_sentence:
+        profile_sentences.append(demo_sentence)
 
     politics: List[str] = []
     party_text = _first_text("pid1", "party_id", "party_registration")
@@ -343,50 +377,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     if civic_engagement:
         politics.append(f"Civic engagement: {civic_engagement}")
 
-    _append_section("POLITICS", politics)
-
-    gun_section: List[str] = []
-    gun_own_val = _first_raw("gun_own", "gunowner", "owns_gun")
-    if gun_own_val is not None:
-        gun_own_text = _format_yes_no(gun_own_val, yes="owns a gun", no="does not own a gun")
-        if gun_own_text:
-            gun_section.append(f"Gun ownership: {gun_own_text}")
-        else:
-            custom = clean_text(gun_own_val)
-            if custom:
-                gun_section.append(f"Gun ownership: {custom}")
-
-    known_gun_keys = {"gun_own", "gunowner", "owns_gun"}
-    for key, label in GUN_FIELD_LABELS.items():
-        value = _first_raw(key)
-        if value is None:
-            continue
-        known_gun_keys.add(key.lower())
-        text = _format_yes_no(value)
-        if text is None:
-            text = clean_text(value, limit=200)
-        if text:
-            gun_section.append(f"{label}: {text}")
-
-    for key in sorted(ex.keys()):
-        low = key.lower()
-        if not low.startswith("gun_"):
-            continue
-        if low in known_gun_keys:
-            continue
-        value = ex.get(key)
-        if _is_nanlike(value):
-            continue
-        text = clean_text(value, limit=200)
-        if not text:
-            continue
-        label = low[4:].replace("_", " ").strip().capitalize()
-        if not label:
-            continue
-        gun_section.append(f"{label}: {text}")
-        known_gun_keys.add(low)
-
-    _append_section("GUN POLICY", gun_section)
+    politics_sentence = _sentencize("Politics include", politics)
+    if politics_sentence:
+        profile_sentences.append(politics_sentence)
 
     wage_section: List[str] = []
     for key, label in MIN_WAGE_FIELD_LABELS.items():
@@ -423,7 +416,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         wage_section.append(f"{label.capitalize()}: {text}")
         known_wage_keys.add(low)
 
-    _append_section("MINIMUM WAGE", wage_section)
+    wage_sentence = _sentencize("Minimum wage views include", wage_section)
+    if wage_sentence:
+        profile_sentences.append(wage_sentence)
 
     media_section: List[str] = []
     fy_raw = _first_raw("freq_youtube")
@@ -464,32 +459,19 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         media_section.append(f"{label}: {text}")
         seen_media_labels.add(label)
 
-    _append_section("MEDIA HABITS", media_section)
+    media_sentence = _sentencize("Media habits include", media_section)
+    if media_sentence:
+        profile_sentences.append(media_sentence)
 
-    session_section: List[str] = []
-    issue_text = _first_text("issue")
-    if issue_text:
-        session_section.append(f"Issue: {issue_text}")
-    issue_detail = _first_text("issue_detail")
-    if issue_detail:
-        session_section.append(f"Issue detail: {issue_detail}")
-    issue_source = _first_text("issue_source")
-    if issue_source:
-        session_section.append(f"Issue source: {issue_source}")
-    session_id_text = _first_text("session_id")
-    if session_id_text:
-        session_section.append(f"Session ID: {session_id_text}")
-    step_text = _first_text("display_step", "step_index")
-    if step_text:
-        session_section.append(f"Step: {step_text}")
-    slate_source = _first_text("slate_source")
-    if slate_source:
-        session_section.append(f"Slate source: {slate_source}")
-    n_options_text = _first_text("n_options")
-    if n_options_text:
-        session_section.append(f"Options in slate: {n_options_text}")
+    if viewer_placeholder and len(profile_sentences) > 1:
+        profile_sentences = [s for s in profile_sentences if "(no profile provided)" not in s.lower()]
+    if viewer_placeholder and profile_sentences and all("(no profile provided)" in s.lower() for s in profile_sentences):
+        profile_sentences = []
 
-    _append_section("SESSION CONTEXT", session_section)
+    profile_text = " ".join(sentence for sentence in profile_sentences if sentence)
+    if not profile_text:
+        profile_text = "Profile information is unavailable."
+    lines.append(profile_text)
 
     current_title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
@@ -503,10 +485,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         current_line_parts.append(f"id: {current_id}")
     elif not current_title and current_id:
         current_line_parts.append(f"id: {current_id}")
+    current_section: List[str] = []
     if current_line_parts:
-        lines.append("")
-        lines.append("CURRENT VIDEO:")
-        lines.append(" — ".join(current_line_parts))
+        current_section = ["", "CURRENT VIDEO:", " — ".join(current_line_parts)]
 
     vids = as_list_json(ex.get("watched_vids_json"))
     det = as_list_json(ex.get("watched_detailed_json"))
@@ -560,6 +541,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
             if extras:
                 descriptor = f"{descriptor} — {', '.join(extras)}"
             lines.append(f"{idx}. {descriptor}")
+
+    if current_section:
+        lines.extend(current_section)
 
     items = ex.get("slate_items_json")
     items = as_list_json(items)

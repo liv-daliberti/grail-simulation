@@ -61,7 +61,7 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1
 
 num_generations: 4
-num_train_epochs: 3
+num_train_epochs: 10
 max_steps: -1
 
 output_dir: models/Qwen2.5-1.5B-OpenR1-GRAIL

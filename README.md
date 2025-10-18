@@ -19,7 +19,7 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 ├── docs/                     # Figures used in the paper and README
 ├── recipes/                  # Training configuration files organised by model family
 ├── src/
-│   ├── open_r1/              # Supervised fine-tuning + GRPO reinforcement learning trainers and helpers
+│   ├── open_r1/              # Supervised fine-tuning + GRPO reinforcement learning trainers and helpers (see src/open_r1/README.md)
 │   ├── gpt-4o/               # GPT-4o evaluation scripts for slate prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline implementation
 │   └── visualization/        # Graphviz-based recommendation tree and session visualisation tools

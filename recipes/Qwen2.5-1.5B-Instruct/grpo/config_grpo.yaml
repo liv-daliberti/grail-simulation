@@ -61,16 +61,16 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1
 
 num_generations: 4
-num_train_epochs: 3
+num_train_epochs: 10
 max_steps: -1
 
-output_dir: models/Qwen2.5-1.5B-OpenR1-GRAIL
+output_dir: models/Qwen2.5-1.5B-OpenR1-GRPO
 save_strategy: steps
 save_steps: 10
 save_total_limit: 500
 
 evaluation_strategy: steps
-eval_steps: 5
+eval_steps: 10
 
 logging_strategy: steps
 logging_steps: 1
@@ -104,5 +104,5 @@ log_grad_norm_after_clip: true
 # ===== Repro / hub =====
 seed: 42
 push_to_hub: true
-hub_model_id: od2961/Qwen2.5-1.5B-OpenR1-GRAIL
+hub_model_id: od2961/Qwen2.5-1.5B-OpenR1-GRPO
 hub_strategy: every_save

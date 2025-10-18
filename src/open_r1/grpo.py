@@ -20,6 +20,7 @@ import datasets  # noqa: F401 (ensures HF dataset scripts are registered)
 import torch
 import transformers  # noqa: F401 (aligns generation configs)
 from transformers import set_seed
+from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
@@ -38,10 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 def _canon(value: str) -> str:
+    """Normalize a string for forgiving comparisons (lowercase and strip punctuation)."""
     return re.sub(r"[^a-z0-9]+", "", (value or "").lower().strip())
 
 
 def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Extract a pruned slate with consistent keys and sanitized text."""
     arr = as_list_json(ex.get("slate_items_json"))
     keep_keys = {
         "title",
@@ -92,6 +95,7 @@ def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def _gold_index_from_items(gold: str, items: List[Dict[str, Any]]) -> int:
+    """Return the 1-based index of the gold answer within the candidate slate."""
     gold = (gold or "").strip()
     if not gold or not items:
         return -1
@@ -107,6 +111,7 @@ def _gold_index_from_items(gold: str, items: List[Dict[str, Any]]) -> int:
 
 
 def _derive_next_from_history(ex: Dict[str, Any], current_id: str) -> str:
+    """Fallback: infer the clicked id from watch history when the dataset lacks an explicit label."""
     vids = as_list_json(ex.get("watched_vids_json"))
     if current_id and isinstance(vids, list) and vids:
         try:
@@ -130,6 +135,7 @@ def _derive_next_from_history(ex: Dict[str, Any], current_id: str) -> str:
 
 
 def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
+    """Pick the best available gold id from the row using preferred columns and fallbacks."""
     if sol_key and sol_key not in {"current_video_id", "current_id"}:
         value = ex.get(sol_key)
         if isinstance(value, str) and value.strip():
@@ -148,6 +154,11 @@ def _row_to_example(
     sol_key: Optional[str],
     max_hist: int = 12,
 ) -> Optional[Dict[str, Any]]:
+    """
+    Convert a raw dataset row into the prompt/answer payload expected by GRPO.
+
+    Returns None when the slate is empty or the gold label cannot be mapped to it.
+    """
     items = _load_slate_items(ex)
     if not items:
         return None
@@ -216,6 +227,7 @@ def _row_to_example(
 
 
 def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args: ModelConfig) -> None:
+    """Orchestrate dataset preparation, trainer construction, and the training loop."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
 
@@ -234,19 +246,23 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
             return False
         return _gold_index_from_items(gold, items) >= 1
 
+    # Filter out rows without a resolvable gold choice before building prompts.
     raw = raw.filter(_ok)
 
+    # Build structured prompts / answers; disable cache so schema changes take effect immediately.
     ds = raw.map(
         lambda ex: _row_to_example(ex, training_args.system_prompt, solution_key, max_hist=max_hist),
         load_from_cache_file=False,
     )
 
     if "__drop__" in ds[script_args.dataset_train_split].column_names:
+        # Datasets can mark bad rows with __drop__; mirror TRL convention by removing them now.
         for split in list(ds.keys()):
             mask = [not flag for flag in ds[split]["__drop__"]]
             keep_indices = [idx for idx, keep in enumerate(mask) if keep]
             ds[split] = ds[split].select(keep_indices)
 
+    # Drop heavy/raw columns to keep memory predictable for GRPOTrainer.
     keep_cols = {
         "prompt",
         "answer",
@@ -288,6 +304,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
         )
 
     if training_args.reward_weights:
+        # Normalise in case the YAML supplies unnormalised weights.
         ws = [max(0.0, float(w)) for w in training_args.reward_weights]
         total = sum(ws) or 1.0
         training_args.reward_weights = [w / total for w in ws]
@@ -304,11 +321,27 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
 
     train_split = script_args.dataset_train_split
     eval_ds = None
-    if getattr(training_args, "do_eval", False) and script_args.dataset_test_split in ds:
-        full = ds[script_args.dataset_test_split]
-        n_keep = max(1, int(0.1 * len(full)))
-        eval_ds = full.shuffle(seed=training_args.seed).select(range(n_keep))
+    if getattr(training_args, "do_eval", False):
+        test_split = getattr(script_args, "dataset_test_split", None)
+        if test_split and test_split in ds:
+            eval_ds = ds[test_split]
+            max_eval = getattr(training_args, "max_eval_samples", None)
+            if isinstance(max_eval, int) and max_eval > 0 and len(eval_ds) > max_eval:
+                eval_ds = eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
+        else:
+            logger.warning("[grpo] do_eval enabled but test split '%s' missing; disabling eval", test_split)
+            eval_ds = None
+            training_args.do_eval = False
 
+    if getattr(training_args, "do_eval", False) and eval_ds is not None:
+        if getattr(training_args, "evaluation_strategy", IntervalStrategy.NO) == IntervalStrategy.NO:
+            logger.info("[grpo] forcing evaluation_strategy='steps' because do_eval is enabled")
+            training_args.evaluation_strategy = IntervalStrategy.STEPS
+        eval_steps = getattr(training_args, "eval_steps", None)
+        if eval_steps is None or int(eval_steps) <= 0:
+            raise ValueError("eval_steps must be > 0 when do_eval is enabled. Set a positive value in the config.")
+
+    # Instantiate the TRL GRPO trainer with the cleaned datasets and reward hooks.
     trainer = GRPOTrainer(
         model=model,
         args=training_args,
@@ -319,8 +352,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
         processing_class=tokenizer,
     )
 
-    from transformers.trainer_utils import get_last_checkpoint
-
+    # Resume training seamlessly when prior checkpoints exist or user specifies one.
     last_ckpt = (
         training_args.resume_from_checkpoint
         or (get_last_checkpoint(training_args.output_dir) if os.path.isdir(training_args.output_dir) else None)
@@ -332,11 +364,13 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
     trainer.save_model(training_args.output_dir)
 
     if getattr(training_args, "do_eval", False) and eval_ds is not None:
+        # Mid-training eval runs follow the schedule enforced above.
         metrics = trainer.evaluate()
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
     if getattr(training_args, "push_to_hub", False):
+        # Defer to TRL helper for Hub interactions so YAML hub_* fields apply automatically.
         trainer.push_to_hub(dataset_name=script_args.dataset_name, tags=["open-r1"])
 
 

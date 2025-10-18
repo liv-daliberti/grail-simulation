@@ -24,6 +24,7 @@ import torch.nn as nn
 import torch.optim as optim
 import transformers  # noqa: F401
 from transformers import set_seed
+from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
@@ -45,6 +46,7 @@ IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
 
 
 def _completion_text(payload: Any) -> str:
+    """Extract the assistant text payload from chat-style or raw completion objects."""
     if isinstance(payload, str):
         return payload
     if isinstance(payload, dict):
@@ -63,6 +65,7 @@ def _completion_text(payload: Any) -> str:
 
 
 def _parse_index_from_answer_block(text: str) -> Optional[int]:
+    """Parse the integer inside <answer> tags; return None when the format is invalid."""
     match = ANS_RE.search(text or "")
     payload = (match.group(1).strip() if match else (text or "").strip())
     match_idx = IDX_ONLY.match(payload)
@@ -75,10 +78,12 @@ def _parse_index_from_answer_block(text: str) -> Optional[int]:
 
 
 def _canon(value: str) -> str:
+    """Lowercase and strip punctuation so ids/titles can be matched loosely."""
     return re.sub(r"[^a-z0-9]+", "", (value or "").lower().strip())
 
 
 def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Collect a normalized slate list for reward functions and the discriminator."""
     arr = as_list_json(ex.get("slate_items_json"))
     keep_keys = {
         "title",
@@ -129,6 +134,7 @@ def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def _gold_index_from_items(gold: str, items: List[Dict[str, Any]]) -> int:
+    """Return the gold selection index using ids or titles as a fallback."""
     gold = (gold or "").strip()
     if not gold or not items:
         return -1
@@ -144,6 +150,7 @@ def _gold_index_from_items(gold: str, items: List[Dict[str, Any]]) -> int:
 
 
 def _derive_next_from_history(ex: Dict[str, Any], current_id: str) -> str:
+    """Infer the next click from watch history when the dataset lacks an explicit label."""
     vids = as_list_json(ex.get("watched_vids_json"))
     if current_id and isinstance(vids, list) and vids:
         try:
@@ -167,6 +174,7 @@ def _derive_next_from_history(ex: Dict[str, Any], current_id: str) -> str:
 
 
 def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
+    """Pick the best available gold id from preferred columns or sensible fallbacks."""
     if sol_key and sol_key not in {"current_video_id", "current_id"}:
         value = ex.get(sol_key)
         if isinstance(value, str) and value.strip():
@@ -185,6 +193,11 @@ def _row_to_example(
     sol_key: Optional[str],
     max_hist: int = 12,
 ) -> Optional[Dict[str, Any]]:
+    """
+    Transform a raw dataset row into a GRPO-ready sample with prompt, answer, and metadata.
+
+    Returns None when a slate is missing or the gold choice cannot be aligned to it.
+    """
     items = _load_slate_items(ex)
     if not items:
         return None
@@ -260,6 +273,7 @@ def _render_disc_text(
     action_surface: str,
     action_id: Optional[str],
 ) -> str:
+    """Render a discriminator input string that mirrors the policy observation format."""
     show_ids = os.getenv("GRAIL_DISC_SHOW_IDS", "0") == "1"
     names = [
         f"{i}. {(it.get('title') or (it.get('id') if show_ids else '') or '(untitled)')}"
@@ -283,6 +297,7 @@ def _render_disc_text(
 
 
 class OnlineDiscriminator:
+    """Lightweight text classifier trained on-policy to supply optional GAIL rewards."""
     def __init__(self, model_name: str, device: torch.device, lr: float = 2e-5):
         from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
 
@@ -310,6 +325,7 @@ class OnlineDiscriminator:
         self._sanity_check_embeddings()
 
     def _sanity_check_embeddings(self) -> None:
+        """Reload the model if the embedding matrix was sharded away by HF lazy loading."""
         try:
             weights = self.model.get_input_embeddings().weight
             if weights is None or weights.dim() != 2 or weights.is_meta:
@@ -318,6 +334,7 @@ class OnlineDiscriminator:
             self._reload_clean()
 
     def _reload_clean(self) -> None:
+        """Hard reset the discriminator weights to keep training numerically stable."""
         from transformers import AutoModelForSequenceClassification
 
         model = AutoModelForSequenceClassification.from_pretrained(
@@ -333,6 +350,7 @@ class OnlineDiscriminator:
 
     @torch.no_grad()
     def prob_positive(self, texts: List[str]) -> np.ndarray:
+        """Return the positive-class probability for each input string."""
         if not texts:
             return np.zeros((0,), dtype=np.float32)
         payload = [t if isinstance(t, str) and t.strip() else "[PAD]" for t in texts]
@@ -359,6 +377,7 @@ class OnlineDiscriminator:
             self.model.train()
 
     def train_batch(self, texts: List[str], labels: List[int]) -> Optional[float]:
+        """Perform one gradient step on the discriminator; returns the loss for logging."""
         if not texts:
             return None
         payload = [t if isinstance(t, str) and t.strip() else "[PAD]" for t in texts]
@@ -378,6 +397,7 @@ class OnlineDiscriminator:
 
 
 def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0):
+    """Wrap discriminator scores so they plug into the GRPO reward interface."""
     def _reward(completions, answer, **kwargs):
         if disc is None:
             return [0.0] * len(completions)
@@ -451,6 +471,7 @@ def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0)
 
 
 def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args: ModelConfig) -> None:
+    """Launch the GRPO + optional GAIL training loop with the configured rewards."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
 
@@ -469,19 +490,23 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
             return False
         return _gold_index_from_items(gold, items) >= 1
 
+    # Quickly drop rows with unusable slates or gold answers before building prompts.
     raw = raw.filter(_ok)
 
+    # Attach structured prompts/answers; avoid caching so changes propagate immediately.
     ds = raw.map(
         lambda ex: _row_to_example(ex, training_args.system_prompt, solution_key, max_hist=max_hist),
         load_from_cache_file=False,
     )
 
     if "__drop__" in ds[script_args.dataset_train_split].column_names:
+        # Honour dataset-provided drop flags so noisy rows do not reach training.
         for split in list(ds.keys()):
             mask = [not flag for flag in ds[split]["__drop__"]]
             keep_indices = [idx for idx, keep in enumerate(mask) if keep]
             ds[split] = ds[split].select(keep_indices)
 
+    # Trim the dataset down to the fields the trainer and rewards actually consume.
     keep_cols = {
         "prompt",
         "answer",
@@ -509,15 +534,18 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
             ds[split] = ds[split].remove_columns(drop)
 
     try:
+        # Translate reward function names declared in YAML into callables.
         reward_fns = get_reward_funcs(script_args, ref_model=None, tokenizer=tokenizer)
     except Exception as exc:
         logger.warning("[rewards] get_reward_funcs failed: %s", exc)
         reward_fns = []
 
+    # Optionally append a discriminator-based reward when the env flag is enabled.
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
     disc = None
     if use_gail:
         def _pick_disc_device() -> torch.device:
+            """Select a CUDA device when available while respecting DDP local rank."""
             override = os.getenv("GAIL_DEVICE", "")
             if override.strip().lower() == "cuda":
                 lrk = os.getenv("LOCAL_RANK")
@@ -566,6 +594,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
             )
 
     if training_args.reward_weights:
+        # Re-normalise weights so YAML-specified magnitudes do not skew total reward scale.
         ws = [max(0.0, float(w)) for w in training_args.reward_weights]
         total = sum(ws) or 1.0
         training_args.reward_weights = [w / total for w in ws]
@@ -582,11 +611,28 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
 
     train_split = script_args.dataset_train_split
     eval_ds = None
-    if getattr(training_args, "do_eval", False) and script_args.dataset_test_split in ds:
-        full = ds[script_args.dataset_test_split]
-        n_keep = max(1, int(0.1 * len(full)))
-        eval_ds = full.shuffle(seed=training_args.seed).select(range(n_keep))
+    if getattr(training_args, "do_eval", False):
+        test_split = getattr(script_args, "dataset_test_split", None)
+        if test_split and test_split in ds:
+            eval_ds = ds[test_split]
+            max_eval = getattr(training_args, "max_eval_samples", None)
+            if isinstance(max_eval, int) and max_eval > 0 and len(eval_ds) > max_eval:
+                eval_ds = eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
+        else:
+            logger.warning("[grail] do_eval enabled but test split '%s' missing; disabling eval", test_split)
+            eval_ds = None
+            training_args.do_eval = False
 
+    if getattr(training_args, "do_eval", False) and eval_ds is not None:
+        # Force the step-based schedule when do_eval is true and guard against missing eval_steps.
+        if getattr(training_args, "evaluation_strategy", IntervalStrategy.NO) == IntervalStrategy.NO:
+            logger.info("[grail] forcing evaluation_strategy='steps' because do_eval is enabled")
+            training_args.evaluation_strategy = IntervalStrategy.STEPS
+        eval_steps = getattr(training_args, "eval_steps", None)
+        if eval_steps is None or int(eval_steps) <= 0:
+            raise ValueError("eval_steps must be > 0 when do_eval is enabled. Set a positive value in the config.")
+
+    # Stand up the GRPO trainer with optional discriminator shaping.
     trainer = GRPOTrainer(
         model=model,
         args=training_args,
@@ -597,8 +643,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
         processing_class=tokenizer,
     )
 
-    from transformers.trainer_utils import get_last_checkpoint
-
+    # Allow resume-from-checkpoint via CLI argument or automatic discovery.
     last_ckpt = (
         training_args.resume_from_checkpoint
         or (get_last_checkpoint(training_args.output_dir) if os.path.isdir(training_args.output_dir) else None)
@@ -610,6 +655,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
     trainer.save_model(training_args.output_dir)
 
     if getattr(training_args, "do_eval", False) and eval_ds is not None:
+        # Toggle GAIL into eval mode so discriminator gradients stay frozen during validation.
         os.environ["GAIL_EVAL_MODE"] = "1"
         metrics = trainer.evaluate()
         os.environ["GAIL_EVAL_MODE"] = "0"
@@ -617,6 +663,7 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
         trainer.save_metrics("eval", metrics)
 
     if getattr(training_args, "push_to_hub", False):
+        # Use TRL helper so hub_model_id, hub_strategy, etc., from YAML apply automatically.
         trainer.push_to_hub(dataset_name=script_args.dataset_name, tags=["open-r1"])
 
 

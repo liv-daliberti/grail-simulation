@@ -27,3 +27,4 @@ wandb/
 /clean_data/
 /.venv/
 /__pycache__/
+.wandb

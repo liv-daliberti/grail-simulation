@@ -57,6 +57,8 @@ The ``clean_data/clean_data.py`` utility produces exactly that schema from the
 CodeOcean capsule, and validates that every output split is compatible with
 ``src/open_r1/grpo.py``.
 
+> Want the full provenance playbook? See [clean_data/README.md](clean_data/README.md) for a line-by-line description of the filters we implement and how they reproduce the CodeOcean pipelines.
+
 ```bash
 # 1) Create a virtual environment with the repository package
 python -m venv .venv

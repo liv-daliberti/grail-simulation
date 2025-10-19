@@ -7,54 +7,58 @@
 
 | Split | Rows | Missing profile | Share missing |
 |-------|------|-----------------|---------------|
-| train | 23412 | 0 | 0.00% |
-| validation | 2615 | 0 | 0.00% |
+| train | 20372 | 0 | 0.00% |
+| validation | 2254 | 0 | 0.00% |
 
 ## Prior video counts
 
 | Prior videos | Train | Validation |
 |--------------|-------|------------|
-| 0 | 6285 | 695 |
-| 1 | 5984 | 672 |
-| 2 | 5738 | 640 |
-| 3 | 5385 | 607 |
-| 4 | 18 | 1 |
-| 5 | 1 | 0 |
-| 6 | 1 | 0 |
+| 0 | 5310 | 590 |
+| 1 | 5184 | 570 |
+| 2 | 5049 | 559 |
+| 3 | 4817 | 535 |
+| 4 | 12 | 0 |
 
 ## Slate size distribution (`n_options`)
 
 | Slate size | Train | Validation |
 |------------|-------|------------|
-| 1 | 1249 | 137 |
-| 2 | 1988 | 236 |
-| 3 | 997 | 106 |
-| 4 | 16477 | 1838 |
-| 5 | 2701 | 298 |
+| 1 | 1126 | 126 |
+| 2 | 1767 | 227 |
+| 3 | 868 | 72 |
+| 4 | 14263 | 1541 |
+| 5 | 2348 | 288 |
 
 ## Unique content counts
 
 | Split | Current videos | Gold videos | Unique slates | Unique state texts |
 |-------|----------------|-------------|---------------|--------------------|
-| train | 244 | 408 | 14927 | 23331 |
-| validation | 195 | 273 | 2183 | 2605 |
+| train | 243 | 403 | 13342 | 20371 |
+| validation | 187 | 263 | 1889 | 2254 |
 
 ## Unique participants per study and issue
 
 | Split | Issue | Study | Participants |
 |-------|-------|-------|--------------|
-| train | gun_control | study1 | 1579 |
-| train | minimum_wage | study3 | 4707 |
-| train | all | all | 6008 |
-| validation | gun_control | study1 | 178 |
-| validation | minimum_wage | study3 | 518 |
-| validation | all | all | 693 |
+| train | gun_control | study1 | 1368 |
+| train | minimum_wage | study2 | 1340 |
+| train | minimum_wage | study3 | 2443 |
+| train | minimum_wage | study4 | 160 |
+| train | all | all | 5063 |
+| validation | gun_control | study1 | 168 |
+| validation | minimum_wage | study2 | 131 |
+| validation | minimum_wage | study3 | 272 |
+| validation | minimum_wage | study4 | 19 |
+| validation | all | all | 587 |
 
-- Overall participants (all issues): 6637
-- Overall participants for gun_control: 1757
-- Overall participants for minimum_wage: 5225
-- Overall participants in study1: 1757
-- Overall participants in study3: 5225
+- Overall participants (all issues): 5590
+- Overall participants for gun_control: 1536
+- Overall participants for minimum_wage: 4365
+- Overall participants in study1: 1536
+- Overall participants in study2: 1471
+- Overall participants in study3: 2715
+- Overall participants in study4: 179
 
 ## Dataset coverage notes
 
@@ -63,7 +67,7 @@ Builder note: rows missing all survey demographics (age, gender, race, income, e
 > "The short answer is that sessions.json contains EVERYTHING. Every test run, every study. In addition to the studies that involved watching videos on the platform, it also contains sessions from the “First Impressions” study, which involved only rating thumbnails, and the “Shorts” study (Study 4 in the paper, I believe), which involved no user decisions (instead playing a sequence of predetermined videos that were either constant or increasing in their extremeness). All of these are differentiated by the topicId." — Emily Hu (University of Pennsylvania)
 
 - Original study participants: 1,650 (Study 1 — gun rights) and 5,326 (Studies 2–4 — minimum wage).
-- Cleaned dataset participants captured here: 1757 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage).
+- Cleaned dataset participants captured here: 1536 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage).
 - Only gun-control and minimum-wage sessions are retained; other topic IDs from the capsule are excluded.
 - All charts and counts above operate on unique participants per issue (a participant can appear once in gun control and once in minimum wage, but never twice within the same issue split).
 

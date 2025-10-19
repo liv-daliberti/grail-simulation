@@ -54,13 +54,22 @@ Env (optional):
 """
 
 from __future__ import annotations
-import os, sys, re, json, logging, argparse, random, csv, math
+
+import argparse
+import csv
+import json
+import logging
+import math
+import os
+import random
+import re
+import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
-from collections import Counter
 
 import datasets
-from datasets import DatasetDict
+from datasets import DatasetDict, Features, Sequence, Value
 import pandas as pd
 
 # ---------- logging ----------
@@ -95,8 +104,16 @@ LABEL_OPTIONS: Dict[str, List[Dict[str, str]]] = {
 }
 
 LABEL_INDEX_TO_ID: Dict[str, Dict[str, str]] = {
-    "minimum_wage": {"1": "min_wage_raise", "2": "min_wage_no_raise", "3": "min_wage_unknown"},
-    "gun_control": {"1": "gun_more_restrictions", "2": "gun_fewer_restrictions", "3": "gun_unknown"},
+    "minimum_wage": {
+        "1": "min_wage_raise",
+        "2": "min_wage_no_raise",
+        "3": "min_wage_unknown",
+    },
+    "gun_control": {
+        "1": "gun_more_restrictions",
+        "2": "gun_fewer_restrictions",
+        "3": "gun_unknown",
+    },
 }
 
 REQUIRED_FOR_GRPO = {
@@ -120,32 +137,38 @@ REQUIRED_FOR_GRPO = {
     "mix_copy_idx",
 }
 
-def _canon(s: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "", (s or "").lower().strip())
+def _canon(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (text or "").lower().strip())
 
-def _canon_vid(v: str) -> str:
-    if not isinstance(v, str): return ""
-    m = YTID_RE.search(v)
-    return m.group(1) if m else v.strip()
 
-def _is_nanlike(x: Any) -> bool:
-    if x is None: return True
-    s = str(x).strip().lower()
-    return s in {"", "nan", "none", "null", "n/a"}
+def _canon_vid(value: str) -> str:
+    if not isinstance(value, str):
+        return ""
+    match = YTID_RE.search(value)
+    return match.group(1) if match else value.strip()
 
-def _as_list_json(x: Any, default="[]") -> list:
-    if isinstance(x, list): return x
-    if isinstance(x, str):
+
+def _is_nanlike(value: Any) -> bool:
+    if value is None:
+        return True
+    return str(value).strip().lower() in {"", "nan", "none", "null", "n/a"}
+
+
+def _as_list_json(value: Any, default: str = "[]") -> list:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
         try:
-            v = json.loads(x or default)
+            v = json.loads(value or default)
             return v if isinstance(v, list) else []
         except Exception:
             return []
     # pyarrow List?
     try:
         import pyarrow as pa  # type: ignore
-        if isinstance(x, pa.Array):
-            return x.to_pylist()
+
+        if isinstance(value, pa.Array):
+            return value.to_pylist()
     except Exception:
         pass
     return []
@@ -354,7 +377,12 @@ def _assign_if_missing(info: Dict[str, Any], key: str, value: Any) -> None:
     info[key] = value
 
 
-def _find_prefixed_value(row: Dict[str, Any], prefix: str, suffix: str, allow_unprefixed: bool = False) -> Optional[Any]:
+def _find_prefixed_value(
+    row: Dict[str, Any],
+    prefix: str,
+    suffix: str,
+    allow_unprefixed: bool = False,
+) -> Optional[Any]:
     """Return the first value in ``row`` that matches a ``prefix`` + ``suffix`` naming pattern."""
     candidates = []
     if prefix:
@@ -376,7 +404,12 @@ def _find_prefixed_value(row: Dict[str, Any], prefix: str, suffix: str, allow_un
     return None
 
 
-def _apply_metadata_fields(info: Dict[str, Any], row: Dict[str, Any], prefix: str, allow_unprefixed: bool = False) -> None:
+def _apply_metadata_fields(
+    info: Dict[str, Any],
+    row: Dict[str, Any],
+    prefix: str,
+    allow_unprefixed: bool = False,
+) -> None:
     """Copy standard video metadata fields from ``row`` into ``info`` using a column prefix."""
     for dest, suffixes in TEXT_SUFFIXES.items():
         for suffix in suffixes:
@@ -426,6 +459,28 @@ def _augment_metadata_from_supplemental(meta: Dict[str, Dict[str, Any]], base_di
             log.warning("Failed to read supplemental metadata %s: %s", csv_path, exc)
 
 
+def _fill_metadata_field(
+    info: Dict[str, Any],
+    row: Dict[str, Any],
+    key: str,
+    *candidate_columns: str,
+) -> None:
+    """Populate ``info[key]`` from the first valid entry in ``candidate_columns``."""
+    if info.get(key):
+        return
+    for col in candidate_columns:
+        if not col:
+            continue
+        value = row.get(col)
+        if value is None:
+            continue
+        sval = str(value).strip()
+        if not sval or _is_nanlike(sval):
+            continue
+        info[key] = sval
+        return
+
+
 def _load_recommendation_tree_metadata(base_dir: Path) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
     """Scan recommendation tree CSVs to build a metadata index keyed by video id."""
     tree_root = base_dir / "recommendation trees"
@@ -459,26 +514,11 @@ def _load_recommendation_tree_metadata(base_dir: Path) -> Tuple[Dict[str, Dict[s
                             if origin_raw not in raw_ids:
                                 raw_ids.append(origin_raw)
 
-                        def _fill(key: str, *cols: str) -> None:
-                            if info.get(key):
-                                return
-                            for col in cols:
-                                if not col:
-                                    continue
-                                val = row.get(col)
-                                if val is None:
-                                    continue
-                                sval = str(val).strip()
-                                if not sval or _is_nanlike(sval):
-                                    continue
-                                info[key] = sval
-                                return
-
-                        _fill("title", "originTitle", "title", "video_title")
-                        _fill("channel_id", "originChannelId", "channel_id")
-                        _fill("channel_title", "originChannel", "channelTitle")
-                        _fill("description", "originDescription", "description")
-                        _fill("duration", "originDuration", "duration")
+                        _fill_metadata_field(info, row, "title", "originTitle", "title", "video_title")
+                        _fill_metadata_field(info, row, "channel_id", "originChannelId", "channel_id")
+                        _fill_metadata_field(info, row, "channel_title", "originChannel", "channelTitle")
+                        _fill_metadata_field(info, row, "description", "originDescription", "description")
+                        _fill_metadata_field(info, row, "duration", "originDuration", "duration")
                         _apply_metadata_fields(info, row, "origin", allow_unprefixed=True)
                         for thumb_key, col in [
                             ("thumbnail_default", "originThumbnailDefault"),
@@ -605,6 +645,7 @@ def _is_missing_value(value: Any) -> bool:
 
 
 def _parse_timestamp_ns(value: Any) -> Optional[int]:
+    """Parse mixed-format timestamps into UTC nanoseconds for deterministic deduping."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -630,6 +671,19 @@ def _parse_timestamp_ns(value: Any) -> Optional[int]:
 
 
 def _load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[str]]]:
+    """
+    Reconstruct the participant inclusion lists used in the CodeOcean R pipelines.
+
+    The logic mirrors the filtering steps in:
+      • gun control (issue 1)/02_clean_merge.R and 03_analysis_multipletesting.R
+      • minimum wage (issue 2)/02_clean_merge.R and 03_analysis_multipletesting.R
+      • minimum wage (issue 2)/02b_clean_merge_yg.R and 03b_analysis_multipletesting_yg.R
+      • shorts/05_clean_shorts_data.R
+
+    Each allow-list is keyed by the identifier that the paper used (worker ID for MTurk
+    and Shorts, case ID for YouGov). We apply the same attention checks, ideology trims,
+    treatment exclusions, and pro/anti requirements as the corresponding R scripts.
+    """
     allowlists: Dict[str, Dict[str, Set[str]]] = {
         "gun_control": {"worker_ids": set(), "urlids": set()},
         "minimum_wage": {
@@ -816,6 +870,18 @@ def _participant_key(
     session_id: str,
     fallback_counter: int,
 ) -> Tuple[str, int]:
+    """
+    Choose a canonical participant identifier, matching the paper's precedence rules.
+
+    Preference order:
+      1. MTurk/Shorts worker IDs
+      2. YouGov case IDs
+      3. Firebase anonymous IDs
+      4. URLIDs
+      5. Session IDs
+
+    Falling back to synthetic IDs ensures every row is deduplicated deterministically.
+    """
     for candidate in (worker_id, case_id, anon_id, urlid, session_id):
         val = _normalize_identifier(candidate)
         if val:
@@ -1519,49 +1585,70 @@ def _load_slate_items(ex: dict) -> List[dict]:
     arr = _as_list_json(ex.get("slate_items_json"))
     out: List[dict] = []
     for it in arr:
-        if not isinstance(it, dict): continue
+        if not isinstance(it, dict):
+            continue
         t = (it.get("title") or "").strip()
         v = (it.get("id") or "").strip()
-        if t or v: out.append({"title": t, "id": v})
+        if t or v:
+            out.append({"title": t, "id": v})
     return out
 
-def _secs(x: Any) -> str:
-    try: return f"{int(round(float(x)))}s"
-    except Exception: return "?"
+def _secs(value: Any) -> str:
+    try:
+        return f"{int(round(float(value)))}s"
+    except Exception:
+        return "?"
 
 def _synthesize_viewer_sentence(ex: dict) -> str:
     bits: List[str] = []
     # age
     age = ex.get("age")
-    try: age_i = int(age) if age not in (None, "", "nan") else None
-    except Exception: age_i = None
+    try:
+        age_i = int(age) if age not in (None, "", "nan") else None
+    except Exception:
+        age_i = None
     if isinstance(age_i, int) and age_i > 0:
         bits.append(f"{age_i}-year-old")
     # gender (q26)
     gender = str(ex.get("q26") or "").strip().lower()
-    if   gender in {"man", "male"}: bits.append("man")
-    elif gender in {"woman", "female"}: bits.append("woman")
-    elif gender: bits.append(gender.title())
+    if gender in {"man", "male"}:
+        bits.append("man")
+    elif gender in {"woman", "female"}:
+        bits.append("woman")
+    elif gender:
+        bits.append(gender.title())
     # race (q29)
     race = str(ex.get("q29") or "").strip()
-    if race and race.lower() != "nan": bits.append(race)
+    if race and race.lower() != "nan":
+        bits.append(race)
     # party/ideo
-    pid1  = str(ex.get("pid1") or "").strip()
+    pid1 = str(ex.get("pid1") or "").strip()
     ideo1 = str(ex.get("ideo1") or "").strip()
     if pid1 and pid1.lower() != "nan":
-        if ideo1 and ideo1.lower() != "nan": bits.append(f"{pid1} {ideo1}".lower())
-        else: bits.append(pid1)
+        if ideo1 and ideo1.lower() != "nan":
+            bits.append(f"{pid1} {ideo1}".lower())
+        else:
+            bits.append(pid1)
     elif ideo1 and ideo1.lower() != "nan":
         bits.append(ideo1.lower())
     # income (q31)
     inc = str(ex.get("q31") or "").strip()
-    if inc and inc.lower() != "nan": bits.append(inc)
+    if inc and inc.lower() != "nan":
+        bits.append(inc)
     # education
     college = str(ex.get("college") or "").strip().lower()
-    if college in {"true","1","yes","y"}: bits.append("college-educated")
+    if college in {"true", "1", "yes", "y"}:
+        bits.append("college-educated")
     # youtube frequency
     fy = str(ex.get("freq_youtube") or "").strip()
-    fmap = {"0":"rarely","1":"occasionally","2":"a few times a month","3":"weekly","4":"several times a week","5":"daily"}
+    fmap = {
+        "0": "rarely",
+        "1": "occasionally",
+        "2": "a few times a month",
+        "3": "weekly",
+        "4": "several times a week",
+        "5": "daily",
+    }
     if fy in fmap:
         bits.append(f"watches YouTube {fmap[fy]}")
     s = ", ".join(b for b in bits if b)
@@ -1579,12 +1666,17 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
     lines.append(viewer)
 
     # ATTRIBUTES (brief)
-    def _clean(s: Any) -> str: return str(s).strip() if s is not None else ""
-    def _truthy_str(s: Any) -> Optional[bool]:
-        if s is None: return None
-        v = str(s).strip().lower()
-        if v in {"1","true","t","yes","y"}:  return True
-        if v in {"0","false","f","no","n"}:  return False
+    def _clean(value: Any) -> str:
+        return str(value).strip() if value is not None else ""
+
+    def _truthy_str(value: Any) -> Optional[bool]:
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if normalized in {"1", "true", "t", "yes", "y"}:
+            return True
+        if normalized in {"0", "false", "f", "no", "n"}:
+            return False
         return None
 
     details: List[str] = []
@@ -1593,24 +1685,37 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
         details.append(f"race/ethnicity: {race}")
 
     gun_own = _truthy_str(ex.get("gun_own"))
-    if gun_own is True:  details.append("owns a gun")
-    elif gun_own is False: details.append("does not own a gun")
+    if gun_own is True:
+        details.append("owns a gun")
+    elif gun_own is False:
+        details.append("does not own a gun")
 
     fy = _clean(ex.get("freq_youtube"))
-    fmap = {"0":"rarely","1":"occasionally","2":"a few times a month","3":"weekly","4":"several times a week","5":"daily"}
-    if fy in fmap: details.append(f"YouTube frequency: {fmap[fy]}")
+    fmap = {
+        "0": "rarely",
+        "1": "occasionally",
+        "2": "a few times a month",
+        "3": "weekly",
+        "4": "several times a week",
+        "5": "daily",
+    }
+    if fy in fmap:
+        details.append(f"YouTube frequency: {fmap[fy]}")
 
     fav = _clean(ex.get("q8") or ex.get("fav_channels"))
-    if fav and not _is_nanlike(fav): details.append(f"favorite channels: {fav}")
+    if fav and not _is_nanlike(fav):
+        details.append(f"favorite channels: {fav}")
     pop = _clean(ex.get("q78"))
-    if pop and not _is_nanlike(pop): details.append(f"popular channels followed: {pop}")
+    if pop and not _is_nanlike(pop):
+        details.append(f"popular channels followed: {pop}")
 
     if details:
         lines.append("\nATTRIBUTES:")
-        for d in details: lines.append(f"- {d}")
+        for detail in details:
+            lines.append(f"- {detail}")
 
     # CURRENTLY WATCHING
-    cvt  = (ex.get("current_video_title") or "").strip()
+    cvt = (ex.get("current_video_title") or "").strip()
     cvid = (ex.get("current_video_id") or "").strip()
     if cvt or cvid:
         lines.append("\nCURRENTLY WATCHING:")
@@ -1620,15 +1725,17 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
             lines.append(f"{cvt or '(untitled)'}")
 
     # HISTORY (prior only, most recent first)
-    det  = _as_list_json(ex.get("watched_detailed_json"))
+    det = _as_list_json(ex.get("watched_detailed_json"))
     vids = _as_list_json(ex.get("watched_vids_json"))
 
-    def _last_index(xs, val):
-        if not isinstance(xs, list) or val is None: return None
-        idx = None
-        for i, v in enumerate(xs):
-            if v == val: idx = i
-        return idx
+    def _last_index(values: Any, target: Any) -> Optional[int]:
+        if not isinstance(values, list) or target is None:
+            return None
+        last = None
+        for index, candidate in enumerate(values):
+            if candidate == target:
+                last = index
+        return last
 
     cur_idx = None
     if cvid:
@@ -1637,7 +1744,8 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
             for j in range(len(det) - 1, -1, -1):
                 try:
                     if isinstance(det[j], dict) and (det[j].get("id") or "").strip() == cvid:
-                        cur_idx = j; break
+                        cur_idx = j
+                        break
                 except Exception:
                     pass
     if cur_idx is None and isinstance(vids, list) and vids:
@@ -1649,19 +1757,21 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
 
     if prior:
         lines.append("\nHISTORY (most recent first):")
-        recent = list(reversed(prior))[:max_hist if max_hist and max_hist > 0 else len(prior)]
+        limit = max_hist if max_hist and max_hist > 0 else len(prior)
+        recent = list(reversed(prior))[:limit]
         for r in recent:
             name = (r.get("title") or (r.get("id") if show_ids else "") or "(untitled)").strip()
-            ws = _secs(r.get("watch_seconds")); tl = _secs(r.get("total_length"))
+            ws = _secs(r.get("watch_seconds"))
+            tl = _secs(r.get("total_length"))
             lines.append(f"- [{ws}/{tl}] {name}")
 
     # OPTIONS
     items = _load_slate_items(ex)
     lines.append("\nOPTIONS:")
     if items:
-        for i, it in enumerate(items, 1):
-            nm = (it.get("title") or (it.get("id") if show_ids else "") or "(untitled)").strip()
-            lines.append(f"{i}. {nm}")
+        for i, item in enumerate(items, 1):
+            name = (item.get("title") or (item.get("id") if show_ids else "") or "(untitled)").strip()
+            lines.append(f"{i}. {name}")
     else:
         lines.append("(no options provided)")
 
@@ -1675,14 +1785,19 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
     except Exception:
         obj = {}
     order = obj.get("order") if isinstance(obj, dict) else None
-    if not isinstance(order, list): return []
-    # sort by idx or end_ms
-    def _key(r):
-        try: return (0, int(r.get("idx")))
+    if not isinstance(order, list):
+        return []
+
+    def _key(row: dict) -> tuple[int, float]:
+        try:
+            return (0, int(row.get("idx")))
         except Exception:
-            try: return (1, float(r.get("end_ms") or -1))
-            except Exception: return (1, -1.0)
-    seq = [r for r in order if isinstance(r, dict)]
+            try:
+                return (1, float(row.get("end_ms") or -1))
+            except Exception:
+                return (1, -1.0)
+
+    seq = [row for row in order if isinstance(row, dict)]
     seq.sort(key=_key)
 
     cur_id = (ex.get("current_video_id") or "").strip()
@@ -1702,14 +1817,20 @@ def _render_prior_slates(ex: dict) -> list[str]:
     except Exception:
         obj = {}
     disp = obj.get("displayOrders") if isinstance(obj, dict) else None
-    if not isinstance(disp, dict): return []
+    if not isinstance(disp, dict):
+        return []
     out = []
+    matching_keys = [
+        key
+        for key in disp.keys()
+        if re.match(r"^\s*(\d+)\s*[-_ ]*recs\s*$", str(key), re.I)
+    ]
     keys = sorted(
-        [k for k in disp.keys() if re.match(r"^\s*(\d+)\s*[-_ ]*recs\s*$", str(k), re.I)],
-        key=lambda k: int(re.search(r"(\d+)", str(k)).group(1))
+        matching_keys,
+        key=lambda key: int(re.search(r"(\d+)", str(key)).group(1)),
     )
-    for k in keys:
-        val = disp.get(k) or []
+    for key in keys:
+        val = disp.get(key) or []
         names = []
         if isinstance(val, list):
             for el in val:
@@ -1719,7 +1840,7 @@ def _render_prior_slates(ex: dict) -> list[str]:
                     names.append(str(el))
         elif isinstance(val, dict):
             names = [str(x) for x in val.keys()]
-        out.append(f"{k}: " + "; ".join(names[:10]))
+        out.append(f"{key}: " + "; ".join(names[:10]))
     return out
 
 def _build_state_disc_text(ex: dict) -> str:
@@ -1763,33 +1884,39 @@ def _get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
         v = ex.get(sol_key)
         if isinstance(v, str) and v.strip() and v.strip() != cur:
             return v.strip()
-    for k in ("next_video_id", "clicked_id", "label", "answer"):
-        v = ex.get(k)
-        if isinstance(v, str) and v.strip() and v.strip() != cur:
-            return v.strip()
+    candidate_fields = ("next_video_id", "clicked_id", "label", "answer")
+    for field in candidate_fields:
+        value = ex.get(field)
+        if isinstance(value, str) and value.strip() and value.strip() != cur:
+            return value.strip()
     return _derive_next_from_history(ex, cur)
 
 def _gold_index_from_items(gold: str, items: List[dict]) -> int:
     gold = (gold or "").strip()
-    if not gold or not items: return -1
+    if not gold or not items:
+        return -1
     for i, it in enumerate(items, 1):
-        if gold == (it.get("id") or ""): return i
+        if gold == (it.get("id") or ""):
+            return i
     gc = _canon(gold)
     if gc:
         for i, it in enumerate(items, 1):
-            if gc == _canon(it.get("title", "")): return i
+            if gc == _canon(it.get("title", "")):
+                return i
     return -1
 
 # ---------- row → clean example ----------
 def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str], max_hist: int) -> Optional[dict]:
     items = _load_slate_items(ex)
-    if not items: return None
+    if not items:
+        return None
     gold_id = _get_gold_next_id(ex, sol_key)
-    gidx    = _gold_index_from_items(gold_id, items)
-    if gidx < 1: return None
+    gidx = _gold_index_from_items(gold_id, items)
+    if gidx < 1:
+        return None
 
     user_msg = _build_user_prompt_from_columns(ex, max_hist=max_hist)
-    sys_msg  = sys_prompt or (
+    sys_msg = sys_prompt or (
         "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"
         "Think briefly in <think>…</think>, then output ONLY the option NUMBER (1..N) inside <answer>…</answer>.\n"
         "Format (STRICT): <think>…</think><answer>3</answer>"
@@ -1805,24 +1932,29 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
     out = {
         "prompt": [
             {"role": "system", "content": sys_msg},
-            {"role": "user",   "content": user_msg},
+            {"role": "user", "content": user_msg},
         ],
-        "answer": str(gidx),                 # GOLD index as string
-        "gold_index": gidx,                  # int
+        "answer": str(gidx),  # GOLD index as string
+        "gold_index": gidx,  # int
         "gold_id": gold_id,
         "n_options": int(ex.get("n_options") or len(items) or 0),
-        "viewer_profile": str(ex.get("viewer_profile_sentence") or _synthesize_viewer_sentence(ex)),
-        "state_text": user_msg,              # LM sees this
+        "viewer_profile": str(
+            ex.get("viewer_profile_sentence") or _synthesize_viewer_sentence(ex)
+        ),
+        "state_text": user_msg,  # LM sees this
         "state_disc_text": _build_state_disc_text(ex),  # disc sees richer info
         "slate_items": items,
-        "slate_text":  str(ex.get("slate_text") or slate_text),
+        "slate_text": str(ex.get("slate_text") or slate_text),
         # passthrough
         "watched_detailed_json": _as_list_json(ex.get("watched_detailed_json")),
-        "watched_vids_json":     _as_list_json(ex.get("watched_vids_json")),
-        "current_video_id":      str(ex.get("current_video_id") or ""),
-        "current_video_title":   str(ex.get("current_video_title") or ""),
+        "watched_vids_json": _as_list_json(ex.get("watched_vids_json")),
+        "current_video_id": str(ex.get("current_video_id") or ""),
+        "current_video_title": str(ex.get("current_video_title") or ""),
         "task": "GRAIL",
-        "is_replay": False, "accuracy": 0.0, "mix_group_id": -1, "mix_copy_idx": -1,
+        "is_replay": False,
+        "accuracy": 0.0,
+        "mix_group_id": -1,
+        "mix_copy_idx": -1,
     }
     out["slate_items_with_meta"] = _as_list_json(ex.get("slate_items_json"))
 
@@ -1849,6 +1981,40 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
             pass
         out[key] = cleaned
     return out
+
+
+def _ensure_shared_schema(datasets_map: Dict[str, datasets.Dataset]) -> Dict[str, datasets.Dataset]:
+    """Ensure every dataset split exposes the same columns and dtypes."""
+    if not datasets_map:
+        return datasets_map
+    all_columns: Set[str] = set()
+    feature_template: Dict[str, Any] = {}
+    for split_ds in datasets_map.values():
+        features = split_ds.features
+        for name, feature in features.items():
+            all_columns.add(name)
+            feature_template.setdefault(name, feature)
+    # default filler per feature type
+    def _default_for_feature(feature: Any, length: int) -> List[Any]:
+        if isinstance(feature, Sequence):
+            inner = feature.feature if hasattr(feature, "feature") else None
+            if inner and isinstance(inner, Value) and inner.dtype == "string":
+                return [[] for _ in range(length)]
+            return [[] for _ in range(length)]
+        return [None] * length
+
+    merged_features = Features(feature_template)
+    aligned: Dict[str, datasets.Dataset] = {}
+    for split_name, split_ds in datasets_map.items():
+        missing = [col for col in all_columns if col not in split_ds.column_names]
+        if missing:
+            for col in missing:
+                feature = feature_template.get(col)
+                filler = _default_for_feature(feature, len(split_ds))
+                split_ds = split_ds.add_column(col, filler)
+        split_ds = split_ds.cast(merged_features)
+        aligned[split_name] = split_ds
+    return aligned
 
 # ---------- driver ----------
 def _load_codeocean_dataset(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
@@ -1882,7 +2048,8 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
                 raise
         log.info("Loading dataset from disk: %s", dataset_name)
         ds = datasets.load_from_disk(dataset_name)
-        if isinstance(ds, DatasetDict): return ds
+        if isinstance(ds, DatasetDict):
+            return ds
         return DatasetDict({"train": ds})
     if os.path.isfile(dataset_name):
         ext = os.path.splitext(dataset_name)[1].lower()
@@ -1927,11 +2094,13 @@ def main():
     sol_key = None  # can be wired to your config if you keep a named solution column
 
     # Filter to usable rows (slate present + gold-in-slate resolvable)
-    def _ok(ex):
+    def _ok(ex: dict) -> bool:
         items = _load_slate_items(ex)
-        if not items: return False
+        if not items:
+            return False
         gold = _get_gold_next_id(ex, sol_key)
-        if not gold: return False
+        if not gold:
+            return False
         return _gold_index_from_items(gold, items) >= 1
 
     raw = raw.filter(_ok)
@@ -1969,6 +2138,7 @@ def main():
     if args.test_split in mapped:
         desired["validation"] = mapped[args.test_split]
 
+    desired = _ensure_shared_schema(desired)
     final = DatasetDict(desired)
     os.makedirs(args.output_dir, exist_ok=True)
     log.info("Saving cleaned dataset to %s", args.output_dir)

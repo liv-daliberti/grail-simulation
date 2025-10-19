@@ -67,21 +67,15 @@ Filters:
 
 Result: **2,715** unique case IDs, matching the paper.
 
-### Study 4 — Minimum Wage Shorts Experiment
+### Study 4 — Minimum Wage Shorts Experiment (not included in training rows)
 
 Source script: `code/shorts/05_clean_shorts_data.R`
 
-Filters:
+- Load `qualtrics_w12_clean_ytrecs_may2024.csv` to recover the list of 932 recruited participants and their attention-check status.
+- The interaction log lives in `data/shorts/ytrecs_sessions_may2024.rds`; many entries contain only the auto-play “startvid” clip and no follow-up recommendations.
+- Because GRPO rows require a recommendation slate and a chosen next video, we currently **exclude Study 4 from the cleaned dataset**. We still ingest the survey allow-list so the shortfall can be tracked (see below), but we do not synthesize rows for sessions with no usable decision pairs.
 
-- Load `qualtrics_w12_clean_ytrecs_may2024.csv`.
-- Keep rows where:
-  - `start_date >= 2024‑05‑28`
-  - `q81 == "Quick and easy"`
-  - `q82 == "wikiHow"`
-  - `video_link` is present.
-- Deduplicate on `worker_id`, keeping the earliest session (the R script retains every qualtrics row; the only duplicate in this export is a participant who launched two URLIDs within the same run).
-
-Output: **931** unique worker IDs. The CodeOcean export contains 932 rows; the single shortfall is the duplicate participant noted above. The paper’s headline figure (932) counts both sessions, but the modeling scripts group by participant, so the deduped total is consistent with their analysis.
+Implication: counts derived from `clean_data.py` reflect Studies 1–3 only. When reporting headline numbers, include a note that the Shorts experiment is omitted due to missing recommendation slates in the released interaction logs.
 
 ## Validation and Logging
 
@@ -123,7 +117,7 @@ These conventions guarantee that any participant counts derived from the cleaned
 
 ## Summary
 
-- The Python builder traces the exact filters in the CodeOcean R scripts for Studies 1–4.
-- Only two minor count differences remain, both explained by attention checks or duplicate sessions.
+- The Python builder mirrors the published filters for Studies 1–3. Study 4 (Shorts) participants are kept in the allow-list for auditing but are not converted into GRPO rows because their interaction log lacks recommendation slates.
+- Only minor count differences remain for Studies 1–3, both explained by attention checks or duplicate sessions.
 - Validation happens via logged allow-list sizes, per-session filtering counters, and the `participant_study` labels embedded in every output row.
 - For an at-a-glance description of the data products and how to run the builder, see the top-level [project README](../README.md). This file serves as the deep-dive reference for researchers verifying provenance and reproducibility.

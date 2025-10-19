@@ -56,6 +56,7 @@ Env (optional):
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import json
 import logging
@@ -63,7 +64,9 @@ import math
 import os
 import random
 import re
+import subprocess
 import sys
+import tempfile
 from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -138,10 +141,22 @@ REQUIRED_FOR_GRPO = {
 }
 
 def _canon(text: str) -> str:
+    """Normalize a label by lowercasing and removing punctuation.
+
+    :param text: Input string that may contain mixed case or punctuation.
+    :return: Canonical lower-case alphanumeric string used for comparisons.
+    """
+
     return re.sub(r"[^a-z0-9]+", "", (text or "").lower().strip())
 
 
 def _canon_vid(value: str) -> str:
+    """Extract the canonical 11-character YouTube id from a raw identifier.
+
+    :param value: Raw video identifier or URL fragment emitted by the platform logs.
+    :return: Canonical YouTube id, or an empty string when not parseable.
+    """
+
     if not isinstance(value, str):
         return ""
     match = YTID_RE.search(value)
@@ -149,32 +164,51 @@ def _canon_vid(value: str) -> str:
 
 
 def _is_nanlike(value: Any) -> bool:
+    """Determine whether a value represents a missing token.
+
+    :param value: Arbitrary scalar loaded from CSV/JSON sources.
+    :return: ``True`` if the value should be treated as missing, ``False`` otherwise.
+    """
+
     if value is None:
         return True
     return str(value).strip().lower() in {"", "nan", "none", "null", "n/a"}
 
 
 def _as_list_json(value: Any, default: str = "[]") -> list:
+    """Convert serialized list-like values into Python lists.
+
+    :param value: Value that may already be a list, JSON string, or Arrow array.
+    :param default: JSON literal used when ``value`` is empty.
+    :return: Python list representation (empty when parsing fails).
+    """
+
     if isinstance(value, list):
         return value
     if isinstance(value, str):
         try:
             v = json.loads(value or default)
             return v if isinstance(v, list) else []
-        except Exception:
+        except (TypeError, json.JSONDecodeError):
             return []
     # pyarrow List?
     try:
         import pyarrow as pa  # type: ignore
+    except ImportError:
+        return []
 
-        if isinstance(value, pa.Array):
-            return value.to_pylist()
-    except Exception:
-        pass
+    if isinstance(value, pa.Array):
+        return value.to_pylist()
     return []
 
 
 def _strip_session_video_id(vid: str) -> str:
+    """Reduce a raw session video identifier to the canonical YouTube id.
+
+    :param vid: Raw identifier stored in the session logs.
+    :return: Canonical 11-character video id, or the original string when parsing fails.
+    """
+
     if not isinstance(vid, str):
         return ""
     vid = vid.strip()
@@ -190,6 +224,12 @@ def _strip_session_video_id(vid: str) -> str:
 
 
 def _resolve_capsule_data_root(path: Path) -> Optional[Path]:
+    """Locate the CodeOcean capsule root or ``data`` directory from a user path.
+
+    :param path: User-supplied directory that may point at the capsule root or ``data`` subdir.
+    :return: Normalized path containing ``platform session data/sessions.json`` or ``None``.
+    """
+
     if not path.exists():
         return None
     if (path / "platform session data" / "sessions.json").exists():
@@ -200,17 +240,28 @@ def _resolve_capsule_data_root(path: Path) -> Optional[Path]:
 
 
 def _read_csv_if_exists(path: Path) -> pd.DataFrame:
+    """Read a CSV file into a dataframe, returning empty on failure.
+
+    :param path: Filesystem path to the CSV file.
+    :return: Dataframe of the file contents or an empty frame when missing/invalid.
+    """
+
     if not path.exists():
         return pd.DataFrame()
     try:
         return pd.read_csv(path, dtype=str)
-    except Exception as exc:
+    except (OSError, pd.errors.ParserError, UnicodeDecodeError, ValueError) as exc:
         log.error("Failed to read %s: %s", path, exc)
         return pd.DataFrame()
 
 
 def _read_survey_with_fallback(*candidates: Path) -> pd.DataFrame:
-    """Try multiple survey CSV locations, skipping Git-LFS pointers that lack ``urlid``."""
+    """Return the first survey export that includes a ``urlid`` column.
+
+    :param candidates: Ordered paths to possible survey CSV files.
+    :return: Dataframe for the first candidate containing ``urlid``; falls back to the
+        first empty frame when none qualify.
+    """
     fallback_df: Optional[pd.DataFrame] = None
     for path in candidates:
         if not path.exists():
@@ -233,6 +284,12 @@ def _read_survey_with_fallback(*candidates: Path) -> pd.DataFrame:
 
 
 def _normalize_urlid(value: Any) -> str:
+    """Standardize URL identifiers for dictionary lookups.
+
+    :param value: Raw identifier that may be numeric or a string with trailing decimals.
+    :return: Cleaned string identifier suitable for use as a key.
+    """
+
     if value is None:
         return ""
     text = str(value).strip()
@@ -244,7 +301,7 @@ def _normalize_urlid(value: Any) -> str:
             if num.is_integer():
                 return str(int(num))
             return text
-    except Exception:
+    except ValueError:
         pass
     if text.endswith(".0") and text[:-2].isdigit():
         return text[:-2]
@@ -252,6 +309,12 @@ def _normalize_urlid(value: Any) -> str:
 
 
 def _build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
+    """Create a mapping from ``urlid`` to associated survey rows.
+
+    :param df: Survey dataframe that contains participant metadata.
+    :return: Dictionary keyed by ``urlid`` with lists of row dictionaries.
+    """
+
     index: Dict[str, List[Dict[str, Any]]] = {}
     if df.empty:
         return index
@@ -274,6 +337,13 @@ def _build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
 
 
 def _select_survey_row(rows: List[Dict[str, Any]], topic_id: str) -> Dict[str, Any]:
+    """Choose the most appropriate survey row for a session.
+
+    :param rows: All survey rows sharing the same ``urlid``.
+    :param topic_id: Topic identifier from the interaction log.
+    :return: Matching survey row when a topic-specific entry exists, otherwise the first row.
+    """
+
     if not rows:
         return {}
     topic_id = (topic_id or "").strip()
@@ -286,6 +356,12 @@ def _select_survey_row(rows: List[Dict[str, Any]], topic_id: str) -> Dict[str, A
 
 
 def _load_video_metadata(base_dir: Path) -> Dict[str, str]:
+    """Load supplemental video titles from the metadata bundle.
+
+    :param base_dir: Capsule directory that contains ``supplemental/metadata and ratings``.
+    :return: Mapping of canonical video ids to titles.
+    """
+
     meta: Dict[str, str] = {}
     meta_dir = base_dir / "supplemental" / "metadata and ratings"
     if not meta_dir.exists():
@@ -293,7 +369,8 @@ def _load_video_metadata(base_dir: Path) -> Dict[str, str]:
     for csv_path in meta_dir.glob("*.csv"):
         try:
             df = pd.read_csv(csv_path)
-        except Exception:
+        except (OSError, pd.errors.ParserError, UnicodeDecodeError, ValueError) as exc:
+            log.warning("Failed to read metadata %s: %s", csv_path, exc)
             continue
         id_col = None
         for cand in ("originID", "originId", "video_id", "videoId", "id"):
@@ -341,6 +418,15 @@ NUMERIC_SUFFIXES = {
     "duration": ["Duration", "duration", "DurationSeconds", "duration_seconds"],
 }
 
+YOUTUBE_FREQ_MAP = {
+    "0": "rarely",
+    "1": "occasionally",
+    "2": "a few times a month",
+    "3": "weekly",
+    "4": "several times a week",
+    "5": "daily",
+}
+
 DEMOGRAPHIC_COLUMNS = [
     "age",
     "gender",
@@ -377,13 +463,51 @@ def _assign_if_missing(info: Dict[str, Any], key: str, value: Any) -> None:
     info[key] = value
 
 
+def _clean_str(value: Any) -> str:
+    """Return a trimmed string, converting ``None`` to an empty string."""
+
+    return str(value).strip() if value is not None else ""
+
+
+def _truthy_str_flag(value: Any) -> Optional[bool]:
+    """Interpret common string boolean markers."""
+
+    if value is None:
+        return None
+    normalized = str(value).strip().lower()
+    if normalized in {"1", "true", "t", "yes", "y"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n"}:
+        return False
+    return None
+
+
+def _last_index(values: Any, target: Any) -> Optional[int]:
+    """Return the last index of ``target`` inside ``values`` when ``values`` is a list."""
+
+    if not isinstance(values, list) or target is None:
+        return None
+    last: Optional[int] = None
+    for index, candidate in enumerate(values):
+        if candidate == target:
+            last = index
+    return last
+
+
 def _find_prefixed_value(
     row: Dict[str, Any],
     prefix: str,
     suffix: str,
     allow_unprefixed: bool = False,
 ) -> Optional[Any]:
-    """Return the first value in ``row`` that matches a ``prefix`` + ``suffix`` naming pattern."""
+    """Locate the first value that matches a ``prefix`` + ``suffix`` naming pattern.
+
+    :param row: Metadata row dictionary.
+    :param prefix: Column prefix (for example ``origin`` or ``target``).
+    :param suffix: Field suffix such as ``Title`` or ``ChannelId``.
+    :param allow_unprefixed: Whether to search unprefixed variants when prefixed columns are missing.
+    :return: Matching value from ``row`` or ``None`` when not present.
+    """
     candidates = []
     if prefix:
         candidates.extend(
@@ -410,7 +534,13 @@ def _apply_metadata_fields(
     prefix: str,
     allow_unprefixed: bool = False,
 ) -> None:
-    """Copy standard video metadata fields from ``row`` into ``info`` using a column prefix."""
+    """Copy common video metadata fields from ``row`` into ``info`` using a column prefix.
+
+    :param info: Destination metadata dictionary.
+    :param row: Source row produced by tree/supplemental CSVs.
+    :param prefix: Column prefix group (e.g., ``origin``).
+    :param allow_unprefixed: Whether to consider suffix-only columns when prefixed ones are absent.
+    """
     for dest, suffixes in TEXT_SUFFIXES.items():
         for suffix in suffixes:
             val = _find_prefixed_value(row, prefix, suffix, allow_unprefixed)
@@ -426,7 +556,11 @@ def _apply_metadata_fields(
 
 
 def _augment_metadata_from_supplemental(meta: Dict[str, Dict[str, Any]], base_dir: Path) -> None:
-    """Enrich the metadata index with additional CSVs under ``supplemental/metadata and ratings``."""
+    """Enrich the metadata index with supplemental CSV content.
+
+    :param meta: Mapping of video ids to metadata dictionaries.
+    :param base_dir: Capsule root that holds the supplemental metadata folder.
+    """
     sup_dir = base_dir / "supplemental" / "metadata and ratings"
     if not sup_dir.exists():
         return
@@ -455,7 +589,7 @@ def _augment_metadata_from_supplemental(meta: Dict[str, Dict[str, Any]], base_di
                             continue
                         info = meta.setdefault(vid, {"id": vid})
                         _apply_metadata_fields(info, row, prefix, allow_unprefixed)
-        except Exception as exc:
+        except (OSError, UnicodeDecodeError, csv.Error, ValueError) as exc:
             log.warning("Failed to read supplemental metadata %s: %s", csv_path, exc)
 
 
@@ -465,7 +599,13 @@ def _fill_metadata_field(
     key: str,
     *candidate_columns: str,
 ) -> None:
-    """Populate ``info[key]`` from the first valid entry in ``candidate_columns``."""
+    """Populate ``info[key]`` from the first valid entry in ``candidate_columns``.
+
+    :param info: Destination metadata dictionary being populated.
+    :param row: Source row containing potential values.
+    :param key: Target key in ``info``.
+    :param candidate_columns: Ordered column names to probe inside ``row``.
+    """
     if info.get(key):
         return
     for col in candidate_columns:
@@ -479,6 +619,189 @@ def _fill_metadata_field(
             continue
         info[key] = sval
         return
+
+
+def _escape_r_string(path: Path) -> str:
+    """Escape a filesystem path so it can be embedded in inline R code.
+
+    :param path: Filesystem path to escape.
+    :return: Path with backslashes normalized and single quotes escaped.
+    """
+
+    text = str(path)
+    text = text.replace("\\", "/")
+    return text.replace("'", "\\'")
+
+
+def _read_rds_dataframe(path: Path) -> pd.DataFrame:
+    """Convert an RDS file into a dataframe via ``Rscript``.
+
+    :param path: Filesystem location of the RDS file.
+    :return: Pandas dataframe containing the R object or an empty frame if conversion fails.
+    """
+    if not path.exists():
+        return pd.DataFrame()
+    tmp_file: Optional[Path] = None
+    try:
+        tmp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
+        tmp_file = Path(tmp.name)
+        tmp.close()
+        path_str = _escape_r_string(path)
+        tmp_str = _escape_r_string(tmp_file)
+        r_code = (
+            "options(warn=2);"
+            f"d <- readRDS('{path_str}');"
+            "if (!is.data.frame(d)) d <- as.data.frame(d);"
+            f"write.csv(d, file='{tmp_str}', row.names=FALSE, na='')"
+        )
+        subprocess.run(
+            ["Rscript", "-e", r_code],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        df = pd.read_csv(tmp_file, dtype=str)
+        return df
+    except subprocess.CalledProcessError as exc:
+        log.warning("Rscript failed while loading %s: %s", path, exc)
+        return pd.DataFrame()
+    except (OSError, pd.errors.ParserError, UnicodeDecodeError, ValueError) as exc:
+        log.warning("Failed to parse RDS %s: %s", path, exc)
+        return pd.DataFrame()
+    finally:
+        if tmp_file and tmp_file.exists():
+            try:
+                tmp_file.unlink()
+            except OSError:
+                pass
+
+
+def _maybe_literal_eval(value: Any) -> Any:
+    """Convert stringified lists/dicts/bools from R exports into native objects.
+
+    :param value: Scalar value from the RDS export.
+    :return: Parsed Python object when possible, otherwise the original value.
+    """
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    if not text:
+        return ""
+    lowered = text.lower()
+    if lowered in {"na", "nan", "null"}:
+        return None
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    if lowered == "inf":
+        return float("inf")
+    if lowered == "-inf":
+        return float("-inf")
+    if text.startswith("{") or text.startswith("["):
+        try:
+            return ast.literal_eval(text)
+        except (ValueError, SyntaxError):
+            return text
+    return text
+
+
+def _load_shorts_sessions(data_root: Path) -> List[Dict[str, Any]]:
+    """Load Shorts (Study 4) interaction logs from the YTRecs RDS export.
+
+    :param data_root: Capsule ``data`` directory containing the ``shorts`` subfolder.
+    :return: List of session dictionaries normalized to match the JSON schema.
+    """
+    rds_path = data_root / "shorts" / "ytrecs_sessions_may2024.rds"
+    df = _read_rds_dataframe(rds_path)
+    if df.empty:
+        return []
+
+    df = df.where(pd.notna(df), None)
+    sessions: List[Dict[str, Any]] = []
+    for _, row in df.iterrows():
+        session: Dict[str, Any] = {}
+        for col in df.columns:
+            value = row[col]
+            if value is None:
+                session[col] = None
+                continue
+            if isinstance(value, str):
+                parsed = _maybe_literal_eval(value)
+                session[col] = parsed
+            else:
+                session[col] = value
+
+        list_like_keys = [
+            "vids",
+            "ignoredVideos",
+            "optionalInstructions",
+            "pauseInteractions",
+            "playInteractions",
+            "ratingEvents",
+            "ratingResults",
+            "replayInteractions",
+            "saveList",
+            "seekBackwardInteractions",
+            "seekForwardInteractions",
+            "skipInteractions",
+            "thumbInteractions",
+        ]
+        for key in list_like_keys:
+            value = session.get(key)
+            if isinstance(value, str):
+                parsed = _maybe_literal_eval(value)
+                session[key] = parsed if isinstance(parsed, list) else []
+            elif value is None:
+                session[key] = []
+            elif not isinstance(value, list):
+                session[key] = list(value) if value is not None else []
+
+        dict_like_keys = [
+            "displayOrders",
+            "vidEndTimes",
+            "vidStartTimes",
+            "vidTotalLengths",
+            "vidWatchTimes",
+            "thumbStates",
+        ]
+        for key in dict_like_keys:
+            value = session.get(key)
+            if isinstance(value, str):
+                parsed = _maybe_literal_eval(value)
+                session[key] = parsed if isinstance(parsed, dict) else {}
+            elif value is None:
+                session[key] = {}
+
+        vids_value = session.get("vids")
+        if isinstance(vids_value, (list, tuple)):
+            session["vids"] = [
+                str(v).strip() for v in vids_value if isinstance(v, str) and v.strip()
+            ]
+        else:
+            session["vids"] = []
+
+        for key in ("endTime", "startTime"):
+            value = session.get(key)
+            if isinstance(value, str) and value.strip().isdigit():
+                session[key] = int(value.strip())
+
+        percent_visible = session.get("percentVisible")
+        if isinstance(percent_visible, str):
+            try:
+                session["percentVisible"] = float(percent_visible)
+            except ValueError:
+                session["percentVisible"] = None
+
+        session_finished = session.get("sessionFinished")
+        if isinstance(session_finished, str):
+            session["sessionFinished"] = session_finished.strip().lower() == "true"
+
+        any_watched = session.get("anyVideoWatched")
+        if isinstance(any_watched, str):
+            session["anyVideoWatched"] = any_watched.strip().lower() == "true"
+
+        sessions.append(session)
+
+    return sessions
 
 
 def _load_recommendation_tree_metadata(base_dir: Path) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
@@ -571,7 +894,7 @@ def _load_recommendation_tree_metadata(base_dir: Path) -> Tuple[Dict[str, Dict[s
                             if rec_entries:
                                 info["recs"] = rec_entries
                         _apply_metadata_fields(info, row, "origin", allow_unprefixed=True)
-            except Exception as exc:
+            except (OSError, UnicodeDecodeError, csv.Error, ValueError) as exc:
                 log.warning("Failed to read tree CSV %s: %s", csv_path, exc)
                 continue
 
@@ -623,6 +946,12 @@ def _infer_participant_study(
 
 
 def _normalize_identifier(value: Any) -> str:
+    """Normalize worker/case identifiers by trimming whitespace and dropping null tokens.
+
+    :param value: Raw identifier from survey rows.
+    :return: Cleaned identifier string or ``""`` when unset.
+    """
+
     text = str(value or "").strip()
     if text and text.lower() not in {"nan", "none", "null"}:
         return text
@@ -633,6 +962,12 @@ _MISSING_STRINGS = {"", "na", "nan", "none", "null", "n/a"}
 
 
 def _is_missing_value(value: Any) -> bool:
+    """Return ``True`` when ``value`` should be treated as a missing entry.
+
+    :param value: Scalar extracted from survey or session data.
+    :return: ``True`` when the value represents a missing token, ``False`` otherwise.
+    """
+
     if value is None:
         return True
     if isinstance(value, float):
@@ -645,7 +980,11 @@ def _is_missing_value(value: Any) -> bool:
 
 
 def _parse_timestamp_ns(value: Any) -> Optional[int]:
-    """Parse mixed-format timestamps into UTC nanoseconds for deterministic deduping."""
+    """Parse mixed-format timestamps into UTC nanoseconds.
+
+    :param value: Timestamp stored as float, integer, or string.
+    :return: Nanosecond-resolution epoch timestamp or ``None`` when parsing fails.
+    """
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -671,25 +1010,23 @@ def _parse_timestamp_ns(value: Any) -> Optional[int]:
 
 
 def _load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[str]]]:
-    """
-    Reconstruct the participant inclusion lists used in the CodeOcean R pipelines.
+    """Reconstruct participant allow-lists used by the original R preprocessing.
 
-    The logic mirrors the filtering steps in:
-      • gun control (issue 1)/02_clean_merge.R and 03_analysis_multipletesting.R
-      • minimum wage (issue 2)/02_clean_merge.R and 03_analysis_multipletesting.R
-      • minimum wage (issue 2)/02b_clean_merge_yg.R and 03b_analysis_multipletesting_yg.R
-      • shorts/05_clean_shorts_data.R
+    The filtering logic mirrors the CodeOcean scripts for each study and captures the
+    identifiers (worker IDs or case IDs) that survived the attention checks and analysis
+    filters.
 
-    Each allow-list is keyed by the identifier that the paper used (worker ID for MTurk
-    and Shorts, case ID for YouGov). We apply the same attention checks, ideology trims,
-    treatment exclusions, and pro/anti requirements as the corresponding R scripts.
+    :param capsule_root: Path to the cloned CodeOcean capsule.
+    :return: Nested dictionary containing per-study allow-lists (worker/case ids and urlids).
     """
     allowlists: Dict[str, Dict[str, Set[str]]] = {
         "gun_control": {"worker_ids": set(), "urlids": set()},
         "minimum_wage": {
             "study2_worker_ids": set(),
+            "study2_urlids": set(),
             "study3_caseids": set(),
             "study4_worker_ids": set(),
+            "study4_urlids": set(),
         },
     }
 
@@ -799,6 +1136,12 @@ def _load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[
             mt_df = _dedupe_earliest(mt_df, "_worker_id")
             study2_workers = {w for w in mt_df["_worker_id"] if w}
             allowlists["minimum_wage"]["study2_worker_ids"] = study2_workers
+            study2_urlids = {
+                _normalize_urlid(val)
+                for val in mt_df.get("urlid", [])
+                if isinstance(val, str) and _normalize_urlid(val)
+            }
+            allowlists["minimum_wage"]["study2_urlids"] = study2_urlids
             log.info("Allow-list (minimum wage Study 2): %d worker_ids", len(study2_workers))
         else:
             missing = required_mt_cols.difference(wage_mt.columns)
@@ -853,6 +1196,12 @@ def _load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[
             shorts_df = _dedupe_earliest(shorts_df, "_worker_id")
             study4_workers = {w for w in shorts_df["_worker_id"] if w}
             allowlists["minimum_wage"]["study4_worker_ids"] = study4_workers
+            study4_urlids = {
+                _normalize_urlid(val)
+                for val in shorts_df.get("urlid", [])
+                if isinstance(val, str) and _normalize_urlid(val)
+            }
+            allowlists["minimum_wage"]["study4_urlids"] = study4_urlids
             log.info("Allow-list (minimum wage Study 4): %d worker_ids", len(study4_workers))
         else:
             log.warning("Minimum wage Study 4 allow-list: missing worker_id column")
@@ -870,17 +1219,22 @@ def _participant_key(
     session_id: str,
     fallback_counter: int,
 ) -> Tuple[str, int]:
-    """
-    Choose a canonical participant identifier, matching the paper's precedence rules.
+    """Choose the canonical participant identifier for deduplication.
 
     Preference order:
-      1. MTurk/Shorts worker IDs
-      2. YouGov case IDs
-      3. Firebase anonymous IDs
-      4. URLIDs
-      5. Session IDs
+        1. MTurk/Shorts worker ids
+        2. YouGov case ids
+        3. Firebase anonymous ids
+        4. URLIDs
+        5. Session ids
 
-    Falling back to synthetic IDs ensures every row is deduplicated deterministically.
+    :param worker_id: Worker id from the survey export.
+    :param case_id: YouGov case id (Study 3).
+    :param anon_id: Firebase anonymous id present in session logs.
+    :param urlid: Survey url identifier.
+    :param session_id: Platform session id.
+    :param fallback_counter: Counter used when minting synthetic identifiers.
+    :return: Tuple of the chosen participant id and the updated fallback counter.
     """
     for candidate in (worker_id, case_id, anon_id, urlid, session_id):
         val = _normalize_identifier(candidate)
@@ -890,6 +1244,12 @@ def _participant_key(
 
 
 def _coerce_session_value(value: Any) -> Any:
+    """Convert session log values to numeric scalars when possible.
+
+    :param value: Raw value from session arrays or dictionaries.
+    :return: Integer/float when coercion succeeds, otherwise the original value.
+    """
+
     if isinstance(value, (int, float)):
         return value
     if isinstance(value, str):
@@ -909,7 +1269,13 @@ def _coerce_session_value(value: Any) -> Any:
 
 
 def _normalize_session_mapping(values: Any, raw_vids: List[str], base_vids: List[str]) -> Dict[str, Any]:
-    """Convert per-video session arrays/dicts into a standard lookup dict."""
+    """Convert per-video session arrays/dicts into a standard lookup dict.
+
+    :param values: Value taken from the session log (list or dict).
+    :param raw_vids: Raw video identifiers as stored in the log.
+    :param base_vids: Canonical 11-character video identifiers.
+    :return: Mapping from video identifiers to coerced values.
+    """
     mapping: Dict[str, Any] = {}
     if isinstance(values, dict):
         for key, val in values.items():
@@ -930,6 +1296,14 @@ def _normalize_session_mapping(values: Any, raw_vids: List[str], base_vids: List
 
 
 def _lookup_session_value(mapping: Dict[str, Any], raw_id: str, base_id: str) -> Any:
+    """Retrieve a session metric for either the raw or canonical video id.
+
+    :param mapping: Dictionary returned by :func:`_normalize_session_mapping`.
+    :param raw_id: Raw video identifier from the log.
+    :param base_id: Canonical 11-character video id.
+    :return: Matching value or ``None`` if unavailable.
+    """
+
     if not mapping:
         return None
     for key in (raw_id, base_id, str(raw_id), str(base_id)):
@@ -939,9 +1313,20 @@ def _lookup_session_value(mapping: Dict[str, Any], raw_id: str, base_id: str) ->
 
 
 def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
+    """Construct the full interaction dataframe from raw CodeOcean assets.
+
+    :param data_root: Path pointing at the capsule ``data`` directory.
+    :return: Pandas dataframe containing one row per usable recommendation decision.
+    """
+
     sessions_path = data_root / "platform session data" / "sessions.json"
     with open(sessions_path, "r", encoding="utf-8") as fp:
         sessions = json.load(fp)
+
+    shorts_sessions = _load_shorts_sessions(data_root)
+    if shorts_sessions:
+        sessions.extend(shorts_sessions)
+        log.info("Loaded %d Shorts sessions from %s", len(shorts_sessions), data_root / "shorts" / "ytrecs_sessions_may2024.rds")
 
     capsule_root = data_root.parent
     survey_gun = _read_survey_with_fallback(
@@ -999,6 +1384,8 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
     wage_study2_workers: Set[str] = allowlists.get("minimum_wage", {}).get("study2_worker_ids", set())
     wage_study3_caseids: Set[str] = allowlists.get("minimum_wage", {}).get("study3_caseids", set())
     wage_study4_workers: Set[str] = allowlists.get("minimum_wage", {}).get("study4_worker_ids", set())
+    wage_study2_urlids: Set[str] = allowlists.get("minimum_wage", {}).get("study2_urlids", set())
+    wage_study4_urlids: Set[str] = allowlists.get("minimum_wage", {}).get("study4_urlids", set())
     enforce_gun_allowlist = bool(gun_valid_workers)
     enforce_wage_allowlist = bool(wage_study2_workers or wage_study3_caseids or wage_study4_workers)
 
@@ -1260,9 +1647,30 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                         participant_token = worker_candidate
                         valid = True
                 elif issue_value == "minimum_wage":
-                    if wage_study3_caseids and case_candidate and case_candidate in wage_study3_caseids:
+                    urlid_norm = urlid
+                    if (
+                        wage_study4_urlids
+                        and urlid_norm
+                        and urlid_norm in wage_study4_urlids
+                        and worker_candidate
+                        and worker_candidate in wage_study4_workers
+                    ):
+                        study_label = "study4"
+                        participant_token = worker_candidate
+                        valid = True
+                    elif wage_study3_caseids and case_candidate and case_candidate in wage_study3_caseids:
                         study_label = "study3"
                         participant_token = case_candidate
+                        valid = True
+                    elif (
+                        wage_study2_urlids
+                        and urlid_norm
+                        and urlid_norm in wage_study2_urlids
+                        and worker_candidate
+                        and worker_candidate in wage_study2_workers
+                    ):
+                        study_label = "study2"
+                        participant_token = worker_candidate
                         valid = True
                     elif wage_study2_workers and worker_candidate and worker_candidate in wage_study2_workers:
                         study_label = "study2"
@@ -1319,6 +1727,10 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
         survey_row = selected_survey_row
         worker_id = worker_id_value
         case_id = case_id_value
+
+        if participant_study_label == "study4":
+            interaction_stats["sessions_skipped_study4"] += 1
+            continue
 
         participant_identifier, fallback_participant_counter = _participant_key(
             worker_id,
@@ -1601,9 +2013,15 @@ def _load_slate_items(ex: dict) -> List[dict]:
     return out
 
 def _secs(value: Any) -> str:
+    """Render a human-readable duration in seconds.
+
+    :param value: Raw duration (string or numeric).
+    :return: Duration formatted as ``"<n>s"`` or ``"?"`` when parsing fails.
+    """
+
     try:
         return f"{int(round(float(value)))}s"
-    except Exception:
+    except (TypeError, ValueError):
         return "?"
 
 def _synthesize_viewer_sentence(ex: dict) -> str:
@@ -1612,7 +2030,7 @@ def _synthesize_viewer_sentence(ex: dict) -> str:
     age = ex.get("age")
     try:
         age_i = int(age) if age not in (None, "", "nan") else None
-    except Exception:
+    except (TypeError, ValueError):
         age_i = None
     if isinstance(age_i, int) and age_i > 0:
         bits.append(f"{age_i}-year-old")
@@ -1661,124 +2079,113 @@ def _synthesize_viewer_sentence(ex: dict) -> str:
     s = ", ".join(b for b in bits if b)
     return s if s else "(no profile provided)"
 
-def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
-    show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
-    lines: List[str] = []
-
-    # PROFILE
-    viewer = (ex.get("viewer_profile_sentence") or "").strip()
-    if not viewer:
-        viewer = _synthesize_viewer_sentence(ex)
-    lines.append("PROFILE:")
-    lines.append(viewer)
-
-    # ATTRIBUTES (brief)
-    def _clean(value: Any) -> str:
-        return str(value).strip() if value is not None else ""
-
-    def _truthy_str(value: Any) -> Optional[bool]:
-        if value is None:
-            return None
-        normalized = str(value).strip().lower()
-        if normalized in {"1", "true", "t", "yes", "y"}:
-            return True
-        if normalized in {"0", "false", "f", "no", "n"}:
-            return False
-        return None
+def _viewer_attribute_lines(ex: dict) -> List[str]:
+    """Return per-viewer attribute strings for the prompt."""
 
     details: List[str] = []
-    race = _clean(ex.get("race") or ex.get("ethnicity") or ex.get("q29"))
+    race = _clean_str(ex.get("race") or ex.get("ethnicity") or ex.get("q29"))
     if race and not _is_nanlike(race):
         details.append(f"race/ethnicity: {race}")
 
-    gun_own = _truthy_str(ex.get("gun_own"))
+    gun_own = _truthy_str_flag(ex.get("gun_own"))
     if gun_own is True:
         details.append("owns a gun")
     elif gun_own is False:
         details.append("does not own a gun")
 
-    fy = _clean(ex.get("freq_youtube"))
-    fmap = {
-        "0": "rarely",
-        "1": "occasionally",
-        "2": "a few times a month",
-        "3": "weekly",
-        "4": "several times a week",
-        "5": "daily",
-    }
-    if fy in fmap:
-        details.append(f"YouTube frequency: {fmap[fy]}")
+    freq = _clean_str(ex.get("freq_youtube"))
+    if freq in YOUTUBE_FREQ_MAP:
+        details.append(f"YouTube frequency: {YOUTUBE_FREQ_MAP[freq]}")
 
-    fav = _clean(ex.get("q8") or ex.get("fav_channels"))
+    fav = _clean_str(ex.get("q8") or ex.get("fav_channels"))
     if fav and not _is_nanlike(fav):
         details.append(f"favorite channels: {fav}")
-    pop = _clean(ex.get("q78"))
+
+    pop = _clean_str(ex.get("q78"))
     if pop and not _is_nanlike(pop):
         details.append(f"popular channels followed: {pop}")
 
-    if details:
-        lines.append("\nATTRIBUTES:")
-        for detail in details:
-            lines.append(f"- {detail}")
+    return details
 
-    # CURRENTLY WATCHING
-    cvt = (ex.get("current_video_title") or "").strip()
-    cvid = (ex.get("current_video_id") or "").strip()
-    if cvt or cvid:
-        lines.append("\nCURRENTLY WATCHING:")
-        if show_ids and cvid:
-            lines.append(f"{cvt or '(untitled)'} — id: {cvid}")
-        else:
-            lines.append(f"{cvt or '(untitled)'}")
 
-    # HISTORY (prior only, most recent first)
-    det = _as_list_json(ex.get("watched_detailed_json"))
+def _current_watch_lines(ex: dict, show_ids: bool) -> List[str]:
+    """Return lines describing the currently watched video."""
+
+    title = (ex.get("current_video_title") or "").strip()
+    vid = (ex.get("current_video_id") or "").strip()
+    if not (title or vid):
+        return []
+    heading = ["\nCURRENTLY WATCHING:"]
+    if show_ids and vid:
+        heading.append(f"{title or '(untitled)'} — id: {vid}")
+    else:
+        heading.append(f"{title or '(untitled)'}")
+    return heading
+
+
+def _history_lines(ex: dict, show_ids: bool, max_hist: int) -> List[str]:
+    """Generate history lines (most recent first) for the prompt."""
+
+    detailed = _as_list_json(ex.get("watched_detailed_json"))
     vids = _as_list_json(ex.get("watched_vids_json"))
+    current_id = (ex.get("current_video_id") or "").strip()
 
-    def _last_index(values: Any, target: Any) -> Optional[int]:
-        if not isinstance(values, list) or target is None:
-            return None
-        last = None
-        for index, candidate in enumerate(values):
-            if candidate == target:
-                last = index
-        return last
-
-    cur_idx = None
-    if cvid:
-        cur_idx = _last_index(vids, cvid)
-        if cur_idx is None and isinstance(det, list):
-            for j in range(len(det) - 1, -1, -1):
-                try:
-                    if isinstance(det[j], dict) and (det[j].get("id") or "").strip() == cvid:
-                        cur_idx = j
-                        break
-                except Exception:
-                    pass
+    cur_idx: Optional[int] = None
+    if current_id:
+        cur_idx = _last_index(vids, current_id)
+        if cur_idx is None and isinstance(detailed, list):
+            for j in range(len(detailed) - 1, -1, -1):
+                entry = detailed[j]
+                if isinstance(entry, dict) and (entry.get("id") or "").strip() == current_id:
+                    cur_idx = j
+                    break
     if cur_idx is None and isinstance(vids, list) and vids:
         cur_idx = len(vids) - 1
 
-    prior = []
-    if isinstance(det, list) and cur_idx is not None and cur_idx > 0:
-        prior = det[:cur_idx]
+    prior_entries: List[Dict[str, Any]] = []
+    if isinstance(detailed, list) and cur_idx is not None and cur_idx > 0:
+        prior_entries = detailed[:cur_idx]
 
-    if prior:
-        lines.append("\nHISTORY (most recent first):")
-        limit = max_hist if max_hist and max_hist > 0 else len(prior)
-        recent = list(reversed(prior))[:limit]
-        for r in recent:
-            name = (r.get("title") or (r.get("id") if show_ids else "") or "(untitled)").strip()
-            ws = _secs(r.get("watch_seconds"))
-            tl = _secs(r.get("total_length"))
-            lines.append(f"- [{ws}/{tl}] {name}")
+    if not prior_entries:
+        return []
 
-    # OPTIONS
+    heading = ["\nHISTORY (most recent first):"]
+    limit = max_hist if max_hist and max_hist > 0 else len(prior_entries)
+    for entry in reversed(prior_entries[-limit:]):
+        name = (
+            entry.get("title")
+            or (entry.get("id") if show_ids else "")
+            or "(untitled)"
+        ).strip()
+        watch_time = _secs(entry.get("watch_seconds"))
+        total_length = _secs(entry.get("total_length"))
+        heading.append(f"- [{watch_time}/{total_length}] {name}")
+    return heading
+
+
+def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
+    show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
+    lines: List[str] = ["PROFILE:"]
+
+    viewer = (ex.get("viewer_profile_sentence") or "").strip()
+    if not viewer:
+        viewer = _synthesize_viewer_sentence(ex)
+    lines.append(viewer)
+
+    details = _viewer_attribute_lines(ex)
+    if details:
+        lines.append("\nATTRIBUTES:")
+        lines.extend(f"- {detail}" for detail in details)
+
+    lines.extend(_current_watch_lines(ex, show_ids))
+    lines.extend(_history_lines(ex, show_ids, max_hist))
+
     items = _load_slate_items(ex)
     lines.append("\nOPTIONS:")
     if items:
-        for i, item in enumerate(items, 1):
+        for idx, item in enumerate(items, 1):
             name = (item.get("title") or (item.get("id") if show_ids else "") or "(untitled)").strip()
-            lines.append(f"{i}. {name}")
+            lines.append(f"{idx}. {name}")
     else:
         lines.append("(no options provided)")
 
@@ -1786,10 +2193,17 @@ def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
 
 # ---------- “full history” & “prior slates” for discriminator ----------
 def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> list[str]:
+    """Render full viewing history lines for the discriminator state.
+
+    :param ex: Row dictionary representing the current interaction.
+    :param include_current: Whether to include the current video in the history output.
+    :return: List of history lines formatted for the discriminator prompt.
+    """
+
     tj = ex.get("trajectory_json")
     try:
         obj = json.loads(tj) if isinstance(tj, str) and tj.strip() else {}
-    except Exception:
+    except (TypeError, json.JSONDecodeError):
         obj = {}
     order = obj.get("order") if isinstance(obj, dict) else None
     if not isinstance(order, list):
@@ -1798,10 +2212,10 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
     def _key(row: dict) -> tuple[int, float]:
         try:
             return (0, int(row.get("idx")))
-        except Exception:
+        except (TypeError, ValueError):
             try:
                 return (1, float(row.get("end_ms") or -1))
-            except Exception:
+            except (TypeError, ValueError):
                 return (1, -1.0)
 
     seq = [row for row in order if isinstance(row, dict)]
@@ -1818,10 +2232,16 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
     return lines
 
 def _render_prior_slates(ex: dict) -> list[str]:
+    """Summarize prior recommendation slates from the trajectory payload.
+
+    :param ex: Row dictionary with ``trajectory_json`` attached.
+    :return: List of strings describing earlier slates.
+    """
+
     tj = ex.get("trajectory_json")
     try:
         obj = json.loads(tj) if isinstance(tj, str) and tj.strip() else {}
-    except Exception:
+    except (TypeError, json.JSONDecodeError):
         obj = {}
     disp = obj.get("displayOrders") if isinstance(obj, dict) else None
     if not isinstance(disp, dict):
@@ -1851,6 +2271,12 @@ def _render_prior_slates(ex: dict) -> list[str]:
     return out
 
 def _build_state_disc_text(ex: dict) -> str:
+    """Build the discriminator state text from a cleaned example row.
+
+    :param ex: Example dictionary containing metadata and trajectory info.
+    :return: Multiline string with current video, history, and prior slates.
+    """
+
     parts: List[str] = []
     now_line = (ex.get("current_video_title") or ex.get("current_video_id") or "(none)")
     parts += ["CURRENT:", now_line]
@@ -1864,6 +2290,13 @@ def _build_state_disc_text(ex: dict) -> str:
 
 # ---------- gold next id ----------
 def _derive_next_from_history(ex: dict, current_id: str) -> str:
+    """Infer the next video id from the watch history when explicit labels are missing.
+
+    :param ex: Session row dictionary.
+    :param current_id: Canonical id of the current video.
+    :return: Next video id or an empty string when cannot be determined.
+    """
+
     vids = _as_list_json(ex.get("watched_vids_json"))
     if current_id and isinstance(vids, list) and vids:
         try:
@@ -1886,6 +2319,12 @@ def _derive_next_from_history(ex: dict, current_id: str) -> str:
     return ""
 
 def _get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
+    """Resolve the gold next-video id for a session step.
+
+    :param ex: Session row being transformed.
+    :param sol_key: Optional alternate column name containing the gold id.
+    :return: Canonical next-video id or an empty string when unavailable.
+    """
     cur = (ex.get("current_video_id") or "").strip()
     if sol_key and sol_key not in {"current_video_id", "current_id"}:
         v = ex.get(sol_key)
@@ -1899,6 +2338,13 @@ def _get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
     return _derive_next_from_history(ex, cur)
 
 def _gold_index_from_items(gold: str, items: List[dict]) -> int:
+    """Locate the 1-based index of ``gold`` inside the slate items list.
+
+    :param gold: Gold video id (canonical string).
+    :param items: Slate items pulled from the session log.
+    :return: Index in ``items`` or ``-1`` when the id cannot be matched.
+    """
+
     gold = (gold or "").strip()
     if not gold or not items:
         return -1
@@ -1912,8 +2358,47 @@ def _gold_index_from_items(gold: str, items: List[dict]) -> int:
                 return i
     return -1
 
+
+PASSTHROUGH_COLUMNS: Set[str] = {
+    "issue",
+    "rating_copy",
+    "rating_index",
+    "rating_video_id",
+    "urlid",
+    "topic_id",
+    "session_id",
+    "step_index",
+    "display_step",
+    "display_order_key",
+    "current_video_raw_id",
+    "current_video_channel",
+    "current_video_channel_id",
+    "next_video_id",
+    "next_video_raw_id",
+    "next_video_title",
+    "next_video_channel",
+    "next_video_channel_id",
+    "percent_visible",
+    "session_finished",
+    "start_time_ms",
+    "end_time_ms",
+    "trajectory_json",
+    "issue_source",
+    "issue_detail",
+    "slate_source",
+}
+
 # ---------- row → clean example ----------
 def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str], max_hist: int) -> Optional[dict]:
+    """Transform a raw session pair into the cleaned GRPO example structure.
+
+    :param ex: Interaction row produced during session processing.
+    :param sys_prompt: Optional system prompt override.
+    :param sol_key: Alternate column to treat as the gold next-video id.
+    :param max_hist: Maximum number of prior history entries to render.
+    :return: Cleaned example dictionary or ``None`` when the row is unusable.
+    """
+
     items = _load_slate_items(ex)
     if not items:
         return None
@@ -1929,12 +2414,12 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
         "Format (STRICT): <think>…</think><answer>3</answer>"
     )
 
-    # enumerated slate text if not present
-    slate_names = []
-    for i, it in enumerate(items, 1):
-        nm = (it.get("title") or it.get("id") or "(untitled)").strip()
-        slate_names.append(f"{i}. {nm}")
-    slate_text = "\n".join(slate_names)
+    slate_text = ex.get("slate_text")
+    if not slate_text:
+        slate_text = "\n".join(
+            f"{idx}. {(item.get('title') or item.get('id') or '(untitled)').strip()}"
+            for idx, item in enumerate(items, 1)
+        )
 
     out = {
         "prompt": [
@@ -1951,7 +2436,7 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
         "state_text": user_msg,  # LM sees this
         "state_disc_text": _build_state_disc_text(ex),  # disc sees richer info
         "slate_items": items,
-        "slate_text": str(ex.get("slate_text") or slate_text),
+        "slate_text": str(slate_text),
         # passthrough
         "watched_detailed_json": _as_list_json(ex.get("watched_detailed_json")),
         "watched_vids_json": _as_list_json(ex.get("watched_vids_json")),
@@ -1965,15 +2450,7 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
     }
     out["slate_items_with_meta"] = _as_list_json(ex.get("slate_items_json"))
 
-    passthrough = {
-        "issue", "rating_copy", "rating_index", "rating_video_id", "urlid", "topic_id",
-        "session_id", "step_index", "display_step", "display_order_key",
-        "current_video_raw_id", "current_video_channel", "current_video_channel_id",
-        "next_video_id", "next_video_raw_id", "next_video_title", "next_video_channel", "next_video_channel_id",
-        "percent_visible", "session_finished", "start_time_ms", "end_time_ms", "trajectory_json",
-        "issue_source", "issue_detail", "slate_source",
-    }
-    for extra in passthrough:
+    for extra in PASSTHROUGH_COLUMNS:
         if extra in ex:
             out[extra] = ex.get(extra)
 
@@ -1984,14 +2461,18 @@ def _row_to_example(ex: dict, sys_prompt: Optional[str], sol_key: Optional[str],
         try:
             if pd.isna(cleaned):  # type: ignore[arg-type]
                 cleaned = None
-        except Exception:
+        except (TypeError, ValueError):
             pass
         out[key] = cleaned
     return out
 
 
 def _ensure_shared_schema(datasets_map: Dict[str, datasets.Dataset]) -> Dict[str, datasets.Dataset]:
-    """Ensure every dataset split exposes the same columns and dtypes."""
+    """Ensure every dataset split exposes the same columns and dtypes.
+
+    :param datasets_map: Mapping of split name to ``datasets.Dataset``.
+    :return: New mapping where each split has identical columns/features.
+    """
     if not datasets_map:
         return datasets_map
     all_columns: Set[str] = set()
@@ -2025,6 +2506,13 @@ def _ensure_shared_schema(datasets_map: Dict[str, datasets.Dataset]) -> Dict[str
 
 # ---------- driver ----------
 def _load_codeocean_dataset(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
+    """Load the raw CodeOcean capsule and convert it into a dataset dictionary.
+
+    :param dataset_name: Path to the capsule ``data`` directory.
+    :param validation_ratio: Fraction of participants to allocate to the validation split.
+    :return: ``DatasetDict`` with ``train``/``validation`` splits populated.
+    """
+
     root = Path(dataset_name).expanduser()
     data_root = _resolve_capsule_data_root(root)
     if not data_root:
@@ -2044,7 +2532,12 @@ def _load_codeocean_dataset(dataset_name: str, validation_ratio: float = 0.1) ->
 
 
 def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
-    """Load from a HF hub id, a load_from_disk folder, or a single-split file."""
+    """Load the raw dataset from disk or Hugging Face Hub.
+
+    :param dataset_name: HF repo id, ``load_from_disk`` folder, file path, or capsule directory.
+    :param validation_ratio: Fraction used when splitting CodeOcean data.
+    :return: ``DatasetDict`` containing the available splits.
+    """
     if os.path.isdir(dataset_name):
         resolved = _resolve_capsule_data_root(Path(dataset_name))
         if resolved is not None:
@@ -2072,6 +2565,8 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
     return datasets.load_dataset(dataset_name)
 
 def main():
+    """Command-line entry point for building the cleaned dataset and reports."""
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset-name", required=True, help="HF hub id, load_from_disk dir, or file")
     ap.add_argument("--train-split", default="train")

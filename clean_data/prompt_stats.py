@@ -1012,18 +1012,51 @@ def generate_prompt_feature_report(
         "Emily Hu (University of Pennsylvania)"
     )
     md_lines.append("")
+    expected_by_study = {
+        "study1": 1650,  # Study 1 — gun control MTurk (paper)
+        "study2": 1679,  # Study 2 — minimum wage MTurk (paper)
+        "study3": 2715,  # Study 3 — minimum wage YouGov (paper)
+    }
+    actual_by_study = {
+        key: overall_counts.get("by_study", {}).get(key, 0) for key in expected_by_study.keys()
+    }
     md_lines.append(
-        "- Original study participants: 1,650 (Study 1 — gun rights) and 5,326 (Studies 2–4 — minimum wage)."
+        "- Original study participants: 1,650 (Study 1 — gun rights), 1,679 (Study 2 — minimum wage MTurk), "
+        "and 2,715 (Study 3 — minimum wage YouGov)."
     )
     md_lines.append(
         f"- Cleaned dataset participants captured here: {overall_counts.get('by_issue', {}).get('gun_control', 0)} "
-        "(gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage)."
+        "(gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage). "
+        "Study 4 (Shorts) is excluded because the released interaction logs do not contain recommendation slates."
     )
     md_lines.append(
-        "- Only gun-control and minimum-wage sessions are retained; other topic IDs from the capsule are excluded."
+        "- Shortfall summary (Studies 1–3 only):"
     )
+    study_labels = {
+        "study1": "Study 1 (gun control MTurk)",
+        "study2": "Study 2 (minimum wage MTurk)",
+        "study3": "Study 3 (minimum wage YouGov)",
+    }
+    shortfall_notes = {
+        "study1": "98 sessions log only the starter clip (`vids` length = 1) and 15 log multiple clips but no recommendation slate (`displayOrders` empty).",
+        "study2": "14 sessions log only the starter clip; 17 have multiple clips but no slate metadata (`displayOrders` empty).",
+        "study3": "No gap — interaction logs are complete.",
+    }
+    for key in ("study1", "study2", "study3"):
+        expected = expected_by_study[key]
+        actual = actual_by_study.get(key, 0)
+        delta = expected - actual
+        note = shortfall_notes.get(key, "")
+        if delta == 0:
+            gap_text = "no gap"
+        else:
+            sign = "-" if delta > 0 else "+"
+            gap_text = f"{sign}{abs(delta)}"
+        md_lines.append(
+            f"  - {study_labels[key]}: {expected} expected vs. {actual} usable ({gap_text}). {note}"
+        )
     md_lines.append(
-        "- All charts and counts above operate on unique participants per issue (a participant can appear once in gun control and once in minimum wage, but never twice within the same issue split)."
+        "- Only gun-control and minimum-wage sessions (Studies 1–3) are retained; other topic IDs from the capsule are excluded."
     )
     md_lines.append("")
 

@@ -7,58 +7,55 @@
 
 | Split | Rows | Missing profile | Share missing |
 |-------|------|-----------------|---------------|
-| train | 20372 | 0 | 0.00% |
-| validation | 2254 | 0 | 0.00% |
+| train | 20342 | 0 | 0.00% |
+| validation | 2272 | 0 | 0.00% |
 
 ## Prior video counts
 
 | Prior videos | Train | Validation |
 |--------------|-------|------------|
-| 0 | 5310 | 590 |
-| 1 | 5184 | 570 |
-| 2 | 5049 | 559 |
-| 3 | 4817 | 535 |
-| 4 | 12 | 0 |
+| 0 | 5309 | 588 |
+| 1 | 5168 | 583 |
+| 2 | 5043 | 562 |
+| 3 | 4811 | 538 |
+| 4 | 11 | 1 |
 
 ## Slate size distribution (`n_options`)
 
 | Slate size | Train | Validation |
 |------------|-------|------------|
-| 1 | 1126 | 126 |
-| 2 | 1767 | 227 |
-| 3 | 868 | 72 |
-| 4 | 14263 | 1541 |
-| 5 | 2348 | 288 |
+| 1 | 1125 | 127 |
+| 2 | 1776 | 218 |
+| 3 | 857 | 83 |
+| 4 | 14257 | 1535 |
+| 5 | 2327 | 309 |
 
 ## Unique content counts
 
 | Split | Current videos | Gold videos | Unique slates | Unique state texts |
 |-------|----------------|-------------|---------------|--------------------|
-| train | 243 | 403 | 13342 | 20371 |
-| validation | 187 | 263 | 1889 | 2254 |
+| train | 241 | 405 | 13334 | 20341 |
+| validation | 200 | 278 | 1895 | 2272 |
 
 ## Unique participants per study and issue
 
 | Split | Issue | Study | Participants |
 |-------|-------|-------|--------------|
-| train | gun_control | study1 | 1368 |
-| train | minimum_wage | study2 | 1340 |
-| train | minimum_wage | study3 | 2443 |
-| train | minimum_wage | study4 | 160 |
-| train | all | all | 5063 |
-| validation | gun_control | study1 | 168 |
-| validation | minimum_wage | study2 | 131 |
-| validation | minimum_wage | study3 | 272 |
-| validation | minimum_wage | study4 | 19 |
-| validation | all | all | 587 |
+| train | gun_control | study1 | 1365 |
+| train | minimum_wage | study2 | 1505 |
+| train | minimum_wage | study3 | 2439 |
+| train | all | all | 5057 |
+| validation | gun_control | study1 | 171 |
+| validation | minimum_wage | study2 | 142 |
+| validation | minimum_wage | study3 | 276 |
+| validation | all | all | 586 |
 
-- Overall participants (all issues): 5590
+- Overall participants (all issues): 5587
 - Overall participants for gun_control: 1536
-- Overall participants for minimum_wage: 4365
+- Overall participants for minimum_wage: 4362
 - Overall participants in study1: 1536
-- Overall participants in study2: 1471
+- Overall participants in study2: 1647
 - Overall participants in study3: 2715
-- Overall participants in study4: 179
 
 ## Dataset coverage notes
 
@@ -66,10 +63,13 @@ Builder note: rows missing all survey demographics (age, gender, race, income, e
 
 > "The short answer is that sessions.json contains EVERYTHING. Every test run, every study. In addition to the studies that involved watching videos on the platform, it also contains sessions from the “First Impressions” study, which involved only rating thumbnails, and the “Shorts” study (Study 4 in the paper, I believe), which involved no user decisions (instead playing a sequence of predetermined videos that were either constant or increasing in their extremeness). All of these are differentiated by the topicId." — Emily Hu (University of Pennsylvania)
 
-- Original study participants: 1,650 (Study 1 — gun rights) and 5,326 (Studies 2–4 — minimum wage).
-- Cleaned dataset participants captured here: 1536 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage).
-- Only gun-control and minimum-wage sessions are retained; other topic IDs from the capsule are excluded.
-- All charts and counts above operate on unique participants per issue (a participant can appear once in gun control and once in minimum wage, but never twice within the same issue split).
+- Original study participants: 1,650 (Study 1 — gun rights), 1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).
+- Cleaned dataset participants captured here: 1536 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage). Study 4 (Shorts) is excluded because the released interaction logs do not contain recommendation slates.
+- Shortfall summary (Studies 1–3 only):
+  - Study 1 (gun control MTurk): 1650 expected vs. 1536 usable (-114). 98 sessions log only the starter clip (`vids` length = 1) and 15 log multiple clips but no recommendation slate (`displayOrders` empty).
+  - Study 2 (minimum wage MTurk): 1679 expected vs. 1647 usable (-32). 14 sessions log only the starter clip; 17 have multiple clips but no slate metadata (`displayOrders` empty).
+  - Study 3 (minimum wage YouGov): 2715 expected vs. 2715 usable (no gap). No gap — interaction logs are complete.
+- Only gun-control and minimum-wage sessions (Studies 1–3) are retained; other topic IDs from the capsule are excluded.
 
 ## Feature figures
 

@@ -95,6 +95,10 @@ python clean_data/clean_data.py \
     --push-to-hub --hub-token $HF_TOKEN
 ```
 
+Builder notes:
+- Rows missing all survey demographics (age, gender, race, income, etc.) are dropped so every retained interaction includes viewer context (roughly 22% of the raw interactions are removed).
+- Each participant is allowed at most one session per issue (gun control vs. minimum wage). Duplicate sessions for the same participant/issue pair are filtered out during cleaning.
+
 The script logs the number of rows kept per split, along with the per-issue
 distribution, and raises an error if any required GRPO columns are missing.
 When a validation split is requested, the builder assigns entire viewers
@@ -105,7 +109,10 @@ Public Hugging Face copies of the cleaned splits:
 - Minimum wage: https://huggingface.co/datasets/od2961/grail-wage
 - Gun control: https://huggingface.co/datasets/od2961/grail-gun
 
-### What Each Row Contains
+##
+Builder note: rows missing all survey demographics (age, gender, race, income, etc.) are dropped during cleaning so every retained interaction has viewer context for the prompt builder. This removes roughly 22% of the ~33k raw interactions.
+Builder note: each participant is restricted to a single session per issue (gun control or minimum wage). Duplicate sessions from the same viewer on the same issue are filtered out by combining the URLID or anonymous Firebase ID with the issue label.
+# What Each Row Contains
 
 - Viewer survey attributes from the underlying PNAS study (three waves, 300+ columns) merged by `urlid`/`topic_id`.
 - Complete watch history and timing context (`watched_detailed_json`, `trajectory_json`) for each decision point.

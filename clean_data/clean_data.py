@@ -54,9 +54,9 @@ Env (optional):
 """
 
 from __future__ import annotations
-import os, sys, re, json, logging, argparse, random, csv
+import os, sys, re, json, logging, argparse, random, csv, math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from collections import Counter
 
 import datasets
@@ -582,6 +582,247 @@ def _infer_participant_study(
     return "unknown"
 
 
+def _normalize_identifier(value: Any) -> str:
+    text = str(value or "").strip()
+    if text and text.lower() not in {"nan", "none", "null"}:
+        return text
+    return ""
+
+
+_MISSING_STRINGS = {"", "na", "nan", "none", "null", "n/a"}
+
+
+def _is_missing_value(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, float):
+        if math.isnan(value):
+            return True
+    text = str(value).strip()
+    if not text:
+        return True
+    return text.lower() in _MISSING_STRINGS
+
+
+def _parse_timestamp_ns(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        ts_from_num = pd.to_datetime(value, unit="ms", errors="coerce", utc=True)
+        if pd.notna(ts_from_num):
+            return int(ts_from_num.value)
+    text = str(value).strip()
+    if not text or text.lower() in _MISSING_STRINGS:
+        return None
+    parsed = pd.to_datetime(text, errors="coerce", utc=True)
+    if pd.notna(parsed):
+        return int(parsed.value)
+    try:
+        num = float(text)
+    except ValueError:
+        return None
+    ts_from_num = pd.to_datetime(num, unit="ms", errors="coerce", utc=True)
+    if pd.notna(ts_from_num):
+        return int(ts_from_num.value)
+    return None
+
+
+def _load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[str]]]:
+    allowlists: Dict[str, Dict[str, Set[str]]] = {
+        "gun_control": {"worker_ids": set(), "urlids": set()},
+        "minimum_wage": {
+            "study2_worker_ids": set(),
+            "study3_caseids": set(),
+            "study4_worker_ids": set(),
+        },
+    }
+
+    def _normalize_series(series: pd.Series) -> pd.Series:
+        return series.fillna("").astype(str).str.strip()
+
+    def _nonempty_mask(series: pd.Series) -> pd.Series:
+        normalized = _normalize_series(series)
+        lower = normalized.str.lower()
+        return ~(normalized.eq("") | lower.isin(_MISSING_STRINGS))
+
+    def _dedupe_earliest(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
+        if df.empty or id_column not in df.columns:
+            return df
+        working = df.copy()
+        sort_columns: List[str] = []
+        if "start_time2" in working.columns:
+            working["_sort_start_time2"] = pd.to_datetime(working["start_time2"], errors="coerce", utc=True)
+            sort_columns.append("_sort_start_time2")
+        if "start_time" in working.columns:
+            numeric = pd.to_numeric(working["start_time"], errors="coerce")
+            working["_sort_start_time"] = pd.to_datetime(numeric, unit="ms", errors="coerce", utc=True)
+            sort_columns.append("_sort_start_time")
+        if not sort_columns:
+            sort_columns = [id_column]
+        else:
+            sort_columns.append(id_column)
+        working = working.sort_values(by=sort_columns, kind="mergesort")
+        deduped = working.drop_duplicates(subset=[id_column], keep="first")
+        deduped = deduped.drop(columns=["_sort_start_time2", "_sort_start_time"], errors="ignore")
+        return deduped
+
+    # Gun control (Study 1)
+    gun_dir = capsule_root / "results" / "intermediate data" / "gun control (issue 1)"
+    gun_wave1 = _read_csv_if_exists(gun_dir / "guncontrol_qualtrics_w1_clean.csv")
+    gun_w123 = _read_csv_if_exists(gun_dir / "guncontrol_qualtrics_w123_clean.csv")
+    required_wave1_cols = {"worker_id", "q87", "q89", "survey_time", "gun_index"}
+    required_followup_cols = {"worker_id", "treatment_arm", "pro", "anti"}
+    if not gun_wave1.empty and not gun_w123.empty:
+        if required_wave1_cols.issubset(gun_wave1.columns) and required_followup_cols.issubset(gun_w123.columns):
+            wave1 = gun_wave1.copy()
+            wave1["_worker_id"] = _normalize_series(wave1["worker_id"])
+            mask = _nonempty_mask(wave1["_worker_id"])
+            mask &= wave1["q87"].fillna("").astype(str).str.strip().eq("Quick and easy")
+            mask &= wave1["q89"].fillna("").astype(str).str.strip().eq("wikiHow")
+            times = pd.to_numeric(wave1["survey_time"], errors="coerce")
+            mask &= times >= 120
+            gun_index = pd.to_numeric(wave1["gun_index"], errors="coerce")
+            mask &= gun_index.between(0.05, 0.95, inclusive="both")
+            valid_wave1_workers = set(wave1.loc[mask, "_worker_id"])
+            valid_wave1_workers.discard("")
+
+            merged = gun_w123.copy()
+            merged["_worker_id"] = _normalize_series(merged["worker_id"])
+            if valid_wave1_workers:
+                merged = merged[merged["_worker_id"].isin(valid_wave1_workers)]
+            treatment_series = merged["treatment_arm"].fillna("").astype(str).str.strip().str.lower()
+            merged = merged[
+                (treatment_series != "control")
+                & _nonempty_mask(merged["treatment_arm"])
+            ]
+            merged = merged[_nonempty_mask(merged["pro"])]
+            merged = merged[_nonempty_mask(merged["anti"])]
+            merged = _dedupe_earliest(merged, "_worker_id")
+            gun_workers = {w for w in merged["_worker_id"] if w}
+            allowlists["gun_control"]["worker_ids"] = gun_workers
+            if "urlid" in merged.columns:
+                gun_urlids = {_normalize_identifier(v) for v in merged["urlid"].tolist() if not _is_missing_value(v)}
+            else:
+                gun_urlids = set()
+            allowlists["gun_control"]["urlids"] = gun_urlids
+            log.info(
+                "Allow-list (gun control): %d worker_ids (urlids=%d)",
+                len(gun_workers),
+                len(gun_urlids),
+            )
+        else:
+            missing = required_wave1_cols.difference(gun_wave1.columns) | required_followup_cols.difference(gun_w123.columns)
+            if missing:
+                log.warning("Gun control allow-list skipped missing columns: %s", ", ".join(sorted(missing)))
+    else:
+        log.warning("Gun control allow-list: missing wave1 or merged dataset; skipping strict filters")
+
+    wage_dir = capsule_root / "results" / "intermediate data" / "minimum wage (issue 2)"
+
+    # Minimum wage Study 2 (MTurk)
+    wage_mt = _read_csv_if_exists(wage_dir / "qualtrics_w12_clean.csv")
+    required_mt_cols = {"worker_id", "q87", "q89", "survey_time", "mw_index_w1", "treatment_arm", "pro", "anti"}
+    if not wage_mt.empty:
+        if required_mt_cols.issubset(wage_mt.columns):
+            mt_df = wage_mt.copy()
+            mt_df["_worker_id"] = _normalize_series(mt_df["worker_id"])
+            mask = _nonempty_mask(mt_df["_worker_id"])
+            mask &= mt_df["q87"].fillna("").astype(str).str.strip().eq("Quick and easy")
+            mask &= mt_df["q89"].fillna("").astype(str).str.strip().eq("wikiHow")
+            mask &= pd.to_numeric(mt_df["survey_time"], errors="coerce") >= 120
+            mw_index = pd.to_numeric(mt_df["mw_index_w1"], errors="coerce")
+            mask &= mw_index.between(0.025, 0.975, inclusive="both")
+            mt_df = mt_df.loc[mask]
+            treatment_series = mt_df["treatment_arm"].fillna("").astype(str).str.strip().str.lower()
+            mt_df = mt_df[
+                (treatment_series != "control")
+                & _nonempty_mask(mt_df["treatment_arm"])
+            ]
+            mt_df = mt_df[_nonempty_mask(mt_df["pro"])]
+            mt_df = mt_df[_nonempty_mask(mt_df["anti"])]
+            mt_df = _dedupe_earliest(mt_df, "_worker_id")
+            study2_workers = {w for w in mt_df["_worker_id"] if w}
+            allowlists["minimum_wage"]["study2_worker_ids"] = study2_workers
+            log.info("Allow-list (minimum wage Study 2): %d worker_ids", len(study2_workers))
+        else:
+            missing = required_mt_cols.difference(wage_mt.columns)
+            log.warning("Minimum wage Study 2 allow-list skipped missing columns: %s", ", ".join(sorted(missing)))
+    else:
+        log.warning("Minimum wage Study 2 allow-list: dataset missing")
+
+    # Minimum wage Study 3 (YouGov)
+    wage_yg = _read_csv_if_exists(wage_dir / "yg_w12_clean.csv")
+    caseid_col = "caseid" if "caseid" in wage_yg.columns else ("CaseID" if "CaseID" in wage_yg.columns else None)
+    required_yg_cols = {"treatment_arm", "pro", "anti"}
+    if not wage_yg.empty and caseid_col:
+        if required_yg_cols.issubset(wage_yg.columns):
+            yg_df = wage_yg.copy()
+            yg_df["_caseid"] = _normalize_series(yg_df[caseid_col])
+            yg_df = yg_df[_nonempty_mask(yg_df["_caseid"])]
+            treatment_series = yg_df["treatment_arm"].fillna("").astype(str).str.strip().str.lower()
+            yg_df = yg_df[
+                (treatment_series != "control")
+                & _nonempty_mask(yg_df["treatment_arm"])
+            ]
+            yg_df = yg_df[_nonempty_mask(yg_df["pro"])]
+            yg_df = yg_df[_nonempty_mask(yg_df["anti"])]
+            yg_df = _dedupe_earliest(yg_df, "_caseid")
+            study3_caseids = {cid for cid in yg_df["_caseid"] if cid}
+            allowlists["minimum_wage"]["study3_caseids"] = study3_caseids
+            log.info("Allow-list (minimum wage Study 3): %d caseids", len(study3_caseids))
+        else:
+            missing = required_yg_cols.difference(wage_yg.columns)
+            log.warning("Minimum wage Study 3 allow-list skipped missing columns: %s", ", ".join(sorted(missing)))
+    else:
+        if wage_yg.empty:
+            log.warning("Minimum wage Study 3 allow-list: dataset missing")
+        else:
+            log.warning("Minimum wage Study 3 allow-list: missing caseid column")
+
+    # Minimum wage Study 4 (Shorts)
+    shorts_path = capsule_root / "results" / "intermediate data" / "shorts" / "qualtrics_w12_clean_ytrecs_may2024.csv"
+    wage_shorts = _read_csv_if_exists(shorts_path)
+    if not wage_shorts.empty:
+        if "worker_id" in wage_shorts.columns:
+            shorts_df = wage_shorts.copy()
+            shorts_df["_worker_id"] = _normalize_series(shorts_df["worker_id"])
+            mask = _nonempty_mask(shorts_df["_worker_id"])
+            if "q81" in shorts_df.columns:
+                mask &= shorts_df["q81"].fillna("").astype(str).str.strip().eq("Quick and easy")
+            if "q82" in shorts_df.columns:
+                mask &= shorts_df["q82"].fillna("").astype(str).str.strip().eq("wikiHow")
+            if "video_link" in shorts_df.columns:
+                mask &= _nonempty_mask(shorts_df["video_link"])
+            shorts_df = shorts_df.loc[mask]
+            shorts_df = _dedupe_earliest(shorts_df, "_worker_id")
+            study4_workers = {w for w in shorts_df["_worker_id"] if w}
+            allowlists["minimum_wage"]["study4_worker_ids"] = study4_workers
+            log.info("Allow-list (minimum wage Study 4): %d worker_ids", len(study4_workers))
+        else:
+            log.warning("Minimum wage Study 4 allow-list: missing worker_id column")
+    else:
+        log.warning("Minimum wage Study 4 allow-list: dataset missing")
+
+    return allowlists
+
+
+def _participant_key(
+    worker_id: str,
+    case_id: str,
+    anon_id: str,
+    urlid: str,
+    session_id: str,
+    fallback_counter: int,
+) -> Tuple[str, int]:
+    for candidate in (worker_id, case_id, anon_id, urlid, session_id):
+        val = _normalize_identifier(candidate)
+        if val:
+            return val, fallback_counter
+    return f"anon::{fallback_counter}", fallback_counter + 1
+
+
 def _coerce_session_value(value: Any) -> Any:
     if isinstance(value, (int, float)):
         return value
@@ -680,6 +921,13 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
 
     tree_meta, tree_issue_map = _load_recommendation_tree_metadata(data_root)
     fallback_titles = _load_video_metadata(data_root)
+    allowlists = _load_participant_allowlists(capsule_root)
+    gun_valid_workers: Set[str] = allowlists.get("gun_control", {}).get("worker_ids", set())
+    wage_study2_workers: Set[str] = allowlists.get("minimum_wage", {}).get("study2_worker_ids", set())
+    wage_study3_caseids: Set[str] = allowlists.get("minimum_wage", {}).get("study3_caseids", set())
+    wage_study4_workers: Set[str] = allowlists.get("minimum_wage", {}).get("study4_worker_ids", set())
+    enforce_gun_allowlist = bool(gun_valid_workers)
+    enforce_wage_allowlist = bool(wage_study2_workers or wage_study3_caseids or wage_study4_workers)
 
     def _video_meta(base_id: str, raw_id: str = "") -> Dict[str, Any]:
         info = dict(tree_meta.get(base_id) or {})
@@ -800,6 +1048,8 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
 
     rows: List[Dict[str, Any]] = []
     interaction_stats: Counter[str] = Counter()
+    seen_participant_issue: set[Tuple[str, str]] = set()
+    fallback_participant_counter = 0
 
     for sess in sessions:
         interaction_stats["sessions_total"] += 1
@@ -899,7 +1149,117 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
             issue = "unknown"
             issue_detail = f"no tree/topic/survey match (urlid={urlid or '(missing)'}, topic={topic or '(missing)'})"
 
-        survey_row = _select_survey_row(survey_rows, topic or "")
+        issue_value = str(issue or "").strip() or "unknown"
+
+        anon_id = str(sess.get("anonymousFirebaseAuthUID") or "").strip()
+        selected_survey_row: Dict[str, Any] = {}
+        worker_id_value = ""
+        case_id_value = ""
+        participant_study_label = "unknown"
+        candidate_entries: List[Tuple[int, str, str, str, str, Dict[str, Any]]] = []
+
+        if survey_rows:
+            for candidate_row in survey_rows:
+                worker_candidate = _normalize_identifier(
+                    candidate_row.get("worker_id")
+                    or candidate_row.get("workerid")
+                    or candidate_row.get("WorkerID")
+                )
+                case_candidate = _normalize_identifier(
+                    candidate_row.get("caseid")
+                    or candidate_row.get("CaseID")
+                )
+                start_ns = _parse_timestamp_ns(candidate_row.get("start_time2"))
+                if start_ns is None:
+                    start_ns = _parse_timestamp_ns(candidate_row.get("start_time"))
+                if start_ns is None:
+                    start_ns = _parse_timestamp_ns(candidate_row.get("start_time_w2"))
+                if start_ns is None:
+                    start_ns = int(1e20)
+
+                study_label = "unknown"
+                participant_token = ""
+                valid = False
+
+                if issue_value == "gun_control" and gun_valid_workers:
+                    if worker_candidate and worker_candidate in gun_valid_workers:
+                        study_label = "study1"
+                        participant_token = worker_candidate
+                        valid = True
+                elif issue_value == "minimum_wage":
+                    if wage_study3_caseids and case_candidate and case_candidate in wage_study3_caseids:
+                        study_label = "study3"
+                        participant_token = case_candidate
+                        valid = True
+                    elif wage_study4_workers and worker_candidate and worker_candidate in wage_study4_workers:
+                        study_label = "study4"
+                        participant_token = worker_candidate
+                        valid = True
+                    elif wage_study2_workers and worker_candidate and worker_candidate in wage_study2_workers:
+                        study_label = "study2"
+                        participant_token = worker_candidate
+                        valid = True
+
+                if valid and study_label in {"study1", "study2", "study3"}:
+                    treat_val = candidate_row.get("treatment_arm")
+                    if _is_missing_value(treat_val) or str(treat_val).strip().lower() == "control":
+                        valid = False
+                    if _is_missing_value(candidate_row.get("pro")) or _is_missing_value(candidate_row.get("anti")):
+                        valid = False
+
+                if valid:
+                    candidate_entries.append((start_ns, participant_token, worker_candidate, case_candidate, study_label, candidate_row))
+
+        enforce_allowlist = False
+        if issue_value == "gun_control" and enforce_gun_allowlist:
+            enforce_allowlist = True
+        elif issue_value == "minimum_wage" and enforce_wage_allowlist:
+            enforce_allowlist = True
+
+        if candidate_entries:
+            candidate_entries.sort(key=lambda item: (item[0], item[1]))
+            _, _, worker_id_value, case_id_value, participant_study_label, selected_survey_row = candidate_entries[0]
+        elif survey_rows:
+            selected_survey_row = _select_survey_row(survey_rows, topic or "")
+            worker_id_value = _normalize_identifier(
+                selected_survey_row.get("worker_id")
+                or selected_survey_row.get("workerid")
+                or selected_survey_row.get("WorkerID")
+            )
+            case_id_value = _normalize_identifier(
+                selected_survey_row.get("caseid")
+                or selected_survey_row.get("CaseID")
+            )
+            participant_study_label = _infer_participant_study(
+                issue_value,
+                selected_survey_row or {},
+                topic,
+                sess,
+            )
+        else:
+            selected_survey_row = {}
+
+        if enforce_allowlist and not candidate_entries:
+            interaction_stats["sessions_filtered_allowlist"] += 1
+            continue
+
+        survey_row = selected_survey_row
+        worker_id = worker_id_value
+        case_id = case_id_value
+
+        participant_identifier, fallback_participant_counter = _participant_key(
+            worker_id,
+            case_id,
+            anon_id,
+            urlid,
+            session_id,
+            fallback_participant_counter,
+        )
+        participant_issue_key = (participant_identifier, issue_value)
+        if participant_issue_key in seen_participant_issue:
+            interaction_stats["sessions_duplicate_participant_issue"] += 1
+            continue
+        seen_participant_issue.add(participant_issue_key)
 
         display_orders = sess.get("displayOrders") or {}
         display_orders_struct: Dict[str, List[Dict[str, Any]]] = {}
@@ -1083,12 +1443,16 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 "end_time_ms": sess.get("endTime"),
             }
 
-            row["participant_study"] = _infer_participant_study(
-                issue_value,
-                survey_row or {},
-                topic,
-                sess,
-            )
+            resolved_study = participant_study_label or "unknown"
+            if not resolved_study or resolved_study == "unknown":
+                resolved_study = _infer_participant_study(
+                    issue_value,
+                    survey_row or {},
+                    topic,
+                    sess,
+                )
+            row["participant_study"] = resolved_study
+            row["participant_id"] = participant_identifier
 
             if survey_row:
                 for k, v in survey_row.items():

@@ -1,30 +1,140 @@
 # Prompt Feature Report
 
-## Dataset Coverage Notes
+- Output directory: `reports/prompt_stats`
+- Figures: `reports/prompt_stats/figures`
+
+## Profile availability
+
+| Split | Rows | Missing profile | Share missing |
+|-------|------|-----------------|---------------|
+| train | 23412 | 0 | 0.00% |
+| validation | 2615 | 0 | 0.00% |
+
+## Prior video counts
+
+| Prior videos | Train | Validation |
+|--------------|-------|------------|
+| 0 | 6285 | 695 |
+| 1 | 5984 | 672 |
+| 2 | 5738 | 640 |
+| 3 | 5385 | 607 |
+| 4 | 18 | 1 |
+| 5 | 1 | 0 |
+| 6 | 1 | 0 |
+
+## Slate size distribution (`n_options`)
+
+| Slate size | Train | Validation |
+|------------|-------|------------|
+| 1 | 1249 | 137 |
+| 2 | 1988 | 236 |
+| 3 | 997 | 106 |
+| 4 | 16477 | 1838 |
+| 5 | 2701 | 298 |
+
+## Unique content counts
+
+| Split | Current videos | Gold videos | Unique slates | Unique state texts |
+|-------|----------------|-------------|---------------|--------------------|
+| train | 244 | 408 | 14927 | 23331 |
+| validation | 195 | 273 | 2183 | 2605 |
+
+## Unique participants per study and issue
+
+| Split | Issue | Study | Participants |
+|-------|-------|-------|--------------|
+| train | gun_control | study1 | 1579 |
+| train | minimum_wage | study3 | 4707 |
+| train | all | all | 6008 |
+| validation | gun_control | study1 | 178 |
+| validation | minimum_wage | study3 | 518 |
+| validation | all | all | 693 |
+
+- Overall participants (all issues): 6637
+- Overall participants for gun_control: 1757
+- Overall participants for minimum_wage: 5225
+- Overall participants in study1: 1757
+- Overall participants in study3: 5225
+
+## Dataset coverage notes
 
 Builder note: rows missing all survey demographics (age, gender, race, income, etc.) are dropped during cleaning so every retained interaction has viewer context for the prompt builder. This removes roughly 22% of the ~33k raw interactions.
 
 > "The short answer is that sessions.json contains EVERYTHING. Every test run, every study. In addition to the studies that involved watching videos on the platform, it also contains sessions from the “First Impressions” study, which involved only rating thumbnails, and the “Shorts” study (Study 4 in the paper, I believe), which involved no user decisions (instead playing a sequence of predetermined videos that were either constant or increasing in their extremeness). All of these are differentiated by the topicId." — Emily Hu (University of Pennsylvania)
 
 - Original study participants: 1,650 (Study 1 — gun rights) and 5,326 (Studies 2–4 — minimum wage).
-- Cleaned dataset participants captured here: 1,757 (gun control) and 4,499 (minimum wage).
-- All statistics below operate on unique participants (one record per viewer). Only gun-control and minimum-wage sessions are retained; other topic IDs from the capsule are excluded.
+- Cleaned dataset participants captured here: 1757 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage).
+- Only gun-control and minimum-wage sessions are retained; other topic IDs from the capsule are excluded.
+- All charts and counts above operate on unique participants per issue (a participant can appear once in gun control and once in minimum wage, but never twice within the same issue split).
 
-## Unique Participants per Study and Issue
+## Feature figures
 
-| Split | Issue | Study  | Participants |
-|-------|-------|--------|--------------|
-| train | gun_control | study1 | 1,579 |
-| train | minimum_wage | study2 | _TBD_ |
-| train | minimum_wage | study3 | _TBD_ |
-| train | minimum_wage | study4 | _TBD_ |
-| train | all | all | 5,631 |
-| validation | gun_control | study1 | 178 |
-| validation | minimum_wage | study2 | _TBD_ |
-| validation | minimum_wage | study3 | 447 |
-| validation | minimum_wage | study4 | _TBD_ |
-| validation | all | all | 625 |
-| total | gun_control | all | 1,757 |
-| total | minimum_wage | all | 4,499 |
-
-_The per-study breakdown will populate once `clean_data/prompt_stats.py` is re-run in an environment with the necessary plotting dependencies. The totals shown above already match the current cleaned dataset._
+- `Viewer age` → `reports/prompt_stats/figures/age.png`
+- `Supports assault weapons ban` → `reports/prompt_stats/figures/assault_ban.png`
+- `Biden approval` → `reports/prompt_stats/figures/biden_approval.png`
+- `Binge-watches YouTube flag` → `reports/prompt_stats/figures/binge_youtube.png`
+- `Children in household flag` → `reports/prompt_stats/figures/children_in_household.png`
+- `City` → `reports/prompt_stats/figures/city.png`
+- `Civic engagement` → `reports/prompt_stats/figures/civic_engagement.png`
+- `College graduate flag` → `reports/prompt_stats/figures/college.png`
+- `Believes concealed carry is safe` → `reports/prompt_stats/figures/concealed_safe.png`
+- `County` → `reports/prompt_stats/figures/county.png`
+- `Education level` → `reports/prompt_stats/figures/education.png`
+- `Employment status` → `reports/prompt_stats/figures/employment_status.png`
+- `Favorite channels text` → `reports/prompt_stats/figures/favorite_channels.png`
+- `YouTube watch frequency code` → `reports/prompt_stats/figures/freq_youtube.png`
+- `Gender` → `reports/prompt_stats/figures/gender.png`
+- `Gun enthusiasm` → `reports/prompt_stats/figures/gun_enthusiasm.png`
+- `Gun identity strength` → `reports/prompt_stats/figures/gun_identity.png`
+- `Gun importance` → `reports/prompt_stats/figures/gun_importance.png`
+- `Gun index` → `reports/prompt_stats/figures/gun_index.png`
+- `Gun index (alternate)` → `reports/prompt_stats/figures/gun_index_2.png`
+- `Gun ownership flag` → `reports/prompt_stats/figures/gun_ownership.png`
+- `Gun policy stance` → `reports/prompt_stats/figures/gun_policy.png`
+- `Gun policy priority` → `reports/prompt_stats/figures/gun_priority.png`
+- `Supports handgun ban` → `reports/prompt_stats/figures/handgun_ban.png`
+- `Household income bracket` → `reports/prompt_stats/figures/household_income.png`
+- `Household size` → `reports/prompt_stats/figures/household_size.png`
+- `Political ideology` → `reports/prompt_stats/figures/ideology.png`
+- `Marital status` → `reports/prompt_stats/figures/marital_status.png`
+- `Media diet description` → `reports/prompt_stats/figures/media_diet.png`
+- `$15 minimum wage support (wave 1)` → `reports/prompt_stats/figures/minwage15_w1.png`
+- `$15 minimum wage support (wave 2)` → `reports/prompt_stats/figures/minwage15_w2.png`
+- `Minimum wage importance` → `reports/prompt_stats/figures/minwage_importance.png`
+- `Minimum wage priority` → `reports/prompt_stats/figures/minwage_priority.png`
+- `Minimum wage stance (wave 1, inferred)` → `reports/prompt_stats/figures/minwage_text_r_w1.png`
+- `Minimum wage stance (wave 2, inferred)` → `reports/prompt_stats/figures/minwage_text_r_w2.png`
+- `Minimum wage stance (wave 3, inferred)` → `reports/prompt_stats/figures/minwage_text_r_w3.png`
+- `Minimum wage stance (wave 1, survey)` → `reports/prompt_stats/figures/minwage_text_w1.png`
+- `Minimum wage stance (wave 2, survey)` → `reports/prompt_stats/figures/minwage_text_w2.png`
+- `Minimum wage support index (wave 1)` → `reports/prompt_stats/figures/mw_index_w1.png`
+- `Minimum wage support index (wave 2)` → `reports/prompt_stats/figures/mw_index_w2.png`
+- `Supports wage increase (wave 1)` → `reports/prompt_stats/figures/mw_support_w1.png`
+- `Supports wage increase (wave 2)` → `reports/prompt_stats/figures/mw_support_w2.png`
+- `News consumption description` → `reports/prompt_stats/figures/news_consumption.png`
+- `News consumption frequency` → `reports/prompt_stats/figures/news_frequency.png`
+- `News sources list` → `reports/prompt_stats/figures/news_sources.png`
+- `Top news sources` → `reports/prompt_stats/figures/news_sources_top.png`
+- `News trust level` → `reports/prompt_stats/figures/news_trust.png`
+- `Occupation text` → `reports/prompt_stats/figures/occupation.png`
+- `Party identification` → `reports/prompt_stats/figures/party_identification.png`
+- `Party lean` → `reports/prompt_stats/figures/party_lean.png`
+- `Platform usage summary` → `reports/prompt_stats/figures/platform_use.png`
+- `Political interest` → `reports/prompt_stats/figures/political_interest.png`
+- `Popular channels followed` → `reports/prompt_stats/figures/popular_channels_followed.png`
+- `Race / ethnicity` → `reports/prompt_stats/figures/race_ethnicity.png`
+- `Religious affiliation` → `reports/prompt_stats/figures/religion.png`
+- `Religious service attendance` → `reports/prompt_stats/figures/religious_attendance.png`
+- `Right to own importance` → `reports/prompt_stats/figures/right_to_own_importance.png`
+- `Social media use` → `reports/prompt_stats/figures/social_media_use.png`
+- `State` → `reports/prompt_stats/figures/state.png`
+- `Supports stricter gun laws` → `reports/prompt_stats/figures/stricter_laws.png`
+- `Trump approval` → `reports/prompt_stats/figures/trump_approval.png`
+- `Veteran status` → `reports/prompt_stats/figures/veteran.png`
+- `2016 vote recall` → `reports/prompt_stats/figures/vote_2016.png`
+- `2020 vote recall` → `reports/prompt_stats/figures/vote_2020.png`
+- `2024 vote intention` → `reports/prompt_stats/figures/vote_2024.png`
+- `ZIP3 prefix` → `reports/prompt_stats/figures/zip3.png`
+- `prior_history_counts` → `reports/prompt_stats/figures/prior_history_counts.png`
+- `slate_size_counts` → `reports/prompt_stats/figures/slate_size_counts.png`
+- `demographic_missing_counts` → `reports/prompt_stats/figures/demographic_missing_counts.png`

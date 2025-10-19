@@ -1,4 +1,10 @@
-"""Shared feature definitions for prompt statistics."""
+"""Canonical feature groups and labels used by the prompt analytics tools.
+
+This module defines the feature taxonomy consumed by the plotting and
+summary code under :mod:`clean_data.prompt`.  Keeping the mapping in one
+place ensures the CLI, reporting scripts, and documentation highlight the
+same viewer attributes and survey responses.
+"""
 
 from __future__ import annotations
 

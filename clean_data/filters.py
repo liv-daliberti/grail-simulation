@@ -1,4 +1,11 @@
-"""Filtering helpers for building cleaned prompt datasets."""
+"""Row-level filters and quick aggregate reporting utilities.
+
+This module contains the lightweight predicates used to discard unusable
+interaction rows before prompt construction as well as diagnostic helpers
+that summarise the issue distribution across splits.  These functions are
+intended to be composed by :mod:`clean_data.clean_data` and higher-level
+entry points rather than imported by downstream consumers directly.
+"""
 
 from __future__ import annotations
 

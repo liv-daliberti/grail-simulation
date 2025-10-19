@@ -1,4 +1,10 @@
-"""CLI entrypoint for prompt feature statistics reporting."""
+"""Command-line front-end for generating prompt feature statistics.
+
+The CLI loads a cleaned dataset, computes summary metrics, renders plots,
+and writes a Markdown report describing viewer coverage, feature richness,
+and participation statistics.  It is typically invoked by the main
+cleaning workflow but can be used standalone for exploratory analysis.
+"""
 
 from __future__ import annotations
 

@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Compatibility wrapper for prompt statistics CLI."""
+"""Thin wrapper that mirrors the legacy prompt statistics entry point.
+
+Historically the prompt reporting lived in this script; during the module
+split we kept the file so downstream tooling could continue invoking it.
+The implementation now simply delegates to :mod:`clean_data.prompt.cli`.
+"""
 
 from __future__ import annotations
 

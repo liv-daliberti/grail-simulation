@@ -1,4 +1,11 @@
-"""Survey and participant allow-list helpers."""
+"""Survey wrangling utilities and participant allow-list reconstruction.
+
+These helpers read the various Qualtrics/YouGov exports distributed with
+the capsule, build indices keyed by URL id, infer study labels, and
+recreate the exact allow-lists used by the original preprocessing script.
+The resulting mappings are consumed by :mod:`clean_data.sessions` when
+filtering session logs.
+"""
 
 from __future__ import annotations
 

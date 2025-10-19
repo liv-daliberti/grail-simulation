@@ -1,4 +1,11 @@
-"""Helper utilities shared across the clean_data package."""
+"""Common low-level helpers reused across the cleaning pipeline.
+
+This module holds normalization routines, regex utilities, and shared
+constants that power session parsing, prompt construction, and survey
+processing.  Anything that manipulates identifiers, serialised JSON, or
+core feature definitions typically lives here to avoid circular imports
+between the higher-level modules.
+"""
 
 from __future__ import annotations
 

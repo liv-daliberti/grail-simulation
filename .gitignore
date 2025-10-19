@@ -31,3 +31,5 @@ wandb/
 /.venv/
 /__pycache__/
 .wandb
+docs/_build/
+docs/_autosummary/

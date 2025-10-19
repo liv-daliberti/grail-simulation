@@ -1,4 +1,10 @@
-"""Command-line interface for building the cleaned GRAIL dataset."""
+"""Command-line entry point that ties together the cleaning workflow.
+
+The CLI parses user arguments, configures :mod:`clean_data.clean_data`
+options, orchestrates dataset construction, kicks off prompt analytics,
+and handles optional issue-level exports.  It mirrors the behaviour of the
+original CodeOcean pipeline while exposing a Python-first interface.
+"""
 
 from __future__ import annotations
 

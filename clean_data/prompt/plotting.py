@@ -1,4 +1,9 @@
-"""Plotting utilities used by prompt statistics."""
+"""Matplotlib-based visualisations for the prompt analytics workflow.
+
+These helpers generate the numeric and categorical histograms that populate
+the prompt feature report, both at the global level and broken down by
+issue, enabling quick inspection of the cleaned dataset.
+"""
 
 from __future__ import annotations
 

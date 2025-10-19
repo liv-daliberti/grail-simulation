@@ -1,0 +1,19 @@
+GRAIL Simulation Documentation
+==============================
+
+This reference is generated directly from the project's source code.  The
+API section below walks through the ``clean_data`` package alongside the
+training and evaluation utilities that live under ``src/``.
+
+API Reference
+-------------
+
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+
+   clean_data
+   open_r1
+   knn
+   visualization
+   prompt_builder

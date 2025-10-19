@@ -1,10 +1,11 @@
-"""CodeOcean dataset helpers.
+"""Façade for rebuilding datasets directly from the CodeOcean capsule.
 
-This module intentionally keeps a very small surface area and delegates the
-heavy session-parsing logic to :mod:`clean_data.sessions`.  Historically the
-implementation lived here; consolidating it in :mod:`clean_data.sessions`
-eliminates duplicate code paths while keeping backwards-compatible entry
-points under the ``clean_data.codeocean`` namespace.
+The functions here provide a tiny shim around :mod:`clean_data.sessions`,
+exposing compatibility helpers that take a capsule path, rebuild the
+interaction dataframe, split it into train/validation splits, and surface
+the optional `resolve_capsule_data_root` convenience used by the CLI.
+Anything that needs to ingest the raw CodeOcean export should go through
+this module rather than re-parsing the capsule tree.
 """
 
 from __future__ import annotations

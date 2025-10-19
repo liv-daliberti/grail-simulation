@@ -1,4 +1,4 @@
-"""Prompt statistics subpackage."""
+"""Namespace exposing the prompt analytics CLI and programmatic API."""
 
 from __future__ import annotations
 

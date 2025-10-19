@@ -1,4 +1,11 @@
-"""I/O helpers for reading CodeOcean assets and related CSV/RDS dumps."""
+"""Input/output primitives for ingesting capsule artefacts and metadata.
+
+The functions in this module know how to locate capsule directories,
+read CSV/RDS exports from the CodeOcean bundle, parse supplemental
+metadata, and normalise the resulting structures for downstream use.
+They form the foundation upon which the session parser reconstructs the
+full interaction dataset.
+"""
 
 from __future__ import annotations
 

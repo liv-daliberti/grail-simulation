@@ -1,4 +1,9 @@
-"""Shared utilities for prompt statistics modules."""
+"""Utility functions and data structures shared by prompt analytics code.
+
+This module abstracts dataset loading, Series manipulations, and summary
+helpers that are reused by the plotting, Markdown, and CLI components of
+the prompt reporting pipeline.
+"""
 
 from __future__ import annotations
 

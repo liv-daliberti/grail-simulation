@@ -1,4 +1,13 @@
-"""Session-to-example transformation helpers."""
+"""Session log parsing and feature engineering for CodeOcean exports.
+
+Here we translate the raw capsule sessions into the intermediate dataframe
+used by :mod:`clean_data.clean_data`: loading survey allow-lists, merging
+per-video metadata, enforcing participant filters, and emitting one row per
+viewer decision.  It is the heaviest module in the package and underpins
+both the CLI and the high-level build functions.
+"""
+
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -6,6 +15,7 @@ import json
 import logging
 import random
 from collections import Counter
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -399,9 +409,110 @@ def _build_watched_details(
         if total_val is not None:
             entry["total_length_ms"] = total_val
 
+        recs = meta.get("recs")
+        if isinstance(recs, list):
+            entry["recommendations"] = [
+                dict(rec) for rec in recs if isinstance(rec, dict)
+            ]
+
         details.append(entry)
 
     return details
+
+
+def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
+    """Convert display order mappings into canonical id sequences."""
+
+    normalized: Dict[int, List[str]] = {}
+    if not isinstance(display_orders, dict):
+        return normalized
+    for key, value in display_orders.items():
+        try:
+            idx = int(key)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(value, (list, tuple)):
+            continue
+        vids: List[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                continue
+            stripped = _strip_session_video_id(item)
+            if stripped:
+                vids.append(stripped)
+        if vids:
+            normalized[idx] = vids
+    return normalized
+
+
+def build_slate_items(  # pylint: disable=too-many-locals,too-many-branches
+    step_index: int,
+    display_orders: Dict[int, List[str]],
+    recommendations: Optional[List[Dict[str, Any]]],
+    tree_meta: Dict[str, Dict[str, Any]],
+    fallback_titles: Dict[str, Any],
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Derive the slate items for the given interaction step."""
+
+    candidates: List[Tuple[str, Optional[str]]] = []
+    source = "display_orders"
+
+    order_ids = display_orders.get(step_index, [])
+    if order_ids:
+        for vid in order_ids:
+            base_vid = _strip_session_video_id(vid)
+            if base_vid:
+                raw_id = vid if vid != base_vid else None
+                candidates.append((base_vid, raw_id))
+    else:
+        source = "tree_metadata"
+        if not isinstance(recommendations, list):
+            recommendations = []
+        for rec in recommendations:
+            if not isinstance(rec, dict):
+                continue
+            rec_id = rec.get("id") or rec.get("video_id") or rec.get("raw_id")
+            rec_id = _strip_session_video_id(str(rec_id or ""))
+            if not rec_id:
+                continue
+            raw_id = rec.get("raw_id")
+            if raw_id:
+                raw_id = _strip_session_video_id(str(raw_id))
+            candidates.append((rec_id, raw_id if raw_id != rec_id else None))
+
+    seen: set[str] = set()
+    items: List[Dict[str, Any]] = []
+    for base_id, raw_id in candidates:
+        if base_id in seen:
+            continue
+        seen.add(base_id)
+        meta = tree_meta.get(base_id, {})
+        title_candidates = (
+            meta.get("title"),
+            fallback_titles.get(base_id),
+            fallback_titles.get(raw_id) if raw_id else None,
+        )
+        title = next(
+            (
+                str(candidate).strip()
+                for candidate in title_candidates
+                if isinstance(candidate, str) and str(candidate).strip()
+            ),
+            "",
+        )
+        if not title and raw_id:
+            title = raw_id
+        if not title:
+            title = base_id
+        item: Dict[str, Any] = {"id": base_id, "title": title}
+        if raw_id:
+            item["raw_id"] = raw_id
+        if meta.get("channel_title"):
+            item["channel_title"] = meta["channel_title"]
+        if meta.get("channel_id"):
+            item["channel_id"] = meta["channel_id"]
+        items.append(item)
+    return items, source
 
 
 def _session_info(sess: dict, watched_details: List[Dict[str, Any]]) -> SessionInfo:
@@ -724,6 +835,10 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
 
         enforce_allowlist = allowlist.requires_enforcement(info.topic)
 
+        display_orders = normalize_display_orders(sess.get("displayOrders"))
+        watched_vids_json = list(base_vids)
+        watched_detailed_json = deepcopy(watched_details)
+
         for idx in range(len(base_vids) - 1):
             current_base = base_vids[idx]
             next_base = base_vids[idx + 1]
@@ -790,6 +905,22 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
                 interaction_stats["sessions_filtered_allowlist"] += 1
                 continue
 
+            recommendations = (
+                watched_details[idx].get("recommendations")
+                if idx < len(watched_details)
+                else []
+            )
+            slate_items, slate_source = build_slate_items(
+                idx,
+                display_orders,
+                recommendations,
+                tree_meta,
+                fallback_titles,
+            )
+            if not slate_items:
+                interaction_stats["pairs_missing_slates"] += 1
+                continue
+
             participant_identifier, fallback_participant_counter = participant_key(
                 ParticipantIdentifiers(
                     worker_id=worker_id_value,
@@ -812,6 +943,16 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
             row["urlid"] = info.urlid
             row["topic_id"] = info.topic
             row["selected_survey_row"] = selected_survey_row
+            row["slate_items_json"] = slate_items
+            row["slate_source"] = slate_source
+            row["n_options"] = len(slate_items)
+            row["next_video_id"] = next_base
+            row["next_video_raw_id"] = raw_vids[idx + 1]
+            row["next_video_title"] = (
+                watched_details[idx + 1]["title"] if idx + 1 < len(watched_details) else ""
+            )
+            row["watched_vids_json"] = watched_vids_json
+            row["watched_detailed_json"] = watched_detailed_json
 
             for col in DEMOGRAPHIC_COLUMNS:
                 if col in selected_survey_row:
@@ -880,6 +1021,8 @@ __all__ = [
     "derive_next_from_history",
     "get_gold_next_id",
     "gold_index_from_items",
+    "normalize_display_orders",
+    "build_slate_items",
     "build_codeocean_rows",
     "split_dataframe",
 ]
@@ -893,5 +1036,7 @@ _load_slate_items = load_slate_items
 _derive_next_from_history = derive_next_from_history
 _get_gold_next_id = get_gold_next_id
 _gold_index_from_items = gold_index_from_items
+_normalize_display_orders = normalize_display_orders
+_build_slate_items = build_slate_items
 _build_codeocean_rows = build_codeocean_rows
 _split_dataframe = split_dataframe

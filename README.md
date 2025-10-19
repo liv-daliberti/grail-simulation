@@ -46,6 +46,11 @@ reproduce the experiments without re-running the CodeOcean extraction workflow.
 - `scripts/run-tests.sh` executes the unit test suite (`pytest`) with the same module resolution.
 - Continuous integration runs via `.github/workflows/ci.yml`, which installs `requirements-dev.txt` and executes both scripts on every push to `main` and on pull requests.
 
+## Documentation
+
+- Install the documentation extras with `pip install -r requirements-dev.txt`.
+- Build the HTML docs with either `make -C docs html` or `sphinx-build -b html docs docs/_build/html`; the output lives under `docs/_build/html`.
+
 ## Pull the Data
 
 All data comes from ```https://codeocean.com/capsule/5416997/tree/v1``` and is associated with the paper [Short-term exposure to filter-bubble recommendation systems has limited polarization effects: Naturalistic experiments on YouTube](https://www.pnas.org/doi/10.1073/pnas.2318127122). Should you want to manully reconstruct our data pull, you can pull the data using the following commands:

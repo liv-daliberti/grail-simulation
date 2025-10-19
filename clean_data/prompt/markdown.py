@@ -1,4 +1,9 @@
-"""Markdown report builder for prompt statistics."""
+"""Generate the human-readable Markdown report for prompt analytics results.
+
+The functions here translate the structured summaries computed by the
+prompt CLI into narrative sections, tables, and figure references so the
+cleaning workflow can emit a ready-to-publish README alongside plots.
+"""
 
 from __future__ import annotations
 

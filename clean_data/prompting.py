@@ -1,4 +1,11 @@
-"""Prompt rendering and row transformation utilities for cleaned GRAIL data."""
+"""Core prompt construction logic for the cleaned GRAIL dataset.
+
+This module converts the normalized session rows into structured prompt
+examples: resolving slate items, synthesising system/user messages,
+tracking passthrough metadata, and enforcing GRPO column requirements.
+Other modules feed raw data into these helpers when building cleaned
+datasets or inspecting individual examples.
+"""
 
 from __future__ import annotations
 

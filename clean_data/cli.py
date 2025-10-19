@@ -106,6 +106,10 @@ def main(argv: Optional[list[str]] = None) -> None:
     if args.prompt_stats_dir:
         if {"train", "validation"}.issubset(dataset.keys()):
             generate_prompt_stats(dataset, Path(args.prompt_stats_dir))
+            logging.getLogger("clean_grail").info(
+                "Prompt statistics package executed; artifacts written to %s",
+                args.prompt_stats_dir,
+            )
         else:
             logging.getLogger("clean_grail").warning(
                 "Prompt stats requested (dir=%s) but dataset lacks both 'train' "

@@ -1,5 +1,7 @@
+LICENSE
 README.md
 setup.py
+src/prompt_builder.py
 src/grail_simulation.egg-info/PKG-INFO
 src/grail_simulation.egg-info/SOURCES.txt
 src/grail_simulation.egg-info/dependency_links.txt
@@ -10,7 +12,6 @@ src/open_r1/configs.py
 src/open_r1/generate.py
 src/open_r1/grail.py
 src/open_r1/grpo.py
-src/prompt_builder.py
 src/open_r1/rewards.py
 src/open_r1/sft.py
 src/open_r1/utils/__init__.py
@@ -38,3 +39,8 @@ src/open_r1/utils/ioi/piston_client.py
 src/open_r1/utils/ioi/utils.py
 src/visualization/__init__.py
 src/visualization/recommendation_tree_viz.py
+tests/test_clean_data_module.py
+tests/test_filters_reporting.py
+tests/test_prompt_smoke.py
+tests/test_sessions_slate.py
+tests/test_surveys_allowlists.py

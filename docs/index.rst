@@ -13,7 +13,3 @@ API Reference
    :recursive:
 
    clean_data
-   open_r1
-   knn
-   visualization
-   prompt_builder

@@ -24,6 +24,41 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
+autodoc_mock_imports = [
+    "accelerate",
+    "aiofiles",
+    "async_lru",
+    "bitsandbytes",
+    "datasets",
+    "deepspeed",
+    "distilabel",
+    "e2b_code_interpreter",
+    "einops",
+    "graphviz",
+    "hf_transfer",
+    "huggingface_hub",
+    "jieba",
+    "langdetect",
+    "latex2sympy2_extended",
+    "liger_kernel",
+    "lighteval",
+    "math_verify",
+    "matplotlib",
+    "morphcloud",
+    "numpy",
+    "pandas",
+    "peft",
+    "pyarrow",
+    "safetensors",
+    "scikit_learn",
+    "sklearn",
+    "sentencepiece",
+    "torch",
+    "transformers",
+    "trl",
+    "wandb",
+]
+
 autosummary_generate = True
 autodoc_default_options = {
     "members": True,

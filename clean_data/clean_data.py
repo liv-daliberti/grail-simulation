@@ -333,6 +333,13 @@ def export_issue_datasets(
         if push_to_hub and repo_id:
             log.info("Pushing issue '%s' dataset to %s", issue_name, repo_id)
             issue_ds.push_to_hub(repo_id, token=hub_token)
+            log.info(
+                "Issue '%s' dataset successfully pushed to Hugging Face hub repository %s",
+                issue_name,
+                repo_id,
+            )
+    if push_to_hub:
+        log.info("All requested issue datasets have been pushed to the Hugging Face hub.")
 
 
 def parse_issue_repo_specs(specs: Optional[list[str]]) -> Dict[str, str]:

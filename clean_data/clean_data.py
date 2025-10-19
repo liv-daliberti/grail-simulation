@@ -970,6 +970,13 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                 continue
             survey_wage_sources.append(yougov_df)
 
+    shorts_survey = _read_survey_with_fallback(
+        capsule_root / "intermediate data" / "shorts" / "qualtrics_w12_clean_ytrecs_may2024.csv",
+        capsule_root / "results" / "intermediate data" / "shorts" / "qualtrics_w12_clean_ytrecs_may2024.csv",
+    )
+    if not shorts_survey.empty:
+        survey_wage_sources.append(shorts_survey)
+
     if survey_wage_sources:
         survey_wage = pd.concat(survey_wage_sources, ignore_index=True, sort=False)
         if "urlid" in survey_wage.columns:
@@ -1257,12 +1264,12 @@ def _build_codeocean_rows(data_root: Path) -> pd.DataFrame:
                         study_label = "study3"
                         participant_token = case_candidate
                         valid = True
-                    elif wage_study4_workers and worker_candidate and worker_candidate in wage_study4_workers:
-                        study_label = "study4"
-                        participant_token = worker_candidate
-                        valid = True
                     elif wage_study2_workers and worker_candidate and worker_candidate in wage_study2_workers:
                         study_label = "study2"
+                        participant_token = worker_candidate
+                        valid = True
+                    elif wage_study4_workers and worker_candidate and worker_candidate in wage_study4_workers:
+                        study_label = "study4"
                         participant_token = worker_candidate
                         valid = True
 

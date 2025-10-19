@@ -24,7 +24,10 @@ wandb/
 **/.DS_Store
 /capsule-5416997/
 /data/
-/clean_data/
+/clean_data/data/
+/clean_data/data/**
+/clean_data/__pycache__/
+/clean_data/__pycache__/**
 /.venv/
 /__pycache__/
 .wandb

@@ -1,10 +1,21 @@
 # Cleaned GRAIL Dataset: Alignment With CodeOcean Pipelines
 
-This document explains how the Python builder in `clean_data/clean_data.py` replicates the preprocessing that the PNAS authors performed in their CodeOcean capsule. It is the detailed companion to the high‑level overview in the [repository README](../README.md).
+This document explains how the Python builder (invoked via `python -m clean_data.cli`) replicates the preprocessing that the PNAS authors performed in their CodeOcean capsule. It is the detailed companion to the high‑level overview in the [repository README](../README.md), and the reusable functions live in `clean_data/clean_data.py`.
 
 ## Overview
 
+## Module Guide
+
+- **Session pipeline**: `clean_data.sessions` houses the canonical `build_codeocean_rows` function plus helpers for session normalization, allow-list enforcement, and participant deduplication.  Any new prompt builder should depend on these APIs rather than re-parsing the capsule.
+- **Prompt builder**: `clean_data.prompting` (with constants in `clean_data/prompt/constants.py`) owns all prompt formatting logic.  `clean_data/clean_data.py` re-exports `row_to_example` for convenience, and prompt_builder.py should import from these modules directly.
+- **Dataset façade**: `clean_data/codeocean.py` offers `load_codeocean_dataset` for consumers that want a ready-made `DatasetDict`.  The CLI `python -m clean_data.cli` wraps this functionality for end-to-end builds.
+- **Prompt analytics**: The statistics/Markdown tooling lives under `clean_data/prompt`.  Invoke it with `python -m clean_data.prompt.cli ...` and point it at any cleaned dataset.
+
+The allow-list CSVs consumed during cleaning come from the CodeOcean capsule’s `results/intermediate data/...` directories—e.g. `results/intermediate data/gun control (issue 1)/guncontrol_qualtrics_w123_clean.csv` for Study 1 and the corresponding minimum-wage folders for Studies 2–4.  Shorts (Study 4) surveys are still read from `results/intermediate data/shorts/qualtrics_w12_clean_ytrecs_may2024.csv`, but interactions are excluded from prompt rows because the released sessions lack recommendation slates.
+
 The builder reads the same intermediate CSV exports the CodeOcean R scripts emit and applies the study‑specific filters before combining them with the YouTube session logs. Every retained training row is keyed on the participant identifier that the paper used (worker IDs for MTurk/Shorts, case IDs for YouGov), and we deduplicate on `(participant_id, issue)` to ensure each person contributes at most one trajectory per domain.
+
+> Looking for the prompt-level diagnostics (feature coverage plots, participant counts, etc.)? They now live in [`clean_data/prompt/`](./prompt), a small package that powers the CLI shim `clean_data/prompt_stats.py`. You can invoke it either via that wrapper or with `python -m clean_data.prompt.cli`.
 
 The implementation mirrors three buckets of logic from the R code:
 
@@ -67,13 +78,13 @@ Filters:
 
 Result: **2,715** unique case IDs, matching the paper.
 
-### Study 4 — Minimum Wage Shorts Experiment (not included in training rows)
+### Study 4 — Minimum Wage Shorts Experiment (prompt rows excluded)
 
 Source script: `code/shorts/05_clean_shorts_data.R`
 
 - Load `qualtrics_w12_clean_ytrecs_may2024.csv` to recover the list of 932 recruited participants and their attention-check status.
 - The interaction log lives in `data/shorts/ytrecs_sessions_may2024.rds`; many entries contain only the auto-play “startvid” clip and no follow-up recommendations.
-- Because GRPO rows require a recommendation slate and a chosen next video, we currently **exclude Study 4 from the cleaned dataset**. We still ingest the survey allow-list so the shortfall can be tracked (see below), but we do not synthesize rows for sessions with no usable decision pairs.
+- Because prompt rows require a recommendation slate and a chosen next video, we currently **exclude Study 4 from the cleaned dataset**. We still ingest the survey allow-list so the shortfall can be tracked (see below), but we do not synthesize rows for sessions with no usable decision pairs.
 
 Implication: counts derived from `clean_data.py` reflect Studies 1–3 only. When reporting headline numbers, include a note that the Shorts experiment is omitted due to missing recommendation slates in the released interaction logs.
 
@@ -88,8 +99,8 @@ During the build step the script records:
 You can re‑run the allow‑list sizing without rebuilding the entire dataset by executing:
 
 ```bash
-python -m compileall clean_data/clean_data.py  # ensures the module imports
-python clean_data/clean_data.py --dataset-name <capsule_dir>/data --output-dir /tmp/check --no-write
+python -m compileall clean_data  # ensures the package imports
+python -m clean_data.cli --dataset-name <capsule_dir>/data --output-dir /tmp/check
 ```
 
 Inspect the logs for the “Allow-list” summaries to confirm the counts above.
@@ -117,7 +128,7 @@ These conventions guarantee that any participant counts derived from the cleaned
 
 ## Summary
 
-- The Python builder mirrors the published filters for Studies 1–3. Study 4 (Shorts) participants are kept in the allow-list for auditing but are not converted into GRPO rows because their interaction log lacks recommendation slates.
+- The Python builder mirrors the published filters for Studies 1–3. Study 4 (Shorts) participants are kept in the allow-list for auditing but are not converted into prompt rows because their interaction log lacks recommendation slates.
 - Only minor count differences remain for Studies 1–3, both explained by attention checks or duplicate sessions.
 - Validation happens via logged allow-list sizes, per-session filtering counters, and the `participant_study` labels embedded in every output row.
 - For an at-a-glance description of the data products and how to run the builder, see the top-level [project README](../README.md). This file serves as the deep-dive reference for researchers verifying provenance and reproducibility.

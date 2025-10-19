@@ -15,21 +15,36 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 
 ```
 .
-├── clean_data/               # Utilities to convert the CodeOcean dump into tidy Hugging Face datasets
+├── clean_data/               # Data cleaning pipeline and prompt analytics helpers
+│   ├── prompt/               # Modular prompt-statistics package (plots, summaries, CLI shim)
+│   └── ...
 ├── docs/                     # Figures used in the paper and README
 ├── recipes/                  # Training configuration files organised by model family
 ├── src/
-│   ├── open_r1/              # Supervised fine-tuning + GRPO reinforcement learning trainers and helpers (see src/open_r1/README.md)
+│   ├── open_r1/              # Supervised fine-tuning + reinforcement learning trainers and helpers (see src/open_r1/README.md)
 │   ├── gpt-4o/               # GPT-4o evaluation scripts for slate prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline implementation
 │   └── visualization/        # Graphviz-based recommendation tree and session visualisation tools
-├── training/                 # SLURM launchers for GRPO (baseline) and GRAIL (with discriminator)
+├── training/                 # SLURM launchers for the RL baselines (with / without discriminator)
 ├── setup.py                  # Editable package definition (pip install -e .)
 └── README.md                 # Project overview and setup instructions (this file)
 ```
 
 The repository ships with the cleaned datasets referenced in the paper so you can
 reproduce the experiments without re-running the CodeOcean extraction workflow.
+
+## Data Cleaning and Prompt Builder Entry Points
+
+- **Dataset builder**: `python -m clean_data.cli` orchestrates the workflow that ultimately calls `clean_data.sessions.build_codeocean_rows` and the convenience façade in `clean_data/codeocean.py`.  The reusable functions exposed from `clean_data/clean_data.py` allow other tooling (prompt builders, offline analyses) to reuse the same pipeline without invoking the CLI.
+- **Prompt analytics**: run `python -m clean_data.prompt.cli` to regenerate the feature coverage plots, participant summaries, and Markdown report found under `reports/prompt_stats`.  This package is self-contained and can be pointed at any cleaned dataset.
+- **Prompt builder module**: downstream consumers should target `clean_data/prompting.py` (and its shared constants in `clean_data/prompt/constants.py`) rather than the historical monolith.  The legacy `clean_data.py` script has been decomposed into these modules.
+- **prompt_builder.py consumers**: the helper in `src/open_r1/prompt_builder.py` loads the cleaned dataset produced from the steps below.  Keep that script pointed at the locations emitted by `python -m clean_data.cli`.
+
+## Automated Checks
+
+- `scripts/run-lint.sh` runs `pylint` with the repository root on `PYTHONPATH`.
+- `scripts/run-tests.sh` executes the unit test suite (`pytest`) with the same module resolution.
+- Continuous integration runs via `.github/workflows/ci.yml`, which installs `requirements-dev.txt` and executes both scripts on every push to `main` and on pull requests.
 
 ## Pull the Data
 
@@ -51,13 +66,11 @@ This will give you a clean copy of the exact data used for the both the original
 
 ## Clean the Dataset
 
-The GRPO training loop expects a tidy Hugging Face dataset containing prompts,
-gold labels, and metadata for both policy domains (gun control and minimum wage).
-The ``clean_data/clean_data.py`` utility produces exactly that schema from the
-CodeOcean capsule, and validates that every output split is compatible with
-``src/open_r1/grpo.py``.
+Collecting prompts begins with a tidy Hugging Face dataset containing rows that mirror the original YouTube decision points. The ``python -m clean_data.cli`` command builds that dataset from the CodeOcean capsule and delegates the heavy lifting to ``clean_data.sessions.build_codeocean_rows`` via the façade in ``clean_data/codeocean.py``.
 
-> Want the full provenance playbook? See [clean_data/README.md](clean_data/README.md) for a line-by-line description of the filters we implement and how they reproduce the CodeOcean pipelines. (The cleaned dataset currently focuses on Studies 1–3; Study 4/Shorts is excluded because the public interaction log lacks recommendation slates.)
+> Looking for diagnostics? The prompt analytics CLI lives under [`clean_data/prompt`](clean_data/prompt) and can be invoked with `python -m clean_data.prompt.cli ...` to regenerate feature summaries and plots.
+
+For more provenance detail (allow-list CSV locations, Shorts exclusions, study-specific filters), see [clean_data/README.md](clean_data/README.md).
 
 ```bash
 # 1) Create a virtual environment with the repository package
@@ -78,7 +91,7 @@ export HF_TOKEN="hf_your_personal_token"
 export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
 
 # 2) Generate the cleaned dataset
-python clean_data/clean_data.py \
+python -m clean_data.cli \
     --dataset-name capsule-5416997/data \
     --output-dir data/cleaned_grail \
     --prompt-stats-dir reports/prompt_stats
@@ -87,9 +100,10 @@ python clean_data/clean_data.py \
 python clean_data/prompt_stats.py \
     --dataset data/cleaned_grail \
     --output-dir reports/prompt_stats
+# (equivalently, `python -m clean_data.prompt.cli ...`)
 
 # Optional: push per-issue subsets (split by domain) to the Hub
-python clean_data/clean_data.py \
+python -m clean_data.cli \
     --dataset-name capsule-5416997/data \
     --output-dir data/cleaned_grail \
     --issue-repo gun_control=my-org/grail-gun \
@@ -102,7 +116,7 @@ Builder notes:
 - Each participant is allowed at most one session per issue (gun control vs. minimum wage). Duplicate sessions for the same participant/issue pair are filtered out during cleaning.
 
 The script logs the number of rows kept per split, along with the per-issue
-distribution, and raises an error if any required GRPO columns are missing.
+distribution, and raises an error if any required prompt columns are missing.
 When a validation split is requested, the builder assigns entire viewers
 (`urlid`/`session_id`) to a single split, so no person appears in both train and
 validation.
@@ -151,6 +165,10 @@ For gun-control sessions the structure is identical:
 
 Each dataset row also carries the viewer profile that accompanies the decision. The `viewer_profile` field distills age, gender, race, media habits, and gun/wage attitudes, while `state_text` expands that information alongside the full watch history. These columns can be surfaced in the visualization template when you want demographic context next to the state nodes—e.g. a row might read “44-year-old, man, Black or African-American (non-Hispanic), democrat liberal, $150,000 or more, college-educated, watches YouTube weekly.”
 
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+
 To export multiple session trajectories at once, point the CLI at the cleaned dataset and a destination directory. The tool will emit distinct session graphs grouped by issue, defaulting to two minimum-wage and two gun-control trajectories:
 
 ```bash
@@ -169,8 +187,8 @@ The command above produces four `.svg` files such as `grail_session_minimum_wage
 1. Ensure the editable package and cache directories are set up (see “Clean the dataset” instructions).
 2. Submit training jobs via SLURM:
    ```bash
-   sbatch training/training-grail.sh    # GRPO + discriminator shaping (uses src/open_r1/grail.py)
-   sbatch training/training-grpo.sh     # Vanilla GRPO baseline (uses src/open_r1/grpo.py)
+   sbatch training/training-grail.sh    # RL + discriminator shaping (uses src/open_r1/grail.py)
+   sbatch training/training-grpo.sh     # RL baseline (uses src/open_r1/grpo.py)
    ```
    Update the scripts or recipe paths if you place custom configs under `recipes/`.
 3. Evaluate baselines locally:

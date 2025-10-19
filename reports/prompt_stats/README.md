@@ -1,5 +1,7 @@
 # Prompt Feature Report
 
+Generated with `python clean_data/prompt_stats.py` (wrapper around `clean_data.prompt.cli`).
+
 - Output directory: `reports/prompt_stats`
 - Figures: `reports/prompt_stats/figures`
 
@@ -64,7 +66,7 @@ Builder note: rows missing all survey demographics (age, gender, race, income, e
 > "The short answer is that sessions.json contains EVERYTHING. Every test run, every study. In addition to the studies that involved watching videos on the platform, it also contains sessions from the “First Impressions” study, which involved only rating thumbnails, and the “Shorts” study (Study 4 in the paper, I believe), which involved no user decisions (instead playing a sequence of predetermined videos that were either constant or increasing in their extremeness). All of these are differentiated by the topicId." — Emily Hu (University of Pennsylvania)
 
 - Original study participants: 1,650 (Study 1 — gun rights), 1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).
-- Cleaned dataset participants captured here: 1536 (gun control) and {overall_counts.get('by_issue', {}).get('minimum_wage', 0)} (minimum wage). Study 4 (Shorts) is excluded because the released interaction logs do not contain recommendation slates.
+- Cleaned dataset participants captured here: 1536 (gun control) and 4362 (minimum wage). Study 4 (Shorts) is excluded because the released interaction logs do not contain recommendation slates.
 - Shortfall summary (Studies 1–3 only):
   - Study 1 (gun control MTurk): 1650 expected vs. 1536 usable (-114). 98 sessions log only the starter clip (`vids` length = 1) and 15 log multiple clips but no recommendation slate (`displayOrders` empty).
   - Study 2 (minimum wage MTurk): 1679 expected vs. 1647 usable (-32). 14 sessions log only the starter clip; 17 have multiple clips but no slate metadata (`displayOrders` empty).

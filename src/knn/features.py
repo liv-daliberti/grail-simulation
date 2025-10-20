@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+import numpy as np
 from numpy.random import default_rng
 
 from common.text import canon_video_id
@@ -359,15 +360,30 @@ class Word2VecFeatureBuilder:
         directory.mkdir(parents=True, exist_ok=True)
         self._model.save(str(directory / "word2vec.model"))
 
-    def encode(self, text: str) -> List[float]:
+    def is_trained(self) -> bool:
+        """Return True when the underlying Word2Vec model is ready for inference."""
+
+        return self._model is not None
+
+    def encode(self, text: str) -> np.ndarray:
         """Return the averaged embedding vector for ``text``."""
 
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")
         tokens = [token for token in self._tokenize(text) if token in self._model.wv]
         if not tokens:
-            return [0.0] * self._model.vector_size
-        return list(self._model.wv[tokens].mean(axis=0))
+            return np.zeros(self._model.vector_size, dtype=np.float32)
+        return np.asarray(self._model.wv[tokens].mean(axis=0), dtype=np.float32)
+
+    def transform(self, corpus: Sequence[str]) -> np.ndarray:
+        """Return stacked embeddings for ``corpus``."""
+
+        if self._model is None:
+            raise RuntimeError("Word2Vec model has not been trained/loaded")
+        if not corpus:
+            return np.zeros((0, self._model.vector_size), dtype=np.float32)
+        vectors = [self.encode(text) for text in corpus]
+        return np.vstack(vectors).astype(np.float32)
 
 
 __all__ = [

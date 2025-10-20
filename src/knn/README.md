@@ -24,7 +24,7 @@ Train an index and evaluate on the default cleaned dataset:
 ```bash
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out_dir models/knn/run-001 \
+  --out-dir models/knn/run-001 \
   --feature-space tfidf \
   --fit-index
 ```
@@ -34,7 +34,7 @@ To compare against Word2Vec features and a filtered issue subset:
 ```bash
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out_dir models/knn/run-w2v \
+  --out-dir models/knn/run-w2v \
   --feature-space word2vec \
   --issue minimum_wage \
   --word2vec-size 256 \
@@ -49,10 +49,10 @@ predictions, metrics, and optional embeddings under the specified `out_dir`.
 `features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same
 PROFILE/HISTORY context seen by other baselines:
 
-- TF-IDF is enabled by default and supports a configurable vocabulary size via
-  `--max-features`.
+- TF-IDF is enabled by default, with optional extra context using
+  `--knn-text-fields`.
 - Word2Vec training (via gensim) can be toggled with `--feature-space word2vec`;
-  models persist to `models/knn_word2vec/` so they can be reused.
+  models persist to `models/knn_word2vec/<issue>/` by default so they can be reused.
 - Title lookups pull from metadata CSVs listed by `GRAIL_TITLE_*` environment
   variables, falling back to the shared network drive defaults.
 

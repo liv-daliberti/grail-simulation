@@ -30,21 +30,681 @@
   },
   "demographic_missing_counts": {
     "overall": {
-      "missing": 0.0,
+      "missing": 0,
       "share": 0.0,
-      "total": 1098.0
+      "total": 1098
     },
     "train": {
-      "missing": 0.0,
+      "missing": 0,
       "share": 0.0,
-      "total": 991.0
+      "total": 991
     },
     "validation": {
-      "missing": 0.0,
+      "missing": 0,
       "share": 0.0,
-      "total": 107.0
+      "total": 107
     }
   },
+  "feature_summary": {
+    "age": {
+      "train": {
+        "count": 991.0,
+        "mean": 46.73662966700303,
+        "std": 15.73199675310304
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 46.4392523364486,
+        "std": 14.093928944260325
+      }
+    },
+    "assault_ban": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.20180722891566266,
+        "std": 0.3163654459156839
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.2,
+        "std": 0.1
+      }
+    },
+    "biden_approval": {
+      "train": {
+        "count": 986.0,
+        "mean": 50.35395537525355,
+        "std": 33.71737728543177
+      },
+      "validation": {
+        "count": 106.0,
+        "mean": 51.075471698113205,
+        "std": 31.515703816377826
+      }
+    },
+    "children_in_household": {
+      "train": {
+        "count": 569.0,
+        "mean": 1.789103690685413,
+        "std": 0.4079449178897478
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 1.78125,
+        "std": 0.41339864235384227
+      }
+    },
+    "college": {
+      "train": {
+        "count": 991.0,
+        "mean": 0.5247225025227044,
+        "std": 0.49938842384361987
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 0.5233644859813084,
+        "std": 0.4994538024630799
+      }
+    },
+    "concealed_safe": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.4186746987951807,
+        "std": 0.2828119179350723
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.4,
+        "std": 0.25495097567963926
+      }
+    },
+    "education": {
+      "train": {
+        "count": 569.0,
+        "mean": 3.9086115992970125,
+        "std": 1.462626260101042
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 3.84375,
+        "std": 1.5433197781082182
+      }
+    },
+    "employment_status": {
+      "train": {
+        "count": 569.0,
+        "mean": 3.3093145869947276,
+        "std": 2.3519653497624446
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 3.234375,
+        "std": 2.5232802776098815
+      }
+    },
+    "favorite_channels": {
+      "train": {
+        "0": 1,
+        "As Told By Kenya\nHasanAbi": 1,
+        "Bailey Sarian\nMrBallen\nChelcie Lynn": 1,
+        "Brandon Walsh\nDavid Dobrik\nLiza Koshy": 1,
+        "Buzzfeed\nGood Morning America\nAmerica's funniest Videos\nJeopardy\nMaroon 5\nJonas Brothers\nLana Del Rey\nNate and Kara\n": 1,
+        "C-SPAN\nABC World News\nBBC News": 1,
+        "CNN\nThe New York times\nBBC news": 1,
+        "CNN\nWashington Post\nSeatinManofLegend\nRichTheMan": 1,
+        "CNN,FOX NEWS,BBC": 1,
+        "Cafe Music BGM": 1,
+        "Carissa Barzee\nJeffrey Star\n": 1,
+        "Character Design Forge\nvarious musicians": 1,
+        "Chris Smoove": 1,
+        "Clear Value Tax\nLogan Allec CPA\nCNN \n": 1,
+        "DW\nTIK": 1,
+        "DarkHorse\nJAMA\nPlebity\nFruityKnitting\nDr. John Campbell\nTriggernometry\nUnHerd\nRoxanne Richardson": 1,
+        "DefunctLand \nAlex Meyers \nGiant Bomb": 1,
+        "Fox News, OAN, New York Times, NPR": 1,
+        "Foxes and Fossils\nInvisible People\nOtis Gibbs\nPlaying for Change\nU. S. Department of Veteran Affairs\nBrandi Carlile": 1,
+        "Greg Adams\nNick Milo": 1,
+        "H3H3/trisha paytas": 1,
+        "I don't have an favorite broadcasters.\nI don't have an favorite channels.": 1,
+        "I don't have any; I just search mostly for video game reviews and content and click on whatever looks interesting.  Also watch music videos, again on any channel that I find.": 1,
+        "I enjoy watching travel videos and tutorials; however, I use Netflix and Prime for entertainment. I use news apps for news.": 1,
+        "I have no favorites.  I generally click on a link from a Facebook post.\nMixed Media Girl": 1,
+        "I have no favorites.  I watch an eclectic mix of music from random channels and a variety of exercise videos.  Any news related content I watch is not specific me.": 1,
+        "I just pull up whatever I'm looking for , I really don't have any broadcaster or channel": 1,
+        "I like FOX news broadcaster.": 1,
+        "I like news channels random religion and religious history stuff and I also watch a lot of lectures on university websites.": 1,
+        "I like to watch beauty influencers, how-to videos, and comedians": 1,
+        "I like to watch music videos and without a Crystal Ball on youtube. Additionally, I will watch stuff about the Bates family.": 1,
+        "I like watching flograppling for sports related content": 1,
+        "I no longer use youtube. They prop up literal propaganda, censor anyone who criticizes the official narrative of the political establishment and have become far too involved in government and policy.": 1,
+        "I only use YouTube for housekeeping skills.": 1,
+        "I really enjoy watching videos on music production.  The company that makes the product I use is called Reason Studios and they have a great channel with information on how the software can be used.": 1,
+        "I usually listen to music streams or look how to's. I do watch videos that are on FB that click thru to Youtube. Mostly about animals and creatives, spiritual and outdoors stuff.": 1,
+        "I usually watch music videos.  My favorites are Counting Crows.": 1,
+        "I watch Fox News\nand NBC news": 1,
+        "INDYCAR\nFormula 1": 1,
+        "JCS\nPewdiepie\nH3H3\nSteve Wilkos\nDr. Phil": 1,
+        "Jenna marbles\nMarkiplier\nRomanAtwoodsVlog": 1,
+        "Laura Lee\nManny Mua\nABC News": 1,
+        "Laura in the Kitchen\nPhillip Defranco\nMyFroggyStuff\nemmymade\nJazza": 1,
+        "Lex Fridmen\nSelf Sufficient Me\nThought Imperium\nMarcus House\nMIT Opencourseware\nIsaac Arthur\nLearn Your Land\n...and many more": 1,
+        "MKBHD\nUnbox Therapy\nCNN\nARISE TV\nMRWHOSETHEBOSS": 1,
+        "MLB\nDivine Mercy": 1,
+        "Make up channels jaclyn hill": 1,
+        "Matt Kohrs\nTrey's Trades\nMarc Rebillet\nMeet Kevin\n": 1,
+        "Meatcanyon\nJoel Haver\nJosh Turner\n": 1,
+        "Meet Kevin\nThe Late Show with Steven Colbert\nTrent Shelton\nMusic Videos": 1,
+        "Minutephysics\nScreen Junkies\nWoWCrendor\nPhillip de Franco": 1,
+        "Motivator Kristina\nThe Project Life Mastery\nGillian Perkins\n": 1,
+        "Music videos by searching.": 1,
+        "NBC news\nTrevor Noah\nBrendan Kavanagh\nChrisFix": 1,
+        "NPR Music\nTom goes Disney\nwaxandherbalt": 1,
+        "No particular favorites, I enjoy watching dog videos and music videos of bands/genres that I like.": 1,
+        "PBS\nYoutube Movies\n": 1,
+        "Philip DeFranco\nDonut Operator\nHasanabi": 1,
+        "Redlettermedia\nTaskmaster": 1,
+        "Roland Martin\nThe Kabs Family\nJack Reacts": 1,
+        "Rooster Teeth\nAchievement Hunter\nCrankgameplays\nMarkiplier\nJacksepticeye": 1,
+        "Sarabeth Yoga\nPregnancy and Postpartum TV\nBlogilates\nTravis Eliot\nAlo Yoga": 1,
+        "Sonic The Hedgehog\nGeekdom101\nCallMeKevin\nDeadwingDork": 1,
+        "Strictly dumplings\nCreamHeroes\nBuzzfeed Unsolved Network\n": 1,
+        "Synapse\nShroud\nAdam Ragusea\nAgadmator\nThe First Take": 1,
+        "The Dodo\nMr Ballen\nDDS TV\nBuzzfeed\nNowThis News": 1,
+        "The Rollin Martin Channel": 1,
+        "There are some YouTubers I follow:\nI love \"Kitboga\" because he raises awareness about scams directed toward the elderly. \nI love \"TheBeauticianChic\" because she does beautiful makeup.\nI adore \"DeMiRanchoATuCocina\" because she makes delicious food with easy recipes.": 1,
+        "Theyoungturks\nCalmingescape\nBbc\nAngelica\nGamegrumps": 1,
+        "Traversy Media\nFreecodecamp.org\nCNN \nDesign course": 1,
+        "USA Today\nGood Morning America": 1,
+        "Various channels. No favorites.": 1,
+        "Voya - My Deep Guide product reviews": 1,
+        "Yes Theory and Linguamarina.": 1,
+        "fashion channel for all the latest fashion videos, parties, and events. About Youtuber Learn about outer space, leading scientific exploration, new technology, earth science basics, & more with science videos & news from Science Channel.": 1,
+        "how to videos": 1,
+        "lovely tea\nphil de fracnio": 1,
+        "mbw.com\n": 1,
+        "msnbc, the young turks": 1,
+        "munchkin": 1,
+        "peter schiff": 1,
+        "scedtv\ncnn": 1,
+        "streetbeefs\n": 1
+      },
+      "validation": {
+        "According to Vin\nMoney Done Right\nCNN": 1,
+        "Bald and bankrupt\nSonny Side/most delicious food show ever": 1,
+        "Last Week Tonight\nLate Show with Stephen Colbert\nLate Night with Seth Meyers\nNYTimes\nCNN \nMSNBC Rachel Maddow": 1,
+        "NA- I don't use YouTube often except to watch the occasional makeup tutorial/review.": 1,
+        "The Piano Guys\nCNBC": 1
+      }
+    },
+    "freq_youtube": {
+      "train": {
+        "count": 991.0,
+        "mean": 2.824419778002018,
+        "std": 1.735091910189078
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 2.8411214953271027,
+        "std": 1.7247485674013194
+      }
+    },
+    "gender": {
+      "train": {
+        "Man": 209,
+        "Other (please specify)": 4,
+        "Woman": 209
+      },
+      "validation": {
+        "Man": 20,
+        "Other (please specify)": 2,
+        "Woman": 21
+      }
+    },
+    "gun_enthusiasm": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.43373493975903615,
+        "std": 0.6621027307968234
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.6,
+        "std": 0.48989794855663565
+      }
+    },
+    "gun_importance": {
+      "train": {
+        "count": 83.0,
+        "mean": 3.036144578313253,
+        "std": 0.8842093075618686
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 3.0,
+        "std": 0.6324555320336759
+      }
+    },
+    "gun_index": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.3307228915662651,
+        "std": 0.2616941244605637
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.29000000000000004,
+        "std": 0.17435595774162696
+      }
+    },
+    "gun_index_2": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.3621987951807229,
+        "std": 0.25901644293247444
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.3375,
+        "std": 0.2076655965729519
+      }
+    },
+    "gun_ownership": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.3132530120481928,
+        "std": 0.46381630252819656
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.6,
+        "std": 0.48989794855663565
+      }
+    },
+    "handgun_ban": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.6174698795180723,
+        "std": 0.34566451934806686
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.55,
+        "std": 0.291547594742265
+      }
+    },
+    "household_income": {
+      "train": {
+        "$10,000-$14,999": 12,
+        "$100,000-$119,999": 26,
+        "$120,000-$149,999": 24,
+        "$15,000-$19,999": 13,
+        "$150,000 or more": 34,
+        "$20,000-$24,999": 20,
+        "$25,000-$29,999": 31,
+        "$30,000-$39,999": 52,
+        "$40,000-$49,999": 39,
+        "$50,000-$59,999": 40,
+        "$60,000-$69,999": 40,
+        "$70,000-$79,999": 29,
+        "$80,000-$99,999": 47,
+        "Less than $10,000": 9,
+        "Prefer not to say": 6
+      },
+      "validation": {
+        "$10,000-$14,999": 2,
+        "$100,000-$119,999": 5,
+        "$120,000-$149,999": 6,
+        "$150,000 or more": 3,
+        "$20,000-$24,999": 1,
+        "$25,000-$29,999": 2,
+        "$30,000-$39,999": 7,
+        "$40,000-$49,999": 5,
+        "$50,000-$59,999": 1,
+        "$60,000-$69,999": 4,
+        "$70,000-$79,999": 4,
+        "$80,000-$99,999": 2,
+        "Less than $10,000": 1
+      }
+    },
+    "ideology": {
+      "train": {
+        "Conservative": 68,
+        "Haven't thought much about it": 12,
+        "Liberal": 234,
+        "Moderate": 108
+      },
+      "validation": {
+        "Conservative": 8,
+        "Liberal": 24,
+        "Moderate": 11
+      }
+    },
+    "minwage15_w1": {
+      "train": {
+        "count": 908.0,
+        "mean": 0.24311674008810572,
+        "std": 0.340493098679553
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.25,
+        "std": 0.3621152454404428
+      }
+    },
+    "minwage15_w2": {
+      "train": {
+        "count": 900.0,
+        "mean": 0.2588888888888889,
+        "std": 0.3472973252110724
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.24754901960784315,
+        "std": 0.34565775965941264
+      }
+    },
+    "minwage_text_r_w1": {
+      "train": {
+        "count": 904.0,
+        "mean": 0.41405088495575226,
+        "std": 0.1979578530142548
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.4086274509803922,
+        "std": 0.19514217650309543
+      }
+    },
+    "minwage_text_r_w2": {
+      "train": {
+        "count": 900.0,
+        "mean": 0.43288844444444446,
+        "std": 0.20288018971200772
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.4152941176470588,
+        "std": 0.19341465099702215
+      }
+    },
+    "minwage_text_w1": {
+      "train": {
+        "count": 339.0,
+        "mean": 15.027286135693215,
+        "std": 4.400258139130899
+      },
+      "validation": {
+        "count": 38.0,
+        "mean": 14.289473684210526,
+        "std": 4.3989107188559045
+      }
+    },
+    "minwage_text_w2": {
+      "train": {
+        "count": 331.0,
+        "mean": 14.56858006042296,
+        "std": 4.652000912003583
+      },
+      "validation": {
+        "count": 38.0,
+        "mean": 14.171052631578947,
+        "std": 4.791750470984199
+      }
+    },
+    "mw_index_w1": {
+      "train": {
+        "count": 908.0,
+        "mean": 0.24793835658345564,
+        "std": 0.24276709894620266
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.23326797385620912,
+        "std": 0.22761087452943143
+      }
+    },
+    "mw_index_w2": {
+      "train": {
+        "count": 900.0,
+        "mean": 0.26120596296296295,
+        "std": 0.2619252133086371
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.25588779956427016,
+        "std": 0.2446806094798565
+      }
+    },
+    "mw_support_w1": {
+      "train": {
+        "count": 908.0,
+        "mean": 0.16602422907488987,
+        "std": 0.2910359505681112
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.14460784313725492,
+        "std": 0.2676062060325071
+      }
+    },
+    "mw_support_w2": {
+      "train": {
+        "count": 900.0,
+        "mean": 0.1786111111111111,
+        "std": 0.3011104704790233
+      },
+      "validation": {
+        "count": 102.0,
+        "mean": 0.15931372549019607,
+        "std": 0.2591209113027276
+      }
+    },
+    "news_frequency": {
+      "train": {
+        "count": 569.0,
+        "mean": 1.7715289982425309,
+        "std": 1.0950429686953635
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 1.703125,
+        "std": 0.8602268505313002
+      }
+    },
+    "news_trust": {
+      "train": {
+        "count": 991.0,
+        "mean": 0.5893037336024217,
+        "std": 0.30773187966810045
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 0.6230529595015577,
+        "std": 0.29563846514936565
+      }
+    },
+    "party_identification": {
+      "train": {
+        "Democrat": 231,
+        "Independent": 116,
+        "Other Party": 10,
+        "Republican": 64
+      },
+      "validation": {
+        "Democrat": 18,
+        "Independent": 15,
+        "Other Party": 2,
+        "Republican": 8
+      }
+    },
+    "party_lean": {
+      "train": {
+        "Not very strong Democrat": 95,
+        "Strong Democrat": 136
+      },
+      "validation": {
+        "Not very strong Democrat": 7,
+        "Strong Democrat": 11
+      }
+    },
+    "political_interest": {
+      "train": {
+        "count": 982.0,
+        "mean": 1.869314324507807,
+        "std": 1.444612077950326
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 1.897196261682243,
+        "std": 1.5027915975186756
+      }
+    },
+    "popular_channels_followed": {
+      "train": {
+        "count": 33.0,
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "validation": {
+        "count": 3.0,
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "race_ethnicity": {
+      "train": {
+        "count": 569.0,
+        "mean": 1.8154657293497365,
+        "std": 1.5320959268159808
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 1.734375,
+        "std": 1.4387732133227251
+      }
+    },
+    "religion": {
+      "train": {
+        "count": 569.0,
+        "mean": 5.8717047451669595,
+        "std": 4.560400046892023
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 6.625,
+        "std": 4.591091918051739
+      }
+    },
+    "religious_attendance": {
+      "train": {
+        "count": 569.0,
+        "mean": 2.444639718804921,
+        "std": 1.2110404183189056
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 2.5,
+        "std": 1.2624381172952597
+      }
+    },
+    "right_to_own_importance": {
+      "train": {
+        "count": 82.0,
+        "mean": 0.2073170731707317,
+        "std": 0.4053846375266991
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.2,
+        "std": 0.4000000000000001
+      }
+    },
+    "state": {
+      "train": {
+        "count": 569.0,
+        "mean": 27.924428822495607,
+        "std": 16.07199041786232
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 28.359375,
+        "std": 14.239433788229608
+      }
+    },
+    "stricter_laws": {
+      "train": {
+        "count": 83.0,
+        "mean": 0.20481927710843373,
+        "std": 0.31081068287986585
+      },
+      "validation": {
+        "count": 5.0,
+        "mean": 0.1,
+        "std": 0.20000000000000004
+      }
+    },
+    "trump_approval": {
+      "train": {
+        "count": 986.0,
+        "mean": 25.016227180527384,
+        "std": 34.907524026146795
+      },
+      "validation": {
+        "count": 106.0,
+        "mean": 21.9811320754717,
+        "std": 29.982064176825965
+      }
+    },
+    "vote_2016": {
+      "train": {
+        "count": 569.0,
+        "mean": 3.260105448154657,
+        "std": 2.6003597134135705
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 3.46875,
+        "std": 2.686591416181478
+      }
+    },
+    "vote_2020": {
+      "train": {
+        "count": 569.0,
+        "mean": 1.929701230228471,
+        "std": 1.6068767253777987
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 2.03125,
+        "std": 1.722722681542215
+      }
+    }
+  },
+  "figures_dir": "reports/prompt_stats/figures",
+  "missing_features": [
+    "city",
+    "county",
+    "zip3",
+    "occupation",
+    "marital_status",
+    "household_size",
+    "veteran",
+    "vote_2024",
+    "civic_engagement",
+    "minwage_text_r_w3",
+    "minwage_importance",
+    "minwage_priority",
+    "binge_youtube",
+    "media_diet",
+    "news_consumption",
+    "news_sources",
+    "news_sources_top",
+    "platform_use",
+    "social_media_use",
+    "gun_priority",
+    "gun_policy",
+    "gun_identity"
+  ],
   "n_options_counts": {
     "train": {
       "1": 4,

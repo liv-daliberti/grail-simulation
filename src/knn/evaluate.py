@@ -30,13 +30,16 @@ from .data import (
     issues_in_dataset,
     load_dataset_source,
 )
-from .features import extract_slate_items
+from .features import Word2VecConfig, extract_slate_items
 from .index import (
     SlateQueryConfig,
     build_tfidf_index,
+    build_word2vec_index,
     knn_predict_among_slate_multi,
     load_tfidf_index,
+    load_word2vec_index,
     save_tfidf_index,
+    save_word2vec_index,
 )
 
 
@@ -157,20 +160,51 @@ def run_eval(args) -> None:
             for token in (args.knn_text_fields or "").split(",")
             if token.strip()
         ]
+        feature_space = (args.feature_space or "tfidf").lower()
         if args.fit_index:
-            logging.info("[KNN] Building TF-IDF index for issue=%s", issue_slug)
-            knn_index = build_tfidf_index(
-                train_ds,
-                max_train=args.knn_max_train,
-                seed=args.knn_seed,
-                max_features=None,
-                extra_fields=extra_fields,
-            )
-            if args.save_index:
-                save_tfidf_index(knn_index, Path(args.save_index) / issue_slug)
+            if feature_space == "tfidf":
+                logging.info("[KNN] Building TF-IDF index for issue=%s", issue_slug)
+                knn_index = build_tfidf_index(
+                    train_ds,
+                    max_train=args.knn_max_train,
+                    seed=args.knn_seed,
+                    max_features=None,
+                    extra_fields=extra_fields,
+                )
+                if args.save_index:
+                    save_tfidf_index(knn_index, Path(args.save_index) / issue_slug)
+            elif feature_space == "word2vec":
+                logging.info("[KNN] Building Word2Vec index for issue=%s", issue_slug)
+                model_root = (
+                    Path(args.word2vec_model_dir)
+                    if args.word2vec_model_dir
+                    else Word2VecConfig().model_dir
+                )
+                w2v_config = Word2VecConfig(
+                    vector_size=int(args.word2vec_size),
+                    model_dir=Path(model_root) / issue_slug,
+                )
+                knn_index = build_word2vec_index(
+                    train_ds,
+                    max_train=args.knn_max_train,
+                    seed=args.knn_seed,
+                    extra_fields=extra_fields,
+                    config=w2v_config,
+                )
+                if args.save_index:
+                    save_word2vec_index(knn_index, Path(args.save_index) / issue_slug)
+            else:
+                raise ValueError(f"Unsupported feature space '{args.feature_space}'")
         elif args.load_index:
-            logging.info("[KNN] Loading TF-IDF index for issue=%s", issue_slug)
-            knn_index = load_tfidf_index(Path(args.load_index) / issue_slug)
+            load_path = Path(args.load_index) / issue_slug
+            if feature_space == "tfidf":
+                logging.info("[KNN] Loading TF-IDF index for issue=%s", issue_slug)
+                knn_index = load_tfidf_index(load_path)
+            elif feature_space == "word2vec":
+                logging.info("[KNN] Loading Word2Vec index for issue=%s", issue_slug)
+                knn_index = load_word2vec_index(load_path)
+            else:
+                raise ValueError(f"Unsupported feature space '{args.feature_space}'")
         else:
             raise ValueError("Set either --fit_index or --load_index to obtain a KNN index")
 

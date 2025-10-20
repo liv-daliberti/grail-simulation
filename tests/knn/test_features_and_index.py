@@ -71,3 +71,27 @@ def test_cli_parser_defaults() -> None:
     args = parser.parse_args([])
     assert args.dataset == DEFAULT_DATASET_SOURCE
     assert Path(args.out_dir).name == "knn"
+    assert args.feature_space == "tfidf"
+    assert args.word2vec_size == 256
+    assert args.word2vec_model_dir == ""
+
+
+def test_cli_parser_hyphenated_options() -> None:
+    parser = cli.build_parser()
+    args = parser.parse_args(
+        [
+            "--feature-space",
+            "tfidf",
+            "--fit-index",
+            "--knn-k",
+            "13",
+            "--eval-max",
+            "5",
+            "--issue",
+            "minimum_wage",
+        ]
+    )
+    assert args.fit_index is True
+    assert args.knn_k == 13
+    assert args.eval_max == 5
+    assert args.issues == "minimum_wage"

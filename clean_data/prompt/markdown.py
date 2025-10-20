@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -217,14 +217,50 @@ def _skipped_features_section(skipped_features: List[str]) -> List[str]:
 def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
     """Summaries comparing expected and cleaned participant totals."""
 
+    overall_by_issue = overall_counts.get("by_issue", {})
+    issue_labels = {
+        "gun_control": "gun control",
+        "minimum_wage": "minimum wage",
+    }
+    issue_descriptions: List[str] = []
+    for key in ("gun_control", "minimum_wage"):
+        if key in overall_by_issue:
+            issue_descriptions.append(
+                f"{overall_by_issue[key]} ({issue_labels.get(key, key.replace('_', ' '))})"
+            )
+    issue_line: str
+    duplicate_note: Optional[str] = None
+    if issue_descriptions:
+        issue_line = (
+            "- Cleaned dataset participants captured here: "
+            + " and ".join(issue_descriptions)
+            + "."
+        )
+        total_by_issue = sum(overall_by_issue.values())
+        overall_total = overall_counts.get("overall", 0)
+        overlap = total_by_issue - overall_total
+        if overlap > 0:
+            duplicate_note = (
+                f"  {overlap} participant{'s' if overlap != 1 else ''} appear in both issues, "
+                f"so the unique total is {overall_total}."
+            )
+    else:
+        issue_line = f"- Cleaned dataset participants captured here (all issues): {overall_counts.get('overall', 0)}."
+
     lines = [
         "- Original study participants: 1,650 (Study 1 — gun rights)",
         "  1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).",
-        f"- Cleaned dataset participants captured here (all issues): {overall_counts.get('overall', 0)}.",
-        "  Study 4 (Shorts) is excluded because the released interaction logs",
-        "  do not contain recommendation slates.",
-        "- Shortfall summary (Studies 1–3 only):",
+        issue_line,
     ]
+    if duplicate_note:
+        lines.append(duplicate_note)
+    lines.extend(
+        [
+            "  Study 4 (Shorts) is excluded because the released interaction logs",
+            "  do not contain recommendation slates.",
+            "- Shortfall summary (Studies 1–3 only):",
+        ]
+    )
 
     expected_by_study = {
         "study1": 1650,

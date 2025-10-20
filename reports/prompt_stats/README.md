@@ -19,8 +19,8 @@ All are differentiated by the topicId." — Emily Hu (University of Pennsylvania
 
 - Original study participants: 1,650 (Study 1 — gun rights)
   1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).
-- Cleaned dataset participants captured here: 88 (gun control)
-  and 1010 (minimum wage).
+- Cleaned dataset participants captured here: 88 (gun control) and 1010 (minimum wage).
+  2 participants appear in both issues, so the unique total is 1096.
   Study 4 (Shorts) is excluded because the released interaction logs
   do not contain recommendation slates.
 - Shortfall summary (Studies 1–3 only):
@@ -90,6 +90,7 @@ Figures directory: `figures`
 
 ## Features skipped due to missing data
 
+- binge_youtube
 - city
 - civic_engagement
 - county

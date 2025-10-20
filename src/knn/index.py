@@ -17,6 +17,8 @@ from .features import (
     assemble_document,
     extract_slate_items,
     prepare_training_documents,
+    Word2VecConfig,
+    Word2VecFeatureBuilder,
     title_for,
 )
 
@@ -34,6 +36,7 @@ class SlateQueryConfig:
 class SlateIndexData:
     """Pre-computed index artefacts used during slate scoring."""
 
+    feature_space: str
     vectorizer: Any
     matrix: Any
     label_id_canon: np.ndarray
@@ -110,10 +113,48 @@ def build_tfidf_index(
     matrix = vectorizer.fit_transform(docs).astype(np.float32)
 
     return {
+        "feature_space": "tfidf",
         "vectorizer": vectorizer,
         "X": matrix,
         "labels_id": labels_id,
         "labels_title": labels_title,
+    }
+
+
+def build_word2vec_index(
+    train_ds,
+    *,
+    max_train: int = 100_000,
+    seed: int = 42,
+    extra_fields: Sequence[str] | None = None,
+    config: Word2VecConfig | None = None,
+):
+    """Create a Word2Vec index from the training split."""
+
+    docs, labels_id, labels_title = prepare_training_documents(
+        train_ds,
+        max_train=max_train,
+        seed=seed,
+        extra_fields=extra_fields,
+    )
+
+    builder = Word2VecFeatureBuilder(config)
+    try:
+        builder.train(docs)
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Install gensim to enable Word2Vec embeddings (pip install gensim)"
+        ) from exc
+
+    matrix = builder.transform(docs)
+
+    return {
+        "feature_space": "word2vec",
+        "vectorizer": builder,
+        "X": matrix,
+        "labels_id": labels_id,
+        "labels_title": labels_title,
+        "word2vec_config": builder.config,
     }
 
 
@@ -137,6 +178,7 @@ def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     meta = {
         "n_docs": int(index["X"].shape[0]),
         "n_features": int(index["X"].shape[1]),
+        "feature_space": "tfidf",
     }
     with open(directory / "meta.json", "w", encoding="utf-8") as handle:
         json.dump(meta, handle, indent=2)
@@ -151,10 +193,89 @@ def load_tfidf_index(in_dir: str) -> Dict[str, Any]:
     labels_id = np.load(directory / "labels_id.npy", allow_pickle=True).tolist()
     labels_title = np.load(directory / "labels_title.npy", allow_pickle=True).tolist()
     return {
+        "feature_space": "tfidf",
         "vectorizer": vectorizer,
         "X": matrix,
         "labels_id": labels_id,
         "labels_title": labels_title,
+    }
+
+
+def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
+    """Persist the Word2Vec index to ``out_dir`` for later reuse."""
+
+    directory = Path(out_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    builder: Word2VecFeatureBuilder = index["vectorizer"]
+    model_dir = directory / "word2vec_model"
+    builder.save(model_dir)
+
+    np.save(
+        directory / "X.npy",
+        np.asarray(index["X"], dtype=np.float32),
+        allow_pickle=False,
+    )
+    np.save(
+        directory / "labels_id.npy",
+        np.asarray(index["labels_id"], dtype=object),
+        allow_pickle=True,
+    )
+    np.save(
+        directory / "labels_title.npy",
+        np.asarray(index["labels_title"], dtype=object),
+        allow_pickle=True,
+    )
+
+    config = getattr(index.get("word2vec_config"), "__dict__", {}) or {}
+    meta = {
+        "n_docs": int(index["X"].shape[0]),
+        "vector_size": int(index["X"].shape[1]) if index["X"].size else 0,
+        "feature_space": "word2vec",
+        "config": {
+            "vector_size": int(config.get("vector_size", 0)),
+            "window": int(config.get("window", 5)),
+            "min_count": int(config.get("min_count", 2)),
+            "epochs": int(config.get("epochs", 10)),
+        },
+    }
+    with open(directory / "meta.json", "w", encoding="utf-8") as handle:
+        json.dump(meta, handle, indent=2)
+
+
+def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
+    """Load a Word2Vec index previously saved via :func:`save_word2vec_index`."""
+
+    directory = Path(in_dir)
+
+    meta_path = directory / "meta.json"
+    config_kwargs: Dict[str, Any] = {}
+    if meta_path.exists():
+        with open(meta_path, "r", encoding="utf-8") as handle:
+            meta = json.load(handle)
+            config_kwargs = meta.get("config", {})
+
+    config = Word2VecConfig(
+        vector_size=int(config_kwargs.get("vector_size", 256)),
+        window=int(config_kwargs.get("window", 5)),
+        min_count=int(config_kwargs.get("min_count", 2)),
+        epochs=int(config_kwargs.get("epochs", 10)),
+        model_dir=directory / "word2vec_model",
+    )
+    builder = Word2VecFeatureBuilder(config)
+    builder.load(config.model_dir)
+
+    matrix = np.load(directory / "X.npy")
+    labels_id = np.load(directory / "labels_id.npy", allow_pickle=True).tolist()
+    labels_title = np.load(directory / "labels_title.npy", allow_pickle=True).tolist()
+
+    return {
+        "feature_space": "word2vec",
+        "vectorizer": builder,
+        "X": matrix,
+        "labels_id": labels_id,
+        "labels_title": labels_title,
+        "word2vec_config": config,
     }
 
 
@@ -225,6 +346,13 @@ def _candidate_query(
     if surface:
         parts.append(_safe_str(surface, lowercase=config.lowercase))
     query_text = "\n".join(part for part in parts if part)
+
+    if index_data.feature_space == "word2vec":
+        query_matrix = index_data.vectorizer.transform([query_text])
+        query_vec = np.asarray(query_matrix[0], dtype=np.float32)
+        sims = index_data.matrix @ query_vec
+        return query_vec, sims
+
     query = index_data.vectorizer.transform([query_text])
     sims = (query @ index_data.matrix.T).toarray().ravel()
     return query, sims
@@ -239,6 +367,28 @@ def _score_vector_from_similarity(
     metric: Optional[str],
 ):
     """Return a scoring vector based on the configured distance metric."""
+    if index_data.feature_space == "word2vec":
+        subset = index_data.matrix[mask]
+        if subset.ndim == 1:
+            subset = subset.reshape(1, -1)
+        if subset.size == 0:
+            return sims_masked
+
+        if metric == "l2":
+            diff = subset - query
+            if diff.ndim == 1:
+                diff = diff.reshape(1, -1)
+            dists = np.linalg.norm(diff, axis=1)
+            return -dists
+
+        if metric == "cosine":
+            query_norm = float(np.linalg.norm(query)) or 1.0
+            subset_norms = np.linalg.norm(subset, axis=1)
+            denom = np.maximum(subset_norms * query_norm, 1e-8)
+            return (subset @ query) / denom
+
+        return sims_masked
+
     if metric == "l2":
         subset = index_data.matrix[mask].astype(np.float32)
         diff = subset - query
@@ -326,7 +476,9 @@ def _build_index_data(knn_index: Dict[str, Any]) -> Optional[SlateIndexData]:
         return None
     labels_id = np.asarray(knn_index["labels_id"], dtype=object)
     labels_title = np.asarray(knn_index["labels_title"], dtype=object)
+    feature_space = str(knn_index.get("feature_space", "tfidf")).lower()
     return SlateIndexData(
+        feature_space=feature_space,
         vectorizer=knn_index["vectorizer"],
         matrix=knn_index["X"],
         label_id_canon=np.asarray([_canon_vid(label) for label in labels_id], dtype=object),
@@ -347,7 +499,10 @@ def _canon_vid(value: str) -> str:
 
 __all__ = [
     "build_tfidf_index",
+    "build_word2vec_index",
     "knn_predict_among_slate_multi",
     "load_tfidf_index",
+    "load_word2vec_index",
     "save_tfidf_index",
+    "save_word2vec_index",
 ]

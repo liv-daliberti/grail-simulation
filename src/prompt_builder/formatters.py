@@ -13,7 +13,7 @@ def truncate_text(text: str, limit: int = 160) -> str:
     """Trim ``text`` to ``limit`` characters, adding an ellipsis when needed."""
 
     text = text.strip()
-    if limit and limit > 3 and len(text) > limit:
+    if limit is not None and limit > 3 and len(text) > limit:
         return text[: limit - 3].rstrip() + "..."
     return text
 
@@ -63,7 +63,8 @@ def with_indefinite_article(phrase: str) -> str:
     if not text:
         return text
     lowered = text.lower()
-    if lowered.startswith(("a ", "an ", "the ", "another ", "this ", "that ", "someone", "somebody", "none")):
+    prefixes = ("a ", "an ", "the ", "another ", "this ", "that ", "someone", "somebody", "none")
+    if lowered.startswith(prefixes):
         return text
     if lowered[0] in "aeiou":
         return f"an {text}"
@@ -79,20 +80,25 @@ def describe_age_fragment(value: Any) -> Optional[str]:
     cleaned = age_text.strip()
     if not cleaned:
         return None
+    lowered = cleaned.lower()
+    result: Optional[str] = None
     if cleaned.isdigit():
-        return f"{cleaned}-year-old"
-    if cleaned.endswith("+"):
+        result = f"{cleaned}-year-old"
+    elif cleaned.endswith("+"):
         base = cleaned[:-1].strip()
         if base.isdigit():
-            return f"{cleaned} years old"
-    lowered = cleaned.lower()
-    if "-" in cleaned and all(part.strip().isdigit() for part in cleaned.split("-") if part.strip()):
-        parts = [part.strip() for part in cleaned.split("-") if part.strip()]
-        if len(parts) == 2:
-            return f"between {parts[0]} and {parts[1]} years old"
-    if lowered.endswith("year-old") or lowered.endswith("years old"):
-        return cleaned
-    return f"{cleaned} years old"
+            result = f"{cleaned} years old"
+    elif "-" in cleaned:
+        range_parts = [part.strip() for part in cleaned.split("-") if part.strip()]
+        if range_parts and all(part.isdigit() for part in range_parts):
+            if len(range_parts) == 2:
+                start, end = range_parts
+                result = f"between {start} and {end} years old"
+    elif lowered.endswith("year-old") or lowered.endswith("years old"):
+        result = cleaned
+    if result is None:
+        result = f"{cleaned} years old"
+    return result
 
 
 def describe_gender_fragment(value: Any) -> Optional[str]:

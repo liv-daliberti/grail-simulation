@@ -8,6 +8,16 @@ from typing import Any, List, Optional
 
 from .constants import FALSE_STRINGS, TRUE_STRINGS
 
+try:  # pragma: no cover - optional dependency
+    import pyarrow as pa  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    pa = None  # type: ignore
+
+try:  # pragma: no cover - optional dependency
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    pd = None  # type: ignore
+
 
 def as_list_json(x: Any, default: str = "[]") -> List[Any]:
     """Return ``x`` as a Python list, accepting JSON strings and Arrow arrays."""
@@ -17,16 +27,11 @@ def as_list_json(x: Any, default: str = "[]") -> List[Any]:
     if isinstance(x, str):
         try:
             value = json.loads(x or default)
-            return value if isinstance(value, list) else []
-        except Exception:  # pragma: no cover - defensive for malformed JSON
+        except (TypeError, ValueError, json.JSONDecodeError):  # pragma: no cover - malformed JSON
             return []
-    try:  # pragma: no cover - pyarrow may be unavailable in some environments
-        import pyarrow as pa  # type: ignore
-
-        if isinstance(x, pa.Array):
-            return x.to_pylist()
-    except Exception:
-        pass
+        return value if isinstance(value, list) else []
+    if pa is not None and isinstance(x, pa.Array):  # pragma: no cover
+        return x.to_pylist()
     return []
 
 
@@ -35,23 +40,21 @@ def secs(x: Any) -> str:
 
     try:
         return f"{int(round(float(x)))}s"
-    except Exception:
+    except (TypeError, ValueError):
         return "?"
 
 
 def _is_nanlike(x: Any) -> bool:
     if x is None:
         return True
-    if isinstance(x, float):
-        if math.isnan(x):
-            return True
-    try:
-        import pandas as pd  # type: ignore
-
-        if isinstance(x, pd._libs.missing.NAType):  # type: ignore[attr-defined]
-            return True
-    except Exception:
-        pass
+    if isinstance(x, float) and math.isnan(x):
+        return True
+    if pd is not None:
+        try:
+            if pd.isna(x):  # type: ignore[union-attr]
+                return True
+        except (TypeError, ValueError):  # pd.isna on complex objects may raise
+            pass
     s = str(x).strip().lower()
     return s in {"", "nan", "none", "null", "n/a", "na"}
 
@@ -109,14 +112,14 @@ def format_count(value: Any) -> Optional[str]:
             num = float(text)
         else:
             num = float(value)
-        if math.isnan(num):
-            return None
-        if abs(num - int(round(num))) < 1e-6:
-            return f"{int(round(num)):,}"
-        return f"{num:,.2f}"
-    except Exception:
+    except (TypeError, ValueError):
         text = str(value).strip()
         return text or None
+    if math.isnan(num):
+        return None
+    if abs(num - int(round(num))) < 1e-6:
+        return f"{int(round(num)):,}"
+    return f"{num:,.2f}"
 
 
 def format_age(value: Any) -> Optional[str]:
@@ -126,10 +129,10 @@ def format_age(value: Any) -> Optional[str]:
         return None
     try:
         age = int(float(str(value).strip()))
-        if age > 0:
-            return str(age)
-    except Exception:
-        pass
+    except (TypeError, ValueError):
+        age = None
+    if isinstance(age, int) and age > 0:
+        return str(age)
     text = str(value).strip()
     return text or None
 

@@ -12,6 +12,8 @@ from typing import Any, Dict, List, Sequence
 
 import numpy as np
 
+from common.eval_utils import safe_div
+
 try:  # pragma: no cover - optional dependency
     import matplotlib
     matplotlib.use("Agg", force=True)
@@ -118,12 +120,6 @@ def plot_elbow(
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()
-
-
-def safe_div(numerator: float, denominator: float) -> float:
-    """Return the division result guarding against a zero denominator."""
-
-    return numerator / denominator if denominator else 0.0
 
 
 def run_eval(args) -> None:

@@ -68,6 +68,12 @@ def ensure_pandas_stub() -> None:
             def eq(self, other: Any) -> "Series":
                 return Series([item == other for item in self._data])
 
+            def __eq__(self, other: Any) -> "Series":
+                return self.eq(other)
+
+            def __ne__(self, other: Any) -> "Series":
+                return Series([item != other for item in self._data])
+
             def isin(self, values: Iterable[Any]) -> "Series":
                 lookup = set(values)
                 return Series([item in lookup for item in self._data])
@@ -78,6 +84,8 @@ def ensure_pandas_stub() -> None:
                 right: float,
                 inclusive: str = "both",
             ) -> "Series":
+                left_inclusive = inclusive in {"both", "left"}
+                right_inclusive = inclusive in {"both", "right"}
                 result: List[bool] = []
                 for item in self._data:
                     try:
@@ -85,8 +93,8 @@ def ensure_pandas_stub() -> None:
                     except (TypeError, ValueError):
                         result.append(False)
                         continue
-                    left_ok = numeric >= left if inclusive in {"both", "right"} else numeric > left
-                    right_ok = numeric <= right if inclusive in {"both", "left"} else numeric < right
+                    left_ok = numeric >= left if left_inclusive else numeric > left
+                    right_ok = numeric <= right if right_inclusive else numeric < right
                     result.append(left_ok and right_ok)
                 return Series(result)
 
@@ -95,6 +103,29 @@ def ensure_pandas_stub() -> None:
 
             def copy(self) -> "Series":
                 return Series(list(self._data), name=self.name)
+
+            def _compare(self, other: Any, op) -> "Series":
+                result: List[bool] = []
+                for item in self._data:
+                    try:
+                        lhs = float(item)
+                        rhs = float(other)
+                        result.append(op(lhs, rhs))
+                    except (TypeError, ValueError):
+                        result.append(False)
+                return Series(result)
+
+            def __ge__(self, other: Any) -> "Series":
+                return self._compare(other, lambda a, b: a >= b)
+
+            def __gt__(self, other: Any) -> "Series":
+                return self._compare(other, lambda a, b: a > b)
+
+            def __le__(self, other: Any) -> "Series":
+                return self._compare(other, lambda a, b: a <= b)
+
+            def __lt__(self, other: Any) -> "Series":
+                return self._compare(other, lambda a, b: a < b)
 
             def __and__(self, other: "Series") -> "Series":
                 other_bool = other._coerce_bool()
@@ -146,7 +177,12 @@ def ensure_pandas_stub() -> None:
                     rows = []
                 rows_list = [dict(row) for row in rows]
                 if columns is None and rows_list:
-                    columns = list({key for row in rows_list for key in row.keys()})
+                    ordered: List[str] = []
+                    for row in rows_list:
+                        for key in row.keys():
+                            if key not in ordered:
+                                ordered.append(key)
+                    columns = ordered
                 self._columns = list(columns or [])
                 self._rows: List[dict] = []
                 for row in rows_list:
@@ -214,15 +250,33 @@ def ensure_pandas_stub() -> None:
                 def __init__(self, frame: "DataFrame") -> None:
                     self._frame = frame
 
-                def __getitem__(self, key: Any) -> "DataFrame":
-                    if isinstance(key, Series):
-                        mask = key._coerce_bool()
+                def __getitem__(self, key: Any) -> Any:
+                    if isinstance(key, tuple):
+                        row_key, col_key = key
                     else:
-                        mask = list(key)
-                    filtered = [
+                        row_key, col_key = key, None
+
+                    if isinstance(row_key, Series):
+                        mask = row_key._coerce_bool()
+                    elif isinstance(row_key, list):
+                        mask = row_key
+                    else:
+                        raise TypeError("Row selector must be a boolean Series or list")
+
+                    filtered_rows = [
                         row for row, keep in zip(self._frame._rows, mask) if keep
                     ]
-                    return DataFrame(filtered, columns=self._frame._columns)
+
+                    if col_key is None:
+                        return DataFrame(filtered_rows, columns=self._frame._columns)
+
+                    if isinstance(col_key, list):
+                        return DataFrame(
+                            [{col: row.get(col) for col in col_key} for row in filtered_rows],
+                            columns=col_key,
+                        )
+
+                    return Series([row.get(col_key) for row in filtered_rows], name=col_key)
 
             @property
             def loc(self) -> "_LocIndexer":
@@ -253,12 +307,33 @@ def ensure_pandas_stub() -> None:
 
             def sort_values(self, by: List[str], kind: str | None = None) -> "DataFrame":  # noqa: ARG002
                 def _key(row: dict) -> tuple:
-                    return tuple(
-                        (row.get(col),) for col in by
-                    )
+                    values = []
+                    for col in by:
+                        val = row.get(col)
+                        if _is_nan(val):
+                            values.append((1, None))
+                        else:
+                            values.append((0, val))
+                    return tuple(values)
 
                 sorted_rows = sorted(self._rows, key=_key)
                 return DataFrame(sorted_rows, columns=self._columns)
+
+            def where(self, condition: Any, other: Any) -> "DataFrame":
+                if isinstance(condition, DataFrame):
+                    cond_rows = condition._rows
+                elif isinstance(condition, Series):
+                    cond_rows = [{col: flag for col in self._columns} for flag in condition._coerce_bool()]
+                else:
+                    raise TypeError("Unsupported condition type for where()")
+                result_rows: List[dict] = []
+                for row, mask in zip(self._rows, cond_rows):
+                    new_row: dict = {}
+                    for col in self._columns:
+                        keep = mask[col] if isinstance(mask, dict) else mask
+                        new_row[col] = row[col] if keep else other
+                    result_rows.append(new_row)
+                return DataFrame(result_rows, columns=self._columns)
 
         def DataFrame_constructor(data: Optional[Any] = None, dtype: Any = None) -> DataFrame:  # noqa: ARG002
             if data is None:

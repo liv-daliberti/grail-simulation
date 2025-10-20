@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
+from common.eval_utils import safe_div
+
 from .data import (
     DEFAULT_DATASET_SOURCE,
     EVAL_SPLIT,
@@ -33,21 +35,6 @@ from .model import (
 from .utils import canon_video_id, ensure_directory, get_logger
 
 logger = get_logger("xgb.eval")
-
-
-def safe_div(numerator: float, denominator: float) -> float:
-    """
-    Return the division result guarding against a zero denominator.
-
-    :param numerator: Value forming the numerator.
-    :type numerator: float
-    :param denominator: Value forming the denominator.
-    :type denominator: float
-    :returns: ``numerator / denominator`` or ``0.0`` when the denominator is zero.
-    :rtype: float
-    """
-
-    return numerator / denominator if denominator else 0.0
 
 
 # pylint: disable=too-many-instance-attributes

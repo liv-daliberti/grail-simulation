@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import csv
 import logging
-import os
 import re
 from dataclasses import dataclass
-from glob import glob
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
-from common.text import canon_video_id, split_env_list
+from common.text import canon_video_id
+from common.title_index import TitleResolver
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
 
 try:  # pragma: no cover - optional dependency
@@ -38,98 +36,14 @@ DEFAULT_TITLE_DIRS = [
 
 CANON_RE = re.compile(r"[^a-z0-9]+")
 
-
-def _add_csv_file(path: str, collector: set[str]) -> None:
-    if os.path.isfile(path):
-        collector.add(path)
-
-
-def _collect_csv_from_directory(directory: str, collector: set[str]) -> None:
-    if not os.path.isdir(directory):
-        return
-    for root, _, filenames in os.walk(directory):
-        for name in filenames:
-            if name.lower().endswith(".csv"):
-                collector.add(os.path.join(root, name))
-
-
-def _iter_csv_files_from_env() -> List[str]:
-    """Return the set of CSV files discovered via environment settings."""
-
-    files: set[str] = set()
-    for path in split_env_list(os.environ.get("GRAIL_TITLE_CSVS")):
-        _add_csv_file(path, files)
-    for directory in split_env_list(os.environ.get("GRAIL_TITLE_DIRS")):
-        _collect_csv_from_directory(directory, files)
-    for pattern in split_env_list(os.environ.get("GRAIL_TITLE_GLOB")):
-        try:
-            for candidate in glob(pattern):
-                _add_csv_file(candidate, files)
-        except OSError:  # pragma: no cover - defensive
-            continue
-    if not files:
-        for directory in DEFAULT_TITLE_DIRS:
-            _collect_csv_from_directory(directory, files)
-    return sorted(files)
-
-
-def _guess_cols(header: List[str]) -> Tuple[Optional[str], Optional[str]]:
-    candidate_ids = [
-        "originId",
-        "ytid",
-        "video_id",
-        "youtube_id",
-        "videoId",
-        "origin_id",
-        "id",
-    ]
-    candidate_titles = ["originTitle", "title", "video_title", "name"]
-    lower = {column.lower(): column for column in header}
-    id_col = next(
-        (lower[name.lower()] for name in candidate_ids if name.lower() in lower),
-        None,
-    )
-    title_col = next(
-        (lower[name.lower()] for name in candidate_titles if name.lower() in lower),
-        None,
-    )
-    return id_col, title_col
-
-
-_title_index_cache: Optional[Dict[str, str]] = None
-
-
-def _build_title_index() -> Dict[str, str]:
-    """Build a mapping from YouTube id to title using CSV metadata sources."""
-
-    index: Dict[str, str] = {}
-    for path in _iter_csv_files_from_env():
-        try:
-            with open(path, "r", encoding="utf-8", newline="") as handle:
-                reader = csv.DictReader(handle)
-                if not reader.fieldnames:
-                    continue
-                id_col, title_col = _guess_cols(reader.fieldnames)
-                if not id_col or not title_col:
-                    continue
-                for row in reader:
-                    video_id = canon_video_id(row.get(id_col, "") or "")
-                    title = (row.get(title_col, "") or "").strip()
-                    if video_id and title and video_id not in index:
-                        index[video_id] = title
-        except (OSError, csv.Error):  # pragma: no cover - defensive
-            continue
-    return index
+_TITLE_RESOLVER = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
 
 
 def title_for(video_id: str) -> Optional[str]:
     """Return a human-readable title for a YouTube id if available."""
 
-    global _title_index_cache  # pylint: disable=global-statement
-    if _title_index_cache is None:
-        _title_index_cache = _build_title_index()
-        logging.info("[title-index] loaded %d titles from CSV", len(_title_index_cache))
-    return _title_index_cache.get(canon_video_id(video_id))
+    title = _TITLE_RESOLVER.resolve(video_id)
+    return title
 
 
 # ---------------------------------------------------------------------------

@@ -18,6 +18,27 @@ Example invocations:
    python -m knn.cli --fit-index --feature-space word2vec \
        --word2vec-size 256 --out-dir models/knn/run-w2v
 
+Diagnostics (elbow plots, accuracy-by-k curves, and per-k predictions) are
+saved under the configured `--out-dir`; use `--train-curve-max` to control how
+many training examples contribute to the curve metrics.
+
+Elbow & Curve Metrics
+---------------------
+
+Each evaluation issue produces:
+
+- ``reports/knn/<feature-space>/elbow_<issue>.png`` – accuracy vs. ``k`` with the
+  elbow-selected point highlighted.
+- ``models/knn/<issue>/knn_curves_<issue>.json`` – serialised curves for the
+  evaluation split (and optionally the training split) containing accuracy-by-``k``,
+  eligible/correct counts, AUC (both absolute and normalised), and the selected
+  ``k``.
+- ``models/knn/<issue>/k-<k>/`` – per-``k`` predictions and aggregate metrics for
+  downstream analysis.
+
+Set ``--train-curve-max`` when invoking the CLI to limit how many training
+examples feed into the training curve diagnostics.
+
 .. automodule:: knn.data
    :members:
    :undoc-members:

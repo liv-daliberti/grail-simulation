@@ -105,6 +105,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional directory to store/load Word2Vec models (defaults to models/knn_word2vec).",
     )
     parser.add_argument(
+        "--train-curve-max",
+        "--train_curve_max",
+        type=int,
+        default=0,
+        dest="train_curve_max",
+        help="Limit the number of training examples evaluated for curve metrics (0 means use all).",
+    )
+    parser.add_argument(
         "--out-dir",
         "--out_dir",
         default=str(Path("models") / "knn"),

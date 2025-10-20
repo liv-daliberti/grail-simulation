@@ -428,12 +428,29 @@ def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
     if not isinstance(display_orders, dict):
         return normalized
     for key, value in display_orders.items():
-        try:
-            idx = int(key)
-        except (TypeError, ValueError):
-            continue
         if not isinstance(value, (list, tuple)):
             continue
+
+        step_idx: Optional[int] = None
+        if isinstance(key, int):
+            step_idx = key
+        elif isinstance(key, str):
+            lowered = key.strip().lower()
+            if "recs" not in lowered:
+                continue
+            digit_fragment = ""
+            for char in lowered:
+                if char.isdigit():
+                    digit_fragment += char
+                else:
+                    break
+            if digit_fragment:
+                raw_idx = int(digit_fragment)
+                step_idx = raw_idx - 2 if raw_idx >= 2 else raw_idx
+
+        if step_idx is None or step_idx < 0:
+            continue
+
         vids: List[str] = []
         for item in value:
             if not isinstance(item, str):
@@ -442,7 +459,7 @@ def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
             if stripped:
                 vids.append(stripped)
         if vids:
-            normalized[idx] = vids
+            normalized[step_idx] = vids
     return normalized
 
 

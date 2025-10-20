@@ -62,6 +62,14 @@ PROFILE/HISTORY context seen by other baselines:
 the gold video appears in the candidate slate. Metrics mirror those reported by
 the XGBoost and GPT-4o baselines so results remain comparable.
 
+Each run also materialises elbow plots and curve summaries:
+
+- Elbow charts are saved to `reports/knn/<feature-space>/elbow_<issue>.png`.
+- Per-`k` predictions and metrics live under `models/knn/<issue>/k-<k>/`.
+- Curve diagnostics (accuracy-by-k, AUC, best-k) for both evaluation and training
+  splits are written to `models/knn/<issue>/knn_curves_<issue>.json`. Use
+  `--train-curve-max` to cap the number of training examples analysed.
+
 ## Testing
 
 Unit tests live under `tests/knn/`. Add or update fixtures when introducing new

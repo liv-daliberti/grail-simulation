@@ -128,6 +128,21 @@ def plot_elbow(
     plt.close()
 
 
+def compute_auc_from_curve(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> tuple[float, float]:
+    """Return raw and normalised area under the accuracy vs k curve."""
+
+    if not k_values:
+        return 0.0, 0.0
+    sorted_k = sorted({int(k) for k in k_values})
+    ys = [float(accuracy_by_k.get(k, 0.0)) for k in sorted_k]
+    if len(sorted_k) == 1:
+        value = ys[0]
+        return value, value
+    area = float(np.trapz(ys, sorted_k))
+    span = float(sorted_k[-1] - sorted_k[0]) or 1.0
+    return area, area / span
+
+
 def _normalise_feature_space(feature_space: str | None) -> str:
     """Return the validated feature space identifier."""
 
@@ -236,7 +251,7 @@ def _build_or_load_index(
     raise ValueError("Set either --fit_index or --load_index to obtain a KNN index")
 
 
-def run_eval(args) -> None:
+def run_eval(args) -> None:  # pylint: disable=too-many-locals
     """Evaluate the KNN baseline across the requested issues."""
 
     os_env = os.environ
@@ -282,6 +297,7 @@ def run_eval(args) -> None:
         evaluate_issue(
             issue_slug=issue_slug,
             dataset_source=dataset_source,
+            train_ds=train_ds,
             eval_ds=eval_ds,
             k_values=k_values,
             knn_index=knn_index,
@@ -293,158 +309,28 @@ def run_eval(args) -> None:
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 
-def evaluate_issue(
+
+def _write_issue_outputs(
     *,
-    issue_slug: str,
-    dataset_source: str,
-    eval_ds,
-    k_values: Sequence[int],
-    knn_index: Dict[str, Any],
-    extra_fields: Sequence[str],
-    feature_space: str,
     args,
+    issue_slug: str,
+    feature_space: str,
+    dataset_source: str,
+    rows: Sequence[Dict[str, Any]],
+    k_values: Sequence[int],
+    accuracy_by_k: Dict[int, float],
+    best_k: int,
+    bucket_stats: Dict[str, Dict[str, int]],
+    single_multi_stats: Dict[str, int],
+    gold_hist: Dict[int, int],
+    per_k_stats: Dict[int, Dict[str, int]],
+    extra_fields: Sequence[str],
+    curve_metrics: Dict[str, Any],
 ) -> None:
-    """Evaluate a single issue split and write metrics/predictions."""
-    k_values = [int(k) for k in k_values]
-    indices = list(range(len(eval_ds)))
-    if args.eval_max and args.eval_max > 0:
-        indices = indices[: args.eval_max]
+    """Persist evaluation artefacts and per-k directories for an issue."""
 
-    rows: List[Dict[str, Any]] = []
-    gold_hist: Dict[int, int] = {}
-    bucket_stats = {
-        "position_seen": {b: 0 for b in BUCKET_LABELS},
-        "options_seen": {b: 0 for b in BUCKET_LABELS},
-        "options_eligible": {b: 0 for b in BUCKET_LABELS},
-        "options_correct": {b: 0 for b in BUCKET_LABELS},
-    }
-
-    per_k_stats = {k: {"eligible": 0, "correct": 0} for k in k_values}
-
-    single_multi_stats = {
-        "seen_single": 0,
-        "seen_multi": 0,
-        "elig_single": 0,
-        "elig_multi": 0,
-        "corr_single": 0,
-        "corr_multi": 0,
-    }
-
-    all_gold_indices: List[int] = []
-    all_n_options: List[int] = []
-
-    start_time = time.time()
-
-    query_config = SlateQueryConfig(
-        text_fields=tuple(extra_fields),
-        lowercase=True,
-        metric=args.knn_metric,
-    )
-
-    for idx, row_index in enumerate(indices, start=1):
-        example = eval_ds[int(row_index)]
-        slate_pairs = extract_slate_items(example)
-        n_options = len(slate_pairs)
-        n_bucket = bin_nopts(n_options)
-        bucket_stats["options_seen"][n_bucket] += 1
-
-        position_raw = example.get("video_index")
-        try:
-            position = int(position_raw) if position_raw is not None else -1
-        except (TypeError, ValueError):
-            position = -1
-        pos_bucket = bucket_from_pos(position)
-        bucket_stats["position_seen"][pos_bucket] += 1
-
-        gold_index = int(example.get("gold_index") or -1)
-        gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
-        if gold_index < 1 and slate_pairs:
-            for option_index, (title, vid) in enumerate(slate_pairs, start=1):
-                if gold_raw and (gold_raw == vid or canon(gold_raw) == canon(title)):
-                    gold_index = option_index
-                    break
-
-        predictions = knn_predict_among_slate_multi(
-            knn_index=knn_index,
-            example=example,
-            k_values=k_values,
-            config=query_config,
-        )
-
-        eligible = gold_index > 0 and n_options > 0
-        if eligible:
-            bucket_stats["options_eligible"][n_bucket] += 1
-            gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
-            all_gold_indices.append(gold_index)
-            all_n_options.append(n_options)
-            if n_options == 1:
-                single_multi_stats["elig_single"] += 1
-            else:
-                single_multi_stats["elig_multi"] += 1
-        if n_options == 1:
-            single_multi_stats["seen_single"] += 1
-        elif n_options > 1:
-            single_multi_stats["seen_multi"] += 1
-
-        for k, pred in predictions.items():
-            if eligible:
-                k_stats = per_k_stats[k]
-                k_stats["eligible"] += 1
-                if pred is not None and int(pred) == gold_index:
-                    k_stats["correct"] += 1
-
-        rows.append(
-            {
-                "predictions_by_k": predictions,
-                "gold_index": int(gold_index),
-                "n_options": int(n_options),
-                "n_options_bucket": n_bucket,
-                "eligible": bool(eligible),
-                "position_index": int(position),
-                "position_bucket": pos_bucket,
-                "issue_value": example.get("issue"),
-            }
-        )
-
-        if idx % 25 == 0:
-            elapsed = time.time() - start_time
-            interim = max(
-                (
-                    safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
-                    for k in k_values
-                    if per_k_stats[k]["eligible"]
-                ),
-                default=0.0,
-            )
-            logging.info(
-                "[eval][%s] %d/%d  interim-best-acc=%.3f  %.1fs",
-                issue_slug,
-                idx,
-                len(indices),
-                interim,
-                elapsed,
-            )
-
-    accuracy_by_k = {
-        k: safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
-        for k in k_values
-    }
-    best_k = select_best_k(k_values, accuracy_by_k)
     best_accuracy = accuracy_by_k.get(best_k, 0.0)
     eligible_overall = int(per_k_stats.get(best_k, {}).get("eligible", 0))
-
-    for row in rows:
-        if not row["eligible"]:
-            continue
-        prediction = row["predictions_by_k"].get(best_k)
-        if prediction is None:
-            continue
-        if int(prediction) == row["gold_index"]:
-            bucket_stats["options_correct"][row["n_options_bucket"]] += 1
-            if row["n_options"] == 1:
-                single_multi_stats["corr_single"] += 1
-            else:
-                single_multi_stats["corr_multi"] += 1
 
     issue_dir = Path(args.out_dir) / issue_slug
     issue_dir.mkdir(parents=True, exist_ok=True)
@@ -484,19 +370,16 @@ def evaluate_issue(
     }
 
     gold_distribution = {str(k): int(v) for k, v in sorted(gold_hist.items())}
-    if gold_hist:
-        top_idx = max(gold_hist.items(), key=lambda kv: kv[1])[0]
-        baseline_correct = sum(1 for gi in all_gold_indices if gi == top_idx)
-        baseline_accuracy = safe_div(baseline_correct, eligible_overall)
+    if gold_hist and eligible_overall:
+        top_idx, top_count = max(gold_hist.items(), key=lambda kv: kv[1])
+        baseline_accuracy = safe_div(top_count, eligible_overall)
     else:
         top_idx = None
         baseline_accuracy = 0.0
 
-    random_baseline = (
-        float(np.mean([1.0 / n for n in all_n_options]))
-        if all_n_options
-        else 0.0
-    )
+    random_sum = float(single_multi_stats.get("rand_inverse_sum", 0.0))
+    random_count = int(single_multi_stats.get("rand_inverse_count", 0))
+    random_baseline = safe_div(random_sum, random_count)
     accuracy_by_k_serializable = {
         str(k): float(accuracy_by_k[k])
         for k in k_values
@@ -507,13 +390,17 @@ def evaluate_issue(
     elbow_path = reports_dir / f"elbow_{issue_slug}.png"
     plot_elbow(k_values, accuracy_by_k, best_k, elbow_path)
 
+    curve_json = issue_dir / f"knn_curves_{issue_slug}.json"
+    with open(curve_json, "w", encoding="utf-8") as handle:
+        json.dump(curve_metrics, handle, ensure_ascii=False, indent=2)
+
     metrics = {
         "model": "knn",
         "feature_space": feature_space,
         "dataset": dataset_source,
         "issue": issue_slug,
         "split": EVAL_SPLIT,
-        "n_total": int(len(indices)),
+        "n_total": int(len(rows)),
         "n_eligible": int(eligible_overall),
         "accuracy_overall": best_accuracy,
         "accuracy_by_k": accuracy_by_k_serializable,
@@ -563,6 +450,8 @@ def evaluate_issue(
             str(k): str((issue_dir / f"k-{int(k)}"))
             for k in k_values
         },
+        "curve_metrics": curve_metrics,
+        "curve_metrics_path": str(curve_json),
         "notes": "Accuracy computed over eligible rows (gold_index>0).",
     }
 
@@ -576,7 +465,7 @@ def evaluate_issue(
         k_predictions_path = k_dir / f"predictions_{issue_slug}_{EVAL_SPLIT}.jsonl"
         with open(k_predictions_path, "w", encoding="utf-8") as handle:
             for row in rows:
-                pred_value = row["predictions_by_k"].get(k)
+                pred_value = row["predictions_by_k"].get(k_int)
                 record = {
                     "k": k_int,
                     "knn_pred_index": int(pred_value) if pred_value is not None else None,
@@ -597,7 +486,7 @@ def evaluate_issue(
             "issue": issue_slug,
             "split": EVAL_SPLIT,
             "k": k_int,
-            "n_total": int(len(indices)),
+            "n_total": int(len(rows)),
             "n_eligible": int(k_stats["eligible"]),
             "n_correct": int(k_stats["correct"]),
             "accuracy": float(accuracy_by_k.get(k_int, 0.0)),
@@ -610,14 +499,318 @@ def evaluate_issue(
         "[DONE][%s] split=%s n=%d eligible=%d knn_acc=%.4f (best_k=%d)",
         issue_slug,
         EVAL_SPLIT,
-        len(indices),
+        len(rows),
         eligible_overall,
         best_accuracy,
         best_k,
     )
     logging.info("[WROTE] per-example: %s", out_jsonl)
     logging.info("[WROTE] metrics: %s", metrics_json)
+    logging.info("[WROTE] curves: %s", curve_json)
+def _accumulate_row(
+    *,
+    example: Dict[str, Any],
+    bucket_stats: Dict[str, Dict[str, int]],
+    per_k_stats: Dict[int, Dict[str, int]],
+    single_multi_stats: Dict[str, int],
+    gold_hist: Dict[int, int],
+    k_values: Sequence[int],
+    knn_index: Dict[str, Any],
+    query_config: SlateQueryConfig,
+) -> Dict[str, Any]:
+    """Process a single evaluation example and update aggregate statistics."""
 
+    slate_pairs = extract_slate_items(example)
+    n_options = len(slate_pairs)
+    n_bucket = bin_nopts(n_options)
+    bucket_stats["options_seen"][n_bucket] += 1
+
+    try:
+        position = int(example.get("video_index") or -1)
+    except (TypeError, ValueError):
+        position = -1
+    pos_bucket = bucket_from_pos(position)
+    bucket_stats["position_seen"][pos_bucket] += 1
+
+    gold_index = int(example.get("gold_index") or -1)
+    gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
+    if gold_index < 1 and slate_pairs:
+        for option_index, (title, vid) in enumerate(slate_pairs, start=1):
+            if gold_raw and (gold_raw == vid or canon(gold_raw) == canon(title)):
+                gold_index = option_index
+                break
+
+    predictions = knn_predict_among_slate_multi(
+        knn_index=knn_index,
+        example=example,
+        k_values=k_values,
+        config=query_config,
+    )
+
+    eligible = gold_index > 0 and n_options > 0
+    if eligible:
+        bucket_stats["options_eligible"][n_bucket] += 1
+        gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
+        single_multi_stats["rand_inverse_sum"] += (1.0 / n_options) if n_options else 0.0
+        single_multi_stats["rand_inverse_count"] += 1
+        if n_options == 1:
+            single_multi_stats["elig_single"] += 1
+        else:
+            single_multi_stats["elig_multi"] += 1
+    if n_options == 1:
+        single_multi_stats["seen_single"] += 1
+    elif n_options > 1:
+        single_multi_stats["seen_multi"] += 1
+
+    if eligible:
+        for k, pred in predictions.items():
+            k_stats = per_k_stats[k]
+            k_stats["eligible"] += 1
+            if pred is not None and int(pred) == gold_index:
+                k_stats["correct"] += 1
+
+    return {
+        "predictions_by_k": predictions,
+        "gold_index": int(gold_index),
+        "n_options": int(n_options),
+        "n_options_bucket": n_bucket,
+        "eligible": bool(eligible),
+        "position_index": int(position),
+        "position_bucket": pos_bucket,
+        "issue_value": example.get("issue"),
+    }
+
+
+def _evaluate_dataset_split(
+    *,
+    dataset,
+    k_values: Sequence[int],
+    knn_index: Dict[str, Any],
+    extra_fields: Sequence[str],
+    metric: str,
+    capture_rows: bool,
+    log_label: str,
+    max_examples: int | None,
+) -> Dict[str, Any]:
+    """Return aggregate statistics for ``dataset`` using the provided index."""
+
+    rows: List[Dict[str, Any]] = [] if capture_rows else []
+    gold_hist: Dict[int, int] = {}
+    bucket_stats = {
+        "position_seen": {b: 0 for b in BUCKET_LABELS},
+        "options_seen": {b: 0 for b in BUCKET_LABELS},
+        "options_eligible": {b: 0 for b in BUCKET_LABELS},
+        "options_correct": {b: 0 for b in BUCKET_LABELS},
+    }
+    per_k_stats = {k: {"eligible": 0, "correct": 0} for k in k_values}
+    single_multi_stats: Dict[str, float | int] = {
+        "seen_single": 0,
+        "seen_multi": 0,
+        "elig_single": 0,
+        "elig_multi": 0,
+        "corr_single": 0,
+        "corr_multi": 0,
+        "rand_inverse_sum": 0.0,
+        "rand_inverse_count": 0,
+    }
+
+    dataset_len = len(dataset)
+    limit = dataset_len
+    if max_examples is not None and max_examples > 0:
+        limit = min(dataset_len, max_examples)
+
+    query_config = SlateQueryConfig(
+        text_fields=tuple(extra_fields),
+        lowercase=True,
+        metric=metric,
+    )
+    start_time = time.time()
+
+    for idx in range(int(limit)):
+        row = _accumulate_row(
+            example=dataset[int(idx)],
+            bucket_stats=bucket_stats,
+            per_k_stats=per_k_stats,
+            single_multi_stats=single_multi_stats,  # type: ignore[arg-type]
+            gold_hist=gold_hist,
+            k_values=k_values,
+            knn_index=knn_index,
+            query_config=query_config,
+        )
+        if capture_rows:
+            rows.append(row)
+        if (idx + 1) % 25 == 0:
+            elapsed = time.time() - start_time
+            logging.info(
+                "[%s] %d/%d  elapsed=%.1fs",
+                log_label,
+                idx + 1,
+                limit,
+                elapsed,
+            )
+
+    return {
+        "rows": rows,
+        "bucket_stats": bucket_stats,
+        "per_k_stats": per_k_stats,
+        "single_multi_stats": single_multi_stats,
+        "gold_hist": gold_hist,
+        "n_examples": int(limit),
+    }
+
+
+def _update_correct_counts(
+    rows: Sequence[Dict[str, Any]],
+    best_k: int,
+    bucket_stats: Dict[str, Dict[str, int]],
+    single_multi_stats: Dict[str, int],
+) -> None:
+    """Update bucket-level correctness tallies for the selected ``best_k``."""
+
+    for row in rows:
+        if not row["eligible"]:
+            continue
+        prediction = row["predictions_by_k"].get(best_k)
+        if prediction is None:
+            continue
+        if int(prediction) == row["gold_index"]:
+            bucket_stats["options_correct"][row["n_options_bucket"]] += 1
+            if row["n_options"] == 1:
+                single_multi_stats["corr_single"] += 1
+            else:
+                single_multi_stats["corr_multi"] += 1
+
+
+def _curve_summary(
+    *,
+    k_values: Sequence[int],
+    accuracy_by_k: Dict[int, float],
+    per_k_stats: Dict[int, Dict[str, int]],
+    best_k: int,
+    n_examples: int,
+) -> Dict[str, Any]:
+    """Return a serialisable summary for accuracy-vs-k curves."""
+
+    area, normalised = compute_auc_from_curve(k_values, accuracy_by_k)
+    sorted_k = sorted({int(k) for k in k_values})
+    accuracy_serialised = {
+        str(k): float(accuracy_by_k.get(k, 0.0))
+        for k in sorted_k
+    }
+    eligible_serialised = {
+        str(k): int(per_k_stats[k]["eligible"])
+        for k in sorted_k
+    }
+    correct_serialised = {
+        str(k): int(per_k_stats[k]["correct"])
+        for k in sorted_k
+    }
+    return {
+        "accuracy_by_k": accuracy_serialised,
+        "eligible_by_k": eligible_serialised,
+        "correct_by_k": correct_serialised,
+        "auc_area": float(area),
+        "auc_normalized": float(normalised),
+        "best_k": int(best_k),
+        "best_accuracy": float(accuracy_by_k.get(best_k, 0.0)),
+        "n_examples": int(n_examples),
+    }
+
+
+def evaluate_issue(
+    *,
+    issue_slug: str,
+    dataset_source: str,
+    train_ds,
+    eval_ds,
+    k_values: Sequence[int],
+    knn_index: Dict[str, Any],
+    extra_fields: Sequence[str],
+    feature_space: str,
+    args,
+) -> None:  # pylint: disable=too-many-locals
+    """Evaluate a single issue split and write metrics/predictions."""
+
+    k_values_int = sorted({int(k) for k in k_values if int(k) > 0})
+    eval_max = args.eval_max if args.eval_max and args.eval_max > 0 else None
+    eval_summary = _evaluate_dataset_split(
+        dataset=eval_ds,
+        k_values=k_values_int,
+        knn_index=knn_index,
+        extra_fields=extra_fields,
+        metric=args.knn_metric,
+        capture_rows=True,
+        log_label=f"eval][{issue_slug}",
+        max_examples=eval_max,
+    )
+
+    rows: List[Dict[str, Any]] = eval_summary["rows"]
+    bucket_stats: Dict[str, Dict[str, int]] = eval_summary["bucket_stats"]
+    single_multi_stats: Dict[str, int] = eval_summary["single_multi_stats"]  # type: ignore[assignment]
+    gold_hist: Dict[int, int] = eval_summary["gold_hist"]
+    per_k_stats: Dict[int, Dict[str, int]] = eval_summary["per_k_stats"]
+
+    accuracy_by_k = {
+        k: safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
+        for k in k_values_int
+    }
+    best_k = select_best_k(k_values_int, accuracy_by_k)
+    _update_correct_counts(rows, best_k, bucket_stats, single_multi_stats)
+    eval_curve = _curve_summary(
+        k_values=k_values_int,
+        accuracy_by_k=accuracy_by_k,
+        per_k_stats=per_k_stats,
+        best_k=best_k,
+        n_examples=eval_summary["n_examples"],
+    )
+
+    train_curve = None
+    train_max = getattr(args, "train_curve_max", 0)
+    if train_ds is not None:
+        max_examples = train_max if train_max and train_max > 0 else None
+        train_summary = _evaluate_dataset_split(
+            dataset=train_ds,
+            k_values=k_values_int,
+            knn_index=knn_index,
+            extra_fields=extra_fields,
+            metric=args.knn_metric,
+            capture_rows=False,
+            log_label=f"train][{issue_slug}",
+            max_examples=max_examples,
+        )
+        train_accuracy_by_k = {
+            k: safe_div(train_summary["per_k_stats"][k]["correct"], train_summary["per_k_stats"][k]["eligible"])
+            for k in k_values_int
+        }
+        train_best_k = select_best_k(k_values_int, train_accuracy_by_k)
+        train_curve = _curve_summary(
+            k_values=k_values_int,
+            accuracy_by_k=train_accuracy_by_k,
+            per_k_stats=train_summary["per_k_stats"],
+            best_k=train_best_k,
+            n_examples=train_summary["n_examples"],
+        )
+
+    curve_metrics = {"eval": eval_curve}
+    if train_curve:
+        curve_metrics["train"] = train_curve
+
+    _write_issue_outputs(
+        args=args,
+        issue_slug=issue_slug,
+        feature_space=feature_space,
+        dataset_source=dataset_source,
+        rows=rows,
+        k_values=k_values_int,
+        accuracy_by_k=accuracy_by_k,
+        best_k=best_k,
+        bucket_stats=bucket_stats,
+        single_multi_stats=single_multi_stats,
+        gold_hist=gold_hist,
+        per_k_stats=per_k_stats,
+        extra_fields=extra_fields,
+        curve_metrics=curve_metrics,
+    )
 
 def bin_nopts(n: int) -> str:
     """Bucket the number of options into the reporting categories."""

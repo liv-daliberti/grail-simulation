@@ -10,7 +10,7 @@ pytest.importorskip("sklearn")
 pytest.importorskip("joblib")
 pytest.importorskip("gensim")
 
-from knn import cli
+from knn import cli, evaluate
 from knn.data import DEFAULT_DATASET_SOURCE
 from knn.features import Word2VecConfig, prepare_training_documents
 from knn.index import (
@@ -82,6 +82,7 @@ def test_cli_parser_defaults() -> None:
     assert args.feature_space == "tfidf"
     assert args.word2vec_size == 256
     assert args.word2vec_model_dir == ""
+    assert args.train_curve_max == 0
 
 
 def test_cli_parser_hyphenated_options() -> None:
@@ -97,12 +98,35 @@ def test_cli_parser_hyphenated_options() -> None:
             "5",
             "--issue",
             "minimum_wage",
+            "--train-curve-max",
+            "42",
         ]
     )
     assert args.fit_index is True
     assert args.knn_k == 13
     assert args.eval_max == 5
     assert args.issues == "minimum_wage"
+    assert args.train_curve_max == 42
+
+
+def test_select_best_k_prefers_elbow() -> None:
+    k_values = [1, 5, 10]
+    accuracy = {1: 0.2, 5: 0.5, 10: 0.52}
+    assert evaluate.select_best_k(k_values, accuracy) == 5
+
+
+def test_plot_elbow_creates_image(tmp_path) -> None:
+    output = tmp_path / "elbow.png"
+    evaluate.plot_elbow([1, 3, 5], {1: 0.1, 3: 0.6, 5: 0.4}, best_k=3, output_path=output)
+    assert output.exists()
+
+
+def test_compute_auc_from_curve() -> None:
+    k_values = [1, 4, 7]
+    accuracy = {1: 0.2, 4: 0.4, 7: 0.6}
+    area, normalised = evaluate.compute_auc_from_curve(k_values, accuracy)
+    assert area > 0
+    assert 0.0 <= normalised <= 1.0
 
 
 def test_build_word2vec_index_roundtrip(tmp_path) -> None:

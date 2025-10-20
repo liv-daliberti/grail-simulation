@@ -32,6 +32,9 @@ def build_markdown(
     study_rows: Iterable[Mapping[str, object]],
     heatmap_paths: Iterable[Path],
     mean_change_path: Path,
+    *,
+    assignment_rows: Iterable[Mapping[str, object]] = (),
+    regression_summary: Optional[Mapping[str, float]] = None,
 ) -> List[str]:
     """Render Markdown lines describing the replication results."""
 
@@ -129,5 +132,35 @@ def build_markdown(
         "computed from the same survey composites used in the published study. "
         "Participants lacking a post-wave response are excluded from the relevant heatmap and summary."
     )
+
+    assignment_rows = list(assignment_rows)
+    if assignment_rows:
+        lines.extend(
+            [
+                "",
+                "### Control vs. treatment summary",
+                "",
+                "| Study | Control Δ | Treatment Δ |",
+                "| ------ | ---------- | ------------ |",
+            ]
+        )
+        for row in assignment_rows:
+            lines.append(
+                "| "
+                f"{row['label']} | "
+                f"{_format_float(row['control_mean_change'])} | "
+                f"{_format_float(row['treatment_mean_change'])} |"
+            )
+        lines.append("")
+
+    if regression_summary:
+        lines.extend(
+            [
+                "Pooled regression (control-adjusted) β̂ ≈ "
+                f"{_format_float(regression_summary.get('coefficient', float('nan')))} "
+                f"with p ≈ {regression_summary.get('p_value', float('nan')):.2e}.",
+                "",
+            ]
+        )
 
     return lines

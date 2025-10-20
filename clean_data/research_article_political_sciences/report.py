@@ -40,6 +40,7 @@ def generate_research_article_report(
 
     study_entries: List[Dict[str, object]] = []
     heatmap_paths: List[Path] = []
+    table_rows: List[Dict[str, float]] = []
 
     for spec in assemble_study_specs():
         study_frame = prepare_study_frame(combined, spec)
@@ -70,6 +71,16 @@ def generate_research_article_report(
         assignment_frame = load_assignment_frame(spec)
         summaries = summarise_assignments(assignment_frame)
         assignment_panels.append((spec.label, summaries))
+        control_entry = next((item for item in summaries if item["assignment"] == "control"), None)
+        treatment_entry = next((item for item in summaries if item["assignment"] == "treatment"), None)
+        if control_entry or treatment_entry:
+            table_rows.append(
+                {
+                    "label": spec.label,
+                    "control_mean_change": control_entry["mean_change"] if control_entry else float("nan"),
+                    "treatment_mean_change": treatment_entry["mean_change"] if treatment_entry else float("nan"),
+                }
+            )
         if not assignment_frame.empty:
             regression_frames.append(
                 assignment_frame.assign(study_key=spec.key, study_label=spec.label)
@@ -95,6 +106,8 @@ def generate_research_article_report(
         ],
         heatmap_paths=heatmap_paths,
         mean_change_path=mean_change_plot,
+        assignment_rows=table_rows,
+        regression_summary=regression_stats,
     )
     (output_path / "README.md").write_text(
         "\n".join(markdown_lines) + "\n",

@@ -352,9 +352,14 @@
     <span class="n">rel_mean_change_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mean_change_path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">&quot;### Mean shifts with 95</span><span class="si">% c</span><span class="s2">onfidence intervals&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;### Control vs. treatment shifts and pooled regression&quot;</span><span class="p">,</span>
             <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">&quot;![Mean opinion change](</span><span class="si">{</span><span class="n">rel_mean_change_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;The first three panels separate mean opinion changes for the control and &quot;</span>
+            <span class="s2">&quot;treatment arms of Studies 1–3 with 95</span><span class="si">% c</span><span class="s2">onfidence intervals. &quot;</span>
+            <span class="s2">&quot;The fourth panel reports the pooled regression coefficient comparing treatment versus &quot;</span>
+            <span class="s2">&quot;control after adjusting for baseline opinion and study fixed effects.&quot;</span><span class="p">,</span>
             <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="p">]</span>
     <span class="p">)</span>

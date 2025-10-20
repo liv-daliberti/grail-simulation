@@ -275,7 +275,7 @@
 <span class="sd">    :type ex: Dict[str, Any]</span>
 <span class="sd">    :param max_hist: Maximum number of prior videos to include in the history section.</span>
 <span class="sd">    :type max_hist: int</span>
-<span class="sd">    :returns: Multi-line prompt describing the viewer, watch history, and options.</span>
+<span class="sd">    :returns: Multi-line prompt describing the viewer, viewing context, and options.</span>
 <span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -286,13 +286,11 @@
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;PROFILE:&quot;</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_render_profile_text</span><span class="p">(</span><span class="n">profile</span><span class="p">))</span>
 
-    <span class="n">history_section</span> <span class="o">=</span> <span class="n">_history_section</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">history_section</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">history_section</span><span class="p">)</span>
-
     <span class="n">current_section</span> <span class="o">=</span> <span class="n">_current_video_section</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">current_section</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">current_section</span><span class="p">)</span>
+
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_recently_watched_section</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">))</span>
 
     <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_options_section</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">))</span>
 
@@ -328,9 +326,9 @@
     <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;CURRENT VIDEO:&quot;</span><span class="p">,</span> <span class="s2">&quot; — &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_history_section</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_recently_watched_section</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Build the viewing history subsection for the prompt.</span>
+<span class="sd">    Build the recently watched subsection for the prompt.</span>
 
 <span class="sd">    :param ex: Interaction row containing history-related fields.</span>
 <span class="sd">    :type ex: Dict[str, Any]</span>
@@ -338,28 +336,29 @@
 <span class="sd">    :type show_ids: bool</span>
 <span class="sd">    :param max_hist: Maximum number of historical items to include.</span>
 <span class="sd">    :type max_hist: int</span>
-<span class="sd">    :returns: Lines summarising previously watched videos, most recent first.</span>
+<span class="sd">    :returns: Lines summarising previously watched videos, newest entry last.</span>
 <span class="sd">    :rtype: List[str]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">descriptors</span> <span class="o">=</span> <span class="n">_history_descriptors</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">descriptors</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="n">section</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;HISTORY (most recent first):&quot;</span><span class="p">]</span>
-    <span class="n">section</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">descriptors</span> <span class="o">=</span> <span class="n">_recently_watched_descriptors</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
+    <span class="n">section</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;RECENTLY WATCHED (NEWEST LAST):&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">descriptors</span><span class="p">:</span>
+        <span class="n">section</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">section</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;(no recently watched videos available)&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">section</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_history_descriptors</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_recently_watched_descriptors</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="n">prior</span> <span class="o">=</span> <span class="n">_prior_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">prior</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">limit</span> <span class="o">=</span> <span class="n">max_hist</span> <span class="k">if</span> <span class="n">max_hist</span> <span class="ow">and</span> <span class="n">max_hist</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>
-    <span class="n">recent</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">prior</span><span class="p">))[:</span><span class="n">limit</span><span class="p">]</span>
+    <span class="n">recent</span> <span class="o">=</span> <span class="n">prior</span><span class="p">[</span><span class="o">-</span><span class="n">limit</span><span class="p">:]</span>
     <span class="n">descriptors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">recent</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">descriptors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_history_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">))</span>
+            <span class="n">descriptors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_watched_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">descriptors</span>
 
 
@@ -383,7 +382,7 @@
     <span class="k">return</span> <span class="p">[]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_history_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_watched_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
         <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span>
         <span class="ow">or</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>

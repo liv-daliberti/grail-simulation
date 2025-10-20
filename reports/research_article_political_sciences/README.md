@@ -29,3 +29,14 @@ The minimal mean shifts and high share of small opinion changes (|Δ| ≤ 0.05 o
 The first three panels separate mean opinion changes for the control and treatment arms of Studies 1–3 with 95% confidence intervals. The fourth panel reports the pooled regression coefficient comparing treatment versus control after adjusting for baseline opinion and study fixed effects.
 
 Replication notes: opinion indices are scaled to [0, 1] and computed from the same survey composites used in the published study. Participants lacking a post-wave response are excluded from the relevant heatmap and summary.
+
+### Control vs. treatment summary
+
+| Study | Control Δ | Treatment Δ |
+| ------ | ---------- | ------------ |
+| Study 1 – Gun Control (MTurk) | 0.033 | 0.029 |
+| Study 2 – Minimum Wage (MTurk) | -0.007 | 0.034 |
+| Study 3 – Minimum Wage (YouGov) | 0.012 | 0.031 |
+
+Pooled regression (control-adjusted) β̂ ≈ 0.018 with p ≈ 1.33e-11.
+

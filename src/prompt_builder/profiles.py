@@ -44,6 +44,39 @@ MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
     ),
 )
 
+POLITICS_FIELD_SPECS: Sequence[tuple[Sequence[str], str]] = (
+    (("pid1", "party_id", "party_registration", "partyid"), "Party identification"),
+    (("pid2", "party_id_lean", "party_lean"), "Party lean"),
+    (("ideo1", "ideo2", "ideology", "ideology_text"), "Ideology"),
+    (("pol_interest", "interest_politics", "political_interest"), "Political interest"),
+    (("vote_2016", "presvote16post"), "Voted in 2016"),
+    (("vote_2020", "presvote20post"), "Voted in 2020"),
+    (("vote_2024", "vote_intent_2024", "vote_2024_intention"), "Vote intention 2024"),
+    (
+        (
+            "trump_approve",
+            "trump_job_approval",
+            "q5_2",
+            "Q5_a",
+            "Q5_a_W2",
+            "political_lead_feels_2",
+        ),
+        "Trump approval",
+    ),
+    (
+        (
+            "biden_approve",
+            "biden_job_approval",
+            "q5_5",
+            "Q5_b",
+            "Q5_b_W2",
+            "political_lead_feels_5",
+        ),
+        "Biden approval",
+    ),
+    (("civic_participation", "volunteering", "civic_activity"), "Civic engagement"),
+)
+
 
 @dataclass
 class ProfileRender:
@@ -592,56 +625,21 @@ def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     return [_ensure_sentence(f"The survey was completed in {normalized}.")]
 
 
+def _collect_labeled_fields(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+    specs: Sequence[tuple[Sequence[str], str]],
+) -> List[str]:
+    entries: List[str] = []
+    for keys, label in specs:
+        value = _first_text(ex, selected, *keys)
+        if value:
+            entries.append(f"{label}: {value}")
+    return entries
+
+
 def _politics_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
-    politics: List[str] = []
-    party = _first_text(ex, selected, "pid1", "party_id", "party_registration", "partyid")
-    if party:
-        politics.append(f"Party identification: {party}")
-    party_lean = _first_text(ex, selected, "pid2", "party_id_lean", "party_lean")
-    if party_lean:
-        politics.append(f"Party lean: {party_lean}")
-    ideology = _first_text(ex, selected, "ideo1", "ideo2", "ideology", "ideology_text")
-    if ideology:
-        politics.append(f"Ideology: {ideology}")
-    interest = _first_text(ex, selected, "pol_interest", "interest_politics", "political_interest")
-    if interest:
-        politics.append(f"Political interest: {interest}")
-    vote_2016 = _first_text(ex, selected, "vote_2016", "presvote16post")
-    if vote_2016:
-        politics.append(f"Voted in 2016: {vote_2016}")
-    vote_2020 = _first_text(ex, selected, "vote_2020", "presvote20post")
-    if vote_2020:
-        politics.append(f"Voted in 2020: {vote_2020}")
-    vote_2024 = _first_text(ex, selected, "vote_2024", "vote_intent_2024", "vote_2024_intention")
-    if vote_2024:
-        politics.append(f"Vote intention 2024: {vote_2024}")
-    trump = _first_text(
-        ex,
-        selected,
-        "trump_approve",
-        "trump_job_approval",
-        "q5_2",
-        "Q5_a",
-        "Q5_a_W2",
-        "political_lead_feels_2",
-    )
-    if trump:
-        politics.append(f"Trump approval: {trump}")
-    biden = _first_text(
-        ex,
-        selected,
-        "biden_approve",
-        "biden_job_approval",
-        "q5_5",
-        "Q5_b",
-        "Q5_b_W2",
-        "political_lead_feels_5",
-    )
-    if biden:
-        politics.append(f"Biden approval: {biden}")
-    civic = _first_text(ex, selected, "civic_participation", "volunteering", "civic_activity")
-    if civic:
-        politics.append(f"Civic engagement: {civic}")
+    politics = _collect_labeled_fields(ex, selected, POLITICS_FIELD_SPECS)
     sentence = _sentencize("Politics include", politics)
     return [sentence] if sentence else []
 

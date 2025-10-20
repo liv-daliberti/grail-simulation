@@ -36,6 +36,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -65,6 +66,7 @@
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_DummyCfg</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>  <span class="c1"># convenience holder for hub + benchmark helpers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
@@ -92,7 +94,7 @@
 
         <span class="c1"># lazy import – avoids circular deps if huggingface_hub absent</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_to_hub_revision</span>
-        <span class="n">fut</span> <span class="o">=</span> <span class="n">push_to_hub_revision</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="n">extra_ignore_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.pt&quot;</span><span class="p">])</span>
+        <span class="n">fut</span><span class="p">:</span> <span class="n">Future</span> <span class="o">=</span> <span class="n">push_to_hub_revision</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="n">extra_ignore_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.pt&quot;</span><span class="p">])</span>
 
         <span class="c1"># (optional) spawn benchmark job when the upload finishes</span>
         <span class="k">if</span> <span class="n">_slurm_available</span><span class="p">():</span>
@@ -101,7 +103,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Upload done – submitting benchmark job.&quot;</span><span class="p">)</span>
                 <span class="n">dummy</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">benchmarks</span>
                 <span class="n">run_benchmark_jobs</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_cfg</span><span class="p">)</span>
-            <span class="n">fut</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_after</span><span class="p">)</span></div>
+            <span class="n">fut</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_after</span><span class="p">)</span>  <span class="c1"># pylint: disable=no-member</span></div>
 </div>
 
 

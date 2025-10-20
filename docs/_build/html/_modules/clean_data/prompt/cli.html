@@ -46,6 +46,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
 
@@ -65,7 +67,7 @@
     <span class="n">summarize_features</span><span class="p">,</span>
     <span class="n">unique_content_counts</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_dir</span><span class="p">,</span> <span class="n">load_dataset_any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_prompt_mask</span><span class="p">,</span> <span class="n">ensure_dir</span><span class="p">,</span> <span class="n">load_dataset_any</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validation_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -112,8 +114,51 @@
     <span class="n">figures_dir</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;figures&quot;</span>
     <span class="n">ensure_dir</span><span class="p">(</span><span class="n">figures_dir</span><span class="p">)</span>
 
-    <span class="n">train_df</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">train_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
-    <span class="n">val_df</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">validation_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+    <span class="n">train_raw</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">train_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+    <span class="n">val_raw</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">validation_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+    <span class="n">train_mask</span> <span class="o">=</span> <span class="n">core_prompt_mask</span><span class="p">(</span><span class="n">train_raw</span><span class="p">)</span>
+    <span class="n">val_mask</span> <span class="o">=</span> <span class="n">core_prompt_mask</span><span class="p">(</span><span class="n">val_raw</span><span class="p">)</span>
+
+    <span class="n">train_df</span> <span class="o">=</span> <span class="n">train_raw</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">train_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">val_df</span> <span class="o">=</span> <span class="n">val_raw</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">val_mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coverage_stats</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+        <span class="n">included</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">excluded</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">included</span>
+        <span class="n">breakdown</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">excluded</span> <span class="ow">and</span> <span class="s2">&quot;participant_study&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">study_series</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;participant_study&quot;</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">breakdown</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">study_series</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;total_rows&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;included_rows&quot;</span><span class="p">:</span> <span class="n">included</span><span class="p">,</span>
+            <span class="s2">&quot;excluded_rows&quot;</span><span class="p">:</span> <span class="n">excluded</span><span class="p">,</span>
+            <span class="s2">&quot;excluded_by_study&quot;</span><span class="p">:</span> <span class="n">breakdown</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="n">coverage_train</span> <span class="o">=</span> <span class="n">_coverage_stats</span><span class="p">(</span><span class="n">train_raw</span><span class="p">,</span> <span class="n">train_mask</span><span class="p">)</span>
+    <span class="n">coverage_val</span> <span class="o">=</span> <span class="n">_coverage_stats</span><span class="p">(</span><span class="n">val_raw</span><span class="p">,</span> <span class="n">val_mask</span><span class="p">)</span>
+
+    <span class="n">overall_breakdown</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">coverage_train</span><span class="p">[</span><span class="s2">&quot;excluded_by_study&quot;</span><span class="p">])</span>
+    <span class="n">overall_breakdown</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">coverage_val</span><span class="p">[</span><span class="s2">&quot;excluded_by_study&quot;</span><span class="p">])</span>
+    <span class="n">coverage_overall</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;total_rows&quot;</span><span class="p">:</span> <span class="n">coverage_train</span><span class="p">[</span><span class="s2">&quot;total_rows&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coverage_val</span><span class="p">[</span><span class="s2">&quot;total_rows&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;included_rows&quot;</span><span class="p">:</span> <span class="n">coverage_train</span><span class="p">[</span><span class="s2">&quot;included_rows&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coverage_val</span><span class="p">[</span><span class="s2">&quot;included_rows&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;excluded_rows&quot;</span><span class="p">:</span> <span class="n">coverage_train</span><span class="p">[</span><span class="s2">&quot;excluded_rows&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">coverage_val</span><span class="p">[</span><span class="s2">&quot;excluded_rows&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;excluded_by_study&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">overall_breakdown</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+    <span class="p">}</span>
+    <span class="n">coverage_summary</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">coverage_train</span><span class="p">,</span>
+        <span class="s2">&quot;validation&quot;</span><span class="p">:</span> <span class="n">coverage_val</span><span class="p">,</span>
+        <span class="s2">&quot;overall&quot;</span><span class="p">:</span> <span class="n">coverage_overall</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="n">feature_summary</span><span class="p">,</span> <span class="n">skipped_features</span> <span class="o">=</span> <span class="n">summarize_features</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">figures_dir</span><span class="p">)</span>
 
@@ -133,6 +178,7 @@
         <span class="s2">&quot;demographic_missing_counts&quot;</span><span class="p">:</span> <span class="n">demographic_counts</span><span class="p">,</span>
         <span class="s2">&quot;unique_counts&quot;</span><span class="p">:</span> <span class="n">unique_stats</span><span class="p">,</span>
         <span class="s2">&quot;participant_counts&quot;</span><span class="p">:</span> <span class="n">participant_stats</span><span class="p">,</span>
+        <span class="s2">&quot;coverage_summary&quot;</span><span class="p">:</span> <span class="n">coverage_summary</span><span class="p">,</span>
         <span class="s2">&quot;figures_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">figures_dir</span><span class="p">),</span>
         <span class="s2">&quot;missing_features&quot;</span><span class="p">:</span> <span class="n">skipped_features</span><span class="p">,</span>
     <span class="p">}</span>
@@ -149,6 +195,7 @@
         <span class="n">feature</span><span class="o">=</span><span class="n">feature_summary</span><span class="p">,</span>
         <span class="n">profile</span><span class="o">=</span><span class="n">profile_stats</span><span class="p">,</span>
         <span class="n">counts</span><span class="o">=</span><span class="n">counts_bundle</span><span class="p">,</span>
+        <span class="n">coverage</span><span class="o">=</span><span class="n">coverage_summary</span><span class="p">,</span>
         <span class="n">skipped_features</span><span class="o">=</span><span class="n">skipped_features</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">figures</span> <span class="o">=</span> <span class="n">ReportFigures</span><span class="p">(</span>

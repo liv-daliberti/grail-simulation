@@ -35,40 +35,19 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.text</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CANON_RE</span><span class="p">,</span>
+    <span class="n">YTID_RE</span><span class="p">,</span>
+    <span class="n">canon_text</span><span class="p">,</span>
+    <span class="n">canon_video_id</span><span class="p">,</span>
+    <span class="n">resolve_paths_from_env</span><span class="p">,</span>
+    <span class="n">split_env_list</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">ANS_TAG</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">INDEX_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
-<span class="n">YTID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z0-9_-]</span><span class="si">{11}</span><span class="s2">)&quot;</span><span class="p">)</span>
-<span class="n">CANON_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="canon_text">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.canon_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">canon_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a lowercased alphanumeric canonical representation.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">CANON_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span></div>
-
-
-
-<div class="viewcode-block" id="canon_video_id">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.canon_video_id">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">canon_video_id</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a YouTube id if possible.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">video_id</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">video_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">YTID_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
-
 
 
 <div class="viewcode-block" id="is_nan_like">
@@ -95,33 +74,6 @@
         <span class="k">return</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
     <span class="n">string_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">string_value</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span></div>
-
-
-
-<div class="viewcode-block" id="split_env_list">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.split_env_list">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">split_env_list</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a colon/comma/space separated list from an environment string.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">token</span>
-        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[:,\s]+&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">token</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-    <span class="p">]</span></div>
-
-
-
-<div class="viewcode-block" id="resolve_paths_from_env">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.resolve_paths_from_env">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_paths_from_env</span><span class="p">(</span><span class="n">variable_names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect file or directory paths from a set of env var names.&quot;&quot;&quot;</span>
-
-    <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">variable_names</span><span class="p">:</span>
-        <span class="n">paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_env_list</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="n">paths</span></div>
 
 </pre></div>
 

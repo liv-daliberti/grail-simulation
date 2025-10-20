@@ -48,6 +48,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DownloadConfig</span><span class="p">,</span> <span class="n">load_dataset</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_div</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATASET_NAME</span><span class="p">,</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span> <span class="n">EVAL_SPLIT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conversation</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_conversation_record</span>
@@ -99,10 +101,6 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span><span class="p">)</span> <span class="k">if</span> <span class="n">denominator</span> <span class="k">else</span> <span class="mf">0.0</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_output_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -307,29 +305,29 @@
 
             <span class="k">if</span> <span class="n">seen_rows</span> <span class="o">%</span> <span class="mi">25</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
-                <span class="n">accuracy</span> <span class="o">=</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
+                <span class="n">accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
                 <span class="n">denom</span> <span class="o">=</span> <span class="n">n_eval_target</span> <span class="k">if</span> <span class="n">n_eval_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">seen_rows</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;[eval] </span><span class="si">%d</span><span class="s2">/</span><span class="si">%s</span><span class="s2">  acc=</span><span class="si">%.3f</span><span class="s2">  parsed=</span><span class="si">%.3f</span><span class="s2">  fmt=</span><span class="si">%.3f</span><span class="s2">  </span><span class="si">%.1f</span><span class="s2">s&quot;</span><span class="p">,</span>
                     <span class="n">seen_rows</span><span class="p">,</span>
                     <span class="n">denom</span><span class="p">,</span>
                     <span class="n">accuracy</span><span class="p">,</span>
-                    <span class="n">_safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
-                    <span class="n">_safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
+                    <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
+                    <span class="n">safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
                     <span class="n">elapsed</span><span class="p">,</span>
                 <span class="p">)</span>
 
     <span class="n">total_seen</span> <span class="o">=</span> <span class="n">seen_rows</span>
-    <span class="n">overall_accuracy</span> <span class="o">=</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
-    <span class="n">format_rate</span> <span class="o">=</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
-    <span class="n">parsed_rate</span> <span class="o">=</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
+    <span class="n">overall_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
+    <span class="n">format_rate</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
+    <span class="n">parsed_rate</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
 
     <span class="n">position_stats</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">bucket</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;n_seen&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
             <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
             <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">correct_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">correct_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">buckets</span>
     <span class="p">}</span>
@@ -339,15 +337,15 @@
         <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span><span class="p">},</span>
         <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">correct_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span><span class="p">},</span>
         <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">correct_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
+            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
         <span class="p">},</span>
         <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">parsed_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
+            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
         <span class="p">},</span>
         <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">formatted_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
+            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
         <span class="p">},</span>
     <span class="p">}</span>
@@ -357,17 +355,17 @@
         <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_multi</span><span class="p">),</span>
         <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_single</span><span class="p">),</span>
         <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_multi</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">corr_single</span><span class="p">,</span> <span class="n">elig_single</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">corr_multi</span><span class="p">,</span> <span class="n">elig_multi</span><span class="p">),</span>
-        <span class="s2">&quot;parsed_rate_multi&quot;</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">parsed_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
-        <span class="s2">&quot;format_rate_multi&quot;</span><span class="p">:</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">formatted_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
+        <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_single</span><span class="p">,</span> <span class="n">elig_single</span><span class="p">),</span>
+        <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_multi</span><span class="p">,</span> <span class="n">elig_multi</span><span class="p">),</span>
+        <span class="s2">&quot;parsed_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
+        <span class="s2">&quot;format_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
     <span class="p">}</span>
 
     <span class="n">gold_index_distribution</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
     <span class="k">if</span> <span class="n">gold_hist</span><span class="p">:</span>
         <span class="n">top_index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">baseline_correct</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">all_gold_indices</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">top_index</span><span class="p">)</span>
-        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="n">_safe_div</span><span class="p">(</span><span class="n">baseline_correct</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
+        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">baseline_correct</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">top_index</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="mf">0.0</span>

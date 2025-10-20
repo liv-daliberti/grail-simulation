@@ -178,6 +178,7 @@ _nitpick_targets = {
         "abc.ABC",
         "collections.Counter",
         "common.title_index.TitleResolver",
+        "concurrent.futures._base.Future",
         "datasets.Dataset",
         "datasets.DatasetDict",
         "distilabel.pipeline.Pipeline",
@@ -208,6 +209,7 @@ _nitpick_targets = {
         "trl.ScriptArguments",
         "trl._ensure_trl_stub.<locals>.GRPOTrainer",
         "xgboost.XGBClassifier",
+        "rewards where",
     ],
     "py:func": [
         "load_participant_allowlists",

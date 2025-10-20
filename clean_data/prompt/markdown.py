@@ -217,15 +217,10 @@ def _skipped_features_section(skipped_features: List[str]) -> List[str]:
 def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
     """Summaries comparing expected and cleaned participant totals."""
 
-    overall_by_issue = overall_counts.get("by_issue", {})
-    gun_total = overall_by_issue.get("gun_control", 0)
-    wage_total = overall_by_issue.get("minimum_wage", 0)
-
     lines = [
         "- Original study participants: 1,650 (Study 1 — gun rights)",
         "  1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).",
-        f"- Cleaned dataset participants captured here: {gun_total} (gun control)",
-        f"  and {wage_total} (minimum wage).",
+        f"- Cleaned dataset participants captured here (all issues): {overall_counts.get('overall', 0)}.",
         "  Study 4 (Shorts) is excluded because the released interaction logs",
         "  do not contain recommendation slates.",
         "- Shortfall summary (Studies 1–3 only):",

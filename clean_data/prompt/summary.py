@@ -220,21 +220,31 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     }
 
     fig_path = figures_dir / "demographic_missing_counts.png"
-    fig, ax = plt.subplots(figsize=(5, 4))
-    splits = ["train", "validation"]
+    fig, ax = plt.subplots(figsize=(6, 4))
+    splits = ["train", "validation", "overall"]
+    palette = ["#2ca02c", "#d62728", "#1f77b4"]
     values = [summaries[split]["share"] * 100 for split in splits]
-    ax.bar(splits, values, color=["#2ca02c", "#d62728"], alpha=0.85)
+    bars = ax.bar(splits, values, color=palette[: len(splits)], alpha=0.85)
     ax.set_title("Rows missing all demographic fields")
     ax.set_ylabel("Percent of rows missing")
     upper_bound = max(values) if values else 0.0
-    offset = upper_bound * 0.05 if upper_bound else 1.0
-    for idx, split in enumerate(splits):
+    if upper_bound == 0.0:
+        ax.set_ylim(0, 5)
+        offset = 0.5
+    else:
+        offset = max(upper_bound * 0.03, 0.5)
+        ax.set_ylim(0, upper_bound + offset * 4)
+    for idx, bar in enumerate(bars):
+        split = splits[idx]
         data = summaries[split]
-        label = (
-            f"{values[idx]:.1f}% "
-            f"({int(data['missing'])}/{int(data['total'])})"
+        label = f"{values[idx]:.1f}% ({int(data['missing'])}/{int(data['total'])})"
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + offset,
+            label,
+            ha="center",
+            va="bottom",
         )
-        ax.text(idx, values[idx] + offset, label, ha="center")
     fig.tight_layout()
     fig.savefig(fig_path, dpi=150)
     plt.close(fig)
@@ -255,13 +265,17 @@ def unique_content_counts(
         return int(cleaned.nunique())
 
     def _canonical_slates(df: pd.DataFrame) -> pd.Series:
-        column = df.get("slate_items_json")
-        if column is None or column.empty:
-            column = df.get("slate_items")
-        if column is None or column.empty:
-            return pd.Series([], dtype=object)
-        normalized = column.dropna().map(canonical_slate_items)
-        return normalized.dropna()
+        for column_name in ("slate_items_json", "slate_items_with_meta", "slate_items"):
+            column = df.get(column_name)
+            if column is None:
+                continue
+            non_null = column[column.notna()]
+            if non_null.empty:
+                continue
+            normalized = non_null.map(canonical_slate_items).dropna()
+            if not normalized.empty:
+                return normalized
+        return pd.Series([], dtype=object)
 
     def _candidate_video_count(slate_series: pd.Series) -> int:
         candidates = set()

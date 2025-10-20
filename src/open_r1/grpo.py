@@ -323,11 +323,8 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
         return
     if len(weights) != len(reward_fns):
         raise ValueError(
-            "reward_weights length ({}) != number of rewards ({}). "
-            "Update the recipe so every reward has a matching weight.".format(
-                len(weights),
-                len(reward_fns),
-            )
+            f"reward_weights length ({len(weights)}) != number of rewards ({len(reward_fns)}). "
+            "Update the recipe so every reward has a matching weight."
         )
     if training_args.reward_weights:
         normalised = [max(0.0, float(value)) for value in training_args.reward_weights]

@@ -4,24 +4,30 @@ Everything under `src/` is importable project code: prompt rendering, prompting
 baselines, and reinforcement-learning trainers all live here so they can share a
 single packaging story.
 
-## Packages
+## Baseline Packages
+
+- `knn/` – k-nearest-neighbour slate selector with modular CLIs, TF-IDF and
+  optional Word2Vec features, and issue-aware dataset filtering. Typical run:
+  `python -m knn.cli --dataset data/cleaned_grail --out_dir models/knn/run-001 --fit-index`.
+- `xgb/` – XGBoost slate baseline that reuses the `knn` prompt/document pipeline
+  but trains a multi-class booster. Train and evaluate via
+  `python -m xgb.cli --fit_model --dataset data/cleaned_grail --out_dir models/xgb/run-001`.
+- `gpt4o/` – Azure GPT-4o powered slate selection baseline with a structured
+  conversation builder. After exporting API credentials, launch
+  `python -m gpt4o.cli --out_dir reports/gpt4o --eval_max 100`.
+- `open_r1/` – GRPO/GRAIL/SFT reinforcement-learning stack. Recipes under
+  `recipes/**` feed the trainers; e.g.
+  `python src/open_r1/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo.yaml`.
+
+## Shared Utilities
 
 - `prompt_builder/` – canonical prompt/profile rendering helpers used by
   baselines and RL trainers (exposes `build_user_prompt`, `render_profile`, and
   related utilities).
-- `knn/` – k-nearest-neighbour slate baseline with a modular CLI, Word2Vec/TF-IDF
-  feature builders, and issue-specific dataset filtering helpers.
-- `xgb/` – gradient-boosted tree baseline that mirrors the `knn` package
-  structure but swaps the index for an XGBoost classifier.
-- `gpt4o/` – Azure GPT-4o powered slate selector with a thin CLI wrapper and a
-  shared conversation builder.
-- `open_r1/` – GRPO/GRAIL trainers, SFT helpers, and recipe-driven configs used
-  for reinforcement-learning experiments.
 - `visualization/` – lightweight plotting utilities (e.g., recommendation tree
   rendering) imported by analysis notebooks and reporting scripts.
-
-`prompt_builder.py` at the package root re-exports the modern package API for
-callers that still import the legacy module.
+- `prompt_builder.py` – compatibility shim that re-exports the package API for
+  legacy imports.
 
 ## Development Guidelines
 

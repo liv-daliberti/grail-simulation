@@ -15,7 +15,10 @@ API Reference
    clean_data
    prompt_builder
    knn
+   gpt4o
+   open_r1
    xgb
+   visualization
 
 Additional API pages provide more detailed module-level documentation:
 
@@ -24,4 +27,7 @@ Additional API pages provide more detailed module-level documentation:
 
    api/prompt_builder
    api/knn
+   api/gpt4o
+   api/open_r1
    api/xgb
+   api/visualization

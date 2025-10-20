@@ -492,7 +492,7 @@ def _safe_int(value: Any, default: int = -1) -> int:
         return default
 
 
-def _context_from_completion(
+def _context_from_completion(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     completion: Any,
     viewer: Any,
     state: Any,

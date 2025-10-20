@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Helpers for pushing training artefacts to the Hugging Face Hub."""
+
 import logging
 import re
 from concurrent.futures import Future

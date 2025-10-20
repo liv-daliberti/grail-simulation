@@ -5,15 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, List, Mapping
 
+import math
+
 
 def _format_float(value: float, precision: int = 3) -> str:
-    if value != value:  # NaN check
+    if math.isnan(value):
         return "n/a"
     return f"{value:.{precision}f}"
 
 
 def _format_percent(value: float, precision: int = 1) -> str:
-    if value != value:
+    if math.isnan(value):
         return "n/a"
     return f"{value * 100:.{precision}f}%"
 
@@ -27,6 +29,28 @@ def build_markdown(
     """Render Markdown lines describing the replication results."""
 
     output_dir = Path(output_dir)
+    header_cells = [
+        "Study",
+        "Participants",
+        "Mean pre",
+        "Mean post",
+        "Mean change",
+        "Median change",
+        "Share ↑",
+        "Share ↓",
+        "Share \\|Δ\\| ≤ 0.05",
+    ]
+    separator_cells = [
+        "------",
+        "--------------",
+        "----------",
+        "-----------",
+        "-------------",
+        "---------------",
+        "---------",
+        "---------",
+        "-----------",
+    ]
     lines: List[str] = [
         "# RESEARCH ARTICLE POLITICAL SCIENCES",
         "",
@@ -38,24 +62,22 @@ def build_markdown(
         "",
         "### Opinion shift summary",
         "",
-        "| Study | Participants | Mean pre | Mean post | Mean change | Median change | Share ↑ | Share ↓ | |Δ| ≤ 0.05 |",
-        "|-------|--------------|----------|-----------|-------------|---------------|---------|---------|-----------|",
+        f"| {' | '.join(header_cells)} |",
+        f"| {' | '.join(separator_cells)} |",
     ]
 
     for row in study_rows:
         lines.append(
-            "| {label} | {n:.0f} | {mean_pre} | {mean_post} | {mean_change} | {median_change} | "
-            "{share_inc} | {share_dec} | {share_small} |".format(
-                label=row["label"],
-                n=row["summary"]["n"],
-                mean_pre=_format_float(row["summary"]["mean_before"]),
-                mean_post=_format_float(row["summary"]["mean_after"]),
-                mean_change=_format_float(row["summary"]["mean_change"]),
-                median_change=_format_float(row["summary"]["median_change"]),
-                share_inc=_format_percent(row["summary"]["share_increase"]),
-                share_dec=_format_percent(row["summary"]["share_decrease"]),
-                share_small=_format_percent(row["summary"]["share_small_change"]),
-            )
+            "| "
+            f"{row['label']} | "
+            f"{row['summary']['n']:.0f} | "
+            f"{_format_float(row['summary']['mean_before'])} | "
+            f"{_format_float(row['summary']['mean_after'])} | "
+            f"{_format_float(row['summary']['mean_change'])} | "
+            f"{_format_float(row['summary']['median_change'])} | "
+            f"{_format_percent(row['summary']['share_increase'])} | "
+            f"{_format_percent(row['summary']['share_decrease'])} | "
+            f"{_format_percent(row['summary']['share_small_change'])} |"
         )
 
     lines.extend(

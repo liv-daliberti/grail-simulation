@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GRAIL Simulation Documentation &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Clean Data Pipeline" href="api/clean_data.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="grail-simulation-documentation">
+<h1>GRAIL Simulation Documentation<a class="headerlink" href="#grail-simulation-documentation" title="Link to this heading">¶</a></h1>
+<p>This reference is generated directly from the project’s source code.  The
+API section below walks through the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package alongside the
+training and evaluation utilities that live under <code class="docutils literal notranslate"><span class="pre">src/</span></code>.</p>
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/clean_data.html">Clean Data Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/clean_data.html#module-clean_data">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/clean_data.html#module-clean_data.prompt">Prompt Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/prompt_builder.html">Prompt Builder API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.as_list_json"><code class="docutils literal notranslate"><span class="pre">as_list_json()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.clean_text"><code class="docutils literal notranslate"><span class="pre">clean_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.is_nanlike"><code class="docutils literal notranslate"><span class="pre">is_nanlike()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.secs"><code class="docutils literal notranslate"><span class="pre">secs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.as_list_json"><code class="docutils literal notranslate"><span class="pre">as_list_json()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.format_age"><code class="docutils literal notranslate"><span class="pre">format_age()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.format_count"><code class="docutils literal notranslate"><span class="pre">format_count()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.format_yes_no"><code class="docutils literal notranslate"><span class="pre">format_yes_no()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.is_nanlike"><code class="docutils literal notranslate"><span class="pre">is_nanlike()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.secs"><code class="docutils literal notranslate"><span class="pre">secs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.parsers.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.clean_text"><code class="docutils literal notranslate"><span class="pre">clean_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.describe_age_fragment"><code class="docutils literal notranslate"><span class="pre">describe_age_fragment()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.describe_gender_fragment"><code class="docutils literal notranslate"><span class="pre">describe_gender_fragment()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.human_join"><code class="docutils literal notranslate"><span class="pre">human_join()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.normalize_language_text"><code class="docutils literal notranslate"><span class="pre">normalize_language_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.truncate_text"><code class="docutils literal notranslate"><span class="pre">truncate_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.formatters.with_indefinite_article"><code class="docutils literal notranslate"><span class="pre">with_indefinite_article()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.profiles.ProfileRender"><code class="docutils literal notranslate"><span class="pre">ProfileRender</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.profiles.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.profiles.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.prompt.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.prompt.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/knn.html">KNN Baseline API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.data.filter_dataset_for_issue"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_issue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.data.issues_in_dataset"><code class="docutils literal notranslate"><span class="pre">issues_in_dataset()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.data.load_dataset_source"><code class="docutils literal notranslate"><span class="pre">load_dataset_source()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.Word2VecConfig"><code class="docutils literal notranslate"><span class="pre">Word2VecConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.Word2VecFeatureBuilder"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.assemble_document"><code class="docutils literal notranslate"><span class="pre">assemble_document()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.extract_now_watching"><code class="docutils literal notranslate"><span class="pre">extract_now_watching()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.extract_slate_items"><code class="docutils literal notranslate"><span class="pre">extract_slate_items()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.prepare_training_documents"><code class="docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.title_for"><code class="docutils literal notranslate"><span class="pre">title_for()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.features.viewer_profile_sentence"><code class="docutils literal notranslate"><span class="pre">viewer_profile_sentence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.index.build_tfidf_index"><code class="docutils literal notranslate"><span class="pre">build_tfidf_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.index.knn_predict_among_slate_multi"><code class="docutils literal notranslate"><span class="pre">knn_predict_among_slate_multi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.index.load_tfidf_index"><code class="docutils literal notranslate"><span class="pre">load_tfidf_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.index.save_tfidf_index"><code class="docutils literal notranslate"><span class="pre">save_tfidf_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#knn.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/gpt4o.html">GPT-4o Tools API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.client.ds_call"><code class="docutils literal notranslate"><span class="pre">ds_call()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.client.get_client"><code class="docutils literal notranslate"><span class="pre">get_client()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.config.ensure_azure_env"><code class="docutils literal notranslate"><span class="pre">ensure_azure_env()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.build_profile_block"><code class="docutils literal notranslate"><span class="pre">build_profile_block()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.extract_income"><code class="docutils literal notranslate"><span class="pre">extract_income()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.extract_marital_status"><code class="docutils literal notranslate"><span class="pre">extract_marital_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.extract_party"><code class="docutils literal notranslate"><span class="pre">extract_party()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.extract_race"><code class="docutils literal notranslate"><span class="pre">extract_race()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.format_ideology"><code class="docutils literal notranslate"><span class="pre">format_ideology()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.humanise_profile"><code class="docutils literal notranslate"><span class="pre">humanise_profile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.make_conversation_record"><code class="docutils literal notranslate"><span class="pre">make_conversation_record()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.conversation.pick_case_insensitive"><code class="docutils literal notranslate"><span class="pre">pick_case_insensitive()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.titles.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.is_nan_like"><code class="docutils literal notranslate"><span class="pre">is_nan_like()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/open_r1.html">Open-R1 Training API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/open_r1.html#module-open_r1">Core Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/open_r1.html#module-open_r1.utils">Utility Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/xgb.html">XGBoost Baseline API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.data.filter_dataset_for_issue"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_issue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.data.issues_in_dataset"><code class="docutils literal notranslate"><span class="pre">issues_in_dataset()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.data.load_dataset_source"><code class="docutils literal notranslate"><span class="pre">load_dataset_source()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.Word2VecConfig"><code class="docutils literal notranslate"><span class="pre">Word2VecConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.Word2VecFeatureBuilder"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.assemble_document"><code class="docutils literal notranslate"><span class="pre">assemble_document()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.extract_now_watching"><code class="docutils literal notranslate"><span class="pre">extract_now_watching()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.extract_slate_items"><code class="docutils literal notranslate"><span class="pre">extract_slate_items()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.prepare_prompt_documents"><code class="docutils literal notranslate"><span class="pre">prepare_prompt_documents()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.prepare_training_documents"><code class="docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.title_for"><code class="docutils literal notranslate"><span class="pre">title_for()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.features.viewer_profile_sentence"><code class="docutils literal notranslate"><span class="pre">viewer_profile_sentence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.XGBoostBoosterParams"><code class="docutils literal notranslate"><span class="pre">XGBoostBoosterParams</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.XGBoostSlateModel"><code class="docutils literal notranslate"><span class="pre">XGBoostSlateModel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.XGBoostTrainConfig"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.fit_xgboost_model"><code class="docutils literal notranslate"><span class="pre">fit_xgboost_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.load_xgboost_model"><code class="docutils literal notranslate"><span class="pre">load_xgboost_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.predict_among_slate"><code class="docutils literal notranslate"><span class="pre">predict_among_slate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.model.save_xgboost_model"><code class="docutils literal notranslate"><span class="pre">save_xgboost_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.evaluate.EvaluationConfig"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.evaluate.IssueMetrics"><code class="docutils literal notranslate"><span class="pre">IssueMetrics</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.evaluate.evaluate_issue"><code class="docutils literal notranslate"><span class="pre">evaluate_issue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.evaluate.safe_div"><code class="docutils literal notranslate"><span class="pre">safe_div()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/xgb.html#xgb.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/visualization.html">Visualization Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.SafeDict"><code class="docutils literal notranslate"><span class="pre">SafeDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.TreeData"><code class="docutils literal notranslate"><span class="pre">TreeData</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge"><code class="docutils literal notranslate"><span class="pre">TreeEdge</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts"><code class="docutils literal notranslate"><span class="pre">aggregate_counts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.build_graph"><code class="docutils literal notranslate"><span class="pre">build_graph()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.build_session_graph"><code class="docutils literal notranslate"><span class="pre">build_session_graph()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.compute_depths"><code class="docutils literal notranslate"><span class="pre">compute_depths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.format_node_label"><code class="docutils literal notranslate"><span class="pre">format_node_label()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_metadata"><code class="docutils literal notranslate"><span class="pre">load_metadata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_trajectories"><code class="docutils literal notranslate"><span class="pre">load_trajectories()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_tree_csv"><code class="docutils literal notranslate"><span class="pre">load_tree_csv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.parse_issue_counts"><code class="docutils literal notranslate"><span class="pre">parse_issue_counts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.render_graph"><code class="docutils literal notranslate"><span class="pre">render_graph()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="api/clean_data.html" title="next chapter">Clean Data Pipeline</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

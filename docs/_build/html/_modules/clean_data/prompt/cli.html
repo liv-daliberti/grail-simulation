@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>clean_data.prompt.cli &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for clean_data.prompt.cli</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Command-line front-end for generating prompt feature statistics.</span>
+
+<span class="sd">The CLI loads a cleaned dataset, computes summary metrics, renders plots,</span>
+<span class="sd">and writes a Markdown report describing viewer coverage, feature richness,</span>
+<span class="sd">and participation statistics.  It is typically invoked by the main</span>
+<span class="sd">cleaning workflow but can be used standalone for exploratory analysis.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.markdown</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ReportContext</span><span class="p">,</span>
+    <span class="n">ReportCounts</span><span class="p">,</span>
+    <span class="n">ReportFigures</span><span class="p">,</span>
+    <span class="n">ReportSummaries</span><span class="p">,</span>
+    <span class="n">build_markdown_report</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.summary</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">demographic_missing_summary</span><span class="p">,</span>
+    <span class="n">n_options_summary</span><span class="p">,</span>
+    <span class="n">participant_counts_summary</span><span class="p">,</span>
+    <span class="n">prior_history_summary</span><span class="p">,</span>
+    <span class="n">profile_summary</span><span class="p">,</span>
+    <span class="n">summarize_features</span><span class="p">,</span>
+    <span class="n">unique_content_counts</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_dir</span><span class="p">,</span> <span class="n">load_dataset_any</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">validation_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">train_split</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split &#39;</span><span class="si">{</span><span class="n">train_split</span><span class="si">}</span><span class="s2">&#39; not found in dataset&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">validation_split</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split &#39;</span><span class="si">{</span><span class="n">validation_split</span><span class="si">}</span><span class="s2">&#39; not found in dataset&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_choose_profile_column</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="s2">&quot;viewer_profile_sentence&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;viewer_profile_sentence&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;viewer_profile&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;viewer_profile&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_summary_json</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">summary_path</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;summary.json&quot;</span>
+    <span class="k">with</span> <span class="n">summary_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_markdown</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">lines</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">readme_path</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;README.md&quot;</span>
+    <span class="n">readme_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="generate_prompt_feature_report">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.cli.generate_prompt_feature_report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_prompt_feature_report</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate exploratory prompt statistics and write plots plus summaries.&quot;&quot;&quot;</span>
+
+    <span class="n">_validate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">train_split</span><span class="p">,</span> <span class="n">validation_split</span><span class="p">)</span>
+
+    <span class="n">ensure_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">figures_dir</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;figures&quot;</span>
+    <span class="n">ensure_dir</span><span class="p">(</span><span class="n">figures_dir</span><span class="p">)</span>
+
+    <span class="n">train_df</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">train_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+    <span class="n">val_df</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">validation_split</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+    <span class="n">feature_summary</span><span class="p">,</span> <span class="n">skipped_features</span> <span class="o">=</span> <span class="n">summarize_features</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">figures_dir</span><span class="p">)</span>
+
+    <span class="n">profile_col</span> <span class="o">=</span> <span class="n">_choose_profile_column</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="n">profile_stats</span> <span class="o">=</span> <span class="n">profile_summary</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">profile_col</span><span class="p">)</span>
+    <span class="n">prior_counts</span><span class="p">,</span> <span class="n">prior_fig</span> <span class="o">=</span> <span class="n">prior_history_summary</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">figures_dir</span><span class="p">)</span>
+    <span class="n">n_options_counts</span><span class="p">,</span> <span class="n">n_options_fig</span> <span class="o">=</span> <span class="n">n_options_summary</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">figures_dir</span><span class="p">)</span>
+    <span class="n">demographic_counts</span><span class="p">,</span> <span class="n">demographic_fig</span> <span class="o">=</span> <span class="n">demographic_missing_summary</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">,</span> <span class="n">figures_dir</span><span class="p">)</span>
+    <span class="n">unique_stats</span> <span class="o">=</span> <span class="n">unique_content_counts</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">)</span>
+    <span class="n">participant_stats</span> <span class="o">=</span> <span class="n">participant_counts_summary</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">)</span>
+
+    <span class="n">report_payload</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;feature_summary&quot;</span><span class="p">:</span> <span class="n">feature_summary</span><span class="p">,</span>
+        <span class="s2">&quot;profile_summary&quot;</span><span class="p">:</span> <span class="n">profile_stats</span><span class="p">,</span>
+        <span class="s2">&quot;prior_history_counts&quot;</span><span class="p">:</span> <span class="n">prior_counts</span><span class="p">,</span>
+        <span class="s2">&quot;n_options_counts&quot;</span><span class="p">:</span> <span class="n">n_options_counts</span><span class="p">,</span>
+        <span class="s2">&quot;demographic_missing_counts&quot;</span><span class="p">:</span> <span class="n">demographic_counts</span><span class="p">,</span>
+        <span class="s2">&quot;unique_counts&quot;</span><span class="p">:</span> <span class="n">unique_stats</span><span class="p">,</span>
+        <span class="s2">&quot;participant_counts&quot;</span><span class="p">:</span> <span class="n">participant_stats</span><span class="p">,</span>
+        <span class="s2">&quot;figures_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">figures_dir</span><span class="p">),</span>
+        <span class="s2">&quot;missing_features&quot;</span><span class="p">:</span> <span class="n">skipped_features</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">_write_summary_json</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">report_payload</span><span class="p">)</span>
+
+    <span class="n">counts_bundle</span> <span class="o">=</span> <span class="n">ReportCounts</span><span class="p">(</span>
+        <span class="n">prior_history</span><span class="o">=</span><span class="n">prior_counts</span><span class="p">,</span>
+        <span class="n">n_options</span><span class="o">=</span><span class="n">n_options_counts</span><span class="p">,</span>
+        <span class="n">demographic_missing</span><span class="o">=</span><span class="n">demographic_counts</span><span class="p">,</span>
+        <span class="n">unique_content</span><span class="o">=</span><span class="n">unique_stats</span><span class="p">,</span>
+        <span class="n">participant</span><span class="o">=</span><span class="n">participant_stats</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">summaries</span> <span class="o">=</span> <span class="n">ReportSummaries</span><span class="p">(</span>
+        <span class="n">feature</span><span class="o">=</span><span class="n">feature_summary</span><span class="p">,</span>
+        <span class="n">profile</span><span class="o">=</span><span class="n">profile_stats</span><span class="p">,</span>
+        <span class="n">counts</span><span class="o">=</span><span class="n">counts_bundle</span><span class="p">,</span>
+        <span class="n">skipped_features</span><span class="o">=</span><span class="n">skipped_features</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">figures</span> <span class="o">=</span> <span class="n">ReportFigures</span><span class="p">(</span>
+        <span class="n">prior_history</span><span class="o">=</span><span class="n">prior_fig</span><span class="p">,</span>
+        <span class="n">n_options</span><span class="o">=</span><span class="n">n_options_fig</span><span class="p">,</span>
+        <span class="n">demographic</span><span class="o">=</span><span class="n">demographic_fig</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">markdown_lines</span> <span class="o">=</span> <span class="n">build_markdown_report</span><span class="p">(</span>
+        <span class="n">ReportContext</span><span class="p">(</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">figures_dir</span><span class="o">=</span><span class="n">figures_dir</span><span class="p">,</span>
+            <span class="n">summaries</span><span class="o">=</span><span class="n">summaries</span><span class="p">,</span>
+            <span class="n">figures</span><span class="o">=</span><span class="n">figures</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">_write_markdown</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">markdown_lines</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse command-line arguments for the prompt statistics CLI.&quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Generate prompt feature histograms and statistics.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--dataset&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to load_from_disk dataset or HF hub id.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--output-dir&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Destination directory for figures and summaries.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--train-split&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--validation-split&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;validation&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.cli.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for the ``prompt-stats`` command line interface.&quot;&quot;&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">()</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset_any</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">generate_prompt_feature_report</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">),</span>
+        <span class="n">train_split</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">train_split</span><span class="p">,</span>
+        <span class="n">validation_split</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">validation_split</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;generate_prompt_feature_report&quot;</span><span class="p">,</span> <span class="s2">&quot;main&quot;</span><span class="p">]</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../prompt.html">clean_data.prompt</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

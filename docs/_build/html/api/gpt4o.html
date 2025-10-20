@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GPT-4o Tools API &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Open-R1 Training API" href="open_r1.html" />
+    <link rel="prev" title="KNN Baseline API" href="knn.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="gpt-4o-tools-api">
+<h1>GPT-4o Tools API<a class="headerlink" href="#gpt-4o-tools-api" title="Link to this heading">¶</a></h1>
+<p>Utilities under the <a class="reference internal" href="#module-gpt4o" title="gpt4o"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gpt4o</span></code></a> package support evaluating GPT-4o
+recommendation slates and interacting with the model provider.  The
+modules below expose the main entry points for running evaluations,
+preparing conversations, and rendering leaderboard titles.</p>
+<p id="module-gpt4o">Utilities for evaluating GPT-4o slate baselines.</p>
+<p id="module-gpt4o.cli">Command-line interface for the GPT-4o slate baseline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.cli.build_parser">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.cli.build_parser" title="Link to this definition">¶</a></dt>
+<dd><p>Create the CLI argument parser for the GPT-4o baseline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ArgumentParser</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.cli.main">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.cli.main" title="Link to this definition">¶</a></dt>
+<dd><p>Parse command-line arguments and execute the evaluation routine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-gpt4o.client">Azure OpenAI client helpers for GPT-4o evaluation.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.client.ds_call">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">ds_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#ds_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.ds_call" title="Link to this definition">¶</a></dt>
+<dd><p>Execute a chat completion call and return the trimmed text output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>messages</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
+<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
+<li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.client.get_client">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">get_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#get_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.get_client" title="Link to this definition">¶</a></dt>
+<dd><p>Construct or reuse the singleton Azure OpenAI client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>openai.AzureOpenAI</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-gpt4o.config">Shared configuration for the GPT-4o slate baseline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.config.ensure_azure_env">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.config.</span></span><span class="sig-name descname"><span class="pre">ensure_azure_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/config.html#ensure_azure_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.config.ensure_azure_env" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure the Azure environment variables are present.</p>
+<p>The sandbox runner historically relied on these being set globally.
+We keep the behaviour but allow shell overrides to win.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-gpt4o.conversation">Prompt construction and example formatting for GPT-4o evaluation.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.build_profile_block">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">build_profile_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#build_profile_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.build_profile_block" title="Link to this definition">¶</a></dt>
+<dd><p>Structured key/value profile block (parity with GRPO).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.extract_income">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">extract_income</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#extract_income"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.extract_income" title="Link to this definition">¶</a></dt>
+<dd><p>Mirror the income extraction used in the GRPO baseline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.extract_marital_status">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">extract_marital_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#extract_marital_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.extract_marital_status" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a brief marital descriptor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.extract_party">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">extract_party</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#extract_party"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.extract_party" title="Link to this definition">¶</a></dt>
+<dd><p>Return a party label derived from standard survey signals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.extract_race">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">extract_race</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#extract_race"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.extract_race" title="Link to this definition">¶</a></dt>
+<dd><p>Extract race information following the GRPO baseline rules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.format_ideology">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">format_ideology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#format_ideology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.format_ideology" title="Link to this definition">¶</a></dt>
+<dd><p>Convert ideology encodings to descriptive text.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.humanise_profile">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">humanise_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#humanise_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.humanise_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Build the human-readable profile sentence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.make_conversation_record">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">make_conversation_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#make_conversation_record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.make_conversation_record" title="Link to this definition">¶</a></dt>
+<dd><p>Transform a dataset row into the prompt payload consumed by GPT-4o.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.conversation.pick_case_insensitive">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">pick_case_insensitive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">candidates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#pick_case_insensitive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.pick_case_insensitive" title="Link to this definition">¶</a></dt>
+<dd><p>Return the first present key (case-insensitive) value from the record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>record</strong> (<em>dict</em>)</p></li>
+<li><p><strong>candidates</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-gpt4o.evaluate">Evaluation loop for the GPT-4o slate baseline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.evaluate.run_eval">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">run_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#run_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.run_eval" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate GPT-4o on the configured dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-gpt4o.titles">Utilities for resolving slate video ids to human-readable titles.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.titles.TitleResolver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Resolve YouTube ids to titles by scanning configured CSV sources.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.titles.TitleResolver.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver.resolve" title="Link to this definition">¶</a></dt>
+<dd><p>Return a title for the provided video id when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-gpt4o.utils">Shared utility helpers for the GPT-4o slate baseline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.canon_text">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_text" title="Link to this definition">¶</a></dt>
+<dd><p>Return a lowercased alphanumeric canonical representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.canon_video_id">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_video_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_video_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_video_id" title="Link to this definition">¶</a></dt>
+<dd><p>Normalise a YouTube id if possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.is_nan_like">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">is_nan_like</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#is_nan_like"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.is_nan_like" title="Link to this definition">¶</a></dt>
+<dd><p>Return True when the provided value should be treated as missing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.resolve_paths_from_env">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_paths_from_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#resolve_paths_from_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.resolve_paths_from_env" title="Link to this definition">¶</a></dt>
+<dd><p>Collect file or directory paths from a set of env var names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable_names</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.split_env_list">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">split_env_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#split_env_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.split_env_list" title="Link to this definition">¶</a></dt>
+<dd><p>Parse a colon/comma/space separated list from an environment string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.truthy">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">truthy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#truthy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.truthy" title="Link to this definition">¶</a></dt>
+<dd><p>Return True for typical boolean truthy values used in the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">GPT-4o Tools API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.client.ds_call"><code class="docutils literal notranslate"><span class="pre">ds_call()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.client.get_client"><code class="docutils literal notranslate"><span class="pre">get_client()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.config.ensure_azure_env"><code class="docutils literal notranslate"><span class="pre">ensure_azure_env()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.build_profile_block"><code class="docutils literal notranslate"><span class="pre">build_profile_block()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.extract_income"><code class="docutils literal notranslate"><span class="pre">extract_income()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.extract_marital_status"><code class="docutils literal notranslate"><span class="pre">extract_marital_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.extract_party"><code class="docutils literal notranslate"><span class="pre">extract_party()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.extract_race"><code class="docutils literal notranslate"><span class="pre">extract_race()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.format_ideology"><code class="docutils literal notranslate"><span class="pre">format_ideology()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.humanise_profile"><code class="docutils literal notranslate"><span class="pre">humanise_profile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.make_conversation_record"><code class="docutils literal notranslate"><span class="pre">make_conversation_record()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.conversation.pick_case_insensitive"><code class="docutils literal notranslate"><span class="pre">pick_case_insensitive()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.titles.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.is_nan_like"><code class="docutils literal notranslate"><span class="pre">is_nan_like()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="knn.html" title="previous chapter">KNN Baseline API</a></li>
+      <li>Next: <a href="open_r1.html" title="next chapter">Open-R1 Training API</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/api/gpt4o.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

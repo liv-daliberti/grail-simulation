@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gpt4o.config &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for gpt4o.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared configuration for the GPT-4o slate baseline.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Azure OpenAI defaults (can be overridden via environment variables)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="n">SANDBOX_API_KEY</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="s2">&quot;SANDBOX_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;1e30d0e4d7564ba984e8adff48053009&quot;</span>
+<span class="p">)</span>
+<span class="n">SANDBOX_ENDPOINT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="s2">&quot;SANDBOX_ENDPOINT&quot;</span><span class="p">,</span> <span class="s2">&quot;https://api-ai-sandbox.princeton.edu/&quot;</span>
+<span class="p">)</span>
+<span class="n">SANDBOX_API_VER</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SANDBOX_API_VER&quot;</span><span class="p">,</span> <span class="s2">&quot;2025-03-01-preview&quot;</span><span class="p">)</span>
+<span class="n">DEPLOYMENT_NAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DEPLOYMENT_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;gpt-4o&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ensure_azure_env">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.config.ensure_azure_env">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_azure_env</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensure the Azure environment variables are present.</span>
+
+<span class="sd">    The sandbox runner historically relied on these being set globally.</span>
+<span class="sd">    We keep the behaviour but allow shell overrides to win.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;SANDBOX_API_KEY&quot;</span><span class="p">,</span> <span class="n">SANDBOX_API_KEY</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;SANDBOX_ENDPOINT&quot;</span><span class="p">,</span> <span class="n">SANDBOX_ENDPOINT</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;SANDBOX_API_VER&quot;</span><span class="p">,</span> <span class="n">SANDBOX_API_VER</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;DEPLOYMENT_NAME&quot;</span><span class="p">,</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Dataset paths / column definitions</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="n">DATASET_NAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_DATASET&quot;</span><span class="p">,</span> <span class="s2">&quot;od2961/grail-interactions&quot;</span><span class="p">)</span>
+<span class="n">TRAIN_SPLIT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_TRAIN_SPLIT&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
+<span class="n">EVAL_SPLIT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_EVAL_SPLIT&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">)</span>
+<span class="n">PROMPT_COLUMN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_PROMPT_COLUMN&quot;</span><span class="p">,</span> <span class="s2">&quot;state_text&quot;</span><span class="p">)</span>
+<span class="n">SOLUTION_COLUMN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_SOLUTION_COLUMN&quot;</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">)</span>
+
+<span class="c1"># Defaults for locating auxiliary title metadata</span>
+<span class="n">DEFAULT_TITLE_DIRS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_gun&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_wage&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Prompt template</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="n">SYSTEM_PROMPT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;You are choosing EXACTLY ONE item from a short slate for a specific viewer.</span>
+
+<span class="s2">Input you will see:</span>
+<span class="s2">  • Viewer profile and optional context/history</span>
+<span class="s2">  • An &quot;OPTIONS:&quot; list with items numbered 1..N</span>
+<span class="s2">    – Each item is shown as either a title (preferred) or an id</span>
+
+<span class="s2">Your job:</span>
+<span class="s2">  • Think briefly in &lt;think&gt;…&lt;/think&gt; using the viewer’s profile, context, and options.</span>
+<span class="s2">  • Compare the top 2–3 candidates, then choose the single best option.</span>
+<span class="s2">  • Never invent new items; choose only from the given OPTIONS list.</span>
+
+<span class="s2">Output format (STRICT):</span>
+<span class="s2">  • First output your hidden reasoning in &lt;think&gt;…&lt;/think&gt;.</span>
+<span class="s2">    – In your thinking, reference candidates by their numbers and names (or ids) to justify the choice.</span>
+<span class="s2">  • Then output ONLY the chosen option’s NUMBER inside &lt;answer&gt;…&lt;/answer&gt;.</span>
+<span class="s2">    – Do NOT output the name, id, or any extra text—ONLY the number.</span>
+<span class="s2">    – Do NOT include punctuation, quotes, or a period after the number.</span>
+
+<span class="s2">Examples of valid &lt;answer&gt;:</span>
+<span class="s2">  &lt;answer&gt;</span>
+<span class="s2">  3</span>
+<span class="s2">  &lt;/answer&gt;</span>
+
+<span class="s2">Examples of INVALID &lt;answer&gt; (never do these):</span>
+<span class="s2">  &lt;answer&gt;3.&lt;/answer&gt;                 ← trailing period</span>
+<span class="s2">  &lt;answer&gt;&quot;3&quot;&lt;/answer&gt;                ← quoted</span>
+<span class="s2">  &lt;answer&gt;Option 3&lt;/answer&gt;           ← extra words</span>
+<span class="s2">  &lt;answer&gt;Parkland …&lt;/answer&gt;         ← name instead of number</span>
+<span class="s2">  You only have 100 tokens to think and 50 tokens to answer.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<span class="c1"># Default cache directory used by the CLI when none is provided</span>
+<span class="n">DEFAULT_CACHE_DIR</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;hf_cache&quot;</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

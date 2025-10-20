@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>clean_data.prompt.markdown &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for clean_data.prompt.markdown</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Generate the human-readable Markdown report for prompt analytics results.</span>
+
+<span class="sd">The functions here translate the structured summaries computed by the</span>
+<span class="sd">prompt CLI into narrative sections, tables, and figure references so the</span>
+<span class="sd">cleaning workflow can emit a ready-to-publish README alongside plots.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+
+
+<div class="viewcode-block" id="ReportFigures">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportFigures">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportFigures</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Paths to rendered summary figures.&quot;&quot;&quot;</span>
+
+    <span class="n">prior_history</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">n_options</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">demographic</span><span class="p">:</span> <span class="n">Path</span></div>
+
+
+
+<div class="viewcode-block" id="ReportCounts">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportCounts">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportCounts</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated count metrics used in the report.&quot;&quot;&quot;</span>
+
+    <span class="n">prior_history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="n">n_options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="n">demographic_missing</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">unique_content</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="n">participant</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="ReportSummaries">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportSummaries">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportSummaries</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Feature-level summaries used to render the Markdown report.&quot;&quot;&quot;</span>
+
+    <span class="n">feature</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]]</span>
+    <span class="n">profile</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">ReportCounts</span>
+    <span class="n">skipped_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ReportContext">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportContext">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full context bundle required to build the prompt report.&quot;&quot;&quot;</span>
+
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">summaries</span><span class="p">:</span> <span class="n">ReportSummaries</span>
+    <span class="n">figures</span><span class="p">:</span> <span class="n">ReportFigures</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_relative_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``path`` relative to ``base`` when possible for cleaner Markdown links.&quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_table</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span><span class="p">]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;|&quot;</span> <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">header</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_profile_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">summaries</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">profile</span>
+    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">):</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">summaries</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;missing_profile&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+        <span class="n">total_rows</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;missing_profile&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">(</span><span class="n">missing</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">total_rows</span><span class="p">)</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">total_rows</span> <span class="k">else</span> <span class="s2">&quot;0.00%&quot;</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+            <span class="n">split</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">total_rows</span><span class="p">)),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">missing</span><span class="p">)),</span>
+            <span class="n">ratio</span><span class="p">,</span>
+        <span class="p">])</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;## Profile availability&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">_format_table</span><span class="p">([</span><span class="s2">&quot;Split&quot;</span><span class="p">,</span> <span class="s2">&quot;Rows&quot;</span><span class="p">,</span> <span class="s2">&quot;Missing profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Share missing&quot;</span><span class="p">],</span> <span class="n">rows</span><span class="p">),</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prior_history_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">prior_history</span>
+    <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;## Prior video counts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">_format_table</span><span class="p">([</span><span class="s2">&quot;Prior videos&quot;</span><span class="p">,</span> <span class="s2">&quot;Train&quot;</span><span class="p">,</span> <span class="s2">&quot;Validation&quot;</span><span class="p">],</span> <span class="n">rows</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_n_options_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">n_options</span>
+    <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;## Slate size distribution (`n_options`)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">_format_table</span><span class="p">([</span><span class="s2">&quot;Slate size&quot;</span><span class="p">,</span> <span class="s2">&quot;Train&quot;</span><span class="p">,</span> <span class="s2">&quot;Validation&quot;</span><span class="p">],</span> <span class="n">rows</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unique_content_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">unique_content</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;## Unique content counts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;| Split | Current videos | Gold videos | Unique slates | Unique state texts |&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;|-------|----------------|-------------|---------------|--------------------|&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">):</span>
+        <span class="n">split_counts</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;| </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;current_video_ids&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gold_video_ids&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slate_texts&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;state_texts&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> |&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_participant_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">participant</span>
+    <span class="n">table_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">):</span>
+        <span class="n">split_counts</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">by_issue</span> <span class="o">=</span> <span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_issue_study&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">for</span> <span class="n">issue_name</span><span class="p">,</span> <span class="n">study_map</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_issue</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">study_name</span><span class="p">,</span> <span class="n">total</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">study_map</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+                <span class="n">table_rows</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">split</span><span class="p">,</span> <span class="n">issue_name</span><span class="p">,</span> <span class="n">study_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">total</span><span class="p">)])</span>
+        <span class="n">table_rows</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">split</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">split_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overall&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))])</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;## Unique participants per study and issue&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">_format_table</span><span class="p">([</span><span class="s2">&quot;Split&quot;</span><span class="p">,</span> <span class="s2">&quot;Issue&quot;</span><span class="p">,</span> <span class="s2">&quot;Study&quot;</span><span class="p">,</span> <span class="s2">&quot;Participants&quot;</span><span class="p">],</span> <span class="n">table_rows</span><span class="p">),</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">overall_counts</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overall&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">issue_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_issue&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">study_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_study&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Overall participants (all issues): </span><span class="si">{</span><span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;overall&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">issue_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">issue_items</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Overall participants for </span><span class="si">{</span><span class="n">issue_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">study_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">study_items</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Overall participants in </span><span class="si">{</span><span class="n">study_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_skipped_features_section</span><span class="p">(</span><span class="n">skipped_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">skipped_features</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;## Features skipped due to missing data&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">feature</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">skipped_features</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_shortfall_lines</span><span class="p">(</span><span class="n">overall_counts</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summaries comparing expected and cleaned participant totals.&quot;&quot;&quot;</span>
+
+    <span class="n">overall_by_issue</span> <span class="o">=</span> <span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_issue&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">gun_total</span> <span class="o">=</span> <span class="n">overall_by_issue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gun_control&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">wage_total</span> <span class="o">=</span> <span class="n">overall_by_issue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;- Original study participants: 1,650 (Study 1 — gun rights)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  1,679 (Study 2 — minimum wage MTurk), and 2,715 (Study 3 — minimum wage YouGov).&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;- Cleaned dataset participants captured here: </span><span class="si">{</span><span class="n">gun_total</span><span class="si">}</span><span class="s2"> (gun control)&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;  and </span><span class="si">{</span><span class="n">wage_total</span><span class="si">}</span><span class="s2"> (minimum wage).&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  Study 4 (Shorts) is excluded because the released interaction logs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  do not contain recommendation slates.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;- Shortfall summary (Studies 1–3 only):&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">expected_by_study</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;study1&quot;</span><span class="p">:</span> <span class="mi">1650</span><span class="p">,</span>
+        <span class="s2">&quot;study2&quot;</span><span class="p">:</span> <span class="mi">1679</span><span class="p">,</span>
+        <span class="s2">&quot;study3&quot;</span><span class="p">:</span> <span class="mi">2715</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">actual_by_study</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_study&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">expected_by_study</span>
+    <span class="p">}</span>
+    <span class="n">shortfall_notes</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;study1&quot;</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">&quot;98 sessions log only the starter clip (`vids` length = 1) and 15 log multiple clips&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;but no recommendation slate (`displayOrders` empty).&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;study2&quot;</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">&quot;14 sessions log only the starter clip; 17 have multiple clips but no slate metadata&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;(`displayOrders` empty).&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;study3&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;No gap — interaction logs are complete.&quot;</span><span class="p">,),</span>
+    <span class="p">}</span>
+    <span class="n">study_labels</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;study1&quot;</span><span class="p">:</span> <span class="s2">&quot;Study 1 (gun control MTurk)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;study2&quot;</span><span class="p">:</span> <span class="s2">&quot;Study 2 (minimum wage MTurk)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;study3&quot;</span><span class="p">:</span> <span class="s2">&quot;Study 3 (minimum wage YouGov)&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="s2">&quot;study2&quot;</span><span class="p">,</span> <span class="s2">&quot;study3&quot;</span><span class="p">):</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">expected_by_study</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">actual</span> <span class="o">=</span> <span class="n">actual_by_study</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">expected</span> <span class="o">-</span> <span class="n">actual</span>
+        <span class="n">gap_text</span> <span class="o">=</span> <span class="s2">&quot;no gap&quot;</span> <span class="k">if</span> <span class="n">delta</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;-&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">delta</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;+&#39;</span><span class="si">}{</span><span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;  - &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">study_labels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> expected vs. </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2"> usable (</span><span class="si">{</span><span class="n">gap_text</span><span class="si">}</span><span class="s2">).&quot;</span>
+        <span class="p">)</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shortfall_notes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">()))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">note</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;- Only gun-control and minimum-wage sessions (Studies 1–3) are retained;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;  other topic IDs from the capsule are excluded.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_coverage_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;## Dataset coverage notes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Builder note: rows missing all survey demographics (age, gender, race, income, etc.)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;are dropped during cleaning so every retained interaction has viewer context.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;This removes roughly 22</span><span class="si">% o</span><span class="s2">f the ~33k raw interactions.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;&gt; &quot;The short answer is that sessions.json contains EVERYTHING.&#39;</span><span class="p">,</span>
+        <span class="s2">&quot;Every test run, every study.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;In addition to the studies that involved watching videos on the platform,&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;it also contains sessions from the “First Impressions” study and the “Shorts” study&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;(Study 4 in the paper).&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Those sessions involved no user decisions.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Instead they played predetermined videos that were&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;either constant or increasing in their extremeness.&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;All are differentiated by the topicId.&quot; — Emily Hu (University of Pennsylvania)&#39;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">overall_counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">participant</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overall&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_shortfall_lines</span><span class="p">(</span><span class="n">overall_counts</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<div class="viewcode-block" id="build_markdown_report">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.build_markdown_report">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_markdown_report</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return rendered Markdown lines summarizing the prompt statistics.&quot;&quot;&quot;</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;# Prompt feature report&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;Figures directory: `</span><span class="si">{</span><span class="n">_relative_path</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">figures_dir</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">figure_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;Prior history distribution&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">figures</span><span class="o">.</span><span class="n">prior_history</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Slate size distribution&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">figures</span><span class="o">.</span><span class="n">n_options</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Demographic coverage&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">figures</span><span class="o">.</span><span class="n">demographic</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">caption</span><span class="p">,</span> <span class="n">fig_path</span> <span class="ow">in</span> <span class="n">figure_paths</span><span class="p">:</span>
+        <span class="n">rel_path</span> <span class="o">=</span> <span class="n">_relative_path</span><span class="p">(</span><span class="n">fig_path</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;![</span><span class="si">{</span><span class="n">caption</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">_profile_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+        <span class="n">_prior_history_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+        <span class="n">_n_options_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+        <span class="n">_unique_content_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+        <span class="n">_participant_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+        <span class="n">_skipped_features_section</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">skipped_features</span><span class="p">),</span>
+        <span class="n">_coverage_section</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">section</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">section</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">lines</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ReportContext&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ReportSummaries&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ReportCounts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ReportFigures&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_markdown_report&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../prompt.html">clean_data.prompt</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>xgb.evaluate &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for xgb.evaluate</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Evaluation loop and metrics for the XGBoost slate baseline.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
+    <span class="n">EVAL_SPLIT</span><span class="p">,</span>
+    <span class="n">SOLUTION_COLUMN</span><span class="p">,</span>
+    <span class="n">TRAIN_SPLIT</span><span class="p">,</span>
+    <span class="n">filter_dataset_for_issue</span><span class="p">,</span>
+    <span class="n">issues_in_dataset</span><span class="p">,</span>
+    <span class="n">load_dataset_source</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_slate_items</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">XGBoostBoosterParams</span><span class="p">,</span>
+    <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+    <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
+    <span class="n">fit_xgboost_model</span><span class="p">,</span>
+    <span class="n">load_xgboost_model</span><span class="p">,</span>
+    <span class="n">predict_among_slate</span><span class="p">,</span>
+    <span class="n">save_xgboost_model</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">canon_video_id</span><span class="p">,</span> <span class="n">ensure_directory</span><span class="p">,</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;xgb.eval&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="safe_div">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.safe_div">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the division result guarding against a zero denominator.</span>
+
+<span class="sd">    :param numerator: Value forming the numerator.</span>
+<span class="sd">    :type numerator: float</span>
+<span class="sd">    :param denominator: Value forming the denominator.</span>
+<span class="sd">    :type denominator: float</span>
+<span class="sd">    :returns: ``numerator / denominator`` or ``0.0`` when the denominator is zero.</span>
+<span class="sd">    :rtype: float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span> <span class="k">if</span> <span class="n">denominator</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+
+
+
+<span class="c1"># pylint: disable=too-many-instance-attributes</span>
+<div class="viewcode-block" id="IssueMetrics">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.IssueMetrics">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IssueMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing evaluation metrics for a single issue.&quot;&quot;&quot;</span>
+
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">evaluated</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">correct</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">known_candidate_hits</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">known_candidate_total</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">coverage</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">avg_probability</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">xgboost_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="EvaluationConfig">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.EvaluationConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration bundle shared across evaluation helpers.</span>
+
+<span class="sd">    :ivar dataset_source: Identifier for the dataset source (path or HF id).</span>
+<span class="sd">    :vartype dataset_source: str</span>
+<span class="sd">    :ivar extra_fields: Additional column names appended to prompt documents.</span>
+<span class="sd">    :vartype extra_fields: Sequence[str]</span>
+<span class="sd">    :ivar eval_max: Optional cap on the number of evaluation rows (0 evaluates all).</span>
+<span class="sd">    :vartype eval_max: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">eval_max</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<span class="c1"># pylint: disable=too-many-instance-attributes</span>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictionOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Result bundle for a single evaluation example.</span>
+
+<span class="sd">    :ivar prediction_index: 1-based index of the chosen slate option (``None`` when unknown).</span>
+<span class="sd">    :vartype prediction_index: Optional[int]</span>
+<span class="sd">    :ivar predicted_id: Video identifier selected by the model.</span>
+<span class="sd">    :vartype predicted_id: str</span>
+<span class="sd">    :ivar gold_video_id: Ground-truth video identifier.</span>
+<span class="sd">    :vartype gold_video_id: str</span>
+<span class="sd">    :ivar candidate_probs: Mapping of slate positions to probabilities.</span>
+<span class="sd">    :vartype candidate_probs: Dict[int, float]</span>
+<span class="sd">    :ivar best_probability: Probability associated with the predicted option.</span>
+<span class="sd">    :vartype best_probability: float</span>
+<span class="sd">    :ivar known_candidate_seen:</span>
+<span class="sd">        Flag indicating whether any slate ids were present in the probability map.</span>
+<span class="sd">    :vartype known_candidate_seen: bool</span>
+<span class="sd">    :ivar known_candidate_hit:</span>
+<span class="sd">        Flag indicating the predicted option matched the ground-truth id and was known.</span>
+<span class="sd">    :vartype known_candidate_hit: bool</span>
+<span class="sd">    :ivar record_probability:</span>
+<span class="sd">        Flag indicating whether ``best_probability`` should be included in aggregates.</span>
+<span class="sd">    :vartype record_probability: bool</span>
+<span class="sd">    :ivar correct: ``True`` when the predicted option matches the gold id.</span>
+<span class="sd">    :vartype correct: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">prediction_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">predicted_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gold_video_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">candidate_probs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">best_probability</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">known_candidate_seen</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">known_candidate_hit</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">record_probability</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">correct</span><span class="p">:</span> <span class="nb">bool</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbabilityContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated probability metadata for a slate prediction.&quot;&quot;&quot;</span>
+
+    <span class="n">best_probability</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">record_probability</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">known_candidate_hit</span><span class="p">:</span> <span class="nb">bool</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutcomeSummary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated metrics derived from prediction outcomes.&quot;&quot;&quot;</span>
+
+    <span class="n">evaluated</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">correct</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">known_hits</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">known_total</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">avg_probability</span><span class="p">:</span> <span class="nb">float</span>
+
+
+<div class="viewcode-block" id="run_eval">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.run_eval">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluate the XGBoost baseline across the requested issues.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments produced via :func:`xgb.cli.build_parser`.</span>
+<span class="sd">    :type args: argparse.Namespace</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">os_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+    <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+
+    <span class="n">dataset_source</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="n">DEFAULT_DATASET_SOURCE</span>
+    <span class="n">base_ds</span> <span class="o">=</span> <span class="n">load_dataset_source</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+    <span class="n">available_issues</span> <span class="o">=</span> <span class="n">issues_in_dataset</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">:</span>
+        <span class="n">requested</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="n">issues</span> <span class="o">=</span> <span class="n">requested</span> <span class="k">if</span> <span class="n">requested</span> <span class="k">else</span> <span class="n">available_issues</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">issues</span> <span class="o">=</span> <span class="n">available_issues</span>
+
+    <span class="n">extra_fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extra_text_fields</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
+        <span class="n">_evaluate_issue</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">dataset_source</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_issue</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">,</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">base_ds</span><span class="p">,</span>
+    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span> <span class="ow">and</span> <span class="n">issue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;all&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Evaluating issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_issue</span><span class="p">(</span><span class="n">base_ds</span><span class="p">,</span> <span class="n">issue</span><span class="p">)</span>
+    <span class="n">train_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span>
+    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">]</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">_load_or_train_model</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">train_ds</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span>
+
+    <span class="n">eval_config</span> <span class="o">=</span> <span class="n">EvaluationConfig</span><span class="p">(</span>
+        <span class="n">dataset_source</span><span class="o">=</span><span class="n">dataset_source</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
+        <span class="n">eval_max</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">eval_max</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="n">evaluate_issue</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
+        <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">eval_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_write_outputs</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[XGBoost] Issue=</span><span class="si">%s</span><span class="s2"> accuracy=</span><span class="si">%.3f</span><span class="s2"> coverage=</span><span class="si">%.3f</span><span class="s2"> evaluated=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">coverage</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">evaluated</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_or_train_model</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XGBoostSlateModel</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_model</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Training model for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="n">booster_params</span> <span class="o">=</span> <span class="n">XGBoostBoosterParams</span><span class="p">(</span>
+            <span class="n">learning_rate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_learning_rate</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_max_depth</span><span class="p">,</span>
+            <span class="n">n_estimators</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_n_estimators</span><span class="p">,</span>
+            <span class="n">subsample</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_subsample</span><span class="p">,</span>
+            <span class="n">colsample_bytree</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_colsample_bytree</span><span class="p">,</span>
+            <span class="n">tree_method</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_tree_method</span><span class="p">,</span>
+            <span class="n">reg_lambda</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_reg_lambda</span><span class="p">,</span>
+            <span class="n">reg_alpha</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">xgb_reg_alpha</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">train_config</span> <span class="o">=</span> <span class="n">XGBoostTrainConfig</span><span class="p">(</span>
+            <span class="n">max_train</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_train</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+            <span class="n">max_features</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">booster</span><span class="o">=</span><span class="n">booster_params</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">fit_xgboost_model</span><span class="p">(</span>
+            <span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_model</span><span class="p">:</span>
+            <span class="n">save_xgboost_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_model</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">load_model</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Loading model for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">load_xgboost_model</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">load_model</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set either --fit_model or --load_model to obtain an XGBoost model.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_outputs</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">IssueMetrics</span><span class="p">,</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
+    <span class="k">if</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2"> already exists. Use --overwrite to replace outputs.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">ensure_directory</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">metrics</span><span class="p">),</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;predictions.jsonl&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="evaluate_issue">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.evaluate_issue">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_issue</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+    <span class="n">eval_ds</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">EvaluationConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">IssueMetrics</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluate a trained XGBoost model on the provided evaluation split.</span>
+
+<span class="sd">    :param model: Trained model bundle used to score slate options.</span>
+<span class="sd">    :type model: XGBoostSlateModel</span>
+<span class="sd">    :param eval_ds: Dataset split representing evaluation rows.</span>
+<span class="sd">    :type eval_ds: datasets.Dataset or sequence-like</span>
+<span class="sd">    :param issue_slug: Slug-ified representation of the issue being evaluated.</span>
+<span class="sd">    :type issue_slug: str</span>
+<span class="sd">    :param config: Evaluation configuration bundle (dataset info, extra fields, limits).</span>
+<span class="sd">    :type config: EvaluationConfig</span>
+<span class="sd">    :returns: Pair of summary metrics and per-example prediction details.</span>
+<span class="sd">    :rtype: tuple[IssueMetrics, List[Dict[str, Any]]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">records</span> <span class="o">=</span> <span class="n">_collect_prediction_records</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">_summarise_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">_records_to_predictions</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_single_example</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+    <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PredictionOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the prediction outcome for a single example.&quot;&quot;&quot;</span>
+    <span class="n">prediction_idx</span><span class="p">,</span> <span class="n">probability_map</span> <span class="o">=</span> <span class="n">predict_among_slate</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">example</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">slate</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">gold_id</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">gold_id_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">gold_id</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prediction_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">slate</span><span class="p">:</span>
+        <span class="n">prediction_idx</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">prediction_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">prediction_idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate</span><span class="p">):</span>
+        <span class="n">predicted_id</span> <span class="o">=</span> <span class="n">slate</span><span class="p">[</span><span class="n">prediction_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">predicted_id</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">candidate_probs</span><span class="p">,</span> <span class="n">known_candidates</span> <span class="o">=</span> <span class="n">_candidate_probabilities</span><span class="p">(</span><span class="n">slate</span><span class="p">,</span> <span class="n">probability_map</span><span class="p">)</span>
+    <span class="n">probability_ctx</span> <span class="o">=</span> <span class="n">_probability_context</span><span class="p">(</span>
+        <span class="n">prediction_idx</span><span class="o">=</span><span class="n">prediction_idx</span><span class="p">,</span>
+        <span class="n">candidate_probs</span><span class="o">=</span><span class="n">candidate_probs</span><span class="p">,</span>
+        <span class="n">known_candidates</span><span class="o">=</span><span class="n">known_candidates</span><span class="p">,</span>
+        <span class="n">gold_id_canon</span><span class="o">=</span><span class="n">gold_id_canon</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">predicted_id_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">predicted_id</span><span class="p">)</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="n">predicted_id_canon</span> <span class="o">==</span> <span class="n">gold_id_canon</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">predicted_id_canon</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">PredictionOutcome</span><span class="p">(</span>
+        <span class="n">prediction_index</span><span class="o">=</span><span class="n">prediction_idx</span><span class="p">,</span>
+        <span class="n">predicted_id</span><span class="o">=</span><span class="n">predicted_id</span><span class="p">,</span>
+        <span class="n">gold_video_id</span><span class="o">=</span><span class="n">gold_id</span><span class="p">,</span>
+        <span class="n">candidate_probs</span><span class="o">=</span><span class="n">candidate_probs</span><span class="p">,</span>
+        <span class="n">best_probability</span><span class="o">=</span><span class="n">probability_ctx</span><span class="o">.</span><span class="n">best_probability</span><span class="p">,</span>
+        <span class="n">known_candidate_seen</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">known_candidates</span><span class="p">),</span>
+        <span class="n">known_candidate_hit</span><span class="o">=</span><span class="n">probability_ctx</span><span class="o">.</span><span class="n">known_candidate_hit</span><span class="p">,</span>
+        <span class="n">record_probability</span><span class="o">=</span><span class="n">probability_ctx</span><span class="o">.</span><span class="n">record_probability</span><span class="p">,</span>
+        <span class="n">correct</span><span class="o">=</span><span class="n">correct</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_prediction_records</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+    <span class="n">eval_ds</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">EvaluationConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return indexed prediction outcomes for the evaluation split.&quot;&quot;&quot;</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">example</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">eval_max</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">outcome</span> <span class="o">=</span> <span class="n">_evaluate_single_example</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">example</span><span class="o">=</span><span class="n">example</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">index</span><span class="p">,</span> <span class="n">outcome</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">records</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_summarise_records</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]],</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">EvaluationConfig</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IssueMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate prediction records into an :class:`IssueMetrics` summary.&quot;&quot;&quot;</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">_summarise_outcomes</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IssueMetrics</span><span class="p">(</span>
+        <span class="n">issue</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">dataset_source</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_source</span><span class="p">,</span>
+        <span class="n">evaluated</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">evaluated</span><span class="p">,</span>
+        <span class="n">correct</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">correct</span><span class="p">,</span>
+        <span class="n">accuracy</span><span class="o">=</span><span class="n">safe_div</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">correct</span><span class="p">,</span> <span class="n">summary</span><span class="o">.</span><span class="n">evaluated</span><span class="p">),</span>
+        <span class="n">known_candidate_hits</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">known_hits</span><span class="p">,</span>
+        <span class="n">known_candidate_total</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">known_total</span><span class="p">,</span>
+        <span class="n">coverage</span><span class="o">=</span><span class="n">safe_div</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">known_hits</span><span class="p">,</span> <span class="n">summary</span><span class="o">.</span><span class="n">known_total</span><span class="p">),</span>
+        <span class="n">avg_probability</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">avg_probability</span><span class="p">,</span>
+        <span class="n">timestamp</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">),</span>
+        <span class="n">xgboost_params</span><span class="o">=</span><span class="n">_model_params</span><span class="p">(</span><span class="n">model</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_records_to_predictions</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]],</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialise prediction records into API-friendly dictionaries.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">issue_slug</span><span class="p">,</span>
+            <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span>
+            <span class="s2">&quot;prediction_index&quot;</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">prediction_index</span><span class="p">,</span>
+            <span class="s2">&quot;predicted_video_id&quot;</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">predicted_id</span><span class="p">,</span>
+            <span class="s2">&quot;gold_video_id&quot;</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">gold_video_id</span><span class="p">,</span>
+            <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">correct</span><span class="p">,</span>
+            <span class="s2">&quot;probabilities&quot;</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">candidate_probs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">records</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidate_probabilities</span><span class="p">(</span>
+    <span class="n">slate</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">probability_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="n">candidate_probs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">slate_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">probability_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">canon_video_id</span><span class="p">(</span><span class="n">candidate_id</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slate_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">candidate_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">known_candidates</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">slate_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">candidate_id</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slate_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">candidate_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">candidate_id</span><span class="p">)</span> <span class="ow">in</span> <span class="n">probability_map</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">candidate_probs</span><span class="p">,</span> <span class="n">known_candidates</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_probability_context</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prediction_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">candidate_probs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">known_candidates</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">gold_id_canon</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProbabilityContext</span><span class="p">:</span>
+    <span class="n">best_probability</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">candidate_probs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prediction_idx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prediction_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="n">record_probability</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">prediction_idx</span> <span class="ow">and</span> <span class="n">prediction_idx</span> <span class="ow">in</span> <span class="n">known_candidates</span><span class="p">)</span>
+    <span class="n">known_candidate_hit</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="n">record_probability</span>
+        <span class="ow">and</span> <span class="n">prediction_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">known_candidates</span><span class="p">[</span><span class="n">prediction_idx</span><span class="p">]</span> <span class="o">==</span> <span class="n">gold_id_canon</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ProbabilityContext</span><span class="p">(</span>
+        <span class="n">best_probability</span><span class="o">=</span><span class="n">best_probability</span><span class="p">,</span>
+        <span class="n">record_probability</span><span class="o">=</span><span class="n">record_probability</span><span class="p">,</span>
+        <span class="n">known_candidate_hit</span><span class="o">=</span><span class="n">known_candidate_hit</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_summarise_outcomes</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutcomeSummary</span><span class="p">:</span>
+    <span class="n">outcomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">outcome</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">records</span><span class="p">]</span>
+    <span class="n">evaluated</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span>
+    <span class="n">known_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">known_candidate_seen</span> <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">)</span>
+    <span class="n">known_hits</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">known_candidate_hit</span> <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">)</span>
+    <span class="n">probability_values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">outcome</span><span class="o">.</span><span class="n">best_probability</span>
+        <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span>
+        <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">record_probability</span>
+    <span class="p">]</span>
+    <span class="n">avg_probability</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">probability_values</span><span class="p">))</span> <span class="k">if</span> <span class="n">probability_values</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">correct</span> <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">OutcomeSummary</span><span class="p">(</span>
+        <span class="n">evaluated</span><span class="o">=</span><span class="n">evaluated</span><span class="p">,</span>
+        <span class="n">correct</span><span class="o">=</span><span class="n">correct</span><span class="p">,</span>
+        <span class="n">known_hits</span><span class="o">=</span><span class="n">known_hits</span><span class="p">,</span>
+        <span class="n">known_total</span><span class="o">=</span><span class="n">known_total</span><span class="p">,</span>
+        <span class="n">avg_probability</span><span class="o">=</span><span class="n">avg_probability</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_model_params</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a serialisable view of relevant XGBoost parameters.</span>
+
+<span class="sd">    :param model: Model bundle whose configuration should be summarised.</span>
+<span class="sd">    :type model: XGBoostSlateModel</span>
+<span class="sd">    :returns: Dictionary containing key training parameters.</span>
+<span class="sd">    :rtype: Dict[str, Any]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">booster</span><span class="o">.</span><span class="n">get_params</span><span class="p">()</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;objective&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;eval_metric&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_estimators&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;max_depth&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;learning_rate&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;subsample&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;colsample_bytree&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tree_method&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reg_lambda&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reg_alpha&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+    <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;extra_fields&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">)</span>
+    <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;n_features&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">vectorizer</span><span class="p">,</span> <span class="s2">&quot;max_features&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">selected</span><span class="p">[</span><span class="s2">&quot;n_classes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">label_encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">selected</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;EvaluationConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;IssueMetrics&quot;</span><span class="p">,</span> <span class="s2">&quot;evaluate_issue&quot;</span><span class="p">,</span> <span class="s2">&quot;run_eval&quot;</span><span class="p">,</span> <span class="s2">&quot;safe_div&quot;</span><span class="p">]</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

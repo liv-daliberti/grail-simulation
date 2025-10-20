@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>open_r1.utils.evaluation &#8212; GRAIL Simulation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for open_r1.utils.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Evaluation utilities for orchestrating LightEval benchmark runs.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_gpu_count_for_vllm</span><span class="p">,</span> <span class="n">get_param_count_from_repo_id</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">SFTConfig</span><span class="p">,</span> <span class="n">ModelConfig</span>
+
+
+<span class="c1"># We need a special environment setup to launch vLLM from within Slurm training jobs.</span>
+<span class="c1"># - Reference code: huggingface/brrr@c55ba35/brrr/lighteval/one_job_runner.py#L105</span>
+<span class="c1"># - Slack thread:</span>
+<span class="c1">#   https://huggingface.slack.com/archives/C043JTYE1MJ/p1726566494958269</span>
+<span class="n">user_home_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+<span class="n">VLLM_SLURM_PREFIX</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;env&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;for f in /etc/profile.d/*.sh; do source $f; done; &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;export HOME=</span><span class="si">{</span><span class="n">user_home_directory</span><span class="si">}</span><span class="s2">; sbatch &quot;</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="register_lighteval_task">
+<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.evaluation.register_lighteval_task">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_lighteval_task</span><span class="p">(</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">eval_suite</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task_list</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">num_fewshot</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a LightEval task configuration.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - Core tasks can be added from this table:</span>
+<span class="sd">          https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/tasks_table.jsonl</span>
+<span class="sd">        - Custom tasks requiring bespoke metrics or scripts should live in</span>
+<span class="sd">          `scripts/evaluation/extended_lighteval_tasks`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        configs: Dictionary used to store the task configuration.</span>
+<span class="sd">        eval_suite: Evaluation suite to pull tasks from.</span>
+<span class="sd">        task_name: Display name for the task.</span>
+<span class="sd">        task_list: Comma-separated task list using the LightEval format:</span>
+<span class="sd">            ``extended|{task_name}|{num_fewshot}|0`` or</span>
+<span class="sd">            ``lighteval|{task_name}|{num_fewshot}|0``.</span>
+<span class="sd">        num_fewshot: Number of few-shot examples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Format task list in lighteval format</span>
+    <span class="n">task_list</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">eval_suite</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">num_fewshot</span><span class="si">}</span><span class="s2">|0&quot;</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">task_list</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">configs</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_list</span></div>
+
+
+
+<span class="n">LIGHTEVAL_TASKS</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;lighteval&quot;</span><span class="p">,</span> <span class="s2">&quot;math_500&quot;</span><span class="p">,</span> <span class="s2">&quot;math_500&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;lighteval&quot;</span><span class="p">,</span> <span class="s2">&quot;aime24&quot;</span><span class="p">,</span> <span class="s2">&quot;aime24&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;lighteval&quot;</span><span class="p">,</span> <span class="s2">&quot;aime25&quot;</span><span class="p">,</span> <span class="s2">&quot;aime25&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;lighteval&quot;</span><span class="p">,</span> <span class="s2">&quot;gpqa&quot;</span><span class="p">,</span> <span class="s2">&quot;gpqa:diamond&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;extended&quot;</span><span class="p">,</span> <span class="s2">&quot;lcb&quot;</span><span class="p">,</span> <span class="s2">&quot;lcb:codegeneration&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">register_lighteval_task</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="p">,</span> <span class="s2">&quot;extended&quot;</span><span class="p">,</span> <span class="s2">&quot;lcb_v4&quot;</span><span class="p">,</span> <span class="s2">&quot;lcb:codegeneration_v4&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_lighteval_tasks">
+<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.evaluation.get_lighteval_tasks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_lighteval_tasks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the list of registered LightEval task identifiers.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">LIGHTEVAL_TASKS</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+
+<span class="n">SUPPORTED_BENCHMARKS</span> <span class="o">=</span> <span class="n">get_lighteval_tasks</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="run_lighteval_job">
+<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.evaluation.run_lighteval_job">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_lighteval_job</span><span class="p">(</span>
+    <span class="n">benchmark</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;SFTConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;GRPOConfig&quot;</span><span class="p">],</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="s2">&quot;ModelConfig&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Submit a LightEval benchmark job via SLURM.&quot;&quot;&quot;</span>
+    <span class="n">task_list</span> <span class="o">=</span> <span class="n">LIGHTEVAL_TASKS</span><span class="p">[</span><span class="n">benchmark</span><span class="p">]</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_id</span>
+    <span class="n">model_revision</span> <span class="o">=</span> <span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_revision</span>
+    <span class="c1"># For large models (&gt;=30B params) or for the MATH benchmark we shard across GPUs</span>
+    <span class="c1"># to avoid OOM.</span>
+    <span class="n">num_gpus</span> <span class="o">=</span> <span class="n">get_gpu_count_for_vllm</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_revision</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">get_param_count_from_repo_id</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">30_000_000_000</span><span class="p">:</span>
+        <span class="n">tensor_parallel</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">num_gpus</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Hack while cluster is full</span>
+        <span class="n">tensor_parallel</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">VLLM_SLURM_PREFIX</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">cmd_args</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;--gres=gpu:</span><span class="si">{</span><span class="n">num_gpus</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;--job-name=&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;or1_</span><span class="si">{</span><span class="n">benchmark</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">model_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">model_revision</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;slurm/evaluate.slurm&quot;</span><span class="p">,</span>
+        <span class="n">benchmark</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">task_list</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">,</span>
+        <span class="n">model_revision</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tensor_parallel</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model_args</span><span class="o">.</span><span class="n">trust_remote_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">training_args</span><span class="o">.</span><span class="n">system_prompt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># encode to base64 to avoid issues with special characters</span>
+        <span class="c1"># we decode in the sbatch script</span>
+        <span class="n">prompt_encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">system_prompt</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="n">cmd_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prompt_encoded</span><span class="p">)</span>
+    <span class="n">cmd</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd_args</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="run_benchmark_jobs">
+<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.evaluation.run_benchmark_jobs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_benchmark_jobs</span><span class="p">(</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;SFTConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;GRPOConfig&quot;</span><span class="p">],</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="s2">&quot;ModelConfig&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Launch benchmark jobs according to the training configuration.&quot;&quot;&quot;</span>
+    <span class="n">benchmarks</span> <span class="o">=</span> <span class="n">training_args</span><span class="o">.</span><span class="n">benchmarks</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">benchmarks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">benchmarks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+        <span class="n">benchmarks</span> <span class="o">=</span> <span class="n">get_lighteval_tasks</span><span class="p">()</span>
+        <span class="c1"># Evaluate on all supported benchmarks. Later we may want to include a `chat` option</span>
+        <span class="c1"># that just evaluates on `ifeval` and `mt_bench` etc.</span>
+
+    <span class="k">for</span> <span class="n">benchmark</span> <span class="ow">in</span> <span class="n">benchmarks</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Launching benchmark `</span><span class="si">%s</span><span class="s2">`&quot;</span><span class="p">,</span> <span class="n">benchmark</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">benchmark</span> <span class="ow">in</span> <span class="n">get_lighteval_tasks</span><span class="p">():</span>
+            <span class="n">run_lighteval_job</span><span class="p">(</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">training_args</span><span class="p">,</span> <span class="n">model_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown benchmark </span><span class="si">{</span><span class="n">benchmark</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">GRAIL Simulation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, GRAIL Simulation Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

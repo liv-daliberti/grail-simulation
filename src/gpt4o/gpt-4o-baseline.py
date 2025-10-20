@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Backwards-compatible entrypoint for the GPT-4o slate baseline."""
 
+# pylint: disable=invalid-name,wrong-import-position
+
 from __future__ import annotations
 
 import sys

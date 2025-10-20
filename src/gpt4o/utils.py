@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Iterable, Optional
+from typing import Iterable
 
 ANS_TAG = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 INDEX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
@@ -72,4 +72,3 @@ def resolve_paths_from_env(variable_names: Iterable[str]) -> list[str]:
     for name in variable_names:
         paths.extend(split_env_list(os.environ.get(name)))
     return paths
-

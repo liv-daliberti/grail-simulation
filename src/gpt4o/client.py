@@ -56,4 +56,3 @@ def ds_call(
         messages=messages,
     )
     return response.choices[0].message.content.strip()
-

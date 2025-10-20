@@ -40,6 +40,9 @@ class TitleResolver:
         self._index: Dict[str, str] | None = None
 
     def _iter_candidate_paths(self) -> list[str]:
+        """Enumerate all CSV files that might contain title metadata."""
+
+        # pylint: disable=too-many-branches
         files: list[str] = []
 
         # Directories to crawl for CSV files
@@ -91,7 +94,7 @@ class TitleResolver:
                         title = (row.get(title_col, "") or "").strip()
                         if video_id and title and video_id not in index:
                             index[video_id] = title
-            except Exception:
+            except (OSError, UnicodeDecodeError, csv.Error):
                 continue
         return index
 
@@ -107,4 +110,3 @@ class TitleResolver:
 
     def __call__(self, video_id: str | None) -> Optional[str]:
         return self.resolve(video_id)
-

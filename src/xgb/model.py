@@ -6,7 +6,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -127,27 +127,10 @@ def fit_xgboost_model(
         raise ImportError("Install xgboost to train the XGBoost baseline.")
 
     train_config = config or XGBoostTrainConfig()
-
-    docs, labels_id, _ = prepare_prompt_documents(
-        train_ds,
-        max_train=train_config.max_train,
-        seed=train_config.seed,
-        extra_fields=extra_fields,
-    )
-    if not docs:
-        raise RuntimeError("No training documents were produced for XGBoost fitting.")
-
-    vectorizer, matrix = _fit_vectorizer(
-        documents=docs,
-        max_features=train_config.max_features,
-    )
-
-    encoder, encoded_labels = _encode_labels(labels_id)
-
-    booster = _train_booster(
+    vectorizer, encoder, booster = _build_model_components(
+        train_ds=train_ds,
         train_config=train_config,
-        matrix=matrix,
-        labels=encoded_labels,
+        extra_fields=extra_fields,
     )
 
     return XGBoostSlateModel(
@@ -240,25 +223,8 @@ def predict_among_slate(
     classes = model.label_encoder.classes_
     probability_map = {cls: float(prob) for cls, prob in zip(classes, class_probs)}
 
-    best_index = None
-    best_score = -math.inf
-    for idx, (_, video_id) in enumerate(extract_slate_items(example), start=1):
-        canon = canon_video_id(video_id)
-        score = probability_map.get(canon)
-        if score is None:
-            continue
-        if score > best_score:
-            best_score = score
-            best_index = idx
-
-    if best_index is None:
-        for idx, (_, video_id) in enumerate(extract_slate_items(example), start=1):
-            candidate = canon_video_id(video_id) or canon_video_id(title_for(video_id) or "")
-            score = probability_map.get(candidate)
-            if score is not None and score > best_score:
-                best_score = score
-                best_index = idx
-
+    slate_pairs = list(extract_slate_items(example))
+    best_index = _select_best_candidate(slate_pairs, probability_map)
     return best_index, probability_map
 
 
@@ -316,6 +282,75 @@ def _train_booster(
     )
     booster.fit(matrix, labels)
     return booster
+
+
+def _build_model_components(
+    *,
+    train_ds,
+    train_config: XGBoostTrainConfig,
+    extra_fields: Sequence[str] | None,
+) -> Tuple[TfidfVectorizer, LabelEncoder, Any]:
+    """Return fitted vectoriser, label encoder, and trained booster."""
+
+    docs, labels_id, _ = prepare_prompt_documents(
+        train_ds,
+        max_train=train_config.max_train,
+        seed=train_config.seed,
+        extra_fields=extra_fields,
+    )
+    if not docs:
+        raise RuntimeError("No training documents were produced for XGBoost fitting.")
+
+    vectorizer, matrix = _fit_vectorizer(
+        documents=docs,
+        max_features=train_config.max_features,
+    )
+    encoder, encoded_labels = _encode_labels(labels_id)
+    booster = _train_booster(
+        train_config=train_config,
+        matrix=matrix,
+        labels=encoded_labels,
+    )
+    return vectorizer, encoder, booster
+
+
+def _select_best_candidate(
+    slate_pairs: Sequence[tuple[str, str]],
+    probability_map: Dict[str, float],
+) -> Optional[int]:
+    """Return the highest scoring slate index, applying fallback heuristics."""
+    primary = _best_index_by_key(slate_pairs, probability_map, _candidate_id_key)
+    if primary is not None:
+        return primary
+    return _best_index_by_key(slate_pairs, probability_map, _fallback_candidate_key)
+
+
+def _best_index_by_key(
+    slate_pairs: Sequence[tuple[str, str]],
+    probability_map: Dict[str, float],
+    key_fn: Callable[[str, str], str],
+) -> Optional[int]:
+    """Return the best slate index according to ``key_fn`` lookup."""
+    best_index: Optional[int] = None
+    best_score = -math.inf
+    for idx, (title, video_id) in enumerate(slate_pairs, start=1):
+        key = key_fn(title, video_id)
+        score = probability_map.get(key)
+        if score is None or score <= best_score:
+            continue
+        best_score = score
+        best_index = idx
+    return best_index
+
+
+def _candidate_id_key(_: str, video_id: str) -> str:
+    """Return the canonical id associated with ``video_id``."""
+    return canon_video_id(video_id)
+
+
+def _fallback_candidate_key(title: str, video_id: str) -> str:
+    """Return a fallback key using canonical id or derived title."""
+    return canon_video_id(video_id) or canon_video_id(title_for(video_id) or "")
 
 
 __all__ = [

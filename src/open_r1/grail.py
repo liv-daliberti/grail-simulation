@@ -15,24 +15,26 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence
 
-import datasets  # noqa: F401
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import transformers  # noqa: F401
-from transformers import set_seed
+from torch import nn, optim
+from transformers import (
+    AutoConfig,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    set_seed,
+)
 from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
-from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from prompt_builder.formatters import clean_text
 from prompt_builder.parsers import as_list_json, is_nanlike
 from prompt_builder.prompt import build_user_prompt
 from prompt_builder.profiles import synthesize_viewer_sentence
+from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_model, get_tokenizer
 
@@ -40,6 +42,43 @@ logger = logging.getLogger(__name__)
 
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
+PASSTHROUGH_FIELDS = {
+    "issue",
+    "session_id",
+    "step_index",
+    "display_step",
+    "display_order_key",
+    "issue_source",
+    "issue_detail",
+    "slate_source",
+    "next_video_id",
+    "next_video_title",
+    "next_video_channel",
+    "next_video_channel_id",
+    "urlid",
+    "topic_id",
+}
+TRAIN_KEEP_COLUMNS = {
+    "prompt",
+    "answer",
+    "gold_index",
+    "gold_id",
+    "n_options",
+    "viewer_profile",
+    "state_text",
+    "slate_items",
+    "slate_text",
+    "slate_items_with_meta",
+    "watched_detailed_json",
+    "watched_vids_json",
+    "current_video_id",
+    "current_video_title",
+    "task",
+    "is_replay",
+    "accuracy",
+    "mix_group_id",
+    "mix_copy_idx",
+}
 
 
 def _completion_text(payload: Any) -> str:
@@ -54,10 +93,13 @@ def _completion_text(payload: Any) -> str:
                 content = str(message.get("content", "")).strip()
                 if content:
                     return content
-        try:
-            return " ".join(str(msg.get("content", "")).strip() for msg in payload if isinstance(msg, dict))
-        except Exception:
-            pass
+        joined_contents = [
+            str(msg.get("content", "")).strip()
+            for msg in payload
+            if isinstance(msg, dict) and str(msg.get("content", "")).strip()
+        ]
+        if joined_contents:
+            return " ".join(joined_contents)
     return str(payload)
 
 
@@ -70,7 +112,7 @@ def _parse_index_from_answer_block(text: str) -> Optional[int]:
         return None
     try:
         return int(match_idx.group(1))
-    except Exception:
+    except (TypeError, ValueError):
         return None
 
 
@@ -114,9 +156,14 @@ def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
             it.get("title") or it.get("name") or it.get("video_title") or cleaned.get("title"),
             limit=160,
         )
-        vid = clean_text(it.get("id") or it.get("raw_id") or it.get("video_id") or cleaned.get("id"))
+        vid = clean_text(
+            it.get("id") or it.get("raw_id") or it.get("video_id") or cleaned.get("id")
+        )
         channel = clean_text(
-            it.get("channel_title") or it.get("channel_name") or it.get("channel") or cleaned.get("channel_title"),
+            it.get("channel_title")
+            or it.get("channel_name")
+            or it.get("channel")
+            or cleaned.get("channel_title"),
             limit=120,
         )
         if title:
@@ -184,6 +231,16 @@ def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
     return _derive_next_from_history(ex, current)
 
 
+def _has_valid_slate(example: Dict[str, Any], solution_key: Optional[str]) -> bool:
+    items = _load_slate_items(example)
+    if not items:
+        return False
+    gold = _get_gold_next_id(example, solution_key)
+    if not gold:
+        return False
+    return _gold_index_from_items(gold, items) >= 1
+
+
 def _row_to_example(
     ex: Dict[str, Any],
     system_prompt: Optional[str],
@@ -206,14 +263,15 @@ def _row_to_example(
     user_msg = build_user_prompt(ex, max_hist=max_hist)
     sys_msg = system_prompt or (
         "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"
-        "Think briefly in <think>…</think>, then output ONLY the option NUMBER (1..N) inside <answer>…</answer>.\n"
+        "Think briefly in <think>…</think>, then output ONLY the option NUMBER "
+        "(1..N) inside <answer>…</answer>.\n"
         "Format (STRICT): <think>…</think><answer>3</answer>"
     )
 
-    slate_names = []
-    for idx, it in enumerate(items, 1):
-        name = (it.get("title") or it.get("id") or "(untitled)").strip()
-        slate_names.append(f"{idx}. {name}")
+    slate_names = [
+        f"{idx}. {(it.get('title') or it.get('id') or '(untitled)').strip()}"
+        for idx, it in enumerate(items, 1)
+    ]
 
     example = {
         "prompt": [
@@ -240,25 +298,8 @@ def _row_to_example(
         "mix_copy_idx": -1,
     }
 
-    passthrough = {
-        "issue",
-        "session_id",
-        "step_index",
-        "display_step",
-        "display_order_key",
-        "issue_source",
-        "issue_detail",
-        "slate_source",
-        "next_video_id",
-        "next_video_title",
-        "next_video_channel",
-        "next_video_channel_id",
-        "urlid",
-        "topic_id",
-    }
-    for key in passthrough:
-        if key in ex:
-            example[key] = ex.get(key)
+    passthrough_data = {key: ex.get(key) for key in PASSTHROUGH_FIELDS if key in ex}
+    example.update(passthrough_data)
 
     return example
 
@@ -285,19 +326,46 @@ def _render_disc_text(
     ]
     if show_ids:
         lines.append("SLATE_IDS:")
-        lines.extend(
-            [f"{i}. {(it.get('id') or '(none)')}" for i, it in enumerate(slate_items, 1)] or ["(none)"]
-        )
+        id_lines = [
+            f"{i}. {(it.get('id') or '(none)')}"
+            for i, it in enumerate(slate_items, 1)
+        ]
+        lines.extend(id_lines or ["(none)"])
         lines.append(f"ACTION_ID: {action_id or '(none)'}")
     lines.append(f"ACTION_NAME: {action_surface or '(none)'}")
     return "\n".join(lines)
 
 
+def _prepare_dataset(
+    raw_dataset,
+    system_prompt: Optional[str],
+    solution_key: Optional[str],
+    max_hist: int,
+    train_split: str,
+):
+    def _format_example(example: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        return _row_to_example(example, system_prompt, solution_key, max_hist=max_hist)
+
+    filtered = raw_dataset.filter(lambda ex: _has_valid_slate(ex, solution_key))
+    formatted = filtered.map(_format_example, load_from_cache_file=False)
+
+    if "__drop__" in formatted[train_split].column_names:
+        for split in list(formatted.keys()):
+            mask = [not flag for flag in formatted[split]["__drop__"]]
+            keep_indices = [idx for idx, keep in enumerate(mask) if keep]
+            formatted[split] = formatted[split].select(keep_indices)
+
+    for split in list(formatted.keys()):
+        drop_cols = [name for name in formatted[split].column_names if name not in TRAIN_KEEP_COLUMNS]
+        if drop_cols:
+            formatted[split] = formatted[split].remove_columns(drop_cols)
+
+    return formatted
+
+
 class OnlineDiscriminator:
     """Lightweight text classifier trained on-policy to supply optional GAIL rewards."""
     def __init__(self, model_name: str, device: torch.device, lr: float = 2e-5):
-        from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
-
         self._model_name = model_name
         self._lr = lr
         self.device = device
@@ -323,17 +391,14 @@ class OnlineDiscriminator:
 
     def _sanity_check_embeddings(self) -> None:
         """Reload the model if the embedding matrix was sharded away by HF lazy loading."""
-        try:
-            weights = self.model.get_input_embeddings().weight
-            if weights is None or weights.dim() != 2 or weights.is_meta:
-                raise RuntimeError("disc embedding not 2-D/materialized")
-        except Exception:
+        embeddings = self.model.get_input_embeddings()
+        weights = getattr(embeddings, "weight", None)
+        is_invalid = weights is None or getattr(weights, "dim", lambda: 0)() != 2
+        if is_invalid or getattr(weights, "is_meta", False):
             self._reload_clean()
 
     def _reload_clean(self) -> None:
         """Hard reset the discriminator weights to keep training numerically stable."""
-        from transformers import AutoModelForSequenceClassification
-
         model = AutoModelForSequenceClassification.from_pretrained(
             self._model_name,
             torch_dtype=torch.float32,
@@ -368,7 +433,7 @@ class OnlineDiscriminator:
 
             logits = self.model(**batch).logits
             return logits.softmax(dim=-1)[:, 1].detach().cpu().numpy()
-        except Exception:
+        except (OSError, RuntimeError, ValueError, torch.cuda.CudaError):
             return np.zeros((len(texts),), dtype=np.float32)
         finally:
             self.model.train()
@@ -393,81 +458,235 @@ class OnlineDiscriminator:
         return float(loss.detach().cpu().item())
 
 
+class RewardContext(NamedTuple):
+    policy_text: str
+    is_valid: bool
+    chosen_index: int
+    viewer: str
+    state: str
+    items: List[Dict[str, Any]]
+    gold_id: str
+    gold_index: int
+
+
+def _ensure_list(value: Any, count: int) -> List[Any]:
+    if isinstance(value, list):
+        return value
+    return [value] * count
+
+
+def _build_reward_contexts(
+    completions: Sequence[Any],
+    kwargs: Dict[str, Any],
+) -> List[RewardContext]:
+    n = len(completions)
+    if n == 0:
+        return []
+
+    viewer_list = _ensure_list(kwargs.get("viewer_profile") or "", n)
+    state_list = _ensure_list(kwargs.get("state_text") or "", n)
+    items_list = _ensure_list(kwargs.get("slate_items") or [], n)
+    gold_id_list = _ensure_list(kwargs.get("gold_id") or "", n)
+    gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, n)
+
+    contexts: List[RewardContext] = []
+    for completion, viewer, state, items, gold_id, gold_idx in zip(
+        completions,
+        viewer_list,
+        state_list,
+        items_list,
+        gold_id_list,
+        gold_idx_list,
+    ):
+        safe_items = items if isinstance(items, list) else []
+        parsed_idx = _parse_index_from_answer_block(_completion_text(completion))
+        is_valid = isinstance(parsed_idx, int) and 1 <= parsed_idx <= len(safe_items)
+        chosen_index = parsed_idx if is_valid else -1
+        choice = safe_items[chosen_index - 1] if is_valid else {}
+        surface = (choice.get("title") or choice.get("id") or "") if choice else ""
+        action_id = choice.get("id") if choice else None
+
+        try:
+            gold_index = int(gold_idx)
+        except (TypeError, ValueError):
+            gold_index = -1
+
+        contexts.append(
+            RewardContext(
+                policy_text=_render_disc_text(
+                    viewer or "",
+                    state or "",
+                    safe_items or [],
+                    surface,
+                    action_id,
+                )
+                if is_valid
+                else "[PAD]",
+                is_valid=is_valid,
+                chosen_index=chosen_index,
+                viewer=str(viewer or ""),
+                state=str(state or ""),
+                items=safe_items or [],
+                gold_id=str(gold_id or "").strip(),
+                gold_index=gold_index,
+            )
+        )
+    return contexts
+
+
+def _train_discriminator_from_contexts(
+    disc: OnlineDiscriminator,
+    contexts: Sequence[RewardContext],
+) -> None:
+    pos_texts: List[str] = []
+    pos_labels: List[int] = []
+    neg_texts: List[str] = []
+    neg_labels: List[int] = []
+
+    for ctx in contexts:
+        if ctx.gold_id and ctx.items:
+            surface = ""
+            for item in ctx.items:
+                if ctx.gold_id == (item.get("id") or ""):
+                    surface = item.get("title") or item.get("id") or ""
+                    break
+            if surface:
+                pos_texts.append(
+                    _render_disc_text(ctx.viewer, ctx.state, ctx.items, surface, ctx.gold_id)
+                )
+                pos_labels.append(1)
+
+        if ctx.is_valid and ctx.gold_index >= 1 and ctx.chosen_index != ctx.gold_index:
+            neg_texts.append(ctx.policy_text)
+            neg_labels.append(0)
+
+    payload = pos_texts + neg_texts
+    if not payload:
+        return
+
+    labels = pos_labels + neg_labels
+    try:
+        disc.train_batch(payload, labels)
+    except (OSError, RuntimeError, ValueError, torch.cuda.CudaError):
+        logger.debug("discriminator train_batch failed; continuing without update", exc_info=True)
+
+
+def _select_disc_device() -> torch.device:
+    override = (os.getenv("GAIL_DEVICE", "").strip() or "").lower()
+    device_hint = os.getenv("GAIL_DEVICE", "").strip()
+    if override == "cuda":
+        local_rank = os.getenv("LOCAL_RANK")
+        if local_rank is not None:
+            try:
+                device_hint = f"cuda:{int(local_rank)}"
+            except ValueError:
+                device_hint = "cuda:0"
+        else:
+            device_hint = "cuda:0"
+    if device_hint:
+        return torch.device(device_hint)
+    if torch.cuda.is_available():
+        local_rank = os.getenv("LOCAL_RANK")
+        if local_rank is not None:
+            try:
+                rank = int(local_rank)
+            except ValueError:
+                rank = 0
+            return torch.device(f"cuda:{rank}")
+        return torch.device("cuda:0")
+    return torch.device("cpu")
+
+
 def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0):
     """Wrap discriminator scores so they plug into the GRPO reward interface."""
     def _reward(completions, answer, **kwargs):
+        del answer
         if disc is None:
             return [0.0] * len(completions)
 
-        train_on = (os.getenv("GAIL_TRAIN", "1") == "1") and (os.getenv("GAIL_EVAL_MODE", "0") != "1")
+        train_on = (
+            os.getenv("GAIL_TRAIN", "1") == "1"
+            and os.getenv("GAIL_EVAL_MODE", "0") != "1"
+        )
 
-        def _aslist(value, n):
-            return value if isinstance(value, list) else [value] * n
+        contexts = _build_reward_contexts(completions, kwargs)
+        if not contexts:
+            return [0.0] * len(completions)
 
-        n = len(completions)
-        viewer_list = _aslist(kwargs.get("viewer_profile") or "", n)
-        state_list = _aslist(kwargs.get("state_text") or "", n)
-        items_list = _aslist(kwargs.get("slate_items") or [], n)
-        gold_id_list = _aslist(kwargs.get("gold_id") or "", n)
-        gold_idx_list = _aslist(kwargs.get("gold_index") or -1, n)
-
-        policy_texts, valid_mask, chosen_idx = [], [], []
-        for comp, viewer, state, items in zip(completions, viewer_list, state_list, items_list):
-            idx = _parse_index_from_answer_block(_completion_text(comp))
-            if isinstance(idx, int) and 1 <= idx <= len(items):
-                choice = items[idx - 1]
-                surface = (choice.get("title") or choice.get("id") or "")
-                policy_texts.append(_render_disc_text(viewer or "", state or "", items or [], surface, choice.get("id")))
-                valid_mask.append(True)
-                chosen_idx.append(idx)
-            else:
-                policy_texts.append("[PAD]")
-                valid_mask.append(False)
-                chosen_idx.append(-1)
-
-        probs = disc.prob_positive(policy_texts)
+        probs = disc.prob_positive([ctx.policy_text for ctx in contexts])
 
         if train_on:
-            pos_texts: List[str] = []
-            pos_labels: List[int] = []
-            neg_texts: List[str] = []
-            neg_labels: List[int] = []
+            _train_discriminator_from_contexts(disc, contexts)
 
-            for viewer, state, items, gold_id, gold_idx, pol_text, ok, idx in zip(
-                viewer_list, state_list, items_list, gold_id_list, gold_idx_list, policy_texts, valid_mask, chosen_idx
-            ):
-                gold_id = (gold_id or "").strip()
-                if isinstance(items, list) and items and gold_id:
-                    surface = None
-                    for it in items:
-                        if gold_id == (it.get("id") or ""):
-                            surface = (it.get("title") or it.get("id") or "")
-                            break
-                    if surface is not None:
-                        pos_texts.append(_render_disc_text(viewer or "", state or "", items or [], surface, gold_id))
-                        pos_labels.append(1)
-
-                if ok and isinstance(gold_idx, int) and gold_idx >= 1 and idx != gold_idx:
-                    neg_texts.append(pol_text)
-                    neg_labels.append(0)
-
-            payload = pos_texts + neg_texts
-            labels = pos_labels + neg_labels
-            if payload:
-                try:
-                    disc.train_batch(payload, labels)
-                except Exception:
-                    pass
-
-        out = []
-        for pr, ok in zip(probs, valid_mask):
-            out.append(float(alpha * pr) if ok else 0.0)
-        return out
+        return [
+            float(alpha * prob) if ctx.is_valid else 0.0
+            for prob, ctx in zip(probs, contexts)
+        ]
 
     return _reward
 
 
-def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args: ModelConfig) -> None:
+def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> List[Any]:
+    try:
+        return get_reward_funcs(script_args, ref_model=None, tokenizer=tokenizer)
+    except (OSError, RuntimeError, ValueError, ImportError) as exc:
+        logger.warning("[rewards] get_reward_funcs failed: %s", exc)
+        return []
+
+
+def _maybe_enable_gail(training_args: GRPOConfig, reward_fns: List[Any]) -> bool:
+    use_gail = os.environ.get("GAIL_USE", "1") != "0"
+    if not use_gail:
+        logger.info("GAIL shaping DISABLED")
+        return False
+
+    disc_model = os.environ.get("GAIL_DISC_MODEL", "distilbert-base-uncased")
+    disc_device = _select_disc_device()
+    disc_lr = float(os.environ.get("GAIL_LR", "2e-5"))
+    gail_alpha = float(os.environ.get("GAIL_ALPHA", "1.0"))
+
+    discriminator = OnlineDiscriminator(disc_model, disc_device, lr=disc_lr)
+    gail_fn = make_gail_reward_fn(discriminator, alpha=gail_alpha)
+    gail_fn.__name__ = "gail_reward"
+    reward_fns.append(gail_fn)
+    logger.info(
+        "GAIL shaping ENABLED (alpha=%.3f, model=%s, device=%s)",
+        gail_alpha,
+        disc_model,
+        str(disc_device),
+    )
+    return True
+
+
+def _adjust_reward_weights(training_args: GRPOConfig, reward_fns: Sequence[Any], use_gail: bool) -> None:
+    weights = getattr(training_args, "reward_weights", None)
+    if weights is None:
+        if use_gail and len(reward_fns) >= 2:
+            gail_weight = float(os.environ.get("GAIL_WEIGHT", "0.5"))
+            training_args.reward_weights = [1.0] * (len(reward_fns) - 1) + [gail_weight]
+        else:
+            training_args.reward_weights = [1.0] * len(reward_fns)
+    elif len(weights) != len(reward_fns):
+        if use_gail and len(weights) == len(reward_fns) - 1:
+            gail_weight = float(os.environ.get("GAIL_WEIGHT", "0.5"))
+            training_args.reward_weights = list(weights) + [gail_weight]
+        else:
+            raise ValueError(
+                f"reward_weights length ({len(weights)}) != number of rewards ({len(reward_fns)}). "
+                "Update YAML or set $GAIL_WEIGHT to auto-extend."
+            )
+
+    if training_args.reward_weights:
+        weights_clean = [max(0.0, float(w)) for w in training_args.reward_weights]
+        total = sum(weights_clean) or 1.0
+        training_args.reward_weights = [w / total for w in weights_clean]
+
+
+def main(
+    script_args: GRPOScriptArguments,
+    training_args: GRPOConfig,
+    model_args: ModelConfig,
+) -> None:
     """Launch the GRPO + optional GAIL training loop with the configured rewards."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
@@ -478,123 +697,17 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
     solution_key = getattr(script_args, "dataset_solution_column", None)
     max_hist = int(os.environ.get("GRAIL_MAX_HISTORY", "12") or "12")
 
-    def _ok(example: Dict[str, Any]) -> bool:
-        items = _load_slate_items(example)
-        if not items:
-            return False
-        gold = _get_gold_next_id(example, solution_key)
-        if not gold:
-            return False
-        return _gold_index_from_items(gold, items) >= 1
-
-    # Quickly drop rows with unusable slates or gold answers before building prompts.
-    raw = raw.filter(_ok)
-
-    # Attach structured prompts/answers; avoid caching so changes propagate immediately.
-    ds = raw.map(
-        lambda ex: _row_to_example(ex, training_args.system_prompt, solution_key, max_hist=max_hist),
-        load_from_cache_file=False,
+    ds = _prepare_dataset(
+        raw,
+        training_args.system_prompt,
+        solution_key,
+        max_hist,
+        script_args.dataset_train_split,
     )
 
-    if "__drop__" in ds[script_args.dataset_train_split].column_names:
-        # Honour dataset-provided drop flags so noisy rows do not reach training.
-        for split in list(ds.keys()):
-            mask = [not flag for flag in ds[split]["__drop__"]]
-            keep_indices = [idx for idx, keep in enumerate(mask) if keep]
-            ds[split] = ds[split].select(keep_indices)
-
-    # Trim the dataset down to the fields the trainer and rewards actually consume.
-    keep_cols = {
-        "prompt",
-        "answer",
-        "gold_index",
-        "gold_id",
-        "n_options",
-        "viewer_profile",
-        "state_text",
-        "slate_items",
-        "slate_text",
-        "slate_items_with_meta",
-        "watched_detailed_json",
-        "watched_vids_json",
-        "current_video_id",
-        "current_video_title",
-        "task",
-        "is_replay",
-        "accuracy",
-        "mix_group_id",
-        "mix_copy_idx",
-    }
-    for split in list(ds.keys()):
-        drop = [name for name in ds[split].column_names if name not in keep_cols]
-        if drop:
-            ds[split] = ds[split].remove_columns(drop)
-
-    try:
-        # Translate reward function names declared in YAML into callables.
-        reward_fns = get_reward_funcs(script_args, ref_model=None, tokenizer=tokenizer)
-    except Exception as exc:
-        logger.warning("[rewards] get_reward_funcs failed: %s", exc)
-        reward_fns = []
-
-    # Optionally append a discriminator-based reward when the env flag is enabled.
-    use_gail = os.environ.get("GAIL_USE", "1") != "0"
-    disc = None
-    if use_gail:
-        def _pick_disc_device() -> torch.device:
-            """Select a CUDA device when available while respecting DDP local rank."""
-            override = os.getenv("GAIL_DEVICE", "")
-            if override.strip().lower() == "cuda":
-                lrk = os.getenv("LOCAL_RANK")
-                if lrk is not None:
-                    override = f"cuda:{int(lrk)}"
-            if override:
-                return torch.device(override)
-            if torch.cuda.is_available():
-                lrk = os.getenv("LOCAL_RANK")
-                return torch.device(f"cuda:{int(lrk)}") if lrk is not None else torch.device("cuda:0")
-            return torch.device("cpu")
-
-        disc_device = _pick_disc_device()
-        disc_model = os.environ.get("GAIL_DISC_MODEL", "distilbert-base-uncased")
-        disc_lr = float(os.environ.get("GAIL_LR", "2e-5"))
-        gail_alpha = float(os.environ.get("GAIL_ALPHA", "1.0"))
-
-        disc = OnlineDiscriminator(disc_model, disc_device, lr=disc_lr)
-        gail_fn = make_gail_reward_fn(disc, alpha=gail_alpha)
-        gail_fn.__name__ = "gail_reward"
-        reward_fns.append(gail_fn)
-        logger.info(
-            "GAIL shaping ENABLED (alpha=%.3f, model=%s, device=%s)",
-            gail_alpha,
-            disc_model,
-            str(disc_device),
-        )
-    else:
-        logger.info("GAIL shaping DISABLED")
-
-    weights = getattr(training_args, "reward_weights", None)
-    if weights is None:
-        if use_gail and len(reward_fns) >= 2:
-            gail_w = float(os.environ.get("GAIL_WEIGHT", "0.5"))
-            training_args.reward_weights = [1.0] * (len(reward_fns) - 1) + [gail_w]
-        else:
-            training_args.reward_weights = [1.0] * len(reward_fns)
-    elif len(weights) != len(reward_fns):
-        if use_gail and len(weights) == len(reward_fns) - 1:
-            gail_w = float(os.environ.get("GAIL_WEIGHT", "0.5"))
-            training_args.reward_weights = list(weights) + [gail_w]
-        else:
-            raise ValueError(
-                f"reward_weights length ({len(weights)}) != number of rewards ({len(reward_fns)}). "
-                "Update YAML or set $GAIL_WEIGHT to auto-extend."
-            )
-
-    if training_args.reward_weights:
-        # Re-normalise weights so YAML-specified magnitudes do not skew total reward scale.
-        ws = [max(0.0, float(w)) for w in training_args.reward_weights]
-        total = sum(ws) or 1.0
-        training_args.reward_weights = [w / total for w in ws]
+    reward_fns = _resolve_reward_functions(script_args, tokenizer)
+    use_gail = _maybe_enable_gail(training_args, reward_fns)
+    _adjust_reward_weights(training_args, reward_fns, use_gail)
 
     logger.info(
         "[grpo+gail] rewards=%s weights=%s",
@@ -616,18 +729,28 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
             if isinstance(max_eval, int) and max_eval > 0 and len(eval_ds) > max_eval:
                 eval_ds = eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
         else:
-            logger.warning("[grail] do_eval enabled but test split '%s' missing; disabling eval", test_split)
+            logger.warning(
+                "[grail] do_eval enabled but test split '%s' missing; disabling eval",
+                test_split,
+            )
             eval_ds = None
             training_args.do_eval = False
 
     if getattr(training_args, "do_eval", False) and eval_ds is not None:
         # Force the step-based schedule when do_eval is true and guard against missing eval_steps.
-        if getattr(training_args, "evaluation_strategy", IntervalStrategy.NO) == IntervalStrategy.NO:
+        if getattr(
+            training_args,
+            "evaluation_strategy",
+            IntervalStrategy.NO,
+        ) == IntervalStrategy.NO:
             logger.info("[grail] forcing evaluation_strategy='steps' because do_eval is enabled")
             training_args.evaluation_strategy = IntervalStrategy.STEPS
         eval_steps = getattr(training_args, "eval_steps", None)
         if eval_steps is None or int(eval_steps) <= 0:
-            raise ValueError("eval_steps must be > 0 when do_eval is enabled. Set a positive value in the config.")
+            raise ValueError(
+                "eval_steps must be > 0 when do_eval is enabled. "
+                "Set a positive value in the config."
+            )
 
     # Stand up the GRPO trainer with optional discriminator shaping.
     trainer = GRPOTrainer(
@@ -641,10 +764,10 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
     )
 
     # Allow resume-from-checkpoint via CLI argument or automatic discovery.
-    last_ckpt = (
-        training_args.resume_from_checkpoint
-        or (get_last_checkpoint(training_args.output_dir) if os.path.isdir(training_args.output_dir) else None)
-    )
+    resume_target = None
+    if os.path.isdir(training_args.output_dir):
+        resume_target = get_last_checkpoint(training_args.output_dir)
+    last_ckpt = training_args.resume_from_checkpoint or resume_target
     train_result = trainer.train(resume_from_checkpoint=last_ckpt)
     trainer.log_metrics("train", train_result.metrics)
     trainer.save_metrics("train", train_result.metrics)
@@ -666,5 +789,5 @@ def main(script_args: GRPOScriptArguments, training_args: GRPOConfig, model_args
 
 if __name__ == "__main__":
     parser = TrlParser((GRPOScriptArguments, GRPOConfig, ModelConfig))
-    script_args, training_args, model_args = parser.parse_args_and_config()
-    main(script_args, training_args, model_args)
+    parsed_script_args, parsed_training_args, parsed_model_args = parser.parse_args_and_config()
+    main(parsed_script_args, parsed_training_args, parsed_model_args)

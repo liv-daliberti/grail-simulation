@@ -86,4 +86,3 @@ Examples of INVALID <answer> (never do these):
 
 # Default cache directory used by the CLI when none is provided
 DEFAULT_CACHE_DIR: Path = Path.cwd() / "hf_cache"
-

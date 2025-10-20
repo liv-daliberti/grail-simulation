@@ -1,5 +1,7 @@
 """Evaluation loop for the GPT-4o slate baseline."""
 
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught
+
 from __future__ import annotations
 
 import json
@@ -115,7 +117,7 @@ def run_eval(args: Any) -> None:
         eval_split = EVAL_SPLIT
         try:
             data_iter = load_dataset(DATASET_NAME, split=eval_split, streaming=True)
-        except Exception:
+        except Exception as exc:
             for fallback in ("validation", "eval", "test"):
                 try:
                     data_iter = load_dataset(DATASET_NAME, split=fallback, streaming=True)
@@ -124,12 +126,23 @@ def run_eval(args: Any) -> None:
                 except Exception:
                     continue
             else:
-                raise RuntimeError("Unable to load evaluation split in streaming mode.")
+                raise RuntimeError("Unable to load evaluation split in streaming mode.") from exc
     else:
         available_splits = list(dataset.keys())
-        eval_split = next((split for split in (EVAL_SPLIT, "validation", "eval", "test") if split in available_splits), None)
+        eval_split = next(
+            (
+                split
+                for split in (EVAL_SPLIT, "validation", "eval", "test")
+                if split in available_splits
+            ),
+            None,
+        )
         if not eval_split:
-            raise RuntimeError(f"Evaluation split not found in dataset. Available: {available_splits}")
+            available_msg = ", ".join(available_splits)
+            raise RuntimeError(
+                "Evaluation split not found in dataset. "
+                f"Available: {available_msg}"
+            )
         data_iter = dataset[eval_split]
         if args.eval_max:
             data_iter = data_iter.select(range(min(args.eval_max, len(data_iter))))
@@ -138,139 +151,138 @@ def run_eval(args: Any) -> None:
         data_iter = data_iter.take(args.eval_max)
 
     n_eval_target = args.eval_max if args.eval_max else None
-    writer = open(out_jsonl, "w", encoding="utf-8")
+    with open(out_jsonl, "w", encoding="utf-8") as writer:
+        buckets = ["1", "2", "3", "4", "5+", "unknown"]
+        opts_buckets = ["1", "2", "3", "4", "5+"]
+        seen_by_pos = defaultdict(int)
+        eligible_by_pos = defaultdict(int)
+        correct_by_pos = defaultdict(int)
 
-    buckets = ["1", "2", "3", "4", "5+", "unknown"]
-    opts_buckets = ["1", "2", "3", "4", "5+"]
-    seen_by_pos = defaultdict(int)
-    eligible_by_pos = defaultdict(int)
-    correct_by_pos = defaultdict(int)
+        seen_by_opts = defaultdict(int)
+        eligible_by_opts = defaultdict(int)
+        correct_by_opts = defaultdict(int)
+        parsed_by_opts = defaultdict(int)
+        formatted_by_opts = defaultdict(int)
 
-    seen_by_opts = defaultdict(int)
-    eligible_by_opts = defaultdict(int)
-    correct_by_opts = defaultdict(int)
-    parsed_by_opts = defaultdict(int)
-    formatted_by_opts = defaultdict(int)
+        seen_single = seen_multi = 0
+        elig_single = elig_multi = 0
+        corr_single = corr_multi = 0
+        parsed_multi = formatted_multi = 0
 
-    seen_single = seen_multi = 0
-    elig_single = elig_multi = 0
-    corr_single = corr_multi = 0
-    parsed_multi = formatted_multi = 0
+        eligible_overall = correct_overall = 0
+        format_ok = parsed_ok = 0
 
-    eligible_overall = correct_overall = 0
-    format_ok = parsed_ok = 0
+        gold_hist: Dict[int, int] = {}
+        all_gold_indices: list[int] = []
+        all_option_counts: list[int] = []
 
-    gold_hist: Dict[int, int] = {}
-    all_gold_indices: list[int] = []
-    all_option_counts: list[int] = []
+        start_time = time.time()
+        seen_rows = 0
 
-    start_time = time.time()
-    seen_rows = 0
+        for example in data_iter:
+            seen_rows += 1
+            record = make_conversation_record(example)
+            messages = record["prompt"]
+            gold_index = int(record.get("gold_index", -1))
+            option_count = int(record.get("n_options", 0))
+            position_index = int(record.get("position_index", -1))
 
-    for example in data_iter:
-        seen_rows += 1
-        record = make_conversation_record(example)
-        messages = record["prompt"]
-        gold_index = int(record.get("gold_index", -1))
-        option_count = int(record.get("n_options", 0))
-        position_index = int(record.get("position_index", -1))
+            pos_bucket = _bucket_from_position(position_index)
+            seen_by_pos[pos_bucket] += 1
 
-        pos_bucket = _bucket_from_position(position_index)
-        seen_by_pos[pos_bucket] += 1
+            try:
+                raw_output = ds_call(
+                    messages,
+                    max_tokens=args.max_tokens,
+                    temperature=args.temperature,
+                    deployment=getattr(args, "deployment", None),
+                )
+            except Exception as exc:
+                raw_output = f"(error: {exc})"
 
-        try:
-            raw_output = ds_call(
-                messages,
-                max_tokens=args.max_tokens,
-                temperature=args.temperature,
-                deployment=getattr(args, "deployment", None),
-            )
-        except Exception as exc:
-            raw_output = f"(error: {exc})"
-
-        is_formatted = bool(ANS_TAG.search(raw_output))
-        if is_formatted:
-            format_ok += 1
-
-        parsed_index = _parse_index_from_output(raw_output)
-        if parsed_index is not None:
-            parsed_ok += 1
-
-        option_bucket = _bucket_from_options(option_count)
-        seen_by_opts[option_bucket] += 1
-        if is_formatted:
-            formatted_by_opts[option_bucket] += 1
-        if parsed_index is not None:
-            parsed_by_opts[option_bucket] += 1
-
-        if option_count == 1:
-            seen_single += 1
-        else:
-            seen_multi += 1
+            is_formatted = bool(ANS_TAG.search(raw_output))
             if is_formatted:
-                formatted_multi += 1
+                format_ok += 1
+
+            parsed_index = _parse_index_from_output(raw_output)
             if parsed_index is not None:
-                parsed_multi += 1
+                parsed_ok += 1
 
-        eligible = gold_index > 0 and option_count > 0
-        if eligible:
-            eligible_overall += 1
-            eligible_by_pos[pos_bucket] += 1
-            eligible_by_opts[option_bucket] += 1
+            option_bucket = _bucket_from_options(option_count)
+            seen_by_opts[option_bucket] += 1
+            if is_formatted:
+                formatted_by_opts[option_bucket] += 1
+            if parsed_index is not None:
+                parsed_by_opts[option_bucket] += 1
 
-            gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
-            all_gold_indices.append(gold_index)
-            all_option_counts.append(option_count)
-
-        is_correct = eligible and (parsed_index is not None) and (parsed_index == gold_index)
-        if is_correct:
-            correct_overall += 1
-            correct_by_pos[pos_bucket] += 1
-            correct_by_opts[option_bucket] += 1
-
-        if eligible:
             if option_count == 1:
-                elig_single += 1
-                if is_correct:
-                    corr_single += 1
+                seen_single += 1
             else:
-                elig_multi += 1
-                if is_correct:
-                    corr_multi += 1
+                seen_multi += 1
+                if is_formatted:
+                    formatted_multi += 1
+                if parsed_index is not None:
+                    parsed_multi += 1
 
-        writer.write(
-            json.dumps(
-                {
-                    "messages": messages,
-                    "gpt_output": raw_output,
-                    "parsed_index": parsed_index,
-                    "gold_index": gold_index,
-                    "n_options": option_count,
-                    "correct": bool(is_correct),
-                    "eligible": bool(eligible),
-                    "position_index": position_index,
-                    "position_bucket": pos_bucket,
-                },
-                ensure_ascii=False,
+            eligible = gold_index > 0 and option_count > 0
+            if eligible:
+                eligible_overall += 1
+                eligible_by_pos[pos_bucket] += 1
+                eligible_by_opts[option_bucket] += 1
+
+                gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
+                all_gold_indices.append(gold_index)
+                all_option_counts.append(option_count)
+
+            is_correct = (
+                eligible and (parsed_index is not None) and (parsed_index == gold_index)
             )
-            + "\n"
-        )
+            if is_correct:
+                correct_overall += 1
+                correct_by_pos[pos_bucket] += 1
+                correct_by_opts[option_bucket] += 1
 
-        if seen_rows % 25 == 0:
-            elapsed = time.time() - start_time
-            accuracy = _safe_div(correct_overall, eligible_overall)
-            denom = n_eval_target if n_eval_target is not None else seen_rows
-            logging.info(
-                "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
-                seen_rows,
-                denom,
-                accuracy,
-                _safe_div(parsed_ok, seen_rows),
-                _safe_div(format_ok, seen_rows),
-                elapsed,
+            if eligible:
+                if option_count == 1:
+                    elig_single += 1
+                    if is_correct:
+                        corr_single += 1
+                else:
+                    elig_multi += 1
+                    if is_correct:
+                        corr_multi += 1
+
+            writer.write(
+                json.dumps(
+                    {
+                        "messages": messages,
+                        "gpt_output": raw_output,
+                        "parsed_index": parsed_index,
+                        "gold_index": gold_index,
+                        "n_options": option_count,
+                        "correct": bool(is_correct),
+                        "eligible": bool(eligible),
+                        "position_index": position_index,
+                        "position_bucket": pos_bucket,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
             )
 
-    writer.close()
+            if seen_rows % 25 == 0:
+                elapsed = time.time() - start_time
+                accuracy = _safe_div(correct_overall, eligible_overall)
+                denom = n_eval_target if n_eval_target is not None else seen_rows
+                logging.info(
+                    "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
+                    seen_rows,
+                    denom,
+                    accuracy,
+                    _safe_div(parsed_ok, seen_rows),
+                    _safe_div(format_ok, seen_rows),
+                    elapsed,
+                )
 
     total_seen = seen_rows
     overall_accuracy = _safe_div(correct_overall, eligible_overall)
@@ -296,10 +308,12 @@ def run_eval(args: Any) -> None:
             for bucket in opts_buckets
         },
         "parsed_rate": {
-            bucket: _safe_div(parsed_by_opts[bucket], seen_by_opts[bucket]) for bucket in opts_buckets
+            bucket: _safe_div(parsed_by_opts[bucket], seen_by_opts[bucket])
+            for bucket in opts_buckets
         },
         "format_rate": {
-            bucket: _safe_div(formatted_by_opts[bucket], seen_by_opts[bucket]) for bucket in opts_buckets
+            bucket: _safe_div(formatted_by_opts[bucket], seen_by_opts[bucket])
+            for bucket in opts_buckets
         },
     }
 
@@ -329,7 +343,11 @@ def run_eval(args: Any) -> None:
         "accuracy": baseline_accuracy,
     }
 
-    random_baseline_accuracy = float(np.mean([1.0 / n for n in all_option_counts])) if all_option_counts else 0.0
+    random_baseline_accuracy = (
+        float(np.mean([1.0 / n for n in all_option_counts]))
+        if all_option_counts
+        else 0.0
+    )
 
     metrics: Dict[str, Any] = {
         "model": getattr(args, "deployment", None) or DEPLOYMENT_NAME,
@@ -352,9 +370,11 @@ def run_eval(args: Any) -> None:
     with open(metrics_json, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, ensure_ascii=False, indent=2)
 
-    print(
+    summary = (
         f"[DONE] split={eval_split}  n={total_seen}  eligible={eligible_overall} "
-        f"accuracy={overall_accuracy:.4f}  parsed_ok={parsed_rate:.3f}  format_rate={format_rate:.3f}"
+        f"accuracy={overall_accuracy:.4f}  parsed_ok={parsed_rate:.3f}  "
+        f"format_rate={format_rate:.3f}"
     )
+    print(summary)
     print(f"[WROTE] per-example: {out_jsonl}")
     print(f"[WROTE] metrics:     {metrics_json}")

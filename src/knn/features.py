@@ -369,14 +369,9 @@ def prepare_training_documents(
 
     records: List[tuple[str, str, str]] = []
     for index in order:
-        example = train_ds[int(index)]
-        document = assemble_document(example, extra_fields)
-        stripped = document.strip()
-        video_id = str(example.get(SOLUTION_COLUMN) or "")
-        label_id = _canon_vid(video_id)
-        label_title = title_for(video_id) or ""
-        if stripped:
-            records.append((stripped, label_id, label_title))
+        record = _record_from_example(train_ds[int(index)], extra_fields)
+        if record:
+            records.append(record)
 
     if not records:
         raise RuntimeError(
@@ -389,10 +384,25 @@ def prepare_training_documents(
     if dropped:
         logging.warning("[KNN] Dropped %d empty docs out of %d.", dropped, len(order))
 
-    filtered_docs, filtered_labels_id, filtered_labels_title = map(list, zip(*records))
+    filtered_docs = [doc for doc, _, _ in records]
+    filtered_labels_id = [label_id for _, label_id, _ in records]
+    filtered_labels_title = [label_title for _, _, label_title in records]
     logging.info("[KNN] Assembled %d documents (kept %d non-empty).", len(order), len(records))
     logging.info("[KNN] Example doc: %r", filtered_docs[0][:200])
     return filtered_docs, filtered_labels_id, filtered_labels_title
+
+
+def _record_from_example(
+    example: dict,
+    extra_fields: Sequence[str] | None,
+) -> Optional[tuple[str, str, str]]:
+    document = assemble_document(example, extra_fields).strip()
+    if not document:
+        return None
+    video_id = str(example.get(SOLUTION_COLUMN) or "")
+    label_id = _canon_vid(video_id)
+    label_title = title_for(video_id) or ""
+    return document, label_id, label_title
 
 
 # ---------------------------------------------------------------------------

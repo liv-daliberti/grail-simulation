@@ -11,6 +11,8 @@ from .evaluate import run_eval
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Create the CLI argument parser for the GPT-4o baseline."""
+
     parser = argparse.ArgumentParser(description="Evaluate GPT-4o on the GRAIL slate dataset.")
     parser.add_argument(
         "--eval_max",
@@ -59,6 +61,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Parse command-line arguments and execute the evaluation routine."""
+
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -71,4 +75,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":  # pragma: no cover
     main()
-

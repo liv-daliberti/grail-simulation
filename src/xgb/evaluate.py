@@ -103,11 +103,14 @@ class PredictionOutcome:
     :vartype candidate_probs: Dict[int, float]
     :ivar best_probability: Probability associated with the predicted option.
     :vartype best_probability: float
-    :ivar known_candidate_seen: Flag indicating whether any slate ids were present in the probability map.
+    :ivar known_candidate_seen:
+        Flag indicating whether any slate ids were present in the probability map.
     :vartype known_candidate_seen: bool
-    :ivar known_candidate_hit: Flag indicating the predicted option matched the ground-truth id and was known.
+    :ivar known_candidate_hit:
+        Flag indicating the predicted option matched the ground-truth id and was known.
     :vartype known_candidate_hit: bool
-    :ivar record_probability: Flag indicating whether ``best_probability`` should be included in aggregates.
+    :ivar record_probability:
+        Flag indicating whether ``best_probability`` should be included in aggregates.
     :vartype record_probability: bool
     :ivar correct: ``True`` when the predicted option matches the gold id.
     :vartype correct: bool
@@ -153,68 +156,85 @@ def run_eval(args) -> None:
     ]
 
     for issue in issues:
-        issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
-        logger.info("[XGBoost] Evaluating issue=%s", issue_slug)
-        ds = filter_dataset_for_issue(base_ds, issue)
-        train_ds = ds[TRAIN_SPLIT]
-        eval_ds = ds[EVAL_SPLIT]
+        _evaluate_issue(args, issue, base_ds, dataset_source, extra_fields)
 
-        if args.fit_model:
-            logger.info("[XGBoost] Training model for issue=%s", issue_slug)
-            train_config = XGBoostTrainConfig(
-                max_train=args.max_train,
-                seed=args.seed,
-                max_features=args.max_features if args.max_features else None,
-                learning_rate=args.xgb_learning_rate,
-                max_depth=args.xgb_max_depth,
-                n_estimators=args.xgb_n_estimators,
-                subsample=args.xgb_subsample,
-                colsample_bytree=args.xgb_colsample_bytree,
-                tree_method=args.xgb_tree_method,
-                reg_lambda=args.xgb_reg_lambda,
-                reg_alpha=args.xgb_reg_alpha,
-            )
-            model = fit_xgboost_model(
-                train_ds,
-                config=train_config,
-                extra_fields=extra_fields,
-            )
-            if args.save_model:
-                save_xgboost_model(model, Path(args.save_model) / issue_slug)
-        elif args.load_model:
-            logger.info("[XGBoost] Loading model for issue=%s", issue_slug)
-            model = load_xgboost_model(Path(args.load_model) / issue_slug)
-        else:
-            raise ValueError("Set either --fit_model or --load_model to obtain an XGBoost model.")
 
-        eval_config = EvaluationConfig(
-            dataset_source=dataset_source,
-            extra_fields=tuple(extra_fields),
-            eval_max=args.eval_max,
-        )
-        metrics, predictions = evaluate_issue(
-            model=model,
-            eval_ds=eval_ds,
-            issue_slug=issue_slug,
-            config=eval_config,
-        )
+def _evaluate_issue(args, issue: str, base_ds, dataset_source: str, extra_fields: List[str]) -> None:
+    issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
+    logger.info("[XGBoost] Evaluating issue=%s", issue_slug)
+    ds = filter_dataset_for_issue(base_ds, issue)
+    train_ds = ds[TRAIN_SPLIT]
+    eval_ds = ds[EVAL_SPLIT]
 
-        out_dir = Path(args.out_dir) / issue_slug
-        if out_dir.exists() and not args.overwrite:
-            raise FileExistsError(f"{out_dir} already exists. Use --overwrite to replace outputs.")
-        ensure_directory(out_dir)
-        with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
-            json.dump(asdict(metrics), handle, indent=2)
-        with open(out_dir / "predictions.jsonl", "w", encoding="utf-8") as handle:
-            for row in predictions:
-                handle.write(json.dumps(row) + "\n")
-        logger.info(
-            "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",
-            issue_slug,
-            metrics.accuracy,
-            metrics.coverage,
-            metrics.evaluated,
+    model = _load_or_train_model(args, issue_slug, train_ds, extra_fields)
+
+    eval_config = EvaluationConfig(
+        dataset_source=dataset_source,
+        extra_fields=tuple(extra_fields),
+        eval_max=args.eval_max,
+    )
+    metrics, predictions = evaluate_issue(
+        model=model,
+        eval_ds=eval_ds,
+        issue_slug=issue_slug,
+        config=eval_config,
+    )
+
+    _write_outputs(args, issue_slug, metrics, predictions)
+    logger.info(
+        "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",
+        issue_slug,
+        metrics.accuracy,
+        metrics.coverage,
+        metrics.evaluated,
+    )
+
+
+def _load_or_train_model(args, issue_slug: str, train_ds, extra_fields: Sequence[str]) -> XGBoostSlateModel:
+    if args.fit_model:
+        logger.info("[XGBoost] Training model for issue=%s", issue_slug)
+        booster_params = XGBoostBoosterParams(
+            learning_rate=args.xgb_learning_rate,
+            max_depth=args.xgb_max_depth,
+            n_estimators=args.xgb_n_estimators,
+            subsample=args.xgb_subsample,
+            colsample_bytree=args.xgb_colsample_bytree,
+            tree_method=args.xgb_tree_method,
+            reg_lambda=args.xgb_reg_lambda,
+            reg_alpha=args.xgb_reg_alpha,
         )
+        train_config = XGBoostTrainConfig(
+            max_train=args.max_train,
+            seed=args.seed,
+            max_features=args.max_features if args.max_features else None,
+            booster=booster_params,
+        )
+        model = fit_xgboost_model(
+            train_ds,
+            config=train_config,
+            extra_fields=extra_fields,
+        )
+        if args.save_model:
+            save_xgboost_model(model, Path(args.save_model) / issue_slug)
+        return model
+
+    if args.load_model:
+        logger.info("[XGBoost] Loading model for issue=%s", issue_slug)
+        return load_xgboost_model(Path(args.load_model) / issue_slug)
+
+    raise ValueError("Set either --fit_model or --load_model to obtain an XGBoost model.")
+
+
+def _write_outputs(args, issue_slug: str, metrics: IssueMetrics, predictions: List[Dict[str, Any]]) -> None:
+    out_dir = Path(args.out_dir) / issue_slug
+    if out_dir.exists() and not args.overwrite:
+        raise FileExistsError(f"{out_dir} already exists. Use --overwrite to replace outputs.")
+    ensure_directory(out_dir)
+    with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
+        json.dump(asdict(metrics), handle, indent=2)
+    with open(out_dir / "predictions.jsonl", "w", encoding="utf-8") as handle:
+        for row in predictions:
+            handle.write(json.dumps(row) + "\n")
 
 
 def evaluate_issue(
@@ -239,58 +259,9 @@ def evaluate_issue(
     :rtype: tuple[IssueMetrics, List[Dict[str, Any]]]
     """
 
-    correct = 0
-    known_candidate_hits = 0
-    known_candidate_total = 0
-    probability_accumulator: List[float] = []
-    predictions: List[Dict[str, Any]] = []
-
-    for index, example in enumerate(eval_ds):
-        if config.eval_max and len(predictions) >= config.eval_max:
-            break
-        outcome = _evaluate_single_example(
-            model=model,
-            example=example,
-            extra_fields=config.extra_fields,
-        )
-
-        if outcome.known_candidate_seen:
-            known_candidate_total += 1
-        if outcome.known_candidate_hit:
-            known_candidate_hits += 1
-        if outcome.record_probability:
-            probability_accumulator.append(outcome.best_probability)
-        if outcome.correct:
-            correct += 1
-
-        predictions.append(
-            {
-                "issue": issue_slug,
-                "index": index,
-                "prediction_index": outcome.prediction_index,
-                "predicted_video_id": outcome.predicted_id,
-                "gold_video_id": outcome.gold_video_id,
-                "correct": outcome.correct,
-                "probabilities": outcome.candidate_probs,
-            }
-        )
-
-    total = len(predictions)
-
-    metrics = IssueMetrics(
-        issue=issue_slug,
-        dataset_source=config.dataset_source,
-        evaluated=total,
-        correct=correct,
-        accuracy=safe_div(correct, total),
-        known_candidate_hits=known_candidate_hits,
-        known_candidate_total=known_candidate_total,
-        coverage=safe_div(known_candidate_hits, known_candidate_total),
-        avg_probability=float(np.mean(probability_accumulator)) if probability_accumulator else 0.0,
-        timestamp=time.time(),
-        extra_fields=tuple(config.extra_fields),
-        xgboost_params=_model_params(model),
-    )
+    records = _collect_prediction_records(model, eval_ds, config)
+    metrics = _summarise_records(records, config, issue_slug, model)
+    predictions = _records_to_predictions(records, issue_slug)
     return metrics, predictions
 
 
@@ -353,6 +324,78 @@ def _evaluate_single_example(
         record_probability=record_probability,
         correct=correct,
     )
+
+
+def _collect_prediction_records(
+    model: XGBoostSlateModel,
+    eval_ds,
+    config: EvaluationConfig,
+) -> List[tuple[int, PredictionOutcome]]:
+    """Return indexed prediction outcomes for the evaluation split."""
+    records: List[tuple[int, PredictionOutcome]] = []
+    for index, example in enumerate(eval_ds):
+        if config.eval_max and len(records) >= config.eval_max:
+            break
+        outcome = _evaluate_single_example(
+            model=model,
+            example=example,
+            extra_fields=config.extra_fields,
+        )
+        records.append((index, outcome))
+    return records
+
+
+def _summarise_records(
+    records: List[tuple[int, PredictionOutcome]],
+    config: EvaluationConfig,
+    issue_slug: str,
+    model: XGBoostSlateModel,
+) -> IssueMetrics:
+    """Aggregate prediction records into an :class:`IssueMetrics` summary."""
+    total = len(records)
+    outcomes = [outcome for _, outcome in records]
+    known_candidate_total = sum(outcome.known_candidate_seen for outcome in outcomes)
+    known_candidate_hits = sum(outcome.known_candidate_hit for outcome in outcomes)
+    probability_values = [
+        outcome.best_probability
+        for outcome in outcomes
+        if outcome.record_probability
+    ]
+    avg_probability = float(np.mean(probability_values)) if probability_values else 0.0
+    correct = sum(outcome.correct for outcome in outcomes)
+    return IssueMetrics(
+        issue=issue_slug,
+        dataset_source=config.dataset_source,
+        evaluated=total,
+        correct=correct,
+        accuracy=safe_div(correct, total),
+        known_candidate_hits=known_candidate_hits,
+        known_candidate_total=known_candidate_total,
+        coverage=safe_div(known_candidate_hits, known_candidate_total),
+        avg_probability=avg_probability,
+        timestamp=time.time(),
+        extra_fields=tuple(config.extra_fields),
+        xgboost_params=_model_params(model),
+    )
+
+
+def _records_to_predictions(
+    records: List[tuple[int, PredictionOutcome]],
+    issue_slug: str,
+) -> List[Dict[str, Any]]:
+    """Serialise prediction records into API-friendly dictionaries."""
+    return [
+        {
+            "issue": issue_slug,
+            "index": index,
+            "prediction_index": outcome.prediction_index,
+            "predicted_video_id": outcome.predicted_id,
+            "gold_video_id": outcome.gold_video_id,
+            "correct": outcome.correct,
+            "probabilities": outcome.candidate_probs,
+        }
+        for index, outcome in records
+    ]
 
 
 def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:

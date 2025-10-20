@@ -1,5 +1,8 @@
 """Prompt construction and example formatting for GPT-4o evaluation."""
 
+# pylint: disable=too-many-return-statements,too-many-branches,too-many-locals
+# pylint: disable=too-many-statements,too-many-nested-blocks,broad-exception-caught
+
 from __future__ import annotations
 
 import json
@@ -73,7 +76,8 @@ def extract_income(example: dict) -> Optional[str]:
     except Exception:
         pass
     if "income_gt50k" in example:
-        return ">$50k household income" if bool(example.get("income_gt50k")) else "≤$50k household income"
+        high_income = bool(example.get("income_gt50k"))
+        return ">$50k household income" if high_income else "≤$50k household income"
     return None
 
 
@@ -269,9 +273,13 @@ def humanise_profile(example: dict) -> str:
             "4": "several times a week",
             "5": "daily",
         }
-        fragments.append(f"watches YouTube {freq_map.get(youtube_freq, 'regularly')}")
+        viewing_phrase = freq_map.get(youtube_freq, "regularly")
+        fragments.append(f"watches YouTube {viewing_phrase}")
 
-    sentence = ", ".join(fragment for fragment in fragments if fragment and not is_nan_like(fragment))
+    sentence_parts = [
+        fragment for fragment in fragments if fragment and not is_nan_like(fragment)
+    ]
+    sentence = ", ".join(sentence_parts)
     return sentence if sentence else "(no profile provided)"
 
 
@@ -378,10 +386,24 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
     if isinstance(trajectory_json, str) and trajectory_json.strip():
         try:
             data = json.loads(trajectory_json)
-            for key in ("current", "now", "active", "playing", "nowPlaying", "currentVideo", "watching"):
+            for key in (
+                "current",
+                "now",
+                "active",
+                "playing",
+                "nowPlaying",
+                "currentVideo",
+                "watching",
+            ):
                 current = data.get(key)
                 if isinstance(current, dict):
-                    title = pick_case_insensitive(current, "title", "video_title", "name", "videoTitle")
+                    title = pick_case_insensitive(
+                        current,
+                        "title",
+                        "video_title",
+                        "name",
+                        "videoTitle",
+                    )
                     video_id = pick_case_insensitive(
                         current,
                         "video_id",
@@ -448,10 +470,39 @@ def _extract_history(
             continue
         row_copy = dict(row)
         row_copy.setdefault("idx", row_copy.get("index", row_copy.get("idx", idx)))
-        row_copy.setdefault("title", pick_case_insensitive(row_copy, "title", "video_title", "name", "videoTitle"))
-        row_copy.setdefault("video_id", pick_case_insensitive(row_copy, "video_id", "id", "videoId", "originId", "origin_id"))
-        row_copy.setdefault("watch_seconds", row_copy.get("watch_seconds") or row_copy.get("watch_time") or row_copy.get("secondsWatched"))
-        row_copy.setdefault("total_length", row_copy.get("total_length") or row_copy.get("total") or row_copy.get("videoLength"))
+        row_copy.setdefault(
+            "title",
+            pick_case_insensitive(
+                row_copy,
+                "title",
+                "video_title",
+                "name",
+                "videoTitle",
+            ),
+        )
+        row_copy.setdefault(
+            "video_id",
+            pick_case_insensitive(
+                row_copy,
+                "video_id",
+                "id",
+                "videoId",
+                "originId",
+                "origin_id",
+            ),
+        )
+        row_copy.setdefault(
+            "watch_seconds",
+            row_copy.get("watch_seconds")
+            or row_copy.get("watch_time")
+            or row_copy.get("secondsWatched"),
+        )
+        row_copy.setdefault(
+            "total_length",
+            row_copy.get("total_length")
+            or row_copy.get("total")
+            or row_copy.get("videoLength"),
+        )
         extracted.append(row_copy)
 
     def _hist_key(entry: dict) -> tuple[int, float]:
@@ -612,14 +663,21 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
     def _is_current(row: dict) -> bool:
         rid = canon_video_id(row.get("video_id") or "")
         rtitle = canon_text(row.get("title") or "")
-        return (now_id_canon and rid == now_id_canon) or (now_title_canon and rtitle == now_title_canon)
+        return (
+            (now_id_canon and rid == now_id_canon)
+            or (now_title_canon and rtitle == now_title_canon)
+        )
 
     prior_sequence = [row for row in prior_sequence if not _is_current(row)]
 
     max_history = int(os.environ.get("GRAIL_MAX_HISTORY", "8"))
-    show_full = str(os.environ.get("GRAIL_HISTORY_FULL", "0")).lower() in {"1", "true", "t", "yes", "y"} or str(
-        os.environ.get("GRAIL_HISTORY_MODE_FULL", "0")
-    ).lower() in {"1", "true", "t", "yes", "y"} or max_history <= 0
+    history_full_env = str(os.environ.get("GRAIL_HISTORY_FULL", "0")).lower()
+    history_full_mode = str(os.environ.get("GRAIL_HISTORY_MODE_FULL", "0")).lower()
+    show_full = (
+        history_full_env in {"1", "true", "t", "yes", "y"}
+        or history_full_mode in {"1", "true", "t", "yes", "y"}
+        or max_history <= 0
+    )
 
     full_history_lines: list[str] = []
     if show_full:
@@ -630,7 +688,12 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
         )
         full_history_lines = _format_history_lines(full_sequence)
 
-    truncated_history_lines = list(reversed(_format_history_lines(prior_sequence)))[:max_history] if prior_sequence else []
+    if prior_sequence:
+        truncated_history_lines = list(
+            reversed(_format_history_lines(prior_sequence))
+        )[:max_history]
+    else:
+        truncated_history_lines = []
 
     slate_pairs = _extract_slate_items(example)
     options_lines: list[str] = []
@@ -663,7 +726,8 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
     user_lines.append("\nOPTIONS:")
     user_lines.extend(options_lines if options_lines else ["(no options provided)"])
     user_lines.append(
-        "\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and return ONLY its NUMBER in <answer>."
+        "\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and"
+        " return ONLY its NUMBER in <answer>."
     )
     user_message = "\n".join(user_lines)
 
@@ -686,4 +750,3 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
             "profile_block": profile_block,
         },
     }
-

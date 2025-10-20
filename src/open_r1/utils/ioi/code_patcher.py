@@ -44,11 +44,11 @@ def fix_python3_imports(source_code):
 
     lines = source_code.splitlines()
     last_import = max(
-        [
+        (
             i
             for i, line in enumerate(lines)
             if line.strip().startswith("import") or (line.strip().startswith("from") and "import" in line)
-        ],
+        ),
         default=0,
     )
     import_section = "\n".join(lines[: last_import + 1])

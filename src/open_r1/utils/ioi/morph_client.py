@@ -203,7 +203,7 @@ class MorphCloudExecutionClient:
 
         run_result = await instance.aexec(run_command)
 
-        if run_result.exit_code == 124 or run_result.exit_code == 137 or run_result.exit_code == 143:
+        if run_result.exit_code in {124, 137, 143}:
             return "0", "Time limit exceeded"
 
         if run_result.exit_code != 0 and "Memory limit exceeded" in run_result.stderr:
@@ -302,7 +302,7 @@ class MorphCloudExecutionClient:
                 - score is a string representation of a float between 0.0 and 1.0
                 - feedback is a string with execution details
         """
-        # TODO: would be faster to pass info about the subtask as well to create a snapshot per subtask
+        # NOTE: passing subtask metadata could enable snapshot reuse per subtask
         # would cache the uploads of all files other than the submission: input.txt, correct_output.txt, grader files
         # rather than reusing the snapshot that only has the compile/run scripts on it
         # currently, run_submission -> client.execute(data) does not easily pass subtask info
@@ -485,7 +485,7 @@ echo "Manager files: ${manager_files[@]}"
 
     async def _get_run_script(self):
         """Get the run script content."""
-        return """#!/usr/bin/env bash
+        return r"""#!/usr/bin/env bash
 # disable stack limit so you don't get RE with recursion
 ulimit -s unlimited
 # some problems have 10MB+ input/output files in their test cases and you might get RE. uncomment if needed

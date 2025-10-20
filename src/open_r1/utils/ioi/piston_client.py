@@ -5,6 +5,7 @@ import re
 import subprocess
 from collections import Counter
 from functools import lru_cache
+from typing import Union
 
 import aiohttp
 
@@ -23,8 +24,8 @@ def get_piston_client_from_env(session=None):
     piston_endpoints = sorted(
         piston_endpoints.split(",") if piston_endpoints != "slurm" else get_slurm_piston_endpoints()
     )
-    gpu_nb = int(os.getenv("LOCAL_RANK", 0))  # per‑GPU index
-    world = int(os.getenv("WORLD_SIZE", 1))  # total GPUs
+    gpu_nb = int(os.getenv("LOCAL_RANK", "0"))  # per‑GPU index
+    world = int(os.getenv("WORLD_SIZE", "1"))  # total GPUs
     if world > 1:
         print(f"Using a subset of piston endpoints for GPU#{gpu_nb}")
         piston_endpoints = piston_endpoints[gpu_nb::world]
@@ -34,7 +35,7 @@ def get_piston_client_from_env(session=None):
 
 
 class PistonClient:
-    """
+    r"""
     A client that will automatically load balance across multiple Piston (https://github.com/engineer-man/piston) workers.
     This assumes piston is running our custom cms_ioi package: https://github.com/guipenedo/piston/releases/
     We recommend starting the instances with the following script as otherwise some IOI problems will hit default limits:
@@ -58,7 +59,7 @@ class PistonClient:
 
     def __init__(
         self,
-        base_endpoint: str | list[str] = "http://ip-10-53-80-65:3223/api/v2",
+        base_endpoint: Union[str, list[str]] = "http://ip-10-53-80-65:3223/api/v2",
         session=None,
         max_requests_per_endpoint=1,
     ):
@@ -72,8 +73,8 @@ class PistonClient:
         self.endpoint_tokens = asyncio.Queue(maxsize=max_requests_per_endpoint * len(self.base_endpoints))
 
         for _ in range(max_requests_per_endpoint):
-            for base_endpoint in self.base_endpoints:
-                self.endpoint_tokens.put_nowait(base_endpoint)
+            for endpoint in self.base_endpoints:
+                self.endpoint_tokens.put_nowait(endpoint)
         self._endpoint_failures = Counter()
         self._unhealthy_endpoints = set()
         self._endpoint_failures_lock = asyncio.Lock()
@@ -135,10 +136,11 @@ class PistonClient:
                     raise PistonError("All endpoints are unhealthy. Please check your Piston workers.")
 
     async def send_execute(self, data, language="cms_ioi", max_retries=5):
-        data = data | {
+        payload = {
             "language": language,
             "version": "*",
         }
+        data = {**(data or {}), **payload}
 
         base_delay = 1.0
 
@@ -202,7 +204,10 @@ def get_slurm_piston_endpoints():
     """Get list of active piston worker endpoints from squeue output"""
     # Run squeue command to get job name, hostname and status, filtering for RUNNING state
     result = subprocess.run(
-        ["squeue", '--format="%j %N %T"', "--noheader", "--states=RUNNING"], capture_output=True, text=True
+        ["squeue", '--format="%j %N %T"', "--noheader", "--states=RUNNING"],
+        capture_output=True,
+        text=True,
+        check=True,
     )
 
     # Split output into lines and skip header

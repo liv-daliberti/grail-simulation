@@ -8,7 +8,7 @@ same viewer attributes and survey responses.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Set
 
 # ---------------------------------------------------------------------------
 # Feature definitions mirroring prompt_builder.py
@@ -199,3 +199,14 @@ FEATURE_LABELS: Dict[str, str] = {
     "gun_policy": "Gun policy stance",
     "gun_identity": "Gun identity strength",
 }
+
+CORE_PARTICIPANT_STUDIES: Set[str] = {"study1", "study2", "study3"}
+CORE_PROMPT_ISSUES: Set[str] = {"gun_control", "minimum_wage"}
+
+__all__ = [
+    "PROMPT_FEATURE_GROUPS",
+    "DEMOGRAPHIC_FEATURE_KEYS",
+    "FEATURE_LABELS",
+    "CORE_PARTICIPANT_STUDIES",
+    "CORE_PROMPT_ISSUES",
+]

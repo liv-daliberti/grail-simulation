@@ -19,6 +19,7 @@ from .plotting import (
 )
 from .utils import (
     SeriesPair,
+    canonical_slate_items,
     categorical_summary,
     clean_viewer_profile,
     convert_numeric,
@@ -175,7 +176,7 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     train_df: pd.DataFrame,
     val_df: pd.DataFrame,
     figures_dir: Path,
-) -> Tuple[Dict[str, int], Path]:
+) -> Tuple[Dict[str, Dict[str, float]], Path]:
     """Report rows missing all demographic feature columns and render a bar chart."""
 
     demo_columns = [
@@ -187,7 +188,7 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     def _demo_missing_series(df: pd.DataFrame) -> pd.Series:
         existing = [col for col in demo_columns if col in df.columns]
         if not existing:
-            return pd.Series([True] * len(df), index=df.index)
+            return pd.Series([False] * len(df), index=df.index)
         return df[existing].apply(
             lambda row: all(is_nanlike(row.get(col)) for col in existing),
             axis=1,
@@ -195,26 +196,49 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
 
     train_missing = _demo_missing_series(train_df)
     val_missing = _demo_missing_series(val_df)
-    counts = {
-        "train": int(train_missing.sum()),
-        "validation": int(val_missing.sum()),
+
+    def _summary(df: pd.DataFrame, mask: pd.Series) -> Dict[str, float]:
+        total = int(len(df))
+        missing = int(mask.sum())
+        share = float(missing) / float(total) if total else 0.0
+        return {"missing": missing, "total": total, "share": share}
+
+    train_summary = _summary(train_df, train_missing)
+    val_summary = _summary(val_df, val_missing)
+    overall_total = int(train_summary["total"] + val_summary["total"])
+    overall_missing = int(train_summary["missing"] + val_summary["missing"])
+    overall_share = (overall_missing / overall_total) if overall_total else 0.0
+
+    summaries = {
+        "train": train_summary,
+        "validation": val_summary,
+        "overall": {
+            "missing": overall_missing,
+            "total": overall_total,
+            "share": overall_share,
+        },
     }
 
     fig_path = figures_dir / "demographic_missing_counts.png"
     fig, ax = plt.subplots(figsize=(5, 4))
-    splits = list(counts.keys())
-    values = [counts[split] for split in splits]
+    splits = ["train", "validation"]
+    values = [summaries[split]["share"] * 100 for split in splits]
     ax.bar(splits, values, color=["#2ca02c", "#d62728"], alpha=0.85)
     ax.set_title("Rows missing all demographic fields")
-    ax.set_ylabel("Count")
-    if values:
-        offset = max(values) * 0.02 or 0.5
-        for idx, val in enumerate(values):
-            ax.text(idx, val + offset, str(val), ha="center")
+    ax.set_ylabel("Percent of rows missing")
+    upper_bound = max(values) if values else 0.0
+    offset = upper_bound * 0.05 if upper_bound else 1.0
+    for idx, split in enumerate(splits):
+        data = summaries[split]
+        label = (
+            f"{values[idx]:.1f}% "
+            f"({int(data['missing'])}/{int(data['total'])})"
+        )
+        ax.text(idx, values[idx] + offset, label, ha="center")
     fig.tight_layout()
     fig.savefig(fig_path, dpi=150)
     plt.close(fig)
-    return counts, fig_path
+    return summaries, fig_path
 
 
 def unique_content_counts(
@@ -230,17 +254,38 @@ def unique_content_counts(
         cleaned = series.dropna().astype(str).str.strip().replace("", np.nan).dropna()
         return int(cleaned.nunique())
 
+    def _canonical_slates(df: pd.DataFrame) -> pd.Series:
+        column = df.get("slate_items_json")
+        if column is None or column.empty:
+            column = df.get("slate_items")
+        if column is None or column.empty:
+            return pd.Series([], dtype=object)
+        normalized = column.dropna().map(canonical_slate_items)
+        return normalized.dropna()
+
+    def _candidate_video_count(slate_series: pd.Series) -> int:
+        candidates = set()
+        for entry in slate_series:
+            candidates.update(entry)
+        return len(candidates)
+
     def _counts_for_split(df: pd.DataFrame) -> Dict[str, int]:
+        slates = _canonical_slates(df)
+        slate_count = int(slates.nunique()) if not slates.empty else 0
         return {
             "current_video_ids": _count_unique(df, "current_video_id"),
             "gold_video_ids": _count_unique(df, "gold_id"),
-            "slate_texts": _count_unique(df, "slate_text"),
+            "candidate_video_ids": _candidate_video_count(slates) if not slates.empty else 0,
+            "slate_combinations": slate_count,
+            "prompt_texts": _count_unique(df, "prompt"),
             "state_texts": _count_unique(df, "state_text"),
         }
 
+    combined_df = pd.concat([train_df, val_df], ignore_index=True)
     return {
         "train": _counts_for_split(train_df),
         "validation": _counts_for_split(val_df),
+        "overall": _counts_for_split(combined_df),
     }
 
 

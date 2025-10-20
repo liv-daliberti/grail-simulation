@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import asdict, dataclass, field
-from typing import Union
+from typing import Optional
 
 from .ioi_utils import load_ioi_tests
 from .piston_client import PistonClient, PistonError
@@ -56,7 +56,9 @@ class SubtaskResult:
             str: The status with the highest priority (lowest value)
         """
         status_prios = {"CE": -1, "RE": 0, "WA": 1, "MLE": 2, "TLE": 3, "PA": 4, "AC": 5, "SKIPPED": 999}
-        return min([x.status for x in self.test_results], key=lambda x: status_prios[x])
+        if not self.test_results:
+            return "SKIPPED"
+        return min((result.status for result in self.test_results), key=status_prios.__getitem__)
 
     @property
     def score(self):
@@ -69,7 +71,7 @@ class SubtaskResult:
         return (
             0
             if not self.test_results
-            else round(min([test_result.score for test_result in self.test_results]), self.score_precision)
+            else round(min(test_result.score for test_result in self.test_results), self.score_precision)
         )
 
     @property
@@ -84,7 +86,8 @@ class SubtaskResult:
             0
             if not self.test_results
             else round(
-                min([test_result.score for test_result in self.test_results]) * self.points, self.score_precision
+                min(test_result.score for test_result in self.test_results) * self.points,
+                self.score_precision,
             )
         )
 
@@ -119,20 +122,20 @@ def _extract_single_status(score: float, feedback: str) -> str:
         str: Status code ('CE', 'MLE', 'TLE', 'WA', 'RE', 'AC', or 'PA')
     """
     if score == 0.0:
-        if "Compilation error" in feedback:
-            return "CE"
-        elif "Memory limit exceeded" in feedback:
-            return "MLE"
-        elif "Time limit exceeded" in feedback:
-            return "TLE"
-        elif "Output isn't correct" in feedback:
-            return "WA"
-        else:
-            return "RE"
-    elif score == 1.0:
+        feedback_text = feedback or ""
+        failure_map = {
+            "Compilation error": "CE",
+            "Memory limit exceeded": "MLE",
+            "Time limit exceeded": "TLE",
+            "Output isn't correct": "WA",
+        }
+        for hint, status in failure_map.items():
+            if hint in feedback_text:
+                return status
+        return "RE"
+    if score == 1.0:
         return "AC"
-    else:
-        return "PA"
+    return "PA"
 
 
 async def score_single_test_case(
@@ -165,7 +168,7 @@ async def score_subtask(
     client: PistonClient,
     subtask: dict,
     submission: str,
-    test_case_run_cache: Union[dict, None] = None,
+    test_case_run_cache: Optional[dict] = None,
     test_batch_size: int = 1,
 ) -> SubtaskResult:
     """
@@ -215,7 +218,7 @@ async def score_subtask(
     if "test_cases" in subtask:
         test_cases = subtask["test_cases"]
         if isinstance(subtask["test_cases"], list):
-            test_cases = {test_name: test for test_name, test in zip(subtask["test_names"], subtask["test_cases"])}
+            test_cases = dict(zip(subtask["test_names"], subtask["test_cases"]))
     else:
         test_cases = load_ioi_tests(subtask["year"], subtask["id"])
 
@@ -265,7 +268,11 @@ async def score_subtasks(
 
 
 async def run_submission(
-    client: PistonClient, problem: dict, test_input: str, submission: str, test_output: str | None = None
+    client: PistonClient,
+    problem: dict,
+    test_input: str,
+    submission: str,
+    test_output: Optional[str] = None,
 ) -> tuple[str, str]:
     """
     Executes a submission against a test case using the Piston execution environment.
@@ -309,27 +316,29 @@ async def execute_ioi(client, data) -> tuple[str, str]:
     if "message" in response:
         raise PistonError(response["message"])
 
-    if "compile" in response and response["compile"]["code"] != 0:
-        return "0", "Compilation error exit code " + str(response["compile"]["code"]) + "\n" + response["compile"][
-            "stderr"
-        ]
+    compile_result = response.get("compile")
+    if compile_result and compile_result["code"] != 0:
+        return (
+            "0",
+            f"Compilation error exit code {compile_result['code']}\n{compile_result['stderr']}",
+        )
 
     if "run" not in response:
         raise PistonError(response)
 
-    if response["run"]["code"] == 1 and "MemoryError" in response["run"]["stderr"]:
+    run_result = response["run"]
+    if run_result["code"] == 1 and "MemoryError" in run_result["stderr"]:
         return "0", "Memory limit exceeded"
 
-    # successful result
-    if response["run"]["stdout"]:
-        return response["run"]["stdout"], response["run"]["stderr"]
-
-    if response["run"]["signal"] == "SIGKILL":
-        return "0", "Time limit exceeded"
-
-    # other issues
-    if response["run"]["code"] != 0:
+    if run_result["stdout"]:
+        score, feedback = run_result["stdout"], run_result["stderr"]
+    elif run_result["signal"] == "SIGKILL":
+        score, feedback = "0", "Time limit exceeded"
+    elif run_result["code"] != 0:
         raise PistonError(
-            f"language={response['language']}, version={response['version']}, exit code={response['run']['code']}, stderr={response['run']['stderr']}, signal={response['run']['signal']}"
+            f"language={response['language']}, version={response['version']}, "
+            f"exit code={run_result['code']}, stderr={run_result['stderr']}, signal={run_result['signal']}"
         )
-    return "0", "Unknown error"
+    else:
+        score, feedback = "0", "Unknown error"
+    return score, feedback

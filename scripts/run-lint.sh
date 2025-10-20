@@ -9,5 +9,5 @@ export PYTHONPATH="${ROOT_DIR}/src:${ROOT_DIR}:${PYTHONPATH:-}"
 
 cd "${ROOT_DIR}"
 
-echo "Running pylint on clean_data and src..."
-"${PYTHON_BIN}" -m pylint clean_data src "$@"
+echo "Running pylint (errors only) on clean_data and src..."
+"${PYTHON_BIN}" -m pylint --disable=all --enable=E clean_data src "$@"

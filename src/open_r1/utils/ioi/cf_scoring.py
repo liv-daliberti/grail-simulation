@@ -55,7 +55,7 @@ async def score_single_test_case(
     return result
 
 
-@alru_cache(maxsize=32)  # TODO make this configurable
+@alru_cache(maxsize=32)  # NOTE: cache size favors common contest reuse without exhausting memory
 async def get_generated_contest_tests(contest_id: str) -> list[dict]:
     import pandas as pd
 

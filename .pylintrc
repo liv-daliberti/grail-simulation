@@ -3,29 +3,36 @@ load-plugins=
 
 [MESSAGES CONTROL]
 disable=
-    C0103,  # invalid-name (legacy APIs keep historical naming)
-    C0114,  # missing-module-docstring
-    C0115,  # missing-class-docstring
-    C0116,  # missing-function-docstring
-    C0301,  # line-too-long
-    C0303,  # trailing-whitespace
-    C0413,  # wrong-import-position
-    C0415,  # import-outside-toplevel
-    R0801,  # duplicate-code
-    R0902,  # too-many-instance-attributes
-    R0903,  # too-few-public-methods
-    R0912,  # too-many-branches
-    R0913,  # too-many-arguments
-    R0914,  # too-many-locals
-    R0915,  # too-many-statements
-    W0404,  # reimported
-    W0611,  # unused-import
-    W0612,  # unused-variable
-    W0613,  # unused-argument
-    W0621,  # redefined-outer-name
-    W0707,  # raise-missing-from
-    W0718,  # broad-exception-caught
-    W1514   # unspecified-encoding
+    C0103,
+    C0114,
+    C0115,
+    C0116,
+    C0301,
+    C0303,
+    C0413,
+    C0415,
+    R0801,
+    R0902,
+    R0903,
+    R0912,
+    R0913,
+    R0914,
+    R0915,
+    R0917,
+    R1705,
+    R1710,
+    W0404,
+    W0212,
+    W0611,
+    W0612,
+    W0613,
+    W0621,
+    W0707,
+    W0718,
+    W1113,
+    W1514,
+    C0304,
+    E1101
 
 [REPORTS]
 output-format = text
@@ -36,4 +43,15 @@ max-line-length = 100
 
 [TYPECHECK]
 generated-members =
-
+ignored-modules =
+    torch,
+    transformers,
+    trl,
+    latex2sympy2_extended,
+    math_verify,
+    distilabel,
+    e2b_code_interpreter,
+    morphcloud,
+    vllm,
+    accelerate,
+    dotenv

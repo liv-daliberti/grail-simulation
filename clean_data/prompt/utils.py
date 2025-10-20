@@ -15,7 +15,15 @@ import numpy as np
 import pandas as pd
 from datasets import DatasetDict, load_dataset, load_from_disk
 
-from ..prompt_constants import FEATURE_LABELS
+from ..helpers import _as_list_json
+from ..prompt_constants import (
+    CORE_PARTICIPANT_STUDIES,
+    CORE_PROMPT_ISSUES,
+    FEATURE_LABELS,
+)
+
+CORE_STUDIES_LOWER = {value.lower() for value in CORE_PARTICIPANT_STUDIES}
+CORE_ISSUES_LOWER = {value.lower() for value in CORE_PROMPT_ISSUES}
 
 
 @dataclass
@@ -65,6 +73,63 @@ class SeriesPair:
                 continue
             data.append((issue_name, train_subset, val_subset))
         return data
+
+
+def core_prompt_mask(df: pd.DataFrame) -> pd.Series:
+    """Return a boolean mask selecting rows from core studies and issues."""
+
+    if df.empty:
+        return pd.Series([], dtype=bool)
+
+    mask = pd.Series([True] * len(df), index=df.index)
+
+    if "participant_study" in df.columns:
+        studies = df["participant_study"].fillna("").astype(str).str.lower()
+        mask &= studies.isin(CORE_STUDIES_LOWER)
+
+    if "issue" in df.columns:
+        issues = df["issue"].fillna("").astype(str).str.lower()
+        mask &= issues.isin(CORE_ISSUES_LOWER)
+
+    return mask
+
+
+def filter_core_prompt_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Filter a dataframe down to the core studies/issues used in reporting."""
+    if df.empty:
+        return df.copy()
+    mask = core_prompt_mask(df)
+    return df.loc[mask].copy()
+
+
+def canonical_slate_items(value: Any) -> Optional[Tuple[str, ...]]:
+    """Normalize a slate representation to a tuple of video ids."""
+
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return None
+    if isinstance(value, np.ndarray):
+        items: Any = value.tolist()
+    else:
+        items = value
+    if not isinstance(items, list):
+        items = _as_list_json(items)
+    if not isinstance(items, list):
+        return None
+
+    identifiers: List[str] = []
+    for entry in items:
+        candidate: Any = entry
+        if isinstance(entry, dict):
+            candidate = entry.get("id") or entry.get("video_id")
+        elif isinstance(entry, (list, tuple)) and entry:
+            candidate = entry[0]
+        text = str(candidate or "").strip()
+        if text:
+            identifiers.append(text)
+
+    if not identifiers:
+        return None
+    return tuple(identifiers)
 
 
 def ensure_dir(path: Path) -> None:
@@ -172,7 +237,7 @@ def count_prior_history(row: pd.Series) -> int:
     watched_ids = row.get("watched_vids_json")
     watched_det = row.get("watched_detailed_json")
 
-    def _coerce_sequence(value: Any) -> List[str]:
+    def _coerce_sequence(value: Any) -> List[Any]:
         if value is None or (isinstance(value, float) and np.isnan(value)):
             return []
         if isinstance(value, list):
@@ -181,7 +246,8 @@ def count_prior_history(row: pd.Series) -> int:
             return list(value)
         if isinstance(value, np.ndarray):
             return value.tolist()
-        return []
+        parsed = _as_list_json(value)
+        return parsed if isinstance(parsed, list) else []
 
     watched_ids = _coerce_sequence(watched_ids)
     watched_det = _coerce_sequence(watched_det)
@@ -326,6 +392,9 @@ def participant_stats(df: pd.DataFrame) -> Dict[str, Any]:
 
 __all__ = [
     "SeriesPair",
+    "core_prompt_mask",
+    "filter_core_prompt_rows",
+    "canonical_slate_items",
     "ensure_dir",
     "load_dataset_any",
     "is_nanlike",

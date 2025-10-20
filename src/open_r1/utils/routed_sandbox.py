@@ -76,7 +76,9 @@ class RoutedSandbox:
         }
 
         # Send the request to the E2B Router
-        response = requests.post(f"http://{self.router_url}/execute_batch", json=payload)
+        response = requests.post(
+            f"http://{self.router_url}/execute_batch", json=payload, timeout=request_timeout
+        )
         if not response.ok:
             print(f"Request failed with status code: {response.status_code}")
 

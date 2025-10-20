@@ -1,34 +1,27 @@
+"""Hierarchical rollout utilities extending the GRPO trainer."""
+
+# pylint: disable=no-member
+
 import re
+from contextlib import nullcontext
+from typing import Any, List, Optional, Tuple, Union
+
 import torch
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.nn.utils.rnn import pad_sequence
 
+from accelerate.utils import broadcast_object_list, gather_object
+from transformers import PreTrainedTokenizerBase, Trainer, TrainerCallback
+from transformers.generation.utils import GenerationMixin
+from transformers.integrations import WandbCallback
+from transformers.tokenization_utils_base import PaddingStrategy
+from transformers.utils import is_flash_attn_2_available
+from trl import GRPOTrainer
+from trl.data_utils import is_conversational, maybe_apply_chat_template
+from trl.extras.profiling import profiling_context
+from trl.trainer.grpo_trainer import pad, unwrap_model_for_generation
 from vllm import SamplingParams
 from vllm.sampling_params import GuidedDecodingParams
-
-from transformers.utils import is_flash_attn_2_available
-
-import torch
-from typing import Optional, Any, Tuple, List, Union
-
-from transformers.generation.utils import GenerationMixin
-from transformers import PreTrainedTokenizerBase
-
-# TRL trainer subclass
-from trl import GRPOTrainer
-from transformers.integrations import WandbCallback
-from transformers import TrainerCallback
-
-# needed inside _generate_and_score_completions
-from accelerate.utils import broadcast_object_list, gather_object
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from contextlib import nullcontext
-from trl.extras.profiling import profiling_context
-from trl.trainer.grpo_trainer import unwrap_model_for_generation, pad
-from trl.data_utils import maybe_apply_chat_template
-from trl.data_utils import is_conversational
-from transformers import Trainer
-from transformers.tokenization_utils_base import PaddingStrategy
-import re
 
 
 
@@ -225,6 +218,8 @@ class HierarchicalGRPOTrainer(GRPOTrainer):
             for row, mask_row in zip(completion_ids, comp_mask)
         ]
         comp_lens = comp_mask.sum(1)
+        completion_mask = comp_mask
+        completion_lengths = comp_lens
         if self.mask_truncated_completions:
             truncated = ~is_eos.any(dim=1)
             comp_mask *= (~truncated).unsqueeze(1).int()
@@ -317,7 +312,7 @@ class HierarchicalGRPOTrainer(GRPOTrainer):
         for i, reward_func_name in enumerate(self.reward_func_names):
             mean_rewards = torch.nanmean(rewards_per_func[:, i]).item()
             self._metrics[mode][f"rewards/{reward_func_name}/mean"].append(mean_rewards)
-            std_rewards = nanstd(rewards_per_func[:, i]).item()
+            std_rewards = torch.nanstd(rewards_per_func[:, i]).item()
             self._metrics[mode][f"rewards/{reward_func_name}/std"].append(std_rewards)
         self._metrics[mode]["reward"].append(mean_grouped_rewards.mean().item())
         self._metrics[mode]["reward_std"].append(std_grouped_rewards.mean().item())

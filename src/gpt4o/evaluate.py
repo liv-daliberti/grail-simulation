@@ -15,6 +15,8 @@ from typing import Any, Dict, Optional
 import numpy as np
 from datasets import DownloadConfig, load_dataset
 
+from common.eval_utils import safe_div
+
 from .client import ds_call
 from .config import DATASET_NAME, DEPLOYMENT_NAME, EVAL_SPLIT
 from .conversation import make_conversation_record
@@ -66,10 +68,6 @@ def _parse_index_from_output(raw: str) -> Optional[int]:
             except Exception:
                 return None
     return None
-
-
-def _safe_div(numerator: float, denominator: float) -> float:
-    return (numerator / denominator) if denominator else 0.0
 
 
 def _ensure_output_dir(output_dir: Path, overwrite: bool) -> None:
@@ -272,29 +270,29 @@ def run_eval(args: Any) -> None:
 
             if seen_rows % 25 == 0:
                 elapsed = time.time() - start_time
-                accuracy = _safe_div(correct_overall, eligible_overall)
+                accuracy = safe_div(correct_overall, eligible_overall)
                 denom = n_eval_target if n_eval_target is not None else seen_rows
                 logging.info(
                     "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
                     seen_rows,
                     denom,
                     accuracy,
-                    _safe_div(parsed_ok, seen_rows),
-                    _safe_div(format_ok, seen_rows),
+                    safe_div(parsed_ok, seen_rows),
+                    safe_div(format_ok, seen_rows),
                     elapsed,
                 )
 
     total_seen = seen_rows
-    overall_accuracy = _safe_div(correct_overall, eligible_overall)
-    format_rate = _safe_div(format_ok, total_seen)
-    parsed_rate = _safe_div(parsed_ok, total_seen)
+    overall_accuracy = safe_div(correct_overall, eligible_overall)
+    format_rate = safe_div(format_ok, total_seen)
+    parsed_rate = safe_div(parsed_ok, total_seen)
 
     position_stats = {
         bucket: {
             "n_seen": int(seen_by_pos[bucket]),
             "n_eligible": int(eligible_by_pos[bucket]),
             "correct": int(correct_by_pos[bucket]),
-            "accuracy": _safe_div(correct_by_pos[bucket], eligible_by_pos[bucket]),
+            "accuracy": safe_div(correct_by_pos[bucket], eligible_by_pos[bucket]),
         }
         for bucket in buckets
     }
@@ -304,15 +302,15 @@ def run_eval(args: Any) -> None:
         "hist_eligible": {bucket: int(eligible_by_opts[bucket]) for bucket in opts_buckets},
         "hist_correct": {bucket: int(correct_by_opts[bucket]) for bucket in opts_buckets},
         "accuracy": {
-            bucket: _safe_div(correct_by_opts[bucket], eligible_by_opts[bucket])
+            bucket: safe_div(correct_by_opts[bucket], eligible_by_opts[bucket])
             for bucket in opts_buckets
         },
         "parsed_rate": {
-            bucket: _safe_div(parsed_by_opts[bucket], seen_by_opts[bucket])
+            bucket: safe_div(parsed_by_opts[bucket], seen_by_opts[bucket])
             for bucket in opts_buckets
         },
         "format_rate": {
-            bucket: _safe_div(formatted_by_opts[bucket], seen_by_opts[bucket])
+            bucket: safe_div(formatted_by_opts[bucket], seen_by_opts[bucket])
             for bucket in opts_buckets
         },
     }
@@ -322,17 +320,17 @@ def run_eval(args: Any) -> None:
         "n_multi": int(seen_multi),
         "eligible_single": int(elig_single),
         "eligible_multi": int(elig_multi),
-        "accuracy_single": _safe_div(corr_single, elig_single),
-        "accuracy_multi": _safe_div(corr_multi, elig_multi),
-        "parsed_rate_multi": _safe_div(parsed_multi, max(1, seen_multi)),
-        "format_rate_multi": _safe_div(formatted_multi, max(1, seen_multi)),
+        "accuracy_single": safe_div(corr_single, elig_single),
+        "accuracy_multi": safe_div(corr_multi, elig_multi),
+        "parsed_rate_multi": safe_div(parsed_multi, max(1, seen_multi)),
+        "format_rate_multi": safe_div(formatted_multi, max(1, seen_multi)),
     }
 
     gold_index_distribution = {str(key): int(value) for key, value in sorted(gold_hist.items())}
     if gold_hist:
         top_index = max(gold_hist.items(), key=lambda kv: kv[1])[0]
         baseline_correct = sum(1 for idx in all_gold_indices if idx == top_index)
-        baseline_accuracy = _safe_div(baseline_correct, eligible_overall)
+        baseline_accuracy = safe_div(baseline_correct, eligible_overall)
     else:
         top_index = None
         baseline_accuracy = 0.0

@@ -8,8 +8,11 @@ This helper now detects that schema and decodes it if a tokenizer is passed.
 """
 
 from __future__ import annotations
-import json, time
+
+import json
+import time
 from typing import List, Optional
+
 import requests
 
 
@@ -49,6 +52,18 @@ def _parse_nonstream_json(data: dict, tokenizer=None) -> List[List[str]]:
     raise RuntimeError(f"Unknown vLLM response format: {data}")
 
 
+def _consume_stream_response(response, prompt_count: int) -> List[List[str]]:
+    """Aggregate streamed JSON lines into per-prompt completions."""
+    texts = [[] for _ in range(prompt_count)]
+    for line in response.iter_lines():
+        if not line:
+            continue
+        row = json.loads(line.decode())
+        idx = row.get("prompt_index", 0)
+        texts[idx].append(row["text"])
+    return [["".join(parts)] for parts in texts]
+
+
 # ─────────────────── POST /generate helper ────────────────────────────────────
 def safe_generate(
     *,
@@ -65,25 +80,22 @@ def safe_generate(
     timeout: float = 30.0,
 ) -> List[List[str]]:
     """Robust call to /generate with retry + schema-agnostic decoding."""
-    payload = dict(
-        prompts=prompts, temperature=temperature, top_p=top_p,
-        n=n, max_tokens=max_tokens, stream=stream,
-    )
+    payload = {
+        "prompts": prompts,
+        "temperature": temperature,
+        "top_p": top_p,
+        "n": n,
+        "max_tokens": max_tokens,
+        "stream": stream,
+    }
 
     for attempt in range(max_retries):
         try:
             r = requests.post(url, json=payload, timeout=timeout, stream=stream)
             if r.status_code == 200:
                 if stream:
-                    texts = [[] for _ in prompts]
-                    for line in r.iter_lines():
-                        if line:
-                            row = json.loads(line.decode())
-                            idx = row.get("prompt_index", 0)
-                            texts[idx].append(row["text"])
-                    return [["".join(parts)] for parts in texts]
-                else:
-                    return _parse_nonstream_json(r.json(), tokenizer)
+                    return _consume_stream_response(r, len(prompts))
+                return _parse_nonstream_json(r.json(), tokenizer)
             raise RuntimeError(f"HTTP {r.status_code}: {r.text[:120]}")
         except (requests.ConnectionError, requests.Timeout, RuntimeError) as e:
             if attempt < max_retries - 1:

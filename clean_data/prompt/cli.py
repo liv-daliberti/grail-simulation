@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from collections import Counter
+
 import pandas as pd
 from datasets import DatasetDict
 
@@ -32,7 +34,7 @@ from .summary import (
     summarize_features,
     unique_content_counts,
 )
-from .utils import ensure_dir, load_dataset_any
+from .utils import core_prompt_mask, ensure_dir, load_dataset_any
 
 
 def _validate_dataset(dataset: DatasetDict, train_split: str, validation_split: str) -> None:
@@ -77,8 +79,51 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
     figures_dir = output_dir / "figures"
     ensure_dir(figures_dir)
 
-    train_df = dataset[train_split].to_pandas()
-    val_df = dataset[validation_split].to_pandas()
+    train_raw = dataset[train_split].to_pandas()
+    val_raw = dataset[validation_split].to_pandas()
+
+    train_mask = core_prompt_mask(train_raw)
+    val_mask = core_prompt_mask(val_raw)
+
+    train_df = train_raw.loc[train_mask].reset_index(drop=True)
+    val_df = val_raw.loc[val_mask].reset_index(drop=True)
+
+    def _coverage_stats(df: pd.DataFrame, mask: pd.Series) -> Dict[str, Any]:
+        total = int(len(df))
+        included = int(mask.sum())
+        excluded = total - included
+        breakdown: Dict[str, int] = {}
+        if excluded and "participant_study" in df.columns:
+            study_series = (
+                df.loc[~mask, "participant_study"]
+                .fillna("unknown")
+                .astype(str)
+                .str.lower()
+            )
+            breakdown = {k: int(v) for k, v in study_series.value_counts().items()}
+        return {
+            "total_rows": total,
+            "included_rows": included,
+            "excluded_rows": excluded,
+            "excluded_by_study": breakdown,
+        }
+
+    coverage_train = _coverage_stats(train_raw, train_mask)
+    coverage_val = _coverage_stats(val_raw, val_mask)
+
+    overall_breakdown = Counter(coverage_train["excluded_by_study"])
+    overall_breakdown.update(coverage_val["excluded_by_study"])
+    coverage_overall = {
+        "total_rows": coverage_train["total_rows"] + coverage_val["total_rows"],
+        "included_rows": coverage_train["included_rows"] + coverage_val["included_rows"],
+        "excluded_rows": coverage_train["excluded_rows"] + coverage_val["excluded_rows"],
+        "excluded_by_study": {k: int(v) for k, v in overall_breakdown.items()},
+    }
+    coverage_summary = {
+        "train": coverage_train,
+        "validation": coverage_val,
+        "overall": coverage_overall,
+    }
 
     feature_summary, skipped_features = summarize_features(train_df, val_df, figures_dir)
 
@@ -98,6 +143,7 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
         "demographic_missing_counts": demographic_counts,
         "unique_counts": unique_stats,
         "participant_counts": participant_stats,
+        "coverage_summary": coverage_summary,
         "figures_dir": str(figures_dir),
         "missing_features": skipped_features,
     }
@@ -114,6 +160,7 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
         feature=feature_summary,
         profile=profile_stats,
         counts=counts_bundle,
+        coverage=coverage_summary,
         skipped_features=skipped_features,
     )
     figures = ReportFigures(

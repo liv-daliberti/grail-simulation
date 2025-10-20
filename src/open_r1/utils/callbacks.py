@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from concurrent.futures import Future
 from typing import Dict, List, Optional
 
 import torch
@@ -32,6 +33,7 @@ def _slurm_available() -> bool:
 
 class _DummyCfg:
     def __init__(self, **kw):  # convenience holder for hub + benchmark helpers
+        self.benchmarks = None
         for k, v in kw.items():
             setattr(self, k, v)
 
@@ -55,7 +57,7 @@ class PushToHubRevisionCallback(TrainerCallback):
 
         # lazy import – avoids circular deps if huggingface_hub absent
         from .hub import push_to_hub_revision
-        fut = push_to_hub_revision(dummy, extra_ignore_patterns=["*.pt"])
+        fut: Future = push_to_hub_revision(dummy, extra_ignore_patterns=["*.pt"])
 
         # (optional) spawn benchmark job when the upload finishes
         if _slurm_available():
@@ -64,7 +66,7 @@ class PushToHubRevisionCallback(TrainerCallback):
                 self.log.info("Upload done – submitting benchmark job.")
                 dummy.benchmarks = args.benchmarks
                 run_benchmark_jobs(dummy, self.model_cfg)
-            fut.add_done_callback(_after)
+            fut.add_done_callback(_after)  # pylint: disable=no-member
 
 # ---------------------------------------------------------------------------
 #  Success-caching callback (text-log scraper) -------------------------------

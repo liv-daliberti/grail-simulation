@@ -27,7 +27,7 @@ class ReportCounts:
 
     prior_history: Dict[str, Dict[int, int]]
     n_options: Dict[str, Dict[int, int]]
-    demographic_missing: Dict[str, int]
+    demographic_missing: Dict[str, Dict[str, float]]
     unique_content: Dict[str, Dict[str, int]]
     participant: Dict[str, Dict[str, Any]]
 
@@ -39,6 +39,7 @@ class ReportSummaries:
     feature: Dict[str, Dict[str, Dict[str, float | int]]]
     profile: Dict[str, Dict[str, float]]
     counts: ReportCounts
+    coverage: Dict[str, Dict[str, Any]]
     skipped_features: List[str]
 
 
@@ -91,6 +92,34 @@ def _profile_section(context: ReportContext) -> List[str]:
     ]
 
 
+def _demographic_section(context: ReportContext) -> List[str]:
+    counts = context.summaries.counts.demographic_missing
+    rows: List[List[str]] = []
+    for split in ("train", "validation", "overall"):
+        data = counts.get(split)
+        if not data:
+            continue
+        total = int(data.get("total", 0))
+        missing = int(data.get("missing", 0))
+        share = data.get("share", 0.0) * 100
+        rows.append(
+            [
+                split,
+                str(total),
+                str(missing),
+                f"{share:.2f}%",
+            ]
+        )
+    if not rows:
+        return []
+    return [
+        "## Demographic completeness",
+        "",
+        *_format_table(["Split", "Rows", "Missing all demographics", "Share"], rows),
+        "",
+    ]
+
+
 def _prior_history_section(context: ReportContext) -> List[str]:
     rows: List[List[str]] = []
     counts = context.summaries.counts.prior_history
@@ -121,58 +150,59 @@ def _n_options_section(context: ReportContext) -> List[str]:
 
 def _unique_content_section(context: ReportContext) -> List[str]:
     counts = context.summaries.counts.unique_content
-    lines = [
-        "## Unique content counts",
-        "",
-        "| Split | Current videos | Gold videos | Unique slates | Unique state texts |",
-        "|-------|----------------|-------------|---------------|--------------------|",
-    ]
-    for split in ("train", "validation"):
-        split_counts = counts.get(split, {})
-        lines.append(
-            f"| {split} | {split_counts.get('current_video_ids', 0)} | "
-            f"{split_counts.get('gold_video_ids', 0)} | {split_counts.get('slate_texts', 0)} | "
-            f"{split_counts.get('state_texts', 0)} |"
+    rows: List[List[str]] = []
+    for split in ("train", "validation", "overall"):
+        split_counts = counts.get(split)
+        if not split_counts:
+            continue
+        rows.append(
+            [
+                split,
+                str(split_counts.get("current_video_ids", 0)),
+                str(split_counts.get("gold_video_ids", 0)),
+                str(split_counts.get("candidate_video_ids", 0)),
+                str(split_counts.get("slate_combinations", 0)),
+                str(
+                    split_counts.get(
+                        "prompt_texts",
+                        split_counts.get("state_texts", 0),
+                    )
+                ),
+            ]
         )
-    lines.append("")
-    return lines
+    return [
+        "## Unique content coverage",
+        "",
+        *_format_table(
+            [
+                "Split",
+                "Current videos",
+                "Gold videos",
+                "Candidate videos",
+                "Unique slates",
+                "Prompt texts",
+            ],
+            rows,
+        ),
+        "",
+    ]
 
 
 def _participant_section(context: ReportContext) -> List[str]:
     counts = context.summaries.counts.participant
-    table_rows: List[List[str]] = []
-    for split in ("train", "validation"):
-        split_counts = counts.get(split, {})
-        by_issue = split_counts.get("by_issue_study", {})
-        for issue_name, study_map in sorted(by_issue.items(), key=lambda item: item[0].lower()):
-            for study_name, total in sorted(study_map.items(), key=lambda item: item[0].lower()):
-                table_rows.append([split, issue_name, study_name, str(total)])
-        table_rows.append([split, "all", "all", str(split_counts.get("overall", 0))])
+    rows: List[List[str]] = []
+    for split in ("train", "validation", "overall"):
+        split_counts = counts.get(split)
+        if not split_counts:
+            continue
+        rows.append([split, str(split_counts.get("overall", 0))])
 
-    lines = [
-        "## Unique participants per study and issue",
+    return [
+        "## Unique participants",
         "",
-        *_format_table(["Split", "Issue", "Study", "Participants"], table_rows),
+        *_format_table(["Split", "Participants (all issues)"], rows),
         "",
     ]
-
-    overall_counts = counts.get("overall", {})
-    issue_items = sorted(
-        overall_counts.get("by_issue", {}).items(),
-        key=lambda item: item[0].lower(),
-    )
-    study_items = sorted(
-        overall_counts.get("by_study", {}).items(),
-        key=lambda item: item[0].lower(),
-    )
-
-    lines.append(f"- Overall participants (all issues): {overall_counts.get('overall', 0)}")
-    for issue_name, value in issue_items:
-        lines.append(f"- Overall participants for {issue_name}: {value}")
-    for study_name, value in study_items:
-        lines.append(f"- Overall participants in {study_name}: {value}")
-    lines.append("")
-    return lines
 
 
 def _skipped_features_section(skipped_features: List[str]) -> List[str]:
@@ -249,25 +279,47 @@ def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
 
 
 def _coverage_section(context: ReportContext) -> List[str]:
-    lines = [
-        "## Dataset coverage notes",
-        "",
-        "Builder note: rows missing all survey demographics (age, gender, race, income, etc.)",
-        "are dropped during cleaning so every retained interaction has viewer context.",
-        "This removes roughly 22% of the ~33k raw interactions.",
-        "",
-        '> "The short answer is that sessions.json contains EVERYTHING.',
-        "Every test run, every study.",
-        "In addition to the studies that involved watching videos on the platform,",
-        "it also contains sessions from the “First Impressions” study and the “Shorts” study",
-        "(Study 4 in the paper).",
-        "Those sessions involved no user decisions.",
-        "Instead they played predetermined videos that were",
-        "either constant or increasing in their extremeness.",
-        'All are differentiated by the topicId." — Emily Hu (University of Pennsylvania)',
-        "",
-    ]
-
+    coverage = context.summaries.coverage
+    lines = ["## Dataset coverage notes", ""]
+    lines.append(
+        "Statistics and charts focus on the core study sessions (study1–study3) "
+        "covering the `gun_control` and `minimum_wage` issues."
+    )
+    lines.append("")
+    for split in ("train", "validation"):
+        stats = coverage.get(split, {})
+        total = int(stats.get("total_rows", 0))
+        included = int(stats.get("included_rows", 0))
+        excluded = int(stats.get("excluded_rows", 0))
+        share = (included / total * 100) if total else 0.0
+        message = (
+            f"- {split.title()}: {included} of {total} rows retained "
+            f"({share:.1f}% coverage)"
+        )
+        if excluded:
+            breakdown = stats.get("excluded_by_study", {})
+            if breakdown:
+                parts = ", ".join(
+                    f"{study}: {count}"
+                    for study, count in sorted(breakdown.items(), key=lambda item: item[0])
+                )
+                message += f"; excluded rows from {parts}"
+        lines.append(message)
+    lines.append("")
+    lines.extend(
+        [
+            '> "The short answer is that sessions.json contains EVERYTHING.',
+            "Every test run, every study.",
+            "In addition to the studies that involved watching videos on the platform,",
+            "it also contains sessions from the “First Impressions” study and the “Shorts” study",
+            "(Study 4 in the paper).",
+            "Those sessions involved no user decisions.",
+            "Instead they played predetermined videos that were",
+            "either constant or increasing in their extremeness.",
+            'All are differentiated by the topicId." — Emily Hu (University of Pennsylvania)',
+            "",
+        ]
+    )
     overall_counts = context.summaries.counts.participant.get("overall", {})
     lines.extend(_shortfall_lines(overall_counts))
     return lines
@@ -279,9 +331,18 @@ def build_markdown_report(context: ReportContext) -> List[str]:
     lines: List[str] = [
         "# Prompt feature report",
         "",
-        f"Figures directory: `{_relative_path(context.figures_dir, context.output_dir)}`",
-        "",
     ]
+
+    coverage_section = _coverage_section(context)
+    if coverage_section:
+        lines.extend(coverage_section)
+
+    lines.extend(
+        [
+            f"Figures directory: `{_relative_path(context.figures_dir, context.output_dir)}`",
+            "",
+        ]
+    )
 
     figure_paths = [
         ("Prior history distribution", context.figures.prior_history),
@@ -293,13 +354,13 @@ def build_markdown_report(context: ReportContext) -> List[str]:
         lines.extend([f"![{caption}]({rel_path})", ""])
 
     for section in (
+        _demographic_section(context),
         _profile_section(context),
         _prior_history_section(context),
         _n_options_section(context),
         _unique_content_section(context),
         _participant_section(context),
         _skipped_features_section(context.summaries.skipped_features),
-        _coverage_section(context),
     ):
         if section:
             lines.extend(section)

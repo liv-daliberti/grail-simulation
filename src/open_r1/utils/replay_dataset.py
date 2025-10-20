@@ -1,6 +1,6 @@
-import torch
+import copy
+
 from torch.utils.data import Dataset
-import os, random, copy, torch
 
 
 class ReplayMixDataset(Dataset):

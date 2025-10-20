@@ -40,3 +40,28 @@ Replication notes: opinion indices are scaled to [0, 1] and computed from the sa
 
 Pooled regression (control-adjusted) β̂ ≈ 0.018 with p ≈ 1.33e-11.
 
+### Alignment with Liu et al. (2025)
+
+- **Small average pre→post shifts:** Mean attitude changes in our Study 1–3 replications (+0.028, +0.036, +0.022 on a 0–1 index) match the paper’s qualitative takeaway that short-term perturbations yielded minimal opinion movement. This mirrors the across-study plots in Liu et al. (2025) that cluster around zero system effects.
+- **Study coverage:** Our analyses focus on Studies 1–3 (gun control plus two minimum wage panels on MTurk and YouGov), which is the same filter-bubble subset summarized in Fig. 1 of the paper.
+
+### Divergence from Liu et al. (2025)
+
+- **Estimand and pooling vs. stratification:** We report a single pooled treatment coefficient (balanced 2/2 vs. slanted 3/1) with baseline opinion and study fixed effects, yielding β̂ ≈ +0.018 (p ≈ 1.3e-11). Liu et al. (2025) instead estimate algorithm effects separately for ideologues and for moderates split by liberal vs. conservative seed, then apply false-discovery-rate adjustments across outcome families. In their stratified framework most attitude effects are indistinguishable from zero; observable positives are small (≈ +0.03 among conservative ideologues in Study 3; ≈ +0.05 among moderates in Study 3 with a conservative seed).
+- **Study-level pattern (Study 2):** Our Study 2 aggregation shows control Δ = −0.007 vs. treatment Δ = +0.034. After stratifying by ideology and seed, the published Study 2 effects sit near zero, with Study 3 driving the larger subgroup estimates.
+- **Inference philosophy:** We emphasize a precise pooled p-value. The paper focuses on effect magnitudes and consistency across preregistered cells, highlighting minimum detectable effects of roughly 0.02–0.04 and concluding that algorithmic attitude shifts, if present, are modest.
+- **Sample coverage:** Our analytic Ns (Study 1 = 1,517; Study 2 = 1,607/1,647; Study 3 = 2,715) fall slightly below the published counts (1,650; 1,679; 2,715), reflecting session drop-offs (e.g., missing slate metadata for Study 1). Without stratification, small composition differences can tilt the pooled estimate.
+
+### Bottom line
+
+Substantively, our replication agrees with Liu et al. (2025): short-term algorithmic slanting produced limited polarization. Numerically, we highlight a statistically precise pooled shift (+0.018), whereas the paper reports stratified, FDR-adjusted results that stay mostly null with small positives confined to Study 3 subgroups.
+
+### Matching the paper’s reporting frame
+
+To align perfectly with the published tables:
+
+1. Re-estimate effects within {ideologues} and {moderates × seed ∈ {liberal, conservative}} for each study.
+2. Include the preregistered covariates and apply the paper’s multiple-testing correction by outcome family.
+3. Report confidence intervals alongside minimum detectable effects (≈ 0.02–0.04) to anchor interpretation.
+
+The Methods, Results, and SI sections of Liu et al. (2025) document the required covariate set, cell definitions, and adjustment procedure.

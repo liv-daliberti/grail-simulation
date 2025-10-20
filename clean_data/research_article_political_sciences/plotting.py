@@ -16,6 +16,88 @@ def _ensure_output_dir(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+def plot_mean_change(
+    summaries: Iterable[Mapping[str, float]],
+    labels: Iterable[str],
+    output_path: Path,
+) -> None:
+    """Render mean opinion shifts with 95% CI-style bars (σ/√n)."""
+
+    output_path = Path(output_path)
+    _ensure_output_dir(output_path)
+
+    summaries = list(summaries)
+    labels = list(labels)
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+
+    if not summaries:
+        ax.text(0.5, 0.5, "No summary statistics available", ha="center", va="center", fontsize=11)
+        ax.axis("off")
+        fig.tight_layout()
+        fig.savefig(output_path, dpi=300)
+        plt.close(fig)
+        return
+
+    if labels and len(labels) != len(summaries):
+        raise ValueError("labels length must match summaries length")
+
+    means = []
+    stderr = []
+    annotations = []
+
+    for summary in summaries:
+        mean_change = summary.get("mean_change", float("nan"))
+        std_change = summary.get("std_change", float("nan"))
+        n = summary.get("n", float("nan"))
+
+        means.append(mean_change)
+
+        if np.isnan(std_change) or np.isnan(n) or n <= 0:
+            stderr.append(float("nan"))
+        else:
+            stderr.append(std_change / np.sqrt(n))
+
+        if n and not np.isnan(n):
+            annotations.append(f"n={int(n)}")
+        else:
+            annotations.append("n/a")
+
+    positions = np.arange(len(summaries))
+    yerr = np.array([stderr, stderr])
+
+    bars = ax.bar(
+        positions,
+        means,
+        yerr=yerr,
+        capsize=6,
+        color="#4c72b0",
+        alpha=0.9,
+    )
+    ax.axhline(0.0, color="#222222", linewidth=1, linestyle="--")
+
+    tick_labels = labels if labels else [str(idx + 1) for idx in range(len(summaries))]
+    ax.set_xticks(positions)
+    ax.set_xticklabels(tick_labels, rotation=15, ha="right")
+    ax.set_ylabel("Mean Δ (post - pre)")
+    ax.set_title("Mean opinion change by study")
+
+    for bar, note in zip(bars, annotations):
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height,
+            note,
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300)
+    plt.close(fig)
+
+
 def plot_heatmap(
     hist: np.ndarray,
     bin_edges: np.ndarray,

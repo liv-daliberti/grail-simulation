@@ -254,7 +254,7 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
 
     deduped_splits: Dict[str, datasets.Dataset] = {}
     for split_name, split_ds in dataset.items():
-        if not len(split_ds):
+        if not split_ds:
             deduped_splits[split_name] = split_ds
             continue
 

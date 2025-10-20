@@ -5,19 +5,23 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Iterable, List
 
+import pandas as pd
 from datasets import DatasetDict
 
 from clean_data.clean_data import dedupe_by_participant_issue
 
 from .analysis import (
     assemble_study_specs,
+    compute_treatment_regression,
     dataframe_from_splits,
     histogram2d_counts,
+    load_assignment_frame,
     prepare_study_frame,
+    summarise_assignments,
     summarise_shift,
 )
 from .markdown import build_markdown
-from .plotting import plot_heatmap, plot_mean_change
+from .plotting import plot_heatmap, plot_assignment_panels
 
 
 def generate_research_article_report(
@@ -58,10 +62,28 @@ def generate_research_article_report(
             }
         )
 
+    assignment_panels: List[tuple[str, List[Dict[str, float]]]] = []
+    regression_frames: List[pd.DataFrame] = []
+
+    for entry in study_entries:
+        spec = entry["spec"]
+        assignment_frame = load_assignment_frame(spec)
+        summaries = summarise_assignments(assignment_frame)
+        assignment_panels.append((spec.label, summaries))
+        if not assignment_frame.empty:
+            regression_frames.append(
+                assignment_frame.assign(study_key=spec.key, study_label=spec.label)
+            )
+
+    regression_df = (
+        pd.concat(regression_frames, ignore_index=True) if regression_frames else pd.DataFrame()
+    )
+    regression_stats = compute_treatment_regression(regression_df)
+
     mean_change_plot = output_path / "mean_opinion_change.png"
-    plot_mean_change(
-        summaries=[entry["summary"] for entry in study_entries],
-        labels=[entry["spec"].label for entry in study_entries],
+    plot_assignment_panels(
+        study_panels=assignment_panels,
+        regression=regression_stats,
         output_path=mean_change_plot,
     )
 

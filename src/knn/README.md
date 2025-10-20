@@ -70,6 +70,84 @@ Each run also materialises elbow plots and curve summaries:
   splits are written to `models/knn/<issue>/knn_curves_<issue>.json`. Use
   `--train-curve-max` to cap the number of training examples analysed.
 
+## Hyperparameter sweeps
+
+We keep curated sweeps for both feature spaces under `models/knn/sweeps/` (see
+`reports/knn/hyperparameter_tuning.md` for the latest summary). Each configuration
+evaluates
+
+- `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100}`
+- distance metrics `cosine` and `l2`
+- optional text augmentation (`viewer_profile,state_text`)
+- Word2Vec dimensions (`128`, `256`) and windows (`5`, `10`)
+
+Example TF-IDF sweep:
+
+```bash
+export PYTHONPATH=src
+for issue in minimum_wage gun_control; do
+  for metric in cosine l2; do
+    for fields in "" "viewer_profile,state_text"; do
+      label=${fields:-none}
+      python -m knn.cli \
+        --dataset data/cleaned_grail \
+        --fit-index \
+        --feature-space tfidf \
+        --issues "$issue" \
+        --knn_k 25 \
+        --knn_k_sweep 1,2,3,4,5,10,15,20,25,50,75,100 \
+        --knn_metric "$metric" \
+        --knn_max_train 5000 \
+        --eval_max 200 \
+        --train_curve_max 2000 \
+        --cache_dir hf_cache \
+        --out_dir "models/knn/sweeps/tfidf/${issue}/metric-${metric}_text-${label}" \
+        $( [ -n "$fields" ] && printf -- '--knn_text_fields %s' "$fields" )
+    done
+  done
+done
+```
+
+and the corresponding Word2Vec sweep:
+
+```bash
+export PYTHONPATH=src WORD2VEC_WORKERS=40
+for issue in minimum_wage gun_control; do
+  for metric in cosine l2; do
+    for fields in "" "viewer_profile,state_text"; do
+      label=${fields:-none}
+      for size in 128 256; do
+        for window in 5 10; do
+          python -m knn.cli \
+            --dataset data/cleaned_grail \
+            --fit-index \
+            --feature-space word2vec \
+            --issues "$issue" \
+            --knn_k 25 \
+            --knn_k_sweep 1,2,3,4,5,10,15,20,25,50,75,100 \
+            --knn_metric "$metric" \
+            --knn_max_train 5000 \
+            --eval_max 200 \
+            --train_curve_max 2000 \
+            --cache_dir hf_cache \
+            --word2vec-model-dir models/knn_word2vec_sweeps \
+            --word2vec-size "$size" \
+            --word2vec-window "$window" \
+            --word2vec-min-count 1 \
+            --word2vec-epochs 10 \
+            --word2vec-workers "${WORD2VEC_WORKERS:-40}" \
+            --out_dir "models/knn/sweeps/word2vec/${issue}/metric-${metric}_text-${label}_sz${size}_win${window}_min1" \
+            $( [ -n "$fields" ] && printf -- '--knn_text_fields %s' "$fields" )
+        done
+      done
+    done
+  done
+done
+```
+
+The loops mirror the runs referenced in the report; feel free to expand the grid
+with additional parameters.
+
 ## Testing
 
 Unit tests live under `tests/knn/`. Add or update fixtures when introducing new

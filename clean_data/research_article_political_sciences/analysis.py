@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple
+import math
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from datasets import DatasetDict
 
+from clean_data.helpers import _MISSING_STRINGS
 
 @dataclass(frozen=True)
 class StudySpec:
@@ -141,3 +144,314 @@ def assemble_study_specs() -> Iterable[StudySpec]:
             heatmap_filename="heatmap_study3_minimum_wage.png",
         ),
     ]
+
+
+def _capsule_results_dir() -> Optional[Path]:
+    """Return the repository-local path to the capsule intermediate data."""
+
+    base = Path(__file__).resolve().parents[2] / "capsule-5416997" / "results" / "intermediate data"
+    return base if base.exists() else None
+
+
+def _normalize_series(series: pd.Series) -> pd.Series:
+    """Return a trimmed string series with missing tokens replaced by blanks."""
+
+    return series.fillna("").astype(str).str.strip()
+
+
+def _nonempty_mask(series: pd.Series) -> pd.Series:
+    """Boolean mask selecting entries that are not considered missing or blank."""
+
+    normalized = _normalize_series(series)
+    lowered = normalized.str.lower()
+    return ~(normalized.eq("") | lowered.isin(_MISSING_STRINGS))
+
+
+def _dedupe_earliest(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
+    """Keep the earliest observation per identifier, mirroring survey filters."""
+
+    if df.empty or id_column not in df.columns:
+        return df
+
+    working = df.copy()
+    sort_cols: List[str] = []
+
+    if "start_time2" in working.columns:
+        working["_sort_start_time2"] = pd.to_datetime(working["start_time2"], errors="coerce", utc=True)
+        sort_cols.append("_sort_start_time2")
+    if "start_time" in working.columns:
+        numeric = pd.to_numeric(working["start_time"], errors="coerce")
+        working["_sort_start_time"] = pd.to_datetime(numeric, unit="ms", errors="coerce", utc=True)
+        sort_cols.append("_sort_start_time")
+
+    if not sort_cols:
+        sort_cols = [id_column]
+    else:
+        sort_cols.append(id_column)
+
+    working = working.sort_values(by=sort_cols, kind="mergesort")
+    deduped = working.drop_duplicates(subset=[id_column], keep="first")
+    deduped = deduped.drop(columns=["_sort_start_time2", "_sort_start_time"], errors="ignore")
+    return deduped
+
+
+def _numeric(series: pd.Series) -> pd.Series:
+    """Coerce a series to numeric values with NaNs for unparsable entries."""
+
+    return pd.to_numeric(series, errors="coerce")
+
+
+def _study1_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
+    """Return control/treatment assignments for Study 1 (gun control MTurk)."""
+
+    wave1_path = base_dir / "gun control (issue 1)" / "guncontrol_qualtrics_w1_clean.csv"
+    follow_path = base_dir / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv"
+    if not wave1_path.exists() or not follow_path.exists():
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    wave1 = pd.read_csv(wave1_path)
+    follow = pd.read_csv(follow_path)
+    if wave1.empty or follow.empty:
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    wave1["_worker_id"] = _normalize_series(wave1.get("worker_id", pd.Series(dtype=str)))
+    mask = _nonempty_mask(wave1["_worker_id"])
+    mask &= wave1.get("q87", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("Quick and easy")
+    mask &= wave1.get("q89", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("wikiHow")
+    mask &= _numeric(wave1.get("survey_time", pd.Series(dtype=float))) >= 120
+    mask &= _numeric(wave1.get(spec.before_column, pd.Series(dtype=float))).between(0.05, 0.95, inclusive="both")
+    valid_ids = set(wave1.loc[mask, "_worker_id"])
+    valid_ids.discard("")
+
+    follow["_worker_id"] = _normalize_series(follow.get("worker_id", pd.Series(dtype=str)))
+    if valid_ids:
+        follow = follow[follow["_worker_id"].isin(valid_ids)]
+
+    follow = follow[_nonempty_mask(follow["_worker_id"])]
+    follow = follow[_nonempty_mask(follow.get("treatment_arm", pd.Series(dtype=str)))]
+    follow = follow[_nonempty_mask(follow.get("pro", pd.Series(dtype=str)))]
+    follow = follow[_nonempty_mask(follow.get("anti", pd.Series(dtype=str)))]
+    follow = _dedupe_earliest(follow, "_worker_id")
+
+    follow[spec.before_column] = _numeric(follow.get(spec.before_column, pd.Series(dtype=float)))
+    follow[spec.after_column] = _numeric(follow.get(spec.after_column, pd.Series(dtype=float)))
+    follow = follow.dropna(subset=[spec.before_column, spec.after_column])
+
+    assignment = follow.get("treatment_arm", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    follow["assignment"] = np.where(assignment == "control", "control", "treatment")
+
+    return follow.rename(
+        columns={
+            "_worker_id": "participant_id",
+            spec.before_column: "before",
+            spec.after_column: "after",
+        }
+    )[["participant_id", "before", "after", "assignment"]]
+
+
+def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
+    """Return control/treatment assignments for Study 2 (minimum wage MTurk)."""
+
+    dataset_path = base_dir / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv"
+    if not dataset_path.exists():
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    df = pd.read_csv(dataset_path)
+    if df.empty:
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    df["_worker_id"] = _normalize_series(df.get("worker_id", pd.Series(dtype=str)))
+    mask = _nonempty_mask(df["_worker_id"])
+    mask &= df.get("q87", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("Quick and easy")
+    mask &= df.get("q89", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("wikiHow")
+    mask &= _numeric(df.get("survey_time", pd.Series(dtype=float))) >= 120
+    mw_index = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
+    mask &= mw_index.between(0.025, 0.975, inclusive="both")
+    df = df.loc[mask].copy()
+
+    df = df[_nonempty_mask(df.get("treatment_arm", pd.Series(dtype=str)))]
+    df = df[_nonempty_mask(df.get("pro", pd.Series(dtype=str)))]
+    df = df[_nonempty_mask(df.get("anti", pd.Series(dtype=str)))]
+    df = _dedupe_earliest(df, "_worker_id")
+
+    df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
+    df[spec.after_column] = _numeric(df.get(spec.after_column, pd.Series(dtype=float)))
+    df = df.dropna(subset=[spec.before_column, spec.after_column])
+
+    assignment = df.get("treatment_arm", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    df["assignment"] = np.where(assignment == "control", "control", "treatment")
+
+    return df.rename(
+        columns={
+            "_worker_id": "participant_id",
+            spec.before_column: "before",
+            spec.after_column: "after",
+        }
+    )[["participant_id", "before", "after", "assignment"]]
+
+
+def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
+    """Return control/treatment assignments for Study 3 (minimum wage YouGov)."""
+
+    dataset_path = base_dir / "minimum wage (issue 2)" / "yg_w12_clean.csv"
+    if not dataset_path.exists():
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    df = pd.read_csv(dataset_path)
+    if df.empty:
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    case_col: Optional[str] = None
+    if "caseid" in df.columns:
+        case_col = "caseid"
+    elif "CaseID" in df.columns:
+        case_col = "CaseID"
+    if case_col is None:
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    df["_caseid"] = _normalize_series(df[case_col])
+    df = df[_nonempty_mask(df["_caseid"])]
+    df = df[_nonempty_mask(df.get("pro", pd.Series(dtype=str)))]
+    df = df[_nonempty_mask(df.get("anti", pd.Series(dtype=str)))]
+    df = _dedupe_earliest(df, "_caseid")
+
+    df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
+    df[spec.after_column] = _numeric(df.get(spec.after_column, pd.Series(dtype=float)))
+    df = df.dropna(subset=[spec.before_column, spec.after_column])
+
+    treatment_arm = df.get("treatment_arm", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    has_explicit_control = treatment_arm.eq("control").any()
+
+    if has_explicit_control:
+        df["assignment"] = np.where(treatment_arm == "control", "control", "treatment")
+    else:
+        dose = _numeric(df.get("treatment_dose", pd.Series(dtype=float)))
+        df["assignment"] = np.where(
+            dose <= 0,
+            "control",
+            np.where(dose > 0, "treatment", None),
+        )
+        df = df.dropna(subset=["assignment"])
+
+    return df.rename(
+        columns={
+            "_caseid": "participant_id",
+            spec.before_column: "before",
+            spec.after_column: "after",
+        }
+    )[["participant_id", "before", "after", "assignment"]]
+
+
+def load_assignment_frame(spec: StudySpec) -> pd.DataFrame:
+    """Load a dataframe containing control/treatment assignments for a study."""
+
+    base_dir = _capsule_results_dir()
+    if base_dir is None:
+        return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+    if spec.key == "study1":
+        return _study1_assignment_frame(base_dir, spec)
+    if spec.key == "study2":
+        return _study2_assignment_frame(base_dir, spec)
+    if spec.key == "study3":
+        return _study3_assignment_frame(base_dir, spec)
+    return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
+
+
+def summarise_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
+    """Return summary statistics for each assignment group in a dataframe."""
+
+    if frame.empty:
+        return []
+
+    summaries: List[Dict[str, float]] = []
+    for assignment, group in frame.groupby("assignment"):
+        metrics = summarise_shift(group, "before", "after")
+        count = int(metrics["n"])
+        stderr = float("nan")
+        if count > 0 and not math.isnan(metrics["std_change"]):
+            stderr = metrics["std_change"] / math.sqrt(max(count, 1))
+        summaries.append(
+            {
+                "assignment": assignment,
+                "n": count,
+                "mean_before": metrics["mean_before"],
+                "mean_after": metrics["mean_after"],
+                "mean_change": metrics["mean_change"],
+                "std_change": metrics["std_change"],
+                "ci95": 1.96 * stderr if not math.isnan(stderr) else float("nan"),
+            }
+        )
+
+    summaries.sort(key=lambda item: (0 if item["assignment"] == "control" else 1, item["assignment"]))
+    return summaries
+
+
+def compute_treatment_regression(df: pd.DataFrame) -> Dict[str, float]:
+    """Estimate a study-adjusted treatment effect on opinion change.
+
+    The model regresses ``after - before`` on a treatment indicator with
+    study fixed-effects (Study 1 as the reference category).  Returns the
+    coefficient, standard error, 95% CI, and two-sided p-value.
+    """
+
+    if df.empty:
+        return {
+            "coefficient": float("nan"),
+            "stderr": float("nan"),
+            "ci_low": float("nan"),
+            "ci_high": float("nan"),
+            "p_value": float("nan"),
+        }
+
+    working = df.copy()
+    working["change"] = working["after"] - working["before"]
+    working = working.replace([np.inf, -np.inf], np.nan).dropna(subset=["change"])
+    if working.empty:
+        return {
+            "coefficient": float("nan"),
+            "stderr": float("nan"),
+            "ci_low": float("nan"),
+            "ci_high": float("nan"),
+            "p_value": float("nan"),
+        }
+
+    treat_indicator = (working["assignment"].str.lower() == "treatment").astype(float).to_numpy(dtype=float)
+    study_keys = sorted({str(label) for label in working["study_key"]})
+
+    rows: List[List[float]] = []
+    for _, row in working.iterrows():
+        row_values: List[float] = [1.0, 1.0 if str(row["assignment"]).lower() == "treatment" else 0.0]
+        for study in study_keys[1:]:
+            row_values.append(1.0 if str(row["study_key"]) == study else 0.0)
+        rows.append(row_values)
+
+    X = np.asarray(rows, dtype=float)
+    y = working["change"].to_numpy(dtype=float)
+
+    beta, residuals, rank, _ = np.linalg.lstsq(X, y, rcond=None)
+    fitted = X @ beta
+    rss = np.sum((y - fitted) ** 2) if residuals.size == 0 else residuals[0]
+    dof = max(len(y) - rank, 1)
+    sigma2 = rss / dof
+    xtx_inv = np.linalg.inv(X.T @ X)
+    cov_beta = sigma2 * xtx_inv
+    stderr = math.sqrt(max(cov_beta[1, 1], 0.0))
+
+    coef = beta[1]
+    ci_low = coef - 1.96 * stderr
+    ci_high = coef + 1.96 * stderr
+
+    if stderr == 0.0:
+        p_value = 0.0
+    else:
+        t_stat = coef / stderr
+        p_value = 2.0 * 0.5 * math.erfc(abs(t_stat) / math.sqrt(2.0))
+
+    return {
+        "coefficient": float(coef),
+        "stderr": float(stderr),
+        "ci_low": float(ci_low),
+        "ci_high": float(ci_high),
+        "p_value": float(p_value),
+    }

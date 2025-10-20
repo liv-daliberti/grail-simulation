@@ -4,17 +4,37 @@ This document consolidates the `k` sweeps run for both KNN baselines (next-video
 
 ## Next-Video Prediction
 
-| Feature space | Issue | Accuracy @ best k | Best k | Trend |
-| --- | --- | ---: | ---: | --- |
-| TF-IDF | Gun control | 0.894 | 2 | Sharp drop after k = 5 |
-| TF-IDF | Minimum wage | 0.306 | 3 | Accuracy decreases for larger k, below baseline |
-| Word2Vec | Gun control | 0.870 | 2 | Declines steadily beyond k = 3 |
-| Word2Vec | Minimum wage | 0.288 | 3 | Accuracy degrades quickly with higher k |
+The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:
 
-Key takeaways:
+- `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100}`
+- Distance metrics: cosine and L2
+- Text-field augmentations: none, `viewer_profile,state_text`
+- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count = 1, epochs = 10  
+  (training uses up to 40 worker threads – see `training/training-knn.sh`)
 
-- Low `k` (2–3) consistently works best; higher neighbourhood sizes dilute the signal.
-- Minimum-wage slates remain difficult: even the best configuration trails the most-frequent baseline.
+All artefacts (metrics JSON, per-`k` predictions, error-based elbow plots) live under
+`models/knn/sweeps/{tfidf,word2vec}/`.
+
+### Best configurations (validation split)
+
+| Feature space | Metric | Text fields | Vec size | Window | Min count | Issue | Accuracy | Best k |
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
+| TF-IDF | cosine | none | — | — | — | Gun control | **0.920** | 2 |
+| TF-IDF | cosine | none | — | — | — | Minimum wage | **0.285** | 2 |
+| Word2Vec | cosine | none | 128 | 10 | 1 | Gun control | **0.880** | 2 |
+| Word2Vec | L2 | viewer_profile,state_text | 128 | 5 | 1 | Minimum wage | **0.305** | 3 |
+
+Observations:
+
+- `k = 2` remains optimal for every gun-control configuration. Minimum-wage improves slightly
+  with `k = 3` when using Word2Vec + L2.
+- Cosine distance dominates for gun control; L2 is competitive for minimum wage once embeddings
+  are used.
+- Adding viewer profile/state text helps Word2Vec on minimum wage but hurts performance on gun control.
+- TF-IDF still outperforms Word2Vec on gun control, while Word2Vec closes (and slightly beats) the gap on minimum wage.
+
+The elbow plots are now labelled with the data split used (“validation split”), clarifying that the
+curves reflect held-out evaluation error rather than the training data.
 
 ## Post-Study Opinion Regression
 

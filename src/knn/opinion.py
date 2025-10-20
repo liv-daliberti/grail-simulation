@@ -16,8 +16,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import NearestNeighbors
 
-from common.eval_utils import safe_div
-
 from .data import (
     DEFAULT_DATASET_SOURCE,
     EVAL_SPLIT,
@@ -456,6 +454,66 @@ def _plot_metric(
     plt.close()
 
 
+def _plot_change_heatmap(
+    *,
+    actual_changes: Sequence[float],
+    predicted_changes: Sequence[float],
+    output_path: Path,
+) -> None:
+    """Render a 2D histogram comparing actual vs. predicted opinion shifts."""
+
+    if plt is None:  # pragma: no cover - optional dependency
+        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (matplotlib not installed).")
+        return
+
+    if not actual_changes or not predicted_changes:
+        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (no valid predictions).")
+        return
+
+    actual = np.asarray(actual_changes, dtype=np.float32)
+    predicted = np.asarray(predicted_changes, dtype=np.float32)
+    if actual.size == 0 or predicted.size == 0:
+        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (empty arrays).")
+        return
+
+    min_val = float(min(actual.min(), predicted.min()))
+    max_val = float(max(actual.max(), predicted.max()))
+    if math.isclose(min_val, max_val):
+        span = 0.1 if math.isfinite(min_val) else 1.0
+        min_val -= span
+        max_val += span
+    else:
+        extent = max(abs(min_val), abs(max_val))
+        if not math.isfinite(extent) or extent <= 1e-6:
+            extent = 1.0
+        min_val, max_val = -extent, extent
+
+    bins = 40
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(5.5, 4.5))
+    hist = plt.hist2d(
+        actual,
+        predicted,
+        bins=bins,
+        range=[[min_val, max_val], [min_val, max_val]],
+        cmap="magma",
+        cmin=1,
+    )
+    plt.colorbar(hist[3], label="Participants")
+    plt.plot([min_val, max_val], [min_val, max_val], color="cyan", linestyle="--", linewidth=1.0)
+    plt.xlim(min_val, max_val)
+    plt.ylim(min_val, max_val)
+    plt.gca().set_aspect("equal", adjustable="box")
+    plt.axhline(0.0, color="grey", linestyle=":", linewidth=0.8)
+    plt.axvline(0.0, color="grey", linestyle=":", linewidth=0.8)
+    plt.xlabel("Actual opinion change (post - pre)")
+    plt.ylabel("Predicted opinion change")
+    plt.title("Predicted vs. actual opinion change")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150)
+    plt.close()
+
+
 def _write_outputs(
     *,
     args,
@@ -473,6 +531,16 @@ def _write_outputs(
     study_dir = outputs_root / spec.key
     study_dir.mkdir(parents=True, exist_ok=True)
 
+    actual_changes: List[float] = []
+    predicted_changes: List[float] = []
+    for row in rows:
+        prediction = row["predictions_by_k"].get(best_k)
+        if prediction is None:
+            continue
+        before = float(row["before_index"])
+        actual_changes.append(float(row["after_index"]) - before)
+        predicted_changes.append(float(prediction) - before)
+
     predictions_path = study_dir / f"opinion_knn_{spec.key}_{EVAL_SPLIT}.jsonl"
     with open(predictions_path, "w", encoding="utf-8") as handle:
         for row in rows:
@@ -488,6 +556,12 @@ def _write_outputs(
     r2_plot = reports_dir / f"r2_{spec.key}.png"
     _plot_metric(metrics_by_k=metrics_by_k, metric_key="mae_after", output_path=mae_plot)
     _plot_metric(metrics_by_k=metrics_by_k, metric_key="r2_after", output_path=r2_plot)
+    heatmap_path = reports_dir / f"change_heatmap_{spec.key}.png"
+    _plot_change_heatmap(
+        actual_changes=actual_changes,
+        predicted_changes=predicted_changes,
+        output_path=heatmap_path,
+    )
 
     metrics_path = study_dir / f"opinion_knn_{spec.key}_{EVAL_SPLIT}_metrics.json"
     serializable_metrics = {
@@ -514,6 +588,7 @@ def _write_outputs(
         "plots": {
             "mae_vs_k": str(mae_plot),
             "r2_vs_k": str(r2_plot),
+            "change_heatmap": str(heatmap_path),
         },
     }
     with open(metrics_path, "w", encoding="utf-8") as handle:

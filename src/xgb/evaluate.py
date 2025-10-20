@@ -173,6 +173,15 @@ def _evaluate_issue(
     dataset_source: str,
     extra_fields: List[str],
 ) -> None:
+    """Evaluate a single issue for the XGBoost baseline and persist outputs.
+
+    :param args: Parsed CLI namespace controlling training/evaluation options.
+    :param issue: Issue label (human-readable) requested for evaluation.
+    :param base_ds: Loaded dataset dictionary containing train/eval splits.
+    :param dataset_source: String describing the data source (path or hub id).
+    :param extra_fields: Additional text fields appended to the feature document.
+    """
+
     issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
     logger.info("[XGBoost] Evaluating issue=%s", issue_slug)
     ds = filter_dataset_for_issue(base_ds, issue)
@@ -209,6 +218,16 @@ def _load_or_train_model(
     train_ds,
     extra_fields: Sequence[str],
 ) -> XGBoostSlateModel:
+    """Return a trained or loaded XGBoost model for the requested issue.
+
+    :param args: Parsed CLI namespace containing training options.
+    :param issue_slug: Normalised issue identifier.
+    :param train_ds: Training dataset split.
+    :param extra_fields: Extra text fields passed to the feature builder.
+    :returns: :class:`XGBoostSlateModel` ready for evaluation.
+    :raises ValueError: If neither ``--fit-model`` nor ``--load-model`` is specified.
+    """
+
     if args.fit_model:
         logger.info("[XGBoost] Training model for issue=%s", issue_slug)
         booster_params = XGBoostBoosterParams(
@@ -249,6 +268,15 @@ def _write_outputs(
     metrics: IssueMetrics,
     predictions: List[Dict[str, Any]],
 ) -> None:
+    """Persist metrics and predictions for a single issue evaluation.
+
+    :param args: Parsed CLI namespace controlling output directory handling.
+    :param issue_slug: Issue identifier appended to output paths.
+    :param metrics: Summary metrics produced by :func:`evaluate_issue`.
+    :param predictions: Per-example prediction dictionaries to serialise.
+    :raises FileExistsError: If the output directory exists and ``--overwrite`` is not set.
+    """
+
     out_dir = Path(args.out_dir) / issue_slug
     if out_dir.exists() and not args.overwrite:
         raise FileExistsError(
@@ -404,6 +432,13 @@ def _candidate_probabilities(
     slate: Sequence[tuple[str, str]],
     probability_map: Dict[str, float],
 ) -> tuple[Dict[int, float], Dict[int, str]]:
+    """Map slate indices to predicted probabilities and known candidates.
+
+    :param slate: Ordered sequence of slate options ``(title, video_id)``.
+    :param probability_map: Mapping from canonical video id to predicted probability.
+    :returns: Tuple of ``(candidate_probabilities, known_candidate_ids)`` keyed by 1-based index.
+    """
+
     candidate_probs = {
         slate_idx + 1: probability_map.get(canon_video_id(candidate_id), 0.0)
         for slate_idx, (_, candidate_id) in enumerate(slate)
@@ -423,6 +458,15 @@ def _probability_context(
     known_candidates: Dict[int, str],
     gold_id_canon: str,
 ) -> ProbabilityContext:
+    """Return context describing the probability associated with the prediction.
+
+    :param prediction_idx: 1-based predicted index or ``None`` when absent.
+    :param candidate_probs: Mapping from 1-based index to predicted probability.
+    :param known_candidates: Mapping from 1-based index to canonical id when seen during training.
+    :param gold_id_canon: Canonicalised gold video identifier.
+    :returns: :class:`ProbabilityContext` describing probabilities and hits.
+    """
+
     best_probability = (
         candidate_probs.get(prediction_idx, 0.0)
         if prediction_idx is not None
@@ -444,6 +488,12 @@ def _probability_context(
 def _summarise_outcomes(
     records: List[tuple[int, PredictionOutcome]]
 ) -> OutcomeSummary:
+    """Aggregate prediction outcomes into summary counts.
+
+    :param records: Sequence of ``(index, PredictionOutcome)`` tuples.
+    :returns: :class:`OutcomeSummary` containing accuracy, coverage, and averages.
+    """
+
     outcomes = [outcome for _, outcome in records]
     evaluated = len(outcomes)
     known_total = sum(outcome.known_candidate_seen for outcome in outcomes)

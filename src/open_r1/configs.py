@@ -84,6 +84,13 @@ class ScriptArguments(trl.ScriptArguments):
     )
 
     def __post_init__(self):
+        """Normalize dataset mixture configuration after initialisation.
+
+        Ensures at least one of ``dataset_name`` or ``dataset_mixture`` is provided,
+        converts the mixture dictionary into :class:`DatasetMixtureConfig`, and
+        validates column consistency across components.
+        """
+
         if self.dataset_name is None and self.dataset_mixture is None:
             raise ValueError("Either `dataset_name` or `dataset_mixture` must be provided")
 

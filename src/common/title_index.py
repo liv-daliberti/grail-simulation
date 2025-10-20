@@ -50,6 +50,15 @@ class TitleResolver:
         env_glob_var: str = _DEFAULT_ENV_GLOB,
         logger_name: str = "title-index",
     ) -> None:
+        """Create a new :class:`TitleResolver` instance.
+
+        :param default_dirs: Optional list of fallback directories searched for CSVs.
+        :param env_csv_var: Environment variable listing explicit CSV files.
+        :param env_dirs_var: Environment variable listing directories to traverse.
+        :param env_glob_var: Environment variable listing glob patterns for CSVs.
+        :param logger_name: Logger name used for diagnostic output.
+        """
+
         self._default_dirs = list(default_dirs or [])
         self._env_csv_var = env_csv_var
         self._env_dirs_var = env_dirs_var
@@ -96,6 +105,11 @@ class TitleResolver:
         return ordered
 
     def _build_index(self) -> Dict[str, str]:
+        """Construct the in-memory mapping from video id to title.
+
+        :returns: Dictionary keyed by canonical video id.
+        """
+
         index: Dict[str, str] = {}
         for path in self._iter_candidate_paths():
             try:
@@ -126,6 +140,8 @@ class TitleResolver:
         return self._index.get(canon_video_id(video_id))
 
     def __call__(self, video_id: str | None) -> Optional[str]:
+        """Proxy to :meth:`resolve` allowing instances to be callable."""
+
         return self.resolve(video_id)
 
 

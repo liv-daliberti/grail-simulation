@@ -217,6 +217,11 @@ class ReplayBuffer:
         return uid
 
     def update_priority_by_uid(self, uid: int, reward: float):
+        """Update the tracked reward statistics for an item referenced by UID.
+
+        :param uid: Unique identifier returned by :meth:`add` or :meth:`add_group`.
+        :param reward: New reward value to merge into the running statistics.
+        """
         reward = _finite_float(reward, 0.0)
         with self._lock:
             idx = self._uid2idx.get(uid, None)
@@ -228,11 +233,20 @@ class ReplayBuffer:
 
     # Legacy (index-based) — keep if you use it elsewhere
     def update_priority(self, idx: int, reward: float):
+        """Update reward statistics for an item referenced by buffer index.
+
+        :param idx: Index within the replay buffer.
+        :param reward: New reward value to merge into the running statistics.
+        """
         with self._lock:
             if 0 <= idx < len(self._buf):
                 self._update_stats(idx, _finite_float(reward, 0.0))
 
     def debug_state(self):
+        """Return a diagnostic snapshot of the buffer internals.
+
+        :returns: Dictionary containing length, capacity, and tail stats.
+        """
         with self._lock:
             tail = slice(max(0, len(self._buf) - 5), len(self._buf))
             return {
@@ -287,6 +301,11 @@ class ReplayBuffer:
             return np.random.choice(self._uids).item()
 
     def get_group(self, uid: int) -> List[dict[str, Any]]:
+        """Return a deep copy of the stored group associated with ``uid``.
+
+        :param uid: Unique identifier returned by :meth:`add_group`.
+        :returns: List of prompt dictionaries or an empty list when missing.
+        """
         with self._lock:
             idx = self._uid2idx.get(uid, None)
             if idx is None:

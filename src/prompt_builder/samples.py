@@ -28,6 +28,7 @@ class PromptSample:
 
 
 def _ensure_dataset() -> None:
+    """Validate that the optional ``datasets`` dependency is available."""
     if load_from_disk is None:  # pragma: no cover - optional dependency guard
         raise ImportError(
             "datasets must be installed to generate prompt samples "
@@ -36,6 +37,11 @@ def _ensure_dataset() -> None:
 
 
 def _iter_splits(ds: DatasetDict) -> Iterable[tuple[str, any]]:
+    """Yield non-empty dataset splits and their names.
+
+    :param ds: Dataset dictionary containing splits.
+    :returns: Iterator of ``(split_name, split_dataset)`` tuples.
+    """
     for split_name, split in ds.items():
         if split is None or not len(split):
             continue
@@ -100,6 +106,12 @@ def generate_prompt_samples(
 
 
 def _normalise_output_path(path: str) -> Path:
+    """Return a validated Markdown output path, creating parent directories.
+
+    :param path: Destination filepath provided via CLI.
+    :returns: Path object pointing to a Markdown file.
+    :raises ValueError: If the path is not Markdown.
+    """
     output_path = Path(path)
     if output_path.suffix.lower() not in {".md", ".markdown"}:
         raise ValueError(f"Output file must be Markdown (.md); received {path}")
@@ -108,6 +120,7 @@ def _normalise_output_path(path: str) -> Path:
 
 
 def _format_sample_heading(idx: int, sample: PromptSample) -> str:
+    """Return a Markdown heading summarising sample metadata."""
     meta_parts = [
         f"Issue: {sample.issue.replace('_', ' ').title()}",
         f"Split: {sample.split}",
@@ -140,12 +153,14 @@ def write_samples_markdown(samples: Sequence[PromptSample], output_path: str) ->
 
 
 def _parse_issue_list(raw: str | None) -> List[str]:
+    """Parse a comma-separated issue list into normalised tokens."""
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
 def _build_cli() -> argparse.ArgumentParser:
+    """Construct the CLI argument parser for the sample generator."""
     parser = argparse.ArgumentParser(
         description="Generate sample prompts for documentation."
     )
@@ -181,6 +196,7 @@ def _build_cli() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """Entry point for the prompt-sample CLI."""
     parser = _build_cli()
     args = parser.parse_args(argv)
     issues = _parse_issue_list(args.issues)

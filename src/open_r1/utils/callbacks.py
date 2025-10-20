@@ -37,6 +37,10 @@ class _DummyCfg:
     """Lightweight attribute container used for hub/benchmark helpers."""
 
     def __init__(self, **kw):  # convenience holder for hub + benchmark helpers
+        """Populate the namespace with arbitrary keyword attributes.
+
+        :param kw: Keyword arguments to expose as attributes.
+        """
         self.benchmarks = None
         for k, v in kw.items():
             setattr(self, k, v)
@@ -70,6 +74,10 @@ class PushToHubRevisionCallback(TrainerCallback):
         # (optional) spawn benchmark job when the upload finishes
         if _slurm_available():
             def _after(_):
+                """Submit benchmark jobs once the upload future resolves.
+
+                :param _: Completed future returned by the upload helper.
+                """
                 from .evaluation import run_benchmark_jobs
                 self.log.info("Upload done – submitting benchmark job.")
                 dummy.benchmarks = args.benchmarks

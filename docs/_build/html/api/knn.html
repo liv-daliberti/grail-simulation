@@ -392,6 +392,20 @@ examples feed into the training curve diagnostics.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="knn.features.Word2VecFeatureBuilder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecFeatureBuilder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecFeatureBuilder.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the builder with optional configuration overrides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a><em> | </em><em>None</em>) – Optional <a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">Word2VecConfig</span></code></a> instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="knn.features.Word2VecFeatureBuilder.encode">
 <span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecFeatureBuilder.encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecFeatureBuilder.encode" title="Link to this definition">¶</a></dt>
 <dd><p>Return the averaged embedding vector for <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
@@ -1009,6 +1023,7 @@ are read from <code class="xref py py-data docutils literal notranslate"><span c
 </ul>
 </li>
 <li><a class="reference internal" href="#knn.features.Word2VecFeatureBuilder"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder</span></code></a><ul>
+<li><a class="reference internal" href="#knn.features.Word2VecFeatureBuilder.__init__"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.Word2VecFeatureBuilder.encode"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder.encode()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.Word2VecFeatureBuilder.is_trained"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder.is_trained()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.Word2VecFeatureBuilder.load"><code class="docutils literal notranslate"><span class="pre">Word2VecFeatureBuilder.load()</span></code></a></li>

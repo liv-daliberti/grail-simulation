@@ -17,6 +17,17 @@ async def score_single_test_case(
     submission: str,
     submission_language: str = "cpp",
 ) -> tuple[str, str]:
+    """Score a submission against a single Codeforces-style test case.
+
+    :param client: Piston execution client used to run the code.
+    :param problem_data: Metadata describing the problem (limits, checker).
+    :param test_input: Input fed to the contestant program.
+    :param test_output: Expected output for the test case.
+    :param submission: Source code submitted by the model.
+    :param submission_language: ``python`` or ``cpp`` selector.
+    :returns: Raw execution result dictionary returned by Piston.
+    :raises ValueError: If the submission language is unsupported.
+    """
     if submission_language not in ["python", "cpp"]:
         raise ValueError(f"Invalid submission language: {submission_language}")
     try:
@@ -57,6 +68,12 @@ async def score_single_test_case(
 
 @alru_cache(maxsize=32)  # NOTE: cache size favors common contest reuse without exhausting memory
 async def get_generated_contest_tests(contest_id: str) -> list[dict]:
+    """Return Codeforces generated tests for the specified contest.
+
+    :param contest_id: Contest identifier string.
+    :returns: Mapping of problem ids to generated test-case dictionaries.
+    :raises ValueError: If the tests folder is not configured or missing.
+    """
     import pandas as pd
 
     import aiofiles
@@ -87,6 +104,11 @@ async def get_generated_contest_tests(contest_id: str) -> list[dict]:
 
 
 async def get_generated_tests(problem_id: str) -> list[dict]:
+    """Return generated tests for a specific contest problem.
+
+    :param problem_id: Problem identifier in ``contest/problem`` form.
+    :returns: List of test case dictionaries.
+    """
     contest_id = problem_id.split("/")[0]
     return (await get_generated_contest_tests(contest_id)).get(problem_id, [])
 
@@ -101,6 +123,19 @@ async def score_submission(
     no_submission_reward: float = -1.0,
     submission_language: str = "cpp",
 ) -> float:
+    """Aggregate scores for a submission across official and generated tests.
+
+    :param client: Piston execution client used to run batches.
+    :param problem_data: Problem metadata including official tests.
+    :param submission: Source code submitted by the model.
+    :param test_batch_size: Number of tests executed concurrently.
+    :param scoring_mode: Aggregation strategy for per-test results.
+    :param no_compile_reward: Reward when compilation fails.
+    :param no_submission_reward: Reward returned when code is missing.
+    :param submission_language: ``python`` or ``cpp`` selector.
+    :returns: Scalar reward representing submission quality.
+    :raises ValueError: If arguments specify unsupported options.
+    """
     if submission_language not in ["python", "cpp"]:
         raise ValueError(f"Invalid submission language: {submission_language}")
     test_cases = problem_data["official_tests"] + (await get_generated_tests(problem_data["id"]))

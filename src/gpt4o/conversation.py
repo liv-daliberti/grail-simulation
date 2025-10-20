@@ -184,6 +184,11 @@ def extract_marital_status(example: dict) -> Optional[str]:
 
 
 def _normalise_race_token(raw: str) -> Optional[str]:
+    """Normalise a free-form race token into a canonical label.
+
+    :param raw: Raw race description extracted from the example.
+    :returns: Canonical race label, the stripped token, or ``None`` when empty.
+    """
     if not raw:
         return None
     key = canon_text(raw)
@@ -333,6 +338,11 @@ def build_profile_block(example: dict) -> str:
 
 
 def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
+    """Derive the currently watched title/id pair from the example payload.
+
+    :param example: Dataset row containing now-watching metadata fields.
+    :returns: ``(title, video_id)`` tuple or ``None`` when unavailable.
+    """
     video_id = pick_case_insensitive(example, "video_id", "videoId")
     if video_id and not is_nan_like(video_id):
         title = (
@@ -423,6 +433,11 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
 
 
 def _get_history_pointer(example: dict) -> Tuple[int | None, float | None]:
+    """Extract the trajectory pointer describing the current history position.
+
+    :param example: Dataset row containing the ``trajectory_json`` blob.
+    :returns: Tuple of ``(current_index, current_end_ms)`` values.
+    """
     trajectory_json = example.get("trajectory_json")
     if not isinstance(trajectory_json, str) or not trajectory_json.strip():
         return None, None
@@ -454,6 +469,14 @@ def _extract_history(
     up_to_end_ms: float | None = None,
     include_current: bool = False,
 ) -> list[dict]:
+    """Parse interaction history entries from the trajectory payload.
+
+    :param example: Dataset row containing the ``trajectory_json`` field.
+    :param up_to_idx: Optional index cap for the returned rows.
+    :param up_to_end_ms: Optional end-time cap for the returned rows.
+    :param include_current: Whether to retain the current item at the caps.
+    :returns: List of canonicalised history dictionaries.
+    """
     trajectory_json = example.get("trajectory_json")
     if not isinstance(trajectory_json, str) or not trajectory_json.strip():
         return []
@@ -506,6 +529,11 @@ def _extract_history(
         extracted.append(row_copy)
 
     def _hist_key(entry: dict) -> tuple[int, float]:
+        """Provide a stable sort key for partially-specified history rows.
+
+        :param entry: Raw history row to normalise for sorting.
+        :returns: Tuple distinguishing indexed items from timing fallbacks.
+        """
         idx_val = entry.get("idx")
         if isinstance(idx_val, int):
             return (0, idx_val)
@@ -541,6 +569,11 @@ def _extract_history(
 
 
 def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
+    """Collect slate titles/ids from text or trajectory metadata.
+
+    :param example: Dataset row containing slate information.
+    :returns: Sequence of unique ``(title, video_id)`` pairs.
+    """
     items: list[Tuple[str, str]] = []
     slate_text = example.get("slate_text")
     if isinstance(slate_text, str) and slate_text.strip():
@@ -604,7 +637,17 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
 
 
 def _format_history_lines(sequence: List[dict]) -> List[str]:
+    """Render history dictionaries into user-readable bullet points.
+
+    :param sequence: Canonicalised history rows.
+    :returns: List of formatted history strings.
+    """
     def _fmt_seconds(value: Any) -> str:
+        """Format a raw seconds value into a friendly suffix representation.
+
+        :param value: Raw seconds or timing value to convert.
+        :returns: Human-readable suffix string (e.g. ``10s`` or ``?``).
+        """
         try:
             return f"{int(round(float(value)))}s"
         except Exception:
@@ -661,6 +704,11 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
     now_title_canon = canon_text(now_title if isinstance(now_title, str) else "")
 
     def _is_current(row: dict) -> bool:
+        """Return ``True`` when the row matches the derived now-watching item.
+
+        :param row: History entry from the trajectory list.
+        :returns: Whether the entry corresponds to the current video.
+        """
         rid = canon_video_id(row.get("video_id") or "")
         rtitle = canon_text(row.get("title") or "")
         return (

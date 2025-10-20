@@ -250,10 +250,17 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">TitleResolver</span><span class="p">(</span><span class="n">_BaseTitleResolver</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve YouTube ids to titles using shared common helpers.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="TitleResolver.__init__">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.titles.TitleResolver.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the resolver with shared default title directories.</span>
+
+<span class="sd">        :param kwargs: Optional keyword overrides forwarded to the base class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;default_dirs&quot;</span><span class="p">:</span> <span class="n">DEFAULT_TITLE_DIRS</span><span class="p">}</span>
         <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span></div>
+</div>
 
 </pre></div>
         </article>

@@ -39,16 +39,28 @@ class SafeDict(dict):
     """Dictionary that returns an empty string for missing keys."""
 
     def __missing__(self, key: str) -> str:
+        """Return an empty string for missing ``key`` to ease template formatting."""
         return ""
 
 
 def _natural_sort_key(value: str) -> Tuple[int, str, str]:
+    """Return a tuple suitable for natural sorting of strings with numeric suffixes.
+
+    :param value: String containing optional numeric segments.
+    :returns: Tuple sorting by numeric portion, alphabetic prefix, and original text.
+    """
     prefix = "".join(ch for ch in value if not ch.isdigit())
     digits = "".join(ch for ch in value if ch.isdigit())
     return (int(digits) if digits else math.inf, prefix, value)
 
 
 def _wrap_text(text: str, width: Optional[int]) -> str:
+    """Wrap ``text`` to the specified ``width`` using newline separators.
+
+    :param text: Original text to wrap.
+    :param width: Maximum line length; no wrapping when ``None`` or ``<= 0``.
+    :returns: Wrapped text with newline separators.
+    """
     if not width or width <= 0:
         return text
     return "\n".join(textwrap.wrap(text, width))

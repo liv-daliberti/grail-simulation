@@ -1254,7 +1254,8 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.is_morph_available">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.</span></span><span class="sig-name descname"><span class="pre">is_morph_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/import_utils.html#is_morph_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.is_morph_available" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the optional morphcloud dependency is installed.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
@@ -1803,7 +1804,8 @@ estimate the parameter count.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.import_utils.is_morph_available">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.import_utils.</span></span><span class="sig-name descname"><span class="pre">is_morph_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/import_utils.html#is_morph_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.import_utils.is_morph_available" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the optional morphcloud dependency is installed.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
@@ -1929,17 +1931,27 @@ Returns the uid (or the same uid if it was deduped and not inserted).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.debug_state">
 <span class="sig-name descname"><span class="pre">debug_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.debug_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.debug_state" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return a diagnostic snapshot of the buffer internals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing length, capacity, and tail stats.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.get_group">
 <span class="sig-name descname"><span class="pre">get_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.get_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.get_group" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return a deep copy of the stored group associated with <code class="docutils literal notranslate"><span class="pre">uid</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>uid</strong> (<em>int</em>)</p>
+<dd class="field-odd"><p><strong>uid</strong> (<em>int</em>) – Unique identifier returned by <a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer.add_group" title="open_r1.utils.replay_buffer.ReplayBuffer.add_group"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_group()</span></code></a>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[dict[str, <em>Any</em>]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of prompt dictionaries or an empty list when missing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[dict[str, <em>Any</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1983,11 +1995,12 @@ training loop remains untouched.  <cite>isw</cite> stays all‑ones.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.update_priority">
 <span class="sig-name descname"><span class="pre">update_priority</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reward</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.update_priority"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.update_priority" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Update reward statistics for an item referenced by buffer index.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>idx</strong> (<em>int</em>)</p></li>
-<li><p><strong>reward</strong> (<em>float</em>)</p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – Index within the replay buffer.</p></li>
+<li><p><strong>reward</strong> (<em>float</em>) – New reward value to merge into the running statistics.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1996,11 +2009,12 @@ training loop remains untouched.  <cite>isw</cite> stays all‑ones.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.update_priority_by_uid">
 <span class="sig-name descname"><span class="pre">update_priority_by_uid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reward</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.update_priority_by_uid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.update_priority_by_uid" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Update the tracked reward statistics for an item referenced by UID.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>uid</strong> (<em>int</em>)</p></li>
-<li><p><strong>reward</strong> (<em>float</em>)</p></li>
+<li><p><strong>uid</strong> (<em>int</em>) – Unique identifier returned by <a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer.add" title="open_r1.utils.replay_buffer.ReplayBuffer.add"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add()</span></code></a> or <a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer.add_group" title="open_r1.utils.replay_buffer.ReplayBuffer.add_group"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_group()</span></code></a>.</p></li>
+<li><p><strong>reward</strong> (<em>float</em>) – New reward value to merge into the running statistics.</p></li>
 </ul>
 </dd>
 </dl>

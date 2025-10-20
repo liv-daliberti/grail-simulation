@@ -29,4 +29,5 @@ _morph_available = _is_package_available("morphcloud")
 
 
 def is_morph_available() -> bool:
+    """Return ``True`` when the optional morphcloud dependency is installed."""
     return _morph_available

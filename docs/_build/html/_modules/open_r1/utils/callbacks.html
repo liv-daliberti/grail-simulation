@@ -275,6 +275,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight attribute container used for hub/benchmark helpers.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>  <span class="c1"># convenience holder for hub + benchmark helpers</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the namespace with arbitrary keyword attributes.</span>
+
+<span class="sd">        :param kw: Keyword arguments to expose as attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
@@ -315,6 +319,10 @@
         <span class="c1"># (optional) spawn benchmark job when the upload finishes</span>
         <span class="k">if</span> <span class="n">_slurm_available</span><span class="p">():</span>
             <span class="k">def</span><span class="w"> </span><span class="nf">_after</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Submit benchmark jobs once the upload future resolves.</span>
+
+<span class="sd">                :param _: Completed future returned by the upload helper.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
                 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_benchmark_jobs</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Upload done – submitting benchmark job.&quot;</span><span class="p">)</span>
                 <span class="n">dummy</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">benchmarks</span>

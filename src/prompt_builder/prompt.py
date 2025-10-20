@@ -11,6 +11,12 @@ from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
 
 
 def _last_index(xs: Any, val: Any) -> Optional[int]:
+    """Return the last index of ``val`` within ``xs`` when ``xs`` is a list.
+
+    :param xs: Sequence potentially containing ``val``.
+    :param val: Value to locate.
+    :returns: Zero-based index or ``None`` when not found.
+    """
     if not isinstance(xs, list) or val is None:
         return None
     idx = None
@@ -21,6 +27,11 @@ def _last_index(xs: Any, val: Any) -> Optional[int]:
 
 
 def _render_profile_text(profile: ProfileRender) -> str:
+    """Join profile sentences into a single descriptive paragraph.
+
+    :param profile: Rendered profile object.
+    :returns: Combined profile text or a fallback string.
+    """
     profile_text = " ".join(sentence for sentence in profile.sentences if sentence)
     if not profile_text:
         return "Profile information is unavailable."
@@ -109,6 +120,13 @@ def _recently_watched_section(ex: Dict[str, Any], show_ids: bool, max_hist: int)
 
 
 def _recently_watched_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
+    """Return formatted descriptors for recently watched videos.
+
+    :param ex: Interaction row containing history arrays.
+    :param show_ids: Whether to include video identifiers.
+    :param max_hist: Maximum number of entries to inspect.
+    :returns: List of descriptor strings ordered oldest → newest.
+    """
     prior = _prior_entries(ex)
     if not prior:
         return []
@@ -122,6 +140,11 @@ def _recently_watched_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: 
 
 
 def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
+    """Return watch-history entries preceding the current video.
+
+    :param ex: Interaction row containing history payloads.
+    :returns: List of entry dictionaries ordered chronologically.
+    """
     vids = as_list_json(ex.get("watched_vids_json"))
     detailed = as_list_json(ex.get("watched_detailed_json"))
     current_id = clean_text(ex.get("current_video_id"))
@@ -142,6 +165,12 @@ def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
 
 
 def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
+    """Return a formatted descriptor summarising a watched video.
+
+    :param record: Dictionary containing watch metadata.
+    :param show_ids: Whether to include identifiers in the descriptor.
+    :returns: Descriptor string describing watch progress and metadata.
+    """
     title = clean_text(
         record.get("title")
         or record.get("name")
@@ -190,6 +219,13 @@ def _options_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
 
 
 def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
+    """Render a single recommendation option for inclusion in the prompt.
+
+    :param position: 1-based index of the option.
+    :param item: Dictionary containing option metadata.
+    :param show_ids: Whether to include identifiers in the output.
+    :returns: Formatted option line.
+    """
     title = clean_text(item.get("title"), limit=160)
     option_id = clean_text(item.get("id"))
     if not title and option_id:
@@ -212,6 +248,11 @@ def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
 
 
 def _format_duration(item: Dict[str, Any]) -> str:
+    """Return a formatted duration string for a slate item.
+
+    :param item: Dictionary containing duration metadata.
+    :returns: Seconds string (e.g. ``\"120s\"``) or empty string when unavailable.
+    """
     duration_raw = (
         item.get("length_seconds")
         or item.get("duration_seconds")
@@ -229,6 +270,11 @@ def _format_duration(item: Dict[str, Any]) -> str:
 
 
 def _option_stats(item: Dict[str, Any]) -> Iterable[str]:
+    """Yield formatted statistics (views, likes, etc.) for the option.
+
+    :param item: Dictionary containing count fields.
+    :returns: Iterator over formatted ``label: value`` strings.
+    """
     stat_labels = [
         ("view_count", "views"),
         ("like_count", "likes"),

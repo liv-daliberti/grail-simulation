@@ -429,6 +429,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_selected_row</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the ``selected_survey_row`` field as a plain dictionary.</span>
+
+<span class="sd">    :param ex: Dataset example containing optional survey-row metadata.</span>
+<span class="sd">    :returns: Mapping of selected survey responses or an empty dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selected_survey_row&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
@@ -450,6 +455,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_sentence</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure that ``text`` ends with sentence punctuation.</span>
+
+<span class="sd">    :param text: Candidate fragment to normalise.</span>
+<span class="sd">    :returns: Sentence-terminated string or an empty string when missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">stripped</span> <span class="o">=</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">stripped</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -459,6 +469,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first non-null value among ``keys`` from the example metadata.</span>
+
+<span class="sd">    :param ex: Primary dataset example.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :param keys: Candidate field names searched in order.</span>
+<span class="sd">    :returns: First value that is not NaN-like, or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ex</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
@@ -477,6 +494,14 @@
     <span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first textual value among ``keys`` with optional length limit.</span>
+
+<span class="sd">    :param ex: Primary dataset example.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :param keys: Candidate field names searched in order.</span>
+<span class="sd">    :param limit: Optional maximum length passed to :func:`clean_text`.</span>
+<span class="sd">    :returns: Cleaned text fragment or an empty string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -484,10 +509,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clean_fragment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trimmed fragment without trailing periods.</span>
+
+<span class="sd">    :param text: Text fragment to normalise.</span>
+<span class="sd">    :returns: Stripped fragment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_phrases_from_items</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert labeled item strings into a list of readable phrases.</span>
+
+<span class="sd">    :param items: Iterable of ``label: value`` strings.</span>
+<span class="sd">    :returns: List of single phrases suitable for inclusion in sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">phrases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
         <span class="n">fragment</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -519,6 +554,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sentencize</span><span class="p">(</span><span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Join ``items`` into a grammatically correct sentence prefixed by text.</span>
+
+<span class="sd">    :param prefix: Leading phrase preceding the list.</span>
+<span class="sd">    :param items: Sequence of phrase fragments.</span>
+<span class="sd">    :returns: Sentence string or empty string when ``items`` is empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">phrases</span> <span class="o">=</span> <span class="n">_phrases_from_items</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">phrases</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -528,6 +569,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_demographic_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble demographic sentences covering identity, location, and status.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of demographic sentences (may contain empties).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">sentences</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_identity_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">))</span>
     <span class="n">sentences</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_location_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">))</span>
@@ -541,6 +588,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_identity_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build sentences describing age, gender, and race identity fragments.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of identity-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">age_fragment</span> <span class="o">=</span> <span class="n">describe_age_fragment</span><span class="p">(</span>
         <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;age_cat&quot;</span><span class="p">,</span> <span class="s2">&quot;age_category&quot;</span><span class="p">)</span>
@@ -588,6 +641,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_location_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences summarising the viewer&#39;s location context.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of location-specific sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">city</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;city&quot;</span><span class="p">,</span> <span class="s2">&quot;city_name&quot;</span><span class="p">)</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
@@ -626,6 +685,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_education_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences summarising educational attainment.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of education-focused sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">education</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
@@ -666,6 +731,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_income_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences describing household income details.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of income-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">income</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
@@ -696,6 +767,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_employment_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences covering employment status and occupation.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of employment-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">employment</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
@@ -725,6 +802,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_family_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences capturing family structure details.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of family-oriented sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">marital_sentence</span> <span class="o">=</span> <span class="n">_marital_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">marital_sentence</span><span class="p">:</span>
@@ -737,6 +820,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_marital_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence describing the viewer&#39;s marital status.&quot;&quot;&quot;</span>
     <span class="n">marital</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;marital_status&quot;</span><span class="p">,</span> <span class="s2">&quot;married&quot;</span><span class="p">,</span> <span class="s2">&quot;marital&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">marital</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -744,6 +828,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_children_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences describing whether children are present in the household.&quot;&quot;&quot;</span>
     <span class="n">children_raw</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -766,6 +851,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_household_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence summarising household size when available.&quot;&quot;&quot;</span>
     <span class="n">household</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;household_size&quot;</span><span class="p">,</span> <span class="s2">&quot;hh_size&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">household</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -788,6 +874,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_religion_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences covering religious identity and related context.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of religion-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">identity</span> <span class="o">=</span> <span class="n">_religion_identity_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">identity</span><span class="p">:</span>
@@ -802,6 +894,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_religion_identity_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence describing religious affiliation when available.&quot;&quot;&quot;</span>
     <span class="n">religion</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -817,6 +910,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_attendance_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence summarising religious attendance or importance.&quot;&quot;&quot;</span>
     <span class="n">attendance</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -837,6 +931,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_veteran_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence indicating veteran status when known.&quot;&quot;&quot;</span>
     <span class="n">veteran_raw</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -858,6 +953,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_language_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences describing the language used to complete the survey.&quot;&quot;&quot;</span>
     <span class="n">language</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -877,6 +973,13 @@
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">specs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect labelled phrases from the example based on field specifications.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :param specs: Sequence of ``(field_names, label)`` pairs.</span>
+<span class="sd">    :returns: List of ``label: value`` strings where values are present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">)</span>
@@ -886,12 +989,24 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_politics_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences covering political views and affiliations.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of politics-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">politics</span> <span class="o">=</span> <span class="n">_collect_labeled_fields</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">POLITICS_FIELD_SPECS</span><span class="p">)</span>
     <span class="n">sentence</span> <span class="o">=</span> <span class="n">_sentencize</span><span class="p">(</span><span class="s2">&quot;Politics include&quot;</span><span class="p">,</span> <span class="n">politics</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">sentence</span><span class="p">]</span> <span class="k">if</span> <span class="n">sentence</span> <span class="k">else</span> <span class="p">[]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gun_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences summarising gun ownership and policy views.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of gun-policy sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gun_section</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">ownership_entry</span> <span class="o">=</span> <span class="n">_gun_ownership_entry</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">ownership_entry</span><span class="p">:</span>
@@ -904,6 +1019,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gun_ownership_entry</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a phrase describing gun ownership status.&quot;&quot;&quot;</span>
     <span class="n">ownership</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;gun_own&quot;</span><span class="p">,</span> <span class="s2">&quot;gunowner&quot;</span><span class="p">,</span> <span class="s2">&quot;owns_gun&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">ownership</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -920,6 +1036,12 @@
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return labelled gun-policy entries and the keys that were consumed.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: Tuple of ``(entries, known_keys)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">known_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;gun_own&quot;</span><span class="p">,</span> <span class="s2">&quot;gunowner&quot;</span><span class="p">,</span> <span class="s2">&quot;owns_gun&quot;</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">GUN_FIELD_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -936,6 +1058,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gun_additional_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">known_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return additional gun-policy entries excluding previously seen keys.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param known_keys: Lowercased keys already consumed.</span>
+<span class="sd">    :returns: List of ``label: value`` strings for additional fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">lower</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -954,6 +1082,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_wage_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences covering minimum-wage and wage policy attitudes.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of minimum-wage sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">wage_section</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">MIN_WAGE_FIELD_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
@@ -989,6 +1123,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_media_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return sentences describing overall media consumption habits.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of media-related sentences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">media_section</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">media_section</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_youtube_frequency_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">))</span>
     <span class="n">media_section</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_youtube_binge_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">))</span>
@@ -1006,6 +1146,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_youtube_frequency_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return phrases describing YouTube watch frequency.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of frequency phrases (0 or 1 entry).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">freq_raw</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span>
         <span class="n">ex</span><span class="p">,</span>
         <span class="n">selected</span><span class="p">,</span>
@@ -1028,6 +1174,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_youtube_binge_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return phrases describing binge behaviour and reported watch time.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :returns: List of binge-related phrases (0 or 1 entry).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">binge_raw</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;binge_youtube&quot;</span><span class="p">,</span> <span class="s2">&quot;youtube_time&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">binge_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -1043,6 +1195,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_first_available_text</span><span class="p">(</span>
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first non-empty text value across ``keys``.</span>
+
+<span class="sd">    :param ex: Dataset example containing viewer metadata.</span>
+<span class="sd">    :param selected: Selected survey-row mapping.</span>
+<span class="sd">    :param keys: Sequence of candidate field names.</span>
+<span class="sd">    :returns: Cleaned text or an empty string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">_first_text</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">220</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">text</span><span class="p">:</span>

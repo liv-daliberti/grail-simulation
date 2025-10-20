@@ -285,17 +285,29 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dictionary that returns an empty string for missing keys.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an empty string for missing ``key`` to ease template formatting.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_natural_sort_key</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple suitable for natural sorting of strings with numeric suffixes.</span>
+
+<span class="sd">    :param value: String containing optional numeric segments.</span>
+<span class="sd">    :returns: Tuple sorting by numeric portion, alphabetic prefix, and original text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
     <span class="n">digits</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
     <span class="k">return</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="k">if</span> <span class="n">digits</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap ``text`` to the specified ``width`` using newline separators.</span>
+
+<span class="sd">    :param text: Original text to wrap.</span>
+<span class="sd">    :param width: Maximum line length; no wrapping when ``None`` or ``&lt;= 0``.</span>
+<span class="sd">    :returns: Wrapped text with newline separators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">width</span> <span class="ow">or</span> <span class="n">width</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">text</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">width</span><span class="p">))</span>

@@ -280,6 +280,7 @@
 
     <span class="n">study_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">heatmap_paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">table_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">assemble_study_specs</span><span class="p">():</span>
         <span class="n">study_frame</span> <span class="o">=</span> <span class="n">prepare_study_frame</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
@@ -310,6 +311,16 @@
         <span class="n">assignment_frame</span> <span class="o">=</span> <span class="n">load_assignment_frame</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="n">summaries</span> <span class="o">=</span> <span class="n">summarise_assignments</span><span class="p">(</span><span class="n">assignment_frame</span><span class="p">)</span>
         <span class="n">assignment_panels</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">summaries</span><span class="p">))</span>
+        <span class="n">control_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">treatment_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">control_entry</span> <span class="ow">or</span> <span class="n">treatment_entry</span><span class="p">:</span>
+            <span class="n">table_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="s2">&quot;control_mean_change&quot;</span><span class="p">:</span> <span class="n">control_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">control_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;treatment_mean_change&quot;</span><span class="p">:</span> <span class="n">treatment_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">treatment_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">assignment_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="n">regression_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">assignment_frame</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">study_key</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">study_label</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
@@ -335,6 +346,8 @@
         <span class="p">],</span>
         <span class="n">heatmap_paths</span><span class="o">=</span><span class="n">heatmap_paths</span><span class="p">,</span>
         <span class="n">mean_change_path</span><span class="o">=</span><span class="n">mean_change_plot</span><span class="p">,</span>
+        <span class="n">assignment_rows</span><span class="o">=</span><span class="n">table_rows</span><span class="p">,</span>
+        <span class="n">regression_summary</span><span class="o">=</span><span class="n">regression_stats</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="p">(</span><span class="n">output_path</span> <span class="o">/</span> <span class="s2">&quot;README.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
         <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">markdown_lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>

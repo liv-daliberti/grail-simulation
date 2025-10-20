@@ -301,6 +301,11 @@
         <span class="k">return</span> <span class="n">ds</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_match_issue</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the row&#39;s issue matches the requested label.</span>
+
+<span class="sd">        :param row: Dataset example containing an ``issue`` column.</span>
+<span class="sd">        :returns: Whether the row belongs to the requested issue slice.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">issue</span>
 

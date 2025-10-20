@@ -437,6 +437,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_race_token</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a free-form race token into a canonical label.</span>
+
+<span class="sd">    :param raw: Raw race description extracted from the example.</span>
+<span class="sd">    :returns: Canonical race label, the stripped token, or ``None`` when empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">key</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
@@ -595,6 +600,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the currently watched title/id pair from the example payload.</span>
+
+<span class="sd">    :param example: Dataset row containing now-watching metadata fields.</span>
+<span class="sd">    :returns: ``(title, video_id)`` tuple or ``None`` when unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">video_id</span> <span class="o">=</span> <span class="n">pick_case_insensitive</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;videoId&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">video_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">video_id</span><span class="p">):</span>
         <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
@@ -685,6 +695,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_history_pointer</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the trajectory pointer describing the current history position.</span>
+
+<span class="sd">    :param example: Dataset row containing the ``trajectory_json`` blob.</span>
+<span class="sd">    :returns: Tuple of ``(current_index, current_end_ms)`` values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">trajectory_json</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;trajectory_json&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trajectory_json</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">trajectory_json</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
@@ -716,6 +731,14 @@
     <span class="n">up_to_end_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">include_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse interaction history entries from the trajectory payload.</span>
+
+<span class="sd">    :param example: Dataset row containing the ``trajectory_json`` field.</span>
+<span class="sd">    :param up_to_idx: Optional index cap for the returned rows.</span>
+<span class="sd">    :param up_to_end_ms: Optional end-time cap for the returned rows.</span>
+<span class="sd">    :param include_current: Whether to retain the current item at the caps.</span>
+<span class="sd">    :returns: List of canonicalised history dictionaries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">trajectory_json</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;trajectory_json&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trajectory_json</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">trajectory_json</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -768,6 +791,11 @@
         <span class="n">extracted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row_copy</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_hist_key</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide a stable sort key for partially-specified history rows.</span>
+
+<span class="sd">        :param entry: Raw history row to normalise for sorting.</span>
+<span class="sd">        :returns: Tuple distinguishing indexed items from timing fallbacks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">idx_val</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx_val</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx_val</span><span class="p">)</span>
@@ -803,6 +831,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect slate titles/ids from text or trajectory metadata.</span>
+
+<span class="sd">    :param example: Dataset row containing slate information.</span>
+<span class="sd">    :returns: Sequence of unique ``(title, video_id)`` pairs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">slate_text</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_text&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slate_text</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">slate_text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
@@ -866,7 +899,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_history_lines</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render history dictionaries into user-readable bullet points.</span>
+
+<span class="sd">    :param sequence: Canonicalised history rows.</span>
+<span class="sd">    :returns: List of formatted history strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_seconds</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Format a raw seconds value into a friendly suffix representation.</span>
+
+<span class="sd">        :param value: Raw seconds or timing value to convert.</span>
+<span class="sd">        :returns: Human-readable suffix string (e.g. ``10s`` or ``?``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span><span class="si">}</span><span class="s2">s&quot;</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -925,6 +968,11 @@
     <span class="n">now_title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">now_title</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">now_title</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_current</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the row matches the derived now-watching item.</span>
+
+<span class="sd">        :param row: History entry from the trajectory list.</span>
+<span class="sd">        :returns: Whether the entry corresponds to the current video.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">rid</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="n">rtitle</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>

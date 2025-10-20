@@ -24,6 +24,11 @@ from .utils import ANS_TAG, INDEX_ONLY
 
 
 def _bucket_from_position(position_index: int) -> str:
+    """Map a zero-based position index to an accuracy bucket label.
+
+    :param position_index: Predicted slate position (zero-based).
+    :returns: String bucket identifier used for metrics aggregation.
+    """
     if position_index < 0:
         return "unknown"
     if position_index == 0:
@@ -38,6 +43,11 @@ def _bucket_from_position(position_index: int) -> str:
 
 
 def _bucket_from_options(count: int) -> str:
+    """Normalise the number of slate options into histogram buckets.
+
+    :param count: Number of candidate options exposed to the model.
+    :returns: String bucket identifier used for metrics aggregation.
+    """
     if count <= 1:
         return "1"
     if count == 2:
@@ -50,6 +60,11 @@ def _bucket_from_options(count: int) -> str:
 
 
 def _parse_index_from_output(raw: str) -> Optional[int]:
+    """Parse the model's predicted index from raw completion text.
+
+    :param raw: Completion text returned by the model.
+    :returns: Parsed integer index (1-based) or ``None`` when absent.
+    """
     match = ANS_TAG.search(raw)
     if match:
         candidate = match.group(1).strip()
@@ -71,6 +86,12 @@ def _parse_index_from_output(raw: str) -> Optional[int]:
 
 
 def _ensure_output_dir(output_dir: Path, overwrite: bool) -> None:
+    """Create the evaluation output directory if it does not already exist.
+
+    :param output_dir: Target directory for evaluation artifacts.
+    :param overwrite: Whether pre-existing directories should be reused.
+    :raises FileExistsError: When the directory exists and overwrite is disabled.
+    """
     if output_dir.exists() and not overwrite:
         raise FileExistsError(
             f"Output directory '{output_dir}' already exists. Use --overwrite to replace."

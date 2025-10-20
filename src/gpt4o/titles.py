@@ -11,6 +11,10 @@ class TitleResolver(_BaseTitleResolver):
     """Resolve YouTube ids to titles using shared common helpers."""
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the resolver with shared default title directories.
+
+        :param kwargs: Optional keyword overrides forwarded to the base class.
+        """
         defaults = {"default_dirs": DEFAULT_TITLE_DIRS}
         defaults.update(kwargs)
         super().__init__(**defaults)

@@ -11,11 +11,18 @@ import aiohttp
 
 
 class PistonError(Exception):
+    """Raised when all available Piston endpoints fail to satisfy a request."""
     pass
 
 
 @lru_cache(maxsize=1)
 def get_piston_client_from_env(session=None):
+    """Initialise a :class:`PistonClient` using configuration from the environment.
+
+    :param session: Optional shared :class:`aiohttp.ClientSession`.
+    :returns: Configured :class:`PistonClient` instance.
+    :raises ValueError: When the ``PISTON_ENDPOINTS`` variable is missing.
+    """
     piston_endpoints = os.getenv("PISTON_ENDPOINTS")
     if piston_endpoints is None:
         raise ValueError(
@@ -63,6 +70,13 @@ class PistonClient:
         session=None,
         max_requests_per_endpoint=1,
     ):
+        """Create a load-balanced client over one or more Piston endpoints.
+
+        :param base_endpoint: Single endpoint or list of endpoints.
+        :param session: Optional shared :class:`aiohttp.ClientSession`.
+        :param max_requests_per_endpoint: Parallel requests allowed per endpoint.
+        :raises ValueError: If no endpoints are provided.
+        """
         self.max_requests_per_endpoint = max_requests_per_endpoint
         self.base_endpoints = [base_endpoint] if isinstance(base_endpoint, str) else base_endpoint
         if len(self.base_endpoints) == 0:
@@ -81,6 +95,10 @@ class PistonClient:
 
     @property
     def session(self):
+        """Return a lazily-initialised :class:`aiohttp.ClientSession`.
+
+        :returns: Shared client session for HTTP requests.
+        """
         if self._session is None:
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(sock_read=30),
@@ -93,36 +111,88 @@ class PistonClient:
         return self._session
 
     async def _wait_for_endpoint(self):
+        """Acquire the next available endpoint token for issuing a request.
+
+        :returns: Endpoint base URL reserved for the request.
+        """
         endpoint = await self.endpoint_tokens.get()
         return endpoint
 
     async def _release_endpoint(self, endpoint):
+        """Release a previously acquired endpoint token back to the pool.
+
+        :param endpoint: Endpoint URL returned by :meth:`_wait_for_endpoint`.
+        """
         await self.endpoint_tokens.put(endpoint)
 
     async def _send_request(self, endpoint, route, data=None, method="post"):
+        """Send an HTTP request to a specific endpoint.
+
+        :param endpoint: Endpoint base URL.
+        :param route: API route to call (without leading slash).
+        :param data: Optional JSON payload.
+        :param method: HTTP method to use.
+        :returns: JSON-decoded response payload.
+        """
         async with self.session.request(
             method, f"{endpoint.rstrip('/')}/{route}", json=data, headers={"Content-Type": "application/json"}
         ) as response:
             return await response.json(content_type=None)
 
     async def _send_to_all(self, route, data=None, method="post"):
+        """Send a request to all endpoints concurrently and gather responses.
+
+        :param route: API route to call.
+        :param data: Optional JSON payload.
+        :param method: HTTP method to use.
+        :returns: List of JSON responses from each endpoint.
+        """
         return await asyncio.gather(
             *[self._send_request(endpoint, route, data, method) for endpoint in self.base_endpoints]
         )
 
     async def _send_to_one(self, endpoint, route, data=None, method="post"):
+        """Send a request to a single endpoint.
+
+        :param endpoint: Endpoint base URL.
+        :param route: API route to call.
+        :param data: Optional JSON payload.
+        :param method: HTTP method to use.
+        :returns: JSON-decoded response payload.
+        """
         return await self._send_request(endpoint, route, data, method)
 
     async def install_package(self, language, version):
+        """Install a runtime package on all endpoints.
+
+        :param language: Runtime language identifier.
+        :param version: Package version to install.
+        :returns: Responses returned by each endpoint.
+        """
         return await self._send_to_all("packages", {"language": language, "version": version}, method="post")
 
     async def uninstall_package(self, language, version):
+        """Uninstall a runtime package from all endpoints.
+
+        :param language: Runtime language identifier.
+        :param version: Package version to remove.
+        :returns: Responses returned by each endpoint.
+        """
         return await self._send_to_all("packages", {"language": language, "version": version}, method="delete")
 
     async def get_supported_runtimes(self):
+        """Return the runtimes supported by each configured endpoint.
+
+        :returns: List of runtime metadata responses.
+        """
         return await self._send_to_all("runtimes", method="get")
 
     async def _check_failed_endpoint(self, endpoint):
+        """Probe and mark endpoints that repeatedly fail requests.
+
+        :param endpoint: Endpoint URL to check.
+        :raises PistonError: When all endpoints are marked unhealthy.
+        """
         async with self._endpoint_failures_lock:
             if endpoint in self._unhealthy_endpoints:
                 return
@@ -136,6 +206,14 @@ class PistonClient:
                     raise PistonError("All endpoints are unhealthy. Please check your Piston workers.")
 
     async def send_execute(self, data, language="cms_ioi", max_retries=5):
+        """Execute code on a managed endpoint with retry and backoff.
+
+        :param data: Execution payload forwarded to Piston.
+        :param language: Runtime language identifier.
+        :param max_retries: Maximum number of retry attempts.
+        :returns: JSON response returned by the successful endpoint.
+        :raises PistonError: If all retries fail or endpoints are unhealthy.
+        """
         payload = {
             "language": language,
             "version": "*",
@@ -201,7 +279,10 @@ class PistonClient:
 
 
 def get_slurm_piston_endpoints():
-    """Get list of active piston worker endpoints from squeue output"""
+    """Return active Piston worker endpoints extracted from ``squeue`` output.
+
+    :returns: List of endpoint URLs discovered via SLURM.
+    """
     # Run squeue command to get job name, hostname and status, filtering for RUNNING state
     result = subprocess.run(
         ["squeue", '--format="%j %N %T"', "--noheader", "--states=RUNNING"],

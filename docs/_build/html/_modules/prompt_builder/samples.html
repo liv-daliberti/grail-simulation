@@ -269,6 +269,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_dataset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that the optional ``datasets`` dependency is available.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">load_from_disk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
             <span class="s2">&quot;datasets must be installed to generate prompt samples &quot;</span>
@@ -277,6 +278,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_iter_splits</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield non-empty dataset splits and their names.</span>
+
+<span class="sd">    :param ds: Dataset dictionary containing splits.</span>
+<span class="sd">    :returns: Iterator of ``(split_name, split_dataset)`` tuples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">split</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">):</span>
             <span class="k">continue</span>
@@ -344,6 +350,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_output_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a validated Markdown output path, creating parent directories.</span>
+
+<span class="sd">    :param path: Destination filepath provided via CLI.</span>
+<span class="sd">    :returns: Path object pointing to a Markdown file.</span>
+<span class="sd">    :raises ValueError: If the path is not Markdown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">output_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;.md&quot;</span><span class="p">,</span> <span class="s2">&quot;.markdown&quot;</span><span class="p">}:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output file must be Markdown (.md); received </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -352,6 +364,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_sample_heading</span><span class="p">(</span><span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">PromptSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Markdown heading summarising sample metadata.&quot;&quot;&quot;</span>
     <span class="n">meta_parts</span> <span class="o">=</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s2">&quot;Issue: </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">&quot;Split: </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -387,12 +400,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_issue_list</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated issue list into normalised tokens.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_cli</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the CLI argument parser for the sample generator.&quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Generate sample prompts for documentation.&quot;</span>
     <span class="p">)</span>
@@ -428,6 +443,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the prompt-sample CLI.&quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">_build_cli</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">issues</span> <span class="o">=</span> <span class="n">_parse_issue_list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">)</span>

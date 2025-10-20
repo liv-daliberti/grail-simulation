@@ -55,6 +55,11 @@ def filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
         return ds
 
     def _match_issue(row: Dict[str, Any]) -> bool:
+        """Return ``True`` when the row's issue matches the requested label.
+
+        :param row: Dataset example containing an ``issue`` column.
+        :returns: Whether the row belongs to the requested issue slice.
+        """
         value = row.get("issue")
         return str(value).strip() == issue
 

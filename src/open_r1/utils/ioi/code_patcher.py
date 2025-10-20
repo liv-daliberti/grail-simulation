@@ -74,6 +74,11 @@ def fix_python3_imports(source_code):
 
 
 def fix_cpp_includes(source_code):
+    """Prepend convenience C++ boilerplate to the submitted source.
+
+    :param source_code: Original C++ submission text.
+    :returns: Modified submission including helpful headers/usings.
+    """
     # has most of the useful functions
     code_header = "#include <bits/stdc++.h>\n"
     # use namespace std since models forget std:: often
@@ -83,10 +88,21 @@ def fix_cpp_includes(source_code):
 
 
 def is_patchable(lang):
+    """Return ``True`` when the language is eligible for automated patching.
+
+    :param lang: Language descriptor string.
+    :returns: Whether the submission can be post-processed safely.
+    """
     return lang in ("python", "python3", "Python 3", "PyPy 3", "PyPy 3-64", "cpp") or "C++" in lang
 
 
 def patch_code(text, lang):
+    """Apply language-specific patching to the submitted source text.
+
+    :param text: Original submission source code.
+    :param lang: Language descriptor string.
+    :returns: Patched source code suitable for evaluation.
+    """
     if not text:
         return text
     if lang in ("python", "python3", "Python 3", "PyPy 3", "PyPy 3-64"):

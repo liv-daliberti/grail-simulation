@@ -61,6 +61,11 @@ def secs(x: Any) -> str:
 
 
 def _is_nanlike(x: Any) -> bool:
+    """Return ``True`` when ``x`` matches a NaN-like sentinel.
+
+    :param x: Value to evaluate for NaN-like characteristics.
+    :returns: Whether the value should be considered missing.
+    """
     if x is None:
         return True
     if isinstance(x, float) and math.isnan(x):

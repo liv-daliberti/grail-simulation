@@ -294,10 +294,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise free-form text into an alphanumeric lowercase token.</span>
+
+<span class="sd">    :param text: Source text to canonicalise.</span>
+<span class="sd">    :returns: Lowercased alphanumeric representation with delimiters removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CANON_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``value`` behaves like a missing sentinel.</span>
+
+<span class="sd">    :param value: Arbitrary value drawn from the dataset.</span>
+<span class="sd">    :returns: Whether the value should be treated as missing data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="n">string</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -305,6 +315,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_truthy</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``value`` is semantically truthy.</span>
+
+<span class="sd">    :param value: Raw flag value (numeric/string/bool).</span>
+<span class="sd">    :returns: Whether the value indicates truth.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
@@ -353,6 +368,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_pick_ci</span><span class="p">(</span><span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="n">alternates</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick a case-insensitive value from ``mapping`` using fallback keys.</span>
+
+<span class="sd">    :param mapping: Dictionary that may contain the desired key.</span>
+<span class="sd">    :param alternates: Candidate key names (case-insensitive).</span>
+<span class="sd">    :returns: Stripped value when found, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">lower</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
@@ -420,15 +441,30 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the slate contents as a list of ``(title, video_id)`` pairs.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_title</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a stripped string when ``value`` is textual.</span>
+
+<span class="sd">        :param value: Raw title candidate.</span>
+<span class="sd">        :returns: Stripped string or an empty string when unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_id</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalise a potential video id to an 11-character YouTube id.</span>
+
+<span class="sd">        :param value: Raw identifier candidate.</span>
+<span class="sd">        :returns: Canonical YouTube id or an empty string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">candidate</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span> <span class="o">==</span> <span class="mi">11</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_structured</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract slate items from structured dictionaries.</span>
+
+<span class="sd">        :param array: Iterable of dictionaries containing slate metadata.</span>
+<span class="sd">        :returns: Structured list of ``(title, video_id)`` pairs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">structured</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">structured</span>
@@ -522,6 +558,11 @@
     <span class="n">extra_fields</span> <span class="o">=</span> <span class="n">extra_fields</span> <span class="ow">or</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_good</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` if ``text`` contains non-empty content.</span>
+
+<span class="sd">        :param text: Candidate text fragment.</span>
+<span class="sd">        :returns: Whether the fragment is meaningful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">text</span> <span class="ow">and</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;(none)&quot;</span><span class="p">})</span>
 
     <span class="n">parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -619,6 +660,12 @@
     <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble a training record tuple for the given example.</span>
+
+<span class="sd">    :param example: Dataset row from the training split.</span>
+<span class="sd">    :param extra_fields: Optional iterable of additional text fields.</span>
+<span class="sd">    :returns: Tuple of ``(document, label_id, label_title)`` or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">document</span> <span class="o">=</span> <span class="n">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">document</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -654,12 +701,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecFeatureBuilder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create Word2Vec embeddings from viewer prompts.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="Word2VecFeatureBuilder.__init__">
+<a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the builder with optional configuration overrides.</span>
+
+<span class="sd">        :param config: Optional :class:`Word2VecConfig` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Word2VecConfig</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tokenise input text into whitespace-delimited lower-case tokens.</span>
+
+<span class="sd">        :param text: Text to split.</span>
+<span class="sd">        :returns: List of tokens.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.train">

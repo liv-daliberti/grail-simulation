@@ -471,6 +471,11 @@
 <div class="viewcode-block" id="ReplayBuffer.update_priority_by_uid">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.update_priority_by_uid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_priority_by_uid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reward</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the tracked reward statistics for an item referenced by UID.</span>
+
+<span class="sd">        :param uid: Unique identifier returned by :meth:`add` or :meth:`add_group`.</span>
+<span class="sd">        :param reward: New reward value to merge into the running statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">reward</span> <span class="o">=</span> <span class="n">_finite_float</span><span class="p">(</span><span class="n">reward</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uid2idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -485,6 +490,11 @@
 <div class="viewcode-block" id="ReplayBuffer.update_priority">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.update_priority">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reward</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update reward statistics for an item referenced by buffer index.</span>
+
+<span class="sd">        :param idx: Index within the replay buffer.</span>
+<span class="sd">        :param reward: New reward value to merge into the running statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">_finite_float</span><span class="p">(</span><span class="n">reward</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span></div>
@@ -493,6 +503,10 @@
 <div class="viewcode-block" id="ReplayBuffer.debug_state">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.debug_state">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">debug_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a diagnostic snapshot of the buffer internals.</span>
+
+<span class="sd">        :returns: Dictionary containing length, capacity, and tail stats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">tail</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">5</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">))</span>
             <span class="k">return</span> <span class="p">{</span>
@@ -556,6 +570,11 @@
 <div class="viewcode-block" id="ReplayBuffer.get_group">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.get_group">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a deep copy of the stored group associated with ``uid``.</span>
+
+<span class="sd">        :param uid: Unique identifier returned by :meth:`add_group`.</span>
+<span class="sd">        :returns: List of prompt dictionaries or an empty list when missing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uid2idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

@@ -262,6 +262,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map a zero-based position index to an accuracy bucket label.</span>
+
+<span class="sd">    :param position_index: Predicted slate position (zero-based).</span>
+<span class="sd">    :returns: String bucket identifier used for metrics aggregation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">position_index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
     <span class="k">if</span> <span class="n">position_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -276,6 +281,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bucket_from_options</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise the number of slate options into histogram buckets.</span>
+
+<span class="sd">    :param count: Number of candidate options exposed to the model.</span>
+<span class="sd">    :returns: String bucket identifier used for metrics aggregation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;1&quot;</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
@@ -288,6 +298,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_index_from_output</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the model&#39;s predicted index from raw completion text.</span>
+
+<span class="sd">    :param raw: Completion text returned by the model.</span>
+<span class="sd">    :returns: Parsed integer index (1-based) or ``None`` when absent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -309,6 +324,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_output_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the evaluation output directory if it does not already exist.</span>
+
+<span class="sd">    :param output_dir: Target directory for evaluation artifacts.</span>
+<span class="sd">    :param overwrite: Whether pre-existing directories should be reused.</span>
+<span class="sd">    :raises FileExistsError: When the directory exists and overwrite is disabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">output_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Output directory &#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">&#39; already exists. Use --overwrite to replace.&quot;</span>

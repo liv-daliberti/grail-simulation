@@ -25,23 +25,24 @@ logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
 class MorphCloudError(Exception):
+    """Raised when a MorphCloud operation fails."""
     pass
 
 
 class MorphCloudExecutionClient:
+    """Asynchronous helper for interacting with MorphCloud execution instances."""
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         spans_log_path: Optional[str] = None,
     ):
-        """
-        Initialize the MorphCloud execution client.
+        """Initialise the MorphCloud execution client.
 
-        Args:
-            api_key: Optional API key for MorphCloud. If not provided, will use MORPH_API_KEY env var.
-            base_url: Optional base URL for MorphCloud API. If not provided, will use default.
-            spans_log_path: Path to log API call spans to. Defaults to 'logs/morph_api_spans.jsonl'.
+        :param api_key: API key override. Defaults to ``MORPH_API_KEY`` env var.
+        :param base_url: Optional API endpoint override.
+        :param spans_log_path: Path to the spans log file.
         """
 
         self.client = MorphCloudClient(api_key=api_key, base_url=base_url)

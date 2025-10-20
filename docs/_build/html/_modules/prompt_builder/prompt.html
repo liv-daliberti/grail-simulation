@@ -249,6 +249,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_last_index</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the last index of ``val`` within ``xs`` when ``xs`` is a list.</span>
+
+<span class="sd">    :param xs: Sequence potentially containing ``val``.</span>
+<span class="sd">    :param val: Value to locate.</span>
+<span class="sd">    :returns: Zero-based index or ``None`` when not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">idx</span> <span class="o">=</span> <span class="kc">None</span>
@@ -259,6 +265,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_profile_text</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">ProfileRender</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Join profile sentences into a single descriptive paragraph.</span>
+
+<span class="sd">    :param profile: Rendered profile object.</span>
+<span class="sd">    :returns: Combined profile text or a fallback string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">profile_text</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sentence</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">sentences</span> <span class="k">if</span> <span class="n">sentence</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">profile_text</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;Profile information is unavailable.&quot;</span>
@@ -350,6 +361,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_recently_watched_descriptors</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return formatted descriptors for recently watched videos.</span>
+
+<span class="sd">    :param ex: Interaction row containing history arrays.</span>
+<span class="sd">    :param show_ids: Whether to include video identifiers.</span>
+<span class="sd">    :param max_hist: Maximum number of entries to inspect.</span>
+<span class="sd">    :returns: List of descriptor strings ordered oldest → newest.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">prior</span> <span class="o">=</span> <span class="n">_prior_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">prior</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -363,6 +381,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prior_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return watch-history entries preceding the current video.</span>
+
+<span class="sd">    :param ex: Interaction row containing history payloads.</span>
+<span class="sd">    :returns: List of entry dictionaries ordered chronologically.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">vids</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
     <span class="n">detailed</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">))</span>
     <span class="n">current_id</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">))</span>
@@ -383,6 +406,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_watched_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted descriptor summarising a watched video.</span>
+
+<span class="sd">    :param record: Dictionary containing watch metadata.</span>
+<span class="sd">    :param show_ids: Whether to include identifiers in the descriptor.</span>
+<span class="sd">    :returns: Descriptor string describing watch progress and metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
         <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span>
         <span class="ow">or</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
@@ -431,6 +460,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_option_line</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a single recommendation option for inclusion in the prompt.</span>
+
+<span class="sd">    :param position: 1-based index of the option.</span>
+<span class="sd">    :param item: Dictionary containing option metadata.</span>
+<span class="sd">    :param show_ids: Whether to include identifiers in the output.</span>
+<span class="sd">    :returns: Formatted option line.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">160</span><span class="p">)</span>
     <span class="n">option_id</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">option_id</span><span class="p">:</span>
@@ -453,6 +489,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_duration</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted duration string for a slate item.</span>
+
+<span class="sd">    :param item: Dictionary containing duration metadata.</span>
+<span class="sd">    :returns: Seconds string (e.g. ``\&quot;120s\&quot;``) or empty string when unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">duration_raw</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;length_seconds&quot;</span><span class="p">)</span>
         <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration_seconds&quot;</span><span class="p">)</span>
@@ -470,6 +511,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_option_stats</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield formatted statistics (views, likes, etc.) for the option.</span>
+
+<span class="sd">    :param item: Dictionary containing count fields.</span>
+<span class="sd">    :returns: Iterator over formatted ``label: value`` strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">stat_labels</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s2">&quot;view_count&quot;</span><span class="p">,</span> <span class="s2">&quot;views&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">&quot;like_count&quot;</span><span class="p">,</span> <span class="s2">&quot;likes&quot;</span><span class="p">),</span>

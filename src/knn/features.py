@@ -53,10 +53,20 @@ def title_for(video_id: str) -> Optional[str]:
 
 
 def _canon(text: str) -> str:
+    """Normalise free-form text into an alphanumeric lowercase token.
+
+    :param text: Source text to canonicalise.
+    :returns: Lowercased alphanumeric representation with delimiters removed.
+    """
     return CANON_RE.sub("", (text or "").lower().strip())
 
 
 def _is_nanlike(value: Any) -> bool:
+    """Return ``True`` when ``value`` behaves like a missing sentinel.
+
+    :param value: Arbitrary value drawn from the dataset.
+    :returns: Whether the value should be treated as missing data.
+    """
     if value is None:
         return True
     string = str(value).strip().lower()
@@ -64,6 +74,11 @@ def _is_nanlike(value: Any) -> bool:
 
 
 def _truthy(value: Any) -> bool:
+    """Return ``True`` when ``value`` is semantically truthy.
+
+    :param value: Raw flag value (numeric/string/bool).
+    :returns: Whether the value indicates truth.
+    """
     if value is None:
         return False
     if isinstance(value, (int, float)):
@@ -106,6 +121,12 @@ def prompt_from_builder(example: dict) -> str:
 
 
 def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
+    """Pick a case-insensitive value from ``mapping`` using fallback keys.
+
+    :param mapping: Dictionary that may contain the desired key.
+    :param alternates: Candidate key names (case-insensitive).
+    :returns: Stripped value when found, otherwise ``None``.
+    """
     if not isinstance(mapping, dict):
         return None
     lower = {key.lower(): key for key in mapping.keys()}
@@ -173,15 +194,30 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
     """Return the slate contents as a list of ``(title, video_id)`` pairs."""
 
     def _clean_title(value: Any) -> str:
+        """Return a stripped string when ``value`` is textual.
+
+        :param value: Raw title candidate.
+        :returns: Stripped string or an empty string when unavailable.
+        """
         return value.strip() if isinstance(value, str) else ""
 
     def _clean_id(value: Any) -> str:
+        """Normalise a potential video id to an 11-character YouTube id.
+
+        :param value: Raw identifier candidate.
+        :returns: Canonical YouTube id or an empty string.
+        """
         if not value:
             return ""
         candidate = canon_video_id(str(value))
         return candidate if len(candidate) == 11 else ""
 
     def _from_structured(array: Any) -> List[Tuple[str, str]]:
+        """Extract slate items from structured dictionaries.
+
+        :param array: Iterable of dictionaries containing slate metadata.
+        :returns: Structured list of ``(title, video_id)`` pairs.
+        """
         structured: List[Tuple[str, str]] = []
         if not isinstance(array, list):
             return structured
@@ -267,6 +303,11 @@ def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) 
     extra_fields = extra_fields or []
 
     def _good(text: str) -> bool:
+        """Return ``True`` if ``text`` contains non-empty content.
+
+        :param text: Candidate text fragment.
+        :returns: Whether the fragment is meaningful.
+        """
         return bool(text and text.lower() not in {"", "nan", "none", "(none)"})
 
     parts: List[str] = []
@@ -360,6 +401,12 @@ def _record_from_example(
     example: dict,
     extra_fields: Sequence[str] | None,
 ) -> Optional[tuple[str, str, str]]:
+    """Assemble a training record tuple for the given example.
+
+    :param example: Dataset row from the training split.
+    :param extra_fields: Optional iterable of additional text fields.
+    :returns: Tuple of ``(document, label_id, label_title)`` or ``None``.
+    """
     document = assemble_document(example, extra_fields).strip()
     if not document:
         return None
@@ -391,11 +438,20 @@ class Word2VecFeatureBuilder:
     """Create Word2Vec embeddings from viewer prompts."""
 
     def __init__(self, config: Optional[Word2VecConfig] = None) -> None:
+        """Initialise the builder with optional configuration overrides.
+
+        :param config: Optional :class:`Word2VecConfig` instance.
+        """
         self.config = config or Word2VecConfig()
         self._model = None
 
     @staticmethod
     def _tokenize(text: str) -> List[str]:
+        """Tokenise input text into whitespace-delimited lower-case tokens.
+
+        :param text: Text to split.
+        :returns: List of tokens.
+        """
         return text.lower().split()
 
     def train(self, corpus: Iterable[str]) -> None:

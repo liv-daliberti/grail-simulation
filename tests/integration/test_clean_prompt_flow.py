@@ -13,6 +13,8 @@ from knn.features import assemble_document, prepare_training_documents
 from prompt_builder import build_user_prompt
 from xgb.features import prepare_prompt_documents
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def raw_clean_row() -> dict:

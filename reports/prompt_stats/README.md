@@ -4,8 +4,8 @@
 
 Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.
 
-- Train: 5292 of 7418 rows retained (71.3% coverage); excluded rows from study4: 674, unknown: 1452
-- Validation: 587 of 793 rows retained (74.0% coverage); excluded rows from study4: 95, unknown: 111
+- Train: 5292 of 5292 rows retained (100.0% coverage)
+- Validation: 587 of 587 rows retained (100.0% coverage)
 
 > "The short answer is that sessions.json contains EVERYTHING.
 Every test run, every study.
@@ -59,27 +59,27 @@ Figures directory: `figures`
 
 | Prior videos | Train | Validation |
 |--------------|-------|------------|
-| 0 | 4873 | 546 |
-| 1 | 331 | 33 |
-| 2 | 57 | 5 |
-| 3 | 31 | 3 |
+| 0 | 4879 | 540 |
+| 1 | 327 | 37 |
+| 2 | 56 | 6 |
+| 3 | 30 | 4 |
 
 ## Slate size distribution (`n_options`)
 
 | Slate size | Train | Validation |
 |------------|-------|------------|
 | 1 | 4 | 0 |
-| 2 | 378 | 52 |
-| 3 | 290 | 36 |
-| 4 | 3706 | 412 |
-| 5 | 914 | 87 |
+| 2 | 379 | 51 |
+| 3 | 291 | 35 |
+| 4 | 3718 | 400 |
+| 5 | 900 | 101 |
 
 ## Unique content coverage
 
 | Split | Current videos | Gold videos | Candidate videos | Unique slates | Prompt texts |
 |-------|----------------|-------------|------------------|---------------|--------------|
-| train | 44 | 170 | 187 | 2799 | 5290 |
-| validation | 24 | 104 | 129 | 494 | 587 |
+| train | 44 | 167 | 185 | 2778 | 5291 |
+| validation | 27 | 104 | 135 | 488 | 586 |
 | overall | 44 | 171 | 188 | 2987 | 5877 |
 
 ## Unique participants

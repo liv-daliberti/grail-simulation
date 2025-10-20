@@ -26,6 +26,7 @@ from vllm.sampling_params import GuidedDecodingParams
 
 
 class HierarchicalGRPOTrainer(GRPOTrainer):
+    """GRPO trainer that supports hierarchical rollouts and optional vLLM generation."""
     def __init__(
         self,
         *args,
@@ -35,6 +36,7 @@ class HierarchicalGRPOTrainer(GRPOTrainer):
         callbacks: list[Any] = None,
         **kwargs,
     ):
+        """Initialise the trainer with optional rollout function and callback factories."""
         self.rollout_fn = rollout_fn
         self.tokenizer = tokenizer
         self.return_reason = return_reason
@@ -55,6 +57,7 @@ class HierarchicalGRPOTrainer(GRPOTrainer):
         self,
         inputs: list[dict[str, Union[torch.Tensor, Any]]],
     ) -> dict[str, Union[torch.Tensor, Any]]:
+        """Generate completions using the configured backend and compute log probabilities."""
         device = self.accelerator.device
         mode = "train" if self.model.training else "eval"
 
@@ -351,6 +354,7 @@ class HierarchicalRollout:
         vllm_client: Optional[Any] = None,
         max_reason_tokens: int = 800,
     ):
+        """Initialise the rollout helper with model/tokenizer and optional vLLM client."""
         self.model = model
         self.tok = tokenizer
         self.vllm_client = vllm_client
@@ -367,6 +371,7 @@ class HierarchicalRollout:
         max_new_tokens: Optional[int] = None,
         **gen_kwargs
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Generate reasoning and answer continuations using the two-stage scheme."""
         device = input_ids.device
 
         # Stage 1: reasoning …

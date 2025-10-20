@@ -10,6 +10,8 @@ import pytest
 
 from tests.helpers.datasets_stub import ensure_datasets_stub
 
+pytestmark = pytest.mark.open_r1
+
 
 def _install_reward_dep_stubs() -> None:
     """Provide minimal stubs for optional dependencies required to import the module."""

@@ -22,6 +22,8 @@ from src.visualization.recommendation_tree_viz import (
     render_graph,
 )
 
+pytestmark = pytest.mark.visualization
+
 
 def test_parse_issue_counts_parses_input() -> None:
     """Issue specifications should produce integer counts."""

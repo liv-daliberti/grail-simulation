@@ -20,6 +20,8 @@ _e2b_available = _is_package_available("e2b")
 
 
 def is_e2b_available() -> bool:
+    """Return ``True`` when the optional e2b dependency is installed."""
+
     return _e2b_available
 
 

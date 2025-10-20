@@ -9,6 +9,8 @@ import pytest
 
 from tests.helpers.datasets_stub import ensure_datasets_stub
 
+pytestmark = pytest.mark.gpt4o
+
 
 def _install_dependency_stubs() -> None:
     """Ensure optional external dependencies are stubbed for imports."""

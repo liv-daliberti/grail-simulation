@@ -1103,6 +1103,10 @@
                 <span class="p">),</span>
                 <span class="n">fallback_participant_counter</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">normalized_study</span> <span class="o">=</span> <span class="p">(</span><span class="n">participant_study_label</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">normalized_study</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="s2">&quot;study2&quot;</span><span class="p">,</span> <span class="s2">&quot;study3&quot;</span><span class="p">}:</span>
+                <span class="n">interaction_stats</span><span class="p">[</span><span class="s2">&quot;sessions_filtered_non_core_study&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
             <span class="n">participant_issue_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">participant_identifier</span><span class="p">,</span> <span class="n">canonical_issue</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">participant_issue_key</span> <span class="ow">in</span> <span class="n">seen_participant_issue</span><span class="p">:</span>
                 <span class="n">interaction_stats</span><span class="p">[</span><span class="s2">&quot;sessions_duplicate_participant_issue&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>

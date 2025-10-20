@@ -18,6 +18,7 @@ import requests
 
 # ─────────────────── generic GET helper ──────────────────────────────────────
 def safe_request(url: str, max_retries: int = 3, backoff: float = 1.0, timeout: float = 10.0):
+    """Perform a GET request with retry/backoff handling."""
     for attempt in range(max_retries):
         try:
             r = requests.get(url, timeout=timeout)
@@ -33,6 +34,7 @@ def safe_request(url: str, max_retries: int = 3, backoff: float = 1.0, timeout: 
 
 # ─────────────────── helper to parse non-stream JSON ─────────────────────────
 def _parse_nonstream_json(data: dict, tokenizer=None) -> List[List[str]]:
+    """Normalise various vLLM response schemas into `List[List[str]]`."""
     # OpenAI route
     if "choices" in data:
         return [[c["text"] for c in data["choices"]]]

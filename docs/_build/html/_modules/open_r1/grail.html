@@ -423,7 +423,16 @@
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.OnlineDiscriminator">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OnlineDiscriminator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight text classifier trained on-policy to supply optional GAIL rewards.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OnlineDiscriminator.__init__">
+<a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.OnlineDiscriminator.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the discriminator with the specified pretrained backbone.</span>
+
+<span class="sd">        :param model_name: Hugging Face model identifier for the classifier.</span>
+<span class="sd">        :param device: Torch device where the model should live.</span>
+<span class="sd">        :param lr: Learning rate used for the discriminator optimiser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span> <span class="o">=</span> <span class="n">model_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lr</span> <span class="o">=</span> <span class="n">lr</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
@@ -445,7 +454,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sanity_check_embeddings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sanity_check_embeddings</span><span class="p">()</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_sanity_check_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reload the model if the embedding matrix was sharded away by HF lazy loading.&quot;&quot;&quot;</span>
@@ -694,6 +704,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">make_gail_reward_fn</span><span class="p">(</span><span class="n">disc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OnlineDiscriminator</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap discriminator scores so they plug into the GRPO reward interface.&quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return discriminator-based rewards for a batch of completions.&quot;&quot;&quot;</span>
+
         <span class="k">del</span> <span class="n">answer</span>
         <span class="k">if</span> <span class="n">disc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>

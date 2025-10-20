@@ -5,15 +5,20 @@ from __future__ import annotations
 import copy
 import math
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch.distributed as dist
 
-def _prompt_key(prompt: list[dict[str, str]]) -> tuple:
+def _prompt_key(prompt: Sequence[Dict[str, str]]) -> Tuple[Tuple[str, str], ...]:
     """Return a hashable key summarising the prompt messages."""
 
-    return tuple((m["role"], " ".join(m["content"].split())) for m in prompt)
+    normalised: List[Tuple[str, str]] = []
+    for message in prompt:
+        role = message.get("role", "")
+        content = message.get("content", "")
+        normalised.append((role, " ".join(content.split())))
+    return tuple(normalised)
 
 def _finite_float(x: Any, default: float = 0.0) -> float:
     """Cast ``x`` to a finite float, returning ``default`` when invalid."""

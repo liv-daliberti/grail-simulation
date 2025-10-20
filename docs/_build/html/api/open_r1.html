@@ -524,6 +524,21 @@ user prompt construction is shared with <cite>open_r1.grpo</cite> through the
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the discriminator with the specified pretrained backbone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>) – Hugging Face model identifier for the classifier.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – Torch device where the model should live.</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) – Learning rate used for the discriminator optimiser.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator.prob_positive">
 <span class="sig-name descname"><span class="pre">prob_positive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.prob_positive" title="Link to this definition">¶</a></dt>
 <dd><p>Return the positive-class probability for each input string.</p>
@@ -1019,7 +1034,8 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.is_e2b_available">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.</span></span><span class="sig-name descname"><span class="pre">is_e2b_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/import_utils.html#is_e2b_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.is_e2b_available" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the optional e2b dependency is installed.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
@@ -1040,10 +1056,18 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">PushToHubRevisionCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TrainerCallback</span></code></p>
+<p>Callback that pushes checkpoints to the Hub using revision tags.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Store the model configuration used when scheduling pushes.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback.on_save">
 <span class="sig-name descname"><span class="pre">on_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback.on_save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback.on_save" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Push the current checkpoint to the Hub and optionally schedule benchmarks.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> (<em>transformers.TrainingArguments</em>)</p></li>
@@ -1060,6 +1084,7 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.ReplayBufferCallback">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">ReplayBufferCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TrainerCallback</span></code></p>
+<p>Callback that logs batches directly into the replay buffer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1070,9 +1095,25 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.callbacks.ReplayBufferCallback.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'crossword_accuracy_reward'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the callback with replay buffer, tokenizer and reward key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a>)</p></li>
+<li><p><strong>accuracy_key</strong> (<em>str</em>)</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end">
 <span class="sig-name descname"><span class="pre">on_train_batch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback.on_train_batch_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Inspect training outputs and enqueue prompts crossing the threshold.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -1096,16 +1137,34 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.callbacks.SuccessCachingCallback.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the callback with a replay buffer and accuracy threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a>)</p></li>
+<li><p><strong>acc_threshold</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.SuccessCachingCallback.on_log">
 <span class="sig-name descname"><span class="pre">on_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback.on_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback.on_log" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Scrape textual logs and add high-accuracy prompts to the buffer.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> (<em>transformers.TrainingArguments</em>)</p></li>
 <li><p><strong>state</strong> (<em>transformers.TrainerState</em>)</p></li>
 <li><p><strong>control</strong> (<em>transformers.TrainerControl</em>)</p></li>
-<li><p><strong>logs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>logs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1113,14 +1172,15 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.SuccessCachingCallback.set_trainer">
 <span class="sig-name descname"><span class="pre">set_trainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trainer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback.set_trainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback.set_trainer" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Register the owning trainer instance for later log inspection.</p>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.get_callbacks">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">get_callbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_cfg</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#get_callbacks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.get_callbacks" title="Link to this definition">¶</a></dt>
-<dd><p>Build the callbacks requested in <cite>train_cfg.callbacks</cite>.</p>
+<dd><p>Instantiate the callbacks listed in <code class="docutils literal notranslate"><span class="pre">train_cfg.callbacks</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a><em> | </em><em>None</em>)</p>
@@ -1371,6 +1431,7 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 <dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">HierarchicalGRPOTrainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollout_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalGRPOTrainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GRPOTrainer</span></code></p>
+<p>GRPO trainer that supports hierarchical rollouts and optional vLLM generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1381,6 +1442,22 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollout_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalGRPOTrainer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the trainer with optional rollout function and callback factories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rollout_fn</strong> (<em>Any</em>)</p></li>
+<li><p><strong>tokenizer</strong> (<em>Any</em>)</p></li>
+<li><p><strong>return_reason</strong> (<em>bool</em>)</p></li>
+<li><p><strong>callbacks</strong> (<em>list</em><em>[</em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -1404,6 +1481,22 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vllm_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_reason_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalRollout.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the rollout helper with model/tokenizer and optional vLLM client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>transformers.generation.utils.GenerationMixin</em>)</p></li>
+<li><p><strong>tokenizer</strong> (<em>transformers.PreTrainedTokenizerBase</em>)</p></li>
+<li><p><strong>vllm_client</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>max_reason_tokens</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -1490,7 +1583,8 @@ estimate the parameter count.</p>
 <dl class="py function" id="module-open_r1.utils.import_utils">
 <dt class="sig sig-object py" id="open_r1.utils.import_utils.is_e2b_available">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.import_utils.</span></span><span class="sig-name descname"><span class="pre">is_e2b_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/import_utils.html#is_e2b_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.import_utils.is_e2b_available" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the optional e2b dependency is installed.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
@@ -1571,6 +1665,21 @@ estimate the parameter count.</p>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Create a replay buffer with the specified capacity and exploration scale.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>capacity</strong> (<em>int</em>) – Maximum number of replay groups retained.</p></li>
+<li><p><strong>C</strong> (<em>float</em>) – Exploration/exploitation trade-off constant.</p></li>
+<li><p><strong>debug_steps</strong> (<em>int</em>) – Enable verbose logging when &gt; 0.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.replay_buffer.ReplayBuffer.add">
 <span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reward</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_buffer.html#ReplayBuffer.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_buffer.ReplayBuffer.add" title="Link to this definition">¶</a></dt>
@@ -1694,14 +1803,19 @@ training loop remains untouched.  <cite>isw</cite> stays all‑ones.</p></li>
 <dt class="sig sig-object py" id="open_r1.utils.replay_dataset.ReplayMixDataset">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.replay_dataset.</span></span><span class="sig-name descname"><span class="pre">ReplayMixDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#ReplayMixDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.ReplayMixDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>Dataset wrapper that annotates rows with the replay flag.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.replay_dataset.ReplayMixDataset.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tok</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#ReplayMixDataset.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.ReplayMixDataset.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Store the underlying dataset and tokenizer used for assertions.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.replay_dataset.replay_collate">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.replay_dataset.</span></span><span class="sig-name descname"><span class="pre">replay_collate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_prob</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#replay_collate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.replay_collate" title="Link to this definition">¶</a></dt>
-<dd><p>Identity collate — no sampling here.
-We only want to clear the old <cite>is_replay</cite> flag,
-but we <em>must not</em> drop ‘accuracy’.</p>
+<dd><p>Identity collate that simply clears replay flags and preserves accuracy.</p>
 </dd></dl>
 
 <dl class="py class" id="module-open_r1.utils.routed_morph">
@@ -1885,7 +1999,8 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.vllm_patch.safe_request">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.vllm_patch.</span></span><span class="sig-name descname"><span class="pre">safe_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/vllm_patch.html#safe_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.vllm_patch.safe_request" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Perform a GET request with retry/backoff handling.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>url</strong> (<em>str</em>)</p></li>

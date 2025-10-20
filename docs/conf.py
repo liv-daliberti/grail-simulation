@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.util
 import os
 import sys
 import types
@@ -101,6 +102,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
 ]
 
 autodoc_mock_imports = [
@@ -156,8 +158,25 @@ napoleon_include_init_with_doc = True
 templates_path = ["_templates"]
 exclude_patterns: list[str] = ["_build", "Thumbs.db", ".DS_Store"]
 
-html_theme = "alabaster"
 html_static_path = ["_static"]
+if (
+    os.environ.get("SPHINX_ENABLE_FURO", "").lower() in {"1", "true", "yes"}
+    or importlib.util.find_spec("furo") is not None
+):
+    html_theme = "furo"
+    html_theme_options = {
+        "light_css_variables": {
+            "color-brand-primary": "#1f4b8e",
+            "color-brand-content": "#1f4b8e",
+        },
+        "dark_css_variables": {
+            "color-brand-primary": "#8bbcef",
+            "color-brand-content": "#8bbcef",
+        },
+    }
+else:
+    html_theme = "alabaster"
+    html_theme_options = {}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -169,6 +188,10 @@ intersphinx_mapping = {
     "graphviz": ("https://graphviz.readthedocs.io/en/stable/", None),
     "datasets": ("https://huggingface.co/docs/datasets/main/en", None),
 }
+
+if os.environ.get("SPHINX_ENABLE_INTERSPHINX", "").lower() not in {"1", "true", "yes"}:
+    # Avoid noisy warnings when building docs in restricted or offline environments.
+    intersphinx_mapping = {}
 
 _nitpick_targets = {
     "py:class": [

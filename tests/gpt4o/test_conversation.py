@@ -9,6 +9,8 @@ import pytest
 
 from gpt4o import conversation
 
+pytestmark = pytest.mark.gpt4o
+
 
 class _StubTitleResolver:
     def __init__(self) -> None:

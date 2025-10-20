@@ -16,6 +16,8 @@ from open_r1.utils.replay_buffer import ReplayBuffer
 # ---------------------------------------------------------------------------
 
 def _slurm_available() -> bool:
+    """Return ``True`` when the `sinfo` binary is available (SLURM)."""
+
     try:
         subprocess.run(
             ["sinfo"],
@@ -32,18 +34,24 @@ def _slurm_available() -> bool:
 # ---------------------------------------------------------------------------
 
 class _DummyCfg:
+    """Lightweight attribute container used for hub/benchmark helpers."""
+
     def __init__(self, **kw):  # convenience holder for hub + benchmark helpers
         self.benchmarks = None
         for k, v in kw.items():
             setattr(self, k, v)
 
 class PushToHubRevisionCallback(TrainerCallback):
+    """Callback that pushes checkpoints to the Hub using revision tags."""
+
     def __init__(self, model_cfg):
+        """Store the model configuration used when scheduling pushes."""
         self.model_cfg = model_cfg
         self.log = logging.getLogger("PushToHub")
 
     def on_save(self, args: TrainingArguments, state: TrainerState,
                 control: TrainerControl, **kwargs):
+        """Push the current checkpoint to the Hub and optionally schedule benchmarks."""
         if not state.is_world_process_zero:
             return
 
@@ -82,6 +90,7 @@ class SuccessCachingCallback(TrainerCallback):
         :meth:`set_trainer` during setup to register it.
     """
     def __init__(self, replay_buffer: ReplayBuffer, acc_threshold: float = 0.999):
+        """Initialise the callback with a replay buffer and accuracy threshold."""
         self.buf = replay_buffer
         self.thr = acc_threshold
         self._trainer = None                         # will be set later
@@ -89,6 +98,7 @@ class SuccessCachingCallback(TrainerCallback):
 
     # ---------- lifecycle hooks ------------------------------------------
     def set_trainer(self, trainer):                  # called once at start
+        """Register the owning trainer instance for later log inspection."""
         self._trainer = trainer
 
     # ---------- main hook -------------------------------------------------
@@ -97,9 +107,10 @@ class SuccessCachingCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        logs: Optional[dict[str, float]] = None,
+        logs: Optional[Dict[str, float]] = None,
         **kwargs,
-    ):
+    ) -> None:
+        """Scrape textual logs and add high-accuracy prompts to the buffer."""
         # nothing to do if trainer not yet registered or no textual logs
         if self._trainer is None or not hasattr(self._trainer, "_textual_logs"):
             return
@@ -122,6 +133,7 @@ class SuccessCachingCallback(TrainerCallback):
 # ---------------------------------------------------------------------------
 
 class ReplayBufferCallback(TrainerCallback):
+    """Callback that logs batches directly into the replay buffer."""
     def __init__(
         self,
         replay_buffer: ReplayBuffer,
@@ -129,6 +141,7 @@ class ReplayBufferCallback(TrainerCallback):
         accuracy_key: str = "crossword_accuracy_reward",
         threshold: float = 1.0,
     ):
+        """Configure the callback with replay buffer, tokenizer and reward key."""
         self.buf  = replay_buffer
         self.tok  = tokenizer
         self.key  = accuracy_key
@@ -138,6 +151,7 @@ class ReplayBufferCallback(TrainerCallback):
     # ←–––– this fires AFTER loss.backward() and BEFORE scheduler/step().
     # It always receives both `inputs` and `outputs`.
     def on_train_batch_end(self, args, state, control, **kw):
+        """Inspect training outputs and enqueue prompts crossing the threshold."""
         outs    = kw["outputs"]             # dict from training_step
         inputs  = kw["inputs"]              # the batch fed forward
 
@@ -189,9 +203,7 @@ def get_callbacks(
     replay_buffer: Optional[ReplayBuffer] = None,
     tokenizer=None,
 ):
-    """
-    Build the callbacks requested in `train_cfg.callbacks`.
-    """
+    """Instantiate the callbacks listed in ``train_cfg.callbacks``."""
     cb_list: List[TrainerCallback] = []
 
     for name in train_cfg.callbacks:

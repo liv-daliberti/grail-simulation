@@ -9,6 +9,9 @@ import pytest
 from prompt_builder import build_user_prompt, render_profile
 
 
+pytestmark = pytest.mark.prompt_builder
+
+
 @pytest.fixture
 def sample_example() -> dict:
     return {
@@ -68,6 +71,8 @@ def sample_example() -> dict:
         ),
     }
 
+
+pytestmark = pytest.mark.prompt_builder
 
 def test_render_profile_produces_sentences(sample_example: dict) -> None:
     profile = render_profile(sample_example)

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from clean_data.surveys import load_participant_allowlists
 
@@ -11,6 +12,8 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(path, index=False)
 
+
+pytestmark = pytest.mark.surveys
 
 def test_load_participant_allowlists_counts(tmp_path):
     capsule_root = tmp_path

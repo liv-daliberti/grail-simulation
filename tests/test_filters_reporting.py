@@ -1,8 +1,11 @@
 """Tests for dataset reporting utilities."""
 
+import pytest
 from datasets import Dataset, DatasetDict
 
 from clean_data.filters import compute_issue_counts
+
+pytestmark = pytest.mark.filters
 
 
 def test_compute_issue_counts_groups_by_issue():

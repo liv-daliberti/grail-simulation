@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from datasets import Dataset, DatasetDict
 
 from clean_data.filters import filter_prompt_ready
 from clean_data.prompt.constants import PASSTHROUGH_COLUMNS, REQUIRED_PROMPT_COLUMNS
 from clean_data.prompting import row_to_example
+
+pytestmark = pytest.mark.prompt_smoke
 
 
 def _base_example() -> dict:

@@ -367,33 +367,31 @@ def prepare_training_documents(
     else:
         order = list(range(n_rows))
 
-    documents: List[str] = []
-    labels_id: List[str] = []
-    labels_title: List[str] = []
-
+    records: List[tuple[str, str, str]] = []
     for index in order:
         example = train_ds[int(index)]
         document = assemble_document(example, extra_fields)
-        documents.append(document)
+        stripped = document.strip()
         video_id = str(example.get(SOLUTION_COLUMN) or "")
-        labels_id.append(_canon_vid(video_id))
-        labels_title.append(title_for(video_id) or "")
+        label_id = _canon_vid(video_id)
+        label_title = title_for(video_id) or ""
+        if stripped:
+            records.append((stripped, label_id, label_title))
 
-    mask = [bool(doc.strip()) for doc in documents]
-    if not any(mask):
-        sample_cols = sorted(list(train_ds.features.keys()))
+    if not records:
         raise RuntimeError(
             "All training documents are empty. Check columns on TRAIN split.\n"
-            f"Seen columns: {sample_cols}\n"
-            "Fixes: include slate items / current video, or pass extra fields via --knn_text_fields."
+            f"Seen columns: {sorted(list(train_ds.features.keys()))}\n"
+            "Fixes: add slate items/current video text or use --knn_text_fields."
         )
-    if sum(mask) < len(documents):
-        logging.warning(
-            "[KNN] Dropped %d empty docs out of %d.", len(documents) - sum(mask), len(documents)
-        )
-    filtered_docs = [doc for doc, keep in zip(documents, mask) if keep]
-    filtered_labels_id = [label for label, keep in zip(labels_id, mask) if keep]
-    filtered_labels_title = [label for label, keep in zip(labels_title, mask) if keep]
+
+    dropped = len(order) - len(records)
+    if dropped:
+        logging.warning("[KNN] Dropped %d empty docs out of %d.", dropped, len(order))
+
+    filtered_docs, filtered_labels_id, filtered_labels_title = map(list, zip(*records))
+    logging.info("[KNN] Assembled %d documents (kept %d non-empty).", len(order), len(records))
+    logging.info("[KNN] Example doc: %r", filtered_docs[0][:200])
     return filtered_docs, filtered_labels_id, filtered_labels_title
 
 

@@ -30,6 +30,7 @@ from .data import (
 )
 from .features import extract_slate_items
 from .index import (
+    SlateQueryConfig,
     build_tfidf_index,
     knn_predict_among_slate_multi,
     load_tfidf_index,
@@ -91,7 +92,12 @@ def resolve_reports_dir(out_dir: Path) -> Path:
     return root_dir / "reports"
 
 
-def plot_elbow(k_values: Sequence[int], accuracy_by_k: Dict[int, float], best_k: int, output_path: Path) -> None:
+def plot_elbow(
+    k_values: Sequence[int],
+    accuracy_by_k: Dict[int, float],
+    best_k: int,
+    output_path: Path,
+) -> None:
     """Create an accuracy vs k plot for diagnostic purposes."""
 
     if plt is None:
@@ -183,6 +189,8 @@ def run_eval(args) -> None:
         )
 
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+
 def evaluate_issue(
     *,
     issue_slug: str,
@@ -192,7 +200,7 @@ def evaluate_issue(
     knn_index: Dict[str, Any],
     extra_fields: Sequence[str],
     args,
-) -> None:  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+) -> None:
     """Evaluate a single issue split and write metrics/predictions."""
     indices = list(range(len(eval_ds)))
     if args.eval_max and args.eval_max > 0:
@@ -218,6 +226,12 @@ def evaluate_issue(
     all_n_options: List[int] = []
 
     start_time = time.time()
+
+    query_config = SlateQueryConfig(
+        text_fields=tuple(extra_fields),
+        lowercase=True,
+        metric=args.knn_metric,
+    )
 
     for idx, row_index in enumerate(indices, start=1):
         example = eval_ds[int(row_index)]
@@ -246,8 +260,7 @@ def evaluate_issue(
             knn_index=knn_index,
             example=example,
             k_values=k_values,
-            text_fields=extra_fields,
-            metric=args.knn_metric,
+            config=query_config,
         )
 
         eligible = gold_index > 0 and n_options > 0
@@ -344,7 +357,10 @@ def evaluate_issue(
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     pos_stats_out = {bucket: int(pos_stats[bucket]) for bucket in buckets}
-    accuracy_opts_out = {bucket: safe_div(corr_opts[bucket], elig_opts[bucket]) for bucket in buckets}
+    accuracy_opts_out = {
+        bucket: safe_div(corr_opts[bucket], elig_opts[bucket])
+        for bucket in buckets
+    }
 
     gold_distribution = {str(k): int(v) for k, v in sorted(gold_hist.items())}
     if gold_hist:

@@ -15,5 +15,8 @@ echo "Running pylint on clean_data..."
 echo "Running pylint on prompt_builder..."
 "${PYTHON_BIN}" -m pylint prompt_builder src/prompt_builder.py "$@"
 
+echo "Running pylint on knn..."
+"${PYTHON_BIN}" -m pylint knn "$@"
+
 echo "Running pytest..."
 "${PYTHON_BIN}" -m pytest tests

@@ -69,6 +69,7 @@ setup(
         "ruff>=0.9.0",
         "safetensors>=0.3.3",
         "scikit-learn>=1.3.0",
+        "joblib>=1.3.0",
         "sentencepiece>=0.1.99",
         "torch==2.6.0",
         "transformers==4.52.3",

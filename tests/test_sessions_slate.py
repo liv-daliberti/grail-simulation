@@ -1,7 +1,11 @@
 """Tests for slate construction helpers."""
 
+import pytest
+
 from clean_data.sessions import build_slate_items, normalize_display_orders
 
+
+pytestmark = pytest.mark.sessions
 
 def test_build_slate_items_prefers_display_orders():
     display_orders = normalize_display_orders({"0": ["vidA", "vidB"]})

@@ -13,16 +13,11 @@ import numpy as np
 from scipy import sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from prompt_builder.formatters import clean_text
-
-from .data import PROMPT_COLUMN
 from .features import (
-    extract_now_watching,
+    assemble_document,
     extract_slate_items,
     prepare_training_documents,
-    prompt_from_builder,
     title_for,
-    viewer_profile_sentence,
 )
 
 
@@ -127,6 +122,89 @@ def _safe_str(value: Any, *, lowercase: bool = True) -> str:
     return text.lower() if lowercase else text
 
 
+def _build_base_parts(
+    example: dict,
+    slate_pairs: Sequence[tuple[str, str]],
+    config: SlateQueryConfig,
+) -> List[str]:
+    parts: List[str] = []
+    base_text = assemble_document(example, config.text_fields)
+    if base_text:
+        parts.append(_safe_str(base_text, lowercase=config.lowercase))
+
+    surfaces = []
+    for title, video_id in slate_pairs:
+        surface = (
+            title
+            if title and title.strip() and title != "(untitled)"
+            else (title_for(video_id) or video_id or "")
+        )
+        if surface:
+            surfaces.append(_safe_str(surface, lowercase=config.lowercase))
+    if surfaces:
+        parts.append(" ".join(surfaces))
+    return parts
+
+
+def _score_candidates(
+    vectorizer: Any,
+    matrix: Any,
+    slate_pairs: Sequence[tuple[str, str]],
+    base_parts: Sequence[str],
+    label_id_canon: np.ndarray,
+    label_title_canon: np.ndarray,
+    unique_k: Sequence[int],
+    config: SlateQueryConfig,
+) -> Dict[int, List[float]]:
+    scores_by_k = {k: [] for k in unique_k}
+    for title, video_id in slate_pairs:
+        surface = (
+            title
+            if title and title.strip() and title != "(untitled)"
+            else (title_for(video_id) or video_id or "")
+        )
+        parts = list(base_parts)
+        if surface:
+            parts.append(_safe_str(surface, lowercase=config.lowercase))
+        query_text = "\n".join(part for part in parts if part)
+        query = vectorizer.transform([query_text])
+        sims = (query @ matrix.T).toarray().ravel()
+
+        vid_canon = _canon_vid(video_id or "")
+        title_canon = _canon(title or "")
+        mask = np.zeros_like(sims, dtype=bool)
+        if vid_canon:
+            mask |= label_id_canon == vid_canon
+        if title_canon:
+            mask |= label_title_canon == title_canon
+        if not mask.any():
+            fallback = float(sims.max() * 0.01) if sims.size else 0.0
+            for k in unique_k:
+                scores_by_k[k].append(fallback)
+            continue
+
+        sims_masked = sims[mask]
+        if sims_masked.size == 0:
+            for k in unique_k:
+                scores_by_k[k].append(0.0)
+            continue
+
+        if config.metric == "l2":
+            subset = matrix[mask].astype(np.float32)
+            diff = subset - query
+            dists = np.sqrt(diff.power(2).sum(axis=1)).A.ravel()
+            score_vector = -dists
+        else:
+            score_vector = sims_masked
+
+        sorted_scores = np.sort(score_vector)[::-1]
+        cumulative = np.cumsum(sorted_scores)
+        for k in unique_k:
+            kk = int(min(max(1, k), sorted_scores.size))
+            scores_by_k[k].append(float(cumulative[kk - 1]))
+    return scores_by_k
+
+
 def knn_predict_among_slate_multi(
     *,
     knn_index: Dict[str, Any],
@@ -152,41 +230,7 @@ def knn_predict_among_slate_multi(
     if not slate_pairs:
         return {k: 1 for k in unique_k}
 
-    base_parts: List[str] = []
-    prompt_text = prompt_from_builder(example)
-    prompt_added = False
-    if prompt_text:
-        base_parts.append(_safe_str(prompt_text, lowercase=lowercase))
-        prompt_added = True
-    if not prompt_added:
-        profile = viewer_profile_sentence(example)
-        if profile:
-            base_parts.append(_safe_str(profile, lowercase=lowercase))
-    if not prompt_added and PROMPT_COLUMN in example:
-        state_text = clean_text(example.get(PROMPT_COLUMN))
-        if state_text:
-            base_parts.append(_safe_str(state_text, lowercase=lowercase))
-    for field in text_fields or []:
-        if field in example and example[field] is not None:
-            base_parts.append(_safe_str(example[field], lowercase=lowercase))
-    current = extract_now_watching(example)
-    if current:
-        now_title, now_id = current
-        if now_title:
-            base_parts.append(_safe_str(now_title, lowercase=lowercase))
-        if now_id:
-            base_parts.append(_safe_str(now_id, lowercase=lowercase))
-    slate_surfaces: List[str] = []
-    for title, video_id in slate_pairs:
-        surface = (
-            title
-            if title and title.strip() and title != "(untitled)"
-            else (title_for(video_id) or video_id or "")
-        )
-        if surface:
-            slate_surfaces.append(_safe_str(surface, lowercase=lowercase))
-    if slate_surfaces:
-        base_parts.append(" ".join(slate_surfaces))
+    base_parts = _build_base_parts(example, slate_pairs, config)
 
     if not knn_index or "vectorizer" not in knn_index:
         return {k: None for k in unique_k}
@@ -202,50 +246,16 @@ def knn_predict_among_slate_multi(
         dtype=object,
     )
 
-    scores_by_k = {k: [] for k in unique_k}
-
-    for title, video_id in slate_pairs:
-        surface = (
-            title
-            if title and title.strip() and title != "(untitled)"
-            else (title_for(video_id) or video_id or "")
-        )
-        parts = list(base_parts)
-        if surface:
-            parts.append(_safe_str(surface, lowercase=lowercase))
-        query_text = "\n".join(part for part in parts if part)
-        query = vectorizer.transform([query_text])
-        sims = (query @ matrix.T).toarray().ravel()
-
-        vid_canon = _canon_vid(video_id or "")
-        title_canon = _canon(title or "")
-        mask = np.zeros_like(sims, dtype=bool)
-        if vid_canon:
-            mask |= label_id_canon == vid_canon
-        if title_canon:
-            mask |= label_title_canon == title_canon
-        if not mask.any():
-            fallback = float(sims.max() * 0.01) if sims.size else 0.0
-            for k in unique_k:
-                scores_by_k[k].append(fallback)
-            continue
-        sims_masked = sims[mask]
-        if sims_masked.size == 0:
-            for k in unique_k:
-                scores_by_k[k].append(0.0)
-            continue
-        if metric == "cosine" or metric is None:
-            score_vector = sims_masked
-        else:
-            subset = matrix[mask].astype(np.float32)
-            diff = subset - query
-            dists = np.sqrt(diff.power(2).sum(axis=1)).A.ravel()
-            score_vector = -dists
-        sorted_scores = np.sort(score_vector)[::-1]
-        cumulative = np.cumsum(sorted_scores)
-        for k in unique_k:
-            kk = int(min(max(1, k), sorted_scores.size))
-            scores_by_k[k].append(float(cumulative[kk - 1]))
+    scores_by_k = _score_candidates(
+        vectorizer,
+        matrix,
+        slate_pairs,
+        base_parts,
+        label_id_canon,
+        label_title_canon,
+        unique_k,
+        config,
+    )
 
     predictions: Dict[int, Optional[int]] = {}
     for k, scores in scores_by_k.items():

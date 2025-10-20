@@ -17,6 +17,8 @@ from clean_data.clean_data import (
 )
 from clean_data.filters import filter_prompt_ready
 
+pytestmark = pytest.mark.clean_data
+
 
 def _example_row() -> dict:
     slate_items = [

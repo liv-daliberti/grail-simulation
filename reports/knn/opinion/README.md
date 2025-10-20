@@ -15,6 +15,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.185 | 0.236 | 0.181 | 0.084 |
 
 - Plots: `reports/knn/tfidf/opinion/mae_*.png`, `reports/knn/tfidf/opinion/r2_*.png`
+- Heatmaps benchmark predicted vs actual change: `reports/knn/tfidf/opinion/change_heatmap_*.png`
 - Opinion-change heatmaps: `reports/knn/tfidf/opinion/change_heatmap_*.png`
 
 ## Word2Vec Feature Space
@@ -26,6 +27,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.177 | 0.226 | 0.251 | 0.084 |
 
 - Plots: `reports/knn/word2vec/opinion/mae_*.png`, `reports/knn/word2vec/opinion/r2_*.png`
+- Heatmaps benchmark predicted vs actual change: `reports/knn/word2vec/opinion/change_heatmap_*.png`
 - Opinion-change heatmaps: `reports/knn/word2vec/opinion/change_heatmap_*.png`
 
 ### Opinion Change Heatmaps

@@ -174,7 +174,7 @@ def _build_cli() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output",
-        default="reports/prompt_builder/sample_prompts.md",
+        default="reports/prompt_builder/README.md",
         help="Destination Markdown file for the samples.",
     )
     return parser

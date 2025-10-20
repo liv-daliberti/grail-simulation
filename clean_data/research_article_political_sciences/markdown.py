@@ -112,9 +112,14 @@ def build_markdown(
     rel_mean_change_path = Path(mean_change_path).relative_to(output_dir)
     lines.extend(
         [
-            "### Mean shifts with 95% confidence intervals",
+            "### Control vs. treatment shifts and pooled regression",
             "",
             f"![Mean opinion change]({rel_mean_change_path.as_posix()})",
+            "",
+            "The first three panels separate mean opinion changes for the control and "
+            "treatment arms of Studies 1–3 with 95% confidence intervals. "
+            "The fourth panel reports the pooled regression coefficient comparing treatment versus "
+            "control after adjusting for baseline opinion and study fixed effects.",
             "",
         ]
     )

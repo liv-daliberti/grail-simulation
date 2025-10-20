@@ -86,7 +86,7 @@ def test_render_profile_produces_sentences(sample_example: dict) -> None:
 def test_build_user_prompt_structure(sample_example: dict) -> None:
     prompt_text = build_user_prompt(sample_example, max_hist=2)
     assert "PROFILE:" in prompt_text
-    assert "HISTORY (most recent first):" in prompt_text
     assert "CURRENT VIDEO:" in prompt_text
+    assert "RECENTLY WATCHED (NEWEST LAST):" in prompt_text
     assert "OPTIONS:" in prompt_text
     assert "Recommended Video" in prompt_text

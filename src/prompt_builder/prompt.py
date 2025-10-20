@@ -35,7 +35,7 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     :type ex: Dict[str, Any]
     :param max_hist: Maximum number of prior videos to include in the history section.
     :type max_hist: int
-    :returns: Multi-line prompt describing the viewer, watch history, and options.
+    :returns: Multi-line prompt describing the viewer, viewing context, and options.
     :rtype: str
     """
 
@@ -46,13 +46,11 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     lines.append("PROFILE:")
     lines.append(_render_profile_text(profile))
 
-    history_section = _history_section(ex, show_ids, max_hist)
-    if history_section:
-        lines.extend(history_section)
-
     current_section = _current_video_section(ex, show_ids)
     if current_section:
         lines.extend(current_section)
+
+    lines.extend(_recently_watched_section(ex, show_ids, max_hist))
 
     lines.extend(_options_section(ex, show_ids))
 
@@ -87,9 +85,9 @@ def _current_video_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
     return ["", "CURRENT VIDEO:", " — ".join(parts)]
 
 
-def _history_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
+def _recently_watched_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
     """
-    Build the viewing history subsection for the prompt.
+    Build the recently watched subsection for the prompt.
 
     :param ex: Interaction row containing history-related fields.
     :type ex: Dict[str, Any]
@@ -97,28 +95,29 @@ def _history_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[
     :type show_ids: bool
     :param max_hist: Maximum number of historical items to include.
     :type max_hist: int
-    :returns: Lines summarising previously watched videos, most recent first.
+    :returns: Lines summarising previously watched videos, newest entry last.
     :rtype: List[str]
     """
 
-    descriptors = _history_descriptors(ex, show_ids, max_hist)
-    if not descriptors:
-        return []
-    section: List[str] = ["", "HISTORY (most recent first):"]
-    section.extend(f"{idx}. {entry}" for idx, entry in enumerate(descriptors, 1))
+    descriptors = _recently_watched_descriptors(ex, show_ids, max_hist)
+    section: List[str] = ["", "RECENTLY WATCHED (NEWEST LAST):"]
+    if descriptors:
+        section.extend(f"{idx}. {entry}" for idx, entry in enumerate(descriptors, 1))
+    else:
+        section.append("(no recently watched videos available)")
     return section
 
 
-def _history_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
+def _recently_watched_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
     prior = _prior_entries(ex)
     if not prior:
         return []
     limit = max_hist if max_hist and max_hist > 0 else len(prior)
-    recent = list(reversed(prior))[:limit]
+    recent = prior[-limit:]
     descriptors: List[str] = []
     for record in recent:
         if isinstance(record, dict):
-            descriptors.append(_history_descriptor(record, show_ids))
+            descriptors.append(_watched_descriptor(record, show_ids))
     return descriptors
 
 
@@ -142,7 +141,7 @@ def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
     return []
 
 
-def _history_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
+def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
     title = clean_text(
         record.get("title")
         or record.get("name")

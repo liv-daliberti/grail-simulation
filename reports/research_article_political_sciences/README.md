@@ -26,6 +26,6 @@ The minimal mean shifts and high share of small opinion changes (|Δ| ≤ 0.05 o
 
 ![Mean opinion change](mean_opinion_change.png)
 
-The first three panels separate mean opinion changes for the control and treatment arms of Studies 1–3 (95% CIs shown as error bars). The fourth panel reports the pooled regression coefficient comparing treatment versus control after adjusting for baseline opinion and study fixed effects.
+The first three panels separate mean opinion changes for the control and treatment arms of Studies 1–3 with 95% confidence intervals. The fourth panel reports the pooled regression coefficient comparing treatment versus control after adjusting for baseline opinion and study fixed effects.
 
 Replication notes: opinion indices are scaled to [0, 1] and computed from the same survey composites used in the published study. Participants lacking a post-wave response are excluded from the relevant heatmap and summary.

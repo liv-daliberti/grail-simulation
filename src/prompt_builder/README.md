@@ -8,7 +8,7 @@ layout while preserving the same public API.
 ## Module layout
 
 - `prompt.py` exposes the top-level `build_user_prompt(...)` helper that stitches
-  together profile, history, current video, and slate sections.
+  together profile, current video, recently watched, and slate sections.
 - `profiles.py` synthesises viewer sentences (`render_profile`,
   `synthesize_viewer_sentence`) and keeps the friendly feature metadata in sync
   with `clean_data/prompt/question_mapping.py`.
@@ -56,10 +56,10 @@ PYTHONPATH=src python -m prompt_builder.samples \
   --dataset data/cleaned_grail \
   --issues gun_control,minimum_wage \
   --count 1 \
-  --output reports/prompt_builder/sample_prompts.md
+  --output reports/prompt_builder/README.md
 ```
 
-The command above refreshes `reports/prompt_builder/sample_prompts.md` with
+The command above refreshes `reports/prompt_builder/README.md` with
 fresh examples. The README carries a shorter preview—full prompts live in the
 report.
 
@@ -73,6 +73,9 @@ NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.666666666666
 
 CURRENT VIDEO:
 Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
+
+RECENTLY WATCHED (NEWEST LAST):
+(no recently watched videos available)
 
 OPTIONS:
 1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain

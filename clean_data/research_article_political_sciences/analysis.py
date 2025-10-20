@@ -229,8 +229,6 @@ def _study1_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
 
     follow = follow[_nonempty_mask(follow["_worker_id"])]
     follow = follow[_nonempty_mask(follow.get("treatment_arm", pd.Series(dtype=str)))]
-    follow = follow[_nonempty_mask(follow.get("pro", pd.Series(dtype=str)))]
-    follow = follow[_nonempty_mask(follow.get("anti", pd.Series(dtype=str)))]
     follow = _dedupe_earliest(follow, "_worker_id")
 
     follow[spec.before_column] = _numeric(follow.get(spec.before_column, pd.Series(dtype=float)))
@@ -270,8 +268,6 @@ def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
     df = df.loc[mask].copy()
 
     df = df[_nonempty_mask(df.get("treatment_arm", pd.Series(dtype=str)))]
-    df = df[_nonempty_mask(df.get("pro", pd.Series(dtype=str)))]
-    df = df[_nonempty_mask(df.get("anti", pd.Series(dtype=str)))]
     df = _dedupe_earliest(df, "_worker_id")
 
     df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
@@ -311,8 +307,6 @@ def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
 
     df["_caseid"] = _normalize_series(df[case_col])
     df = df[_nonempty_mask(df["_caseid"])]
-    df = df[_nonempty_mask(df.get("pro", pd.Series(dtype=str)))]
-    df = df[_nonempty_mask(df.get("anti", pd.Series(dtype=str)))]
     df = _dedupe_earliest(df, "_caseid")
 
     df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))

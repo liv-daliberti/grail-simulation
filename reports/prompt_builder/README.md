@@ -13,6 +13,9 @@ NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.666666666666
 CURRENT VIDEO:
 Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
 
+RECENTLY WATCHED (NEWEST LAST):
+(no recently watched videos available)
+
 OPTIONS:
 1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain
 2. Why America Will NEVER Have Real Gun Control — channel: The Young Turks
@@ -29,6 +32,9 @@ PROFILE:
 
 CURRENT VIDEO:
 Seattle's $15 Minimum Wage Experiment is Working — channel: Alicé Anil
+
+RECENTLY WATCHED (NEWEST LAST):
+(no recently watched videos available)
 
 OPTIONS:
 1. If a Business Won't pay a Living Wage - it Shouldn't Exist — channel: Thom Hartmann Program

@@ -172,6 +172,51 @@ def _extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
 def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
     """Return the slate contents as a list of ``(title, video_id)`` pairs."""
 
+    def _clean_title(value: Any) -> str:
+        return value.strip() if isinstance(value, str) else ""
+
+    def _clean_id(value: Any) -> str:
+        if not value:
+            return ""
+        candidate = canon_video_id(str(value))
+        return candidate if len(candidate) == 11 else ""
+
+    def _from_structured(array: Any) -> List[Tuple[str, str]]:
+        structured: List[Tuple[str, str]] = []
+        if not isinstance(array, list):
+            return structured
+        for entry in array:
+            if not isinstance(entry, dict):
+                continue
+            title = (
+                entry.get("title")
+                or entry.get("video_title")
+                or entry.get("name")
+                or entry.get("surface")
+                or entry.get("text")
+                or ""
+            )
+            video_id = (
+                entry.get("id")
+                or entry.get("video_id")
+                or entry.get("videoId")
+                or entry.get("ytid")
+                or entry.get("yt_id")
+                or entry.get("candidate_id")
+                or entry.get("content_id")
+                or ""
+            )
+            cleaned_title = _clean_title(title)
+            cleaned_id = _clean_id(video_id)
+            if cleaned_title or cleaned_id:
+                structured.append((cleaned_title, cleaned_id))
+        return structured
+
+    for key in ("slate_items", "options", "slate_items_with_meta"):
+        structured_items = _from_structured(example.get(key))
+        if structured_items:
+            return structured_items
+
     items: List[Tuple[str, str]] = []
     slate_text = example.get("slate_text")
     if isinstance(slate_text, str) and slate_text.strip():
@@ -181,20 +226,13 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
                 continue
             parts = token.split("\t") if "\t" in token else token.split("|", maxsplit=1)
             if len(parts) == 2:
-                title, vid = parts
+                title_raw, vid_raw = parts
             else:
-                title, vid = token, token
-            items.append((title.strip(), vid.strip()))
-    if items:
-        return items
-    array = example.get("slate_items") or example.get("options")
-    if isinstance(array, list):
-        for entry in array:
-            if not isinstance(entry, dict):
-                continue
-            title = entry.get("title") or entry.get("video_title") or entry.get("name") or ""
-            video_id = entry.get("id") or entry.get("video_id") or ""
-            items.append((title, video_id))
+                title_raw, vid_raw = token, ""
+            title = _clean_title(title_raw)
+            video_id = _clean_id(vid_raw)
+            if title or video_id:
+                items.append((title, video_id))
     return items
 
 

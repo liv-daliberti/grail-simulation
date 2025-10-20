@@ -20,6 +20,8 @@ ISSUES=("minimum_wage" "gun_control")
 
 mkdir -p "$OUT_DIR" "$CACHE_DIR" "$WORD2VEC_MODEL_DIR"
 
+export PYTHONPATH="${PYTHONPATH:-}:$ROOT_DIR/src"
+
 run_knn() {
   local feature_space=$1
   local out_subdir=$2

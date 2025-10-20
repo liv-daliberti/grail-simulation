@@ -221,6 +221,7 @@ _nitpick_targets = {
         "sklearn.preprocessing.LabelEncoder",
         "torch.device",
         "torch.utils.data.Dataset",
+        "transformers.AutoModelForCausalLM",
         "transformers.PreTrainedModel",
         "transformers.PreTrainedTokenizer",
         "transformers.PreTrainedTokenizerBase",
@@ -242,6 +243,9 @@ _nitpick_targets = {
     ],
     "py:mod": [
         "xgboost",
+    ],
+    "py:data": [
+        "sys.argv",
     ],
 }
 

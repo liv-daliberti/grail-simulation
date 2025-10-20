@@ -17,18 +17,46 @@ The interaction logs trace back to the public behavioural dataset introduced in 
 
 ```
 .
-├── clean_data/               # Data cleaning pipeline and prompt analytics helpers
-│   └── prompt/               # Plotting + Markdown utilities for prompt diagnostics
-├── docs/                     # Sphinx configuration, figures, and rendered reports
+├── capsule-5416997/          # Snapshot of the CodeOcean capsule inputs/metadata
+├── clean_data/               # Data cleaning pipeline and publication replicas
+│   ├── prompt/               # Prompt analytics plots and Markdown builders
+│   └── research_article_political_sciences/  # Replication figures + summaries
+├── data/                     # Local cleaned datasets (gitignored artefacts)
+├── docs/                     # Sphinx project that powers the Read the Docs site
+├── logs/                     # Default output location for training/eval runs
+├── models/                   # Trained model checkpoints and evaluation curves
 ├── recipes/                  # Training configuration files organised by model family
-├── src/
-│   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
+├── reports/                  # Markdown reports rendered from analyses
+├── scripts/                  # Utility entrypoints (linting, testing, exports)
+├── src/                      # Python packages for agents, models, and visualization
+│   ├── common/               # Shared utilities
 │   ├── gpt4o/                # GPT-4o slate-prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline
-│   └── visualization/        # Graphviz-based session and recommendation-tree renderers
-├── training/                 # SLURM launchers for baseline and GRAIL runs
+│   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
+│   ├── prompt_builder/       # Prompt templating helpers
+│   ├── visualization/        # Recommendation-tree renderers / plotting tools
+│   └── xgb/                  # Gradient-boosted baselines + evaluation
+├── tests/                    # Pytest suite covering data + model components
+├── training/                 # SLURM launchers and experiment configs
 └── setup.py                  # Editable package definition (pip install -e .)
 ```
+
+## Data Sources
+
+Raw data mirrors the CodeOcean capsule at <https://codeocean.com/capsule/5416997/tree/v1>. The commands below reproduce the original download:
+
+```bash
+git clone https://git.codeocean.com/capsule-5416997.git
+cd capsule-5416997
+mkdir results
+curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/.../results.zip'
+unzip results-*.zip
+mkdir ../data
+cd ../data
+curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
+```
+
+The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
 
 ## Quickstart
 
@@ -164,23 +192,6 @@ High-level progression (training + evaluation):
 ```
 
 Both `bash training/training-knn.sh` and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
-
-## Data Sources
-
-Raw data mirrors the CodeOcean capsule at <https://codeocean.com/capsule/5416997/tree/v1>. The commands below reproduce the original download:
-
-```bash
-git clone https://git.codeocean.com/capsule-5416997.git
-cd capsule-5416997
-mkdir results
-curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/.../results.zip'
-unzip results-*.zip
-mkdir ../data
-cd ../data
-curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
-```
-
-The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
 
 ## Published Artifacts
 

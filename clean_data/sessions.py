@@ -41,6 +41,7 @@ from clean_data.io import (
 from clean_data.surveys import (
     DEMOGRAPHIC_COLUMNS,
     build_survey_index,
+    infer_issue_from_topic,
     infer_participant_study,
     load_participant_allowlists,
     select_survey_row,
@@ -777,7 +778,7 @@ def gold_index_from_items(gold: str, items: List[dict]) -> int:
     return -1
 
 
-def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=too-many-locals,too-many-statements
+def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     """Construct the full interaction dataframe from raw CodeOcean assets.
 
     :param data_root: Capsule ``data`` directory.
@@ -824,16 +825,39 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
         )
         info = _session_info(sess, watched_details)
 
-        survey_lookup = surveys.get(info.topic.lower(), {})
-        survey_rows = survey_lookup.get(info.urlid, [])
+        canonical_issue: Optional[str] = None
+        survey_rows: List[Dict[str, Any]] = []
+        for issue_key, lookup in surveys.items():
+            rows_for_url = lookup.get(info.urlid, [])
+            if rows_for_url:
+                canonical_issue = issue_key
+                survey_rows = rows_for_url
+                break
+
+        issue_name = canonical_issue or infer_issue_from_topic(info.topic)
+        if not issue_name and watched_details:
+            for detail in watched_details:
+                candidate_issue = detail.get("issue")
+                if isinstance(candidate_issue, str) and candidate_issue.strip():
+                    issue_name = candidate_issue.strip().lower()
+                    break
+        if not issue_name:
+            raw_issue = str(sess.get("issue") or "").strip().lower()
+            if raw_issue in {"gun_control", "minimum_wage", "min_wage"}:
+                issue_name = "minimum_wage" if raw_issue == "min_wage" else raw_issue
+
+        canonical_issue = issue_name or info.topic.lower()
+        if not survey_rows:
+            survey_lookup = surveys.get(canonical_issue, {})
+            survey_rows = survey_lookup.get(info.urlid, [])
         candidate_entries = _candidate_entries_for_survey(
-            info.topic,
+            canonical_issue,
             info.urlid,
             survey_rows,
             allowlist,
         )
 
-        enforce_allowlist = allowlist.requires_enforcement(info.topic)
+        enforce_allowlist = allowlist.requires_enforcement(canonical_issue)
 
         display_orders = normalize_display_orders(sess.get("displayOrders"))
         watched_vids_json = list(base_vids)
@@ -931,7 +955,7 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
                 ),
                 fallback_participant_counter,
             )
-            participant_issue_key = (participant_identifier, info.topic)
+            participant_issue_key = (participant_identifier, canonical_issue)
             if participant_issue_key in seen_participant_issue:
                 interaction_stats["sessions_duplicate_participant_issue"] += 1
                 continue
@@ -939,7 +963,7 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
 
             row["participant_id"] = participant_identifier
             row["participant_study"] = participant_study_label or "unknown"
-            row["issue"] = info.topic.lower() if info.topic else ""
+            row["issue"] = canonical_issue
             row["urlid"] = info.urlid
             row["topic_id"] = info.topic
             row["selected_survey_row"] = selected_survey_row

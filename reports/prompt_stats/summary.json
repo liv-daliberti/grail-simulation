@@ -1,916 +1,1972 @@
 {
   "demographic_missing_counts": {
-    "train": 0,
-    "validation": 0
+    "train": 331,
+    "validation": 21
   },
   "feature_summary": {
     "age": {
       "train": {
-        "count": 20338.0,
-        "mean": 45.73261874323926,
-        "std": 15.156799989905592
+        "count": 1030.0,
+        "mean": 46.64854368932039,
+        "std": 15.584432511776317
       },
       "validation": {
-        "count": 2272.0,
-        "mean": 45.75880281690141,
-        "std": 15.405890815080744
+        "count": 116.0,
+        "mean": 46.543103448275865,
+        "std": 14.013781542725344
       }
     },
     "assault_ban": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.30299906279287725,
-        "std": 0.3409911719979931
+        "count": 83.0,
+        "mean": 0.20180722891566266,
+        "std": 0.3163654459156839
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.2721804511278195,
-        "std": 0.3335508175503671
+        "count": 5.0,
+        "mean": 0.2,
+        "std": 0.1
       }
     },
     "biden_approval": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 1025.0,
+        "mean": 49.67121951219512,
+        "std": 33.83250278732352
+      },
+      "validation": {
+        "count": 115.0,
+        "mean": 50.095652173913045,
+        "std": 31.60351491542439
+      }
     },
     "binge_youtube": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "10\u201330 minutes per day": 8,
+        "1\u20132 hours per day": 8,
+        "2\u20133 hours per day": 4,
+        "31\u201359 minutes per day": 7,
+        "Less than 10 minutes per day": 6,
+        "More than 3 hours per day": 6
+      },
+      "validation": {
+        "10\u201330 minutes per day": 3,
+        "2\u20133 hours per day": 1,
+        "31\u201359 minutes per day": 1,
+        "Less than 10 minutes per day": 3,
+        "More than 3 hours per day": 1
+      }
     },
     "children_in_household": {
-      "train": {},
-      "validation": {}
-    },
-    "city": {
-      "train": {},
-      "validation": {}
-    },
-    "civic_engagement": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 1.789103690685413,
+        "std": 0.4079449178897478
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 1.78125,
+        "std": 0.41339864235384227
+      }
     },
     "college": {
       "train": {
-        "count": 20342.0,
-        "mean": 0.5483728246976698,
-        "std": 0.49765456878317565
+        "count": 1030.0,
+        "mean": 0.5320388349514563,
+        "std": 0.4989724572107696
       },
       "validation": {
-        "count": 2272.0,
-        "mean": 0.5602992957746479,
-        "std": 0.4963506773734489
+        "count": 116.0,
+        "mean": 0.5517241379310345,
+        "std": 0.4973174173053779
       }
     },
     "concealed_safe": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.45979381443298967,
-        "std": 0.27441708628261124
+        "count": 83.0,
+        "mean": 0.4186746987951807,
+        "std": 0.2828119179350723
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.46541353383458645,
-        "std": 0.27270439331375795
+        "count": 5.0,
+        "mean": 0.4,
+        "std": 0.25495097567963926
       }
-    },
-    "county": {
-      "train": {},
-      "validation": {}
     },
     "education": {
       "train": {
-        "count": 9274.0,
-        "mean": 3.8019193444037094,
-        "std": 1.4658474838024085
+        "count": 569.0,
+        "mean": 3.9086115992970125,
+        "std": 1.462626260101042
       },
       "validation": {
-        "count": 1059.0,
-        "mean": 3.8885741265344667,
-        "std": 1.401082728134743
+        "count": 64.0,
+        "mean": 3.84375,
+        "std": 1.5433197781082182
       }
     },
     "employment_status": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 3.3093145869947276,
+        "std": 2.3519653497624446
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 3.234375,
+        "std": 2.5232802776098815
+      }
     },
     "favorite_channels": {
       "train": {
-        "count": 80.0,
-        "mean": 0.0,
-        "std": 0.0
+        "0": 1,
+        "As Told By Kenya\nHasanAbi": 1,
+        "Bailey Sarian\nMrBallen\nChelcie Lynn": 1,
+        "Brandon Walsh\nDavid Dobrik\nLiza Koshy": 1,
+        "Buzzfeed\nGood Morning America\nAmerica's funniest Videos\nJeopardy\nMaroon 5\nJonas Brothers\nLana Del Rey\nNate and Kara\n": 1,
+        "C-SPAN\nABC World News\nBBC News": 1,
+        "CNN\nThe New York times\nBBC news": 1,
+        "CNN\nWashington Post\nSeatinManofLegend\nRichTheMan": 1,
+        "CNN,FOX NEWS,BBC": 1,
+        "Cafe Music BGM": 1,
+        "Carissa Barzee\nJeffrey Star\n": 1,
+        "Character Design Forge\nvarious musicians": 1,
+        "Chris Smoove": 1,
+        "Clear Value Tax\nLogan Allec CPA\nCNN \n": 1,
+        "DW\nTIK": 1,
+        "DarkHorse\nJAMA\nPlebity\nFruityKnitting\nDr. John Campbell\nTriggernometry\nUnHerd\nRoxanne Richardson": 1,
+        "DefunctLand \nAlex Meyers \nGiant Bomb": 1,
+        "Fox News, OAN, New York Times, NPR": 1,
+        "Foxes and Fossils\nInvisible People\nOtis Gibbs\nPlaying for Change\nU. S. Department of Veteran Affairs\nBrandi Carlile": 1,
+        "Greg Adams\nNick Milo": 1,
+        "H3H3/trisha paytas": 1,
+        "I don't have an favorite broadcasters.\nI don't have an favorite channels.": 1,
+        "I don't have any; I just search mostly for video game reviews and content and click on whatever looks interesting.  Also watch music videos, again on any channel that I find.": 1,
+        "I enjoy watching travel videos and tutorials; however, I use Netflix and Prime for entertainment. I use news apps for news.": 1,
+        "I have no favorites.  I generally click on a link from a Facebook post.\nMixed Media Girl": 1,
+        "I have no favorites.  I watch an eclectic mix of music from random channels and a variety of exercise videos.  Any news related content I watch is not specific me.": 1,
+        "I just pull up whatever I'm looking for , I really don't have any broadcaster or channel": 1,
+        "I like FOX news broadcaster.": 1,
+        "I like news channels random religion and religious history stuff and I also watch a lot of lectures on university websites.": 1,
+        "I like to watch beauty influencers, how-to videos, and comedians": 1,
+        "I like to watch music videos and without a Crystal Ball on youtube. Additionally, I will watch stuff about the Bates family.": 1,
+        "I like watching flograppling for sports related content": 1,
+        "I no longer use youtube. They prop up literal propaganda, censor anyone who criticizes the official narrative of the political establishment and have become far too involved in government and policy.": 1,
+        "I only use YouTube for housekeeping skills.": 1,
+        "I really enjoy watching videos on music production.  The company that makes the product I use is called Reason Studios and they have a great channel with information on how the software can be used.": 1,
+        "I usually listen to music streams or look how to's. I do watch videos that are on FB that click thru to Youtube. Mostly about animals and creatives, spiritual and outdoors stuff.": 1,
+        "I usually watch music videos.  My favorites are Counting Crows.": 1,
+        "I watch Fox News\nand NBC news": 1,
+        "INDYCAR\nFormula 1": 1,
+        "JCS\nPewdiepie\nH3H3\nSteve Wilkos\nDr. Phil": 1,
+        "Jenna marbles\nMarkiplier\nRomanAtwoodsVlog": 1,
+        "Laura Lee\nManny Mua\nABC News": 1,
+        "Laura in the Kitchen\nPhillip Defranco\nMyFroggyStuff\nemmymade\nJazza": 1,
+        "Lex Fridmen\nSelf Sufficient Me\nThought Imperium\nMarcus House\nMIT Opencourseware\nIsaac Arthur\nLearn Your Land\n...and many more": 1,
+        "MKBHD\nUnbox Therapy\nCNN\nARISE TV\nMRWHOSETHEBOSS": 1,
+        "MLB\nDivine Mercy": 1,
+        "Make up channels jaclyn hill": 1,
+        "Matt Kohrs\nTrey's Trades\nMarc Rebillet\nMeet Kevin\n": 1,
+        "Meatcanyon\nJoel Haver\nJosh Turner\n": 1,
+        "Meet Kevin\nThe Late Show with Steven Colbert\nTrent Shelton\nMusic Videos": 1,
+        "Minutephysics\nScreen Junkies\nWoWCrendor\nPhillip de Franco": 1,
+        "Motivator Kristina\nThe Project Life Mastery\nGillian Perkins\n": 1,
+        "Music videos by searching.": 1,
+        "NBC news\nTrevor Noah\nBrendan Kavanagh\nChrisFix": 1,
+        "NPR Music\nTom goes Disney\nwaxandherbalt": 1,
+        "No particular favorites, I enjoy watching dog videos and music videos of bands/genres that I like.": 1,
+        "PBS\nYoutube Movies\n": 1,
+        "Philip DeFranco\nDonut Operator\nHasanabi": 1,
+        "Redlettermedia\nTaskmaster": 1,
+        "Roland Martin\nThe Kabs Family\nJack Reacts": 1,
+        "Rooster Teeth\nAchievement Hunter\nCrankgameplays\nMarkiplier\nJacksepticeye": 1,
+        "Sarabeth Yoga\nPregnancy and Postpartum TV\nBlogilates\nTravis Eliot\nAlo Yoga": 1,
+        "Sonic The Hedgehog\nGeekdom101\nCallMeKevin\nDeadwingDork": 1,
+        "Strictly dumplings\nCreamHeroes\nBuzzfeed Unsolved Network\n": 1,
+        "Synapse\nShroud\nAdam Ragusea\nAgadmator\nThe First Take": 1,
+        "The Dodo\nMr Ballen\nDDS TV\nBuzzfeed\nNowThis News": 1,
+        "The Rollin Martin Channel": 1,
+        "There are some YouTubers I follow:\nI love \"Kitboga\" because he raises awareness about scams directed toward the elderly. \nI love \"TheBeauticianChic\" because she does beautiful makeup.\nI adore \"DeMiRanchoATuCocina\" because she makes delicious food with easy recipes.": 1,
+        "Theyoungturks\nCalmingescape\nBbc\nAngelica\nGamegrumps": 1,
+        "Traversy Media\nFreecodecamp.org\nCNN \nDesign course": 1,
+        "USA Today\nGood Morning America": 1,
+        "Various channels. No favorites.": 1,
+        "Voya - My Deep Guide product reviews": 1,
+        "Yes Theory and Linguamarina.": 1,
+        "fashion channel for all the latest fashion videos, parties, and events. About Youtuber Learn about outer space, leading scientific exploration, new technology, earth science basics, & more with science videos & news from Science Channel.": 1,
+        "how to videos": 1,
+        "lovely tea\nphil de fracnio": 1,
+        "mbw.com\n": 1,
+        "msnbc, the young turks": 1,
+        "munchkin": 1,
+        "peter schiff": 1,
+        "scedtv\ncnn": 1,
+        "streetbeefs\n": 1
       },
       "validation": {
-        "count": 8.0,
-        "mean": 0.0,
-        "std": 0.0
+        "According to Vin\nMoney Done Right\nCNN": 1,
+        "Bald and bankrupt\nSonny Side/most delicious food show ever": 1,
+        "Last Week Tonight\nLate Show with Stephen Colbert\nLate Night with Seth Meyers\nNYTimes\nCNN \nMSNBC Rachel Maddow": 1,
+        "NA- I don't use YouTube often except to watch the occasional makeup tutorial/review.": 1,
+        "The Piano Guys\nCNBC": 1
       }
     },
     "freq_youtube": {
       "train": {
-        "count": 20342.0,
-        "mean": 2.8623045914855965,
-        "std": 1.7107655787507998
+        "count": 1030.0,
+        "mean": 2.8446601941747574,
+        "std": 1.734612133436187
       },
       "validation": {
-        "count": 2272.0,
-        "mean": 2.930017605633803,
-        "std": 1.7833680944363173
+        "count": 116.0,
+        "mean": 2.8189655172413794,
+        "std": 1.72506440624908
       }
     },
     "gender": {
       "train": {
-        "Man": 5378,
-        "Other (please specify)": 91,
-        "Woman": 5599
+        "Man": 221,
+        "Other (please specify)": 4,
+        "Woman": 236
       },
       "validation": {
-        "Man": 543,
-        "Other (please specify)": 8,
-        "Woman": 662
+        "Man": 25,
+        "Other (please specify)": 2,
+        "Woman": 25
       }
     },
     "gun_enthusiasm": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.4305529522024367,
-        "std": 0.605507349801578
+        "count": 83.0,
+        "mean": 0.43373493975903615,
+        "std": 0.6621027307968234
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.47969924812030074,
-        "std": 0.6557735945375261
+        "count": 5.0,
+        "mean": 0.6,
+        "std": 0.48989794855663565
       }
-    },
-    "gun_identity": {
-      "train": {},
-      "validation": {}
     },
     "gun_importance": {
       "train": {
-        "count": 5335.0,
-        "mean": 2.8719775070290536,
-        "std": 0.9401549890471975
+        "count": 83.0,
+        "mean": 3.036144578313253,
+        "std": 0.8842093075618686
       },
       "validation": {
-        "count": 665.0,
-        "mean": 2.986466165413534,
-        "std": 0.950566270082011
+        "count": 5.0,
+        "mean": 3.0,
+        "std": 0.6324555320336759
       }
     },
     "gun_index": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.4101312089971883,
-        "std": 0.28129434005285914
+        "count": 83.0,
+        "mean": 0.3307228915662651,
+        "std": 0.2616941244605637
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.39338345864661656,
-        "std": 0.27836360496388335
+        "count": 5.0,
+        "mean": 0.29000000000000004,
+        "std": 0.17435595774162696
       }
     },
     "gun_index_2": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.43801546391752577,
-        "std": 0.27965729796721167
+        "count": 83.0,
+        "mean": 0.3621987951807229,
+        "std": 0.25901644293247444
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.4230576441102757,
-        "std": 0.28066828073663663
+        "count": 5.0,
+        "mean": 0.3375,
+        "std": 0.2076655965729519
       }
     },
     "gun_ownership": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.3203373945641987,
-        "std": 0.4666062024963016
+        "count": 83.0,
+        "mean": 0.3132530120481928,
+        "std": 0.46381630252819656
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.3593984962406015,
-        "std": 0.4798241523106104
+        "count": 5.0,
+        "mean": 0.6,
+        "std": 0.48989794855663565
       }
-    },
-    "gun_policy": {
-      "train": {},
-      "validation": {}
-    },
-    "gun_priority": {
-      "train": {},
-      "validation": {}
     },
     "handgun_ban": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.6573102155576382,
-        "std": 0.3328443496942433
+        "count": 83.0,
+        "mean": 0.6174698795180723,
+        "std": 0.34566451934806686
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.6398496240601503,
-        "std": 0.3191718253211051
+        "count": 5.0,
+        "mean": 0.55,
+        "std": 0.291547594742265
       }
     },
     "household_income": {
       "train": {
-        "$10,000-$14,999": 355,
-        "$100,000-$119,999": 671,
-        "$120,000-$149,999": 694,
-        "$15,000-$19,999": 377,
-        "$150,000 or more": 724,
-        "$20,000-$24,999": 592,
-        "$25,000-$29,999": 646,
-        "$30,000-$39,999": 1192,
-        "$40,000-$49,999": 1016,
-        "$50,000-$59,999": 1127,
-        "$60,000-$69,999": 934,
-        "$70,000-$79,999": 848,
-        "$80,000-$99,999": 1252,
-        "Less than $10,000": 427,
-        "Prefer not to say": 213
+        "$10,000-$14,999": 12,
+        "$100,000-$119,999": 31,
+        "$120,000-$149,999": 27,
+        "$15,000-$19,999": 15,
+        "$150,000 or more": 37,
+        "$20,000-$24,999": 25,
+        "$25,000-$29,999": 31,
+        "$30,000-$39,999": 52,
+        "$40,000-$49,999": 42,
+        "$50,000-$59,999": 45,
+        "$60,000-$69,999": 44,
+        "$70,000-$79,999": 34,
+        "$80,000-$99,999": 50,
+        "Less than $10,000": 10,
+        "Prefer not to say": 6
       },
       "validation": {
-        "$10,000-$14,999": 46,
-        "$100,000-$119,999": 62,
-        "$120,000-$149,999": 75,
-        "$15,000-$19,999": 43,
-        "$150,000 or more": 90,
-        "$20,000-$24,999": 57,
-        "$25,000-$29,999": 48,
-        "$30,000-$39,999": 140,
-        "$40,000-$49,999": 110,
-        "$50,000-$59,999": 145,
-        "$60,000-$69,999": 89,
-        "$70,000-$79,999": 90,
-        "$80,000-$99,999": 125,
-        "Less than $10,000": 73,
-        "Prefer not to say": 20
+        "$10,000-$14,999": 2,
+        "$100,000-$119,999": 5,
+        "$120,000-$149,999": 8,
+        "$150,000 or more": 7,
+        "$20,000-$24,999": 1,
+        "$25,000-$29,999": 3,
+        "$30,000-$39,999": 7,
+        "$40,000-$49,999": 5,
+        "$50,000-$59,999": 1,
+        "$60,000-$69,999": 5,
+        "$70,000-$79,999": 5,
+        "$80,000-$99,999": 2,
+        "Less than $10,000": 1
       }
-    },
-    "household_size": {
-      "train": {},
-      "validation": {}
     },
     "ideology": {
       "train": {
-        "Conservative": 2486,
-        "Haven't thought much about it": 278,
-        "Liberal": 5433,
-        "Moderate": 2871
+        "Conservative": 87,
+        "Haven't thought much about it": 13,
+        "Liberal": 247,
+        "Moderate": 114
       },
       "validation": {
-        "Conservative": 253,
-        "Haven't thought much about it": 49,
-        "Liberal": 649,
-        "Moderate": 258
+        "Conservative": 13,
+        "Liberal": 26,
+        "Moderate": 13
       }
-    },
-    "marital_status": {
-      "train": {},
-      "validation": {}
-    },
-    "media_diet": {
-      "train": {},
-      "validation": {}
     },
     "minwage15_w1": {
       "train": {
-        "count": 15007.0,
-        "mean": 0.3067568468048244,
-        "std": 0.3641123280181623
+        "count": 908.0,
+        "mean": 0.24311674008810572,
+        "std": 0.340493098679553
       },
       "validation": {
-        "count": 1607.0,
-        "mean": 0.30880522713130054,
-        "std": 0.3590703148401926
+        "count": 102.0,
+        "mean": 0.25,
+        "std": 0.3621152454404428
       }
     },
     "minwage15_w2": {
       "train": {
-        "count": 14925.0,
-        "mean": 0.3416750418760469,
-        "std": 0.3773644053196031
+        "count": 900.0,
+        "mean": 0.2588888888888889,
+        "std": 0.3472973252110724
       },
       "validation": {
-        "count": 1599.0,
-        "mean": 0.3350531582238899,
-        "std": 0.3805444985452786
+        "count": 102.0,
+        "mean": 0.24754901960784315,
+        "std": 0.34565775965941264
       }
-    },
-    "minwage_importance": {
-      "train": {},
-      "validation": {}
-    },
-    "minwage_priority": {
-      "train": {},
-      "validation": {}
     },
     "minwage_text_r_w1": {
       "train": {
-        "count": 14918.0,
-        "mean": 0.4378584260624749,
-        "std": 0.20038430505276358
+        "count": 904.0,
+        "mean": 0.41405088495575226,
+        "std": 0.1979578530142548
       },
       "validation": {
-        "count": 1591.0,
-        "mean": 0.4388407291011943,
-        "std": 0.21308145720503793
+        "count": 102.0,
+        "mean": 0.4086274509803922,
+        "std": 0.19514217650309543
       }
     },
     "minwage_text_r_w2": {
       "train": {
-        "count": 14901.0,
-        "mean": 0.45737845782162273,
-        "std": 0.20586756360431563
+        "count": 900.0,
+        "mean": 0.43288844444444446,
+        "std": 0.20288018971200772
       },
       "validation": {
-        "count": 1595.0,
-        "mean": 0.4614583072100314,
-        "std": 0.2161228645938908
+        "count": 102.0,
+        "mean": 0.4152941176470588,
+        "std": 0.19341465099702215
       }
-    },
-    "minwage_text_r_w3": {
-      "train": {},
-      "validation": {}
     },
     "minwage_text_w1": {
       "train": {
-        "count": 5733.0,
-        "mean": 14.253870573870575,
-        "std": 4.541987273058048
+        "count": 339.0,
+        "mean": 15.027286135693215,
+        "std": 4.400258139130899
       },
       "validation": {
-        "count": 548.0,
-        "mean": 14.292883211678832,
-        "std": 4.380925027417103
+        "count": 38.0,
+        "mean": 14.289473684210526,
+        "std": 4.3989107188559045
       }
     },
     "minwage_text_w2": {
       "train": {
-        "count": 5647.0,
-        "mean": 14.820106251106782,
-        "std": 39.88492686191466
+        "count": 331.0,
+        "mean": 14.56858006042296,
+        "std": 4.652000912003583
       },
       "validation": {
-        "count": 540.0,
-        "mean": 13.89398148148148,
-        "std": 4.445632051012589
+        "count": 38.0,
+        "mean": 14.171052631578947,
+        "std": 4.791750470984199
       }
     },
     "mw_index_w1": {
       "train": {
-        "count": 15007.0,
-        "mean": 0.29427720582246797,
-        "std": 0.25322686409270234
+        "count": 908.0,
+        "mean": 0.24793835658345564,
+        "std": 0.24276709894620266
       },
       "validation": {
-        "count": 1607.0,
-        "mean": 0.2971194017245977,
-        "std": 0.25843129234761425
+        "count": 102.0,
+        "mean": 0.23326797385620912,
+        "std": 0.22761087452943143
       }
     },
     "mw_index_w2": {
       "train": {
-        "count": 14925.0,
-        "mean": 0.32171812411262657,
-        "std": 0.27968575567402604
+        "count": 900.0,
+        "mean": 0.26120596296296295,
+        "std": 0.2619252133086371
       },
       "validation": {
-        "count": 1602.0,
-        "mean": 0.3266407912728138,
-        "std": 0.28484442566671286
+        "count": 102.0,
+        "mean": 0.25588779956427016,
+        "std": 0.2446806094798565
       }
     },
     "mw_support_w1": {
       "train": {
-        "count": 15004.0,
-        "mean": 0.2102939216209011,
-        "std": 0.30492192380861205
+        "count": 908.0,
+        "mean": 0.16602422907488987,
+        "std": 0.2910359505681112
       },
       "validation": {
-        "count": 1607.0,
-        "mean": 0.21950840074673306,
-        "std": 0.31044953218313204
+        "count": 102.0,
+        "mean": 0.14460784313725492,
+        "std": 0.2676062060325071
       }
     },
     "mw_support_w2": {
       "train": {
-        "count": 14925.0,
-        "mean": 0.24743718592964825,
-        "std": 0.334212188725843
+        "count": 900.0,
+        "mean": 0.1786111111111111,
+        "std": 0.3011104704790233
       },
       "validation": {
-        "count": 1599.0,
-        "mean": 0.2606316447779862,
-        "std": 0.3419257734448005
+        "count": 102.0,
+        "mean": 0.15931372549019607,
+        "std": 0.2591209113027276
       }
     },
-    "news_consumption": {
-      "train": {},
-      "validation": {}
-    },
     "news_frequency": {
-      "train": {},
-      "validation": {}
-    },
-    "news_sources": {
-      "train": {},
-      "validation": {}
-    },
-    "news_sources_top": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 1.7715289982425309,
+        "std": 1.0950429686953635
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 1.703125,
+        "std": 0.8602268505313002
+      }
     },
     "news_trust": {
-      "train": {},
-      "validation": {}
-    },
-    "occupation": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 991.0,
+        "mean": 0.5893037336024217,
+        "std": 0.30773187966810045
+      },
+      "validation": {
+        "count": 107.0,
+        "mean": 0.6230529595015577,
+        "std": 0.29563846514936565
+      }
     },
     "party_identification": {
       "train": {
-        "Democrat": 5266,
-        "Independent": 3197,
-        "Other Party": 310,
-        "Republican": 2291
+        "Democrat": 247,
+        "Independent": 123,
+        "Other Party": 10,
+        "Republican": 80
       },
       "validation": {
-        "Democrat": 691,
-        "Independent": 283,
-        "Other Party": 40,
-        "Republican": 195
+        "Democrat": 22,
+        "Independent": 16,
+        "Other Party": 2,
+        "Republican": 12
       }
     },
     "party_lean": {
       "train": {
-        "Not very strong Democrat": 2373,
-        "Strong Democrat": 2893
+        "Not very strong Democrat": 101,
+        "Strong Democrat": 146
       },
       "validation": {
-        "Not very strong Democrat": 358,
-        "Strong Democrat": 333
+        "Not very strong Democrat": 11,
+        "Strong Democrat": 11
       }
-    },
-    "platform_use": {
-      "train": {},
-      "validation": {}
     },
     "political_interest": {
       "train": {
-        "count": 20194.0,
-        "mean": 2.1411640421247236,
-        "std": 1.474666388307442
+        "count": 1021.0,
+        "mean": 1.9271955599085864,
+        "std": 1.4607832396557698
       },
       "validation": {
-        "count": 2260.0,
-        "mean": 2.111504424778761,
-        "std": 1.4821306642896297
+        "count": 116.0,
+        "mean": 2.0086206896551726,
+        "std": 1.5221614540314008
       }
     },
     "popular_channels_followed": {
       "train": {
-        "AJ+": 8,
-        "America Uncovered": 4,
-        "America Uncovered,Colion Noir": 4,
-        "America Uncovered,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News": 4,
-        "America Uncovered,JRE Clips,Vox,VICE News": 4,
-        "America Uncovered,NowThis World": 4,
-        "America Uncovered,VICE News": 4,
-        "America Uncovered,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN": 320,
-        "CNN,America Uncovered": 4,
-        "CNN,America Uncovered,NowThis World": 4,
-        "CNN,America Uncovered,VICE News,MSNBC": 4,
-        "CNN,America Uncovered,Vox,VICE News,MSNBC": 4,
-        "CNN,Colion Noir": 4,
-        "CNN,Good Morning Britain": 4,
-        "CNN,Good Morning Britain,MSNBC": 7,
-        "CNN,Good Morning Britain,The Daily Wire": 4,
-        "CNN,Good Morning Britain,The Young Turks": 4,
-        "CNN,Good Morning Britain,Vox,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN,JRE Clips": 31,
-        "CNN,JRE Clips,VICE News": 8,
-        "CNN,JRE Clips,VICE News,AJ+,MSNBC": 4,
-        "CNN,JRE Clips,Vox,MSNBC": 4,
-        "CNN,JRE Clips,Vox,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,JRE Clips,Vox,VICE News": 4,
-        "CNN,MSNBC": 218,
-        "CNN,NowThis World": 12,
-        "CNN,NowThis World,MSNBC": 4,
-        "CNN,The Daily Wire": 20,
-        "CNN,The Daily Wire,MSNBC": 8,
-        "CNN,The Daily Wire,NowThis World": 4,
-        "CNN,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,The Daily Wire,VICE News": 4,
-        "CNN,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,The Daily Wire,VICE News,NowThis World,MSNBC": 4,
-        "CNN,The Young Turks": 8,
-        "CNN,The Young Turks,MSNBC": 71,
-        "CNN,The Young Turks,NowThis World,MSNBC": 3,
-        "CNN,The Young Turks,VICE News": 16,
-        "CNN,The Young Turks,VICE News,AJ+": 4,
-        "CNN,The Young Turks,VICE News,MSNBC": 7,
-        "CNN,VICE News": 51,
-        "CNN,VICE News,AJ+": 4,
-        "CNN,VICE News,MSNBC": 40,
-        "CNN,VICE News,NowThis World": 4,
-        "CNN,VICE News,NowThis World,MSNBC": 4,
-        "CNN,Vox": 26,
-        "CNN,Vox,MSNBC": 18,
-        "CNN,Vox,The Daily Wire,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,VICE News,NowThis World": 4,
-        "CNN,Vox,The Daily Wire,VICE News,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Young Turks": 8,
-        "CNN,Vox,The Young Turks,AJ+,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Young Turks,MSNBC": 4,
-        "CNN,Vox,The Young Turks,VICE News": 8,
-        "CNN,Vox,The Young Turks,VICE News,MSNBC": 8,
-        "CNN,Vox,VICE News": 32,
-        "CNN,Vox,VICE News,MSNBC": 12,
-        "CNN,Vox,VICE News,NowThis World,MSNBC": 8,
-        "Fox News": 261,
-        "Fox News,America Uncovered,MSNBC": 2,
-        "Fox News,America Uncovered,The Young Turks,MSNBC": 4,
-        "Fox News,America Uncovered,Vox,The Daily Wire,The Young Turks,VICE News,AJ+": 4,
-        "Fox News,CNN": 97,
-        "Fox News,CNN,America Uncovered,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,Good Morning Britain": 4,
-        "Fox News,CNN,Good Morning Britain,JRE Clips,Colion Noir,VICE News,MSNBC": 4,
-        "Fox News,CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,Good Morning Britain,VICE News,NowThis World": 4,
-        "Fox News,CNN,JRE Clips": 14,
-        "Fox News,CNN,JRE Clips,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,Vox,The Young Turks,VICE News,NowThis World,MSNBC": 4,
-        "Fox News,CNN,MSNBC": 77,
-        "Fox News,CNN,The Daily Wire": 12,
-        "Fox News,CNN,The Daily Wire,MSNBC": 12,
-        "Fox News,CNN,The Daily Wire,The Young Turks": 4,
-        "Fox News,CNN,The Daily Wire,VICE News": 8,
-        "Fox News,CNN,The Daily Wire,VICE News,MSNBC": 4,
-        "Fox News,CNN,The Young Turks,MSNBC": 20,
-        "Fox News,CNN,The Young Turks,NowThis World,MSNBC": 4,
-        "Fox News,CNN,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,VICE News": 20,
-        "Fox News,CNN,VICE News,MSNBC": 4,
-        "Fox News,CNN,Vox": 4,
-        "Fox News,CNN,Vox,AJ+,NowThis World,MSNBC": 4,
-        "Fox News,CNN,Vox,MSNBC": 4,
-        "Fox News,CNN,Vox,The Daily Wire": 4,
-        "Fox News,CNN,Vox,The Daily Wire,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News,CNN,Vox,The Daily Wire,VICE News,MSNBC": 4,
-        "Fox News,CNN,Vox,The Young Turks,MSNBC": 8,
-        "Fox News,CNN,Vox,VICE News": 6,
-        "Fox News,CNN,Vox,VICE News,MSNBC": 12,
-        "Fox News,JRE Clips": 16,
-        "Fox News,JRE Clips,The Daily Wire": 4,
-        "Fox News,JRE Clips,The Daily Wire,VICE News,MSNBC": 4,
-        "Fox News,JRE Clips,VICE News,MSNBC": 8,
-        "Fox News,JRE Clips,Vox,VICE News": 4,
-        "Fox News,MSNBC": 28,
-        "Fox News,The Daily Wire": 60,
-        "Fox News,The Daily Wire,MSNBC": 12,
-        "Fox News,The Daily Wire,NowThis World": 4,
-        "Fox News,The Daily Wire,VICE News": 4,
-        "Fox News,The Young Turks,VICE News,MSNBC": 3,
-        "Fox News,VICE News": 4,
-        "Fox News,Vox,The Daily Wire": 4,
-        "Fox News,Vox,The Daily Wire,NowThis World": 1,
-        "Fox News,Vox,VICE News": 8,
-        "Good Morning Britain": 4,
-        "Good Morning Britain,VICE News": 4,
-        "JRE Clips": 68,
-        "JRE Clips,Colion Noir,The Young Turks,VICE News": 4,
-        "JRE Clips,MSNBC": 2,
-        "JRE Clips,The Daily Wire": 8,
-        "JRE Clips,The Daily Wire,AJ+,NowThis World": 4,
-        "JRE Clips,The Daily Wire,VICE News": 4,
-        "JRE Clips,The Young Turks": 4,
-        "JRE Clips,The Young Turks,VICE News": 8,
-        "JRE Clips,VICE News": 42,
-        "JRE Clips,VICE News,NowThis World,MSNBC": 4,
-        "JRE Clips,Vox": 4,
-        "JRE Clips,Vox,VICE News": 12,
-        "MSNBC": 83,
-        "Steven Crowder": 43,
-        "Steven Crowder,America Uncovered,Good Morning Britain,The Young Turks,MSNBC": 4,
-        "Steven Crowder,CNN,Good Morning Britain,MSNBC": 4,
-        "Steven Crowder,CNN,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,CNN,Vox,NowThis World": 4,
-        "Steven Crowder,Fox News": 8,
-        "Steven Crowder,Fox News,CNN": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,VICE News,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,Vox,NowThis World": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,VICE News,MSNBC": 8,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,The Daily Wire,Colion Noir,The Young Turks,VICE News,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,Vox,VICE News": 4,
-        "Steven Crowder,Fox News,CNN,The Daily Wire,MSNBC": 4,
-        "Steven Crowder,Fox News,CNN,The Daily Wire,VICE News,AJ+,NowThis World": 4,
-        "Steven Crowder,Fox News,JRE Clips": 4,
-        "Steven Crowder,Fox News,JRE Clips,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,Fox News,JRE Clips,Vox,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,Fox News,MSNBC": 4,
-        "Steven Crowder,Fox News,The Daily Wire": 10,
-        "Steven Crowder,Fox News,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,Fox News,The Young Turks,MSNBC": 4,
-        "Steven Crowder,Good Morning Britain": 4,
-        "Steven Crowder,Good Morning Britain,The Daily Wire,VICE News": 4,
-        "Steven Crowder,JRE Clips": 4,
-        "Steven Crowder,JRE Clips,The Daily Wire": 4,
-        "Steven Crowder,JRE Clips,The Daily Wire,The Young Turks": 4,
-        "Steven Crowder,The Daily Wire": 8,
-        "Steven Crowder,The Daily Wire,Colion Noir": 4,
-        "Steven Crowder,The Young Turks": 8,
-        "Steven Crowder,VICE News": 4,
-        "Steven Crowder,Vox,The Daily Wire,Colion Noir": 4,
-        "Steven Crowder,Vox,VICE News": 4,
-        "The Daily Wire": 16,
-        "The Daily Wire,MSNBC": 12,
-        "The Daily Wire,NowThis World": 4,
-        "The Daily Wire,The Young Turks": 4,
-        "The Daily Wire,VICE News": 16,
-        "The Daily Wire,VICE News,MSNBC": 4,
-        "The Young Turks": 36,
-        "The Young Turks,MSNBC": 27,
-        "The Young Turks,VICE News": 4,
-        "The Young Turks,VICE News,AJ+": 4,
-        "The Young Turks,VICE News,MSNBC": 4,
-        "VICE News": 85,
-        "VICE News,AJ+": 12,
-        "VICE News,MSNBC": 16,
-        "VICE News,NowThis World": 16,
-        "Vox": 91,
-        "Vox,AJ+": 8,
-        "Vox,MSNBC": 8,
-        "Vox,NowThis World,MSNBC": 1,
-        "Vox,The Daily Wire,VICE News": 4,
-        "Vox,The Young Turks": 4,
-        "Vox,The Young Turks,VICE News": 4,
-        "Vox,VICE News": 76,
-        "Vox,VICE News,AJ+": 4,
-        "Vox,VICE News,MSNBC": 15,
-        "Vox,VICE News,NowThis World,MSNBC": 6
+        "count": 33.0,
+        "mean": 0.0,
+        "std": 0.0
       },
       "validation": {
-        "CNN": 36,
-        "CNN,Good Morning Britain,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,Good Morning Britain,Vox,The Daily Wire,The Young Turks,VICE News,AJ+,NowThis World,MSNBC": 4,
-        "CNN,JRE Clips,VICE News": 3,
-        "CNN,MSNBC": 39,
-        "CNN,The Daily Wire": 8,
-        "CNN,The Daily Wire,MSNBC": 8,
-        "CNN,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,The Daily Wire,VICE News,NowThis World": 4,
-        "CNN,The Young Turks": 6,
-        "CNN,The Young Turks,MSNBC": 8,
-        "CNN,VICE News": 8,
-        "CNN,VICE News,MSNBC": 8,
-        "CNN,Vox": 4,
-        "CNN,Vox,NowThis World,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,The Young Turks,MSNBC": 4,
-        "CNN,Vox,The Daily Wire,VICE News,MSNBC": 4,
-        "CNN,Vox,The Young Turks,VICE News,MSNBC": 4,
-        "Fox News": 24,
-        "Fox News,America Uncovered": 4,
-        "Fox News,America Uncovered,Good Morning Britain,JRE Clips": 4,
-        "Fox News,America Uncovered,The Young Turks": 4,
-        "Fox News,CNN": 16,
-        "Fox News,CNN,AJ+,MSNBC": 4,
-        "Fox News,CNN,America Uncovered,JRE Clips,Vox,The Young Turks,VICE News,AJ+,MSNBC": 4,
-        "Fox News,CNN,JRE Clips,The Daily Wire,Colion Noir": 4,
-        "Fox News,CNN,MSNBC": 8,
-        "Fox News,CNN,The Daily Wire": 2,
-        "Fox News,CNN,The Daily Wire,The Young Turks,MSNBC": 4,
-        "Fox News,CNN,VICE News": 8,
-        "Fox News,CNN,Vox,The Daily Wire": 4,
-        "Fox News,CNN,Vox,The Daily Wire,MSNBC": 4,
-        "Fox News,CNN,Vox,VICE News": 4,
-        "Fox News,CNN,Vox,VICE News,MSNBC": 4,
-        "Fox News,MSNBC": 4,
-        "Fox News,VICE News": 4,
-        "JRE Clips": 8,
-        "MSNBC": 12,
-        "NowThis World": 4,
-        "Steven Crowder,Fox News,CNN,Good Morning Britain,JRE Clips,Vox,The Daily Wire,VICE News": 4,
-        "Steven Crowder,Fox News,CNN,JRE Clips,The Daily Wire,VICE News,MSNBC": 4,
-        "Steven Crowder,JRE Clips,The Daily Wire": 4,
-        "Steven Crowder,Vox,The Young Turks,NowThis World,MSNBC": 4,
-        "The Daily Wire": 3,
-        "The Daily Wire,VICE News,MSNBC": 4,
-        "The Daily Wire,VICE News,NowThis World": 4,
-        "The Young Turks,VICE News": 4,
-        "VICE News": 12,
-        "VICE News,MSNBC": 4,
-        "Vox": 4,
-        "Vox,The Daily Wire,VICE News,AJ+": 2,
-        "Vox,The Daily Wire,VICE News,NowThis World": 4,
-        "Vox,VICE News": 8
+        "count": 3.0,
+        "mean": 0.0,
+        "std": 0.0
       }
     },
     "race_ethnicity": {
       "train": {
-        "count": 9274.0,
-        "mean": 1.7133922794910503,
-        "std": 1.3889097024725963
+        "count": 569.0,
+        "mean": 1.8154657293497365,
+        "std": 1.5320959268159808
       },
       "validation": {
-        "count": 1059.0,
-        "mean": 1.870632672332389,
-        "std": 1.5636561221924141
+        "count": 64.0,
+        "mean": 1.734375,
+        "std": 1.4387732133227251
       }
     },
     "religion": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 5.8717047451669595,
+        "std": 4.560400046892023
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 6.625,
+        "std": 4.591091918051739
+      }
     },
     "religious_attendance": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 2.444639718804921,
+        "std": 1.2110404183189056
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 2.5,
+        "std": 1.2624381172952597
+      }
     },
     "right_to_own_importance": {
       "train": {
-        "count": 5331.0,
-        "mean": 0.3318326767960983,
-        "std": 0.47087126840192156
+        "count": 82.0,
+        "mean": 0.2073170731707317,
+        "std": 0.4053846375266991
       },
       "validation": {
-        "count": 661.0,
-        "mean": 0.3146747352496218,
-        "std": 0.4643862037627757
+        "count": 5.0,
+        "mean": 0.2,
+        "std": 0.4000000000000001
       }
     },
-    "social_media_use": {
-      "train": {},
-      "validation": {}
-    },
     "state": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 27.924428822495607,
+        "std": 16.07199041786232
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 28.359375,
+        "std": 14.239433788229608
+      }
     },
     "stricter_laws": {
       "train": {
-        "count": 5335.0,
-        "mean": 0.2985941893158388,
-        "std": 0.3357668157076197
+        "count": 83.0,
+        "mean": 0.20481927710843373,
+        "std": 0.31081068287986585
       },
       "validation": {
-        "count": 665.0,
-        "mean": 0.2744360902255639,
-        "std": 0.3127381222901772
+        "count": 5.0,
+        "mean": 0.1,
+        "std": 0.20000000000000004
       }
     },
     "trump_approval": {
-      "train": {},
-      "validation": {}
-    },
-    "veteran": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 1025.0,
+        "mean": 25.704390243902438,
+        "std": 35.13110539239567
+      },
+      "validation": {
+        "count": 115.0,
+        "mean": 23.85217391304348,
+        "std": 31.520109103281953
+      }
     },
     "vote_2016": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 3.260105448154657,
+        "std": 2.6003597134135705
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 3.46875,
+        "std": 2.686591416181478
+      }
     },
     "vote_2020": {
-      "train": {},
-      "validation": {}
-    },
-    "vote_2024": {
-      "train": {},
-      "validation": {}
-    },
-    "zip3": {
-      "train": {},
-      "validation": {}
+      "train": {
+        "count": 569.0,
+        "mean": 1.929701230228471,
+        "std": 1.6068767253777987
+      },
+      "validation": {
+        "count": 64.0,
+        "mean": 2.03125,
+        "std": 1.722722681542215
+      }
     }
   },
   "figures_dir": "reports/prompt_stats/figures",
+  "missing_features": [
+    "city",
+    "county",
+    "zip3",
+    "occupation",
+    "marital_status",
+    "household_size",
+    "veteran",
+    "vote_2024",
+    "civic_engagement",
+    "minwage_text_r_w3",
+    "minwage_importance",
+    "minwage_priority",
+    "media_diet",
+    "news_consumption",
+    "news_sources",
+    "news_sources_top",
+    "platform_use",
+    "social_media_use",
+    "gun_priority",
+    "gun_policy",
+    "gun_identity"
+  ],
   "n_options_counts": {
     "train": {
-      "1": 1125,
-      "2": 1776,
-      "3": 857,
-      "4": 14257,
-      "5": 2327
+      "1": 38,
+      "4": 1323
     },
     "validation": {
-      "1": 127,
-      "2": 218,
-      "3": 83,
-      "4": 1535,
-      "5": 309
+      "1": 6,
+      "4": 131
     }
   },
   "participant_counts": {
     "overall": {
       "by_issue": {
-        "gun_control": 1536,
-        "minimum_wage": 4362
+        "0425": 14,
+        "0611c": 2,
+        "0702_22": 9,
+        "0702_31": 56,
+        "200922uniquetest1": 2,
+        "_rdu0ydeqnk_june2021_22_1_p": 3,
+        "ac2": 17,
+        "ai3": 15,
+        "gun_control": 88,
+        "march2022_22_1_anti": 1,
+        "minimum_wage": 1058,
+        "nov_22_10_b": 1,
+        "nov_22_11_a": 1,
+        "nov_22_12_b": 2,
+        "nov_22_14_b": 5,
+        "nov_22_17_b": 1,
+        "nov_22_1_a": 24,
+        "nov_22_1_b": 2,
+        "nov_22_20_b": 1,
+        "nov_22_2_b": 1,
+        "nov_22_4_a": 1,
+        "nov_22_5_b": 1,
+        "nov_22_6_b": 1,
+        "nov_22_9_b": 1,
+        "nov_31_11_b": 1,
+        "nov_31_12_a": 1,
+        "nov_31_14_a": 2,
+        "nov_31_16_a": 2,
+        "nov_31_17_a": 1,
+        "nov_31_19_a": 1,
+        "nov_31_19_b": 2,
+        "nov_31_1_a": 1,
+        "nov_31_1_b": 1,
+        "nov_31_20_b": 1,
+        "nov_31_2_a": 1,
+        "nov_31_3_a": 1,
+        "nov_31_9_b": 2,
+        "nov_40_12_a": 1,
+        "nov_40_12_b": 2,
+        "nov_40_14_a": 1,
+        "nov_40_14_b": 1,
+        "nov_40_15_a": 2,
+        "nov_40_16_a": 1,
+        "nov_40_16_b": 2,
+        "nov_40_17_b": 1,
+        "nov_40_18_a": 1,
+        "nov_40_18_b": 1,
+        "nov_40_19_a": 3,
+        "nov_40_1_b": 2,
+        "nov_40_20_b": 1,
+        "nov_40_2_a": 2,
+        "nov_40_2_b": 3,
+        "nov_40_4_b": 1,
+        "nov_40_5_a": 2,
+        "nov_40_7_b": 3,
+        "nov_40_8_a": 2,
+        "nov_40_9_a": 2,
+        "pilot_31_1": 4,
+        "pilot_31_13": 2,
+        "pilot_31_14": 1,
+        "pilot_31_15": 1,
+        "pilot_31_17": 1,
+        "pilot_31_2": 2,
+        "pilot_31_22": 3,
+        "pilot_31_25": 1,
+        "pilot_31_27": 1,
+        "pilot_31_28": 4,
+        "pilot_31_30": 3,
+        "pilot_31_34": 4,
+        "pilot_31_37": 1,
+        "pilot_31_38": 1,
+        "pilot_31_41": 5,
+        "pilot_31_42": 1,
+        "pilot_31_48": 1,
+        "pilot_31_5": 1,
+        "pilot_31_6": 1,
+        "pilot_33_09": 1,
+        "pilot_40_1": 1,
+        "pilot_40_11": 2,
+        "pilot_40_14": 1,
+        "pilot_40_15": 3,
+        "pilot_40_16": 1,
+        "pilot_40_17": 1,
+        "pilot_40_22": 2,
+        "pilot_40_24": 1,
+        "pilot_40_27": 2,
+        "pilot_40_30": 2,
+        "pilot_40_31": 1,
+        "pilot_40_36": 2,
+        "pilot_40_38": 1,
+        "pilot_40_39": 3,
+        "pilot_40_4": 1,
+        "pilot_40_40": 1,
+        "pilot_40_43": 1,
+        "pilot_40_45": 2,
+        "pilot_40_46": 1,
+        "pilot_40_47": 1,
+        "pilot_40_49": 1,
+        "pilot_40_5": 2,
+        "pilot_40_9": 1,
+        "pilot_a_31_10": 1,
+        "pilot_a_31_15": 1,
+        "pilot_a_31_19": 2,
+        "pilot_a_31_21": 1,
+        "pilot_a_31_24": 1,
+        "pilot_a_31_26": 2,
+        "pilot_a_31_27": 1,
+        "pilot_a_31_29": 2,
+        "pilot_a_31_3": 2,
+        "pilot_a_31_31": 2,
+        "pilot_a_31_4": 1,
+        "pilot_a_31_44": 1,
+        "pilot_a_31_47": 3,
+        "pilot_a_31_49": 2,
+        "pilot_a_31_50": 1,
+        "pilot_a_31_7": 1,
+        "pilot_a_31_8": 4,
+        "pilot_a_40_11": 1,
+        "pilot_a_40_12": 1,
+        "pilot_a_40_16": 3,
+        "pilot_a_40_17": 1,
+        "pilot_a_40_19": 1,
+        "pilot_a_40_20": 1,
+        "pilot_a_40_22": 1,
+        "pilot_a_40_23": 2,
+        "pilot_a_40_24": 1,
+        "pilot_a_40_25": 1,
+        "pilot_a_40_26": 4,
+        "pilot_a_40_31": 3,
+        "pilot_a_40_32": 1,
+        "pilot_a_40_36": 1,
+        "pilot_a_40_38": 1,
+        "pilot_a_40_39": 1,
+        "pilot_a_40_4": 1,
+        "pilot_a_40_40": 1,
+        "pilot_a_40_41": 2,
+        "pilot_a_40_43": 2,
+        "pilot_a_40_5": 1,
+        "pilot_a_40_7": 1,
+        "pnpltpdea3y_june2021_22_23_a": 1,
+        "test_22_1_b": 4,
+        "testingjune3_22_12_a": 1,
+        "testingjune3_22_17_a": 1
       },
       "by_issue_study": {
+        "0425": {
+          "unknown": 14
+        },
+        "0611c": {
+          "unknown": 2
+        },
+        "0702_22": {
+          "unknown": 9
+        },
+        "0702_31": {
+          "unknown": 56
+        },
+        "200922uniquetest1": {
+          "unknown": 2
+        },
+        "_rdu0ydeqnk_june2021_22_1_p": {
+          "unknown": 3
+        },
+        "ac2": {
+          "unknown": 17
+        },
+        "ai3": {
+          "unknown": 15
+        },
         "gun_control": {
-          "study1": 1536
+          "study1": 88
+        },
+        "march2022_22_1_anti": {
+          "unknown": 1
         },
         "minimum_wage": {
-          "study2": 1647,
-          "study3": 2715
+          "study2": 377,
+          "study3": 633,
+          "study4": 48
+        },
+        "nov_22_10_b": {
+          "unknown": 1
+        },
+        "nov_22_11_a": {
+          "unknown": 1
+        },
+        "nov_22_12_b": {
+          "unknown": 2
+        },
+        "nov_22_14_b": {
+          "unknown": 5
+        },
+        "nov_22_17_b": {
+          "unknown": 1
+        },
+        "nov_22_1_a": {
+          "unknown": 24
+        },
+        "nov_22_1_b": {
+          "unknown": 2
+        },
+        "nov_22_20_b": {
+          "unknown": 1
+        },
+        "nov_22_2_b": {
+          "unknown": 1
+        },
+        "nov_22_4_a": {
+          "unknown": 1
+        },
+        "nov_22_5_b": {
+          "unknown": 1
+        },
+        "nov_22_6_b": {
+          "unknown": 1
+        },
+        "nov_22_9_b": {
+          "unknown": 1
+        },
+        "nov_31_11_b": {
+          "unknown": 1
+        },
+        "nov_31_12_a": {
+          "unknown": 1
+        },
+        "nov_31_14_a": {
+          "unknown": 2
+        },
+        "nov_31_16_a": {
+          "unknown": 2
+        },
+        "nov_31_17_a": {
+          "unknown": 1
+        },
+        "nov_31_19_a": {
+          "unknown": 1
+        },
+        "nov_31_19_b": {
+          "unknown": 2
+        },
+        "nov_31_1_a": {
+          "unknown": 1
+        },
+        "nov_31_1_b": {
+          "unknown": 1
+        },
+        "nov_31_20_b": {
+          "unknown": 1
+        },
+        "nov_31_2_a": {
+          "unknown": 1
+        },
+        "nov_31_3_a": {
+          "unknown": 1
+        },
+        "nov_31_9_b": {
+          "unknown": 2
+        },
+        "nov_40_12_a": {
+          "unknown": 1
+        },
+        "nov_40_12_b": {
+          "unknown": 2
+        },
+        "nov_40_14_a": {
+          "unknown": 1
+        },
+        "nov_40_14_b": {
+          "unknown": 1
+        },
+        "nov_40_15_a": {
+          "unknown": 2
+        },
+        "nov_40_16_a": {
+          "unknown": 1
+        },
+        "nov_40_16_b": {
+          "unknown": 2
+        },
+        "nov_40_17_b": {
+          "unknown": 1
+        },
+        "nov_40_18_a": {
+          "unknown": 1
+        },
+        "nov_40_18_b": {
+          "unknown": 1
+        },
+        "nov_40_19_a": {
+          "unknown": 3
+        },
+        "nov_40_1_b": {
+          "unknown": 2
+        },
+        "nov_40_20_b": {
+          "unknown": 1
+        },
+        "nov_40_2_a": {
+          "unknown": 2
+        },
+        "nov_40_2_b": {
+          "unknown": 3
+        },
+        "nov_40_4_b": {
+          "unknown": 1
+        },
+        "nov_40_5_a": {
+          "unknown": 2
+        },
+        "nov_40_7_b": {
+          "unknown": 3
+        },
+        "nov_40_8_a": {
+          "unknown": 2
+        },
+        "nov_40_9_a": {
+          "unknown": 2
+        },
+        "pilot_31_1": {
+          "unknown": 4
+        },
+        "pilot_31_13": {
+          "unknown": 2
+        },
+        "pilot_31_14": {
+          "unknown": 1
+        },
+        "pilot_31_15": {
+          "unknown": 1
+        },
+        "pilot_31_17": {
+          "unknown": 1
+        },
+        "pilot_31_2": {
+          "unknown": 2
+        },
+        "pilot_31_22": {
+          "unknown": 3
+        },
+        "pilot_31_25": {
+          "unknown": 1
+        },
+        "pilot_31_27": {
+          "unknown": 1
+        },
+        "pilot_31_28": {
+          "unknown": 4
+        },
+        "pilot_31_30": {
+          "unknown": 3
+        },
+        "pilot_31_34": {
+          "unknown": 4
+        },
+        "pilot_31_37": {
+          "unknown": 1
+        },
+        "pilot_31_38": {
+          "unknown": 1
+        },
+        "pilot_31_41": {
+          "unknown": 5
+        },
+        "pilot_31_42": {
+          "unknown": 1
+        },
+        "pilot_31_48": {
+          "unknown": 1
+        },
+        "pilot_31_5": {
+          "unknown": 1
+        },
+        "pilot_31_6": {
+          "unknown": 1
+        },
+        "pilot_33_09": {
+          "unknown": 1
+        },
+        "pilot_40_1": {
+          "unknown": 1
+        },
+        "pilot_40_11": {
+          "unknown": 2
+        },
+        "pilot_40_14": {
+          "unknown": 1
+        },
+        "pilot_40_15": {
+          "unknown": 3
+        },
+        "pilot_40_16": {
+          "unknown": 1
+        },
+        "pilot_40_17": {
+          "unknown": 1
+        },
+        "pilot_40_22": {
+          "unknown": 2
+        },
+        "pilot_40_24": {
+          "unknown": 1
+        },
+        "pilot_40_27": {
+          "unknown": 2
+        },
+        "pilot_40_30": {
+          "unknown": 2
+        },
+        "pilot_40_31": {
+          "unknown": 1
+        },
+        "pilot_40_36": {
+          "unknown": 2
+        },
+        "pilot_40_38": {
+          "unknown": 1
+        },
+        "pilot_40_39": {
+          "unknown": 3
+        },
+        "pilot_40_4": {
+          "unknown": 1
+        },
+        "pilot_40_40": {
+          "unknown": 1
+        },
+        "pilot_40_43": {
+          "unknown": 1
+        },
+        "pilot_40_45": {
+          "unknown": 2
+        },
+        "pilot_40_46": {
+          "unknown": 1
+        },
+        "pilot_40_47": {
+          "unknown": 1
+        },
+        "pilot_40_49": {
+          "unknown": 1
+        },
+        "pilot_40_5": {
+          "unknown": 2
+        },
+        "pilot_40_9": {
+          "unknown": 1
+        },
+        "pilot_a_31_10": {
+          "unknown": 1
+        },
+        "pilot_a_31_15": {
+          "unknown": 1
+        },
+        "pilot_a_31_19": {
+          "unknown": 2
+        },
+        "pilot_a_31_21": {
+          "unknown": 1
+        },
+        "pilot_a_31_24": {
+          "unknown": 1
+        },
+        "pilot_a_31_26": {
+          "unknown": 2
+        },
+        "pilot_a_31_27": {
+          "unknown": 1
+        },
+        "pilot_a_31_29": {
+          "unknown": 2
+        },
+        "pilot_a_31_3": {
+          "unknown": 2
+        },
+        "pilot_a_31_31": {
+          "unknown": 2
+        },
+        "pilot_a_31_4": {
+          "unknown": 1
+        },
+        "pilot_a_31_44": {
+          "unknown": 1
+        },
+        "pilot_a_31_47": {
+          "unknown": 3
+        },
+        "pilot_a_31_49": {
+          "unknown": 2
+        },
+        "pilot_a_31_50": {
+          "unknown": 1
+        },
+        "pilot_a_31_7": {
+          "unknown": 1
+        },
+        "pilot_a_31_8": {
+          "unknown": 4
+        },
+        "pilot_a_40_11": {
+          "unknown": 1
+        },
+        "pilot_a_40_12": {
+          "unknown": 1
+        },
+        "pilot_a_40_16": {
+          "unknown": 3
+        },
+        "pilot_a_40_17": {
+          "unknown": 1
+        },
+        "pilot_a_40_19": {
+          "unknown": 1
+        },
+        "pilot_a_40_20": {
+          "unknown": 1
+        },
+        "pilot_a_40_22": {
+          "unknown": 1
+        },
+        "pilot_a_40_23": {
+          "unknown": 2
+        },
+        "pilot_a_40_24": {
+          "unknown": 1
+        },
+        "pilot_a_40_25": {
+          "unknown": 1
+        },
+        "pilot_a_40_26": {
+          "unknown": 4
+        },
+        "pilot_a_40_31": {
+          "unknown": 3
+        },
+        "pilot_a_40_32": {
+          "unknown": 1
+        },
+        "pilot_a_40_36": {
+          "unknown": 1
+        },
+        "pilot_a_40_38": {
+          "unknown": 1
+        },
+        "pilot_a_40_39": {
+          "unknown": 1
+        },
+        "pilot_a_40_4": {
+          "unknown": 1
+        },
+        "pilot_a_40_40": {
+          "unknown": 1
+        },
+        "pilot_a_40_41": {
+          "unknown": 2
+        },
+        "pilot_a_40_43": {
+          "unknown": 2
+        },
+        "pilot_a_40_5": {
+          "unknown": 1
+        },
+        "pilot_a_40_7": {
+          "unknown": 1
+        },
+        "pnpltpdea3y_june2021_22_23_a": {
+          "unknown": 1
+        },
+        "test_22_1_b": {
+          "unknown": 4
+        },
+        "testingjune3_22_12_a": {
+          "unknown": 1
+        },
+        "testingjune3_22_17_a": {
+          "unknown": 1
         }
       },
       "by_study": {
-        "study1": 1536,
-        "study2": 1647,
-        "study3": 2715
+        "study1": 88,
+        "study2": 377,
+        "study3": 633,
+        "study4": 48,
+        "unknown": 352
       },
-      "overall": 5587
+      "overall": 1495
     },
     "train": {
       "by_issue": {
-        "gun_control": 1365,
-        "minimum_wage": 3944
+        "0425": 14,
+        "0611c": 2,
+        "0702_22": 9,
+        "0702_31": 56,
+        "200922uniquetest1": 2,
+        "_rdu0ydeqnk_june2021_22_1_p": 3,
+        "ac2": 14,
+        "ai3": 11,
+        "gun_control": 83,
+        "march2022_22_1_anti": 1,
+        "minimum_wage": 947,
+        "nov_22_10_b": 1,
+        "nov_22_11_a": 1,
+        "nov_22_12_b": 1,
+        "nov_22_14_b": 5,
+        "nov_22_17_b": 1,
+        "nov_22_1_a": 24,
+        "nov_22_1_b": 2,
+        "nov_22_20_b": 1,
+        "nov_22_2_b": 1,
+        "nov_22_4_a": 1,
+        "nov_22_5_b": 1,
+        "nov_22_6_b": 1,
+        "nov_22_9_b": 1,
+        "nov_31_11_b": 1,
+        "nov_31_12_a": 1,
+        "nov_31_14_a": 1,
+        "nov_31_16_a": 2,
+        "nov_31_17_a": 1,
+        "nov_31_19_a": 1,
+        "nov_31_19_b": 2,
+        "nov_31_1_a": 1,
+        "nov_31_1_b": 1,
+        "nov_31_2_a": 1,
+        "nov_31_3_a": 1,
+        "nov_31_9_b": 2,
+        "nov_40_12_a": 1,
+        "nov_40_12_b": 2,
+        "nov_40_14_a": 1,
+        "nov_40_14_b": 1,
+        "nov_40_15_a": 2,
+        "nov_40_16_a": 1,
+        "nov_40_16_b": 2,
+        "nov_40_17_b": 1,
+        "nov_40_18_a": 1,
+        "nov_40_18_b": 1,
+        "nov_40_19_a": 3,
+        "nov_40_1_b": 2,
+        "nov_40_20_b": 1,
+        "nov_40_2_a": 2,
+        "nov_40_2_b": 2,
+        "nov_40_5_a": 2,
+        "nov_40_7_b": 3,
+        "nov_40_8_a": 2,
+        "nov_40_9_a": 2,
+        "pilot_31_1": 4,
+        "pilot_31_13": 2,
+        "pilot_31_14": 1,
+        "pilot_31_15": 1,
+        "pilot_31_17": 1,
+        "pilot_31_2": 2,
+        "pilot_31_22": 3,
+        "pilot_31_25": 1,
+        "pilot_31_27": 1,
+        "pilot_31_28": 4,
+        "pilot_31_30": 3,
+        "pilot_31_34": 4,
+        "pilot_31_37": 1,
+        "pilot_31_38": 1,
+        "pilot_31_41": 5,
+        "pilot_31_42": 1,
+        "pilot_31_48": 1,
+        "pilot_31_5": 1,
+        "pilot_31_6": 1,
+        "pilot_33_09": 1,
+        "pilot_40_11": 2,
+        "pilot_40_14": 1,
+        "pilot_40_15": 3,
+        "pilot_40_16": 1,
+        "pilot_40_17": 1,
+        "pilot_40_22": 2,
+        "pilot_40_24": 1,
+        "pilot_40_27": 2,
+        "pilot_40_30": 1,
+        "pilot_40_31": 1,
+        "pilot_40_36": 2,
+        "pilot_40_38": 1,
+        "pilot_40_39": 3,
+        "pilot_40_4": 1,
+        "pilot_40_40": 1,
+        "pilot_40_45": 2,
+        "pilot_40_46": 1,
+        "pilot_40_47": 1,
+        "pilot_40_49": 1,
+        "pilot_40_5": 1,
+        "pilot_40_9": 1,
+        "pilot_a_31_10": 1,
+        "pilot_a_31_15": 1,
+        "pilot_a_31_19": 2,
+        "pilot_a_31_21": 1,
+        "pilot_a_31_24": 1,
+        "pilot_a_31_26": 2,
+        "pilot_a_31_27": 1,
+        "pilot_a_31_29": 1,
+        "pilot_a_31_3": 2,
+        "pilot_a_31_31": 1,
+        "pilot_a_31_4": 1,
+        "pilot_a_31_44": 1,
+        "pilot_a_31_47": 3,
+        "pilot_a_31_49": 2,
+        "pilot_a_31_7": 1,
+        "pilot_a_31_8": 2,
+        "pilot_a_40_11": 1,
+        "pilot_a_40_12": 1,
+        "pilot_a_40_16": 3,
+        "pilot_a_40_17": 1,
+        "pilot_a_40_19": 1,
+        "pilot_a_40_20": 1,
+        "pilot_a_40_22": 1,
+        "pilot_a_40_23": 2,
+        "pilot_a_40_24": 1,
+        "pilot_a_40_25": 1,
+        "pilot_a_40_26": 4,
+        "pilot_a_40_31": 3,
+        "pilot_a_40_32": 1,
+        "pilot_a_40_36": 1,
+        "pilot_a_40_38": 1,
+        "pilot_a_40_39": 1,
+        "pilot_a_40_4": 1,
+        "pilot_a_40_40": 1,
+        "pilot_a_40_41": 2,
+        "pilot_a_40_43": 2,
+        "pilot_a_40_5": 1,
+        "pilot_a_40_7": 1,
+        "pnpltpdea3y_june2021_22_23_a": 1,
+        "test_22_1_b": 4,
+        "testingjune3_22_12_a": 1,
+        "testingjune3_22_17_a": 1
       },
       "by_issue_study": {
+        "0425": {
+          "unknown": 14
+        },
+        "0611c": {
+          "unknown": 2
+        },
+        "0702_22": {
+          "unknown": 9
+        },
+        "0702_31": {
+          "unknown": 56
+        },
+        "200922uniquetest1": {
+          "unknown": 2
+        },
+        "_rdu0ydeqnk_june2021_22_1_p": {
+          "unknown": 3
+        },
+        "ac2": {
+          "unknown": 14
+        },
+        "ai3": {
+          "unknown": 11
+        },
         "gun_control": {
-          "study1": 1365
+          "study1": 83
+        },
+        "march2022_22_1_anti": {
+          "unknown": 1
         },
         "minimum_wage": {
-          "study2": 1505,
-          "study3": 2439
+          "study2": 339,
+          "study3": 569,
+          "study4": 39
+        },
+        "nov_22_10_b": {
+          "unknown": 1
+        },
+        "nov_22_11_a": {
+          "unknown": 1
+        },
+        "nov_22_12_b": {
+          "unknown": 1
+        },
+        "nov_22_14_b": {
+          "unknown": 5
+        },
+        "nov_22_17_b": {
+          "unknown": 1
+        },
+        "nov_22_1_a": {
+          "unknown": 24
+        },
+        "nov_22_1_b": {
+          "unknown": 2
+        },
+        "nov_22_20_b": {
+          "unknown": 1
+        },
+        "nov_22_2_b": {
+          "unknown": 1
+        },
+        "nov_22_4_a": {
+          "unknown": 1
+        },
+        "nov_22_5_b": {
+          "unknown": 1
+        },
+        "nov_22_6_b": {
+          "unknown": 1
+        },
+        "nov_22_9_b": {
+          "unknown": 1
+        },
+        "nov_31_11_b": {
+          "unknown": 1
+        },
+        "nov_31_12_a": {
+          "unknown": 1
+        },
+        "nov_31_14_a": {
+          "unknown": 1
+        },
+        "nov_31_16_a": {
+          "unknown": 2
+        },
+        "nov_31_17_a": {
+          "unknown": 1
+        },
+        "nov_31_19_a": {
+          "unknown": 1
+        },
+        "nov_31_19_b": {
+          "unknown": 2
+        },
+        "nov_31_1_a": {
+          "unknown": 1
+        },
+        "nov_31_1_b": {
+          "unknown": 1
+        },
+        "nov_31_2_a": {
+          "unknown": 1
+        },
+        "nov_31_3_a": {
+          "unknown": 1
+        },
+        "nov_31_9_b": {
+          "unknown": 2
+        },
+        "nov_40_12_a": {
+          "unknown": 1
+        },
+        "nov_40_12_b": {
+          "unknown": 2
+        },
+        "nov_40_14_a": {
+          "unknown": 1
+        },
+        "nov_40_14_b": {
+          "unknown": 1
+        },
+        "nov_40_15_a": {
+          "unknown": 2
+        },
+        "nov_40_16_a": {
+          "unknown": 1
+        },
+        "nov_40_16_b": {
+          "unknown": 2
+        },
+        "nov_40_17_b": {
+          "unknown": 1
+        },
+        "nov_40_18_a": {
+          "unknown": 1
+        },
+        "nov_40_18_b": {
+          "unknown": 1
+        },
+        "nov_40_19_a": {
+          "unknown": 3
+        },
+        "nov_40_1_b": {
+          "unknown": 2
+        },
+        "nov_40_20_b": {
+          "unknown": 1
+        },
+        "nov_40_2_a": {
+          "unknown": 2
+        },
+        "nov_40_2_b": {
+          "unknown": 2
+        },
+        "nov_40_5_a": {
+          "unknown": 2
+        },
+        "nov_40_7_b": {
+          "unknown": 3
+        },
+        "nov_40_8_a": {
+          "unknown": 2
+        },
+        "nov_40_9_a": {
+          "unknown": 2
+        },
+        "pilot_31_1": {
+          "unknown": 4
+        },
+        "pilot_31_13": {
+          "unknown": 2
+        },
+        "pilot_31_14": {
+          "unknown": 1
+        },
+        "pilot_31_15": {
+          "unknown": 1
+        },
+        "pilot_31_17": {
+          "unknown": 1
+        },
+        "pilot_31_2": {
+          "unknown": 2
+        },
+        "pilot_31_22": {
+          "unknown": 3
+        },
+        "pilot_31_25": {
+          "unknown": 1
+        },
+        "pilot_31_27": {
+          "unknown": 1
+        },
+        "pilot_31_28": {
+          "unknown": 4
+        },
+        "pilot_31_30": {
+          "unknown": 3
+        },
+        "pilot_31_34": {
+          "unknown": 4
+        },
+        "pilot_31_37": {
+          "unknown": 1
+        },
+        "pilot_31_38": {
+          "unknown": 1
+        },
+        "pilot_31_41": {
+          "unknown": 5
+        },
+        "pilot_31_42": {
+          "unknown": 1
+        },
+        "pilot_31_48": {
+          "unknown": 1
+        },
+        "pilot_31_5": {
+          "unknown": 1
+        },
+        "pilot_31_6": {
+          "unknown": 1
+        },
+        "pilot_33_09": {
+          "unknown": 1
+        },
+        "pilot_40_11": {
+          "unknown": 2
+        },
+        "pilot_40_14": {
+          "unknown": 1
+        },
+        "pilot_40_15": {
+          "unknown": 3
+        },
+        "pilot_40_16": {
+          "unknown": 1
+        },
+        "pilot_40_17": {
+          "unknown": 1
+        },
+        "pilot_40_22": {
+          "unknown": 2
+        },
+        "pilot_40_24": {
+          "unknown": 1
+        },
+        "pilot_40_27": {
+          "unknown": 2
+        },
+        "pilot_40_30": {
+          "unknown": 1
+        },
+        "pilot_40_31": {
+          "unknown": 1
+        },
+        "pilot_40_36": {
+          "unknown": 2
+        },
+        "pilot_40_38": {
+          "unknown": 1
+        },
+        "pilot_40_39": {
+          "unknown": 3
+        },
+        "pilot_40_4": {
+          "unknown": 1
+        },
+        "pilot_40_40": {
+          "unknown": 1
+        },
+        "pilot_40_45": {
+          "unknown": 2
+        },
+        "pilot_40_46": {
+          "unknown": 1
+        },
+        "pilot_40_47": {
+          "unknown": 1
+        },
+        "pilot_40_49": {
+          "unknown": 1
+        },
+        "pilot_40_5": {
+          "unknown": 1
+        },
+        "pilot_40_9": {
+          "unknown": 1
+        },
+        "pilot_a_31_10": {
+          "unknown": 1
+        },
+        "pilot_a_31_15": {
+          "unknown": 1
+        },
+        "pilot_a_31_19": {
+          "unknown": 2
+        },
+        "pilot_a_31_21": {
+          "unknown": 1
+        },
+        "pilot_a_31_24": {
+          "unknown": 1
+        },
+        "pilot_a_31_26": {
+          "unknown": 2
+        },
+        "pilot_a_31_27": {
+          "unknown": 1
+        },
+        "pilot_a_31_29": {
+          "unknown": 1
+        },
+        "pilot_a_31_3": {
+          "unknown": 2
+        },
+        "pilot_a_31_31": {
+          "unknown": 1
+        },
+        "pilot_a_31_4": {
+          "unknown": 1
+        },
+        "pilot_a_31_44": {
+          "unknown": 1
+        },
+        "pilot_a_31_47": {
+          "unknown": 3
+        },
+        "pilot_a_31_49": {
+          "unknown": 2
+        },
+        "pilot_a_31_7": {
+          "unknown": 1
+        },
+        "pilot_a_31_8": {
+          "unknown": 2
+        },
+        "pilot_a_40_11": {
+          "unknown": 1
+        },
+        "pilot_a_40_12": {
+          "unknown": 1
+        },
+        "pilot_a_40_16": {
+          "unknown": 3
+        },
+        "pilot_a_40_17": {
+          "unknown": 1
+        },
+        "pilot_a_40_19": {
+          "unknown": 1
+        },
+        "pilot_a_40_20": {
+          "unknown": 1
+        },
+        "pilot_a_40_22": {
+          "unknown": 1
+        },
+        "pilot_a_40_23": {
+          "unknown": 2
+        },
+        "pilot_a_40_24": {
+          "unknown": 1
+        },
+        "pilot_a_40_25": {
+          "unknown": 1
+        },
+        "pilot_a_40_26": {
+          "unknown": 4
+        },
+        "pilot_a_40_31": {
+          "unknown": 3
+        },
+        "pilot_a_40_32": {
+          "unknown": 1
+        },
+        "pilot_a_40_36": {
+          "unknown": 1
+        },
+        "pilot_a_40_38": {
+          "unknown": 1
+        },
+        "pilot_a_40_39": {
+          "unknown": 1
+        },
+        "pilot_a_40_4": {
+          "unknown": 1
+        },
+        "pilot_a_40_40": {
+          "unknown": 1
+        },
+        "pilot_a_40_41": {
+          "unknown": 2
+        },
+        "pilot_a_40_43": {
+          "unknown": 2
+        },
+        "pilot_a_40_5": {
+          "unknown": 1
+        },
+        "pilot_a_40_7": {
+          "unknown": 1
+        },
+        "pnpltpdea3y_june2021_22_23_a": {
+          "unknown": 1
+        },
+        "test_22_1_b": {
+          "unknown": 4
+        },
+        "testingjune3_22_12_a": {
+          "unknown": 1
+        },
+        "testingjune3_22_17_a": {
+          "unknown": 1
         }
       },
       "by_study": {
-        "study1": 1365,
-        "study2": 1505,
-        "study3": 2439
+        "study1": 83,
+        "study2": 339,
+        "study3": 569,
+        "study4": 39,
+        "unknown": 331
       },
-      "overall": 5057
+      "overall": 1358
     },
     "validation": {
       "by_issue": {
-        "gun_control": 171,
-        "minimum_wage": 418
+        "ac2": 3,
+        "ai3": 4,
+        "gun_control": 5,
+        "minimum_wage": 111,
+        "nov_22_12_b": 1,
+        "nov_31_14_a": 1,
+        "nov_31_20_b": 1,
+        "nov_40_2_b": 1,
+        "nov_40_4_b": 1,
+        "pilot_40_1": 1,
+        "pilot_40_30": 1,
+        "pilot_40_43": 1,
+        "pilot_40_5": 1,
+        "pilot_a_31_29": 1,
+        "pilot_a_31_31": 1,
+        "pilot_a_31_50": 1,
+        "pilot_a_31_8": 2
       },
       "by_issue_study": {
+        "ac2": {
+          "unknown": 3
+        },
+        "ai3": {
+          "unknown": 4
+        },
         "gun_control": {
-          "study1": 171
+          "study1": 5
         },
         "minimum_wage": {
-          "study2": 142,
-          "study3": 276
+          "study2": 38,
+          "study3": 64,
+          "study4": 9
+        },
+        "nov_22_12_b": {
+          "unknown": 1
+        },
+        "nov_31_14_a": {
+          "unknown": 1
+        },
+        "nov_31_20_b": {
+          "unknown": 1
+        },
+        "nov_40_2_b": {
+          "unknown": 1
+        },
+        "nov_40_4_b": {
+          "unknown": 1
+        },
+        "pilot_40_1": {
+          "unknown": 1
+        },
+        "pilot_40_30": {
+          "unknown": 1
+        },
+        "pilot_40_43": {
+          "unknown": 1
+        },
+        "pilot_40_5": {
+          "unknown": 1
+        },
+        "pilot_a_31_29": {
+          "unknown": 1
+        },
+        "pilot_a_31_31": {
+          "unknown": 1
+        },
+        "pilot_a_31_50": {
+          "unknown": 1
+        },
+        "pilot_a_31_8": {
+          "unknown": 2
         }
       },
       "by_study": {
-        "study1": 171,
-        "study2": 142,
-        "study3": 276
+        "study1": 5,
+        "study2": 38,
+        "study3": 64,
+        "study4": 9,
+        "unknown": 21
       },
-      "overall": 586
+      "overall": 137
     }
   },
   "prior_history_counts": {
     "train": {
-      "0": 5309,
-      "1": 5168,
-      "2": 5043,
-      "3": 4811,
-      "4": 11
+      "0": 1331,
+      "1": 19,
+      "2": 2,
+      "3": 4,
+      "4": 4,
+      "7": 1
     },
     "validation": {
-      "0": 588,
-      "1": 583,
-      "2": 562,
-      "3": 538,
-      "4": 1
+      "0": 134,
+      "1": 3
     }
   },
   "profile_summary": {
     "train": {
       "missing_profile": 0.0,
-      "rows": 20342.0
+      "rows": 1361.0
     },
     "validation": {
       "missing_profile": 0.0,
-      "rows": 2272.0
+      "rows": 137.0
     }
   },
   "unique_counts": {
     "train": {
-      "current_video_ids": 241,
-      "gold_video_ids": 405,
-      "slate_texts": 13334,
-      "state_texts": 20341
+      "current_video_ids": 19,
+      "gold_video_ids": 33,
+      "slate_texts": 17,
+      "state_texts": 994
     },
     "validation": {
-      "current_video_ids": 200,
-      "gold_video_ids": 278,
-      "slate_texts": 1895,
-      "state_texts": 2272
+      "current_video_ids": 11,
+      "gold_video_ids": 25,
+      "slate_texts": 11,
+      "state_texts": 120
     }
   }
 }

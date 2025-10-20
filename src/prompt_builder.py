@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+from collections.abc import Mapping
 from typing import Any, Dict, List, Optional
 
 TRUE_STRINGS = {"1", "true", "t", "yes", "y"}
@@ -15,6 +16,21 @@ YT_FREQ_MAP = {
     "3": "weekly",
     "4": "several times a week",
     "5": "daily",
+}
+
+LANGUAGE_FRIENDLY_NAMES = {
+    "en": "English",
+    "en-us": "English",
+    "en_us": "English",
+    "english": "English",
+    "es": "Spanish",
+    "es-mx": "Spanish",
+    "es_mx": "Spanish",
+    "spanish": "Spanish",
+    "fr": "French",
+    "fr-fr": "French",
+    "fr-ca": "French",
+    "fr_ca": "French",
 }
 
 GUN_FIELD_LABELS: Dict[str, str] = {
@@ -124,6 +140,76 @@ def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
     if limit:
         text = _truncate_text(text, limit)
     return text
+
+
+def _human_join(parts: List[str]) -> str:
+    cleaned = [p.strip() for p in parts if p and p.strip()]
+    if not cleaned:
+        return ""
+    if len(cleaned) == 1:
+        return cleaned[0]
+    if len(cleaned) == 2:
+        return f"{cleaned[0]} and {cleaned[1]}"
+    return f"{', '.join(cleaned[:-1])}, and {cleaned[-1]}"
+
+
+def _with_indefinite_article(phrase: str) -> str:
+    text = phrase.strip()
+    if not text:
+        return text
+    lowered = text.lower()
+    if lowered.startswith(("a ", "an ", "the ", "another ", "this ", "that ", "someone", "somebody", "none")):
+        return text
+    if lowered[0] in "aeiou":
+        return f"an {text}"
+    return f"a {text}"
+
+
+def _describe_age_fragment(value: Any) -> Optional[str]:
+    age_text = _format_age(value)
+    if not age_text:
+        return None
+    cleaned = age_text.strip()
+    if not cleaned:
+        return None
+    if cleaned.isdigit():
+        return f"{cleaned}-year-old"
+    if cleaned.endswith("+"):
+        base = cleaned[:-1].strip()
+        if base.isdigit():
+            return f"{cleaned} years old"
+    lowered = cleaned.lower()
+    if "-" in cleaned and all(part.strip().isdigit() for part in cleaned.split("-") if part.strip()):
+        parts = [part.strip() for part in cleaned.split("-") if part.strip()]
+        if len(parts) == 2:
+            return f"between {parts[0]} and {parts[1]} years old"
+    if lowered.endswith("year-old") or lowered.endswith("years old"):
+        return cleaned
+    return f"{cleaned} years old"
+
+
+def _describe_gender_fragment(value: Any) -> Optional[str]:
+    text = clean_text(value)
+    if not text:
+        return None
+    lowered = text.lower()
+    if lowered in {"male", "man", "m"}:
+        return "man"
+    if lowered in {"female", "woman", "f"}:
+        return "woman"
+    if lowered in {"non-binary", "nonbinary", "non binary"}:
+        return "non-binary person"
+    if "prefer" in lowered and "say" in lowered:
+        return "someone who prefers not to state their gender"
+    return text
+
+
+def _normalize_language_text(value: Any) -> str:
+    text = clean_text(value)
+    if not text:
+        return ""
+    lowered = text.lower()
+    return LANGUAGE_FRIENDLY_NAMES.get(lowered, text)
 
 
 def _format_count(value: Any) -> Optional[str]:
@@ -288,10 +374,37 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
             return f"{prefix} {phrases[0]}."
         return f"{prefix} {', '.join(phrases[:-1])}, and {phrases[-1]}."
 
+    selected_row_raw = ex.get("selected_survey_row")
+    selected_row: Dict[str, Any] = {}
+    if isinstance(selected_row_raw, Mapping):
+        selected_row = dict(selected_row_raw)
+    elif isinstance(selected_row_raw, str):
+        try:
+            parsed = json.loads(selected_row_raw)
+            if isinstance(parsed, dict):
+                selected_row = parsed
+        except Exception:
+            selected_row = {}
+    else:
+        as_py = getattr(selected_row_raw, "as_py", None)
+        if callable(as_py):
+            try:
+                candidate = as_py()
+                if isinstance(candidate, dict):
+                    selected_row = candidate
+            except Exception:
+                selected_row = {}
+
     def _first_raw(*keys: str):
         for key in keys:
-            if key in ex and not _is_nanlike(ex[key]):
-                return ex[key]
+            if key in ex:
+                value = ex[key]
+                if value is not None and not _is_nanlike(value):
+                    return value
+            if key in selected_row:
+                value = selected_row.get(key)
+                if value is not None and not _is_nanlike(value):
+                    return value
         return None
 
     def _first_text(*keys: str, limit: Optional[int] = None) -> str:
@@ -299,6 +412,9 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         if value is None:
             return ""
         return clean_text(value, limit=limit)
+
+    def _clean_fragment(text: str) -> str:
+        return (text or "").strip().rstrip(".")
 
     profile_sentences: List[str] = []
     viewer_placeholder = False
@@ -310,103 +426,223 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         if ensured:
             profile_sentences.append(ensured)
 
-    demographics: List[str] = []
-    age_text = _format_age(_first_raw("age"))
-    if age_text:
-        demographics.append(f"Age: {age_text}")
-    gender_text = _first_text("gender", "q26")
-    if gender_text:
-        demographics.append(f"Gender: {gender_text}")
-    race_text = _first_text("race", "ethnicity", "q29")
-    if race_text:
-        demographics.append(f"Race/ethnicity: {race_text}")
+    demographic_sentences: List[str] = []
 
-    location_parts: List[str] = []
+    def _append_demo(text: str):
+        ensured = _ensure_sentence(text)
+        if ensured:
+            demographic_sentences.append(ensured)
+
+    age_fragment = _describe_age_fragment(_first_raw("age", "age_cat", "age_category"))
+    gender_fragment = _describe_gender_fragment(
+        _first_raw("gender", "q26", "gender4", "gender_3_text")
+    )
+    race_fragment = _first_text("race", "race_ethnicity", "ethnicity", "q29")
+    identity_bits: List[str] = []
+    if age_fragment:
+        lowered_age = age_fragment.lower()
+        if lowered_age.startswith(("between", "at least", "at most", "under", "over")):
+            identity_bits.append(age_fragment)
+        else:
+            identity_bits.append(_with_indefinite_article(age_fragment))
+    if gender_fragment:
+        gender_clean = _clean_fragment(gender_fragment)
+        lowered_gender = gender_clean.lower()
+        if lowered_gender in {"male"}:
+            gender_clean = "man"
+        elif lowered_gender in {"female"}:
+            gender_clean = "woman"
+        if not gender_clean.lower().startswith(("a ", "an ", "the ", "someone", "somebody")):
+            gender_clean = _with_indefinite_article(gender_clean)
+        identity_bits.append(gender_clean)
+    if identity_bits:
+        _append_demo(f"This viewer is {' and '.join(identity_bits)}.")
+    elif gender_fragment:
+        _append_demo(f"This viewer identifies as {_clean_fragment(gender_fragment)}.")
+    elif race_fragment:
+        _append_demo(f"This viewer identifies as {_clean_fragment(race_fragment)}.")
+    if race_fragment and identity_bits:
+        _append_demo(f"They identify as {_clean_fragment(race_fragment)}.")
+
     city_text = _first_text("city", "city_name")
-    if city_text:
-        location_parts.append(city_text)
-    state_text = _first_text("state", "state_residence", "state_name")
-    if state_text:
-        location_parts.append(state_text)
+    state_text = _first_text("state", "state_residence", "state_name", "inputstate", "thumb_states", "state_full")
     county_text = _first_text("county", "county_name")
+    zip_text = _first_text("zip3", "zip", "zip5")
+    location_phrase = ""
+    if city_text and state_text:
+        location_phrase = f"{_clean_fragment(city_text)}, {_clean_fragment(state_text)}"
+    elif city_text:
+        location_phrase = _clean_fragment(city_text)
+    elif state_text:
+        location_phrase = _clean_fragment(state_text)
+    extras: List[str] = []
     if county_text:
-        location_parts.append(f"{county_text} County")
-    zip_text = _first_text("zip3")
+        extras.append(f"{_clean_fragment(county_text)} County")
     if zip_text:
-        location_parts.append(f"ZIP3 {zip_text}")
-    if location_parts:
-        demographics.append("Location: " + ", ".join(location_parts))
+        extras.append(f"ZIP3 {_clean_fragment(zip_text)}")
+    if location_phrase:
+        if extras:
+            location_phrase = f"{location_phrase} ({'; '.join(extras)})"
+        _append_demo(f"They live in {location_phrase}.")
+    elif extras:
+        _append_demo(f"They live in {_human_join(extras)}.")
 
-    educ_text = _first_text("education", "educ", "education_level", "college_desc")
-    if educ_text:
-        demographics.append(f"Education: {educ_text}")
-    college_text = _format_yes_no(_first_raw("college"), yes="college educated", no="not college educated")
-    if college_text:
-        demographics.append(f"College: {college_text}")
+    education_text = _first_text(
+        "education",
+        "educ",
+        "education_level",
+        "college_desc",
+        "highest_education",
+        "education_text",
+    )
+    college_flag = _format_yes_no(_first_raw("college", "college_grad"), yes="yes", no="no")
+    if education_text:
+        cleaned_education = _clean_fragment(education_text)
+        if college_flag == "yes":
+            _append_demo(f"They have {cleaned_education} and are college educated.")
+        elif college_flag == "no":
+            _append_demo(f"They have {cleaned_education} and are not college educated.")
+        else:
+            _append_demo(f"They have {cleaned_education}.")
+    elif college_flag == "yes":
+        _append_demo("They are college educated.")
+    elif college_flag == "no":
+        _append_demo("They are not college educated.")
 
-    income_text = _first_text("q31", "income", "household_income")
+    income_text = _first_text("q31", "income", "household_income", "income_bracket", "income_cat")
     if income_text:
-        demographics.append(f"Household income: {income_text}")
+        _append_demo(f"Their household income is reported as {_clean_fragment(income_text)}.")
+    else:
+        income_flag = _format_yes_no(_first_raw("income_gt50k"), yes="above $50k", no="not above $50k")
+        if income_flag:
+            _append_demo(f"Their household income is {income_flag}.")
 
-    employment_text = _first_text("employment_status", "employment", "labor_force")
-    if employment_text:
-        demographics.append(f"Employment: {employment_text}")
-    occupation_text = _first_text("occupation")
-    if occupation_text:
-        demographics.append(f"Occupation: {occupation_text}")
+    employment_text = _first_text("employment_status", "employment", "labor_force", "employ")
+    occupation_text = _first_text("occupation", "occupation_text")
+    if employment_text and occupation_text:
+        _append_demo(
+            f"They work as {_clean_fragment(occupation_text)} and report being {_clean_fragment(employment_text)}."
+        )
+    elif occupation_text:
+        _append_demo(f"They work as {_clean_fragment(occupation_text)}.")
+    elif employment_text:
+        _append_demo(f"They report being {_clean_fragment(employment_text)}.")
 
-    marital_text = _first_text("marital_status", "married")
+    marital_text = _first_text("marital_status", "married", "marital")
     if marital_text:
-        demographics.append(f"Marital status: {marital_text}")
+        _append_demo(f"They report being {_clean_fragment(marital_text)}.")
 
-    children_text = _format_yes_no(_first_raw("children_in_house", "kids_household"), yes="yes", no="no")
-    if children_text:
-        demographics.append(f"Children in household: {children_text}")
-    household_size = _first_text("household_size")
-    if household_size:
-        demographics.append(f"Household size: {household_size}")
+    children_raw = _first_raw("children_in_house", "kids_household", "child18", "children")
+    if children_raw is not None:
+        children_flag = _format_yes_no(children_raw, yes="yes", no="no")
+        if children_flag == "yes":
+            _append_demo("They have children in their household.")
+        elif children_flag == "no":
+            _append_demo("They do not have children in their household.")
+        else:
+            children_clean = clean_text(children_raw)
+            if children_clean:
+                _append_demo(f"Children in household: {children_clean}.")
 
-    religion_text = _first_text("religion", "relig_affiliation", "religious_affiliation")
+    household_size_text = _first_text("household_size", "hh_size")
+    if household_size_text:
+        size_clean = _clean_fragment(household_size_text)
+        size_sentence = ""
+        try:
+            size_value = float(size_clean)
+            if math.isfinite(size_value):
+                size_int = int(round(size_value))
+                if abs(size_value - size_int) < 1e-6:
+                    if size_int == 1:
+                        size_sentence = "They live alone."
+                    else:
+                        size_sentence = f"Their household has {size_int} people."
+        except Exception:
+            size_sentence = ""
+        if not size_sentence:
+            size_sentence = f"Their household size is {size_clean}."
+        _append_demo(size_sentence)
+
+    religion_text = _first_text(
+        "religion",
+        "relig_affiliation",
+        "religious_affiliation",
+        "religpew",
+        "religion_text",
+    )
     if religion_text:
-        demographics.append(f"Religion: {religion_text}")
-    attendance_text = _first_text("relig_attend", "church_attend", "service_attendance")
+        _append_demo(f"They identify as {_clean_fragment(religion_text)}.")
+
+    attendance_text = _first_text("relig_attend", "church_attend", "service_attendance", "pew_religimp")
     if attendance_text:
-        demographics.append(f"Religious attendance: {attendance_text}")
+        attendance_clean = _clean_fragment(attendance_text)
+        lowered = attendance_clean.lower()
+        if "important" in lowered:
+            _append_demo(f"They say religion is {attendance_clean} to them.")
+        else:
+            _append_demo(f"They report attending services {attendance_clean}.")
 
-    veteran_text = _format_yes_no(_first_raw("veteran", "military_service"), yes="yes", no="no")
-    if veteran_text:
-        demographics.append(f"Veteran: {veteran_text}")
+    veteran_raw = _first_raw("veteran", "military_service", "veteran_status")
+    if veteran_raw is not None:
+        veteran_flag = _format_yes_no(veteran_raw, yes="yes", no="no")
+        if veteran_flag == "yes":
+            _append_demo("They are a veteran.")
+        elif veteran_flag == "no":
+            _append_demo("They are not a veteran.")
+        else:
+            veteran_clean = clean_text(veteran_raw)
+            if veteran_clean:
+                _append_demo(f"Veteran status: {veteran_clean}.")
 
-    demo_sentence = _sentencize("Demographics include", demographics)
-    if demo_sentence:
-        profile_sentences.append(demo_sentence)
+    language_text = _first_raw("user_language", "user_language_w1", "user_language_w2", "survey_language")
+    language_clean = _normalize_language_text(language_text)
+    if language_clean:
+        _append_demo(f"The survey was completed in {language_clean}.")
+
+    for sentence in demographic_sentences:
+        if sentence:
+            profile_sentences.append(sentence)
 
     politics: List[str] = []
-    party_text = _first_text("pid1", "party_id", "party_registration")
+    party_text = _first_text("pid1", "party_id", "party_registration", "partyid")
     if party_text:
         politics.append(f"Party identification: {party_text}")
     party_lean_text = _first_text("pid2", "party_id_lean", "party_lean")
     if party_lean_text:
         politics.append(f"Party lean: {party_lean_text}")
-    ideology_text = _first_text("ideo1", "ideo2", "ideology")
+    ideology_text = _first_text("ideo1", "ideo2", "ideology", "ideology_text")
     if ideology_text:
         politics.append(f"Ideology: {ideology_text}")
     pol_interest = _first_text("pol_interest", "interest_politics", "political_interest")
     if pol_interest:
         politics.append(f"Political interest: {pol_interest}")
-    vote_2016 = _first_text("vote_2016")
+    vote_2016 = _first_text("vote_2016", "presvote16post")
     if vote_2016:
         politics.append(f"Voted in 2016: {vote_2016}")
-    vote_2020 = _first_text("vote_2020")
+    vote_2020 = _first_text("vote_2020", "presvote20post")
     if vote_2020:
         politics.append(f"Voted in 2020: {vote_2020}")
     vote_2024 = _first_text("vote_2024", "vote_intent_2024", "vote_2024_intention")
     if vote_2024:
         politics.append(f"Vote intention 2024: {vote_2024}")
-    trump_approve = _first_text("trump_approve", "trump_job_approval")
+    trump_approve = _first_text(
+        "trump_approve",
+        "trump_job_approval",
+        "q5_2",
+        "Q5_a",
+        "Q5_a_W2",
+        "political_lead_feels_2",
+    )
     if trump_approve:
         politics.append(f"Trump approval: {trump_approve}")
-    biden_approve = _first_text("biden_approve", "biden_job_approval")
+    biden_approve = _first_text(
+        "biden_approve",
+        "biden_job_approval",
+        "q5_5",
+        "Q5_b",
+        "Q5_b_W2",
+        "political_lead_feels_5",
+    )
     if biden_approve:
         politics.append(f"Biden approval: {biden_approve}")
     civic_engagement = _first_text("civic_participation", "volunteering", "civic_activity")
@@ -502,7 +738,7 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
         profile_sentences.append(wage_sentence)
 
     media_section: List[str] = []
-    fy_raw = _first_raw("freq_youtube")
+    fy_raw = _first_raw("freq_youtube", "q77", "Q77", "youtube_freq", "youtube_freq_v2")
     if fy_raw is not None:
         code = str(fy_raw).strip()
         freq = YT_FREQ_MAP.get(code)
@@ -513,26 +749,34 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
             if freq_text:
                 media_section.append(f"YouTube frequency: {freq_text}")
 
-    binge_text = _format_yes_no(_first_raw("binge_youtube"), yes="yes", no="no")
+    binge_raw = _first_raw("binge_youtube", "youtube_time")
+    binge_text = _format_yes_no(binge_raw, yes="yes", no="no")
     if binge_text:
         media_section.append(f"Binge watches YouTube: {binge_text}")
+    elif binge_raw is not None:
+        binge_clean = clean_text(binge_raw)
+        if binge_clean:
+            media_section.append(f"YouTube time reported: {binge_clean}")
 
     media_labels = [
-        ("q8", "Favorite channels"),
-        ("fav_channels", "Favorite channels"),
-        ("q78", "Popular channels followed"),
-        ("media_diet", "Media diet"),
-        ("news_consumption", "News consumption"),
-        ("news_sources", "News sources"),
-        ("news_sources_top", "Top news sources"),
-        ("news_frequency", "News frequency"),
-        ("platform_use", "Platform usage"),
-        ("social_media_use", "Social media use"),
-        ("news_trust", "News trust"),
+        (("q8", "fav_channels"), "Favorite channels"),
+        (("q78", "popular_channels"), "Popular channels followed"),
+        (("media_diet",), "Media diet"),
+        (("news_consumption",), "News consumption"),
+        (("news_sources",), "News sources"),
+        (("news_sources_top",), "Top news sources"),
+        (("news_frequency", "newsint"), "News frequency"),
+        (("platform_use",), "Platform usage"),
+        (("social_media_use",), "Social media use"),
+        (("news_trust", "trust_majornews_w1", "trust_localnews_w1", "trust_majornews_w2", "trust_localnews_w2", "trust_majornews_w3", "trust_localnews_w3"), "News trust"),
     ]
     seen_media_labels: set[str] = set()
-    for key, label in media_labels:
-        text = _first_text(key, limit=220)
+    for keys, label in media_labels:
+        text = ""
+        for key in keys:
+            text = _first_text(key, limit=220)
+            if text:
+                break
         if not text:
             continue
         if label in seen_media_labels and label in {"Favorite channels"}:

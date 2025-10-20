@@ -154,17 +154,23 @@ def _parse_index_from_completion(text: str, allow_bare: bool) -> Optional[int]:
         return None
     return _safe_int(index_match.group(1))
 
-def pure_accuracy_reward(
+def pure_accuracy_reward(  # pylint: disable=too-many-locals
     completions: List[Any],
     _answer: List[str],  # unused; kept for interface parity
     **kwargs,
 ) -> List[float]:
     """
-    Index-only accuracy:
-      1) Parse NUMBER from <answer>…</answer> (or bare number if env allows)
-      2) Compare to kw['gold_index'] (1-based)
-      3) Optionally check 1 <= NUMBER <= n_options
-    Returns per-sample 1.0/0.0.
+    Score completions using index-only accuracy.
+
+    Steps:
+
+    1. Parse the numeric answer from ``<answer>…</answer>`` blocks (or bare numbers when
+       the ``PUREACC_ALLOW_BARE_NUMBER`` environment flag is enabled).
+    2. Compare the parsed value to ``gold_index`` (1-based).
+    3. Optionally ensure ``1 <= NUMBER <= n_options`` if option counts are provided.
+
+    Returns:
+        list[float]: Per-sample accuracy scores (``1.0`` or ``0.0``).
     """
     gold_idx_arr = kwargs.get("gold_index")
     option_counts = kwargs.get("n_options")
@@ -443,7 +449,7 @@ def get_cosine_scaled_reward(
 ):
     """Create a cosine-scaled reward function parameterised by length."""
 
-    def cosine_scaled_reward(completions, solution, **kwargs):
+    def cosine_scaled_reward(completions, solution, **kwargs):  # pylint: disable=too-many-locals
         """Reward function that scales based on completion length using a cosine schedule.
 
         Shorter correct solutions are rewarded more than longer ones.
@@ -660,7 +666,9 @@ def ioi_code_reward(
             continue
 
         safe_results.append(
-            SubtaskResult(test_results=[TestResult(score=float(result))])
+            SubtaskResult(
+                test_results=[TestResult(test_name="synthetic", score=float(result))]
+            )
         )
 
     return [result.score for result in safe_results]
@@ -700,7 +708,7 @@ def binary_code_reward(
     return output
 
 
-def code_reward(
+def code_reward(  # pylint: disable=too-many-locals
     completions,
     num_parallel: int = 2,
     provider_type: str = "e2b",

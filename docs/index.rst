@@ -8,23 +8,10 @@ training and evaluation utilities that live under ``src/``.
 API Reference
 -------------
 
-.. autosummary::
-   :toctree: _autosummary
-   :recursive:
-
-   clean_data
-   prompt_builder
-   knn
-   gpt4o
-   open_r1
-   xgb
-   visualization
-
-Additional API pages provide more detailed module-level documentation:
-
 .. toctree::
    :maxdepth: 2
 
+   api/clean_data
    api/prompt_builder
    api/knn
    api/gpt4o

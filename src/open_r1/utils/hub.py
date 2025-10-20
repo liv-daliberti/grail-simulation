@@ -112,13 +112,13 @@ def get_param_count_from_repo_id(repo_id: str) -> int:
     try:
         metadata = get_safetensors_metadata(repo_id)
         return list(metadata.parameter_count.values())[0]
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         # Pattern to match products (like 8x7b) and single values (like 42m)
         pattern = r"((\d+(\.\d+)?)(x(\d+(\.\d+)?))?)([bm])"
         matches = re.findall(pattern, repo_id.lower())
 
         param_counts = []
-        for full_match, number1, _, _, number2, _, unit in matches:
+        for _, number1, _, _, number2, _, unit in matches:
             if number2:  # If there's a second number, it's a product
                 number = float(number1) * float(number2)
             else:  # Otherwise, it's a single value
@@ -131,12 +131,9 @@ def get_param_count_from_repo_id(repo_id: str) -> int:
 
             param_counts.append(number)
 
-        if len(param_counts) > 0:
-            # Return the largest number
+        if param_counts:
             return int(max(param_counts))
-        else:
-            # Return -1 if no match found
-            return -1
+        return -1
 
 
 def get_gpu_count_for_vllm(model_name: str, revision: str = "main", num_gpus: int = 8) -> int:

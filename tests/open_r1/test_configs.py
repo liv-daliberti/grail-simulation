@@ -23,15 +23,34 @@ def _install_trl_stub() -> None:
 
     @dataclass
     class _BaseGRPOConfig:
-        pass
+        chat_template: str | None = None
+        gradient_checkpointing: bool = False
 
     @dataclass
     class _BaseSFTConfig:
-        pass
+        chat_template: str | None = None
+        gradient_checkpointing: bool = False
+
+    @dataclass
+    class _ModelConfig:
+        model_name_or_path: str = "dummy"
+        model_revision: str | None = None
+        trust_remote_code: bool = False
+        attn_implementation: str | None = None
+        torch_dtype: str | None = None
+
+    def _get_kbit_device_map():
+        return None
+
+    def _get_quantization_config(_model_args):
+        return None
 
     trl_stub.ScriptArguments = _BaseScriptArguments
     trl_stub.GRPOConfig = _BaseGRPOConfig
     trl_stub.SFTConfig = _BaseSFTConfig
+    trl_stub.ModelConfig = _ModelConfig
+    trl_stub.get_kbit_device_map = _get_kbit_device_map
+    trl_stub.get_quantization_config = _get_quantization_config
 
     sys.modules["trl"] = trl_stub
 

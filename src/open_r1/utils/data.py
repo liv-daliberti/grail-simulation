@@ -1,3 +1,5 @@
+"""Helpers for loading datasets and mixtures used by the training scripts."""
+
 import logging
 
 import datasets
@@ -21,7 +23,7 @@ def get_dataset(args: ScriptArguments) -> DatasetDict:
     if args.dataset_name and not args.dataset_mixture:
         logger.info("Loading dataset: %s", args.dataset_name)
         return datasets.load_dataset(args.dataset_name, args.dataset_config)
-    elif args.dataset_mixture:
+    if args.dataset_mixture:
         logger.info(
             "Creating dataset mixture with %s datasets",
             len(args.dataset_mixture.datasets),
@@ -74,10 +76,7 @@ def get_dataset(args: ScriptArguments) -> DatasetDict:
                     args.dataset_mixture.test_split_size,
                 )
                 return combined_dataset
-            else:
-                return DatasetDict({"train": combined_dataset})
-        else:
-            raise ValueError("No datasets were loaded from the mixture configuration")
+            return DatasetDict({"train": combined_dataset})
+        raise ValueError("No datasets were loaded from the mixture configuration")
 
-    else:
-        raise ValueError("Either `dataset_name` or `dataset_mixture` must be provided")
+    raise ValueError("Either `dataset_name` or `dataset_mixture` must be provided")

@@ -1,17 +1,17 @@
-# open_r1/utils/replay_buffer.py
+"""Replay buffer helpers for bandit-style GRPO training."""
+
 from __future__ import annotations
-from typing import Any, List, Tuple, Optional, Dict
+
 import copy
-import threading
 import math
+import threading
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import torch.distributed as dist
 
 def _prompt_key(prompt: list[dict[str, str]]) -> tuple:
     return tuple((m["role"], " ".join(m["content"].split())) for m in prompt)
-
-def _is_full_example(x: Any) -> bool:
-    return isinstance(x, dict) and "prompt" in x
 
 def _finite_float(x: Any, default: float = 0.0) -> float:
     try:
@@ -46,7 +46,7 @@ class ReplayBuffer:
         self._uids: List[int] = []
         self._uid2idx: Dict[int, int] = {}
 
-        self._seen = set()         # prompt de-dup
+        self._seen = set()  # prompt de-dup
         self._t = 0
         self._lock = threading.Lock()
         self._sample_calls = 0
@@ -60,7 +60,6 @@ class ReplayBuffer:
 
     def _set_err(self, **kw):
         self._last_error = kw
-        
 
     def __len__(self) -> int:
         return len(self._buf)

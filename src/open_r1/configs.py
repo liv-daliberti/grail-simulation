@@ -49,23 +49,24 @@ class ScriptArguments(trl.ScriptArguments):
     Args:
         dataset_mixture (`dict[str, Any]` or `None`, *optional*, defaults to `None`):
             Configuration for creating dataset mixtures with advanced options.
-            Format:
-              dataset_mixture:
-                datasets:
-                  - id: dataset_id1
-                    config: config_name
-                    columns:
-                      - col1
-                      - col2
-                    weight: 0.5
-                  - id: dataset_id2
-                    config: config_name
-                    columns:
-                      - col1
-                      - col2
-                    weight: 0.5
-                seed: 42
-                test_split_size: 0.1
+            Example::
+
+                dataset_mixture:
+                  datasets:
+                    - id: dataset_id1
+                      config: config_name
+                      columns:
+                        - col1
+                        - col2
+                      weight: 0.5
+                    - id: dataset_id2
+                      config: config_name
+                      columns:
+                        - col1
+                        - col2
+                      weight: 0.5
+                  seed: 42
+                  test_split_size: 0.1
     """
 
     # Override the dataset_name to make it optional
@@ -242,7 +243,7 @@ class SFTConfig(trl.SFTConfig):
 
 
 @dataclass
-class GRPOScriptArguments(ScriptArguments):
+class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance-attributes
     """
     Script arguments for the GRPO training script.
 

@@ -1,4 +1,8 @@
+"""Evaluation utilities for orchestrating LightEval benchmark runs."""
+
+import base64
 import logging
+import os
 import subprocess
 from typing import TYPE_CHECKING, Dict, Union
 
@@ -10,9 +14,6 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from trl import GRPOConfig, SFTConfig, ModelConfig
-
-import base64
-import os
 
 
 # We need a special environment setup to launch vLLM from within Slurm training jobs.
@@ -73,7 +74,8 @@ register_lighteval_task(LIGHTEVAL_TASKS, "extended", "lcb", "lcb:codegeneration"
 register_lighteval_task(LIGHTEVAL_TASKS, "extended", "lcb_v4", "lcb:codegeneration_v4", 0)
 
 
-def get_lighteval_tasks():
+def get_lighteval_tasks() -> list[str]:
+    """Return the list of registered LightEval task identifiers."""
     return list(LIGHTEVAL_TASKS.keys())
 
 
@@ -85,6 +87,7 @@ def run_lighteval_job(
     training_args: Union["SFTConfig", "GRPOConfig"],
     model_args: "ModelConfig",
 ) -> None:
+    """Submit a LightEval benchmark job via SLURM."""
     task_list = LIGHTEVAL_TASKS[benchmark]
     model_name = training_args.hub_model_id
     model_revision = training_args.hub_model_revision
@@ -120,11 +123,12 @@ def run_lighteval_job(
     cmd[-1] += " " + " ".join(cmd_args)
     subprocess.run(cmd, check=True)
 
-   
+
 def run_benchmark_jobs(
     training_args: Union["SFTConfig", "GRPOConfig"],
     model_args: "ModelConfig",
 ) -> None:
+    """Launch benchmark jobs according to the training configuration."""
     benchmarks = training_args.benchmarks
     if len(benchmarks) == 1 and benchmarks[0] == "all":
         benchmarks = get_lighteval_tasks()

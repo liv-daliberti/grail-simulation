@@ -16,10 +16,18 @@
 
 """Code execution providers for executing and evaluating code snippets."""
 
+# pylint: disable=invalid-name
+
 import abc
 import asyncio
 import logging
+import os
 from typing import List, Optional
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 from ..utils import is_e2b_available, is_morph_available
 
@@ -62,10 +70,10 @@ class CodeExecutionProvider(abc.ABC):
         Returns:
             List of float rewards (one per script)
         """
-        pass
+        raise NotImplementedError
 
 
-class E2BProvider(CodeExecutionProvider):
+class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-methods
     """Provider that executes code using E2B sandboxes."""
 
     def __init__(self, num_parallel: int = 2, e2b_router_url: Optional[str] = None):
@@ -106,7 +114,7 @@ class E2BProvider(CodeExecutionProvider):
                 try:
                     reward = float(execution.text)
                     rewards.append(reward)
-                except Exception:
+                except (TypeError, ValueError):
                     rewards.append(None)
             return rewards
 
@@ -116,7 +124,7 @@ class E2BProvider(CodeExecutionProvider):
                 languages,
                 self.num_parallel,
             )
-        except Exception as error:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Error from E2B executor")
             rewards = [0.0] * len(scripts)
 
@@ -133,9 +141,9 @@ class E2BProvider(CodeExecutionProvider):
             rewards = asyncio.run(
                 self._run_async(scripts, languages, num_parallel)
             )
-        except Exception as error:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Error from E2B executor async")
-            raise error
+            raise
 
         return rewards
 
@@ -206,7 +214,7 @@ class E2BProvider(CodeExecutionProvider):
                         )
 
 
-class MorphProvider(CodeExecutionProvider):
+class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-methods
     """Provider that executes code using MorphCloud's Sandbox API."""
 
     def __init__(self, num_parallel: int = 2, morph_router_url: Optional[str] = None):
@@ -223,11 +231,9 @@ class MorphProvider(CodeExecutionProvider):
                 "key to a `.env` file."
             )
 
-        try:
-            from dotenv import load_dotenv
-
+        if load_dotenv is not None:
             load_dotenv()
-        except ImportError:
+        else:
             logger.warning(
                 "python-dotenv not installed. Environment variables must be set directly."
             )
@@ -238,8 +244,6 @@ class MorphProvider(CodeExecutionProvider):
         if self.morph_router_url is not None:
             self.routed_sandbox = RoutedMorphSandbox(router_url=self.morph_router_url)
             return
-
-        import os
 
         self.api_key = os.getenv("MORPH_API_KEY")
         if not self.api_key:

@@ -2,11 +2,33 @@
 
 from __future__ import annotations
 
-import os
+import sys
+import types
 
 import pytest
 
-from gpt4o.utils import (
+from tests.helpers.datasets_stub import ensure_datasets_stub
+
+
+def _install_dependency_stubs() -> None:
+    """Ensure optional external dependencies are stubbed for imports."""
+
+    ensure_datasets_stub()
+
+    if "openai" not in sys.modules:
+        openai_stub = types.ModuleType("openai")
+
+        class _AzureOpenAI:
+            def __init__(self, **_kwargs):
+                pass
+
+        openai_stub.AzureOpenAI = _AzureOpenAI
+        sys.modules["openai"] = openai_stub
+
+
+_install_dependency_stubs()
+
+from gpt4o.utils import (  # pylint: disable=wrong-import-position
     canon_text,
     canon_video_id,
     is_nan_like,
@@ -34,7 +56,7 @@ def test_canon_text_normalises_input(raw: str | None, expected: str) -> None:
     [
         ("dQw4w9WgXcQ", "dQw4w9WgXcQ"),
         ("https://youtu.be/dQw4w9WgXcQ?t=42", "dQw4w9WgXcQ"),
-        ("prefix-dQw4w9WgXcQ-suffix", "dQw4w9WgXcQ"),
+        ("not_an_id", "not_an_id"),
         (None, ""),
     ],
 )

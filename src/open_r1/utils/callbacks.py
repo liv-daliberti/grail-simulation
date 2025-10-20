@@ -72,10 +72,12 @@ class PushToHubRevisionCallback(TrainerCallback):
 
 class SuccessCachingCallback(TrainerCallback):
     """
-    Scrapes `trainer._textual_logs` after every log step and pushes any prompt
-    whose accuracy ≥ `acc_threshold` into `ReplayBuffer`.
+    Scrape ``trainer._textual_logs`` after each log step and push any prompt whose
+    accuracy meets or exceeds ``acc_threshold`` into the attached ``ReplayBuffer``.
 
-    NOTE: Transformers never passes `trainer` via **kwargs → use `set_trainer`.
+    Note:
+        Transformers never passes the trainer instance via ``**kwargs``; call
+        :meth:`set_trainer` during setup to register it.
     """
     def __init__(self, replay_buffer: ReplayBuffer, acc_threshold: float = 0.999):
         self.buf = replay_buffer

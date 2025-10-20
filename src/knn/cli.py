@@ -18,6 +18,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(description="KNN baselines for GRAIL (TF-IDF / Word2Vec)")
     parser.add_argument(
+        "--task",
+        choices=["slate", "opinion"],
+        default="slate",
+        help="Select evaluation target: 'slate' for next-video recommendation or 'opinion' for post-study indices.",
+    )
+    parser.add_argument(
         "--feature-space",
         "--feature_space",
         default="tfidf",
@@ -186,6 +192,13 @@ def build_parser() -> argparse.ArgumentParser:
         dest="issues",
         help="Comma-separated list of issues to evaluate (defaults to all).",
     )
+    parser.add_argument(
+        "--opinion-studies",
+        "--opinion_studies",
+        default="",
+        dest="opinion_studies",
+        help="Comma-separated list of opinion study keys (study1,study2,study3). Defaults to all.",
+    )
     return parser
 
 
@@ -199,7 +212,17 @@ def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-    run_eval(args)
+    if args.task == "slate":
+        run_eval(args)
+        return
+
+    if args.task == "opinion":
+        from .opinion import run_opinion_eval
+
+        run_opinion_eval(args)
+        return
+
+    raise ValueError(f"Unsupported task '{args.task}'.")
 
 
 if __name__ == "__main__":  # pragma: no cover

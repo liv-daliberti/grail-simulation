@@ -3,59 +3,107 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+import logging
+from pathlib import Path
 
-
-@dataclass
-class CLIArgs:
-    dataset: str
-    cache_dir: str
-    feature_space: str
-    vector_size: int
-    window: int
-    min_count: int
-    run_mode: str
+from .evaluate import run_eval
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Refactored KNN baseline")
-    parser.add_argument("--dataset", default="data/cleaned_grail", help="Dataset path or HF repo")
-    parser.add_argument("--cache-dir", default=".cache", help="Where to cache dataset downloads")
+    """Return the argument parser for the KNN baseline CLI."""
+
+    parser = argparse.ArgumentParser(description="TF-IDF KNN baseline for GRAIL")
     parser.add_argument(
-        "--feature-space",
-        choices=["tfidf", "word2vec"],
-        default="word2vec",
-        help="Feature space to use for the KNN index",
+        "--fit_index",
+        action="store_true",
+        help="Build KNN index from the train split before evaluation.",
     )
-    parser.add_argument("--vector-size", type=int, default=256, help="Word2Vec vector size")
-    parser.add_argument("--window", type=int, default=5, help="Word2Vec window size")
-    parser.add_argument("--min-count", type=int, default=2, help="Word2Vec minimum token frequency")
     parser.add_argument(
-        "--run-mode",
-        choices=["fit", "predict"],
-        default="fit",
-        help="Whether to fit a new index or run predictions with an existing one",
+        "--save_index",
+        default="",
+        help="Directory to save the fitted TF-IDF index (npz + joblib).",
+    )
+    parser.add_argument(
+        "--load_index",
+        default="",
+        help="Directory containing a previously saved TF-IDF index to reuse.",
+    )
+    parser.add_argument(
+        "--knn_k",
+        type=int,
+        default=25,
+        help="Primary number of neighbours to score per slate option.",
+    )
+    parser.add_argument(
+        "--knn_k_sweep",
+        default="1,2,3,4,5,10,25,50",
+        help="Comma-separated list of additional k values to evaluate.",
+    )
+    parser.add_argument(
+        "--knn_metric",
+        default="l2",
+        choices=["l2", "cosine"],
+        help="Distance metric used to weight neighbour votes.",
+    )
+    parser.add_argument(
+        "--knn_max_train",
+        type=int,
+        default=200_000,
+        help="Maximum number of training rows to keep when building the index.",
+    )
+    parser.add_argument(
+        "--knn_seed",
+        type=int,
+        default=42,
+        help="Random seed applied when subsampling the train split.",
+    )
+    parser.add_argument(
+        "--eval_max",
+        type=int,
+        default=0,
+        help="Limit evaluation examples (0 means evaluate every row).",
+    )
+    parser.add_argument(
+        "--out_dir",
+        default=str(Path("models") / "knn"),
+        help="Directory for predictions, metrics, and saved indices.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Allow overwriting metrics/prediction files in --out_dir.",
+    )
+    parser.add_argument(
+        "--cache_dir",
+        default=str(Path.cwd() / "hf_cache"),
+        help="HF datasets cache directory.",
+    )
+    parser.add_argument(
+        "--knn_text_fields",
+        default="",
+        help="Comma-separated extra columns to append to TF-IDF queries.",
+    )
+    parser.add_argument(
+        "--dataset",
+        default="data/cleaned_grail",
+        help="Local dataset path (load_from_disk) or Hugging Face dataset id.",
+    )
+    parser.add_argument(
+        "--issues",
+        default="",
+        help="Comma-separated list of issues to evaluate (defaults to all).",
     )
     return parser
 
 
-def parse_args(argv: list[str] | None = None) -> CLIArgs:
+def main(argv: list[str] | None = None) -> None:
+    """Parse CLI arguments and execute the evaluation routine."""
+
     parser = build_parser()
     args = parser.parse_args(argv)
-    return CLIArgs(
-        dataset=args.dataset,
-        cache_dir=args.cache_dir,
-        feature_space=args.feature_space,
-        vector_size=args.vector_size,
-        window=args.window,
-        min_count=args.min_count,
-        run_mode=args.run_mode,
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+    run_eval(args)
 
 
-def main() -> None:  # pragma: no cover - placeholder
-    raise NotImplementedError("CLI entry point will be implemented during refactor")
-
-
-if __name__ == "__main__":  # pragma: no cover - manual execution only
+if __name__ == "__main__":  # pragma: no cover
     main()

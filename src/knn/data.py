@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Dict, List
 
-from datasets import DatasetDict, load_dataset, load_from_disk
+try:  # pragma: no cover - optional dependency
+    from datasets import DatasetDict, load_dataset, load_from_disk  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    DatasetDict = None  # type: ignore
+    load_dataset = load_from_disk = None  # type: ignore
 
 # ---------------------------------------------------------------------------
 # Dataset configuration
@@ -25,6 +28,8 @@ PROMPT_MAX_HISTORY = int(
 def load_dataset_source(source: str, cache_dir: str) -> DatasetDict:
     """Load a cleaned dataset from disk or from the Hugging Face Hub."""
 
+    if load_dataset is None or load_from_disk is None:  # pragma: no cover - optional dependency
+        raise ImportError("datasets must be installed to load the GRAIL dataset")
     if os.path.isdir(source):
         return load_from_disk(source)
     dataset = load_dataset(source, cache_dir=cache_dir)

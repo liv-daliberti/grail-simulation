@@ -7,6 +7,8 @@ from pathlib import Path
 
 
 def get_logger(name: str = "knn") -> logging.Logger:
+    """Return a memoised logger configured with a simple stream handler."""
+
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler()
@@ -18,6 +20,8 @@ def get_logger(name: str = "knn") -> logging.Logger:
 
 
 def ensure_directory(path: Path) -> None:
+    """Create ``path`` (including parents) when it does not already exist."""
+
     path.mkdir(parents=True, exist_ok=True)
 
 

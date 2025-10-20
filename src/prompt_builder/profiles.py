@@ -646,16 +646,35 @@ def _politics_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
 
 def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     gun_section: List[str] = []
+    ownership_entry = _gun_ownership_entry(ex, selected)
+    if ownership_entry:
+        gun_section.append(ownership_entry)
+    labeled_entries, known_keys = _gun_labeled_entries(ex, selected)
+    gun_section.extend(labeled_entries)
+    gun_section.extend(_gun_additional_entries(ex, known_keys))
+    sentence = _sentencize("Gun policy views include", gun_section)
+    return [sentence] if sentence else []
+
+
+def _gun_ownership_entry(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     ownership = _first_raw(ex, selected, "gun_own", "gunowner", "owns_gun")
-    if ownership is not None:
-        ownership_text = format_yes_no(ownership, yes="owns a gun", no="does not own a gun")
-        if ownership_text:
-            gun_section.append(f"Gun ownership: {ownership_text}")
-        else:
-            custom = clean_text(ownership)
-            if custom:
-                gun_section.append(f"Gun ownership: {custom}")
-    known_keys = {"gun_own", "gunowner", "owns_gun"}
+    if ownership is None:
+        return None
+    ownership_text = format_yes_no(ownership, yes="owns a gun", no="does not own a gun")
+    if ownership_text:
+        return f"Gun ownership: {ownership_text}"
+    custom = clean_text(ownership)
+    if custom:
+        return f"Gun ownership: {custom}"
+    return None
+
+
+def _gun_labeled_entries(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+) -> tuple[List[str], set[str]]:
+    entries: List[str] = []
+    known_keys: set[str] = {"gun_own", "gunowner", "owns_gun"}
     for key, label in GUN_FIELD_LABELS.items():
         value = _first_raw(ex, selected, key)
         if value is None:
@@ -665,7 +684,12 @@ def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
         if text is None:
             text = clean_text(value, limit=200)
         if text:
-            gun_section.append(f"{label}: {text}")
+            entries.append(f"{label}: {text}")
+    return entries, known_keys
+
+
+def _gun_additional_entries(ex: Dict[str, Any], known_keys: set[str]) -> List[str]:
+    entries: List[str] = []
     for key in sorted(ex.keys()):
         lower = key.lower()
         if not lower.startswith("gun_") or lower in known_keys:
@@ -678,9 +702,8 @@ def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
             continue
         label = lower[4:].replace("_", " ").strip().capitalize()
         if label:
-            gun_section.append(f"{label}: {text}")
-    sentence = _sentencize("Gun policy views include", gun_section)
-    return [sentence] if sentence else []
+            entries.append(f"{label}: {text}")
+    return entries
 
 
 def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:

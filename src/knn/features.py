@@ -2,18 +2,25 @@
 
 from __future__ import annotations
 
-import json
+import csv
 import logging
 import os
 import re
 from dataclasses import dataclass
+from glob import glob
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-import numpy as np
+from numpy.random import default_rng
+
 from prompt_builder.formatters import clean_text
 from prompt_builder.prompt import build_user_prompt
 from prompt_builder.profiles import synthesize_viewer_sentence
+
+try:  # pragma: no cover - optional dependency
+    from gensim.models import Word2Vec  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    Word2Vec = None
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
@@ -21,9 +28,13 @@ from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 # Title index helpers
 # ---------------------------------------------------------------------------
 
+_TITLE_INDEX_ROOT = (
+    "/n/fs/similarity/trees/data/results/"
+    "capsule-5416997-data/recommendation trees"
+)
 DEFAULT_TITLE_DIRS = [
-    "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_gun",
-    "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_wage",
+    f"{_TITLE_INDEX_ROOT}/trees_gun",
+    f"{_TITLE_INDEX_ROOT}/trees_wage",
 ]
 
 YTID_RE = re.compile(r"([A-Za-z0-9_-]{11})")
@@ -31,50 +42,46 @@ CANON_RE = re.compile(r"[^a-z0-9]+")
 
 
 def _split_env_list(value: str | None) -> List[str]:
+    """Return a list of tokens from a comma/space/colon separated string."""
+
     if not value:
         return []
-    parts: List[str] = []
-    for chunk in re.split(r"[:,\s]+", value):
-        token = chunk.strip()
-        if token:
-            parts.append(token)
-    return parts
+    tokens = [chunk.strip() for chunk in re.split(r"[:,\s]+", value) if chunk.strip()]
+    return tokens
+
+
+def _add_csv_file(path: str, collector: set[str]) -> None:
+    if os.path.isfile(path):
+        collector.add(path)
+
+
+def _collect_csv_from_directory(directory: str, collector: set[str]) -> None:
+    if not os.path.isdir(directory):
+        return
+    for root, _, filenames in os.walk(directory):
+        for name in filenames:
+            if name.lower().endswith(".csv"):
+                collector.add(os.path.join(root, name))
 
 
 def _iter_csv_files_from_env() -> List[str]:
-    files: List[str] = []
+    """Return the set of CSV files discovered via environment settings."""
+
+    files: set[str] = set()
     for path in _split_env_list(os.environ.get("GRAIL_TITLE_CSVS")):
-        if os.path.isfile(path):
-            files.append(path)
+        _add_csv_file(path, files)
     for directory in _split_env_list(os.environ.get("GRAIL_TITLE_DIRS")):
-        if os.path.isdir(directory):
-            for root, _, filenames in os.walk(directory):
-                for name in filenames:
-                    if name.lower().endswith(".csv"):
-                        files.append(os.path.join(root, name))
+        _collect_csv_from_directory(directory, files)
     for pattern in _split_env_list(os.environ.get("GRAIL_TITLE_GLOB")):
         try:
-            from glob import glob
-
             for candidate in glob(pattern):
-                if os.path.isfile(candidate):
-                    files.append(candidate)
-        except Exception:  # pragma: no cover - defensive
+                _add_csv_file(candidate, files)
+        except OSError:  # pragma: no cover - defensive
             continue
     if not files:
         for directory in DEFAULT_TITLE_DIRS:
-            if os.path.isdir(directory):
-                for root, _, filenames in os.walk(directory):
-                    for name in filenames:
-                        if name.lower().endswith(".csv"):
-                            files.append(os.path.join(root, name))
-    deduped: List[str] = []
-    seen: set[str] = set()
-    for path in files:
-        if path not in seen:
-            seen.add(path)
-            deduped.append(path)
-    return deduped
+            _collect_csv_from_directory(directory, files)
+    return sorted(files)
 
 
 def _guess_cols(header: List[str]) -> Tuple[Optional[str], Optional[str]]:
@@ -89,18 +96,24 @@ def _guess_cols(header: List[str]) -> Tuple[Optional[str], Optional[str]]:
     ]
     candidate_titles = ["originTitle", "title", "video_title", "name"]
     lower = {column.lower(): column for column in header}
-    id_col = next((lower[name.lower()] for name in candidate_ids if name.lower() in lower), None)
-    title_col = next((lower[name.lower()] for name in candidate_titles if name.lower() in lower), None)
+    id_col = next(
+        (lower[name.lower()] for name in candidate_ids if name.lower() in lower),
+        None,
+    )
+    title_col = next(
+        (lower[name.lower()] for name in candidate_titles if name.lower() in lower),
+        None,
+    )
     return id_col, title_col
 
 
-_TITLE_INDEX: Optional[Dict[str, str]] = None
+_title_index_cache: Optional[Dict[str, str]] = None
 
 
 def _build_title_index() -> Dict[str, str]:
-    index: Dict[str, str] = {}
-    import csv
+    """Build a mapping from YouTube id to title using CSV metadata sources."""
 
+    index: Dict[str, str] = {}
     for path in _iter_csv_files_from_env():
         try:
             with open(path, "r", encoding="utf-8", newline="") as handle:
@@ -111,11 +124,11 @@ def _build_title_index() -> Dict[str, str]:
                 if not id_col or not title_col:
                     continue
                 for row in reader:
-                    vid = _canon_vid(row.get(id_col, "") or "")
+                    video_id = _canon_vid(row.get(id_col, "") or "")
                     title = (row.get(title_col, "") or "").strip()
-                    if vid and title and vid not in index:
-                        index[vid] = title
-        except Exception:  # pragma: no cover - defensive
+                    if video_id and title and video_id not in index:
+                        index[video_id] = title
+        except (OSError, csv.Error):  # pragma: no cover - defensive
             continue
     return index
 
@@ -123,11 +136,11 @@ def _build_title_index() -> Dict[str, str]:
 def title_for(video_id: str) -> Optional[str]:
     """Return a human-readable title for a YouTube id if available."""
 
-    global _TITLE_INDEX  # pylint: disable=global-statement
-    if _TITLE_INDEX is None:
-        _TITLE_INDEX = _build_title_index()
-        logging.info("[title-index] loaded %d titles from CSV", len(_TITLE_INDEX))
-    return _TITLE_INDEX.get(_canon_vid(video_id))
+    global _title_index_cache  # pylint: disable=global-statement
+    if _title_index_cache is None:
+        _title_index_cache = _build_title_index()
+        logging.info("[title-index] loaded %d titles from CSV", len(_title_index_cache))
+    return _title_index_cache.get(_canon_vid(video_id))
 
 
 # ---------------------------------------------------------------------------
@@ -162,24 +175,28 @@ def _truthy(value: Any) -> bool:
 
 
 def viewer_profile_sentence(example: dict) -> str:
+    """Return the viewer profile sentence for ``example``."""
+
     sentence = clean_text(example.get("viewer_profile_sentence"))
     if not sentence:
         sentence = clean_text(example.get("viewer_profile"))
     if not sentence:
         try:
             sentence = synthesize_viewer_sentence(example)
-        except Exception:  # pragma: no cover - defensive
+        except ValueError:  # pragma: no cover - defensive
             sentence = ""
     return sentence or ""
 
 
 def prompt_from_builder(example: dict) -> str:
+    """Return the prompt text for ``example`` using the shared builder."""
+
     existing = example.get("state_text") or example.get("prompt")
     if isinstance(existing, str) and existing.strip():
         return existing.strip()
     try:
         return build_user_prompt(example, max_hist=PROMPT_MAX_HISTORY)
-    except Exception:  # pragma: no cover - defensive
+    except (TypeError, ValueError):  # pragma: no cover - defensive
         return ""
 
 
@@ -197,6 +214,8 @@ def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
 
 
 def _extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
+    """Return the current (title, video_id) tuple if present."""
+
     video_id = _pick_ci(example, "video_id", "videoId")
     if video_id and not _is_nanlike(video_id):
         title = _pick_ci(
@@ -226,18 +245,18 @@ def _extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
     )
     video_id = _pick_ci(
         example,
-        "current_video_id",
-        "now_playing_id",
-        "watching_id",
-        "currentVideoId",
-        "nowPlayingId",
-        "watchingId",
-        "now_id",
-        "current_id",
-        "originId",
-        "video_id",
-        "videoId",
-    )
+            "current_video_id",
+            "now_playing_id",
+            "watching_id",
+            "currentVideoId",
+            "nowPlayingId",
+            "watchingId",
+            "now_id",
+            "current_id",
+            "originId",
+            "video_id",
+            "videoId",
+        )
     if (title and not _is_nanlike(title)) or (video_id and not _is_nanlike(video_id)):
         if _is_nanlike(title) and video_id:
             title = title_for(video_id) or ""
@@ -246,6 +265,8 @@ def _extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
 
 
 def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
+    """Return the slate contents as a list of ``(title, video_id)`` pairs."""
+
     items: List[Tuple[str, str]] = []
     slate_text = example.get("slate_text")
     if isinstance(slate_text, str) and slate_text.strip():
@@ -272,45 +293,60 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
     return items
 
 
+def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
+    """Public wrapper returning the slate as ``(title, video_id)`` pairs."""
+
+    return _extract_slate_items(example)
+
+
+def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
+    """Public wrapper returning the currently-watched title/id, if known."""
+
+    return _extract_now_watching(example)
+
+
 def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
+    """Return concatenated text used to featurise ``example``."""
+
     extra_fields = extra_fields or []
 
     def _good(text: str) -> bool:
-        if not text:
-            return False
-        lowered = text.lower()
-        return lowered not in {"", "nan", "none", "(none)"}
+        return bool(text and text.lower() not in {"", "nan", "none", "(none)"})
 
     parts: List[str] = []
     prompt_text = prompt_from_builder(example)
-    used_prompt = False
-    if _good(prompt_text):
+    if not _good(prompt_text):
+        fallback_candidates = (
+            viewer_profile_sentence(example),
+            clean_text(example.get(PROMPT_COLUMN)),
+        )
+        prompt_text = next((value for value in fallback_candidates if _good(value)), "")
+    if prompt_text:
         parts.append(prompt_text)
-        used_prompt = True
-    if not used_prompt:
-        profile_sentence = viewer_profile_sentence(example)
-        if _good(profile_sentence):
-            parts.append(profile_sentence)
-    if not used_prompt and PROMPT_COLUMN in example:
-        state_text = clean_text(example.get(PROMPT_COLUMN))
-        if _good(state_text):
-            parts.append(state_text)
-    current = _extract_now_watching(example)
-    if current:
-        title, video_id = current
-        if _good(title):
-            parts.append(title)
-        if _good(video_id):
-            parts.append(video_id)
+
+    now_watching = _extract_now_watching(example)
+    if now_watching:
+        now_title, now_id = now_watching
+        if _good(now_title):
+            parts.append(now_title)
+        if _good(now_id):
+            parts.append(now_id)
+
     for title, video_id in _extract_slate_items(example):
-        surface = title if _good(title) and title != "(untitled)" else (title_for(video_id) or video_id or "")
+        surface = (
+            title
+            if _good(title) and title != "(untitled)"
+            else (title_for(video_id) or video_id or "")
+        )
         if _good(surface):
             parts.append(surface)
+
     for field in extra_fields:
-        value = clean_text(example.get(field))
-        if _good(value):
-            parts.append(value)
-    return " ".join(fragment for fragment in parts if _good(fragment)).strip()
+        cleaned = clean_text(example.get(field))
+        if _good(cleaned):
+            parts.append(cleaned)
+
+    return " ".join(parts).strip()
 
 
 def prepare_training_documents(
@@ -319,7 +355,7 @@ def prepare_training_documents(
     seed: int,
     extra_fields: Sequence[str] | None = None,
 ):
-    from numpy.random import default_rng
+    """Return TF-IDF training documents and associated labels."""
 
     n_rows = len(train_ds)
     if n_rows == 0:
@@ -341,11 +377,7 @@ def prepare_training_documents(
         documents.append(document)
         video_id = str(example.get(SOLUTION_COLUMN) or "")
         labels_id.append(_canon_vid(video_id))
-        try:
-            title = title_for(video_id) or ""
-        except Exception:  # pragma: no cover - defensive
-            title = ""
-        labels_title.append(title)
+        labels_title.append(title_for(video_id) or "")
 
     mask = [bool(doc.strip()) for doc in documents]
     if not any(mask):
@@ -372,6 +404,8 @@ def prepare_training_documents(
 
 @dataclass
 class Word2VecConfig:
+    """Configuration options for Word2Vec embeddings."""
+
     vector_size: int = 256
     window: int = 5
     min_count: int = 2
@@ -391,8 +425,10 @@ class Word2VecFeatureBuilder:
         return text.lower().split()
 
     def train(self, corpus: Iterable[str]) -> None:
-        from gensim.models import Word2Vec  # type: ignore
+        """Train a Word2Vec model using the provided corpus."""
 
+        if Word2Vec is None:  # pragma: no cover - optional dependency
+            raise ImportError("Install gensim to enable Word2Vec embeddings")
         sentences = [self._tokenize(text) for text in corpus]
         self._model = Word2Vec(
             sentences=sentences,
@@ -405,17 +441,23 @@ class Word2VecFeatureBuilder:
         self.save(self.config.model_dir)
 
     def load(self, directory: Path) -> None:
-        from gensim.models import Word2Vec  # type: ignore
+        """Load a previously trained Word2Vec model from disk."""
 
+        if Word2Vec is None:  # pragma: no cover - optional dependency
+            raise ImportError("Install gensim to enable Word2Vec embeddings")
         self._model = Word2Vec.load(str(directory / "word2vec.model"))
 
     def save(self, directory: Path) -> None:
+        """Persist the trained model to ``directory``."""
+
         if self._model is None:
             raise RuntimeError("Word2Vec model must be trained before saving")
         directory.mkdir(parents=True, exist_ok=True)
         self._model.save(str(directory / "word2vec.model"))
 
     def encode(self, text: str) -> List[float]:
+        """Return the averaged embedding vector for ``text``."""
+
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")
         tokens = [token for token in self._tokenize(text) if token in self._model.wv]
@@ -429,7 +471,10 @@ __all__ = [
     "Word2VecConfig",
     "Word2VecFeatureBuilder",
     "assemble_document",
+    "extract_now_watching",
+    "extract_slate_items",
     "prepare_training_documents",
     "prompt_from_builder",
     "title_for",
+    "viewer_profile_sentence",
 ]

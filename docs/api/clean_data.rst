@@ -111,3 +111,36 @@ Prompt Utilities
    :members:
    :undoc-members:
    :show-inheritance:
+
+Research Article Replication
+----------------------------
+
+.. automodule:: clean_data.research_article_political_sciences
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: clean_data.research_article_political_sciences.analysis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: clean_data.research_article_political_sciences.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: clean_data.research_article_political_sciences.markdown
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: clean_data.research_article_political_sciences.plotting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: clean_data.research_article_political_sciences.report
+   :members:
+   :undoc-members:
+   :show-inheritance:

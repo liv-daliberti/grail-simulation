@@ -2372,6 +2372,264 @@ the prompt reporting pipeline.</p>
 </dd></dl>
 
 </section>
+<section id="module-clean_data.research_article_political_sciences">
+<span id="research-article-replication"></span><h2>Research Article Replication<a class="headerlink" href="#module-clean_data.research_article_political_sciences" title="Link to this heading">¶</a></h2>
+<p>Analysis utilities replicating the PNAS filter-bubble study findings.</p>
+<p>This package builds heatmaps and summary statistics that mirror the
+short-term opinion shifts reported in <em>Short-term exposure to filter-bubble
+recommendation systems has limited polarization effects: Naturalistic
+experiments on YouTube</em> (PNAS, 2025).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.generate_research_article_report">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.</span></span><span class="sig-name descname"><span class="pre">generate_research_article_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatmap_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/report.html#generate_research_article_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.generate_research_article_report" title="Link to this definition">¶</a></dt>
+<dd><p>Generate heatmaps and Markdown summarising opinion shifts per study.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>)</p></li>
+<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>heatmap_bins</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, object]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-clean_data.research_article_political_sciences.analysis">Core data wrangling helpers for the political sciences replication.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">StudySpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatmap_filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#StudySpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration describing one study’s pre/post opinion columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>)</p></li>
+<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>label</strong> (<em>str</em>)</p></li>
+<li><p><strong>before_column</strong> (<em>str</em>)</p></li>
+<li><p><strong>after_column</strong> (<em>str</em>)</p></li>
+<li><p><strong>heatmap_filename</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.after_column">
+<span class="sig-name descname"><span class="pre">after_column</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.after_column" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.before_column">
+<span class="sig-name descname"><span class="pre">before_column</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.before_column" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.heatmap_filename">
+<span class="sig-name descname"><span class="pre">heatmap_filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.heatmap_filename" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.key">
+<span class="sig-name descname"><span class="pre">key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.StudySpec.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.StudySpec.label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.assemble_study_specs">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">assemble_study_specs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#assemble_study_specs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.assemble_study_specs" title="Link to this definition">¶</a></dt>
+<dd><p>Return the static study specifications handled by the report.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterable</em>[<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>StudySpec</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.dataframe_from_splits">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">dataframe_from_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#dataframe_from_splits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.dataframe_from_splits" title="Link to this definition">¶</a></dt>
+<dd><p>Combine all dataset splits into a single pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.histogram2d_counts">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">histogram2d_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#histogram2d_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.histogram2d_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Return a 2D histogram of before vs. after opinion indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>before_col</strong> (<em>str</em>)</p></li>
+<li><p><strong>after_col</strong> (<em>str</em>)</p></li>
+<li><p><strong>bins</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[numpy.ndarray, numpy.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.prepare_study_frame">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">prepare_study_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#prepare_study_frame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.prepare_study_frame" title="Link to this definition">¶</a></dt>
+<dd><p>Filter the combined dataframe down to the rows matching a study.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>spec</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>StudySpec</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.summarise_shift">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">summarise_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#summarise_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.summarise_shift" title="Link to this definition">¶</a></dt>
+<dd><p>Compute summary statistics describing the opinion shift.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>before_col</strong> (<em>str</em>)</p></li>
+<li><p><strong>after_col</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.to_numeric">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">to_numeric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#to_numeric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.to_numeric" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a pandas series to numeric values, preserving NaNs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>series</strong> (<em>pandas.Series</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-clean_data.research_article_political_sciences.cli">Command-line entry point for the political sciences replication report.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.cli.main">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.cli.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entry point used by <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span></code> to run the replication analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-clean_data.research_article_political_sciences.markdown">Markdown rendering utilities for the political sciences replication.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.markdown.build_markdown">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.markdown.</span></span><span class="sig-name descname"><span class="pre">build_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatmap_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_change_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/markdown.html#build_markdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.markdown.build_markdown" title="Link to this definition">¶</a></dt>
+<dd><p>Render Markdown lines describing the replication results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>study_rows</strong> (<em>Iterable</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>heatmap_paths</strong> (<em>Iterable</em><em>[</em><em>Path</em><em>]</em>)</p></li>
+<li><p><strong>mean_change_path</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-clean_data.research_article_political_sciences.plotting">Plotting helpers for the political sciences replication report.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.plotting.plot_heatmap">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/plotting.html#plot_heatmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.plotting.plot_heatmap" title="Link to this definition">¶</a></dt>
+<dd><p>Render a heatmap from a 2D histogram of pre/post opinion indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>numpy.ndarray</em>)</p></li>
+<li><p><strong>bin_edges</strong> (<em>numpy.ndarray</em>)</p></li>
+<li><p><strong>title</strong> (<em>str</em>)</p></li>
+<li><p><strong>output_path</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.plotting.plot_mean_change">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_mean_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">summaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/plotting.html#plot_mean_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.plotting.plot_mean_change" title="Link to this definition">¶</a></dt>
+<dd><p>Plot the mean opinion change per study with 95% CI error bars.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>summaries</strong> (<em>Iterable</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>labels</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>output_path</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-clean_data.research_article_political_sciences.report">Top-level orchestration for the political sciences replication report.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean_data.research_article_political_sciences.report.generate_research_article_report">
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.report.</span></span><span class="sig-name descname"><span class="pre">generate_research_article_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">heatmap_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/report.html#generate_research_article_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.report.generate_research_article_report" title="Link to this definition">¶</a></dt>
+<dd><p>Generate heatmaps and Markdown summarising opinion shifts per study.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>)</p></li>
+<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>heatmap_bins</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, object]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
         </article>
@@ -2605,6 +2863,30 @@ the prompt reporting pipeline.</p>
 <li><a class="reference internal" href="#clean_data.prompt.utils.participant_ids"><code class="docutils literal notranslate"><span class="pre">participant_ids()</span></code></a></li>
 <li><a class="reference internal" href="#clean_data.prompt.utils.participant_stats"><code class="docutils literal notranslate"><span class="pre">participant_stats()</span></code></a></li>
 <li><a class="reference internal" href="#clean_data.prompt.utils.series_from_columns"><code class="docutils literal notranslate"><span class="pre">series_from_columns()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-clean_data.research_article_political_sciences">Research Article Replication</a><ul>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.generate_research_article_report"><code class="docutils literal notranslate"><span class="pre">generate_research_article_report()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec"><code class="docutils literal notranslate"><span class="pre">StudySpec</span></code></a><ul>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.after_column"><code class="docutils literal notranslate"><span class="pre">StudySpec.after_column</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.before_column"><code class="docutils literal notranslate"><span class="pre">StudySpec.before_column</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.heatmap_filename"><code class="docutils literal notranslate"><span class="pre">StudySpec.heatmap_filename</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.issue"><code class="docutils literal notranslate"><span class="pre">StudySpec.issue</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.key"><code class="docutils literal notranslate"><span class="pre">StudySpec.key</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec.label"><code class="docutils literal notranslate"><span class="pre">StudySpec.label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.assemble_study_specs"><code class="docutils literal notranslate"><span class="pre">assemble_study_specs()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.dataframe_from_splits"><code class="docutils literal notranslate"><span class="pre">dataframe_from_splits()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.histogram2d_counts"><code class="docutils literal notranslate"><span class="pre">histogram2d_counts()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.prepare_study_frame"><code class="docutils literal notranslate"><span class="pre">prepare_study_frame()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.summarise_shift"><code class="docutils literal notranslate"><span class="pre">summarise_shift()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.to_numeric"><code class="docutils literal notranslate"><span class="pre">to_numeric()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.markdown.build_markdown"><code class="docutils literal notranslate"><span class="pre">build_markdown()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.plotting.plot_heatmap"><code class="docutils literal notranslate"><span class="pre">plot_heatmap()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.plotting.plot_mean_change"><code class="docutils literal notranslate"><span class="pre">plot_mean_change()</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.research_article_political_sciences.report.generate_research_article_report"><code class="docutils literal notranslate"><span class="pre">generate_research_article_report()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -16,8 +16,7 @@ import os
 
 
 # We need a special environment setup to launch vLLM from within Slurm training jobs.
-# - Reference code:
-#   https://github.com/huggingface/brrr/blob/c55ba3505686d690de24c7ace6487a5c1426c0fd/brrr/lighteval/one_job_runner.py#L105
+# - Reference code: huggingface/brrr@c55ba35/brrr/lighteval/one_job_runner.py#L105
 # - Slack thread:
 #   https://huggingface.slack.com/archives/C043JTYE1MJ/p1726566494958269
 user_home_directory = os.path.expanduser("~")
@@ -89,7 +88,8 @@ def run_lighteval_job(
     task_list = LIGHTEVAL_TASKS[benchmark]
     model_name = training_args.hub_model_id
     model_revision = training_args.hub_model_revision
-    # For large models >= 30b params or those running the MATH benchmark, we need to shard them across the GPUs to avoid OOM
+    # For large models (>=30B params) or for the MATH benchmark we shard across GPUs
+    # to avoid OOM.
     num_gpus = get_gpu_count_for_vllm(model_name, model_revision)
     if get_param_count_from_repo_id(model_name) >= 30_000_000_000:
         tensor_parallel = True
@@ -100,7 +100,10 @@ def run_lighteval_job(
     cmd = VLLM_SLURM_PREFIX.copy()
     cmd_args = [
         f"--gres=gpu:{num_gpus}",
-        f"--job-name=or1_{benchmark}_{model_name.split('/')[-1]}_{model_revision}",
+        (
+            "--job-name="
+            f"or1_{benchmark}_{model_name.split('/')[-1]}_{model_revision}"
+        ),
         "slurm/evaluate.slurm",
         benchmark,
         f'"{task_list}"',
@@ -117,8 +120,11 @@ def run_lighteval_job(
     cmd[-1] += " " + " ".join(cmd_args)
     subprocess.run(cmd, check=True)
 
-
-def run_benchmark_jobs(training_args: Union["SFTConfig", "GRPOConfig"], model_args: "ModelConfig") -> None:
+   
+def run_benchmark_jobs(
+    training_args: Union["SFTConfig", "GRPOConfig"],
+    model_args: "ModelConfig",
+) -> None:
     benchmarks = training_args.benchmarks
     if len(benchmarks) == 1 and benchmarks[0] == "all":
         benchmarks = get_lighteval_tasks()
@@ -126,7 +132,7 @@ def run_benchmark_jobs(training_args: Union["SFTConfig", "GRPOConfig"], model_ar
         # that just evaluates on `ifeval` and `mt_bench` etc.
 
     for benchmark in benchmarks:
-        print(f"Launching benchmark `{benchmark}`")
+        logger.info("Launching benchmark `%s`", benchmark)
         if benchmark in get_lighteval_tasks():
             run_lighteval_job(benchmark, training_args, model_args)
         else:

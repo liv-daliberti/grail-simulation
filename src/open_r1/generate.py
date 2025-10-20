@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Utilities for constructing distilabel pipelines for data generation."""
+
 from typing import Optional
 
 from distilabel.llms import OpenAILLM
@@ -20,7 +22,7 @@ from distilabel.steps import StepResources
 from distilabel.steps.tasks import TextGeneration
 
 
-def build_distilabel_pipeline(
+def build_distilabel_pipeline(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     model: str,
     base_url: str = "http://localhost:8000/v1",
     prompt_column: Optional[str] = None,
@@ -34,6 +36,8 @@ def build_distilabel_pipeline(
     timeout: int = 900,
     retries: int = 0,
 ) -> Pipeline:
+    """Construct a distilabel pipeline configured for OpenAI-compatible endpoints."""
+
     generation_kwargs = {"max_new_tokens": max_new_tokens}
 
     if temperature is not None:
@@ -42,7 +46,8 @@ def build_distilabel_pipeline(
     if top_p is not None:
         generation_kwargs["top_p"] = top_p
 
-    with Pipeline().ray() as pipeline:
+    with Pipeline().ray() as pipeline_obj:
+        input_mapping = {"instruction": prompt_column} if prompt_column is not None else {}
         TextGeneration(
             llm=OpenAILLM(
                 base_url=base_url,
@@ -53,14 +58,14 @@ def build_distilabel_pipeline(
                 generation_kwargs=generation_kwargs,
             ),
             template=prompt_template,
-            input_mappings=({"instruction": prompt_column} if prompt_column is not None else {}),
+            input_mappings=input_mapping,
             input_batch_size=input_batch_size,
             num_generations=num_generations,
             group_generations=True,
             resources=StepResources(replicas=client_replicas),
         )
 
-    return pipeline
+    return pipeline_obj
 
 
 if __name__ == "__main__":
@@ -68,7 +73,11 @@ if __name__ == "__main__":
 
     from datasets import load_dataset
 
-    parser = argparse.ArgumentParser(description="Run distilabel pipeline for generating responses with DeepSeek R1")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run a distilabel pipeline for generating responses with the DeepSeek R1 model"
+        )
+    )
     parser.add_argument(
         "--hf-dataset",
         type=str,
@@ -175,8 +184,15 @@ if __name__ == "__main__":
         print(f"  {arg}: {value}")
     print()
 
-    print(f"Loading '{args.hf_dataset}' (config: {args.hf_dataset_config}, split: {args.hf_dataset_split}) dataset...")
-    dataset = load_dataset(args.hf_dataset, args.hf_dataset_config, split=args.hf_dataset_split)
+    print(
+        f"Loading '{args.hf_dataset}' "
+        f"(config: {args.hf_dataset_config}, split: {args.hf_dataset_split}) dataset..."
+    )
+    dataset = load_dataset(
+        args.hf_dataset,
+        args.hf_dataset_config,
+        split=args.hf_dataset_split,
+    )
     print("Dataset loaded!")
 
     pipeline = build_distilabel_pipeline(

@@ -277,7 +277,8 @@ class GRPOScriptArguments(ScriptArguments):
             "help": (
                 "List of reward functions. Possible values: 'accuracy', 'format', "
                 "'reasoning_steps', 'cosine', 'repetition_penalty', 'length', "
-                "'tag_count', 'code', 'ioi_code', 'code_format', 'soft_overlong_punishment'."
+                "'tag_count', 'code', 'ioi_code', 'code_format', "
+                "'soft_overlong_punishment'."
             )
         },
     )
@@ -316,7 +317,7 @@ class GRPOScriptArguments(ScriptArguments):
         # '(?:python|cpp)'
         metadata={
             "help": (
-                "Language for code format reward. Based on E2B supported languages "
+                "Language for code format reward. Based on the E2B supported languages "
                 "documented at https://e2b.dev/docs/code-interpreting/supported-languages."
             ),
             "choices": ["python", "javascript", "r", "java", "bash", "cpp"],
@@ -327,9 +328,9 @@ class GRPOScriptArguments(ScriptArguments):
         metadata={
             "help": (
                 "For each generation, evaluate this many test cases in parallel. "
-                "If any fail (score 0) stop evaluating early; otherwise continue with "
-                "the next batch. Helps avoid overloading the eval server and saves time "
-                "on wrong solutions."
+                "If any fail (score 0) stop evaluating early; otherwise continue "
+                "with the next batch. Helps avoid overloading the eval server and "
+                "saves time on wrong solutions."
             )
         },
     )

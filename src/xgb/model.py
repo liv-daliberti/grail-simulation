@@ -343,9 +343,12 @@ def _best_index_by_key(
     return best_index
 
 
-def _candidate_id_key(_: str, video_id: str) -> str:
-    """Return the canonical id associated with ``video_id``."""
-    return canon_video_id(video_id)
+def _candidate_id_key(title: str, video_id: str) -> str:
+    """Return the canonical id associated with ``video_id`` (falling back to ``title``)."""
+    candidate = canon_video_id(video_id)
+    if not candidate:
+        candidate = canon_video_id(title)
+    return candidate
 
 
 def _fallback_candidate_key(title: str, video_id: str) -> str:

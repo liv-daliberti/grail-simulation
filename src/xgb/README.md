@@ -1,34 +1,25 @@
-# XGBoost Slate Baselines
+# XGBoost Slate Baseline
 
-This package mirrors the structure of the refactored `knn` baseline while
-swapping the neighbourhood search for an XGBoost multi-class classifier. The
-goal is to provide a fast, non-generative baseline that can be compared against
-the kNN approach and any future neural models. The module lives under
-`xgb` rather than `xgboost` to avoid clashing with the upstream `xgboost`
-library on `sys.path`.
+Tree-based counterpart to the `knn` package. The implementation mirrors the
+refactored kNN structure but swaps the index for an XGBoost multi-class
+classifier that operates over the same prompt documents.
 
 ## Package layout
 
 ```
 src/xgb/
-├── __init__.py          # package entry point
-├── cli.py               # argument parsing / orchestration
-├── data.py              # dataset loading helpers (re-exported from knn)
-├── evaluate.py          # evaluation loop + metrics
-├── features.py          # prompt assembly utilities shared with knn
-├── model.py             # TF-IDF + XGBoost training/prediction helpers
-├── utils.py             # logging / filesystem helpers
-└── xgboost-baseline.py  # legacy executable entry point
+├── cli.py               # CLI for training, evaluation, and model export
+├── data.py              # dataset loading + issue filtering (reuses knn helpers)
+├── evaluate.py          # evaluation loop, metrics writer, CLI orchestration
+├── features.py          # prompt assembly + slate extraction utilities
+├── model.py             # TF-IDF vectoriser + XGBoost training / inference code
+├── utils.py             # assorted helpers (video-id canonicalisation, logging)
+└── xgboost-baseline.py  # legacy shim that now calls xgb.cli:main
 ```
-
-The modules intentionally mirror the evolving `knn` refactor so experiments can
-share most of the prompt-building and dataset plumbing. Feature construction is
-currently TF-IDF based; switching to more sophisticated embeddings should only
-require touching `model.py`.
 
 ## Quick start
 
-Train and evaluate on all available issues:
+Fit a model and evaluate on the default dataset:
 
 ```bash
 python -m xgb.cli \
@@ -37,7 +28,7 @@ python -m xgb.cli \
   --out_dir models/xgb/run-001
 ```
 
-To speed up experimentation you can pre-train per-issue models and reuse them:
+You can optionally persist the trained bundle for later reuse:
 
 ```bash
 python -m xgb.cli \
@@ -50,16 +41,25 @@ python -m xgb.cli \
   --issues minimum_wage,gun_control
 ```
 
+CLI arguments cover common experimentation knobs:
+
+- `--extra_text_fields` appends additional columns to the prompt document before
+  vectorisation (useful for ablations).
+- `--max_train`, `--max_features`, and `--seed` control subsampling and TF-IDF
+  vocabulary size.
+- `--xgb_*` flags forward hyper-parameters directly to `xgboost.XGBClassifier`.
+
+See `python -m xgb.cli --help` for the full list.
+
 ## Implementation notes
 
-* TF-IDF features are generated via the shared prompt builder to stay aligned
-  with other baselines.
-* XGBoost is configured with `multi:softprob`, allowing the model to emit a
-  probability for every seen video id; slate candidates are re-ranked using the
-  highest available probability.
-* Metrics include overall accuracy plus a "coverage" score indicating how often
-  the correct option was among the candidate ids observed during training.
+- `features.prepare_prompt_documents` builds TF-IDF-friendly text while ensuring
+  slate ordering matches the prompt consumed by other baselines.
+- The model always trains with `multi:softprob`, enabling per-slate probability
+  vectors. `predict_among_slate` extracts the top-ranked option that appears in
+  the provided candidate set.
+- Evaluation reports accuracy and slate coverage so metrics can be compared to
+  the kNN and GPT-4o baselines.
 
-Pull requests extending the feature pipeline or adding richer metrics are very
-welcome. Keep the CLI backwards compatible where possible so scripts that
-exercise the baseline do not need to change.
+Pull requests that extend the feature pipeline or add richer metrics are welcome
+—keep the CLI backwards compatible so existing experiment scripts keep working.

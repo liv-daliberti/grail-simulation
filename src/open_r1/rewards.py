@@ -16,17 +16,18 @@
 """Reward functions for GRPO training."""
 
 import asyncio
+import importlib
 import json
 import math
+import os
 import re
 from functools import partial, update_wrapper
-from typing import Callable, Dict, Optional, List, Any, Tuple
-import os
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from latex2sympy2_extended import NormalizationConfig
 from math_verify import LatexExtractionConfig, parse, verify
 import transformers
-from transformers import PreTrainedModel
+from transformers.utils.import_utils import _is_package_available
 
 from .utils.code_providers import get_provider
 from .utils.ioi import (
@@ -37,11 +38,28 @@ from .utils.ioi import (
     score_subtask,
 )
 
+PURE_ACC_ENV_FLAG = "PUREACC_ALLOW_BARE_NUMBER"
+PURE_ACC_TRUE_VALUES = {"1", "true", "t", "yes", "y"}
+BINARY_THRESHOLD = 0.99
+LEN_EXTRACTION_CONFIG = [
+    LatexExtractionConfig(
+        normalization_config=NormalizationConfig(
+            nits=False,
+            malformed_operators=False,
+            basic_latex=True,
+            equations=True,
+            boxed=True,
+            units=True,
+        ),
+        boxed_match_priority=0,
+        try_extract_without_anchor=False,
+    )
+]
+DEFAULT_EXTRACTION_CONFIG = [LatexExtractionConfig()]
+
 # ── helpers ───────────────────────────────────────────────────────────
 
-_ANSWER_TAG = re.compile(r"(?si)<think>.*?</think>.*?<answer>\s*(.*?)\s*</answer>")
-_NUM_ONLY   = re.compile(r"^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$", re.I)
-_FORMAT_RE  = re.compile(r"(?si)^\s*<think>.*?</think>.*?<answer>\s*\d+\s*</answer>\s*$")
+_NUM_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$", re.I)
 
 def _canon(s: str) -> str:
     s = s.replace("’", "'").strip().lower()
@@ -77,7 +95,7 @@ def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
     if m:
         try:
             return int(m.group(1))
-        except Exception:
+        except ValueError:
             return -1
     _, idxmap = _parse_slate_names(slate)
     gcan = _canon(gold)
@@ -100,51 +118,45 @@ def _completion_text(comp: Any) -> str:
                 if c:
                     return c
         try:
-            return " ".join(str(m.get("content", "")).strip() for m in comp if isinstance(m, dict))
-        except Exception:
+            return " ".join(
+                str(message.get("content", "")).strip()
+                for message in comp
+                if isinstance(message, dict)
+            )
+        except (AttributeError, TypeError):
             pass
     return str(comp)
 
-# ── accuracy on index, using slate_text to resolve gold name → index ───────────
-
-def _completion_text(comp: Any) -> str:
-    """
-    Extract plain assistant text from a completion that may be:
-      • str
-      • list[dict(role, content)] (chat)
-      • dict(role, content)
-    Fallback to str(comp) if unknown.
-    """
-    if isinstance(comp, str):
-        return comp
-    if isinstance(comp, dict):
-        return str(comp.get("content", "")).strip()
-    if isinstance(comp, list) and comp:
-        for msg in reversed(comp):
-            if isinstance(msg, dict) and "content" in msg:
-                c = str(msg.get("content", "")).strip()
-                if c:
-                    return c
-        try:
-            return " ".join(str(m.get("content","")).strip() for m in comp if isinstance(m, dict))
-        except Exception:
-            pass
-    return str(comp)
-    
 _ANS_PAT = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
-_CANON_RE = re.compile(r"[^a-z0-9]+")
-_LEADING_IDX = re.compile(r'^\s*(?:option\s*)?\d+\s*[\.\):\-]\s*', re.I)
-
-# Require digits-only answer inside <answer>
-_FORMAT_RE = re.compile(r"(?si)^\s*<think>.*?</think>.*?<answer>\s*\d+\s*</answer>\s*$")
 _INDEX_ONLY_RE = re.compile(r'^\s*(?:option\s*)?(\d+)\s*$', re.I)
 
-# Keep your helpers: _ANS_PAT, _INDEX_ONLY_RE, _completion_text, etc.
+def _safe_int(value: Any) -> Optional[int]:
+    """Return an int if possible, otherwise None."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_index_from_completion(text: str, allow_bare: bool) -> Optional[int]:
+    """Extract numeric answer from completion text."""
+    answer_match = _ANS_PAT.search(text)
+    if answer_match:
+        payload = answer_match.group(1).strip()
+    elif allow_bare:
+        payload = text.strip()
+    else:
+        return None
+
+    index_match = _INDEX_ONLY_RE.match(payload)
+    if not index_match:
+        return None
+    return _safe_int(index_match.group(1))
 
 def pure_accuracy_reward(
     completions: List[Any],
-    answer:      List[str],   # unused here; kept for interface parity
-    **kw,
+    _answer: List[str],  # unused; kept for interface parity
+    **kwargs,
 ) -> List[float]:
     """
     Index-only accuracy:
@@ -153,8 +165,8 @@ def pure_accuracy_reward(
       3) Optionally check 1 <= NUMBER <= n_options
     Returns per-sample 1.0/0.0.
     """
-    gold_idx_arr = kw.get("gold_index")
-    n_opts_arr   = kw.get("n_options", None)
+    gold_idx_arr = kwargs.get("gold_index")
+    option_counts = kwargs.get("n_options")
 
     # Normalize to lists
     if isinstance(gold_idx_arr, int):
@@ -163,79 +175,77 @@ def pure_accuracy_reward(
         # No gold index? Nothing to score.
         return [0.0] * len(completions)
 
-    if isinstance(n_opts_arr, int):
-        n_opts_arr = [n_opts_arr] * len(completions)
-    if n_opts_arr is None:
-        n_opts_arr = [None] * len(completions)
+    if isinstance(option_counts, int):
+        option_counts = [option_counts] * len(completions)
+    if option_counts is None:
+        option_counts = [None] * len(completions)
 
     # Optional: allow bare "3" without <think>/<answer> for early ramp
-    ALLOW_BARE = os.environ.get("PUREACC_ALLOW_BARE_NUMBER", "0").lower() in {"1","true","t","yes","y"}
+    allow_bare = (
+        os.environ.get(PURE_ACC_ENV_FLAG, "0").lower() in PURE_ACC_TRUE_VALUES
+    )
 
     outs: List[float] = []
-    fmt_ok = pred_ok = elig_ok = 0
+    pred_ok = elig_ok = 0
 
-    for comp, gidx, nopt in zip(completions, gold_idx_arr, n_opts_arr):
+    for comp, gidx, nopt in zip(completions, gold_idx_arr, option_counts):
         txt = _completion_text(comp)
-
-        # Strict format gate (default): require <think>…</think><answer>NUMBER</answer>
-        m = _ANS_PAT.search(txt)
-        if not m and not ALLOW_BARE:
-            outs.append(0.0); continue
-
-        if m:
-            payload = m.group(1).strip()
-        else:
-            payload = txt.strip()
-
-        mi = None
-        mm = _INDEX_ONLY_RE.match(payload)
-        if mm:
-            try: mi = int(mm.group(1))
-            except: mi = None
-
-        if mi is None:
-            outs.append(0.0); continue
+        predicted_index = _parse_index_from_completion(txt, allow_bare)
+        if predicted_index is None:
+            outs.append(0.0)
+            continue
         pred_ok += 1
 
-        try:
-            gi = int(gidx)
-        except:
-            outs.append(0.0); continue
-
-        if gi <= 0:
-            # Unlabeled / invalid row → treat as incorrect to avoid NaNs during training
-            outs.append(0.0); continue
+        gold_idx = _safe_int(gidx)
+        if gold_idx is None or gold_idx <= 0:
+            outs.append(0.0)
+            continue
         elig_ok += 1
 
-        if isinstance(nopt, (int, float)) and int(nopt) > 0:
-            if mi < 1 or mi > int(nopt):
-                outs.append(0.0); continue
+        max_options = _safe_int(nopt)
+        if max_options is not None:
+            if max_options <= 0 or not 1 <= predicted_index <= max_options:
+                outs.append(0.0)
+                continue
 
-        outs.append(1.0 if mi == gi else 0.0)
+        outs.append(1.0 if predicted_index == gold_idx else 0.0)
 
-    # Optional: quick logging so you can see why acc might be low
-    try:
-        _wb_log({
-            "reward/pure_acc/parsed_rate": pred_ok / max(1, len(completions)),
-            "reward/pure_acc/eligible_rate": elig_ok / max(1, len(completions)),
-            "reward/pure_acc/batch_mean": float(np.mean(np.asarray(outs, dtype=np.float32))) if outs else float("nan"),
-        })
-    except Exception:
-        pass
+    total = len(completions)
+    logger = globals().get("_wb_log")
+    if callable(logger) and total:
+        parse_rate = pred_ok / total
+        eligible_rate = elig_ok / total
+        batch_mean = sum(outs) / len(outs) if outs else math.nan
+        try:
+            logger(
+                {
+                    "reward/pure_acc/parsed_rate": parse_rate,
+                    "reward/pure_acc/eligible_rate": eligible_rate,
+                    "reward/pure_acc/batch_mean": batch_mean,
+                }
+            )
+        except (TypeError, ValueError):
+            pass
 
     return outs
-    
-def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str], **kwargs) -> list[Optional[float]]:
-    """Reward function that checks if the completion is the same as the ground truth."""
+
+
+def accuracy_reward(
+    completions: list[list[dict[str, str]]],
+    solution: list[str],
+    **kwargs,
+) -> list[Optional[float]]:
+    """Reward function that checks if a completion matches the ground truth."""
+    _ = kwargs  # Unused but kept for API compatibility
     contents = [completion[0]["content"] for completion in completions]
-    rewards = []
+    rewards: list[Optional[float]] = []
     for content, sol in zip(contents, solution):
         gold_parsed = parse(
             sol,
             extraction_mode="first_match",
         )
-        if len(gold_parsed) != 0:
-            # We require the answer to be provided in correct latex (no malformed operators)
+        if gold_parsed:
+            # We require the answer to be provided in correct LaTeX
             answer_parsed = parse(
                 content,
                 extraction_config=[
@@ -248,7 +258,6 @@ def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str]
                             boxed="all",
                             units=True,
                         ),
-                        # Ensures that boxed is tried first
                         boxed_match_priority=0,
                         try_extract_without_anchor=False,
                     )
@@ -258,49 +267,54 @@ def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str]
             # Compute binary rewards if verifiable, `None` otherwise to skip this example
             try:
                 reward = float(verify(gold_parsed, answer_parsed))
-            except Exception as e:
-                print(f"verify failed: {e}, answer: {answer_parsed}, gold: {gold_parsed}")
+            except (ValueError, TypeError) as error:
+                print(
+                    f"verify failed: {error}, "
+                    f"answer: {answer_parsed}, gold: {gold_parsed}"
+                )
                 reward = None
         else:
             # If the gold solution is not parseable, we assign `None` to skip this example
             reward = None
-            print("Failed to parse gold solution: ", sol)
+            print("Failed to parse gold solution:", sol)
         rewards.append(reward)
 
     return rewards
 
-import re
-
 
 def formating(completions, **kwargs):
-    """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
+    """Check whether completions follow the expected think/answer tag format."""
+    _ = kwargs
     pattern = r"^<think>\n.*?\n</think>\n<answer>\n.*?\n</answer>$"
     completion_contents = [completion[0]["content"] for completion in completions]
-    matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
+    matches = [
+        re.match(pattern, content, re.DOTALL | re.MULTILINE)
+        for content in completion_contents
+    ]
     return [1.0 if match else 0.0 for match in matches]
+
 
 def format_reward(
     completions: List[List[dict]],
-    solution:     Optional[List[str]] = None,   # keep for backwards‐compat
-    answer:       Optional[List[str]] = None,   # new name
+    solution: Optional[List[str]] = None,  # keep for backwards‐compat
+    answer: Optional[List[str]] = None,  # new name
     **kwargs,
 ) -> List[Optional[float]]:
     """
     Return the usual format reward only if the sample's accuracy reward is 0.
     Works with either `solution=[…]` or `answer=[…]`.
     """
-    # pick whichever one you got
     golds = solution if solution is not None else answer
 
     acc = accuracy_reward(completions, solution=golds, **kwargs)
     fmt = formating(completions)
 
     gated: List[Optional[float]] = []
-    for a, f in zip(acc, fmt):
-        if a is None:
+    for accuracy_score, format_score in zip(acc, fmt):
+        if accuracy_score is None:
             gated.append(None)      # skip
-        elif a == 0.0:
-            gated.append(f)         # wrong → formatting bonus
+        elif accuracy_score == 0.0:
+            gated.append(format_score)         # wrong → formatting bonus
         else:
             gated.append(0.0)       # correct → no bonus
     return gated
@@ -310,6 +324,7 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
 
     Adapted from: https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90
     """
+    _ = kwargs
 
     def count_tags(text: str) -> float:
         count = 0.0
@@ -329,13 +344,15 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
 
 def reasoning_steps_reward(completions, **kwargs):
     r"""Reward function that checks for clear step-by-step reasoning.
+
     Regex pattern:
-        Step \d+: - matches "Step 1:", "Step 2:", etc.
-        ^\d+\. - matches numbered lists like "1.", "2.", etc. at start of line
-        \n- - matches bullet points with hyphens
-        \n\* - matches bullet points with asterisks
-        First,|Second,|Next,|Finally, - matches transition words
+        Step \d+:  matches "Step 1:", "Step 2:", etc.
+        ^\d+\.     matches numbered lists like "1.", "2.", etc. at line start
+        \n-        matches bullet points with hyphens
+        \n\*       matches bullet points with asterisks
+        First,|Second,|Next,|Finally,  matches transition words
     """
+    _ = kwargs
     pattern = r"(Step \d+:|^\d+\.|\n-|\n\*|First,|Second,|Next,|Finally,)"
     completion_contents = [completion[0]["content"] for completion in completions]
     matches = [len(re.findall(pattern, content)) for content in completion_contents]
@@ -344,7 +361,34 @@ def reasoning_steps_reward(completions, **kwargs):
     return [min(1.0, count / 3) for count in matches]
 
 
-def len_reward(completions: list[Dict[str, str]], solution: list[str], **kwargs) -> float:
+def _compute_length_correctness(contents: List[str], solution: List[str]) -> List[bool]:
+    """Return per-sample correctness for length-based rewards."""
+    correctness: List[bool] = []
+    for content, sol in zip(contents, solution):
+        gold_parsed = parse(
+            sol,
+            extraction_mode="first_match",
+            extraction_config=DEFAULT_EXTRACTION_CONFIG,
+        )
+        if not gold_parsed:
+            correctness.append(True)
+            print("Failed to parse gold solution:", sol)
+            continue
+
+        answer_parsed = parse(
+            content,
+            extraction_config=LEN_EXTRACTION_CONFIG,
+            extraction_mode="first_match",
+        )
+        correctness.append(verify(answer_parsed, gold_parsed))
+    return correctness
+
+
+def len_reward(
+    completions: list[Dict[str, str]],
+    solution: list[str],
+    **kwargs,
+) -> list[float]:
     """Compute length-based rewards to discourage overthinking and promote token efficiency.
 
     Taken from the Kimi 1.5 tech report: https://huggingface.co/papers/2501.12599
@@ -358,41 +402,10 @@ def len_reward(completions: list[Dict[str, str]], solution: list[str], **kwargs)
         - For correct answers: reward = 0.5 - (len - min_len)/(max_len - min_len)
         - For incorrect answers: reward = min(0, 0.5 - (len - min_len)/(max_len - min_len))
     """
+    _ = kwargs
     contents = [completion[0]["content"] for completion in completions]
 
-    # First check correctness of answers
-    correctness = []
-    for content, sol in zip(contents, solution):
-        gold_parsed = parse(
-            sol,
-            extraction_mode="first_match",
-            extraction_config=[LatexExtractionConfig()],
-        )
-        if len(gold_parsed) == 0:
-            # Skip unparseable examples
-            correctness.append(True)  # Treat as correct to avoid penalizing
-            print("Failed to parse gold solution: ", sol)
-            continue
-
-        answer_parsed = parse(
-            content,
-            extraction_config=[
-                LatexExtractionConfig(
-                    normalization_config=NormalizationConfig(
-                        nits=False,
-                        malformed_operators=False,
-                        basic_latex=True,
-                        equations=True,
-                        boxed=True,
-                        units=True,
-                    ),
-                    boxed_match_priority=0,
-                    try_extract_without_anchor=False,
-                )
-            ],
-            extraction_mode="first_match",
-        )
-        correctness.append(verify(answer_parsed, gold_parsed))
+    correctness = _compute_length_correctness(contents, solution)
 
     # Calculate lengths
     lengths = [len(content) for content in contents]

@@ -40,6 +40,43 @@ class SlateIndexData:
     label_title_canon: np.ndarray
 
 
+@dataclass(frozen=True)
+class CandidateScorer:
+    """Callable helper for scoring slate candidates."""
+
+    index_data: SlateIndexData
+    base_parts: Sequence[str]
+    config: SlateQueryConfig
+    unique_k: Sequence[int]
+
+    def score(self, title: str, video_id: str) -> Dict[int, float]:
+        """Return per-``k`` scores for the given slate candidate."""
+        query, sims = _candidate_query(
+            index_data=self.index_data,
+            base_parts=self.base_parts,
+            title=title,
+            video_id=video_id,
+            config=self.config,
+        )
+        mask = _candidate_mask(title, video_id, self.index_data)
+        if not mask.any():
+            fallback = float(sims.max() * 0.01) if sims.size else 0.0
+            return {k: fallback for k in self.unique_k}
+
+        sims_masked = sims[mask]
+        if sims_masked.size == 0:
+            return {k: 0.0 for k in self.unique_k}
+
+        score_vector = _score_vector_from_similarity(
+            sims_masked=sims_masked,
+            index_data=self.index_data,
+            mask=mask,
+            query=query,
+            metric=self.config.metric,
+        )
+        return _aggregate_scores(score_vector, self.unique_k)
+
+
 def build_tfidf_index(
     train_ds,
     *,
@@ -166,48 +203,13 @@ def _score_candidates(
     unique_k: Sequence[int],
     config: SlateQueryConfig,
 ) -> Dict[int, List[float]]:
+    scorer = CandidateScorer(index_data, base_parts, config, unique_k)
     scores_by_k = {k: [] for k in unique_k}
     for title, video_id in slate_pairs:
-        candidate_scores = _score_single_candidate(
-            index_data=index_data,
-            base_parts=base_parts,
-            title=title,
-            video_id=video_id,
-            unique_k=unique_k,
-            config=config,
-        )
+        candidate_scores = scorer.score(title, video_id)
         for k, score in candidate_scores.items():
             scores_by_k[k].append(score)
     return scores_by_k
-
-
-def _score_single_candidate(
-    *,
-    index_data: SlateIndexData,
-    base_parts: Sequence[str],
-    title: str,
-    video_id: str,
-    unique_k: Sequence[int],
-    config: SlateQueryConfig,
-) -> Dict[int, float]:
-    query, sims = _candidate_query(index_data, base_parts, title, video_id, config)
-    mask = _candidate_mask(title, video_id, index_data)
-    if not mask.any():
-        fallback = float(sims.max() * 0.01) if sims.size else 0.0
-        return {k: fallback for k in unique_k}
-
-    sims_masked = sims[mask]
-    if sims_masked.size == 0:
-        return {k: 0.0 for k in unique_k}
-
-    score_vector = _score_vector_from_similarity(
-        sims_masked=sims_masked,
-        index_data=index_data,
-        mask=mask,
-        query=query,
-        metric=config.metric,
-    )
-    return _aggregate_scores(score_vector, unique_k)
 
 
 def _candidate_query(
@@ -217,6 +219,7 @@ def _candidate_query(
     video_id: str,
     config: SlateQueryConfig,
 ):
+    """Return the transformed query vector and raw similarities for a candidate."""
     surface = _surface_text(title, video_id)
     parts = list(base_parts)
     if surface:
@@ -235,6 +238,7 @@ def _score_vector_from_similarity(
     query,
     metric: Optional[str],
 ):
+    """Return a scoring vector based on the configured distance metric."""
     if metric == "l2":
         subset = index_data.matrix[mask].astype(np.float32)
         diff = subset - query
@@ -244,6 +248,7 @@ def _score_vector_from_similarity(
 
 
 def _aggregate_scores(score_vector: np.ndarray, unique_k: Sequence[int]) -> Dict[int, float]:
+    """Aggregate neighbour scores for each ``k`` value."""
     sorted_scores = np.sort(score_vector)[::-1]
     cumulative = np.cumsum(sorted_scores)
     return {

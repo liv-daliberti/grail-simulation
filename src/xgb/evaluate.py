@@ -127,6 +127,26 @@ class PredictionOutcome:
     correct: bool
 
 
+@dataclass(frozen=True)
+class ProbabilityContext:
+    """Aggregated probability metadata for a slate prediction."""
+
+    best_probability: float
+    record_probability: bool
+    known_candidate_hit: bool
+
+
+@dataclass(frozen=True)
+class OutcomeSummary:
+    """Aggregated metrics derived from prediction outcomes."""
+
+    evaluated: int
+    correct: int
+    known_hits: int
+    known_total: int
+    avg_probability: float
+
+
 def run_eval(args) -> None:
     """
     Evaluate the XGBoost baseline across the requested issues.
@@ -159,7 +179,13 @@ def run_eval(args) -> None:
         _evaluate_issue(args, issue, base_ds, dataset_source, extra_fields)
 
 
-def _evaluate_issue(args, issue: str, base_ds, dataset_source: str, extra_fields: List[str]) -> None:
+def _evaluate_issue(
+    args,
+    issue: str,
+    base_ds,
+    dataset_source: str,
+    extra_fields: List[str],
+) -> None:
     issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
     logger.info("[XGBoost] Evaluating issue=%s", issue_slug)
     ds = filter_dataset_for_issue(base_ds, issue)
@@ -190,7 +216,12 @@ def _evaluate_issue(args, issue: str, base_ds, dataset_source: str, extra_fields
     )
 
 
-def _load_or_train_model(args, issue_slug: str, train_ds, extra_fields: Sequence[str]) -> XGBoostSlateModel:
+def _load_or_train_model(
+    args,
+    issue_slug: str,
+    train_ds,
+    extra_fields: Sequence[str],
+) -> XGBoostSlateModel:
     if args.fit_model:
         logger.info("[XGBoost] Training model for issue=%s", issue_slug)
         booster_params = XGBoostBoosterParams(
@@ -225,10 +256,17 @@ def _load_or_train_model(args, issue_slug: str, train_ds, extra_fields: Sequence
     raise ValueError("Set either --fit_model or --load_model to obtain an XGBoost model.")
 
 
-def _write_outputs(args, issue_slug: str, metrics: IssueMetrics, predictions: List[Dict[str, Any]]) -> None:
+def _write_outputs(
+    args,
+    issue_slug: str,
+    metrics: IssueMetrics,
+    predictions: List[Dict[str, Any]],
+) -> None:
     out_dir = Path(args.out_dir) / issue_slug
     if out_dir.exists() and not args.overwrite:
-        raise FileExistsError(f"{out_dir} already exists. Use --overwrite to replace outputs.")
+        raise FileExistsError(
+            f"{out_dir} already exists. Use --overwrite to replace outputs."
+        )
     ensure_directory(out_dir)
     with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
         json.dump(asdict(metrics), handle, indent=2)
@@ -289,26 +327,13 @@ def _evaluate_single_example(
     else:
         predicted_id = ""
 
-    candidate_probs = {
-        slate_idx + 1: probability_map.get(canon_video_id(candidate_id), 0.0)
-        for slate_idx, (_, candidate_id) in enumerate(slate)
-    }
-
-    known_candidates = {
-        slate_idx + 1: canon_video_id(candidate_id)
-        for slate_idx, (_, candidate_id) in enumerate(slate)
-        if canon_video_id(candidate_id) in probability_map
-    }
-
-    best_probability = (
-        candidate_probs.get(prediction_idx, 0.0)
-        if prediction_idx is not None
-        else 0.0
+    candidate_probs, known_candidates = _candidate_probabilities(slate, probability_map)
+    probability_ctx = _probability_context(
+        prediction_idx=prediction_idx,
+        candidate_probs=candidate_probs,
+        known_candidates=known_candidates,
+        gold_id_canon=gold_id_canon,
     )
-    record_probability = bool(prediction_idx and prediction_idx in known_candidates)
-    known_candidate_hit = False
-    if record_probability and prediction_idx is not None:
-        known_candidate_hit = known_candidates[prediction_idx] == gold_id_canon
 
     predicted_id_canon = canon_video_id(predicted_id)
     correct = predicted_id_canon == gold_id_canon and bool(predicted_id_canon)
@@ -318,10 +343,10 @@ def _evaluate_single_example(
         predicted_id=predicted_id,
         gold_video_id=gold_id,
         candidate_probs=candidate_probs,
-        best_probability=best_probability,
+        best_probability=probability_ctx.best_probability,
         known_candidate_seen=bool(known_candidates),
-        known_candidate_hit=known_candidate_hit,
-        record_probability=record_probability,
+        known_candidate_hit=probability_ctx.known_candidate_hit,
+        record_probability=probability_ctx.record_probability,
         correct=correct,
     )
 
@@ -352,27 +377,17 @@ def _summarise_records(
     model: XGBoostSlateModel,
 ) -> IssueMetrics:
     """Aggregate prediction records into an :class:`IssueMetrics` summary."""
-    total = len(records)
-    outcomes = [outcome for _, outcome in records]
-    known_candidate_total = sum(outcome.known_candidate_seen for outcome in outcomes)
-    known_candidate_hits = sum(outcome.known_candidate_hit for outcome in outcomes)
-    probability_values = [
-        outcome.best_probability
-        for outcome in outcomes
-        if outcome.record_probability
-    ]
-    avg_probability = float(np.mean(probability_values)) if probability_values else 0.0
-    correct = sum(outcome.correct for outcome in outcomes)
+    summary = _summarise_outcomes(records)
     return IssueMetrics(
         issue=issue_slug,
         dataset_source=config.dataset_source,
-        evaluated=total,
-        correct=correct,
-        accuracy=safe_div(correct, total),
-        known_candidate_hits=known_candidate_hits,
-        known_candidate_total=known_candidate_total,
-        coverage=safe_div(known_candidate_hits, known_candidate_total),
-        avg_probability=avg_probability,
+        evaluated=summary.evaluated,
+        correct=summary.correct,
+        accuracy=safe_div(summary.correct, summary.evaluated),
+        known_candidate_hits=summary.known_hits,
+        known_candidate_total=summary.known_total,
+        coverage=safe_div(summary.known_hits, summary.known_total),
+        avg_probability=summary.avg_probability,
         timestamp=time.time(),
         extra_fields=tuple(config.extra_fields),
         xgboost_params=_model_params(model),
@@ -396,6 +411,70 @@ def _records_to_predictions(
         }
         for index, outcome in records
     ]
+
+
+def _candidate_probabilities(
+    slate: Sequence[tuple[str, str]],
+    probability_map: Dict[str, float],
+) -> tuple[Dict[int, float], Dict[int, str]]:
+    candidate_probs = {
+        slate_idx + 1: probability_map.get(canon_video_id(candidate_id), 0.0)
+        for slate_idx, (_, candidate_id) in enumerate(slate)
+    }
+    known_candidates = {
+        slate_idx + 1: canon_video_id(candidate_id)
+        for slate_idx, (_, candidate_id) in enumerate(slate)
+        if canon_video_id(candidate_id) in probability_map
+    }
+    return candidate_probs, known_candidates
+
+
+def _probability_context(
+    *,
+    prediction_idx: Optional[int],
+    candidate_probs: Dict[int, float],
+    known_candidates: Dict[int, str],
+    gold_id_canon: str,
+) -> ProbabilityContext:
+    best_probability = (
+        candidate_probs.get(prediction_idx, 0.0)
+        if prediction_idx is not None
+        else 0.0
+    )
+    record_probability = bool(prediction_idx and prediction_idx in known_candidates)
+    known_candidate_hit = bool(
+        record_probability
+        and prediction_idx is not None
+        and known_candidates[prediction_idx] == gold_id_canon
+    )
+    return ProbabilityContext(
+        best_probability=best_probability,
+        record_probability=record_probability,
+        known_candidate_hit=known_candidate_hit,
+    )
+
+
+def _summarise_outcomes(
+    records: List[tuple[int, PredictionOutcome]]
+) -> OutcomeSummary:
+    outcomes = [outcome for _, outcome in records]
+    evaluated = len(outcomes)
+    known_total = sum(outcome.known_candidate_seen for outcome in outcomes)
+    known_hits = sum(outcome.known_candidate_hit for outcome in outcomes)
+    probability_values = [
+        outcome.best_probability
+        for outcome in outcomes
+        if outcome.record_probability
+    ]
+    avg_probability = float(np.mean(probability_values)) if probability_values else 0.0
+    correct = sum(outcome.correct for outcome in outcomes)
+    return OutcomeSummary(
+        evaluated=evaluated,
+        correct=correct,
+        known_hits=known_hits,
+        known_total=known_total,
+        avg_probability=avg_probability,
+    )
 
 
 def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:

@@ -8,7 +8,11 @@ from datetime import datetime
 
 # Make the project root and src directory importable so autodoc can find modules.
 ROOT_DIR = os.path.abspath("..")
-sys.path.insert(0, os.path.abspath(".."))
+SRC_DIR = os.path.join(ROOT_DIR, "src")
+
+sys.path.insert(0, ROOT_DIR)
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 project = "GRAIL Simulation"
 author = "GRAIL Simulation Team"

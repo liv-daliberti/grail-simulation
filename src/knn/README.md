@@ -1,59 +1,69 @@
-# KNN Slate Baselines (Refactor in Progress)
+# KNN Slate Baselines
 
-The legacy `knn-baseline.py` script is being migrated into a modular
-package so we can experiment with richer feature spaces and cleaner
-evaluation tooling. The refactor introduces a package layout and Word2Vec
-embedding pipeline that will replace the single-file implementation.
+Modular implementation of the k-nearest-neighbour slate selector. The package
+supersedes the legacy `knn-baseline.py` script while keeping the single-file
+entry point for backwards compatibility.
 
 ## Package layout
 
 ```
 src/knn/
-├── __init__.py        # package entry point
-├── cli.py             # argument parsing / orchestration (upcoming)
-├── data.py            # dataset loading, filtering, slate bucketing (stub)
-├── evaluate.py        # metrics for predicted vs. gold slates (stub)
-├── features.py        # TF-IDF + Word2Vec feature builders (stub + W2V skeleton)
-├── index.py           # reusable KNN index wrapper (stub)
-├── utils.py           # logging / filesystem helpers
-└── knn-baseline.py    # legacy executable script (current baseline)
+├── cli.py          # CLI front-end (train/evaluate, issue filtering, exports)
+├── data.py         # dataset loading helpers + issue-aware filtering
+├── evaluate.py     # accuracy + coverage metrics and evaluation loop
+├── features.py     # TF-IDF + optional Word2Vec document builders
+├── index.py        # Faiss / sklearn KNN wrapper with persistence helpers
+├── utils.py        # logging, prompt helpers, and video-id canonicalisation
+└── knn-baseline.py # legacy entry point delegating to knn.cli:main
 ```
 
-The new modules are currently scaffolds with docstrings and
-`NotImplementedError` placeholders. Functionality will move into them in
-follow-up PRs while keeping the legacy script working for reproducibility.
+## Quick start
 
-## Word2Vec migration
+Train an index and evaluate on the default cleaned dataset:
 
-`features.py` now contains a `Word2VecFeatureBuilder` skeleton that will:
+```bash
+python -m knn.cli \
+  --dataset data/cleaned_grail \
+  --out_dir models/knn/run-001 \
+  --feature-space tfidf \
+  --fit-index
+```
 
-1. Build prompt text via `prompt_builder.build_user_prompt` to ensure
-   the same PROFILE/HISTORY context used elsewhere in the project.
-2. Tokenise the prompt text and train a gensim Word2Vec model with
-   configurable vector size, window, min-count, and epochs.
-3. Persist models under `models/knn_word2vec/` so embeddings can be
-   reused between runs.
-4. Produce averaged word-vector embeddings for each slate as the new
-   feature space, while retaining a TF-IDF fallback for ablation.
+To compare against Word2Vec features and a filtered issue subset:
 
-The upcoming CLI (`cli.py`) will expose knobs such as `--feature-space
-tfidf|word2vec`, `--vector-size`, `--window`, and `--min-count`, and will
-delegate to the appropriate feature/index modules.
+```bash
+python -m knn.cli \
+  --dataset data/cleaned_grail \
+  --out_dir models/knn/run-w2v \
+  --feature-space word2vec \
+  --issue minimum_wage \
+  --word2vec-size 256 \
+  --eval-max 2000
+```
 
-## Migration checklist
+All CLI switches are documented via `python -m knn.cli --help`. The script writes
+predictions, metrics, and optional embeddings under the specified `out_dir`.
 
-- [ ] Port dataset loading, slate bucketing, and filtering from
-      `knn-baseline.py` into `data.py`.
-- [ ] Move TF-IDF vectoriser code into `features.py` and add unit tests.
-- [ ] Implement `KNNIndex` (fit/save/load/predict) in `index.py`.
-- [ ] Implement evaluation metrics (accuracy, option coverage) in
-      `evaluate.py`.
-- [ ] Wire the CLI to orchestrate load → feature → index → evaluate,
-      using the new Word2Vec defaults.
-- [ ] Add tests under `tests/knn/` covering feature extraction and index
-      predictions.
+## Feature helpers
 
-Until the refactor is complete, continue using `knn-baseline.py` directly
-for experiments. Contributions that flesh out the new modules are very
-welcome—just make sure to keep backwards compatibility paths during the
-transition.
+`features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same
+PROFILE/HISTORY context seen by other baselines:
+
+- TF-IDF is enabled by default and supports a configurable vocabulary size via
+  `--max-features`.
+- Word2Vec training (via gensim) can be toggled with `--feature-space word2vec`;
+  models persist to `models/knn_word2vec/` so they can be reused.
+- Title lookups pull from metadata CSVs listed by `GRAIL_TITLE_*` environment
+  variables, falling back to the shared network drive defaults.
+
+## Evaluation
+
+`evaluate.py` computes accuracy and slate coverage—the latter surfaces how often
+the gold video appears in the candidate slate. Metrics mirror those reported by
+the XGBoost and GPT-4o baselines so results remain comparable.
+
+## Testing
+
+Unit tests live under `tests/knn/`. Add or update fixtures when introducing new
+feature builders or storage formats. The CLI smoke tests rely on small synthetic
+datasets generated during CI to avoid pulling the full cleaned corpus.

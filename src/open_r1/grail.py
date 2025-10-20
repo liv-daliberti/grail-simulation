@@ -15,10 +15,11 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
+from datasets import DatasetDict
 from torch import nn, optim
 from transformers import (
     AutoConfig,
@@ -79,6 +80,13 @@ TRAIN_KEEP_COLUMNS = {
     "mix_group_id",
     "mix_copy_idx",
 }
+
+DEFAULT_SYSTEM_PROMPT = (
+    "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"
+    "Think briefly in <think>…</think>, then output ONLY the option NUMBER "
+    "(1..N) inside <answer>…</answer>.\n"
+    "Format (STRICT): <think>…</think><answer>3</answer>"
+)
 
 
 def _completion_text(payload: Any) -> str:
@@ -261,17 +269,11 @@ def _row_to_example(
         return None
 
     user_msg = build_user_prompt(ex, max_hist=max_hist)
-    sys_msg = system_prompt or (
-        "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"
-        "Think briefly in <think>…</think>, then output ONLY the option NUMBER "
-        "(1..N) inside <answer>…</answer>.\n"
-        "Format (STRICT): <think>…</think><answer>3</answer>"
+    sys_msg = system_prompt or DEFAULT_SYSTEM_PROMPT
+    slate_text = "\n".join(
+        f"{idx}. {(item.get('title') or item.get('id') or '(untitled)').strip()}"
+        for idx, item in enumerate(items, 1)
     )
-
-    slate_names = [
-        f"{idx}. {(it.get('title') or it.get('id') or '(untitled)').strip()}"
-        for idx, it in enumerate(items, 1)
-    ]
 
     example = {
         "prompt": [
@@ -285,7 +287,7 @@ def _row_to_example(
         "viewer_profile": str(ex.get("viewer_profile_sentence") or synthesize_viewer_sentence(ex)),
         "state_text": user_msg,
         "slate_items": items,
-        "slate_text": "\n".join(slate_names),
+        "slate_text": slate_text,
         "slate_items_with_meta": as_list_json(ex.get("slate_items_json")),
         "watched_detailed_json": as_list_json(ex.get("watched_detailed_json")),
         "watched_vids_json": as_list_json(ex.get("watched_vids_json")),
@@ -356,7 +358,11 @@ def _prepare_dataset(
             formatted[split] = formatted[split].select(keep_indices)
 
     for split in list(formatted.keys()):
-        drop_cols = [name for name in formatted[split].column_names if name not in TRAIN_KEEP_COLUMNS]
+        drop_cols = [
+            name
+            for name in formatted[split].column_names
+            if name not in TRAIN_KEEP_COLUMNS
+        ]
         if drop_cols:
             formatted[split] = formatted[split].remove_columns(drop_cols)
 
@@ -459,6 +465,7 @@ class OnlineDiscriminator:
 
 
 class RewardContext(NamedTuple):
+    """Container for discriminator training data extracted from GRPO completions."""
     policy_text: str
     is_valid: bool
     chosen_index: int
@@ -475,6 +482,52 @@ def _ensure_list(value: Any, count: int) -> List[Any]:
     return [value] * count
 
 
+def _safe_int(value: Any, default: int = -1) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _context_from_completion(
+    completion: Any,
+    viewer: Any,
+    state: Any,
+    items: Any,
+    gold_id: Any,
+    gold_idx: Any,
+) -> RewardContext:
+    safe_items = items if isinstance(items, list) else []
+    parsed_idx = _parse_index_from_answer_block(_completion_text(completion))
+    is_valid = isinstance(parsed_idx, int) and 1 <= parsed_idx <= len(safe_items)
+    chosen_index = parsed_idx if is_valid else -1
+    choice = safe_items[chosen_index - 1] if is_valid else {}
+    surface = (choice.get("title") or choice.get("id") or "") if choice else ""
+    action_id = choice.get("id") if choice else None
+    gold_index = _safe_int(gold_idx)
+    policy_text = (
+        _render_disc_text(
+            str(viewer or ""),
+            str(state or ""),
+            safe_items or [],
+            surface,
+            action_id,
+        )
+        if is_valid
+        else "[PAD]"
+    )
+    return RewardContext(
+        policy_text=policy_text,
+        is_valid=is_valid,
+        chosen_index=chosen_index,
+        viewer=str(viewer or ""),
+        state=str(state or ""),
+        items=safe_items or [],
+        gold_id=str(gold_id or "").strip(),
+        gold_index=gold_index,
+    )
+
+
 def _build_reward_contexts(
     completions: Sequence[Any],
     kwargs: Dict[str, Any],
@@ -489,49 +542,17 @@ def _build_reward_contexts(
     gold_id_list = _ensure_list(kwargs.get("gold_id") or "", n)
     gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, n)
 
-    contexts: List[RewardContext] = []
-    for completion, viewer, state, items, gold_id, gold_idx in zip(
-        completions,
-        viewer_list,
-        state_list,
-        items_list,
-        gold_id_list,
-        gold_idx_list,
-    ):
-        safe_items = items if isinstance(items, list) else []
-        parsed_idx = _parse_index_from_answer_block(_completion_text(completion))
-        is_valid = isinstance(parsed_idx, int) and 1 <= parsed_idx <= len(safe_items)
-        chosen_index = parsed_idx if is_valid else -1
-        choice = safe_items[chosen_index - 1] if is_valid else {}
-        surface = (choice.get("title") or choice.get("id") or "") if choice else ""
-        action_id = choice.get("id") if choice else None
-
-        try:
-            gold_index = int(gold_idx)
-        except (TypeError, ValueError):
-            gold_index = -1
-
-        contexts.append(
-            RewardContext(
-                policy_text=_render_disc_text(
-                    viewer or "",
-                    state or "",
-                    safe_items or [],
-                    surface,
-                    action_id,
-                )
-                if is_valid
-                else "[PAD]",
-                is_valid=is_valid,
-                chosen_index=chosen_index,
-                viewer=str(viewer or ""),
-                state=str(state or ""),
-                items=safe_items or [],
-                gold_id=str(gold_id or "").strip(),
-                gold_index=gold_index,
-            )
+    return [
+        _context_from_completion(completion, viewer, state, items, gold_id, gold_idx)
+        for completion, viewer, state, items, gold_id, gold_idx in zip(
+            completions,
+            viewer_list,
+            state_list,
+            items_list,
+            gold_id_list,
+            gold_idx_list,
         )
-    return contexts
+    ]
 
 
 def _train_discriminator_from_contexts(
@@ -634,7 +655,7 @@ def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> Li
         return []
 
 
-def _maybe_enable_gail(training_args: GRPOConfig, reward_fns: List[Any]) -> bool:
+def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
     if not use_gail:
         logger.info("GAIL shaping DISABLED")
@@ -658,7 +679,11 @@ def _maybe_enable_gail(training_args: GRPOConfig, reward_fns: List[Any]) -> bool
     return True
 
 
-def _adjust_reward_weights(training_args: GRPOConfig, reward_fns: Sequence[Any], use_gail: bool) -> None:
+def _adjust_reward_weights(
+    training_args: GRPOConfig,
+    reward_fns: Sequence[Any],
+    use_gail: bool,
+) -> None:
     weights = getattr(training_args, "reward_weights", None)
     if weights is None:
         if use_gail and len(reward_fns) >= 2:
@@ -671,15 +696,80 @@ def _adjust_reward_weights(training_args: GRPOConfig, reward_fns: Sequence[Any],
             gail_weight = float(os.environ.get("GAIL_WEIGHT", "0.5"))
             training_args.reward_weights = list(weights) + [gail_weight]
         else:
-            raise ValueError(
-                f"reward_weights length ({len(weights)}) != number of rewards ({len(reward_fns)}). "
-                "Update YAML or set $GAIL_WEIGHT to auto-extend."
+            message = (
+                f"reward_weights length ({len(weights)}) != number of rewards "
+                f"({len(reward_fns)}). Update YAML or set $GAIL_WEIGHT to auto-extend."
             )
+            raise ValueError(message)
 
     if training_args.reward_weights:
         weights_clean = [max(0.0, float(w)) for w in training_args.reward_weights]
         total = sum(weights_clean) or 1.0
         training_args.reward_weights = [w / total for w in weights_clean]
+
+
+def _build_dataset_and_tokenizer(
+    script_args: GRPOScriptArguments,
+    training_args: GRPOConfig,
+    model_args: ModelConfig,
+) -> Tuple[DatasetDict, Any]:
+    raw_dataset = get_dataset(script_args)
+    tokenizer = get_tokenizer(model_args, training_args)
+    solution_key = getattr(script_args, "dataset_solution_column", None)
+    max_hist = int(os.environ.get("GRAIL_MAX_HISTORY", "12") or "12")
+    dataset = _prepare_dataset(
+        raw_dataset,
+        training_args.system_prompt,
+        solution_key,
+        max_hist,
+        script_args.dataset_train_split,
+    )
+    return dataset, tokenizer
+
+
+def _prepare_eval_dataset(
+    dataset: DatasetDict,
+    script_args: GRPOScriptArguments,
+    training_args: GRPOConfig,
+) -> Optional[Any]:
+    if not getattr(training_args, "do_eval", False):
+        return None
+    test_split = getattr(script_args, "dataset_test_split", None)
+    if not (test_split and test_split in dataset):
+        logger.warning(
+            "[grail] do_eval enabled but test split '%s' missing; disabling eval",
+            test_split,
+        )
+        training_args.do_eval = False
+        return None
+    eval_ds = dataset[test_split]
+    max_eval = getattr(training_args, "max_eval_samples", None)
+    if isinstance(max_eval, int) and 0 < max_eval < len(eval_ds):
+        return eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
+    return eval_ds
+
+
+def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
+    if not getattr(training_args, "do_eval", False) or eval_ds is None:
+        return
+    strategy = getattr(training_args, "evaluation_strategy", IntervalStrategy.NO)
+    if strategy == IntervalStrategy.NO:
+        logger.info("[grail] forcing evaluation_strategy='steps' because do_eval is enabled")
+        training_args.evaluation_strategy = IntervalStrategy.STEPS
+    eval_steps = getattr(training_args, "eval_steps", None)
+    if eval_steps is None or int(eval_steps) <= 0:
+        raise ValueError(
+            "eval_steps must be > 0 when do_eval is enabled. Set a positive value in the config."
+        )
+
+
+def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
+    resume = getattr(training_args, "resume_from_checkpoint", None)
+    if resume:
+        return resume
+    if os.path.isdir(training_args.output_dir):
+        return get_last_checkpoint(training_args.output_dir)
+    return None
 
 
 def main(
@@ -691,22 +781,9 @@ def main(
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
 
-    raw = get_dataset(script_args)
-    tokenizer = get_tokenizer(model_args, training_args)
-
-    solution_key = getattr(script_args, "dataset_solution_column", None)
-    max_hist = int(os.environ.get("GRAIL_MAX_HISTORY", "12") or "12")
-
-    ds = _prepare_dataset(
-        raw,
-        training_args.system_prompt,
-        solution_key,
-        max_hist,
-        script_args.dataset_train_split,
-    )
-
+    dataset, tokenizer = _build_dataset_and_tokenizer(script_args, training_args, model_args)
     reward_fns = _resolve_reward_functions(script_args, tokenizer)
-    use_gail = _maybe_enable_gail(training_args, reward_fns)
+    use_gail = _maybe_enable_gail(reward_fns)
     _adjust_reward_weights(training_args, reward_fns, use_gail)
 
     logger.info(
@@ -720,54 +797,20 @@ def main(
     model.config.return_dict_in_generate = True
 
     train_split = script_args.dataset_train_split
-    eval_ds = None
-    if getattr(training_args, "do_eval", False):
-        test_split = getattr(script_args, "dataset_test_split", None)
-        if test_split and test_split in ds:
-            eval_ds = ds[test_split]
-            max_eval = getattr(training_args, "max_eval_samples", None)
-            if isinstance(max_eval, int) and max_eval > 0 and len(eval_ds) > max_eval:
-                eval_ds = eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
-        else:
-            logger.warning(
-                "[grail] do_eval enabled but test split '%s' missing; disabling eval",
-                test_split,
-            )
-            eval_ds = None
-            training_args.do_eval = False
+    eval_ds = _prepare_eval_dataset(dataset, script_args, training_args)
+    _configure_eval(training_args, eval_ds)
 
-    if getattr(training_args, "do_eval", False) and eval_ds is not None:
-        # Force the step-based schedule when do_eval is true and guard against missing eval_steps.
-        if getattr(
-            training_args,
-            "evaluation_strategy",
-            IntervalStrategy.NO,
-        ) == IntervalStrategy.NO:
-            logger.info("[grail] forcing evaluation_strategy='steps' because do_eval is enabled")
-            training_args.evaluation_strategy = IntervalStrategy.STEPS
-        eval_steps = getattr(training_args, "eval_steps", None)
-        if eval_steps is None or int(eval_steps) <= 0:
-            raise ValueError(
-                "eval_steps must be > 0 when do_eval is enabled. "
-                "Set a positive value in the config."
-            )
-
-    # Stand up the GRPO trainer with optional discriminator shaping.
     trainer = GRPOTrainer(
         model=model,
         args=training_args,
         reward_funcs=reward_fns,
-        train_dataset=ds[train_split],
+        train_dataset=dataset[train_split],
         eval_dataset=eval_ds,
         peft_config=get_peft_config(model_args),
         processing_class=tokenizer,
     )
 
-    # Allow resume-from-checkpoint via CLI argument or automatic discovery.
-    resume_target = None
-    if os.path.isdir(training_args.output_dir):
-        resume_target = get_last_checkpoint(training_args.output_dir)
-    last_ckpt = training_args.resume_from_checkpoint or resume_target
+    last_ckpt = _resolve_checkpoint(training_args)
     train_result = trainer.train(resume_from_checkpoint=last_ckpt)
     trainer.log_metrics("train", train_result.metrics)
     trainer.save_metrics("train", train_result.metrics)

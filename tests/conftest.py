@@ -13,7 +13,11 @@ for path in (ROOT_DIR, SRC_DIR):
         sys.path.insert(0, path)
 
 from tests.helpers.datasets_stub import ensure_datasets_stub  # noqa: E402
+from tests.helpers.graphviz_stub import ensure_graphviz_stub  # noqa: E402
+from tests.helpers.openai_stub import ensure_openai_stub  # noqa: E402
 from tests.helpers.pandas_stub import ensure_pandas_stub  # noqa: E402
 
 ensure_datasets_stub()
 ensure_pandas_stub()
+ensure_graphviz_stub()
+ensure_openai_stub()

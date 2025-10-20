@@ -28,6 +28,10 @@ def ensure_datasets_stub() -> None:
         class Features(dict):  # type: ignore[type-arg]
             pass
 
+        class DownloadConfig:  # pragma: no cover - data container
+            def __init__(self, **_kwargs) -> None:
+                pass
+
         def _infer_feature(values: List[Any]) -> "Value | Sequence":
             for value in values:
                 if value is not None:
@@ -241,6 +245,7 @@ def ensure_datasets_stub() -> None:
         module.Features = Features
         module.Sequence = Sequence
         module.Value = Value
+        module.DownloadConfig = DownloadConfig
         module.concatenate_datasets = concatenate_datasets
         module.load_from_disk = load_from_disk
         module.load_dataset = load_dataset

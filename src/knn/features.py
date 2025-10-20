@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
+from common.text import canon_video_id, split_env_list
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
 
 try:  # pragma: no cover - optional dependency
@@ -35,17 +36,7 @@ DEFAULT_TITLE_DIRS = [
     f"{_TITLE_INDEX_ROOT}/trees_wage",
 ]
 
-YTID_RE = re.compile(r"([A-Za-z0-9_-]{11})")
 CANON_RE = re.compile(r"[^a-z0-9]+")
-
-
-def _split_env_list(value: str | None) -> List[str]:
-    """Return a list of tokens from a comma/space/colon separated string."""
-
-    if not value:
-        return []
-    tokens = [chunk.strip() for chunk in re.split(r"[:,\s]+", value) if chunk.strip()]
-    return tokens
 
 
 def _add_csv_file(path: str, collector: set[str]) -> None:
@@ -66,11 +57,11 @@ def _iter_csv_files_from_env() -> List[str]:
     """Return the set of CSV files discovered via environment settings."""
 
     files: set[str] = set()
-    for path in _split_env_list(os.environ.get("GRAIL_TITLE_CSVS")):
+    for path in split_env_list(os.environ.get("GRAIL_TITLE_CSVS")):
         _add_csv_file(path, files)
-    for directory in _split_env_list(os.environ.get("GRAIL_TITLE_DIRS")):
+    for directory in split_env_list(os.environ.get("GRAIL_TITLE_DIRS")):
         _collect_csv_from_directory(directory, files)
-    for pattern in _split_env_list(os.environ.get("GRAIL_TITLE_GLOB")):
+    for pattern in split_env_list(os.environ.get("GRAIL_TITLE_GLOB")):
         try:
             for candidate in glob(pattern):
                 _add_csv_file(candidate, files)
@@ -122,7 +113,7 @@ def _build_title_index() -> Dict[str, str]:
                 if not id_col or not title_col:
                     continue
                 for row in reader:
-                    video_id = _canon_vid(row.get(id_col, "") or "")
+                    video_id = canon_video_id(row.get(id_col, "") or "")
                     title = (row.get(title_col, "") or "").strip()
                     if video_id and title and video_id not in index:
                         index[video_id] = title
@@ -138,7 +129,7 @@ def title_for(video_id: str) -> Optional[str]:
     if _title_index_cache is None:
         _title_index_cache = _build_title_index()
         logging.info("[title-index] loaded %d titles from CSV", len(_title_index_cache))
-    return _title_index_cache.get(_canon_vid(video_id))
+    return _title_index_cache.get(canon_video_id(video_id))
 
 
 # ---------------------------------------------------------------------------
@@ -148,13 +139,6 @@ def title_for(video_id: str) -> Optional[str]:
 
 def _canon(text: str) -> str:
     return CANON_RE.sub("", (text or "").lower().strip())
-
-
-def _canon_vid(value: str) -> str:
-    if not isinstance(value, str):
-        return ""
-    match = YTID_RE.search(value)
-    return match.group(1) if match else value.strip()
 
 
 def _is_nanlike(value: Any) -> bool:
@@ -398,7 +382,7 @@ def _record_from_example(
     if not document:
         return None
     video_id = str(example.get(SOLUTION_COLUMN) or "")
-    label_id = _canon_vid(video_id)
+    label_id = canon_video_id(video_id)
     label_title = title_for(video_id) or ""
     return document, label_id, label_title
 

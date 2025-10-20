@@ -37,12 +37,10 @@ logger = logging.getLogger(__name__)
 
 if is_e2b_available():
     from e2b_code_interpreter import AsyncSandbox
-    from e2b_code_interpreter.models import Execution
 
     from .routed_sandbox import RoutedSandbox
 else:
     AsyncSandbox = None
-    Execution = None
     RoutedSandbox = None
 
 if is_morph_available():
@@ -56,7 +54,7 @@ else:
     RoutedMorphSandbox = None
 
 
-class CodeExecutionProvider(abc.ABC):
+class CodeExecutionProvider(abc.ABC):  # pylint: disable=too-few-public-methods
     """Abstract base class for code execution providers."""
 
     @abc.abstractmethod
@@ -162,7 +160,7 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
 
         return rewards
 
-    async def _run_script(
+    async def _run_script(  # pylint: disable=too-many-branches
         self,
         script: str,
         languages: List[str],
@@ -195,7 +193,7 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
             except asyncio.TimeoutError:
                 logger.warning("E2B sandbox operation timed out")
                 return 0.0
-            except Exception as error:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 sandbox_id = getattr(sandbox, "sandbox_id", "unknown")
                 logger.exception(
                     "Error in `_run_script` from E2B sandbox ID %s",
@@ -206,7 +204,7 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
                 if sandbox is not None:
                     try:
                         await sandbox.kill()
-                    except Exception as error:  # pylint: disable=broad-exception-caught
+                    except Exception:  # pylint: disable=broad-exception-caught
                         sandbox_id = getattr(sandbox, "sandbox_id", "unknown")
                         logger.exception(
                             "Error from E2B executor kill with sandbox ID %s",
@@ -255,8 +253,9 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
         try:
             self.client = MorphCloudClient(api_key=self.api_key)
             self.Sandbox = Sandbox
-        except ImportError as e:
-            raise ImportError(f"Required MorphCloud dependencies not installed: {e}")
+        except ImportError as exc:
+            msg = "Required MorphCloud dependencies not installed"
+            raise ImportError(msg) from exc
 
     def execute_scripts(self, scripts: List[str], languages: List[str]) -> List[float]:
         """Execute scripts using MorphCloud Sandbox API.
@@ -286,15 +285,13 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
                     except (ValueError, AttributeError):
                         rewards.append(0.0)
                 return rewards
-            except Exception as error:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("Error from MorphCloud router")
                 return [0.0] * len(scripts)
 
-        import asyncio
-
         try:
             rewards = asyncio.run(self._run_async(scripts, languages, self.num_parallel))
-        except Exception as error:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Error from MorphCloud executor")
             rewards = [0.0] * len(scripts)
 
@@ -415,18 +412,15 @@ def get_provider(provider_type: str = "e2b", **kwargs) -> CodeExecutionProvider:
     num_parallel = kwargs.pop("num_parallel", 2)
 
     if provider_type == "e2b":
-        # Extract E2B-specific arguments
         e2b_router_url = kwargs.pop("e2b_router_url", None)
         return E2BProvider(
             num_parallel=num_parallel,
             e2b_router_url=e2b_router_url,
         )
-    elif provider_type == "morph":
-        # Extract Morph-specific arguments
+    if provider_type == "morph":
         morph_router_url = kwargs.pop("morph_router_url", None)
         return MorphProvider(
             num_parallel=num_parallel,
             morph_router_url=morph_router_url,
         )
-    else:
-        raise ValueError(f"Unknown provider type: {provider_type}")
+    raise ValueError(f"Unknown provider type: {provider_type}")

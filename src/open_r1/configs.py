@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Configuration helpers for open_r1 training scripts."""
+
 from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
@@ -72,7 +74,12 @@ class ScriptArguments(trl.ScriptArguments):
     )
     dataset_mixture: Optional[dict[str, Any]] = field(
         default=None,
-        metadata={"help": "Configuration for creating dataset mixtures with advanced options like shuffling."},
+        metadata={
+            "help": (
+                "Configuration for creating dataset mixtures with advanced options "
+                "like shuffling."
+            )
+        },
     )
 
     def __post_init__(self):
@@ -110,22 +117,27 @@ class ScriptArguments(trl.ScriptArguments):
             )
 
             # Check that column names are consistent across all dataset configs
-            columns_sets = [set(dataset.columns) for dataset in datasets_list if dataset.columns is not None]
+            columns_sets = [
+                set(dataset.columns)
+                for dataset in datasets_list
+                if dataset.columns is not None
+            ]
             if columns_sets:
                 first_columns = columns_sets[0]
                 if not all(columns == first_columns for columns in columns_sets):
                     raise ValueError(
-                        "Column names must be consistent across all dataset configurations in a mixture. "
+                        "Column names must be consistent across all dataset configurations "
+                        "in a mixture. "
                         f"Found different column sets: {[list(cols) for cols in columns_sets]}"
                     )
 
 
-# TODO: add the shared options with a mixin to reduce code duplication
+# NOTE: Consider adding shared options with a mixin to reduce code duplication.
 @dataclass
 class GRPOConfig(trl.GRPOConfig):
-    """
-    args for callbacks, benchmarks etc
-    """
+    """Arguments for callbacks, benchmarks, and related settings."""
+
+    # pylint: disable=too-many-instance-attributes
 
     benchmarks: list[str] = field(
         default_factory=lambda: [],
@@ -135,13 +147,26 @@ class GRPOConfig(trl.GRPOConfig):
         default_factory=lambda: [],
         metadata={"help": "The callbacks to run during training."},
     )
-    chat_template: Optional[str] = field(default=None, metadata={"help": "The chat template to use."})
-    hub_model_revision: Optional[str] = field(
-        default="main", metadata={"help": "The Hub model branch to push the model to."}
+    chat_template: Optional[str] = field(
+        default=None,
+        metadata={"help": "The chat template to use."},
     )
-    num_completions_to_print: int = field(default=0, metadata={"help": "Number of completions to print."})
-    overwrite_hub_revision: bool = field(default=False, metadata={"help": "Whether to overwrite the Hub revision."})
-    push_to_hub_revision: bool = field(default=False, metadata={"help": "Whether to push to a Hub revision/branch."})
+    hub_model_revision: Optional[str] = field(
+        default="main",
+        metadata={"help": "The Hub model branch to push the model to."},
+    )
+    num_completions_to_print: int = field(
+        default=0,
+        metadata={"help": "Number of completions to print."},
+    )
+    overwrite_hub_revision: bool = field(
+        default=False,
+        metadata={"help": "Whether to overwrite the Hub revision."},
+    )
+    push_to_hub_revision: bool = field(
+        default=False,
+        metadata={"help": "Whether to push to a Hub revision/branch."},
+    )
     system_prompt: Optional[str] = field(
         default=None,
         metadata={"help": "The optional system prompt to use."},
@@ -149,27 +174,30 @@ class GRPOConfig(trl.GRPOConfig):
     wandb_log_unique_prompts: bool = field(
         default=True,
         metadata={
-            "help": ("Whether to log the unique prompts to wandb. This will create a new run for each unique prompt.")
+            "help": (
+                "Whether to log the unique prompts to wandb. This will create a new run "
+                "for each unique prompt."
+            )
         },
     )
     wandb_entity: Optional[str] = field(
         default=None,
-        metadata={"help": ("The entity to store runs under.")},
+        metadata={"help": "The entity to store runs under."},
     )
     wandb_project: Optional[str] = field(
         default=None,
-        metadata={"help": ("The project to store runs under.")},
+        metadata={"help": "The project to store runs under."},
     )
     wandb_run_group: Optional[str] = field(
         default=None,
-        metadata={"help": ("The group to store runs under.")},
+        metadata={"help": "The group to store runs under."},
     )
-    
+
 @dataclass
 class SFTConfig(trl.SFTConfig):
-    """
-    args for callbacks, benchmarks etc
-    """
+    """Arguments for callbacks, benchmarks, and related settings."""
+
+    # pylint: disable=too-many-instance-attributes
 
     benchmarks: list[str] = field(
         default_factory=lambda: [],
@@ -179,7 +207,10 @@ class SFTConfig(trl.SFTConfig):
         default_factory=lambda: [],
         metadata={"help": "The callbacks to run during training."},
     )
-    chat_template: Optional[str] = field(default=None, metadata={"help": "The chat template to use."})
+    chat_template: Optional[str] = field(
+        default=None,
+        metadata={"help": "The chat template to use."},
+    )
     system_prompt: Optional[str] = field(
         default=None,
         metadata={"help": "The optional system prompt to use for benchmarking."},
@@ -188,19 +219,25 @@ class SFTConfig(trl.SFTConfig):
         default="main",
         metadata={"help": "The Hub model branch to push the model to."},
     )
-    overwrite_hub_revision: bool = field(default=False, metadata={"help": "Whether to overwrite the Hub revision."})
-    push_to_hub_revision: bool = field(default=False, metadata={"help": "Whether to push to a Hub revision/branch."})
+    overwrite_hub_revision: bool = field(
+        default=False,
+        metadata={"help": "Whether to overwrite the Hub revision."},
+    )
+    push_to_hub_revision: bool = field(
+        default=False,
+        metadata={"help": "Whether to push to a Hub revision/branch."},
+    )
     wandb_entity: Optional[str] = field(
         default=None,
-        metadata={"help": ("The entity to store runs under.")},
+        metadata={"help": "The entity to store runs under."},
     )
     wandb_project: Optional[str] = field(
         default=None,
-        metadata={"help": ("The project to store runs under.")},
+        metadata={"help": "The project to store runs under."},
     )
     wandb_run_group: Optional[str] = field(
         default=None,
-        metadata={"help": ("The group to store runs under.")},
+        metadata={"help": "The group to store runs under."},
     )
 
 
@@ -211,7 +248,10 @@ class GRPOScriptArguments(ScriptArguments):
 
     Args:
         reward_funcs (`list[str]`):
-            List of reward functions. Possible values: 'accuracy', 'format', 'reasoning_steps', 'cosine', 'repetition_penalty', 'length', 'tag_count', 'code', 'ioi_code', 'code_format', 'soft_overlong_punishment'.
+            List of reward functions.
+            Possible values: 'accuracy', 'format', 'reasoning_steps', 'cosine',
+            'repetition_penalty', 'length', 'tag_count', 'code', 'ioi_code',
+            'code_format', 'soft_overlong_punishment'.
         cosine_min_value_wrong (`float`):
             Minimum reward for cosine scaling for wrong answers.
         cosine_max_value_wrong (`float`):
@@ -230,6 +270,7 @@ class GRPOScriptArguments(ScriptArguments):
             Minimum number of tokens in completion.
     """
 
+    # pylint: disable=too-many-instance-attributes
     reward_funcs: list[str] = field(
         default_factory=lambda: ["accuracy", "format", "tag_count"],
         metadata={

@@ -320,9 +320,12 @@ def format_reward(
     return gated
 
 def tag_count_reward(completions, **kwargs) -> list[float]:
-    """Reward function that checks if we produce the desired number of think and answer tags associated with `format_reward()`.
+    """
+    Reward function that checks if we produce the desired number of think and
+    answer tags associated with `format_reward()`.
 
-    Adapted from: https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90
+    Adapted from:
+    https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90
     """
     _ = kwargs
 
@@ -437,6 +440,8 @@ def get_cosine_scaled_reward(
     max_value_correct: float = 1.0,
     max_len: int = 1000,
 ):
+    """Create a cosine-scaled reward function parameterised by length."""
+
     def cosine_scaled_reward(completions, solution, **kwargs):
         """Reward function that scales based on completion length using a cosine schedule.
 
@@ -454,6 +459,7 @@ def get_cosine_scaled_reward(
             max_value_correct: Maximum reward for correct answers
             max_len: Maximum length for scaling
         """
+        _ = kwargs
         contents = [completion[0]["content"] for completion in completions]
         rewards = []
 
@@ -461,29 +467,16 @@ def get_cosine_scaled_reward(
             gold_parsed = parse(
                 sol,
                 extraction_mode="first_match",
-                extraction_config=[LatexExtractionConfig()],
+                extraction_config=DEFAULT_EXTRACTION_CONFIG,
             )
-            if len(gold_parsed) == 0:
+            if not gold_parsed:
                 rewards.append(1.0)  # Skip unparseable examples
-                print("Failed to parse gold solution: ", sol)
+                print("Failed to parse gold solution:", sol)
                 continue
 
             answer_parsed = parse(
                 content,
-                extraction_config=[
-                    LatexExtractionConfig(
-                        normalization_config=NormalizationConfig(
-                            nits=False,
-                            malformed_operators=False,
-                            basic_latex=True,
-                            equations=True,
-                            boxed=True,
-                            units=True,
-                        ),
-                        boxed_match_priority=0,
-                        try_extract_without_anchor=False,
-                    )
-                ],
+                extraction_config=LEN_EXTRACTION_CONFIG,
                 extraction_mode="first_match",
             )
 
@@ -534,15 +527,13 @@ def get_repetition_penalty_reward(
             return zip(*[words[i:] for i in range(n)]), words
 
     elif language == "zh":
-        from transformers.utils.import_utils import _is_package_available
-
         if not _is_package_available("jieba"):
             raise ValueError("Please install jieba for Chinese repetition reward")
 
-        import jieba  # local import keeps EN fast
+        jieba_module = importlib.import_module("jieba")
 
         def zipngram(text: str, n: int):
-            seg_list = list(jieba.cut(text))
+            seg_list = list(jieba_module.cut(text))
             return zip(*[seg_list[i:] for i in range(n)]), seg_list
 
     else:
@@ -580,6 +571,7 @@ def get_repetition_penalty_reward(
         Returns:
             list[float]  (one reward per completion)
         """
+        _ = kwargs
         rewards = []
         for raw in completions:
             text = _extract_content(raw)
@@ -615,63 +607,67 @@ def _init_event_loop():
     return loop
 
 
-def ioi_code_reward(completions, test_batch_size: int = 1, provider_type: str = "piston", **kwargs) -> list[float]:
-    """Reward function that evaluates IOI problems using a specified execution client.
+def ioi_code_reward(
+    completions,
+    test_batch_size: int = 1,
+    provider_type: str = "piston",
+    **kwargs,
+) -> list[float]:
+    """Evaluate IOI problems using the configured execution client."""
 
-    Assumes the dataset has the same format as hf.co/datasets/open-r1/ioi
-
-    Args:
-        completions: List of model completions to evaluate
-        test_batch_size: Evaluate these many test cases in parallel, then check if any of them failed (0 score):
-                       if so stop evaluating; otherwise continue with the next batch of test cases.
-        provider_type: The execution provider to use (default: "piston"). Supported values: "piston", "morph"
-        **kwargs: Additional arguments passed from the dataset
-    """
-    # Get the appropriate client based on provider_type
     if provider_type == "morph":
         execution_client = get_morph_client_from_env()
     else:
         # for info on setting up piston workers, see slurm/piston/README.md
         execution_client = get_piston_client_from_env()
 
-    code_snippets = [
-        # note: grading is automatically skipped if no code is extracted
-        add_includes(extract_code(completion[-1]["content"], "cpp"), problem_id)
-        for completion, problem_id in zip(completions, kwargs["id"])
+    code_snippets = []
+    for completion, problem_id in zip(completions, kwargs["id"]):
+        snippet = extract_code(completion[-1]["content"], "cpp")
+        code_snippets.append(add_includes(snippet, problem_id))
+
+    problems_data = [
+        dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values())
     ]
 
-    async def run_catch_exceptions(task):
-        try:
-            return await task
-        except Exception as e:
-            print(f"Error from {provider_type} worker: {e}")
-            return SubtaskResult()
-
-    problems_data = [dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values())]
-
     loop = _init_event_loop()
-    evals = [
+    eval_tasks = [
         loop.create_task(
-            run_catch_exceptions(
-                score_subtask(
-                    execution_client,
-                    problem_data,
-                    code,
-                    test_batch_size=test_batch_size,
-                )
+            score_subtask(
+                execution_client,
+                problem_data,
+                code,
+                test_batch_size=test_batch_size,
             )
         )
         for problem_data, code in zip(problems_data, code_snippets)
     ]
-    results = loop.run_until_complete(asyncio.gather(*evals))
 
-    return [result.score for result in results]
+    gathered = loop.run_until_complete(
+        asyncio.gather(*eval_tasks, return_exceptions=True)
+    )
+
+    safe_results: List[SubtaskResult] = []
+    for result in gathered:
+        if isinstance(result, SubtaskResult):
+            safe_results.append(result)
+            continue
+
+        if isinstance(result, BaseException):
+            print(f"Error from {provider_type} worker: {result}")
+            safe_results.append(SubtaskResult())
+            continue
+
+        safe_results.append(SubtaskResult(score=float(result)))
+
+    return [result.score for result in safe_results]
 
 
 def extract_code(completion: str, language: str = "python") -> str:
+    """Return the last fenced code block for the requested language."""
     pattern = re.compile(rf"```{language}\n(.*?)```", re.DOTALL)
     matches = pattern.findall(completion)
-    extracted_answer = matches[-1] if len(matches) >= 1 else ""
+    extracted_answer = matches[-1] if matches else ""
     return extracted_answer
 
 
@@ -681,7 +677,8 @@ def binary_code_reward(
     provider_type: str = "e2b",
     enforce_same_language: bool = False,
     **kwargs,
-) -> list[float]:
+) -> list[Optional[float]]:
+    """Convert execution rewards into binary success scores."""
     rewards = code_reward(
         completions,
         num_parallel=num_parallel,
@@ -689,7 +686,6 @@ def binary_code_reward(
         enforce_same_language=enforce_same_language,
         **kwargs,
     )
-    BINARY_THRESHOLD = 0.99
 
     output = []
     for reward in rewards:
@@ -742,9 +738,13 @@ def code_reward(
 
             output = process.stdout.strip()
 
-            # TODO: implement a proper validator to compare against ground truth. For now we just check for exact string match on each line of stdout.
+            # TODO: replace with a validator that compares structured
+            #       outputs rather than relying on exact stdout matches.
             all_correct = True
-            for line1, line2 in zip(output.split('\\n'), case['output'].split('\\n')):
+            for line1, line2 in zip(
+                output.split('\\n'),
+                case["output"].split('\\n'),
+            ):
                 all_correct = all_correct and line1.strip() == line2.strip()
 
             if all_correct:
@@ -759,22 +759,25 @@ def code_reward(
     evaluate_code(code_snippet, test_cases)
     """
 
-    code_snippets = [extract_code(completion[-1]["content"]) for completion in completions]
+    code_snippets = [
+        extract_code(completion[-1]["content"]) for completion in completions
+    ]
     verification_info = kwargs["verification_info"]
 
-    template = evaluation_script_template
-
-    scripts = [
-        template.format(code=json.dumps(code), test_cases=json.dumps(json.dumps(info["test_cases"])))
-        for code, info in zip(code_snippets, verification_info)
-    ]
+    scripts: List[str] = []
+    for code, info in zip(code_snippets, verification_info):
+        script = evaluation_script_template.format(
+            code=json.dumps(code),
+            test_cases=json.dumps(json.dumps(info["test_cases"])),
+        )
+        scripts.append(script)
 
     language = verification_info[0]["language"]
 
     if enforce_same_language:
         all_same_language = all(v["language"] == language for v in verification_info)
         if not all_same_language:
-            raise ValueError("All verification_info must have the same language", verification_info)
+            raise ValueError("verification_info entries must share the same language")
 
     execution_provider = get_provider(
         provider_type=provider_type,
@@ -782,20 +785,27 @@ def code_reward(
         **kwargs,
     )
 
-    return execution_provider.execute_scripts(scripts, ["python"] * len(scripts))
+    return execution_provider.execute_scripts(
+        scripts,
+        ["python"] * len(scripts),
+    )
 
 
 def get_code_format_reward(language: str = "python"):
     """Format reward function specifically for code responses.
 
     Args:
-        language: Programming language supported by E2B https://e2b.dev/docs/code-interpreting/supported-languages
+        language: Programming language supported by E2B.
     """
     pattern = rf"^<think>\n.*?\n</think>\n<answer>\n.*?```{language}.*?```.*?\n</answer>$"
 
     def code_format_reward(completions, **kwargs):
+        _ = kwargs
         completion_contents = [completion[0]["content"] for completion in completions]
-        matches = [re.match(pattern, content, re.DOTALL | re.MULTILINE) for content in completion_contents]
+        matches = [
+            re.match(pattern, content, re.DOTALL | re.MULTILINE)
+            for content in completion_contents
+        ]
         return [1.0 if match else 0.0 for match in matches]
 
     return code_format_reward
@@ -803,23 +813,30 @@ def get_code_format_reward(language: str = "python"):
 
 def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
     """
-    Reward function that penalizes overlong completions. It is used to penalize overlong completions,
-    but not to reward shorter completions. Reference: Eq. (13) from the DAPO paper (https://huggingface.co/papers/2503.14476)
+    Penalise overlong completions without rewarding shorter ones.
+
+    Reference: Eq. (13) from the DAPO paper
+    (https://huggingface.co/papers/2503.14476)
 
     Args:
-        max_completion_len: Maximum length of the completion
-        soft_punish_cache: Minimum length of the completion. If set to 0, no minimum length is applied.
+        max_completion_len: Maximum length of the completion.
+        soft_punish_cache: Buffer length before the hard penalty applies.
     """
 
-    def soft_overlong_punishment_reward(completion_ids: list[list[int]], **kwargs) -> list[float]:
+    def soft_overlong_punishment_reward(
+        completion_ids: list[list[int]],
+        **kwargs,
+    ) -> list[float]:
         """Reward function that penalizes overlong completions."""
+        _ = kwargs
         rewards = []
         for ids in completion_ids:
             completion_length = len(ids)
             if completion_length <= max_completion_len - soft_punish_cache:
                 rewards.append(0.0)
             elif max_completion_len - soft_punish_cache < completion_length <= max_completion_len:
-                rewards.append((max_completion_len - soft_punish_cache - completion_length) / soft_punish_cache)
+                delta = max_completion_len - soft_punish_cache - completion_length
+                rewards.append(delta / soft_punish_cache)
             else:
                 rewards.append(-1.0)
         return rewards
@@ -827,11 +844,13 @@ def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
     return soft_overlong_punishment_reward
 
 def get_reward_funcs(
-        script_args,
-        ref_model: transformers.PreTrainedModel,
-        tokenizer: transformers.PreTrainedTokenizerBase,
-    ) -> list[Callable]:
-    REWARD_FUNCS_REGISTRY = {
+    script_args,
+    _ref_model: transformers.PreTrainedModel,
+    _tokenizer: transformers.PreTrainedTokenizerBase,
+) -> list[Callable]:
+    """Assemble the reward functions requested by the training script."""
+    enforce_same_language = getattr(script_args, "enforce_same_language", False)
+    reward_funcs_registry = {
         "pure_accuracy_reward": pure_accuracy_reward,
         "cosine": get_cosine_scaled_reward(
             min_value_wrong=script_args.cosine_min_value_wrong,
@@ -850,7 +869,7 @@ def get_reward_funcs(
                 code_reward,
                 num_parallel=script_args.parallel_code_exec_per_proc,
                 provider_type=script_args.code_provider,
-                enforce_same_language=getattr(script_args, "enforce_same_language", False),
+                enforce_same_language=enforce_same_language,
             ),
             code_reward,
         ),
@@ -859,7 +878,7 @@ def get_reward_funcs(
                 binary_code_reward,
                 num_parallel=script_args.parallel_code_exec_per_proc,
                 provider_type=script_args.code_provider,
-                enforce_same_language=getattr(script_args, "enforce_same_language", False),
+                enforce_same_language=enforce_same_language,
             ),
             binary_code_reward,
         ),
@@ -879,5 +898,5 @@ def get_reward_funcs(
         ),
     }
 
-    reward_funcs = [REWARD_FUNCS_REGISTRY[func] for func in script_args.reward_funcs]
+    reward_funcs = [reward_funcs_registry[func] for func in script_args.reward_funcs]
     return reward_funcs

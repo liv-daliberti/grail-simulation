@@ -63,14 +63,20 @@
     <span class="n">issues_in_dataset</span><span class="p">,</span>
     <span class="n">load_dataset_source</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_slate_items</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">Word2VecConfig</span><span class="p">,</span> <span class="n">extract_slate_items</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.index</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SlateQueryConfig</span><span class="p">,</span>
     <span class="n">build_tfidf_index</span><span class="p">,</span>
+    <span class="n">build_word2vec_index</span><span class="p">,</span>
     <span class="n">knn_predict_among_slate_multi</span><span class="p">,</span>
     <span class="n">load_tfidf_index</span><span class="p">,</span>
+    <span class="n">load_word2vec_index</span><span class="p">,</span>
     <span class="n">save_tfidf_index</span><span class="p">,</span>
+    <span class="n">save_word2vec_index</span><span class="p">,</span>
 <span class="p">)</span>
+
+
+<span class="n">BUCKET_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_k_values</span><span class="p">(</span><span class="n">k_default</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sweep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
@@ -155,9 +161,132 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return raw and normalised area under the accuracy vs k curve.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">k_values</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="n">sorted_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">})</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_k</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">value</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">sorted_k</span><span class="p">))</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sorted_k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sorted_k</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="mf">1.0</span>
+    <span class="k">return</span> <span class="n">area</span><span class="p">,</span> <span class="n">area</span> <span class="o">/</span> <span class="n">span</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalise_feature_space</span><span class="p">(</span><span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the validated feature space identifier.&quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature_space</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_word2vec_config_from_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Word2VecConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Word2Vec configuration derived from CLI arguments.&quot;&quot;&quot;</span>
+
+    <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">Word2VecConfig</span><span class="p">()</span>
+    <span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span> <span class="k">else</span> <span class="n">default_cfg</span><span class="o">.</span><span class="n">model_dir</span>
+    <span class="k">return</span> <span class="n">Word2VecConfig</span><span class="p">(</span>
+        <span class="n">vector_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_size</span><span class="p">),</span>
+        <span class="n">window</span><span class="o">=</span><span class="n">default_cfg</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>
+        <span class="n">min_count</span><span class="o">=</span><span class="n">default_cfg</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="n">default_cfg</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+        <span class="n">model_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_index_for_issue</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an index for the requested feature space and handle persistence.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Building TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">build_tfidf_index</span><span class="p">(</span>
+            <span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">max_train</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_max_train</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_seed</span><span class="p">,</span>
+            <span class="n">max_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">:</span>
+            <span class="n">save_tfidf_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">index</span>
+
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Building Word2Vec index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">_word2vec_config_from_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">build_word2vec_index</span><span class="p">(</span>
+            <span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">max_train</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_max_train</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_seed</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">:</span>
+            <span class="n">save_word2vec_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">index</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_index_for_issue</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a persisted index for the requested feature space.&quot;&quot;&quot;</span>
+
+    <span class="n">load_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Loading TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">load_tfidf_index</span><span class="p">(</span><span class="n">load_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Loading Word2Vec index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">load_word2vec_index</span><span class="p">(</span><span class="n">load_path</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_or_load_index</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the KNN index for ``issue_slug`` based on CLI arguments.&quot;&quot;&quot;</span>
+
+    <span class="n">feature_space</span> <span class="o">=</span> <span class="n">_normalise_feature_space</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;feature_space&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_index</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_fit_index_for_issue</span><span class="p">(</span>
+            <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+            <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_load_index_for_issue</span><span class="p">(</span>
+            <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+            <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set either --fit_index or --load_index to obtain a KNN index&quot;</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="run_eval">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.run_eval">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the KNN baseline across the requested issues.&quot;&quot;&quot;</span>
 
     <span class="n">os_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
@@ -192,30 +321,23 @@
             <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">knn_text_fields</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">]</span>
-        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_index</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Building TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
-            <span class="n">knn_index</span> <span class="o">=</span> <span class="n">build_tfidf_index</span><span class="p">(</span>
-                <span class="n">train_ds</span><span class="p">,</span>
-                <span class="n">max_train</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_max_train</span><span class="p">,</span>
-                <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_seed</span><span class="p">,</span>
-                <span class="n">max_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">:</span>
-                <span class="n">save_tfidf_index</span><span class="p">(</span><span class="n">knn_index</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Loading TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
-            <span class="n">knn_index</span> <span class="o">=</span> <span class="n">load_tfidf_index</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set either --fit_index or --load_index to obtain a KNN index&quot;</span><span class="p">)</span>
+        <span class="n">knn_index</span> <span class="o">=</span> <span class="n">_build_or_load_index</span><span class="p">(</span>
+            <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">feature_space</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">knn_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;feature_space&quot;</span><span class="p">,</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
         <span class="n">evaluate_issue</span><span class="p">(</span>
             <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
             <span class="n">dataset_source</span><span class="o">=</span><span class="n">dataset_source</span><span class="p">,</span>
+            <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
             <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
             <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
             <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -223,150 +345,33 @@
 
 <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_issue</span><span class="p">(</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_issue_outputs</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">eval_ds</span><span class="p">,</span>
-    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">args</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">bucket_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">per_k_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.&quot;&quot;&quot;</span>
-    <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">)))</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[:</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist evaluation artefacts and per-k directories for an issue.&quot;&quot;&quot;</span>
 
-    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">buckets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
-    <span class="n">pos_stats</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
-    <span class="n">corr_pos</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
-    <span class="n">seen_opts</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
-    <span class="n">elig_opts</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
-    <span class="n">corr_opts</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
-
-    <span class="n">eligible_by_k</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">}</span>
-    <span class="n">correct_by_k</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">}</span>
-
-    <span class="n">seen_single</span> <span class="o">=</span> <span class="n">seen_multi</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">elig_single</span> <span class="o">=</span> <span class="n">elig_multi</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">corr_single</span> <span class="o">=</span> <span class="n">corr_multi</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="n">all_gold_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">all_n_options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-    <span class="n">query_config</span> <span class="o">=</span> <span class="n">SlateQueryConfig</span><span class="p">(</span>
-        <span class="n">text_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
-        <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">metric</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_metric</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="n">example</span> <span class="o">=</span> <span class="n">eval_ds</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">row_index</span><span class="p">)]</span>
-        <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-        <span class="n">n_options</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)</span>
-        <span class="n">n_bucket</span> <span class="o">=</span> <span class="n">bin_nopts</span><span class="p">(</span><span class="n">n_options</span><span class="p">)</span>
-        <span class="n">seen_opts</span><span class="p">[</span><span class="n">n_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="n">position_raw</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">position</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">position_raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">position_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-            <span class="n">position</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_pos</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">pos_stats</span><span class="p">[</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="n">gold_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">gold_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">slate_pairs</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">option_index</span><span class="p">,</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">vid</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">gold_raw</span> <span class="ow">and</span> <span class="p">(</span><span class="n">gold_raw</span> <span class="o">==</span> <span class="n">vid</span> <span class="ow">or</span> <span class="n">canon</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span> <span class="o">==</span> <span class="n">canon</span><span class="p">(</span><span class="n">title</span><span class="p">)):</span>
-                    <span class="n">gold_index</span> <span class="o">=</span> <span class="n">option_index</span>
-                    <span class="k">break</span>
-
-        <span class="n">predictions</span> <span class="o">=</span> <span class="n">knn_predict_among_slate_multi</span><span class="p">(</span>
-            <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
-            <span class="n">example</span><span class="o">=</span><span class="n">example</span><span class="p">,</span>
-            <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
-            <span class="n">config</span><span class="o">=</span><span class="n">query_config</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">eligible</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_options</span> <span class="o">&gt;</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
-            <span class="n">elig_opts</span><span class="p">[</span><span class="n">n_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">gold_hist</span><span class="p">[</span><span class="n">gold_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">gold_hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gold_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">all_gold_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gold_index</span><span class="p">)</span>
-            <span class="n">all_n_options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_options</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">n_options</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">elig_single</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">elig_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="n">n_options</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">seen_single</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">elif</span> <span class="n">n_options</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">seen_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
-                <span class="n">eligible_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">:</span>
-                    <span class="n">correct_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;predictions_by_k&quot;</span><span class="p">:</span> <span class="n">predictions</span><span class="p">,</span>
-                <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">gold_index</span><span class="p">),</span>
-                <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_options</span><span class="p">),</span>
-                <span class="s2">&quot;n_options_bucket&quot;</span><span class="p">:</span> <span class="n">n_bucket</span><span class="p">,</span>
-                <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">eligible</span><span class="p">),</span>
-                <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">position</span><span class="p">),</span>
-                <span class="s2">&quot;position_bucket&quot;</span><span class="p">:</span> <span class="n">pos_bucket</span><span class="p">,</span>
-                <span class="s2">&quot;issue_value&quot;</span><span class="p">:</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">),</span>
-            <span class="p">}</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">idx</span> <span class="o">%</span> <span class="mi">25</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
-            <span class="n">interim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-                <span class="p">(</span><span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">eligible_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="n">eligible_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span>
-                <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;[eval][</span><span class="si">%s</span><span class="s2">] </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">  interim-best-acc=</span><span class="si">%.3f</span><span class="s2">  </span><span class="si">%.1f</span><span class="s2">s&quot;</span><span class="p">,</span>
-                <span class="n">issue_slug</span><span class="p">,</span>
-                <span class="n">idx</span><span class="p">,</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
-                <span class="n">interim</span><span class="p">,</span>
-                <span class="n">elapsed</span><span class="p">,</span>
-            <span class="p">)</span>
-
-    <span class="n">accuracy_by_k</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">eligible_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">}</span>
-    <span class="n">best_k</span> <span class="o">=</span> <span class="n">select_best_k</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
     <span class="n">best_accuracy</span> <span class="o">=</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">eligible_overall</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">eligible_overall</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">per_k_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]:</span>
-            <span class="k">continue</span>
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">prediction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span> <span class="o">==</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;gold_index&quot;</span><span class="p">]:</span>
-            <span class="n">corr_pos</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;position_bucket&quot;</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">corr_opts</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options_bucket&quot;</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">corr_single</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">corr_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-
-    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
-    <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">out_jsonl</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;knn_eval_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.jsonl&quot;</span>
-    <span class="n">metrics_json</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;knn_eval_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">_metrics.json&quot;</span>
+    <span class="n">issue_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
+    <span class="n">issue_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out_jsonl</span> <span class="o">=</span> <span class="n">issue_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;knn_eval_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.jsonl&quot;</span>
+    <span class="n">metrics_json</span> <span class="o">=</span> <span class="n">issue_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;knn_eval_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">_metrics.json&quot;</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_jsonl</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
@@ -388,42 +393,50 @@
             <span class="p">}</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">pos_stats_out</span> <span class="o">=</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">pos_stats</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">buckets</span><span class="p">}</span>
+    <span class="n">pos_stats_out</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;position_seen&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span>
+    <span class="p">}</span>
     <span class="n">accuracy_opts_out</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">elig_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">buckets</span>
+        <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span>
+            <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_correct&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">],</span>
+            <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_eligible&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span>
     <span class="p">}</span>
 
     <span class="n">gold_distribution</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
-    <span class="k">if</span> <span class="n">gold_hist</span><span class="p">:</span>
-        <span class="n">top_idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">baseline_correct</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">gi</span> <span class="ow">in</span> <span class="n">all_gold_indices</span> <span class="k">if</span> <span class="n">gi</span> <span class="o">==</span> <span class="n">top_idx</span><span class="p">)</span>
-        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">baseline_correct</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">gold_hist</span> <span class="ow">and</span> <span class="n">eligible_overall</span><span class="p">:</span>
+        <span class="n">top_idx</span><span class="p">,</span> <span class="n">top_count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">top_count</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">top_idx</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="n">random_baseline</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_n_options</span><span class="p">]))</span>
-        <span class="k">if</span> <span class="n">all_n_options</span>
-        <span class="k">else</span> <span class="mf">0.0</span>
-    <span class="p">)</span>
+    <span class="n">random_sum</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rand_inverse_sum&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="n">random_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rand_inverse_count&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">random_baseline</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">random_sum</span><span class="p">,</span> <span class="n">random_count</span><span class="p">)</span>
     <span class="n">accuracy_by_k_serializable</span> <span class="o">=</span> <span class="p">{</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span>
     <span class="p">}</span>
 
-    <span class="n">reports_dir</span> <span class="o">=</span> <span class="n">resolve_reports_dir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">))</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span>
+    <span class="n">reports_dir</span> <span class="o">=</span> <span class="n">resolve_reports_dir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">))</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span> <span class="o">/</span> <span class="n">feature_space</span>
     <span class="n">reports_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">elbow_path</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;elbow_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">.png&quot;</span>
     <span class="n">plot_elbow</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">,</span> <span class="n">best_k</span><span class="p">,</span> <span class="n">elbow_path</span><span class="p">)</span>
 
+    <span class="n">curve_json</span> <span class="o">=</span> <span class="n">issue_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;knn_curves_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">.json&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">curve_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">curve_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
     <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">feature_space</span><span class="p">,</span>
         <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_source</span><span class="p">,</span>
         <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">issue_slug</span><span class="p">,</span>
         <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">EVAL_SPLIT</span><span class="p">,</span>
-        <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)),</span>
+        <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)),</span>
         <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_overall</span><span class="p">),</span>
         <span class="s2">&quot;accuracy_overall&quot;</span><span class="p">:</span> <span class="n">best_accuracy</span><span class="p">,</span>
         <span class="s2">&quot;accuracy_by_k&quot;</span><span class="p">:</span> <span class="n">accuracy_by_k_serializable</span><span class="p">,</span>
@@ -431,20 +444,26 @@
         <span class="s2">&quot;position_stats&quot;</span><span class="p">:</span> <span class="n">pos_stats_out</span><span class="p">,</span>
         <span class="s2">&quot;by_n_options&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="n">bucket</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;hist_seen&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-                <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-                <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">corr_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
+                <span class="s2">&quot;hist_seen&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_seen&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">]),</span>
+                <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_eligible&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">]),</span>
+                <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_correct&quot;</span><span class="p">][</span><span class="n">bucket</span><span class="p">]),</span>
                 <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy_opts_out</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span>
             <span class="p">}</span>
-            <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">buckets</span>
+            <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span>
         <span class="p">},</span>
         <span class="s2">&quot;split_single_vs_multi&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;n_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_single</span><span class="p">),</span>
-            <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_multi</span><span class="p">),</span>
-            <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_single</span><span class="p">),</span>
-            <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_multi</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_single</span><span class="p">,</span> <span class="n">elig_single</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_multi</span><span class="p">,</span> <span class="n">elig_multi</span><span class="p">),</span>
+            <span class="s2">&quot;n_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;seen_single&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;seen_multi&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_single&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_multi&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;corr_single&quot;</span><span class="p">],</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_single&quot;</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;corr_multi&quot;</span><span class="p">],</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_multi&quot;</span><span class="p">],</span>
+            <span class="p">),</span>
         <span class="p">},</span>
         <span class="s2">&quot;gold_index_distribution&quot;</span><span class="p">:</span> <span class="n">gold_distribution</span><span class="p">,</span>
         <span class="s2">&quot;baseline_most_frequent_gold_index&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -463,24 +482,371 @@
             <span class="s2">&quot;text_fields&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
         <span class="p">},</span>
         <span class="s2">&quot;elbow_plot&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">elbow_path</span><span class="p">),</span>
+        <span class="s2">&quot;per_k_directories&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">((</span><span class="n">issue_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;k-</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;curve_metrics&quot;</span><span class="p">:</span> <span class="n">curve_metrics</span><span class="p">,</span>
+        <span class="s2">&quot;curve_metrics_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">curve_json</span><span class="p">),</span>
         <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Accuracy computed over eligible rows (gold_index&gt;0).&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">:</span>
+        <span class="n">k_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">k_dir</span> <span class="o">=</span> <span class="n">issue_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;k-</span><span class="si">{</span><span class="n">k_int</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">k_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">k_predictions_path</span> <span class="o">=</span> <span class="n">k_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;predictions_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.jsonl&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">k_predictions_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                <span class="n">pred_value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k_int</span><span class="p">)</span>
+                <span class="n">record</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="n">k_int</span><span class="p">,</span>
+                    <span class="s2">&quot;knn_pred_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred_value</span><span class="p">)</span> <span class="k">if</span> <span class="n">pred_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;gold_index&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pred_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred_value</span><span class="p">)</span> <span class="o">==</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;gold_index&quot;</span><span class="p">]),</span>
+                    <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;position_index&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">issue_slug</span> <span class="k">if</span> <span class="n">issue_slug</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span> <span class="k">else</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue_value&quot;</span><span class="p">),</span>
+                <span class="p">}</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">k_stats</span> <span class="o">=</span> <span class="n">per_k_stats</span><span class="p">[</span><span class="n">k_int</span><span class="p">]</span>
+        <span class="n">k_metrics</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">feature_space</span><span class="p">,</span>
+            <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_source</span><span class="p">,</span>
+            <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">issue_slug</span><span class="p">,</span>
+            <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">EVAL_SPLIT</span><span class="p">,</span>
+            <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="n">k_int</span><span class="p">,</span>
+            <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)),</span>
+            <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;n_correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;correct&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k_int</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+            <span class="s2">&quot;elbow_plot&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">elbow_path</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">k_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;metrics_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">k_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;[DONE][</span><span class="si">%s</span><span class="s2">] split=</span><span class="si">%s</span><span class="s2"> n=</span><span class="si">%d</span><span class="s2"> eligible=</span><span class="si">%d</span><span class="s2"> knn_acc=</span><span class="si">%.4f</span><span class="s2"> (best_k=</span><span class="si">%d</span><span class="s2">)&quot;</span><span class="p">,</span>
         <span class="n">issue_slug</span><span class="p">,</span>
         <span class="n">EVAL_SPLIT</span><span class="p">,</span>
-        <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
         <span class="n">eligible_overall</span><span class="p">,</span>
         <span class="n">best_accuracy</span><span class="p">,</span>
         <span class="n">best_k</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[WROTE] per-example: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">out_jsonl</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[WROTE] metrics: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">metrics_json</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[WROTE] curves: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">curve_json</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_accumulate_row</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">example</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">bucket_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">per_k_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">query_config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process a single evaluation example and update aggregate statistics.&quot;&quot;&quot;</span>
 
+    <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">n_options</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)</span>
+    <span class="n">n_bucket</span> <span class="o">=</span> <span class="n">bin_nopts</span><span class="p">(</span><span class="n">n_options</span><span class="p">)</span>
+    <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_seen&quot;</span><span class="p">][</span><span class="n">n_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_pos</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;position_seen&quot;</span><span class="p">][</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">gold_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">gold_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">slate_pairs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">option_index</span><span class="p">,</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">vid</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">gold_raw</span> <span class="ow">and</span> <span class="p">(</span><span class="n">gold_raw</span> <span class="o">==</span> <span class="n">vid</span> <span class="ow">or</span> <span class="n">canon</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span> <span class="o">==</span> <span class="n">canon</span><span class="p">(</span><span class="n">title</span><span class="p">)):</span>
+                <span class="n">gold_index</span> <span class="o">=</span> <span class="n">option_index</span>
+                <span class="k">break</span>
+
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">knn_predict_among_slate_multi</span><span class="p">(</span>
+        <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
+        <span class="n">example</span><span class="o">=</span><span class="n">example</span><span class="p">,</span>
+        <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">query_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">eligible</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_options</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
+        <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_eligible&quot;</span><span class="p">][</span><span class="n">n_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">gold_hist</span><span class="p">[</span><span class="n">gold_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">gold_hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gold_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;rand_inverse_sum&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">n_options</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;rand_inverse_count&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">n_options</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_single&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;elig_multi&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">n_options</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;seen_single&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">n_options</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;seen_multi&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">k_stats</span> <span class="o">=</span> <span class="n">per_k_stats</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">:</span>
+                <span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;correct&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;predictions_by_k&quot;</span><span class="p">:</span> <span class="n">predictions</span><span class="p">,</span>
+        <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">gold_index</span><span class="p">),</span>
+        <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_options</span><span class="p">),</span>
+        <span class="s2">&quot;n_options_bucket&quot;</span><span class="p">:</span> <span class="n">n_bucket</span><span class="p">,</span>
+        <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">eligible</span><span class="p">),</span>
+        <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">position</span><span class="p">),</span>
+        <span class="s2">&quot;position_bucket&quot;</span><span class="p">:</span> <span class="n">pos_bucket</span><span class="p">,</span>
+        <span class="s2">&quot;issue_value&quot;</span><span class="p">:</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_dataset_split</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">,</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">capture_rows</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">log_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">max_examples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return aggregate statistics for ``dataset`` using the provided index.&quot;&quot;&quot;</span>
+
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">capture_rows</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">bucket_stats</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;position_seen&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span><span class="p">},</span>
+        <span class="s2">&quot;options_seen&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span><span class="p">},</span>
+        <span class="s2">&quot;options_eligible&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span><span class="p">},</span>
+        <span class="s2">&quot;options_correct&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BUCKET_LABELS</span><span class="p">},</span>
+    <span class="p">}</span>
+    <span class="n">per_k_stats</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">}</span>
+    <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;seen_single&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;seen_multi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;elig_single&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;elig_multi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;corr_single&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;corr_multi&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;rand_inverse_sum&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">&quot;rand_inverse_count&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">dataset_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">limit</span> <span class="o">=</span> <span class="n">dataset_len</span>
+    <span class="k">if</span> <span class="n">max_examples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">max_examples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dataset_len</span><span class="p">,</span> <span class="n">max_examples</span><span class="p">)</span>
+
+    <span class="n">query_config</span> <span class="o">=</span> <span class="n">SlateQueryConfig</span><span class="p">(</span>
+        <span class="n">text_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
+        <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">_accumulate_row</span><span class="p">(</span>
+            <span class="n">example</span><span class="o">=</span><span class="n">dataset</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="p">)],</span>
+            <span class="n">bucket_stats</span><span class="o">=</span><span class="n">bucket_stats</span><span class="p">,</span>
+            <span class="n">per_k_stats</span><span class="o">=</span><span class="n">per_k_stats</span><span class="p">,</span>
+            <span class="n">single_multi_stats</span><span class="o">=</span><span class="n">single_multi_stats</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="n">gold_hist</span><span class="o">=</span><span class="n">gold_hist</span><span class="p">,</span>
+            <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
+            <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
+            <span class="n">query_config</span><span class="o">=</span><span class="n">query_config</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">capture_rows</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">25</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">  elapsed=</span><span class="si">%.1f</span><span class="s2">s&quot;</span><span class="p">,</span>
+                <span class="n">log_label</span><span class="p">,</span>
+                <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">limit</span><span class="p">,</span>
+                <span class="n">elapsed</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="n">rows</span><span class="p">,</span>
+        <span class="s2">&quot;bucket_stats&quot;</span><span class="p">:</span> <span class="n">bucket_stats</span><span class="p">,</span>
+        <span class="s2">&quot;per_k_stats&quot;</span><span class="p">:</span> <span class="n">per_k_stats</span><span class="p">,</span>
+        <span class="s2">&quot;single_multi_stats&quot;</span><span class="p">:</span> <span class="n">single_multi_stats</span><span class="p">,</span>
+        <span class="s2">&quot;gold_hist&quot;</span><span class="p">:</span> <span class="n">gold_hist</span><span class="p">,</span>
+        <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_correct_counts</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">bucket_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update bucket-level correctness tallies for the selected ``best_k``.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prediction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span> <span class="o">==</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;gold_index&quot;</span><span class="p">]:</span>
+            <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_correct&quot;</span><span class="p">][</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options_bucket&quot;</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;corr_single&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;corr_multi&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_curve_summary</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">per_k_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_examples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a serialisable summary for accuracy-vs-k curves.&quot;&quot;&quot;</span>
+
+    <span class="n">area</span><span class="p">,</span> <span class="n">normalised</span> <span class="o">=</span> <span class="n">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
+    <span class="n">sorted_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">})</span>
+    <span class="n">accuracy_serialised</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span>
+    <span class="p">}</span>
+    <span class="n">eligible_serialised</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">per_k_stats</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;eligible&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span>
+    <span class="p">}</span>
+    <span class="n">correct_serialised</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">per_k_stats</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;correct&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;accuracy_by_k&quot;</span><span class="p">:</span> <span class="n">accuracy_serialised</span><span class="p">,</span>
+        <span class="s2">&quot;eligible_by_k&quot;</span><span class="p">:</span> <span class="n">eligible_serialised</span><span class="p">,</span>
+        <span class="s2">&quot;correct_by_k&quot;</span><span class="p">:</span> <span class="n">correct_serialised</span><span class="p">,</span>
+        <span class="s2">&quot;auc_area&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">area</span><span class="p">),</span>
+        <span class="s2">&quot;auc_normalized&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">normalised</span><span class="p">),</span>
+        <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span>
+        <span class="s2">&quot;best_accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+        <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_examples</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_issue</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">eval_ds</span><span class="p">,</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.&quot;&quot;&quot;</span>
+
+    <span class="n">k_values_int</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
+    <span class="n">eval_max</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">eval_summary</span> <span class="o">=</span> <span class="n">_evaluate_dataset_split</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
+        <span class="n">k_values</span><span class="o">=</span><span class="n">k_values_int</span><span class="p">,</span>
+        <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_metric</span><span class="p">,</span>
+        <span class="n">capture_rows</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">log_label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;eval][</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">max_examples</span><span class="o">=</span><span class="n">eval_max</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]</span>
+    <span class="n">bucket_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;bucket_stats&quot;</span><span class="p">]</span>
+    <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;single_multi_stats&quot;</span><span class="p">]</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;gold_hist&quot;</span><span class="p">]</span>
+    <span class="n">per_k_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;per_k_stats&quot;</span><span class="p">]</span>
+
+    <span class="n">accuracy_by_k</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">per_k_stats</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;correct&quot;</span><span class="p">],</span> <span class="n">per_k_stats</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;eligible&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values_int</span>
+    <span class="p">}</span>
+    <span class="n">best_k</span> <span class="o">=</span> <span class="n">select_best_k</span><span class="p">(</span><span class="n">k_values_int</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
+    <span class="n">_update_correct_counts</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">best_k</span><span class="p">,</span> <span class="n">bucket_stats</span><span class="p">,</span> <span class="n">single_multi_stats</span><span class="p">)</span>
+    <span class="n">eval_curve</span> <span class="o">=</span> <span class="n">_curve_summary</span><span class="p">(</span>
+        <span class="n">k_values</span><span class="o">=</span><span class="n">k_values_int</span><span class="p">,</span>
+        <span class="n">accuracy_by_k</span><span class="o">=</span><span class="n">accuracy_by_k</span><span class="p">,</span>
+        <span class="n">per_k_stats</span><span class="o">=</span><span class="n">per_k_stats</span><span class="p">,</span>
+        <span class="n">best_k</span><span class="o">=</span><span class="n">best_k</span><span class="p">,</span>
+        <span class="n">n_examples</span><span class="o">=</span><span class="n">eval_summary</span><span class="p">[</span><span class="s2">&quot;n_examples&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">train_curve</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train_max</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;train_curve_max&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_ds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_examples</span> <span class="o">=</span> <span class="n">train_max</span> <span class="k">if</span> <span class="n">train_max</span> <span class="ow">and</span> <span class="n">train_max</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">train_summary</span> <span class="o">=</span> <span class="n">_evaluate_dataset_split</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">k_values</span><span class="o">=</span><span class="n">k_values_int</span><span class="p">,</span>
+            <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">knn_metric</span><span class="p">,</span>
+            <span class="n">capture_rows</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">log_label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;train][</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">max_examples</span><span class="o">=</span><span class="n">max_examples</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">train_accuracy_by_k</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">train_summary</span><span class="p">[</span><span class="s2">&quot;per_k_stats&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;correct&quot;</span><span class="p">],</span> <span class="n">train_summary</span><span class="p">[</span><span class="s2">&quot;per_k_stats&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;eligible&quot;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values_int</span>
+        <span class="p">}</span>
+        <span class="n">train_best_k</span> <span class="o">=</span> <span class="n">select_best_k</span><span class="p">(</span><span class="n">k_values_int</span><span class="p">,</span> <span class="n">train_accuracy_by_k</span><span class="p">)</span>
+        <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_summary</span><span class="p">(</span>
+            <span class="n">k_values</span><span class="o">=</span><span class="n">k_values_int</span><span class="p">,</span>
+            <span class="n">accuracy_by_k</span><span class="o">=</span><span class="n">train_accuracy_by_k</span><span class="p">,</span>
+            <span class="n">per_k_stats</span><span class="o">=</span><span class="n">train_summary</span><span class="p">[</span><span class="s2">&quot;per_k_stats&quot;</span><span class="p">],</span>
+            <span class="n">best_k</span><span class="o">=</span><span class="n">train_best_k</span><span class="p">,</span>
+            <span class="n">n_examples</span><span class="o">=</span><span class="n">train_summary</span><span class="p">[</span><span class="s2">&quot;n_examples&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="n">curve_metrics</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="n">eval_curve</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">train_curve</span><span class="p">:</span>
+        <span class="n">curve_metrics</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve</span>
+
+    <span class="n">_write_issue_outputs</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="n">dataset_source</span><span class="o">=</span><span class="n">dataset_source</span><span class="p">,</span>
+        <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
+        <span class="n">k_values</span><span class="o">=</span><span class="n">k_values_int</span><span class="p">,</span>
+        <span class="n">accuracy_by_k</span><span class="o">=</span><span class="n">accuracy_by_k</span><span class="p">,</span>
+        <span class="n">best_k</span><span class="o">=</span><span class="n">best_k</span><span class="p">,</span>
+        <span class="n">bucket_stats</span><span class="o">=</span><span class="n">bucket_stats</span><span class="p">,</span>
+        <span class="n">single_multi_stats</span><span class="o">=</span><span class="n">single_multi_stats</span><span class="p">,</span>
+        <span class="n">gold_hist</span><span class="o">=</span><span class="n">gold_hist</span><span class="p">,</span>
+        <span class="n">per_k_stats</span><span class="o">=</span><span class="n">per_k_stats</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">curve_metrics</span><span class="o">=</span><span class="n">curve_metrics</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">bin_nopts</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Bucket the number of options into the reporting categories.&quot;&quot;&quot;</span>

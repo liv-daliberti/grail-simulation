@@ -1,5 +1,7 @@
 # RESEARCH ARTICLE POLITICAL SCIENCES
 
+Documentation: [https://grail-simulation.readthedocs.io/en/latest/index.html](https://grail-simulation.readthedocs.io/en/latest/index.html)
+
 ## Short-term exposure to filter-bubble recommendation systems has limited polarization effects
 
 This section replicates headline opinion-shift findings from _Short-term exposure to filter-bubble recommendation systems has limited polarization effects: Naturalistic experiments on YouTube_ (Liu et al., PNAS 2025) using the cleaned data in this repository.

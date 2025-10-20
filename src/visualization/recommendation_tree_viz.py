@@ -844,6 +844,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
+    """Entry point for the recommendation tree visualiser.
+
+    :param argv: Optional list of CLI arguments.
+    :raises SystemExit: When the command arguments are inconsistent.
+    """
     args = parse_args(argv)
     highlight_path: List[str] = []
     if args.highlight:

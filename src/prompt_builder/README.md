@@ -46,3 +46,38 @@ fallback text such as “Profile information is unavailable.”
   schema columns.
 - The Sphinx documentation under `docs/api/prompt_builder.rst` imports the
   modules directly—maintain docstrings for all public functions.
+
+## Sample prompts
+
+Use the helper CLI to generate markdown snippets for docs and reports:
+
+```bash
+PYTHONPATH=src python -m prompt_builder.samples \
+  --dataset data/cleaned_grail \
+  --issues gun_control,minimum_wage \
+  --count 1 \
+  --output reports/prompt_builder/sample_prompts.md
+```
+
+The command above refreshes `reports/prompt_builder/sample_prompts.md` with
+fresh examples. The README carries a shorter preview—full prompts live in the
+report.
+
+### Gun control (validation split)
+
+```text
+PROFILE:
+31-year-old, woman, Black or African-American (non-Hispanic), democrat liberal, $70,000-$79,999, college-educated, watches YouTube weekly. This viewer is a 31-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are college educated. Their household income is reported as $70,000-$79,999. The survey was completed in English. Politics include party identification Democrat, party lean Not very strong Democrat, ideology Liberal, political interest 3, trump approval 30, and biden approval 80. Gun policy views include gun ownership does not own a gun, right-to-own importance no, supports assault weapons ban 0.25, supports handgun ban yes, believes concealed carry is safe no, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm no, and gun importance yes. Media habits include YouTube frequency weekly, favorite channels CBS,
+CNN
+NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.6666666666666666.
+
+CURRENT VIDEO:
+Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
+
+OPTIONS:
+1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain
+2. Why America Will NEVER Have Real Gun Control — channel: The Young Turks
+3. Gun Control and The Violence in Chicago — channel: Colion Noir
+4. Gun Banners Say the Darndest Things — channel: Rob Doar
+5. How to Create a Gun-Free America in 5 Easy Steps
+```

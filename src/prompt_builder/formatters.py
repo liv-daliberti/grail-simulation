@@ -13,9 +13,11 @@ def truncate_text(text: str, limit: int = 160) -> str:
     """Trim ``text`` to ``limit`` characters, adding an ellipsis when needed."""
 
     text = text.strip()
-    if limit is not None and limit > 3 and len(text) > limit:
-        return text[: limit - 3].rstrip() + "..."
-    return text
+    if limit is None:
+        return text
+    if limit <= 3 or len(text) <= limit:
+        return text
+    return text[: limit - 3].rstrip() + "..."
 
 
 def clean_text(value: Any, *, limit: Optional[int] = None) -> str:

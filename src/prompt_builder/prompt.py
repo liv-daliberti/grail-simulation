@@ -72,6 +72,28 @@ def _current_video_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
 def _history_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
     """Return the viewing history section (most recent first)."""
 
+    descriptors = _history_descriptors(ex, show_ids, max_hist)
+    if not descriptors:
+        return []
+    section: List[str] = ["", "HISTORY (most recent first):"]
+    section.extend(f"{idx}. {entry}" for idx, entry in enumerate(descriptors, 1))
+    return section
+
+
+def _history_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
+    prior = _prior_entries(ex)
+    if not prior:
+        return []
+    limit = max_hist if max_hist and max_hist > 0 else len(prior)
+    recent = list(reversed(prior))[:limit]
+    descriptors: List[str] = []
+    for record in recent:
+        if isinstance(record, dict):
+            descriptors.append(_history_descriptor(record, show_ids))
+    return descriptors
+
+
+def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
     vids = as_list_json(ex.get("watched_vids_json"))
     detailed = as_list_json(ex.get("watched_detailed_json"))
     current_id = clean_text(ex.get("current_video_id"))
@@ -86,21 +108,9 @@ def _history_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[
                     break
     if cur_idx is None and isinstance(vids, list) and vids:
         cur_idx = len(vids) - 1
-    prior: List[dict] = []
     if isinstance(detailed, list) and cur_idx is not None and cur_idx > 0:
-        prior = detailed[:cur_idx]
-    if not prior:
-        return []
-
-    section: List[str] = ["", "HISTORY (most recent first):"]
-    limit = max_hist if max_hist and max_hist > 0 else len(prior)
-    recent = list(reversed(prior))[:limit]
-    for idx, record in enumerate(recent, 1):
-        if not isinstance(record, dict):
-            continue
-        descriptor = _history_descriptor(record, show_ids)
-        section.append(f"{idx}. {descriptor}")
-    return section
+        return detailed[:cur_idx]
+    return []
 
 
 def _history_descriptor(record: Dict[str, Any], show_ids: bool) -> str:

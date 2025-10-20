@@ -1,3 +1,4 @@
+# pylint: skip-file
 """Backward-compatibility shim for :mod:`prompt_builder`.
 
 The original implementation lived in this single module.  The logic now
@@ -11,8 +12,11 @@ from __future__ import annotations
 import warnings
 
 warnings.warn(
-    "Importing from 'prompt_builder.py' is deprecated; import from the "
-    "'prompt_builder' package (e.g. 'from prompt_builder.prompt import build_user_prompt') instead.",
+    (
+        "Importing from 'prompt_builder.py' is deprecated; import from the "
+        "'prompt_builder' package (e.g. 'from prompt_builder.prompt import "
+        "build_user_prompt') instead."
+    ),
     DeprecationWarning,
     stacklevel=2,
 )

@@ -6,7 +6,7 @@ import json
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from .constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS, YT_FREQ_MAP
 from .formatters import (
@@ -18,6 +18,31 @@ from .formatters import (
     with_indefinite_article,
 )
 from .parsers import format_yes_no, is_nanlike
+
+MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
+    (("q8", "fav_channels"), "Favorite channels", True),
+    (("q78", "popular_channels"), "Popular channels followed", False),
+    (("media_diet",), "Media diet", False),
+    (("news_consumption",), "News consumption", False),
+    (("news_sources",), "News sources", False),
+    (("news_sources_top",), "Top news sources", False),
+    (("news_frequency", "newsint"), "News frequency", False),
+    (("platform_use",), "Platform usage", False),
+    (("social_media_use",), "Social media use", False),
+    (
+        (
+            "news_trust",
+            "trust_majornews_w1",
+            "trust_localnews_w1",
+            "trust_majornews_w2",
+            "trust_localnews_w2",
+            "trust_majornews_w3",
+            "trust_localnews_w3",
+        ),
+        "News trust",
+        False,
+    ),
+)
 
 
 @dataclass
@@ -400,12 +425,24 @@ def _employment_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[
 
 def _family_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     sentences: List[str] = []
-    marital = _first_text(ex, selected, "marital_status", "married", "marital")
-    if marital:
-        sentences.append(
-            _ensure_sentence(f"They report being {_clean_fragment(marital)}.")
-        )
+    marital_sentence = _marital_sentence(ex, selected)
+    if marital_sentence:
+        sentences.append(marital_sentence)
+    sentences.extend(_children_sentences(ex, selected))
+    household_sentence = _household_sentence(ex, selected)
+    if household_sentence:
+        sentences.append(household_sentence)
+    return sentences
 
+
+def _marital_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
+    marital = _first_text(ex, selected, "marital_status", "married", "marital")
+    if not marital:
+        return None
+    return _ensure_sentence(f"They report being {_clean_fragment(marital)}.")
+
+
+def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     children_raw = _first_raw(
         ex,
         selected,
@@ -414,46 +451,56 @@ def _family_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
         "child18",
         "children",
     )
-    if children_raw is not None:
-        children_flag = format_yes_no(children_raw, yes="yes", no="no")
-        if children_flag == "yes":
-            sentences.append(_ensure_sentence("They have children in their household."))
-        elif children_flag == "no":
-            sentences.append(
-                _ensure_sentence("They do not have children in their household.")
-            )
-        else:
-            children_text = clean_text(children_raw)
-            if children_text:
-                sentences.append(
-                    _ensure_sentence(
-                        f"Children in household: {children_text}."
-                    )
-                )
+    if children_raw is None:
+        return []
+    flag = format_yes_no(children_raw, yes="yes", no="no")
+    if flag == "yes":
+        return [_ensure_sentence("They have children in their household.")]
+    if flag == "no":
+        return [_ensure_sentence("They do not have children in their household.")]
+    text = clean_text(children_raw)
+    if not text:
+        return []
+    return [_ensure_sentence(f"Children in household: {text}.")]
 
+
+def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     household = _first_text(ex, selected, "household_size", "hh_size")
-    if household:
-        size_clean = _clean_fragment(household)
-        sentence = ""
-        try:
-            size_val = float(size_clean)
-        except (TypeError, ValueError):
-            size_val = math.nan
-        if math.isfinite(size_val):
-            size_int = int(round(size_val))
-            if abs(size_val - size_int) < 1e-6:
-                if size_int == 1:
-                    sentence = "They live alone."
-                else:
-                    sentence = f"Their household has {size_int} people."
-        if not sentence:
-            sentence = f"Their household size is {size_clean}."
-        sentences.append(_ensure_sentence(sentence))
-    return sentences
+    if not household:
+        return None
+    size_clean = _clean_fragment(household)
+    try:
+        size_val = float(size_clean)
+    except (TypeError, ValueError):
+        size_val = math.nan
+    sentence = ""
+    if math.isfinite(size_val):
+        size_int = int(round(size_val))
+        if abs(size_val - size_int) < 1e-6:
+            if size_int == 1:
+                sentence = "They live alone."
+            else:
+                sentence = f"Their household has {size_int} people."
+    if not sentence:
+        sentence = f"Their household size is {size_clean}."
+    return _ensure_sentence(sentence)
 
 
 def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     sentences: List[str] = []
+    identity = _religion_identity_sentence(ex, selected)
+    if identity:
+        sentences.append(identity)
+    attendance = _attendance_sentence(ex, selected)
+    if attendance:
+        sentences.append(attendance)
+    veteran = _veteran_sentence(ex, selected)
+    if veteran:
+        sentences.append(veteran)
+    return sentences
+
+
+def _religion_identity_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     religion = _first_text(
         ex,
         selected,
@@ -463,10 +510,12 @@ def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         "religpew",
         "religion_text",
     )
-    if religion:
-        sentences.append(
-            _ensure_sentence(f"They identify as {_clean_fragment(religion)}.")
-        )
+    if not religion:
+        return None
+    return _ensure_sentence(f"They identify as {_clean_fragment(religion)}.")
+
+
+def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     attendance = _first_text(
         ex,
         selected,
@@ -475,21 +524,18 @@ def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         "service_attendance",
         "pew_religimp",
     )
-    if attendance:
-        attendance_clean = _clean_fragment(attendance)
-        lowered = attendance_clean.lower()
-        if "important" in lowered:
-            sentences.append(
-                _ensure_sentence(
-                    f"They say religion is {attendance_clean} to them."
-                )
-            )
-        else:
-            sentences.append(
-                _ensure_sentence(
-                    f"They report attending services {attendance_clean}."
-                )
-            )
+    if not attendance:
+        return None
+    attendance_clean = _clean_fragment(attendance)
+    lowered = attendance_clean.lower()
+    if "important" in lowered:
+        text = f"They say religion is {attendance_clean} to them."
+    else:
+        text = f"They report attending services {attendance_clean}."
+    return _ensure_sentence(text)
+
+
+def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     veteran_raw = _first_raw(
         ex,
         selected,
@@ -497,19 +543,17 @@ def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         "military_service",
         "veteran_status",
     )
-    if veteran_raw is not None:
-        veteran_flag = format_yes_no(veteran_raw, yes="yes", no="no")
-        if veteran_flag == "yes":
-            sentences.append(_ensure_sentence("They are a veteran."))
-        elif veteran_flag == "no":
-            sentences.append(_ensure_sentence("They are not a veteran."))
-        else:
-            veteran_text = clean_text(veteran_raw)
-            if veteran_text:
-                sentences.append(
-                    _ensure_sentence(f"Veteran status: {veteran_text}.")
-                )
-    return sentences
+    if veteran_raw is None:
+        return None
+    flag = format_yes_no(veteran_raw, yes="yes", no="no")
+    if flag == "yes":
+        return _ensure_sentence("They are a veteran.")
+    if flag == "no":
+        return _ensure_sentence("They are not a veteran.")
+    veteran_text = clean_text(veteran_raw)
+    if not veteran_text:
+        return None
+    return _ensure_sentence(f"Veteran status: {veteran_text}.")
 
 
 def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -657,6 +701,22 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
 
 def _media_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     media_section: List[str] = []
+    media_section.extend(_youtube_frequency_sentences(ex, selected))
+    media_section.extend(_youtube_binge_sentences(ex, selected))
+    seen: set[str] = set()
+    for sources, label, skip_duplicate in MEDIA_SOURCES:
+        text = _first_available_text(ex, selected, sources)
+        if not text:
+            continue
+        if skip_duplicate and label in seen:
+            continue
+        media_section.append(f"{label}: {text}")
+        seen.add(label)
+    sentence = _sentencize("Media habits include", media_section)
+    return [sentence] if sentence else []
+
+
+def _youtube_frequency_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     freq_raw = _first_raw(
         ex,
         selected,
@@ -666,70 +726,39 @@ def _media_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
         "youtube_freq",
         "youtube_freq_v2",
     )
-    if freq_raw is not None:
-        code = str(freq_raw).strip()
-        mapped = YT_FREQ_MAP.get(code)
-        if mapped:
-            media_section.append(f"YouTube frequency: {mapped}")
-        else:
-            freq_text = clean_text(freq_raw)
-            if freq_text:
-                media_section.append(f"YouTube frequency: {freq_text}")
+    if freq_raw is None:
+        return []
+    code = str(freq_raw).strip()
+    mapped = YT_FREQ_MAP.get(code)
+    if mapped:
+        return [f"YouTube frequency: {mapped}"]
+    freq_text = clean_text(freq_raw)
+    if not freq_text:
+        return []
+    return [f"YouTube frequency: {freq_text}"]
+
+
+def _youtube_binge_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     binge_raw = _first_raw(ex, selected, "binge_youtube", "youtube_time")
+    if binge_raw is None:
+        return []
     binge_text = format_yes_no(binge_raw, yes="yes", no="no")
     if binge_text:
-        media_section.append(f"Binge watches YouTube: {binge_text}")
-    elif binge_raw is not None:
-        binge_clean = clean_text(binge_raw)
-        if binge_clean:
-            media_section.append(f"YouTube time reported: {binge_clean}")
-    media_fields: List[Sequence[str]] = [
-        ("q8", "fav_channels"),
-        ("q78", "popular_channels"),
-        ("media_diet",),
-        ("news_consumption",),
-        ("news_sources",),
-        ("news_sources_top",),
-        ("news_frequency", "newsint"),
-        ("platform_use",),
-        ("social_media_use",),
-        (
-            "news_trust",
-            "trust_majornews_w1",
-            "trust_localnews_w1",
-            "trust_majornews_w2",
-            "trust_localnews_w2",
-            "trust_majornews_w3",
-            "trust_localnews_w3",
-        ),
-    ]
-    labels = [
-        "Favorite channels",
-        "Popular channels followed",
-        "Media diet",
-        "News consumption",
-        "News sources",
-        "Top news sources",
-        "News frequency",
-        "Platform usage",
-        "Social media use",
-        "News trust",
-    ]
-    seen: set[str] = set()
-    for sources, label in zip(media_fields, labels):
-        text = ""
-        for key in sources:
-            text = _first_text(ex, selected, key, limit=220)
-            if text:
-                break
-        if not text:
-            continue
-        if label == "Favorite channels" and label in seen:
-            continue
-        media_section.append(f"{label}: {text}")
-        seen.add(label)
-    sentence = _sentencize("Media habits include", media_section)
-    return [sentence] if sentence else []
+        return [f"Binge watches YouTube: {binge_text}"]
+    binge_clean = clean_text(binge_raw)
+    if not binge_clean:
+        return []
+    return [f"YouTube time reported: {binge_clean}"]
+
+
+def _first_available_text(
+    ex: Dict[str, Any], selected: Dict[str, Any], keys: Sequence[str]
+) -> str:
+    for key in keys:
+        text = _first_text(ex, selected, key, limit=220)
+        if text:
+            return text
+    return ""
 
 
 __all__ = [

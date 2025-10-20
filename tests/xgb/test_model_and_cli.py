@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 pytest.importorskip("xgboost")
+pytest.importorskip("sklearn")
+pytest.importorskip("joblib")
 
 from xgb import cli
 from xgb.model import XGBoostSlateModel, XGBoostTrainConfig, fit_xgboost_model, predict_among_slate

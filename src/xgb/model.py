@@ -12,8 +12,19 @@ try:  # pragma: no cover - optional dependency
     import joblib
 except ImportError:  # pragma: no cover - optional dependency
     joblib = None  # type: ignore[assignment]
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import LabelEncoder
+
+try:  # pragma: no cover - optional dependency
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.preprocessing import LabelEncoder
+except ImportError:  # pragma: no cover - optional dependency
+    TfidfVectorizer = None  # type: ignore[assignment]
+    LabelEncoder = None  # type: ignore[assignment]
+
+
+def _ensure_sklearn_available(action: str) -> None:
+    """Ensure optional scikit-learn dependency is present before continuing."""
+    if TfidfVectorizer is None or LabelEncoder is None:  # pragma: no cover - optional dependency
+        raise ImportError(f"Install scikit-learn to {action}.")
 
 from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
 from .utils import canon_video_id
@@ -128,6 +139,7 @@ def fit_xgboost_model(
 
     if XGBClassifier is None:  # pragma: no cover - optional dependency
         raise ImportError("Install xgboost to train the XGBoost baseline.")
+    _ensure_sklearn_available("train the XGBoost baseline")
 
     train_config = config or XGBoostTrainConfig()
     vectorizer, encoder, booster = _build_model_components(
@@ -156,6 +168,7 @@ def save_xgboost_model(model: XGBoostSlateModel, out_dir: Path | str) -> None:
 
     if joblib is None:
         raise ImportError("Install joblib to save the XGBoost baseline artifacts.")
+    _ensure_sklearn_available("serialize XGBoost vectorizer and label encoder")
 
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -178,6 +191,7 @@ def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
 
     if joblib is None:
         raise ImportError("Install joblib to load the XGBoost baseline artifacts.")
+    _ensure_sklearn_available("load the XGBoost baseline artifacts")
 
     directory = Path(in_dir)
     vectorizer: TfidfVectorizer = joblib.load(directory / "vectorizer.joblib")
@@ -241,6 +255,7 @@ def _fit_vectorizer(
     *, documents: Sequence[str], max_features: Optional[int]
 ) -> Tuple[TfidfVectorizer, Any]:
     """Fit a TF-IDF vectoriser on ``documents`` and return the vectoriser plus matrix."""
+    _ensure_sklearn_available("vectorise prompt documents for XGBoost")
     tfidf_max_features = max_features if max_features and max_features > 0 else None
     vectorizer = TfidfVectorizer(
         lowercase=True,
@@ -256,6 +271,7 @@ def _fit_vectorizer(
 
 def _encode_labels(labels_id: Sequence[str]) -> Tuple[LabelEncoder, Any]:
     """Return an encoder and numeric labels derived from ``labels_id``."""
+    _ensure_sklearn_available("encode prompt labels for XGBoost")
     encoder = LabelEncoder()
     encoded = encoder.fit_transform(labels_id)
     if len(encoder.classes_) < 2:

@@ -21,7 +21,7 @@ The interaction logs trace back to the public behavioural dataset introduced in 
 ├── clean_data/               # Data cleaning pipeline and publication replicas
 │   ├── prompt/               # Prompt analytics plots and Markdown builders
 │   └── research_article_political_sciences/  # Replication figures + summaries
-├── data/                     # Local cleaned datasets (gitignored artefacts)
+├── data/                     # Local cleaned datasets (gitignored artifacts)
 ├── docs/                     # Sphinx project that powers the Read the Docs site
 ├── logs/                     # Default output location for training/eval runs
 ├── models/                   # Trained model checkpoints and evaluation curves
@@ -99,7 +99,7 @@ Builder notes:
 - Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from saved prompt rows because the released logs lack recommendation slates.
 - Additional prompt coverage methodology is documented in [reports/prompt_stats/README.md](reports/prompt_stats/README.md).
 
-#### Output artefacts
+#### Output artifacts
 
 Running the CLI yields two complementary views:
 
@@ -154,7 +154,7 @@ The repository stitches together several subsystems to turn raw CodeOcean logs i
 1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
 2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
 3. **Feature extraction** – `src/knn/features.py` assembles text documents and optionally trains Word2Vec embeddings (`Word2VecFeatureBuilder`) or TF-IDF vectors.
-4. **Index training** – `src/knn/index.py` fits the chosen feature space (`build_tfidf_index` / `build_word2vec_index`) and persists per-issue artefacts.
+4. **Index training** – `src/knn/index.py` fits the chosen feature space (`build_tfidf_index` / `build_word2vec_index`) and persists per-issue artifacts.
 5. **KNN evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and selects the elbow-based `k`.
 6. **Reporting** – metrics, per-`k` predictions, elbow plots, and curve diagnostics are written to `models/` and `reports/`.
 
@@ -187,7 +187,7 @@ High-level progression (training + evaluation):
       +-------------+--------------+
                     |
         +-----------+-----------+
-        | Reports & Artefacts  |
+        | Reports & Artifacts  |
         |  models/, reports/   |
         +----------------------+
 ```

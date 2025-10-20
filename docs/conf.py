@@ -113,6 +113,7 @@ autodoc_mock_imports = [
     "datasets",
     "deepspeed",
     "distilabel",
+    "dotenv",
     "e2b_code_interpreter",
     "einops",
     "graphviz",
@@ -153,6 +154,9 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 autodoc_typehints = "description"
+autodoc_type_aliases = {
+    "Future": "concurrent.futures.Future",
+}
 napoleon_include_init_with_doc = True
 
 templates_path = ["_templates"]
@@ -215,6 +219,7 @@ _nitpick_targets = {
         "optional",
         "pandas.DataFrame",
         "pandas.Series",
+        "pd.DataFrame",
         "pathlib.Path",
         "sequence-like",
         "sklearn.feature_extraction.text.TfidfVectorizer",
@@ -237,6 +242,8 @@ _nitpick_targets = {
         "trl._ensure_trl_stub.<locals>.GRPOTrainer",
         "xgboost.XGBClassifier",
         "rewards where",
+        "Word2VecConfig",
+        "Future",
     ],
     "py:func": [
         "load_participant_allowlists",

@@ -16,6 +16,8 @@
 
 """Helpers for pushing training artefacts to the Hugging Face Hub."""
 
+from __future__ import annotations
+
 import logging
 import re
 from concurrent.futures import Future

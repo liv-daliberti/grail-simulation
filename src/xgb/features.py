@@ -6,8 +6,6 @@ from typing import Sequence, Tuple
 
 from knn.features import (
     DEFAULT_TITLE_DIRS,
-    Word2VecConfig,
-    Word2VecFeatureBuilder,
     assemble_document,
     extract_now_watching,
     extract_slate_items,
@@ -49,8 +47,6 @@ def prepare_prompt_documents(
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
-    "Word2VecConfig",
-    "Word2VecFeatureBuilder",
     "assemble_document",
     "extract_now_watching",
     "extract_slate_items",

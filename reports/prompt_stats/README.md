@@ -2,7 +2,8 @@
 
 ## Dataset coverage notes
 
-Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.
+Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.  
+These counts are derived from the deduplicated `(participant_id, issue)` view used for analytics; the full cleaned dataset retains every promptable interaction.
 
 - Train: 5293 of 7394 rows retained (71.6% coverage); excluded rows from study4: 665, unknown: 1436
 - Validation: 586 of 781 rows retained (75.0% coverage); excluded rows from study4: 68, unknown: 127

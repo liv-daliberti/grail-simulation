@@ -151,6 +151,8 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
         languages: List[str],
         num_parallel: int,
     ) -> List[float]:
+        """Execute scripts concurrently using the asynchronous E2B sandbox."""
+
         semaphore = asyncio.Semaphore(num_parallel)
 
         tasks = [self._run_script(script, languages, semaphore) for script in scripts]
@@ -166,6 +168,8 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
         languages: List[str],
         semaphore: asyncio.Semaphore,
     ) -> float:
+        """Execute a single script within the sandbox, returning the reward."""
+
         # We set a timeout margin, as the AsyncSandbox timeout does not seem to work
         # These values are based on running 256 examples with the gold solution
         # from open-r1/verifiable-coding-problems-python_decontaminated

@@ -6,7 +6,7 @@ This document describes how the Python implementation in `clean_data/` mirrors t
 
 | Module | Responsibility |
 | ------ | -------------- |
-| `clean_data.sessions` | Parses CodeOcean session logs, enforces allow-lists, deduplicates participants, and emits the intermediate dataframe. |
+| `clean_data.sessions` | Parses CodeOcean session logs, enforces allow-lists, and emits the full interaction history dataframe (no participant/issue dedupe). |
 | `clean_data.prompting` | Converts each interaction row into a GRPO-style prompt (`row_to_example`) and manages all prompt formatting helpers. |
 | `clean_data.clean_data` | Public façade: loads datasets, filters unusable rows, builds cleaned splits, validates schema, saves/pushes outputs, and runs prompt stats. |
 | `clean_data.codeocean` | Thin compatibility shim that reconstructs datasets directly from the capsule directory. |
@@ -30,10 +30,10 @@ Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists
 ## Processing Pipeline
 
 1. **Reconstruct allow-lists** – attention checks, survey-duration limits, ideology index trimming, and control-arm removal mirror the R scripts.
-2. **Merge surveys with sessions** – join cleaned survey exports to the YouTube logs, keeping the earliest valid session per participant (`clean_data.sessions.build_codeocean_rows`).
+2. **Merge surveys with sessions** – join cleaned survey exports to the YouTube logs, emitting every usable interaction for each participant (`clean_data.sessions.build_codeocean_rows`).
 3. **Filter unusable rows** – drop interactions missing a usable slate or gold choice (`clean_data.filters.filter_prompt_ready`).
 4. **Convert to prompts** – build GRPO-friendly prompt dictionaries with metadata passthrough (`clean_data.prompting.row_to_example`).
-5. **Validate & save** – enforce required columns, write the dataset to disk, emit prompt stats, and optionally push to the Hugging Face Hub.
+5. **Validate & save** – enforce required columns, write the full dataset (all interactions) to disk, emit prompt stats from a deduplicated view, and optionally push to the Hugging Face Hub.
 
 ## Study-Specific Filters
 
@@ -45,6 +45,15 @@ Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists
 | Study 4 – Shorts experiment | `qualtrics_w12_clean_ytrecs_may2024.csv` + `ytrecs_sessions_may2024.rds` | Allow-list recorded for auditing, but sessions excluded from prompts because logs lack recommendation slates | 931 worker IDs retained in reporting |
 
 Shorts participants remain in the allow-list summaries so shortfall analyses match the original paper, but prompt rows are emitted only for Studies 1–3.
+
+## Output Artefacts
+
+Running `python -m clean_data.cli` now produces two complementary datasets:
+
+- **Full cleaned dataset** – persisted under `--output-dir`, retaining every promptable interaction for each `(participant, issue)` pair.
+- **Deduped analytics view** – computed in-memory via `clean_data.clean_data.dedupe_by_participant_issue` so prompt statistics still mirror the historical “one row per participant/issue” summaries.
+
+Downstream tooling that expects the deduped layout can invoke the helper directly, while modelling workflows can make use of the richer full-history export.
 
 ## Validation and Logging
 

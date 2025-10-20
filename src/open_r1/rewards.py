@@ -63,6 +63,8 @@ DEFAULT_EXTRACTION_CONFIG = [LatexExtractionConfig()]
 _NUM_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$", re.I)
 
 def _canon(s: str) -> str:
+    """Return a lowercase alphanumeric representation for fuzzy matching."""
+
     s = s.replace("’", "'").strip().lower()
     s = re.sub(r"\s+", " ", s)
     return re.sub(r"[^a-z0-9]+", "", s)
@@ -337,6 +339,8 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
     _ = kwargs
 
     def count_tags(text: str) -> float:
+        """Return a partial reward based on the presence of required tags."""
+
         count = 0.0
         if text.count("<think>\n") == 1:
             count += 0.25
@@ -530,6 +534,8 @@ def get_repetition_penalty_reward(
     if language == "en":
 
         def zipngram(text: str, n: int):
+            """Return iterator over n-grams and the token list for English text."""
+
             words = text.lower().split()
             return zip(*[words[i:] for i in range(n)]), words
 
@@ -540,6 +546,8 @@ def get_repetition_penalty_reward(
         jieba_module = importlib.import_module("jieba")
 
         def zipngram(text: str, n: int):
+            """Return iterator over n-grams and the token list for Chinese text."""
+
             seg_list = list(jieba_module.cut(text))
             return zip(*[seg_list[i:] for i in range(n)]), seg_list
 
@@ -811,6 +819,8 @@ def get_code_format_reward(language: str = "python"):
     pattern = rf"^<think>\n.*?\n</think>\n<answer>\n.*?```{language}.*?```.*?\n</answer>$"
 
     def code_format_reward(completions, **kwargs):
+        """Return 1.0 when the completion matches the language-specific format pattern."""
+
         _ = kwargs
         completion_contents = [completion[0]["content"] for completion in completions]
         matches = [

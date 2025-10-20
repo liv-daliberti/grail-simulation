@@ -258,6 +258,13 @@ def _row_to_example(
 
 
 def _valid_example(example: Dict[str, Any], solution_key: Optional[str]) -> bool:
+    """Return ``True`` when ``example`` contains a usable slate and gold label.
+
+    :param example: Raw dataset row to validate.
+    :param solution_key: Optional column name containing the gold id.
+    :returns: ``True`` if the slate has candidates and the gold id is present in the slate.
+    """
+
     items = _load_slate_items(example)
     if not items:
         return False
@@ -268,6 +275,12 @@ def _valid_example(example: Dict[str, Any], solution_key: Optional[str]) -> bool
 
 
 def _drop_marked_rows(dataset: DatasetDict, train_split: str) -> None:
+    """Remove rows marked with the ``__drop__`` flag across all splits.
+
+    :param dataset: Dataset mixture to mutate in place.
+    :param train_split: Name of the training split used to check for the marker column.
+    """
+
     if "__drop__" not in dataset[train_split].column_names:
         return
     for split in list(dataset.keys()):
@@ -277,6 +290,12 @@ def _drop_marked_rows(dataset: DatasetDict, train_split: str) -> None:
 
 
 def _prune_columns(dataset: DatasetDict) -> DatasetDict:
+    """Remove columns outside ``KEEP_COLUMNS`` from every split.
+
+    :param dataset: Dataset dictionary to prune.
+    :returns: Dataset dictionary with extraneous columns dropped.
+    """
+
     for split in list(dataset.keys()):
         drop = [name for name in dataset[split].column_names if name not in KEEP_COLUMNS]
         if drop:
@@ -290,6 +309,15 @@ def _build_dataset(
     solution_key: Optional[str],
     max_hist: int,
 ) -> DatasetDict:
+    """Build the training dataset with prompt conversion and filtering.
+
+    :param script_args: High-level script arguments controlling dataset loading.
+    :param training_args: Training hyperparameters providing system prompt, etc.
+    :param solution_key: Optional column containing the gold target id.
+    :param max_hist: Maximum history length to include in prompts.
+    :returns: Dataset dictionary ready for GRPO training.
+    """
+
     raw = get_dataset(script_args)
     filtered = raw.filter(_valid_example, fn_kwargs={"solution_key": solution_key})
     mapped = filtered.map(
@@ -309,6 +337,13 @@ def _load_reward_functions(
     script_args: GRPOScriptArguments,
     tokenizer,
 ) -> List[Any]:
+    """Load reward functions configured for the training run.
+
+    :param script_args: Script arguments containing reward configuration.
+    :param tokenizer: Tokenizer instance passed to reward constructors.
+    :returns: List of reward callables (may be empty on failure).
+    """
+
     try:
         return get_reward_funcs(script_args, _ref_model=None, _tokenizer=tokenizer)
     except Exception as exc:  # pylint: disable=broad-exception-caught
@@ -317,6 +352,13 @@ def _load_reward_functions(
 
 
 def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> None:
+    """Ensure reward weights align with the number of reward functions.
+
+    :param training_args: Training arguments where weights are stored.
+    :param reward_fns: List of reward functions enabled for the run.
+    :raises ValueError: If the configured list length does not match ``reward_fns``.
+    """
+
     weights = getattr(training_args, "reward_weights", None)
     if weights is None:
         training_args.reward_weights = [1.0] * len(reward_fns)
@@ -337,6 +379,14 @@ def _prepare_eval_dataset(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
 ) -> Optional[Any]:
+    """Prepare the evaluation dataset when ``do_eval`` is enabled.
+
+    :param dataset: Dataset dictionary produced by :func:`_build_dataset`.
+    :param script_args: Script arguments providing split names.
+    :param training_args: Training configuration containing evaluation flags.
+    :returns: Evaluation dataset or ``None`` when evaluation is disabled/unavailable.
+    """
+
     if not getattr(training_args, "do_eval", False):
         return None
     test_split = getattr(script_args, "dataset_test_split", None)
@@ -355,6 +405,13 @@ def _prepare_eval_dataset(
 
 
 def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
+    """Adjust evaluation strategy to ensure periodic evaluation runs.
+
+    :param training_args: Training configuration mutated in place.
+    :param eval_ds: Prepared evaluation dataset (or ``None``).
+    :raises ValueError: If ``eval_steps`` is missing when evaluation is enabled.
+    """
+
     if not getattr(training_args, "do_eval", False) or eval_ds is None:
         return
     strategy = getattr(training_args, "evaluation_strategy", IntervalStrategy.NO)
@@ -370,6 +427,12 @@ def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
 
 
 def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
+    """Return the checkpoint path to resume from when available.
+
+    :param training_args: Training configuration containing resume parameters.
+    :returns: Path to the checkpoint directory or ``None`` if not found.
+    """
+
     resume = getattr(training_args, "resume_from_checkpoint", None)
     if resume:
         return resume

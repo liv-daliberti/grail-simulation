@@ -59,14 +59,21 @@ The command:
 
 1. Rebuilds the session dataframe (`clean_data.sessions.build_codeocean_rows`).
 2. Converts each interaction into a GRPO-style prompt example (`clean_data.prompting.row_to_example`).
-3. Runs prompt analytics (plots + Markdown) if `--prompt-stats-dir` is provided.
-4. Saves the cleaned dataset to disk and optionally pushes per-issue splits to the Hugging Face Hub.
+3. Runs prompt analytics (plots + Markdown) if `--prompt-stats-dir` is provided, using a deduplicated `(participant_id, issue)` view for historical comparability.
+4. Saves the full cleaned dataset (all interactions) to disk and optionally pushes per-issue splits to the Hugging Face Hub.
 
 Builder notes:
 
 - Rows missing all survey demographics are removed so every prompt has viewer context (~22 % of raw interactions).
-- Each participant contributes at most one trajectory per issue via `(participant_id, issue)` deduplication.
+- The on-disk dataset preserves the complete interaction history for each participant; use `clean_data.clean_data.dedupe_by_participant_issue` if you need the legacy one-row-per-participant layout.
 - Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from prompt rows because the released logs lack recommendation slates.
+
+#### Output artefacts
+
+Running the CLI yields two complementary views:
+
+- `--output-dir`: full cleaned dataset with every promptable interaction.
+- `--prompt-stats-dir`: figures + markdown computed from the deduped `(participant_id, issue)` view so coverage charts remain comparable with earlier reports.
 
 ### 3. Prompt Analytics
 
@@ -113,7 +120,7 @@ The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_
 
 The repository stitches together several subsystems to turn raw CodeOcean logs into reproducible training/evaluation runs. The core stages are:
 
-1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and deduplicates `(participant, issue)` pairs.
+1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
 2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
 3. **Feature extraction** – `src/knn/features.py` assembles text documents and optionally trains Word2Vec embeddings (`Word2VecFeatureBuilder`) or TF-IDF vectors.
 4. **Index training** – `src/knn/index.py` fits the chosen feature space (`build_tfidf_index` / `build_word2vec_index`) and persists per-issue artefacts.
@@ -171,7 +178,7 @@ cd ../data
 curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
 ```
 
-The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks, control-arm drops, and deduplication logic as the R scripts.
+The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
 
 ## Published Artifacts
 

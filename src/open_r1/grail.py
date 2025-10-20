@@ -243,6 +243,8 @@ def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
 
 
 def _has_valid_slate(example: Dict[str, Any], solution_key: Optional[str]) -> bool:
+    """Return ``True`` when ``example`` contains a slate with the gold option."""
+
     items = _load_slate_items(example)
     if not items:
         return False
@@ -348,7 +350,19 @@ def _prepare_dataset(
     max_hist: int,
     train_split: str,
 ):
+    """Convert raw rows into GRPO-ready prompts and filter unusable examples.
+
+    :param raw_dataset: Dataset dictionary returned by :func:`get_dataset`.
+    :param system_prompt: Optional system prompt inserted ahead of user text.
+    :param solution_key: Optional column providing the gold next-video id.
+    :param max_hist: Maximum history length to include in viewer prompts.
+    :param train_split: Name of the training split used for drop handling.
+    :returns: Dataset dictionary with cleaned columns ready for training.
+    """
+
     def _format_example(example: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Return the formatted example or ``None`` when the slate is invalid."""
+
         return _row_to_example(example, system_prompt, solution_key, max_hist=max_hist)
 
     filtered = raw_dataset.filter(lambda ex: _has_valid_slate(ex, solution_key))
@@ -480,12 +494,16 @@ class RewardContext(NamedTuple):
 
 
 def _ensure_list(value: Any, count: int) -> List[Any]:
+    """Return ``value`` as a list, repeating scalars ``count`` times."""
+
     if isinstance(value, list):
         return value
     return [value] * count
 
 
 def _safe_int(value: Any, default: int = -1) -> int:
+    """Cast ``value`` to ``int`` and fall back to ``default`` on failure."""
+
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -500,6 +518,8 @@ def _context_from_completion(  # pylint: disable=too-many-arguments,too-many-pos
     gold_id: Any,
     gold_idx: Any,
 ) -> RewardContext:
+    """Construct a :class:`RewardContext` from a completion and metadata."""
+
     safe_items = items if isinstance(items, list) else []
     parsed_idx = _parse_index_from_answer_block(_completion_text(completion))
     is_valid = isinstance(parsed_idx, int) and 1 <= parsed_idx <= len(safe_items)
@@ -535,6 +555,8 @@ def _build_reward_contexts(
     completions: Sequence[Any],
     kwargs: Dict[str, Any],
 ) -> List[RewardContext]:
+    """Return reward contexts for all completions in a batch."""
+
     n = len(completions)
     if n == 0:
         return []
@@ -562,6 +584,8 @@ def _train_discriminator_from_contexts(
     disc: OnlineDiscriminator,
     contexts: Sequence[RewardContext],
 ) -> None:
+    """Train the online discriminator on positive/negative examples."""
+
     pos_texts: List[str] = []
     pos_labels: List[int] = []
     neg_texts: List[str] = []
@@ -596,6 +620,8 @@ def _train_discriminator_from_contexts(
 
 
 def _select_disc_device() -> torch.device:
+    """Return the torch device used for online discriminator training."""
+
     override = (os.getenv("GAIL_DEVICE", "").strip() or "").lower()
     device_hint = os.getenv("GAIL_DEVICE", "").strip()
     if override == "cuda":
@@ -651,6 +677,8 @@ def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0)
 
 
 def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> List[Any]:
+    """Load baseline reward functions for GRPO training."""
+
     try:
         return get_reward_funcs(script_args, _ref_model=None, _tokenizer=tokenizer)
     except (OSError, RuntimeError, ValueError, ImportError) as exc:
@@ -659,6 +687,8 @@ def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> Li
 
 
 def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
+    """Optionally append a GAIL reward function based on environment variables."""
+
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
     if not use_gail:
         logger.info("GAIL shaping DISABLED")
@@ -687,6 +717,8 @@ def _adjust_reward_weights(
     reward_fns: Sequence[Any],
     use_gail: bool,
 ) -> None:
+    """Normalise reward weights and append a GAIL weight when required."""
+
     weights = getattr(training_args, "reward_weights", None)
     if weights is None:
         if use_gail and len(reward_fns) >= 2:
@@ -716,6 +748,8 @@ def _build_dataset_and_tokenizer(
     training_args: GRPOConfig,
     model_args: ModelConfig,
 ) -> Tuple[DatasetDict, Any]:
+    """Return processed dataset and tokenizer for the GAIL pipeline."""
+
     raw_dataset = get_dataset(script_args)
     tokenizer = get_tokenizer(model_args, training_args)
     solution_key = getattr(script_args, "dataset_solution_column", None)
@@ -735,6 +769,8 @@ def _prepare_eval_dataset(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
 ) -> Optional[Any]:
+    """Return the evaluation dataset subset for the GAIL pipeline."""
+
     if not getattr(training_args, "do_eval", False):
         return None
     test_split = getattr(script_args, "dataset_test_split", None)
@@ -753,6 +789,8 @@ def _prepare_eval_dataset(
 
 
 def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
+    """Adjust evaluation scheduling for the GAIL GRPO trainer."""
+
     if not getattr(training_args, "do_eval", False) or eval_ds is None:
         return
     strategy = getattr(training_args, "evaluation_strategy", IntervalStrategy.NO)
@@ -767,6 +805,8 @@ def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
 
 
 def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
+    """Return checkpoint path for the GAIL pipeline, respecting overrides."""
+
     resume = getattr(training_args, "resume_from_checkpoint", None)
     if resume:
         return resume

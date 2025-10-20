@@ -54,4 +54,10 @@ ignored-modules =
     morphcloud,
     vllm,
     accelerate,
-    dotenv
+    dotenv,
+    graphviz,
+    joblib,
+    sklearn,
+    async_lru,
+    aiofiles,
+    openai

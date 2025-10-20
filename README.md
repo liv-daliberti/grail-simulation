@@ -4,7 +4,7 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 
 ![GRAIL overview](docs/Simulation.drawio.png)
 
-The interaction logs trace back to the public behavioural dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule. Across Studies 1–3 the mean opinion shift per issue remains below 0.05, underscoring how rare substantive changes were in the original experiments.
+The interaction logs trace back to the public behavioural dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule. Across Studies 1–3 the mean opinion shift per issue remains below 0.05, underscoring how rare substantive changes were in the original experiments. Detailed replication tables and plots live in [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md).
 
 ## Key Components
 

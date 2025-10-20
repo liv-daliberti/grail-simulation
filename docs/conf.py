@@ -157,14 +157,14 @@ html_theme = "alabaster"
 html_static_path = ["_static"]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", {}),
-    "numpy": ("https://numpy.org/doc/stable/", {}),
-    "pandas": ("https://pandas.pydata.org/docs/", {}),
-    "torch": ("https://pytorch.org/docs/stable/", {}),
-    "transformers": ("https://huggingface.co/docs/transformers/main/en", {}),
-    "sklearn": ("https://scikit-learn.org/stable/", {}),
-    "graphviz": ("https://graphviz.readthedocs.io/en/stable/", {}),
-    "datasets": ("https://huggingface.co/docs/datasets/main/en", {}),
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "transformers": ("https://huggingface.co/docs/transformers/main/en", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "graphviz": ("https://graphviz.readthedocs.io/en/stable/", None),
+    "datasets": ("https://huggingface.co/docs/datasets/main/en", None),
 }
 
 _nitpick_targets = {

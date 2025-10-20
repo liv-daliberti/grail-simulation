@@ -955,6 +955,10 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
                 ),
                 fallback_participant_counter,
             )
+            normalized_study = (participant_study_label or "").strip().lower()
+            if normalized_study not in {"study1", "study2", "study3"}:
+                interaction_stats["sessions_filtered_non_core_study"] += 1
+                continue
             participant_issue_key = (participant_identifier, canonical_issue)
             if participant_issue_key in seen_participant_issue:
                 interaction_stats["sessions_duplicate_participant_issue"] += 1

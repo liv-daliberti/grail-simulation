@@ -204,6 +204,13 @@
             <span class="n">feature_template</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">feature</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_for_feature</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">Value</span> <span class="o">|</span> <span class="n">HFSequence</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filler column matching the provided feature spec.</span>
+
+<span class="sd">        :param feature: Hugging Face feature describing the target column.</span>
+<span class="sd">        :param length: Desired column length.</span>
+<span class="sd">        :returns: List of placeholder values respecting the feature type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">HFSequence</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">)]</span>
         <span class="k">return</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">length</span>
@@ -284,6 +291,59 @@
     <span class="n">final</span> <span class="o">=</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">ensure_shared_schema</span><span class="p">(</span><span class="n">desired</span><span class="p">))</span>
     <span class="n">validate_required_columns</span><span class="p">(</span><span class="n">final</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">final</span></div>
+
+
+
+<div class="viewcode-block" id="dedupe_by_participant_issue">
+<a class="viewcode-back" href="../../api/clean_data.html#clean_data.clean_data.dedupe_by_participant_issue">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dedupe_by_participant_issue</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop duplicate rows sharing the same participant and issue.</span>
+
+<span class="sd">    The cleaning pipeline now retains every interaction row long enough to</span>
+<span class="sd">    run prompt diagnostics (e.g., prior-history coverage).  Downstream</span>
+<span class="sd">    consumers that require the historical one-row-per-participant-and-issue</span>
+<span class="sd">    view can apply this helper to recover the previous behaviour.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">deduped_splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_ds</span><span class="p">):</span>
+            <span class="n">deduped_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span>
+            <span class="k">continue</span>
+
+        <span class="n">required_columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;participant_id&quot;</span><span class="p">,</span> <span class="s2">&quot;issue&quot;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">required_columns</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">split_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">):</span>
+            <span class="n">deduped_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span>
+            <span class="k">continue</span>
+
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">deduped_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span>
+            <span class="k">continue</span>
+
+        <span class="n">participant</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">&quot;participant_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">issue</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="s2">&quot;issue&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">participant</span> <span class="o">+</span> <span class="s2">&quot;||&quot;</span> <span class="o">+</span> <span class="n">issue</span>
+        <span class="n">keep_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">keys</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span>
+        <span class="n">deduped_frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep_mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">removed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">deduped_frame</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">removed</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Removed </span><span class="si">%d</span><span class="s2"> duplicate participant/issue rows from split &#39;</span><span class="si">%s</span><span class="s2">&#39; (kept </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2">).&quot;</span><span class="p">,</span>
+                <span class="n">removed</span><span class="p">,</span>
+                <span class="n">split_name</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">deduped_frame</span><span class="p">),</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="n">deduped_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span>
+            <span class="n">deduped_frame</span><span class="p">,</span>
+            <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">features</span><span class="o">=</span><span class="n">split_ds</span><span class="o">.</span><span class="n">features</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">deduped_splits</span><span class="p">)</span></div>
 
 
 

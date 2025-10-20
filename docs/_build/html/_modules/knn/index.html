@@ -125,8 +125,13 @@
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a TF-IDF index from the training split.</span>
 
-<span class="sd">    Returns a dictionary containing the fitted vectoriser, sparse matrix, and</span>
-<span class="sd">    labels for candidate filtering.</span>
+<span class="sd">    :param train_ds: Training dataset split (Hugging Face dataset or list-like).</span>
+<span class="sd">    :param max_train: Maximum number of rows to sample for fitting.</span>
+<span class="sd">    :param seed: Random seed used for subsampling.</span>
+<span class="sd">    :param max_features: Optional vocabulary cap for the vectoriser.</span>
+<span class="sd">    :param extra_fields: Extra textual columns concatenated into each document.</span>
+<span class="sd">    :returns: Dictionary containing the fitted vectoriser, sparse matrix, and</span>
+<span class="sd">        label metadata.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
@@ -167,7 +172,16 @@
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Word2VecConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a Word2Vec index from the training split.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a Word2Vec index from the training split.</span>
+
+<span class="sd">    :param train_ds: Training dataset split.</span>
+<span class="sd">    :param max_train: Maximum number of rows to sample for fitting.</span>
+<span class="sd">    :param seed: Random seed used for subsampling.</span>
+<span class="sd">    :param extra_fields: Extra textual columns concatenated into each document.</span>
+<span class="sd">    :param config: Optional :class:`~knn.features.Word2VecConfig` override.</span>
+<span class="sd">    :returns: Dictionary containing the trained Word2Vec model and embeddings.</span>
+<span class="sd">    :raises ImportError: If gensim is unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
@@ -200,7 +214,11 @@
 <div class="viewcode-block" id="save_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_tfidf_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the TF-IDF index to ``out_dir`` for later reuse.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the TF-IDF index to ``out_dir`` for later reuse.</span>
+
+<span class="sd">    :param index: Dictionary returned by :func:`build_tfidf_index`.</span>
+<span class="sd">    :param out_dir: Target directory where artefacts will be written.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -229,7 +247,11 @@
 <div class="viewcode-block" id="load_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_tfidf_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a TF-IDF index previously saved via :func:`save_tfidf_index`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a TF-IDF index previously saved via :func:`save_tfidf_index`.</span>
+
+<span class="sd">    :param in_dir: Directory containing the persisted TF-IDF artefacts.</span>
+<span class="sd">    :returns: Dictionary with the loaded vectoriser, matrix, and labels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
     <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
@@ -249,7 +271,11 @@
 <div class="viewcode-block" id="save_word2vec_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_word2vec_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the Word2Vec index to ``out_dir`` for later reuse.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the Word2Vec index to ``out_dir`` for later reuse.</span>
+
+<span class="sd">    :param index: Dictionary returned by :func:`build_word2vec_index`.</span>
+<span class="sd">    :param out_dir: Target directory where embeddings and metadata are stored.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -294,7 +320,11 @@
 <div class="viewcode-block" id="load_word2vec_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_word2vec_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a Word2Vec index previously saved via :func:`save_word2vec_index`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a Word2Vec index previously saved via :func:`save_word2vec_index`.</span>
+
+<span class="sd">    :param in_dir: Directory containing the persisted Word2Vec artefacts.</span>
+<span class="sd">    :returns: Dictionary with the restored Word2Vec model, embeddings, and labels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
 
@@ -331,7 +361,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_safe_str</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lowercase</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a normalised string representation of ``value``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a normalised string representation of ``value``.</span>
+
+<span class="sd">    :param value: Arbitrary object to convert into a string.</span>
+<span class="sd">    :param lowercase: Whether the result should be lowercased.</span>
+<span class="sd">    :returns: Stripped string representation safe for tokenisation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -346,6 +381,13 @@
     <span class="n">slate_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the base text parts used to score slate candidates.</span>
+
+<span class="sd">    :param example: Dataset row containing viewer prompt information.</span>
+<span class="sd">    :param slate_pairs: Sequence of ``(title, video_id)`` tuples.</span>
+<span class="sd">    :param config: Query configuration controlling casing and extra fields.</span>
+<span class="sd">    :returns: List of textual fragments concatenated during scoring.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">base_text</span> <span class="o">=</span> <span class="n">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">text_fields</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">base_text</span><span class="p">:</span>
@@ -362,7 +404,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_surface_text</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the most human-friendly representation for a candidate surface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the most human-friendly representation for a candidate surface.</span>
+
+<span class="sd">    :param title: Title associated with the candidate (may be empty).</span>
+<span class="sd">    :param video_id: Canonical video identifier.</span>
+<span class="sd">    :returns: Preferential title to use when building query context.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">title</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">title</span> <span class="o">!=</span> <span class="s2">&quot;(untitled)&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">title</span>
     <span class="k">return</span> <span class="n">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span> <span class="ow">or</span> <span class="n">video_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
@@ -375,6 +422,15 @@
     <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score every slate candidate for each ``k`` value.</span>
+
+<span class="sd">    :param index_data: Loaded index data required for similarity lookups.</span>
+<span class="sd">    :param slate_pairs: Sequence of slate candidates as ``(title, video_id)``.</span>
+<span class="sd">    :param base_parts: Common text fragments shared across candidates.</span>
+<span class="sd">    :param unique_k: Sorted ``k`` values evaluated for the slate.</span>
+<span class="sd">    :param config: Query configuration instance.</span>
+<span class="sd">    :returns: Mapping from ``k`` to the list of scores per candidate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">scorer</span> <span class="o">=</span> <span class="n">CandidateScorer</span><span class="p">(</span><span class="n">index_data</span><span class="p">,</span> <span class="n">base_parts</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">unique_k</span><span class="p">)</span>
     <span class="n">scores_by_k</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">title</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">slate_pairs</span><span class="p">:</span>
@@ -391,7 +447,15 @@
     <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the transformed query vector and raw similarities for a candidate.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the transformed query vector and raw similarities for a candidate.</span>
+
+<span class="sd">    :param index_data: Prepared index data (vectoriser + matrix + labels).</span>
+<span class="sd">    :param base_parts: Text fragments shared across candidates for the slate.</span>
+<span class="sd">    :param title: Candidate title.</span>
+<span class="sd">    :param video_id: Candidate video identifier.</span>
+<span class="sd">    :param config: Query configuration controlling casing and metric.</span>
+<span class="sd">    :returns: Tuple of ``(query_vector, similarity_array)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">surface</span> <span class="o">=</span> <span class="n">_surface_text</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_parts</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">surface</span><span class="p">:</span>
@@ -417,7 +481,15 @@
     <span class="n">query</span><span class="p">,</span>
     <span class="n">metric</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a scoring vector based on the configured distance metric.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a scoring vector based on the configured distance metric.</span>
+
+<span class="sd">    :param sims_masked: Similarity values restricted to matching rows.</span>
+<span class="sd">    :param index_data: Index data providing matrices for distance computation.</span>
+<span class="sd">    :param mask: Boolean mask selecting rows matching the candidate.</span>
+<span class="sd">    :param query: Query vector for the candidate.</span>
+<span class="sd">    :param metric: Distance metric (``l2`` or ``cosine``) or ``None`` for dot product.</span>
+<span class="sd">    :returns: Vector of scores aligned with ``sims_masked`` ordering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
         <span class="n">subset</span> <span class="o">=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">subset</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -449,7 +521,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_scores</span><span class="p">(</span><span class="n">score_vector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate neighbour scores for each ``k`` value.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate neighbour scores for each ``k`` value.</span>
+
+<span class="sd">    :param score_vector: Sorted neighbour score vector for a candidate.</span>
+<span class="sd">    :param unique_k: Sequence of ``k`` values to aggregate over.</span>
+<span class="sd">    :returns: Mapping of ``k`` to the cumulative score of the top-``k`` neighbours.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sorted_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">score_vector</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">cumulative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">sorted_scores</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
@@ -463,7 +540,13 @@
     <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean mask selecting rows that match the candidate.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean mask selecting rows that match the candidate.</span>
+
+<span class="sd">    :param title: Candidate title text.</span>
+<span class="sd">    :param video_id: Candidate video identifier.</span>
+<span class="sd">    :param index_data: Index data including canonical label arrays.</span>
+<span class="sd">    :returns: Boolean mask over training rows matching title or video id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">index_data</span><span class="o">.</span><span class="n">label_id_canon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
     <span class="n">vid_canon</span> <span class="o">=</span> <span class="n">_canon_vid</span><span class="p">(</span><span class="n">video_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">vid_canon</span><span class="p">:</span>
@@ -485,8 +568,12 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>  <span class="c1"># pylint: disable=too-many-branches</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Score each slate option using candidate-aware TF-IDF kNN.</span>
 
-<span class="sd">    Returns a mapping from ``k`` to the predicted option index (1-based). ``None``</span>
-<span class="sd">    indicates that a prediction could not be produced for that ``k``.</span>
+<span class="sd">    :param knn_index: Dictionary describing the fitted index artefacts.</span>
+<span class="sd">    :param example: Dataset row containing the slate to score.</span>
+<span class="sd">    :param k_values: Sequence of ``k`` values to evaluate.</span>
+<span class="sd">    :param config: Optional :class:`~knn.index.SlateQueryConfig` overriding defaults.</span>
+<span class="sd">    :returns: Mapping from ``k`` to the predicted 1-based option index. ``None``</span>
+<span class="sd">        indicates that a prediction could not be produced for that ``k``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">SlateQueryConfig</span><span class="p">()</span>
@@ -526,6 +613,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_index_data</span><span class="p">(</span><span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SlateIndexData</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct :class:`SlateIndexData` from a raw index dictionary.</span>
+
+<span class="sd">    :param knn_index: Dictionary describing the fitted index artefacts.</span>
+<span class="sd">    :returns: :class:`SlateIndexData` instance or ``None`` when the index is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">knn_index</span> <span class="ow">or</span> <span class="s2">&quot;vectorizer&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">knn_index</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">labels_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">knn_index</span><span class="p">[</span><span class="s2">&quot;labels_id&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
@@ -541,10 +634,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a canonicalised alphanumeric string.</span>
+
+<span class="sd">    :param text: Input string to canonicalise.</span>
+<span class="sd">    :returns: Lowercased string with non-alphanumeric characters removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canon_vid</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the canonical 11-character YouTube video identifier.</span>
+
+<span class="sd">    :param value: Raw candidate identifier.</span>
+<span class="sd">    :returns: Canonical video id or the stripped input when no match is found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z0-9_-]</span><span class="si">{11}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>

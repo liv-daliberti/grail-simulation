@@ -11,9 +11,13 @@ import numpy as np
 import torch.distributed as dist
 
 def _prompt_key(prompt: list[dict[str, str]]) -> tuple:
+    """Return a hashable key summarising the prompt messages."""
+
     return tuple((m["role"], " ".join(m["content"].split())) for m in prompt)
 
 def _finite_float(x: Any, default: float = 0.0) -> float:
+    """Cast ``x`` to a finite float, returning ``default`` when invalid."""
+
     try:
         v = float(x)
         return v if math.isfinite(v) else default
@@ -22,6 +26,8 @@ def _finite_float(x: Any, default: float = 0.0) -> float:
 
 
 def _is_full_example(x: Any) -> bool:
+    """Return ``True`` when ``x`` contains both prompt and answer entries."""
+
     return isinstance(x, dict) and "prompt" in x and "answer" in x
 
 
@@ -56,19 +62,29 @@ class ReplayBuffer:
         self._last_error: Optional[dict] = None
 
     def last_error(self):
+        """Return the most recent error metadata recorded by the buffer."""
+
         return self._last_error
 
     def _set_err(self, **kw):
+        """Store diagnostic metadata for the last failed operation."""
+
         self._last_error = kw
 
     def __len__(self) -> int:
+        """Return the number of groups stored in the replay buffer."""
+
         return len(self._buf)
 
     # ----------------- stats utils -----------------
     def _init_stats(self, r: float) -> tuple[float, float, int]:
+        """Initialise running reward statistics for a newly inserted item."""
+
         return float(r), 0.0, 1
 
     def _update_stats(self, idx: int, r: float):
+        """Update Welford running statistics for sample ``idx`` using reward ``r``."""
+
         mu, M2, n = self._mean[idx], self._M2[idx], self._n[idx]
         n += 1
         delta = r - mu
@@ -79,6 +95,8 @@ class ReplayBuffer:
 
     # ----------------- helpers -----------------
     def _key_for_sample(self, sample: Any):
+        """Return a deduplication key for individual or grouped samples."""
+
         # Deduplicate on prompt content
         if _is_full_example(sample):
             return _prompt_key(sample["prompt"])

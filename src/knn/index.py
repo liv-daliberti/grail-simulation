@@ -518,7 +518,7 @@ def knn_predict_among_slate_multi(
     :param knn_index: Dictionary describing the fitted index artefacts.
     :param example: Dataset row containing the slate to score.
     :param k_values: Sequence of ``k`` values to evaluate.
-    :param config: Optional :class:`SlateQueryConfig` overriding defaults.
+    :param config: Optional :class:`~knn.index.SlateQueryConfig` overriding defaults.
     :returns: Mapping from ``k`` to the predicted 1-based option index. ``None``
         indicates that a prediction could not be produced for that ``k``.
     """

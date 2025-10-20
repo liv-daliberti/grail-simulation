@@ -215,6 +215,15 @@
     <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue for the XGBoost baseline and persist outputs.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace controlling training/evaluation options.</span>
+<span class="sd">    :param issue: Issue label (human-readable) requested for evaluation.</span>
+<span class="sd">    :param base_ds: Loaded dataset dictionary containing train/eval splits.</span>
+<span class="sd">    :param dataset_source: String describing the data source (path or hub id).</span>
+<span class="sd">    :param extra_fields: Additional text fields appended to the feature document.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span> <span class="ow">and</span> <span class="n">issue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;all&quot;</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Evaluating issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_issue</span><span class="p">(</span><span class="n">base_ds</span><span class="p">,</span> <span class="n">issue</span><span class="p">)</span>
@@ -251,6 +260,16 @@
     <span class="n">train_ds</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XGBoostSlateModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trained or loaded XGBoost model for the requested issue.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace containing training options.</span>
+<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
+<span class="sd">    :param train_ds: Training dataset split.</span>
+<span class="sd">    :param extra_fields: Extra text fields passed to the feature builder.</span>
+<span class="sd">    :returns: :class:`XGBoostSlateModel` ready for evaluation.</span>
+<span class="sd">    :raises ValueError: If neither ``--fit-model`` nor ``--load-model`` is specified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_model</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Training model for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
         <span class="n">booster_params</span> <span class="o">=</span> <span class="n">XGBoostBoosterParams</span><span class="p">(</span>
@@ -291,6 +310,15 @@
     <span class="n">metrics</span><span class="p">:</span> <span class="n">IssueMetrics</span><span class="p">,</span>
     <span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist metrics and predictions for a single issue evaluation.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace controlling output directory handling.</span>
+<span class="sd">    :param issue_slug: Issue identifier appended to output paths.</span>
+<span class="sd">    :param metrics: Summary metrics produced by :func:`evaluate_issue`.</span>
+<span class="sd">    :param predictions: Per-example prediction dictionaries to serialise.</span>
+<span class="sd">    :raises FileExistsError: If the output directory exists and ``--overwrite`` is not set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
     <span class="k">if</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
@@ -449,6 +477,13 @@
     <span class="n">slate</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
     <span class="n">probability_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map slate indices to predicted probabilities and known candidates.</span>
+
+<span class="sd">    :param slate: Ordered sequence of slate options ``(title, video_id)``.</span>
+<span class="sd">    :param probability_map: Mapping from canonical video id to predicted probability.</span>
+<span class="sd">    :returns: Tuple of ``(candidate_probabilities, known_candidate_ids)`` keyed by 1-based index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">candidate_probs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">slate_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">probability_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">canon_video_id</span><span class="p">(</span><span class="n">candidate_id</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">slate_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">candidate_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate</span><span class="p">)</span>
@@ -468,6 +503,15 @@
     <span class="n">known_candidates</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="n">gold_id_canon</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProbabilityContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return context describing the probability associated with the prediction.</span>
+
+<span class="sd">    :param prediction_idx: 1-based predicted index or ``None`` when absent.</span>
+<span class="sd">    :param candidate_probs: Mapping from 1-based index to predicted probability.</span>
+<span class="sd">    :param known_candidates: Mapping from 1-based index to canonical id when seen during training.</span>
+<span class="sd">    :param gold_id_canon: Canonicalised gold video identifier.</span>
+<span class="sd">    :returns: :class:`ProbabilityContext` describing probabilities and hits.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">best_probability</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">candidate_probs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prediction_idx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prediction_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -489,6 +533,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_summarise_outcomes</span><span class="p">(</span>
     <span class="n">records</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutcomeSummary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate prediction outcomes into summary counts.</span>
+
+<span class="sd">    :param records: Sequence of ``(index, PredictionOutcome)`` tuples.</span>
+<span class="sd">    :returns: :class:`OutcomeSummary` containing accuracy, coverage, and averages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">outcomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">outcome</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">records</span><span class="p">]</span>
     <span class="n">evaluated</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span>
     <span class="n">known_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">known_candidate_seen</span> <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">)</span>

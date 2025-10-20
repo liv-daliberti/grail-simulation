@@ -45,7 +45,10 @@
 <div class="viewcode-block" id="build_parser">
 <a class="viewcode-back" href="../../api/knn.html#knn.cli.build_parser">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the argument parser for the KNN baseline CLI.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the argument parser for the KNN baseline CLI.</span>
+
+<span class="sd">    :returns: Configured :class:`argparse.ArgumentParser` instance with all KNN options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;KNN baselines for GRAIL (TF-IDF / Word2Vec)&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -192,7 +195,11 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/knn.html#knn.cli.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments and execute the evaluation routine.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments and execute the evaluation routine.</span>
+
+<span class="sd">    :param argv: Optional list of command-line arguments. When ``None`` the values</span>
+<span class="sd">        are read from :data:`sys.argv`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">build_parser</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>

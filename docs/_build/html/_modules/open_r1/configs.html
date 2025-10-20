@@ -125,6 +125,13 @@
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize dataset mixture configuration after initialisation.</span>
+
+<span class="sd">        Ensures at least one of ``dataset_name`` or ``dataset_mixture`` is provided,</span>
+<span class="sd">        converts the mixture dictionary into :class:`DatasetMixtureConfig`, and</span>
+<span class="sd">        validates column consistency across components.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_mixture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either `dataset_name` or `dataset_mixture` must be provided&quot;</span><span class="p">)</span>
 

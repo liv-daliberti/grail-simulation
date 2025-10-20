@@ -47,7 +47,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dd><p>Create the CLI argument parser for the GPT-4o baseline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.14)"><em>ArgumentParser</em></a></p>
+<dd class="field-odd"><p><em>ArgumentParser</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -58,7 +58,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dd><p>Parse command-line arguments and execute the evaluation routine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -74,14 +74,14 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em><em>]</em>)</p></li>
-<li><p><strong>max_tokens</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>deployment</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>messages</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
+<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
+<li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -118,10 +118,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Structured key/value profile block (parity with GRPO).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -132,10 +132,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Mirror the income extraction used in the GRPO baseline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -146,10 +146,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Extract a brief marital descriptor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -160,10 +160,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Return a party label derived from standard survey signals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -174,10 +174,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Extract race information following the GRPO baseline rules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -188,10 +188,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Convert ideology encodings to descriptive text.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>raw</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+<dd class="field-odd"><p><strong>raw</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -202,10 +202,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Build the human-readable profile sentence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -216,10 +216,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Transform a dataset row into the prompt payload consumed by GPT-4o.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>]</p>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -231,12 +231,12 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>record</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p></li>
-<li><p><strong>candidates</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>record</strong> (<em>dict</em>)</p></li>
+<li><p><strong>candidates</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None</p>
+<dd class="field-even"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -248,7 +248,7 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Evaluate GPT-4o on the configured dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>) – Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)</p>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -273,10 +273,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Return True when the provided value should be treated as missing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><em>object</em></a><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -287,10 +287,10 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Return True for typical boolean truthy values used in the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><em>object</em></a><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>

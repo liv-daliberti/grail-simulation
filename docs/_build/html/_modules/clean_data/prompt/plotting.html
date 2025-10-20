@@ -108,6 +108,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue numeric histograms, falling back to global plots.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_numeric</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return numeric series with invalid entries removed.</span>
+
+<span class="sd">        :param values: Input series containing numeric-like values.</span>
+<span class="sd">        :returns: Series of floats with ``NaN`` values dropped.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">pair</span><span class="o">.</span><span class="n">has_issue</span><span class="p">():</span>
@@ -228,6 +234,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue categorical histograms, falling back to global plots.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return trimmed categorical series with missing entries removed.</span>
+
+<span class="sd">        :param series: Input series containing categorical values.</span>
+<span class="sd">        :returns: Series of non-empty, stripped strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">series</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
             <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>

@@ -291,6 +291,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_valid_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">solution_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``example`` contains a usable slate and gold label.</span>
+
+<span class="sd">    :param example: Raw dataset row to validate.</span>
+<span class="sd">    :param solution_key: Optional column name containing the gold id.</span>
+<span class="sd">    :returns: ``True`` if the slate has candidates and the gold id is present in the slate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">items</span> <span class="o">=</span> <span class="n">_load_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -301,6 +308,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_drop_marked_rows</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove rows marked with the ``__drop__`` flag across all splits.</span>
+
+<span class="sd">    :param dataset: Dataset mixture to mutate in place.</span>
+<span class="sd">    :param train_split: Name of the training split used to check for the marker column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="s2">&quot;__drop__&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">[</span><span class="n">train_split</span><span class="p">]</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
@@ -310,6 +323,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prune_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove columns outside ``KEEP_COLUMNS`` from every split.</span>
+
+<span class="sd">    :param dataset: Dataset dictionary to prune.</span>
+<span class="sd">    :returns: Dataset dictionary with extraneous columns dropped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">drop</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">[</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">column_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">KEEP_COLUMNS</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">drop</span><span class="p">:</span>
@@ -323,6 +342,15 @@
     <span class="n">solution_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the training dataset with prompt conversion and filtering.</span>
+
+<span class="sd">    :param script_args: High-level script arguments controlling dataset loading.</span>
+<span class="sd">    :param training_args: Training hyperparameters providing system prompt, etc.</span>
+<span class="sd">    :param solution_key: Optional column containing the gold target id.</span>
+<span class="sd">    :param max_hist: Maximum history length to include in prompts.</span>
+<span class="sd">    :returns: Dataset dictionary ready for GRPO training.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">raw</span> <span class="o">=</span> <span class="n">get_dataset</span><span class="p">(</span><span class="n">script_args</span><span class="p">)</span>
     <span class="n">filtered</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_valid_example</span><span class="p">,</span> <span class="n">fn_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;solution_key&quot;</span><span class="p">:</span> <span class="n">solution_key</span><span class="p">})</span>
     <span class="n">mapped</span> <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
@@ -342,6 +370,13 @@
     <span class="n">script_args</span><span class="p">:</span> <span class="n">GRPOScriptArguments</span><span class="p">,</span>
     <span class="n">tokenizer</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load reward functions configured for the training run.</span>
+
+<span class="sd">    :param script_args: Script arguments containing reward configuration.</span>
+<span class="sd">    :param tokenizer: Tokenizer instance passed to reward constructors.</span>
+<span class="sd">    :returns: List of reward callables (may be empty on failure).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_reward_funcs</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">_ref_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-exception-caught</span>
@@ -350,6 +385,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_reward_weights</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">reward_fns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure reward weights align with the number of reward functions.</span>
+
+<span class="sd">    :param training_args: Training arguments where weights are stored.</span>
+<span class="sd">    :param reward_fns: List of reward functions enabled for the run.</span>
+<span class="sd">    :raises ValueError: If the configured list length does not match ``reward_fns``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">weights</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;reward_weights&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">reward_fns</span><span class="p">)</span>
@@ -370,6 +412,14 @@
     <span class="n">script_args</span><span class="p">:</span> <span class="n">GRPOScriptArguments</span><span class="p">,</span>
     <span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare the evaluation dataset when ``do_eval`` is enabled.</span>
+
+<span class="sd">    :param dataset: Dataset dictionary produced by :func:`_build_dataset`.</span>
+<span class="sd">    :param script_args: Script arguments providing split names.</span>
+<span class="sd">    :param training_args: Training configuration containing evaluation flags.</span>
+<span class="sd">    :returns: Evaluation dataset or ``None`` when evaluation is disabled/unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">test_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_test_split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -388,6 +438,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust evaluation strategy to ensure periodic evaluation runs.</span>
+
+<span class="sd">    :param training_args: Training configuration mutated in place.</span>
+<span class="sd">    :param eval_ds: Prepared evaluation dataset (or ``None``).</span>
+<span class="sd">    :raises ValueError: If ``eval_steps`` is missing when evaluation is enabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;evaluation_strategy&quot;</span><span class="p">,</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">)</span>
@@ -403,6 +460,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the checkpoint path to resume from when available.</span>
+
+<span class="sd">    :param training_args: Training configuration containing resume parameters.</span>
+<span class="sd">    :returns: Path to the checkpoint directory or ``None`` if not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">resume</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;resume_from_checkpoint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">resume</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">resume</span>

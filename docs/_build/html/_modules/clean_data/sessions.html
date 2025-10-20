@@ -401,6 +401,13 @@
     <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_video_meta</span><span class="p">(</span><span class="n">base_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return augmented metadata for a watched video.</span>
+
+<span class="sd">        :param base_id: Canonical video identifier.</span>
+<span class="sd">        :param raw_id: Optional raw identifier associated with the session.</span>
+<span class="sd">        :returns: Metadata dictionary combining tree metadata and fallbacks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="n">raw_id</span> <span class="ow">and</span> <span class="n">raw_id</span> <span class="o">!=</span> <span class="n">base_id</span><span class="p">:</span>
             <span class="n">raw_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_ids&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
@@ -419,12 +426,27 @@
         <span class="k">return</span> <span class="n">info</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a title for the candidate along with a missing flag.</span>
+
+<span class="sd">        :param meta: Metadata dictionary returned by :func:`_video_meta`.</span>
+<span class="sd">        :param fallback_id: Identifier used when no title is available.</span>
+<span class="sd">        :returns: Tuple of ``(title_text, missing)`` where ``missing`` is ``True``</span>
+<span class="sd">            when only a placeholder title could be produced.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">title</span><span class="p">,</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(title missing for </span><span class="si">{</span><span class="n">fallback_id</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_channel</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the channel title with a missing flag.</span>
+
+<span class="sd">        :param meta: Metadata dictionary returned by :func:`_video_meta`.</span>
+<span class="sd">        :returns: Tuple ``(channel_name, missing)`` where ``missing`` indicates</span>
+<span class="sd">            a placeholder string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">channel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">channel</span><span class="p">,</span> <span class="kc">False</span>
@@ -1054,6 +1076,23 @@
                 <span class="n">interaction_stats</span><span class="p">[</span><span class="s2">&quot;pairs_missing_slates&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
 
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">slate_source</span> <span class="o">==</span> <span class="s2">&quot;tree_metadata&quot;</span>
+                <span class="ow">and</span> <span class="n">next_base</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">next_base</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">slate_items</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">fallback_title</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">if</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">watched_details</span><span class="p">):</span>
+                    <span class="n">fallback_title</span> <span class="o">=</span> <span class="n">watched_details</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">fallback_title</span><span class="p">:</span>
+                    <span class="n">fallback_title</span> <span class="o">=</span> <span class="n">next_base</span>
+                <span class="n">slate_items</span> <span class="o">=</span> <span class="n">slate_items</span> <span class="o">+</span> <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">next_base</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">fallback_title</span><span class="p">}]</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slate_items</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_items</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slate_items</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_items</span><span class="p">)</span>
+
             <span class="n">participant_identifier</span><span class="p">,</span> <span class="n">fallback_participant_counter</span> <span class="o">=</span> <span class="n">participant_key</span><span class="p">(</span>
                 <span class="n">ParticipantIdentifiers</span><span class="p">(</span>
                     <span class="n">worker_id</span><span class="o">=</span><span class="n">worker_id_value</span><span class="p">,</span>
@@ -1067,8 +1106,8 @@
             <span class="n">participant_issue_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">participant_identifier</span><span class="p">,</span> <span class="n">canonical_issue</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">participant_issue_key</span> <span class="ow">in</span> <span class="n">seen_participant_issue</span><span class="p">:</span>
                 <span class="n">interaction_stats</span><span class="p">[</span><span class="s2">&quot;sessions_duplicate_participant_issue&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">continue</span>
-            <span class="n">seen_participant_issue</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">participant_issue_key</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seen_participant_issue</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">participant_issue_key</span><span class="p">)</span>
 
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;participant_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">participant_identifier</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;participant_study&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">participant_study_label</span> <span class="ow">or</span> <span class="s2">&quot;unknown&quot;</span>
@@ -1078,7 +1117,6 @@
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;selected_survey_row&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected_survey_row</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slate_items</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;slate_source&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slate_source</span>
-            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;n_options&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_items</span><span class="p">)</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;next_video_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">next_base</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;next_video_raw_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_vids</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;next_video_title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -1115,6 +1153,12 @@
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">df</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pick_group</span><span class="p">(</span><span class="n">row_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a partition key for the participant/session of ``row_idx``.</span>
+
+<span class="sd">        :param row_idx: Dataframe row index.</span>
+<span class="sd">        :returns: Group key ensuring participants remain in a single split.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">session</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">urlid</span> <span class="ow">and</span> <span class="n">urlid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>

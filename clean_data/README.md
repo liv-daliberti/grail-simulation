@@ -30,7 +30,7 @@ Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists
 ## Processing Pipeline
 
 1. **Reconstruct allow-lists** – attention checks, survey-duration limits, ideology index trimming, and control-arm removal mirror the R scripts.
-2. **Merge surveys with sessions** – join cleaned survey exports to the YouTube logs, emitting every usable interaction for each participant (`clean_data.sessions.build_codeocean_rows`).
+2. **Merge surveys with sessions** – join cleaned survey exports to the YouTube logs, retaining every usable interaction for Studies 1–3 (`clean_data.sessions.build_codeocean_rows`).
 3. **Filter unusable rows** – drop interactions missing a usable slate or gold choice (`clean_data.filters.filter_prompt_ready`).
 4. **Convert to prompts** – build GRPO-friendly prompt dictionaries with metadata passthrough (`clean_data.prompting.row_to_example`).
 5. **Validate & save** – enforce required columns, write the full dataset (all interactions) to disk, emit prompt stats from a deduplicated view, and optionally push to the Hugging Face Hub.
@@ -50,7 +50,7 @@ Shorts participants remain in the allow-list summaries so shortfall analyses mat
 
 Running `python -m clean_data.cli` now produces two complementary datasets:
 
-- **Full cleaned dataset** – persisted under `--output-dir`, retaining every promptable interaction for each `(participant, issue)` pair.
+- **Full cleaned dataset** – persisted under `--output-dir`, retaining every promptable interaction for each `(participant, issue)` pair within Studies 1–3.
 - **Deduped analytics view** – computed in-memory via `clean_data.clean_data.dedupe_by_participant_issue` so prompt statistics still mirror the historical “one row per participant/issue” summaries.
 
 Downstream tooling that expects the deduped layout can invoke the helper directly, while modelling workflows can make use of the richer full-history export.

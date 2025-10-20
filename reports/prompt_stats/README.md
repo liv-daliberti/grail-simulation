@@ -2,11 +2,10 @@
 
 ## Dataset coverage notes
 
-Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.  
-These counts are derived from the deduplicated `(participant_id, issue)` view used for analytics; the full cleaned dataset retains every promptable interaction.
+Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.
 
-- Train: 5293 of 7394 rows retained (71.6% coverage); excluded rows from study4: 665, unknown: 1436
-- Validation: 586 of 781 rows retained (75.0% coverage); excluded rows from study4: 68, unknown: 127
+- Train: 5292 of 7418 rows retained (71.3% coverage); excluded rows from study4: 674, unknown: 1452
+- Validation: 587 of 793 rows retained (74.0% coverage); excluded rows from study4: 95, unknown: 111
 
 > "The short answer is that sessions.json contains EVERYTHING.
 Every test run, every study.
@@ -45,50 +44,50 @@ Figures directory: `figures`
 
 | Split | Rows | Missing all demographics | Share |
 |-------|------|--------------------------|-------|
-| train | 5293 | 0 | 0.00% |
-| validation | 586 | 0 | 0.00% |
+| train | 5292 | 0 | 0.00% |
+| validation | 587 | 0 | 0.00% |
 | overall | 5879 | 0 | 0.00% |
 
 ## Profile availability
 
 | Split | Rows | Missing profile | Share missing |
 |-------|------|-----------------|---------------|
-| train | 5293 | 0 | 0.00% |
-| validation | 586 | 0 | 0.00% |
+| train | 5292 | 0 | 0.00% |
+| validation | 587 | 0 | 0.00% |
 
 ## Prior video counts
 
 | Prior videos | Train | Validation |
 |--------------|-------|------------|
-| 0 | 4867 | 552 |
-| 1 | 336 | 28 |
+| 0 | 4873 | 546 |
+| 1 | 331 | 33 |
 | 2 | 57 | 5 |
-| 3 | 33 | 1 |
+| 3 | 31 | 3 |
 
 ## Slate size distribution (`n_options`)
 
 | Slate size | Train | Validation |
 |------------|-------|------------|
 | 1 | 4 | 0 |
-| 2 | 397 | 33 |
-| 3 | 293 | 33 |
-| 4 | 3695 | 423 |
-| 5 | 904 | 97 |
+| 2 | 378 | 52 |
+| 3 | 290 | 36 |
+| 4 | 3706 | 412 |
+| 5 | 914 | 87 |
 
 ## Unique content coverage
 
 | Split | Current videos | Gold videos | Candidate videos | Unique slates | Prompt texts |
 |-------|----------------|-------------|------------------|---------------|--------------|
-| train | 43 | 170 | 188 | 2792 | 5291 |
-| validation | 24 | 100 | 128 | 494 | 586 |
+| train | 44 | 170 | 187 | 2799 | 5290 |
+| validation | 24 | 104 | 129 | 494 | 587 |
 | overall | 44 | 171 | 188 | 2987 | 5877 |
 
 ## Unique participants
 
 | Split | Participants (all issues) |
 |-------|---------------------------|
-| train | 5293 |
-| validation | 586 |
+| train | 5292 |
+| validation | 587 |
 | overall | 5879 |
 
 ## Features skipped due to missing data

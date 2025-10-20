@@ -198,6 +198,8 @@
         <span class="n">languages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">num_parallel</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute scripts concurrently using the asynchronous E2B sandbox.&quot;&quot;&quot;</span>
+
         <span class="n">semaphore</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">num_parallel</span><span class="p">)</span>
 
         <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_script</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">languages</span><span class="p">,</span> <span class="n">semaphore</span><span class="p">)</span> <span class="k">for</span> <span class="n">script</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">]</span>
@@ -213,6 +215,8 @@
         <span class="n">languages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">semaphore</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a single script within the sandbox, returning the reward.&quot;&quot;&quot;</span>
+
         <span class="c1"># We set a timeout margin, as the AsyncSandbox timeout does not seem to work</span>
         <span class="c1"># These values are based on running 256 examples with the gold solution</span>
         <span class="c1"># from open-r1/verifiable-coding-problems-python_decontaminated</span>

@@ -65,8 +65,8 @@ The command:
 Builder notes:
 
 - Rows missing all survey demographics are removed so every prompt has viewer context (~22 % of raw interactions).
-- The on-disk dataset preserves the complete interaction history for each participant; use `clean_data.clean_data.dedupe_by_participant_issue` if you need the legacy one-row-per-participant layout.
-- Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from prompt rows because the released logs lack recommendation slates.
+- The on-disk dataset preserves the complete interaction history for each participant across Studies 1–3; use `clean_data.clean_data.dedupe_by_participant_issue` if you need the legacy one-row-per-participant layout.
+- Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from saved prompt rows because the released logs lack recommendation slates.
 
 #### Output artefacts
 

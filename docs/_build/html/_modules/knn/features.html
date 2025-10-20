@@ -110,7 +110,11 @@
 <div class="viewcode-block" id="viewer_profile_sentence">
 <a class="viewcode-back" href="../../api/xgb.html#knn.features.viewer_profile_sentence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">viewer_profile_sentence</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the viewer profile sentence for ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the viewer profile sentence for ``example``.</span>
+
+<span class="sd">    :param example: Dataset row containing viewer metadata.</span>
+<span class="sd">    :returns: Cleaned viewer profile sentence (may be empty).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">sentence</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">sentence</span><span class="p">:</span>
@@ -127,7 +131,11 @@
 <div class="viewcode-block" id="prompt_from_builder">
 <a class="viewcode-back" href="../../api/xgb.html#knn.features.prompt_from_builder">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the prompt text for ``example`` using the shared builder.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the prompt text for ``example`` using the shared builder.</span>
+
+<span class="sd">    :param example: Dataset row used to construct the prompt.</span>
+<span class="sd">    :returns: Prompt string derived from shared builder logic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">existing</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state_text&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prompt&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">existing</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">existing</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
@@ -235,7 +243,11 @@
 <div class="viewcode-block" id="extract_slate_items">
 <a class="viewcode-back" href="../../api/xgb.html#knn.features.extract_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Public wrapper returning the slate as ``(title, video_id)`` pairs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the slate as ``(title, video_id)`` pairs.</span>
+
+<span class="sd">    :param example: Dataset row containing slate metadata.</span>
+<span class="sd">    :returns: Ordered list of candidate tuples for the slate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -244,7 +256,11 @@
 <div class="viewcode-block" id="extract_now_watching">
 <a class="viewcode-back" href="../../api/xgb.html#knn.features.extract_now_watching">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Public wrapper returning the currently-watched title/id, if known.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the currently watched title/id, if known.</span>
+
+<span class="sd">    :param example: Dataset row containing now-watching metadata.</span>
+<span class="sd">    :returns: ``(title, video_id)`` tuple when available, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -253,7 +269,12 @@
 <div class="viewcode-block" id="assemble_document">
 <a class="viewcode-back" href="../../api/xgb.html#knn.features.assemble_document">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return concatenated text used to featurise ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return concatenated text used to featurise ``example``.</span>
+
+<span class="sd">    :param example: Dataset row containing prompt and slate context.</span>
+<span class="sd">    :param extra_fields: Iterable of additional field names to append.</span>
+<span class="sd">    :returns: Single text string describing the viewer + slate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">extra_fields</span> <span class="o">=</span> <span class="n">extra_fields</span> <span class="ow">or</span> <span class="p">[]</span>
 
@@ -305,7 +326,15 @@
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return TF-IDF training documents and associated labels.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return TF-IDF training documents and associated labels.</span>
+
+<span class="sd">    :param train_ds: Training dataset split.</span>
+<span class="sd">    :param max_train: Maximum number of rows to sample.</span>
+<span class="sd">    :param seed: Random seed for subsampling.</span>
+<span class="sd">    :param extra_fields: Optional iterable of additional text fields.</span>
+<span class="sd">    :returns: Tuple ``(documents, label_ids, label_titles)``.</span>
+<span class="sd">    :raises RuntimeError: If no valid documents are produced.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">n_rows</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>

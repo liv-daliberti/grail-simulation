@@ -108,6 +108,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_table</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return Markdown table lines for the given header and rows.</span>
+
+<span class="sd">    :param header: List of column headers.</span>
+<span class="sd">    :param rows: Sequence of rows, each already converted to strings.</span>
+<span class="sd">    :returns: List of Markdown-formatted strings representing the table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span><span class="p">]</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;|&quot;</span> <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">header</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
@@ -116,6 +123,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_profile_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the profile availability section.</span>
+
+<span class="sd">    :param context: Report context containing profile summaries.</span>
+<span class="sd">    :returns: Markdown lines describing profile coverage per split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">summaries</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">profile</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">):</span>
@@ -138,6 +151,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_demographic_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the demographic completeness section.</span>
+
+<span class="sd">    :param context: Report context containing demographic counts.</span>
+<span class="sd">    :returns: Markdown lines describing demographic coverage per split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">demographic_missing</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span> <span class="s2">&quot;overall&quot;</span><span class="p">):</span>
@@ -166,6 +185,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prior_history_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the prior-history summary section.</span>
+
+<span class="sd">    :param context: Report context containing prior history counts.</span>
+<span class="sd">    :returns: Markdown lines describing prior-history distributions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">prior_history</span>
     <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]))</span>
@@ -180,6 +205,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_n_options_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the slate size summary section.</span>
+
+<span class="sd">    :param context: Report context containing ``n_options`` counts.</span>
+<span class="sd">    :returns: Markdown lines describing slate-size distributions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">n_options</span>
     <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]))</span>
@@ -194,6 +225,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_unique_content_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the unique content coverage section.</span>
+
+<span class="sd">    :param context: Report context containing unique content counts.</span>
+<span class="sd">    :returns: Markdown lines describing coverage per split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">unique_content</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span> <span class="s2">&quot;overall&quot;</span><span class="p">):</span>
@@ -234,6 +271,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_participant_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the participant coverage section.</span>
+
+<span class="sd">    :param context: Report context containing participant counts.</span>
+<span class="sd">    :returns: Markdown lines listing participant totals per split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">counts</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">participant</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span> <span class="s2">&quot;overall&quot;</span><span class="p">):</span>
@@ -251,6 +294,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_skipped_features_section</span><span class="p">(</span><span class="n">skipped_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the skipped-features section.</span>
+
+<span class="sd">    :param skipped_features: List of feature identifiers omitted from reporting.</span>
+<span class="sd">    :returns: Markdown lines documenting skipped features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">skipped_features</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;## Features skipped due to missing data&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
@@ -355,6 +404,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coverage_section</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the dataset coverage notes section.</span>
+
+<span class="sd">    :param context: Report context containing coverage summaries.</span>
+<span class="sd">    :returns: Markdown lines documenting dataset coverage decisions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">coverage</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">summaries</span><span class="o">.</span><span class="n">coverage</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;## Dataset coverage notes&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>

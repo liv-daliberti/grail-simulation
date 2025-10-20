@@ -162,7 +162,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return raw and normalised area under the accuracy vs k curve.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return raw and normalised area under the accuracy vs k curve.</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values considered during evaluation.</span>
+<span class="sd">    :param accuracy_by_k: Mapping from ``k`` to observed accuracy.</span>
+<span class="sd">    :returns: Tuple of ``(auc_area, auc_normalized)`` where ``auc_area`` is the</span>
+<span class="sd">        trapezoidal integral and ``auc_normalized`` divides by the span of ``k``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">k_values</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
@@ -177,7 +183,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_feature_space</span><span class="p">(</span><span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the validated feature space identifier.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the validated feature space identifier.</span>
+
+<span class="sd">    :param feature_space: Raw feature-space string supplied via CLI.</span>
+<span class="sd">    :returns: Lowercase feature-space token (``tfidf`` or ``word2vec``).</span>
+<span class="sd">    :raises ValueError: If an unsupported feature space is supplied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature_space</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">}:</span>
@@ -186,7 +197,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_word2vec_config_from_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Word2VecConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Word2Vec configuration derived from CLI arguments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Word2Vec configuration derived from CLI arguments.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace containing Word2Vec options.</span>
+<span class="sd">    :param issue_slug: Current issue being processed (used to namespace models).</span>
+<span class="sd">    :returns: Populated :class:`~knn.features.Word2VecConfig` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">Word2VecConfig</span><span class="p">()</span>
     <span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span> <span class="k">else</span> <span class="n">default_cfg</span><span class="o">.</span><span class="n">model_dir</span>
@@ -207,7 +223,16 @@
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">args</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an index for the requested feature space and handle persistence.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an index for the requested feature space and handle persistence.</span>
+
+<span class="sd">    :param feature_space: ``tfidf`` or ``word2vec``.</span>
+<span class="sd">    :param train_ds: Training split (Hugging Face dataset slice).</span>
+<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
+<span class="sd">    :param extra_fields: Optional text fields to concatenate into documents.</span>
+<span class="sd">    :param args: CLI namespace for additional parameters.</span>
+<span class="sd">    :returns: Dictionary describing the fitted index artefacts.</span>
+<span class="sd">    :raises ValueError: If the requested feature space is unsupported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Building TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
@@ -245,7 +270,14 @@
     <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">args</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a persisted index for the requested feature space.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a persisted index for the requested feature space.</span>
+
+<span class="sd">    :param feature_space: ``tfidf`` or ``word2vec``.</span>
+<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
+<span class="sd">    :param args: CLI namespace providing the ``--load-index`` directory.</span>
+<span class="sd">    :returns: Dictionary with the loaded index artefacts.</span>
+<span class="sd">    :raises ValueError: If the feature space is not recognised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">load_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
     <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
@@ -264,7 +296,15 @@
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">args</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the KNN index for ``issue_slug`` based on CLI arguments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the KNN index for ``issue_slug`` based on CLI arguments.</span>
+
+<span class="sd">    :param train_ds: Training split dataset.</span>
+<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
+<span class="sd">    :param extra_fields: Optional extra text fields.</span>
+<span class="sd">    :param args: CLI namespace containing ``--fit-index`` or ``--load-index``.</span>
+<span class="sd">    :returns: Dictionary describing the fitted or loaded KNN index.</span>
+<span class="sd">    :raises ValueError: When neither ``--fit-index`` nor ``--load-index`` is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">feature_space</span> <span class="o">=</span> <span class="n">_normalise_feature_space</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;feature_space&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_index</span><span class="p">:</span>
@@ -287,7 +327,10 @@
 <div class="viewcode-block" id="run_eval">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.run_eval">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the KNN baseline across the requested issues.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the KNN baseline across the requested issues.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace returned by :func:`knn.cli.build_parser`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">os_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
     <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
@@ -363,7 +406,23 @@
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist evaluation artefacts and per-k directories for an issue.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist evaluation artefacts and per-``k`` directories for an issue.</span>
+
+<span class="sd">    :param args: CLI namespace controlling output directories.</span>
+<span class="sd">    :param issue_slug: Issue slug associated with the evaluation batch.</span>
+<span class="sd">    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).</span>
+<span class="sd">    :param dataset_source: Source dataset label written to metrics.</span>
+<span class="sd">    :param rows: Per-example records produced during evaluation.</span>
+<span class="sd">    :param k_values: Sequence of ``k`` values scored for the issue.</span>
+<span class="sd">    :param accuracy_by_k: Accuracy measured for each ``k``.</span>
+<span class="sd">    :param best_k: Elbow-selected ``k`` value.</span>
+<span class="sd">    :param bucket_stats: Aggregated slate-position statistics.</span>
+<span class="sd">    :param single_multi_stats: Aggregated single vs multi option metrics.</span>
+<span class="sd">    :param gold_hist: Histogram of gold indices encountered.</span>
+<span class="sd">    :param per_k_stats: Eligibility and correctness tallies per ``k``.</span>
+<span class="sd">    :param extra_fields: Extra text fields contributing to the query document.</span>
+<span class="sd">    :param curve_metrics: Serialised evaluation/train curve diagnostics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">best_accuracy</span> <span class="o">=</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="n">eligible_overall</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">per_k_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
@@ -554,7 +613,18 @@
     <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">query_config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process a single evaluation example and update aggregate statistics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process a single evaluation example and update aggregate statistics.</span>
+
+<span class="sd">    :param example: Dataset row representing one recommendation slate.</span>
+<span class="sd">    :param bucket_stats: Mutable dictionary tracking per-bucket counts.</span>
+<span class="sd">    :param per_k_stats: Mutable dictionary storing eligible/correct tallies per ``k``.</span>
+<span class="sd">    :param single_multi_stats: Mutable dictionary tracking single vs multi-option stats.</span>
+<span class="sd">    :param gold_hist: Mutable histogram of observed gold indices.</span>
+<span class="sd">    :param k_values: Sequence of ``k`` values to score.</span>
+<span class="sd">    :param knn_index: Prepared KNN index artefacts.</span>
+<span class="sd">    :param query_config: Configuration controlling query generation.</span>
+<span class="sd">    :returns: Serialised per-example record including predictions for each ``k``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
     <span class="n">n_options</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)</span>
@@ -629,7 +699,19 @@
     <span class="n">max_examples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">log_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return aggregate statistics for ``dataset`` using the provided index.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return aggregate statistics for ``dataset`` using the provided index.</span>
+
+<span class="sd">    :param dataset: Dataset slice to iterate.</span>
+<span class="sd">    :param k_values: Sequence of ``k`` values to evaluate.</span>
+<span class="sd">    :param knn_index: Prepared KNN index artefacts.</span>
+<span class="sd">    :param extra_fields: Extra text fields appended to the query.</span>
+<span class="sd">    :param metric: Distance metric for candidate scoring (``l2`` or ``cosine``).</span>
+<span class="sd">    :param capture_rows: Whether to retain per-example prediction rows.</span>
+<span class="sd">    :param log_label: Label emitted in progress logs.</span>
+<span class="sd">    :param max_examples: Optional limit on the number of processed examples.</span>
+<span class="sd">    :param log_k: Optional ``k`` to report accuracy for in progress logs.</span>
+<span class="sd">    :returns: Dictionary containing rows, aggregate stats, and counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">capture_rows</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -716,7 +798,13 @@
     <span class="n">bucket_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
     <span class="n">single_multi_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update bucket-level correctness tallies for the selected ``best_k``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update bucket-level correctness tallies for the selected ``best_k``.</span>
+
+<span class="sd">    :param rows: Iterable of per-example prediction records.</span>
+<span class="sd">    :param best_k: Elbow-selected ``k`` used to judge correctness.</span>
+<span class="sd">    :param bucket_stats: Mutable dictionary storing per-bucket correctness.</span>
+<span class="sd">    :param single_multi_stats: Mutable dictionary tracking single vs multi counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]:</span>
@@ -780,7 +868,18 @@
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">args</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.</span>
+
+<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
+<span class="sd">    :param dataset_source: Name or path of the dataset originated from.</span>
+<span class="sd">    :param train_ds: Training split dataset for optional curve diagnostics.</span>
+<span class="sd">    :param eval_ds: Evaluation split dataset.</span>
+<span class="sd">    :param k_values: Sequence of ``k`` values to assess.</span>
+<span class="sd">    :param knn_index: Prepared KNN index artefacts.</span>
+<span class="sd">    :param extra_fields: Extra text fields appended to queries.</span>
+<span class="sd">    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).</span>
+<span class="sd">    :param args: CLI namespace controlling evaluation options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">k_values_int</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
     <span class="n">eval_max</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>

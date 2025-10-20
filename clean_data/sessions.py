@@ -435,18 +435,24 @@ def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
         if isinstance(key, int):
             step_idx = key
         elif isinstance(key, str):
-            lowered = key.strip().lower()
-            if "recs" not in lowered:
+            stripped = key.strip()
+            lowered = stripped.lower()
+            if "recs" not in lowered and not stripped.isdigit():
                 continue
-            digit_fragment = ""
-            for char in lowered:
+
+            digits = []
+            for char in stripped:
                 if char.isdigit():
-                    digit_fragment += char
-                else:
+                    digits.append(char)
+                elif digits:
                     break
-            if digit_fragment:
-                raw_idx = int(digit_fragment)
-                step_idx = raw_idx - 2 if raw_idx >= 2 else raw_idx
+            if not digits:
+                continue
+            raw_idx = int("".join(digits))
+            if "recs" in lowered and raw_idx >= 2:
+                step_idx = raw_idx - 2
+            else:
+                step_idx = raw_idx
 
         if step_idx is None or step_idx < 0:
             continue

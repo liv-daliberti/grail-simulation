@@ -109,6 +109,53 @@ make -C docs html
 
 The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_build/html`.
 
+## End-to-End Pipeline
+
+The repository stitches together several subsystems to turn raw CodeOcean logs into reproducible training/evaluation runs. The core stages are:
+
+1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and deduplicates `(participant, issue)` pairs.
+2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
+3. **Feature extraction** – `src/knn/features.py` assembles text documents and optionally trains Word2Vec embeddings (`Word2VecFeatureBuilder`) or TF-IDF vectors.
+4. **Index training** – `src/knn/index.py` fits the chosen feature space (`build_tfidf_index` / `build_word2vec_index`) and persists per-issue artefacts.
+5. **KNN evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and selects the elbow-based `k`.
+6. **Reporting** – metrics, per-`k` predictions, elbow plots, and curve diagnostics are written to `models/` and `reports/`.
+
+High-level progression (training + evaluation):
+
+```
+        Raw Capsule Exports
+                  |
+                  v
+        clean_data.sessions
+                  |
+                  v
+         Prompt Builder (GRPO)
+                  |
+                  v
+        +-----------------------+
+        |  Feature Extraction   |
+        |  - TF-IDF (default)   |
+        |  - Word2Vec (optional)|
+        +-----------+-----------+
+                    |
+            +-------v-------+
+            |  KNN Index   |
+            |  Training    |
+            +-------+------+
+                    |
+      +-------------v--------------+
+      | KNN Evaluation (metrics,   |
+      | elbow curve, acc@k logs)   |
+      +-------------+--------------+
+                    |
+        +-----------+-----------+
+        | Reports & Artefacts  |
+        |  models/, reports/   |
+        +----------------------+
+```
+
+Both `bash training/training-knn.sh` and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
+
 ## Data Sources
 
 Raw data mirrors the CodeOcean capsule at <https://codeocean.com/capsule/5416997/tree/v1>. The commands below reproduce the original download:

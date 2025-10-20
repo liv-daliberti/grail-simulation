@@ -591,6 +591,7 @@ def _evaluate_dataset_split(
     capture_rows: bool,
     log_label: str,
     max_examples: int | None,
+    log_k: int | None = None,
 ) -> Dict[str, Any]:
     """Return aggregate statistics for ``dataset`` using the provided index."""
 
@@ -624,6 +625,15 @@ def _evaluate_dataset_split(
         lowercase=True,
         metric=metric,
     )
+
+    log_k_value: int | None = None
+    if log_k:
+        desired = int(log_k)
+        if desired in per_k_stats:
+            log_k_value = desired
+        elif per_k_stats:
+            log_k_value = min(per_k_stats.keys(), key=lambda key_k: abs(key_k - desired))
+
     start_time = time.time()
 
     for idx in range(int(limit)):
@@ -641,12 +651,17 @@ def _evaluate_dataset_split(
             rows.append(row)
         if (idx + 1) % 25 == 0:
             elapsed = time.time() - start_time
+            acc_message = ""
+            if log_k_value is not None:
+                stats = per_k_stats[log_k_value]
+                acc_message = f"  acc@{log_k_value}={safe_div(stats['correct'], stats['eligible']):.3f}"
             logging.info(
-                "[%s] %d/%d  elapsed=%.1fs",
+                "[%s] %d/%d  elapsed=%.1fs%s",
                 log_label,
                 idx + 1,
                 limit,
                 elapsed,
+                acc_message,
             )
 
     return {
@@ -742,6 +757,7 @@ def evaluate_issue(
         capture_rows=True,
         log_label=f"eval][{issue_slug}",
         max_examples=eval_max,
+        log_k=args.knn_k,
     )
 
     rows: List[Dict[str, Any]] = eval_summary["rows"]
@@ -777,6 +793,7 @@ def evaluate_issue(
             capture_rows=False,
             log_label=f"train][{issue_slug}",
             max_examples=max_examples,
+            log_k=args.knn_k,
         )
         train_accuracy_by_k = {
             k: safe_div(train_summary["per_k_stats"][k]["correct"], train_summary["per_k_stats"][k]["eligible"])

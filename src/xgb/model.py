@@ -13,6 +13,8 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     joblib = None  # type: ignore[assignment]
 
+import numpy as np
+
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.preprocessing import LabelEncoder
@@ -290,6 +292,8 @@ def _train_booster(
     """Instantiate and fit the XGBoost booster component."""
     params = train_config.booster
     booster_kwargs = dict(params.extra_kwargs or {})
+    unique_labels = int(np.unique(labels).size)
+    booster_kwargs.setdefault("num_class", unique_labels)
     booster = XGBClassifier(
         objective="multi:softprob",
         eval_metric="mlogloss",

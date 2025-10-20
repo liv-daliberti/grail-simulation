@@ -87,3 +87,27 @@ Figures directory: `figures`
 | train | 989 |
 | validation | 107 |
 | overall | 1096 |
+
+## Features skipped due to missing data
+
+- city
+- civic_engagement
+- county
+- gun_identity
+- gun_policy
+- gun_priority
+- household_size
+- marital_status
+- media_diet
+- minwage_importance
+- minwage_priority
+- minwage_text_r_w3
+- news_consumption
+- news_sources
+- news_sources_top
+- occupation
+- platform_use
+- social_media_use
+- veteran
+- vote_2024
+- zip3

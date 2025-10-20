@@ -535,6 +535,12 @@ def _extract_session_rows(
 
 
 def _find_watch_details(row: Mapping[str, object], video_id: str) -> Mapping[str, object]:
+    """Find the watch metadata for a given video inside a session row.
+
+    :param row: Session row with watch details embedded.
+    :param video_id: Identifier of the video to search for.
+    :returns: Matching watch information, or an empty mapping.
+    """
     entries = row.get("watched_detailed_json")
     if isinstance(entries, list):
         for entry in entries:
@@ -554,6 +560,17 @@ def build_session_graph(
     engine: str,
     highlight_path: Sequence[str],
 ) -> Digraph:
+    """Visualise a single viewer session as a Graphviz graph.
+
+    :param rows: Chronologically ordered session rows.
+    :param label_template: Template used to render node labels.
+    :param wrap_width: Optional wrapping width for labels.
+    :param rankdir: Graph orientation (Graphviz ``rankdir`` attribute).
+    :param engine: Graphviz layout engine to use.
+    :param highlight_path: Sequence of video identifiers to highlight.
+    :returns: Configured :class:`graphviz.Digraph` instance.
+    """
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     graph = Digraph(comment="Viewer session", engine=engine, format="png")
     graph.attr(rankdir=rankdir)
     highlight_set = {vid.strip() for vid in highlight_path if vid.strip()}
@@ -666,7 +683,13 @@ def build_session_graph(
 
 
 def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[str]) -> Path:
-    """Render a Graphviz graph to disk, normalising the output path."""
+    """Render a Graphviz graph to disk, normalising the output path.
+
+    :param graph: Graphviz graph to render.
+    :param output_path: Target output file path.
+    :param output_format: Optional format override (otherwise inferred from ``output_path``).
+    :returns: Path to the rendered output file.
+    """
     format_to_use = output_format or output_path.suffix.lstrip(".")
     if not format_to_use:
         format_to_use = "png"
@@ -683,6 +706,12 @@ def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[s
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    """Parse CLI arguments for the recommendation visualiser.
+
+    :param argv: Optional explicit argument vector.
+    :returns: Parsed arguments namespace.
+    :raises SystemExit: If required arguments are missing.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tree", type=Path, help="Path to a tree CSV file.")
     parser.add_argument(

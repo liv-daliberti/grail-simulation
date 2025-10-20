@@ -41,6 +41,12 @@ class ReplayBuffer:
     """
 
     def __init__(self, capacity: int = 4000, C: float = 1.0, debug_steps: int = 0):
+        """Create a replay buffer with the specified capacity and exploration scale.
+
+        :param capacity: Maximum number of replay groups retained.
+        :param C: Exploration/exploitation trade-off constant.
+        :param debug_steps: Enable verbose logging when > 0.
+        """
         self.capacity = int(capacity)
         self.C = float(C)
         self.debug_steps = int(debug_steps)

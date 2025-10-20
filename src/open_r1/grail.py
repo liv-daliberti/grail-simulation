@@ -388,7 +388,14 @@ def _prepare_dataset(
 
 class OnlineDiscriminator:
     """Lightweight text classifier trained on-policy to supply optional GAIL rewards."""
+
     def __init__(self, model_name: str, device: torch.device, lr: float = 2e-5):
+        """Initialise the discriminator with the specified pretrained backbone.
+
+        :param model_name: Hugging Face model identifier for the classifier.
+        :param device: Torch device where the model should live.
+        :param lr: Learning rate used for the discriminator optimiser.
+        """
         self._model_name = model_name
         self._lr = lr
         self.device = device
@@ -650,6 +657,8 @@ def _select_disc_device() -> torch.device:
 def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0):
     """Wrap discriminator scores so they plug into the GRPO reward interface."""
     def _reward(completions, answer, **kwargs):
+        """Return discriminator-based rewards for a batch of completions."""
+
         del answer
         if disc is None:
             return [0.0] * len(completions)

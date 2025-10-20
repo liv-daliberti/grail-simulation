@@ -32,6 +32,7 @@ from transformers.utils.import_utils import _is_package_available
 from .utils.code_providers import get_provider
 from .utils.ioi import (
     SubtaskResult,
+    TestResult,
     add_includes,
     get_morph_client_from_env,
     get_piston_client_from_env,
@@ -658,7 +659,9 @@ def ioi_code_reward(
             safe_results.append(SubtaskResult())
             continue
 
-        safe_results.append(SubtaskResult(score=float(result)))
+        safe_results.append(
+            SubtaskResult(test_results=[TestResult(score=float(result))])
+        )
 
     return [result.score for result in safe_results]
 

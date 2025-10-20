@@ -21,6 +21,7 @@ logs/
 .torchinductor/
 .triton/
 wandb/
+*.egg-info/
 **/.DS_Store
 /capsule-5416997/
 /data/

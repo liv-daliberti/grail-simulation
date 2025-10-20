@@ -23,6 +23,9 @@ def read_long_description() -> str:
     return ""
 
 
+src_packages = find_packages(where="src")
+clean_data_packages = find_packages(include=["clean_data", "clean_data.*"])
+
 setup(
     name="grail-simulation",
     version="0.1.0",
@@ -30,8 +33,8 @@ setup(
     long_description=read_long_description(),
     long_description_content_type="text/markdown",
     author="GRAIL Simulation Team",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=sorted(set(src_packages + clean_data_packages)),
+    package_dir={"": "src", "clean_data": "clean_data"},
     python_requires=">=3.10",
     install_requires=[
         "accelerate==1.4.0",

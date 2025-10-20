@@ -36,11 +36,21 @@ from trl import GRPOConfig, SFTConfig
 logger = logging.getLogger(__name__)
 
 
-def push_to_hub_revision(training_args: SFTConfig | GRPOConfig, extra_ignore_patterns=[]) -> Future:
+def push_to_hub_revision(
+    training_args: SFTConfig | GRPOConfig,
+    extra_ignore_patterns=None,
+) -> Future:
     """Pushes the model to branch on a Hub repo."""
 
+    if extra_ignore_patterns is None:
+        extra_ignore_patterns = []
+
     # Create a repo if it doesn't exist yet
-    repo_url = create_repo(repo_id=training_args.hub_model_id, private=True, exist_ok=True)
+    repo_url = create_repo(
+        repo_id=training_args.hub_model_id,
+        private=True,
+        exist_ok=True,
+    )
     # Get initial commit to branch from
     initial_commit = list_repo_commits(training_args.hub_model_id)[-1]
     # Now create the branch we'll be pushing to
@@ -50,8 +60,8 @@ def push_to_hub_revision(training_args: SFTConfig | GRPOConfig, extra_ignore_pat
         revision=initial_commit.commit_id,
         exist_ok=True,
     )
-    logger.info(f"Created target repo at {repo_url}")
-    logger.info(f"Pushing to the Hub revision {training_args.hub_model_revision}...")
+    logger.info("Created target repo at %s", repo_url)
+    logger.info("Pushing to the Hub revision %s...", training_args.hub_model_revision)
     ignore_patterns = ["checkpoint-*", "*.pth"]
     ignore_patterns.extend(extra_ignore_patterns)
     future = upload_folder(
@@ -62,7 +72,11 @@ def push_to_hub_revision(training_args: SFTConfig | GRPOConfig, extra_ignore_pat
         ignore_patterns=ignore_patterns,
         run_as_future=True,
     )
-    logger.info(f"Pushed to {repo_url} revision {training_args.hub_model_revision} successfully!")
+    logger.info(
+        "Pushed to %s revision %s successfully!",
+        repo_url,
+        training_args.hub_model_revision,
+    )
 
     return future
 
@@ -87,7 +101,12 @@ def check_hub_revision_exists(training_args: SFTConfig | GRPOConfig):
 
 
 def get_param_count_from_repo_id(repo_id: str) -> int:
-    """Function to get model param counts from safetensors metadata or find patterns like 42m, 1.5b, 0.5m or products like 8x7b in a repo ID."""
+    """Return parameter count from safetensors metadata or repo naming pattern.
+
+    The repo ID can include human-readable counts such as 42m, 1.5b, 0.5m, or
+    products like 8x7b. If metadata is unavailable, those tokens are parsed to
+    estimate the parameter count.
+    """
     try:
         metadata = get_safetensors_metadata(repo_id)
         return list(metadata.parameter_count.values())[0]
@@ -119,14 +138,16 @@ def get_param_count_from_repo_id(repo_id: str) -> int:
 
 
 def get_gpu_count_for_vllm(model_name: str, revision: str = "main", num_gpus: int = 8) -> int:
-    """vLLM enforces a constraint that the number of attention heads must be divisible by the number of GPUs and 64 must be divisible by the number of GPUs.
-    This function calculates the number of GPUs to use for decoding based on the number of attention heads in the model.
-    """
+    """Return a GPU count compatible with vLLM attention head constraints."""
     config = AutoConfig.from_pretrained(model_name, revision=revision, trust_remote_code=True)
     # Get number of attention heads
     num_heads = config.num_attention_heads
     # Reduce num_gpus so that num_heads is divisible by num_gpus and 64 is divisible by num_gpus
     while num_heads % num_gpus != 0 or 64 % num_gpus != 0:
-        logger.info(f"Reducing num_gpus from {num_gpus} to {num_gpus - 1} to make num_heads divisible by num_gpus")
+        logger.info(
+            "Reducing num_gpus from %s to %s to make num_heads divisible by num_gpus",
+            num_gpus,
+            num_gpus - 1,
+        )
         num_gpus -= 1
     return num_gpus

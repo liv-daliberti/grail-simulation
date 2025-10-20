@@ -350,7 +350,15 @@ def _candidate_id_key(title: str, video_id: str) -> str:
 
 def _fallback_candidate_key(title: str, video_id: str) -> str:
     """Return a fallback key using canonical id or derived title."""
-    return canon_video_id(video_id) or canon_video_id(title_for(video_id) or "")
+    candidate = canon_video_id(video_id)
+    if candidate:
+        return candidate
+    if title:
+        title_candidate = canon_video_id(title)
+        if title_candidate:
+            return title_candidate
+    derived = title_for(video_id) or title or ""
+    return canon_video_id(derived) or derived.strip()
 
 
 __all__ = [

@@ -1,8 +1,11 @@
-
+import logging
 import subprocess
 from typing import TYPE_CHECKING, Dict, Union
 
 from .hub import get_gpu_count_for_vllm, get_param_count_from_repo_id
+
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -13,15 +16,20 @@ import os
 
 
 # We need a special environment setup to launch vLLM from within Slurm training jobs.
-# - Reference code: https://github.com/huggingface/brrr/blob/c55ba3505686d690de24c7ace6487a5c1426c0fd/brrr/lighteval/one_job_runner.py#L105
-# - Slack thread: https://huggingface.slack.com/archives/C043JTYE1MJ/p1726566494958269
+# - Reference code:
+#   https://github.com/huggingface/brrr/blob/c55ba3505686d690de24c7ace6487a5c1426c0fd/brrr/lighteval/one_job_runner.py#L105
+# - Slack thread:
+#   https://huggingface.slack.com/archives/C043JTYE1MJ/p1726566494958269
 user_home_directory = os.path.expanduser("~")
 VLLM_SLURM_PREFIX = [
     "env",
     "-i",
     "bash",
     "-c",
-    f"for f in /etc/profile.d/*.sh; do source $f; done; export HOME={user_home_directory}; sbatch ",
+    (
+        "for f in /etc/profile.d/*.sh; do source $f; done; "
+        f"export HOME={user_home_directory}; sbatch "
+    ),
 ]
 
 
@@ -32,21 +40,27 @@ def register_lighteval_task(
     task_list: str,
     num_fewshot: int = 0,
 ):
-    """Registers a LightEval task configuration.
+    """Register a LightEval task configuration.
 
-    - Core tasks can be added from this table: https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/tasks_table.jsonl
-    - Custom tasks that require their own metrics / scripts, should be stored in scripts/evaluation/extended_lighteval_tasks
+    Notes:
+        - Core tasks can be added from this table:
+          https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/tasks_table.jsonl
+        - Custom tasks requiring bespoke metrics or scripts should live in
+          `scripts/evaluation/extended_lighteval_tasks`.
 
     Args:
-        configs (Dict[str, str]): The dictionary to store the task configuration.
-        eval_suite (str, optional): The evaluation suite.
-        task_name (str): The name of the task.
-        task_list (str): The comma-separated list of tasks in the format "extended|{task_name}|{num_fewshot}|0" or "lighteval|{task_name}|{num_fewshot}|0".
-        num_fewshot (int, optional): The number of few-shot examples. Defaults to 0.
-        is_custom_task (bool, optional): Whether the task is a custom task. Defaults to False.
+        configs: Dictionary used to store the task configuration.
+        eval_suite: Evaluation suite to pull tasks from.
+        task_name: Display name for the task.
+        task_list: Comma-separated task list using the LightEval format:
+            ``extended|{task_name}|{num_fewshot}|0`` or
+            ``lighteval|{task_name}|{num_fewshot}|0``.
+        num_fewshot: Number of few-shot examples.
     """
     # Format task list in lighteval format
-    task_list = ",".join(f"{eval_suite}|{task}|{num_fewshot}|0" for task in task_list.split(","))
+    task_list = ",".join(
+        f"{eval_suite}|{task}|{num_fewshot}|0" for task in task_list.split(",")
+    )
     configs[task_name] = task_list
 
 

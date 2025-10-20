@@ -13,9 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
-from prompt_builder.formatters import clean_text
-from prompt_builder.prompt import build_user_prompt
-from prompt_builder.profiles import synthesize_viewer_sentence
+from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
 
 try:  # pragma: no cover - optional dependency
     from gensim.models import Word2Vec  # type: ignore

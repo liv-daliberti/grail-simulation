@@ -274,7 +274,11 @@ class GRPOScriptArguments(ScriptArguments):
     reward_funcs: list[str] = field(
         default_factory=lambda: ["accuracy", "format", "tag_count"],
         metadata={
-            "help": "List of reward functions. Possible values: 'accuracy', 'format', 'reasoning_steps', 'cosine', 'repetition_penalty', 'length', tag_count', 'code', 'code_format'"
+            "help": (
+                "List of reward functions. Possible values: 'accuracy', 'format', "
+                "'reasoning_steps', 'cosine', 'repetition_penalty', 'length', "
+                "'tag_count', 'code', 'ioi_code', 'code_format', 'soft_overlong_punishment'."
+            )
         },
     )
     cosine_min_value_wrong: float = field(
@@ -303,30 +307,48 @@ class GRPOScriptArguments(ScriptArguments):
     )
     repetition_max_penalty: float = field(
         default=-1.0,
-        metadata={"help": "Maximum (negative) penalty for for repetition penalty reward"},
+        metadata={
+            "help": "Maximum (negative) penalty for the repetition penalty reward."
+        },
     )
     code_language: str = field(
         default="python",
         # '(?:python|cpp)'
         metadata={
-            "help": "Language for code format reward. Based on E2B supported languages https://e2b.dev/docs/code-interpreting/supported-languages",
+            "help": (
+                "Language for code format reward. Based on E2B supported languages "
+                "documented at https://e2b.dev/docs/code-interpreting/supported-languages."
+            ),
             "choices": ["python", "javascript", "r", "java", "bash", "cpp"],
         },
     )
     code_eval_test_batch_size: int = field(
         default=1,
         metadata={
-            "help": "for each generation, evaluate these many test cases in parallel, then check if any of them failed (0 score): if so stop evaluating; otherwise continue with the next batch of test cases. Useful to avoid overloading the eval server + save time on wrong solutions"
+            "help": (
+                "For each generation, evaluate this many test cases in parallel. "
+                "If any fail (score 0) stop evaluating early; otherwise continue with "
+                "the next batch. Helps avoid overloading the eval server and saves time "
+                "on wrong solutions."
+            )
         },
     )
     code_eval_scoring_mode: Literal["pass_fail", "partial", "weighted_sum"] = field(
         default="weighted_sum",
-        metadata={"help": "use fraction of passed test cases as reward. If false, use 0/1 scoring."},
+        metadata={
+            "help": (
+                "Use fraction of passed test cases as reward. If false, use 0/1 "
+                "scoring."
+            )
+        },
     )
     parallel_code_exec_per_proc: int = field(
         default=2,
         metadata={
-            "help": "Number of parallel E2B code executions per process. Default of 2 is suitable for the Free Hobby tier of E2B with 8 GPUs used for training."
+            "help": (
+                "Number of parallel E2B code executions per process. Default of 2 is "
+                "suitable for the Free Hobby tier of E2B when training with 8 GPUs."
+            )
         },
     )
 
@@ -373,7 +395,16 @@ class GRPOScriptArguments(ScriptArguments):
         default=4096,
         metadata={"help": "Minimum number of characters in completion."},
     )
-    
-    span_kl_target:   float = field(default=0.05, metadata={"help": "per-token KL target"})
-    span_kl_beta0:    float = field(default=0.12, metadata={"help": "initial KL coeff"})
-    span_kl_horizon:  int   = field(default=10000, metadata={"help": "horizon for KL controller"})
+
+    span_kl_target: float = field(
+        default=0.05,
+        metadata={"help": "Per-token KL target."},
+    )
+    span_kl_beta0: float = field(
+        default=0.12,
+        metadata={"help": "Initial KL coefficient."},
+    )
+    span_kl_horizon: int = field(
+        default=10000,
+        metadata={"help": "Horizon for the KL controller."},
+    )

@@ -25,10 +25,13 @@ from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
-from prompt_builder.formatters import clean_text
-from prompt_builder.parsers import as_list_json, is_nanlike
-from prompt_builder.prompt import build_user_prompt
-from prompt_builder.profiles import synthesize_viewer_sentence
+from prompt_builder import (
+    as_list_json,
+    build_user_prompt,
+    clean_text,
+    is_nanlike,
+    synthesize_viewer_sentence,
+)
 
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.rewards import get_reward_funcs
@@ -307,7 +310,7 @@ def _load_reward_functions(
     tokenizer,
 ) -> List[Any]:
     try:
-        return get_reward_funcs(script_args, ref_model=None, tokenizer=tokenizer)
+        return get_reward_funcs(script_args, _ref_model=None, _tokenizer=tokenizer)
     except Exception as exc:  # pylint: disable=broad-exception-caught
         logger.warning("[rewards] get_reward_funcs failed: %s", exc)
         return []

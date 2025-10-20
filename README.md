@@ -4,6 +4,8 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 
 ![GRAIL overview](docs/Simulation.drawio.png)
 
+The interaction logs trace back to the public behavioural dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule.
+
 ## Key Components
 
 - **Environment model** – retrieves candidate next actions from behaviour logs to keep the agent grounded.

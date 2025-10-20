@@ -94,4 +94,12 @@ Outputs include histogram PNGs, JSON summaries, and a Markdown README summarisin
 - Allow-list enforcement, deduplication, and prompt synthesis live in separate modules for clarity.
 - Shortfall and validation metrics are logged automatically, making it easy to audit runs or compare against the original studies.
 
+## Development Checks
+
+- `pylint clean_data` keeps the package aligned with the main repo lint rules (mirrors `scripts/run-lint.sh`).
+- `pytest tests/test_clean_data_module.py tests/test_prompt_utils.py ...` exercises the clean-data pipeline end-to-end; run `pytest tests -k clean_data` for the full suite.
+- `make -C docs html` rebuilds the Sphinx documentation, including autodoc pages for `clean_data.*` modules—confirm new APIs render correctly before shipping changes.
+
+These checks run in CI, but executing them locally catches regressions earlier when iterating on the pipeline.
+
 See the top-level README for setup instructions, training commands, and published artifacts.

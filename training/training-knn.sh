@@ -16,7 +16,7 @@ KNN_MAX_TRAIN="${KNN_MAX_TRAIN:-200000}"
 EVAL_MAX="${EVAL_MAX:-0}"
 WORD2VEC_SIZE="${WORD2VEC_SIZE:-256}"
 
-ISSUES=("gun rights" "minimum wage")
+ISSUES=("minimum_wage" "gun_control")
 
 mkdir -p "$OUT_DIR" "$CACHE_DIR" "$WORD2VEC_MODEL_DIR"
 

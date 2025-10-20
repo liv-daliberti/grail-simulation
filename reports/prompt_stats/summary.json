@@ -2,21 +2,21 @@
   "coverage_summary": {
     "overall": {
       "excluded_by_study": {
-        "study4": 48,
-        "unknown": 352
+        "study4": 51,
+        "unknown": 376
       },
-      "excluded_rows": 400,
-      "included_rows": 1098,
-      "total_rows": 1498
+      "excluded_rows": 427,
+      "included_rows": 4449,
+      "total_rows": 4876
     },
     "train": {
       "excluded_by_study": {
-        "study4": 39,
-        "unknown": 331
+        "study4": 42,
+        "unknown": 355
       },
-      "excluded_rows": 370,
-      "included_rows": 991,
-      "total_rows": 1361
+      "excluded_rows": 397,
+      "included_rows": 3992,
+      "total_rows": 4389
     },
     "validation": {
       "excluded_by_study": {
@@ -24,38 +24,38 @@
         "unknown": 21
       },
       "excluded_rows": 30,
-      "included_rows": 107,
-      "total_rows": 137
+      "included_rows": 457,
+      "total_rows": 487
     }
   },
   "demographic_missing_counts": {
     "overall": {
       "missing": 0,
       "share": 0.0,
-      "total": 1098
+      "total": 4449
     },
     "train": {
       "missing": 0,
       "share": 0.0,
-      "total": 991
+      "total": 3992
     },
     "validation": {
       "missing": 0,
       "share": 0.0,
-      "total": 107
+      "total": 457
     }
   },
   "feature_summary": {
     "age": {
       "train": {
-        "count": 991.0,
-        "mean": 46.73662966700303,
-        "std": 15.73199675310304
+        "count": 3992.0,
+        "mean": 47.520791583166336,
+        "std": 15.61435829435646
       },
       "validation": {
-        "count": 107.0,
-        "mean": 46.4392523364486,
-        "std": 14.093928944260325
+        "count": 457.0,
+        "mean": 47.33698030634573,
+        "std": 15.427539744442461
       }
     },
     "assault_ban": {
@@ -72,38 +72,38 @@
     },
     "biden_approval": {
       "train": {
-        "count": 986.0,
-        "mean": 50.35395537525355,
-        "std": 33.71737728543177
+        "count": 3969.0,
+        "mean": 44.945578231292515,
+        "std": 34.59001586448255
       },
       "validation": {
-        "count": 106.0,
-        "mean": 51.075471698113205,
-        "std": 31.515703816377826
+        "count": 456.0,
+        "mean": 47.271929824561404,
+        "std": 33.78954086273404
       }
     },
     "children_in_household": {
       "train": {
-        "count": 569.0,
-        "mean": 1.789103690685413,
-        "std": 0.4079449178897478
+        "count": 2444.0,
+        "mean": 1.7958265139116203,
+        "std": 0.4030963577941358
       },
       "validation": {
-        "count": 64.0,
-        "mean": 1.78125,
-        "std": 0.41339864235384227
+        "count": 271.0,
+        "mean": 1.8044280442804428,
+        "std": 0.3966403482445839
       }
     },
     "college": {
       "train": {
-        "count": 991.0,
-        "mean": 0.5247225025227044,
-        "std": 0.49938842384361987
+        "count": 3992.0,
+        "mean": 0.499749498997996,
+        "std": 0.499999937249244
       },
       "validation": {
-        "count": 107.0,
-        "mean": 0.5233644859813084,
-        "std": 0.4994538024630799
+        "count": 457.0,
+        "mean": 0.487964989059081,
+        "std": 0.4998551375265158
       }
     },
     "concealed_safe": {
@@ -120,26 +120,26 @@
     },
     "education": {
       "train": {
-        "count": 569.0,
-        "mean": 3.9086115992970125,
-        "std": 1.462626260101042
+        "count": 2444.0,
+        "mean": 3.8211947626841245,
+        "std": 1.456806097686768
       },
       "validation": {
-        "count": 64.0,
-        "mean": 3.84375,
-        "std": 1.5433197781082182
+        "count": 271.0,
+        "mean": 3.6715867158671585,
+        "std": 1.4926279083343783
       }
     },
     "employment_status": {
       "train": {
-        "count": 569.0,
-        "mean": 3.3093145869947276,
-        "std": 2.3519653497624446
+        "count": 2444.0,
+        "mean": 3.472176759410802,
+        "std": 2.4137416896192914
       },
       "validation": {
-        "count": 64.0,
-        "mean": 3.234375,
-        "std": 2.5232802776098815
+        "count": 271.0,
+        "mean": 3.4723247232472323,
+        "std": 2.417298082574027
       }
     },
     "favorite_channels": {
@@ -238,26 +238,26 @@
     },
     "freq_youtube": {
       "train": {
-        "count": 991.0,
-        "mean": 2.824419778002018,
-        "std": 1.735091910189078
+        "count": 3992.0,
+        "mean": 2.813376753507014,
+        "std": 1.7409921100899546
       },
       "validation": {
-        "count": 107.0,
-        "mean": 2.8411214953271027,
-        "std": 1.7247485674013194
+        "count": 457.0,
+        "mean": 2.612691466083151,
+        "std": 1.671256808680744
       }
     },
     "gender": {
       "train": {
-        "Man": 209,
-        "Other (please specify)": 4,
-        "Woman": 209
+        "Man": 732,
+        "Other (please specify)": 15,
+        "Woman": 801
       },
       "validation": {
-        "Man": 20,
+        "Man": 87,
         "Other (please specify)": 2,
-        "Woman": 21
+        "Woman": 97
       }
     },
     "gun_enthusiasm": {
@@ -334,229 +334,231 @@
     },
     "household_income": {
       "train": {
-        "$10,000-$14,999": 12,
-        "$100,000-$119,999": 26,
-        "$120,000-$149,999": 24,
-        "$15,000-$19,999": 13,
-        "$150,000 or more": 34,
-        "$20,000-$24,999": 20,
-        "$25,000-$29,999": 31,
-        "$30,000-$39,999": 52,
-        "$40,000-$49,999": 39,
-        "$50,000-$59,999": 40,
-        "$60,000-$69,999": 40,
-        "$70,000-$79,999": 29,
-        "$80,000-$99,999": 47,
-        "Less than $10,000": 9,
-        "Prefer not to say": 6
+        "$10,000-$14,999": 51,
+        "$100,000-$119,999": 99,
+        "$120,000-$149,999": 76,
+        "$15,000-$19,999": 57,
+        "$150,000 or more": 106,
+        "$20,000-$24,999": 78,
+        "$25,000-$29,999": 98,
+        "$30,000-$39,999": 178,
+        "$40,000-$49,999": 133,
+        "$50,000-$59,999": 160,
+        "$60,000-$69,999": 133,
+        "$70,000-$79,999": 115,
+        "$80,000-$99,999": 171,
+        "Less than $10,000": 68,
+        "Prefer not to say": 25
       },
       "validation": {
-        "$10,000-$14,999": 2,
-        "$100,000-$119,999": 5,
-        "$120,000-$149,999": 6,
-        "$150,000 or more": 3,
-        "$20,000-$24,999": 1,
-        "$25,000-$29,999": 2,
-        "$30,000-$39,999": 7,
-        "$40,000-$49,999": 5,
-        "$50,000-$59,999": 1,
-        "$60,000-$69,999": 4,
-        "$70,000-$79,999": 4,
-        "$80,000-$99,999": 2,
-        "Less than $10,000": 1
+        "$10,000-$14,999": 7,
+        "$100,000-$119,999": 15,
+        "$120,000-$149,999": 15,
+        "$15,000-$19,999": 5,
+        "$150,000 or more": 14,
+        "$20,000-$24,999": 12,
+        "$25,000-$29,999": 7,
+        "$30,000-$39,999": 19,
+        "$40,000-$49,999": 20,
+        "$50,000-$59,999": 15,
+        "$60,000-$69,999": 16,
+        "$70,000-$79,999": 14,
+        "$80,000-$99,999": 18,
+        "Less than $10,000": 9
       }
     },
     "ideology": {
       "train": {
-        "Conservative": 68,
-        "Haven't thought much about it": 12,
-        "Liberal": 234,
-        "Moderate": 108
+        "Conservative": 349,
+        "Haven't thought much about it": 54,
+        "Liberal": 726,
+        "Moderate": 419
       },
       "validation": {
-        "Conservative": 8,
-        "Liberal": 24,
-        "Moderate": 11
+        "Conservative": 41,
+        "Haven't thought much about it": 8,
+        "Liberal": 86,
+        "Moderate": 51
       }
     },
     "minwage15_w1": {
       "train": {
-        "count": 908.0,
-        "mean": 0.24311674008810572,
-        "std": 0.340493098679553
+        "count": 3909.0,
+        "mean": 0.30576873880787925,
+        "std": 0.3640581701120677
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.25,
-        "std": 0.3621152454404428
+        "count": 452.0,
+        "mean": 0.31360619469026546,
+        "std": 0.3635305671273904
       }
     },
     "minwage15_w2": {
       "train": {
-        "count": 900.0,
-        "mean": 0.2588888888888889,
-        "std": 0.3472973252110724
+        "count": 3870.0,
+        "mean": 0.3402454780361757,
+        "std": 0.3781565740812865
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.24754901960784315,
-        "std": 0.34565775965941264
+        "count": 450.0,
+        "mean": 0.3466666666666667,
+        "std": 0.37281213618777065
       }
     },
     "minwage_text_r_w1": {
       "train": {
-        "count": 904.0,
-        "mean": 0.41405088495575226,
-        "std": 0.1979578530142548
+        "count": 3884.0,
+        "mean": 0.43655643666323385,
+        "std": 0.20228808580174346
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.4086274509803922,
-        "std": 0.19514217650309543
+        "count": 450.0,
+        "mean": 0.44982222222222223,
+        "std": 0.18554775233093432
       }
     },
     "minwage_text_r_w2": {
       "train": {
-        "count": 900.0,
-        "mean": 0.43288844444444446,
-        "std": 0.20288018971200772
+        "count": 3864.0,
+        "mean": 0.45696366459627336,
+        "std": 0.20676264065349811
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.4152941176470588,
-        "std": 0.19341465099702215
+        "count": 449.0,
+        "mean": 0.4598218262806236,
+        "std": 0.2005992456141982
       }
     },
     "minwage_text_w1": {
       "train": {
-        "count": 339.0,
-        "mean": 15.027286135693215,
-        "std": 4.400258139130899
+        "count": 1465.0,
+        "mean": 14.268116040955633,
+        "std": 4.54769129442637
       },
       "validation": {
-        "count": 38.0,
-        "mean": 14.289473684210526,
-        "std": 4.3989107188559045
+        "count": 181.0,
+        "mean": 14.041436464088397,
+        "std": 4.052445702118058
       }
     },
     "minwage_text_w2": {
       "train": {
-        "count": 331.0,
-        "mean": 14.56858006042296,
-        "std": 4.652000912003583
+        "count": 1425.0,
+        "mean": 14.813326315789473,
+        "std": 39.70431381426883
       },
       "validation": {
-        "count": 38.0,
-        "mean": 14.171052631578947,
-        "std": 4.791750470984199
+        "count": 179.0,
+        "mean": 13.825418994413408,
+        "std": 4.194624015868353
       }
     },
     "mw_index_w1": {
       "train": {
-        "count": 908.0,
-        "mean": 0.24793835658345564,
-        "std": 0.24276709894620266
+        "count": 3909.0,
+        "mean": 0.29481221986705486,
+        "std": 0.2543626169578386
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.23326797385620912,
-        "std": 0.22761087452943143
+        "count": 452.0,
+        "mean": 0.2952539419159994,
+        "std": 0.24361352826002095
       }
     },
     "mw_index_w2": {
       "train": {
-        "count": 900.0,
-        "mean": 0.26120596296296295,
-        "std": 0.2619252133086371
+        "count": 3871.0,
+        "mean": 0.32220011993947667,
+        "std": 0.2811158735297826
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.25588779956427016,
-        "std": 0.2446806094798565
+        "count": 450.0,
+        "mean": 0.32354268077601406,
+        "std": 0.2663705277356078
       }
     },
     "mw_support_w1": {
       "train": {
-        "count": 908.0,
-        "mean": 0.16602422907488987,
-        "std": 0.2910359505681112
+        "count": 3908.0,
+        "mean": 0.2115532241555783,
+        "std": 0.3072960757648807
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.14460784313725492,
-        "std": 0.2676062060325071
+        "count": 452.0,
+        "mean": 0.21073008849557523,
+        "std": 0.2927609609307992
       }
     },
     "mw_support_w2": {
       "train": {
-        "count": 900.0,
-        "mean": 0.1786111111111111,
-        "std": 0.3011104704790233
+        "count": 3870.0,
+        "mean": 0.24890180878552973,
+        "std": 0.3374485634791536
       },
       "validation": {
-        "count": 102.0,
-        "mean": 0.15931372549019607,
-        "std": 0.2591209113027276
+        "count": 450.0,
+        "mean": 0.24833333333333332,
+        "std": 0.3115775273596534
       }
     },
     "news_frequency": {
       "train": {
-        "count": 569.0,
-        "mean": 1.7715289982425309,
-        "std": 1.0950429686953635
+        "count": 2444.0,
+        "mean": 1.8306055646481179,
+        "std": 1.1485190606327753
       },
       "validation": {
-        "count": 64.0,
-        "mean": 1.703125,
-        "std": 0.8602268505313002
+        "count": 271.0,
+        "mean": 1.7306273062730628,
+        "std": 1.0889173223436772
       }
     },
     "news_trust": {
       "train": {
-        "count": 991.0,
-        "mean": 0.5893037336024217,
-        "std": 0.30773187966810045
+        "count": 3992.0,
+        "mean": 0.553941215764863,
+        "std": 0.3146687458467597
       },
       "validation": {
-        "count": 107.0,
-        "mean": 0.6230529595015577,
-        "std": 0.29563846514936565
+        "count": 457.0,
+        "mean": 0.5835156819839533,
+        "std": 0.30617375604144637
       }
     },
     "party_identification": {
       "train": {
-        "Democrat": 231,
-        "Independent": 116,
-        "Other Party": 10,
-        "Republican": 64
+        "Democrat": 726,
+        "Independent": 450,
+        "Other Party": 47,
+        "Republican": 324
       },
       "validation": {
-        "Democrat": 18,
-        "Independent": 15,
-        "Other Party": 2,
-        "Republican": 8
+        "Democrat": 82,
+        "Independent": 59,
+        "Other Party": 9,
+        "Republican": 36
       }
     },
     "party_lean": {
       "train": {
-        "Not very strong Democrat": 95,
-        "Strong Democrat": 136
+        "Not very strong Democrat": 338,
+        "Strong Democrat": 388
       },
       "validation": {
-        "Not very strong Democrat": 7,
-        "Strong Democrat": 11
+        "Not very strong Democrat": 40,
+        "Strong Democrat": 42
       }
     },
     "political_interest": {
       "train": {
-        "count": 982.0,
-        "mean": 1.869314324507807,
-        "std": 1.444612077950326
+        "count": 3951.0,
+        "mean": 1.732557158525268,
+        "std": 1.4038212081946366
       },
       "validation": {
-        "count": 107.0,
-        "mean": 1.897196261682243,
-        "std": 1.5027915975186756
+        "count": 453.0,
+        "mean": 1.8344370860927153,
+        "std": 1.4222766930833637
       }
     },
     "popular_channels_followed": {
@@ -573,38 +575,38 @@
     },
     "race_ethnicity": {
       "train": {
-        "count": 569.0,
-        "mean": 1.8154657293497365,
-        "std": 1.5320959268159808
+        "count": 2444.0,
+        "mean": 1.7516366612111294,
+        "std": 1.4254874626887453
       },
       "validation": {
-        "count": 64.0,
-        "mean": 1.734375,
-        "std": 1.4387732133227251
+        "count": 271.0,
+        "mean": 1.5830258302583027,
+        "std": 1.2447408462168128
       }
     },
     "religion": {
       "train": {
-        "count": 569.0,
-        "mean": 5.8717047451669595,
-        "std": 4.560400046892023
+        "count": 2444.0,
+        "mean": 5.6497545008183305,
+        "std": 4.5127655745916515
       },
       "validation": {
-        "count": 64.0,
-        "mean": 6.625,
-        "std": 4.591091918051739
+        "count": 271.0,
+        "mean": 6.084870848708487,
+        "std": 4.55513495997815
       }
     },
     "religious_attendance": {
       "train": {
-        "count": 569.0,
-        "mean": 2.444639718804921,
-        "std": 1.2110404183189056
+        "count": 2444.0,
+        "mean": 2.392798690671031,
+        "std": 1.2171902353908592
       },
       "validation": {
-        "count": 64.0,
-        "mean": 2.5,
-        "std": 1.2624381172952597
+        "count": 271.0,
+        "mean": 2.3726937269372694,
+        "std": 1.2108944782936806
       }
     },
     "right_to_own_importance": {
@@ -621,14 +623,14 @@
     },
     "state": {
       "train": {
-        "count": 569.0,
-        "mean": 27.924428822495607,
-        "std": 16.07199041786232
+        "count": 2444.0,
+        "mean": 28.315875613747956,
+        "std": 16.019144438892052
       },
       "validation": {
-        "count": 64.0,
-        "mean": 28.359375,
-        "std": 14.239433788229608
+        "count": 271.0,
+        "mean": 27.826568265682656,
+        "std": 14.968459916846495
       }
     },
     "stricter_laws": {
@@ -645,38 +647,38 @@
     },
     "trump_approval": {
       "train": {
-        "count": 986.0,
-        "mean": 25.016227180527384,
-        "std": 34.907524026146795
+        "count": 3967.0,
+        "mean": 31.68086715402067,
+        "std": 37.79145532715215
       },
       "validation": {
-        "count": 106.0,
-        "mean": 21.9811320754717,
-        "std": 29.982064176825965
+        "count": 455.0,
+        "mean": 30.318681318681318,
+        "std": 35.75886245974452
       }
     },
     "vote_2016": {
       "train": {
-        "count": 569.0,
-        "mean": 3.260105448154657,
-        "std": 2.6003597134135705
+        "count": 2444.0,
+        "mean": 3.3252864157119477,
+        "std": 2.5850822590809006
       },
       "validation": {
-        "count": 64.0,
-        "mean": 3.46875,
-        "std": 2.686591416181478
+        "count": 271.0,
+        "mean": 3.2140221402214024,
+        "std": 2.5711905981005634
       }
     },
     "vote_2020": {
       "train": {
-        "count": 569.0,
-        "mean": 1.929701230228471,
-        "std": 1.6068767253777987
+        "count": 2444.0,
+        "mean": 2.0916530278232406,
+        "std": 1.6760405715405329
       },
       "validation": {
-        "count": 64.0,
-        "mean": 2.03125,
-        "std": 1.722722681542215
+        "count": 271.0,
+        "mean": 2.177121771217712,
+        "std": 1.7621462037737827
       }
     }
   },
@@ -708,123 +710,126 @@
   "n_options_counts": {
     "train": {
       "1": 4,
-      "4": 987
+      "3": 293,
+      "4": 3695
     },
     "validation": {
-      "4": 107
+      "2": 1,
+      "3": 33,
+      "4": 423
     }
   },
   "participant_counts": {
     "overall": {
       "by_issue": {
         "gun_control": 88,
-        "minimum_wage": 1010
+        "minimum_wage": 4361
       },
       "by_issue_study": {
         "gun_control": {
           "study1": 88
         },
         "minimum_wage": {
-          "study2": 377,
-          "study3": 633
+          "study2": 1646,
+          "study3": 2715
         }
       },
       "by_study": {
         "study1": 88,
-        "study2": 377,
-        "study3": 633
+        "study2": 1646,
+        "study3": 2715
       },
-      "overall": 1098
+      "overall": 4449
     },
     "train": {
       "by_issue": {
         "gun_control": 83,
-        "minimum_wage": 908
+        "minimum_wage": 3909
       },
       "by_issue_study": {
         "gun_control": {
           "study1": 83
         },
         "minimum_wage": {
-          "study2": 339,
-          "study3": 569
+          "study2": 1465,
+          "study3": 2444
         }
       },
       "by_study": {
         "study1": 83,
-        "study2": 339,
-        "study3": 569
+        "study2": 1465,
+        "study3": 2444
       },
-      "overall": 991
+      "overall": 3992
     },
     "validation": {
       "by_issue": {
         "gun_control": 5,
-        "minimum_wage": 102
+        "minimum_wage": 452
       },
       "by_issue_study": {
         "gun_control": {
           "study1": 5
         },
         "minimum_wage": {
-          "study2": 38,
-          "study3": 64
+          "study2": 181,
+          "study3": 271
         }
       },
       "by_study": {
         "study1": 5,
-        "study2": 38,
-        "study3": 64
+        "study2": 181,
+        "study3": 271
       },
-      "overall": 107
+      "overall": 457
     }
   },
   "prior_history_counts": {
     "train": {
-      "0": 966,
+      "0": 3967,
       "1": 19,
       "2": 2,
       "3": 4
     },
     "validation": {
-      "0": 104,
+      "0": 454,
       "1": 3
     }
   },
   "profile_summary": {
     "train": {
       "missing_profile": 0.0,
-      "rows": 991.0
+      "rows": 3992.0
     },
     "validation": {
       "missing_profile": 0.0,
-      "rows": 107.0
+      "rows": 457.0
     }
   },
   "unique_counts": {
     "overall": {
-      "candidate_video_ids": 49,
+      "candidate_video_ids": 100,
       "current_video_ids": 16,
-      "gold_video_ids": 27,
-      "prompt_texts": 1042,
-      "slate_combinations": 14,
-      "state_texts": 1042
+      "gold_video_ids": 77,
+      "prompt_texts": 4447,
+      "slate_combinations": 2738,
+      "state_texts": 4447
     },
     "train": {
-      "candidate_video_ids": 49,
+      "candidate_video_ids": 100,
       "current_video_ids": 16,
-      "gold_video_ids": 27,
-      "prompt_texts": 945,
-      "slate_combinations": 14,
-      "state_texts": 945
+      "gold_video_ids": 77,
+      "prompt_texts": 3990,
+      "slate_combinations": 2550,
+      "state_texts": 3990
     },
     "validation": {
-      "candidate_video_ids": 27,
+      "candidate_video_ids": 73,
       "current_video_ids": 7,
-      "gold_video_ids": 16,
-      "prompt_texts": 107,
-      "slate_combinations": 7,
-      "state_texts": 107
+      "gold_video_ids": 61,
+      "prompt_texts": 457,
+      "slate_combinations": 426,
+      "state_texts": 457
     }
   }
 }

@@ -10,7 +10,16 @@ from .parsers import format_age, is_nanlike
 
 
 def truncate_text(text: str, limit: int = 160) -> str:
-    """Trim ``text`` to ``limit`` characters, adding an ellipsis when needed."""
+    """
+    Trim ``text`` to ``limit`` characters, adding an ellipsis when truncation occurs.
+
+    :param text: Raw text to condense.
+    :type text: str
+    :param limit: Maximum number of characters to allow before shortening.
+    :type limit: int
+    :returns: Condensed text, suffixed with ``...`` when the original exceeded ``limit``.
+    :rtype: str
+    """
 
     text = text.strip()
     if limit is None:
@@ -21,7 +30,16 @@ def truncate_text(text: str, limit: int = 160) -> str:
 
 
 def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
-    """Convert ``value`` to a cleaned string, collapsing list-like inputs."""
+    """
+    Convert ``value`` to normalised text, collapsing list-like inputs when present.
+
+    :param value: Arbitrary value to format as human-friendly text.
+    :type value: Any
+    :param limit: Optional character limit applied after normalisation.
+    :type limit: int, optional
+    :returns: Cleaned string representation or an empty string when nothing meaningful remains.
+    :rtype: str
+    """
 
     if is_nanlike(value):
         return ""
@@ -46,7 +64,14 @@ def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
 
 
 def human_join(parts: List[str]) -> str:
-    """Return a human-friendly join for ``parts`` using commas and ``and``."""
+    """
+    Join ``parts`` into a grammatically friendly string.
+
+    :param parts: Text fragments to combine.
+    :type parts: List[str]
+    :returns: Items joined with commas and ``and`` following English style.
+    :rtype: str
+    """
 
     cleaned = [p.strip() for p in parts if p and p.strip()]
     if not cleaned:
@@ -59,7 +84,14 @@ def human_join(parts: List[str]) -> str:
 
 
 def with_indefinite_article(phrase: str) -> str:
-    """Prefix ``phrase`` with an article when appropriate."""
+    """
+    Prefix ``phrase`` with an appropriate indefinite article.
+
+    :param phrase: The phrase to augment.
+    :type phrase: str
+    :returns: The phrase with ``a`` or ``an`` prepended when needed.
+    :rtype: str
+    """
 
     text = phrase.strip()
     if not text:
@@ -74,7 +106,14 @@ def with_indefinite_article(phrase: str) -> str:
 
 
 def describe_age_fragment(value: Any) -> Optional[str]:
-    """Return a natural-language age fragment."""
+    """
+    Produce a natural-language age fragment derived from ``value``.
+
+    :param value: Raw age input as text or numeric data.
+    :type value: Any
+    :returns: Age description suitable for insertion into a sentence, or ``None`` when unknown.
+    :rtype: Optional[str]
+    """
 
     age_text = format_age(value)
     if not age_text:
@@ -104,7 +143,14 @@ def describe_age_fragment(value: Any) -> Optional[str]:
 
 
 def describe_gender_fragment(value: Any) -> Optional[str]:
-    """Return a normalised gender fragment."""
+    """
+    Produce a normalised gender fragment derived from ``value``.
+
+    :param value: Raw gender input as text or coded data.
+    :type value: Any
+    :returns: Gender description ready for sentence use, or ``None`` when unknown.
+    :rtype: Optional[str]
+    """
 
     text = clean_text(value)
     if not text:
@@ -122,7 +168,14 @@ def describe_gender_fragment(value: Any) -> Optional[str]:
 
 
 def normalize_language_text(value: Any) -> str:
-    """Convert language codes into human-friendly names."""
+    """
+    Convert language codes or informal labels into human-friendly names.
+
+    :param value: Raw language identifier.
+    :type value: Any
+    :returns: Normalised language name or an empty string when nothing is provided.
+    :rtype: str
+    """
 
     text = clean_text(value)
     if not text:

@@ -47,14 +47,28 @@ MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
 
 @dataclass
 class ProfileRender:
-    """Container for profile sentences and placeholder metadata."""
+    """
+    Container for profile sentences and placeholder metadata.
+
+    :ivar sentences: Ordered sentences describing the viewer's profile.
+    :type sentences: List[str]
+    :ivar viewer_placeholder: Flag indicating the profile relied on fallback text.
+    :type viewer_placeholder: bool
+    """
 
     sentences: List[str]
     viewer_placeholder: bool
 
 
 def synthesize_viewer_sentence(ex: Dict[str, Any]) -> str:
-    """Fallback sentence when an explicit profile is missing."""
+    """
+    Generate a fallback viewer description when an explicit profile is absent.
+
+    :param ex: Data row containing demographic and behavioural fields.
+    :type ex: Dict[str, Any]
+    :returns: Concise description synthesised from available attributes.
+    :rtype: str
+    """
 
     bits: List[str] = []
     age_text = describe_age_fragment(ex.get("age"))
@@ -88,7 +102,14 @@ def synthesize_viewer_sentence(ex: Dict[str, Any]) -> str:
 
 
 def render_profile(ex: Dict[str, Any]) -> ProfileRender:
-    """Compose the viewer profile sentences for an example row."""
+    """
+    Compose profile sentences describing the viewer associated with ``ex``.
+
+    :param ex: Data row that may contain inline or nested survey information.
+    :type ex: Dict[str, Any]
+    :returns: Structured profile output including sentences and placeholder state.
+    :rtype: ProfileRender
+    """
 
     selected_row = _load_selected_row(ex)
     viewer = clean_text(ex.get("viewer_profile_sentence"))

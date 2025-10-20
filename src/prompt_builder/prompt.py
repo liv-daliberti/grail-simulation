@@ -28,7 +28,16 @@ def _render_profile_text(profile: ProfileRender) -> str:
 
 
 def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
-    """Build the user prompt for a cleaned interaction row."""
+    """
+    Assemble the user prompt used for recommendation tasks.
+
+    :param ex: Cleaned interaction row with profile, history, and slate fields.
+    :type ex: Dict[str, Any]
+    :param max_hist: Maximum number of prior videos to include in the history section.
+    :type max_hist: int
+    :returns: Multi-line prompt describing the viewer, watch history, and options.
+    :rtype: str
+    """
 
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
     lines: List[str] = []
@@ -51,7 +60,16 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
 
 
 def _current_video_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """Return the current video lines, prefixed with a blank line."""
+    """
+    Build the current video subsection for the prompt.
+
+    :param ex: Interaction row containing information about the active video.
+    :type ex: Dict[str, Any]
+    :param show_ids: Flag controlling whether identifiers should always be emitted.
+    :type show_ids: bool
+    :returns: Lines describing the active video, or an empty list when unavailable.
+    :rtype: List[str]
+    """
 
     title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
@@ -70,7 +88,18 @@ def _current_video_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
 
 
 def _history_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
-    """Return the viewing history section (most recent first)."""
+    """
+    Build the viewing history subsection for the prompt.
+
+    :param ex: Interaction row containing history-related fields.
+    :type ex: Dict[str, Any]
+    :param show_ids: Flag controlling whether identifiers should always be emitted.
+    :type show_ids: bool
+    :param max_hist: Maximum number of historical items to include.
+    :type max_hist: int
+    :returns: Lines summarising previously watched videos, most recent first.
+    :rtype: List[str]
+    """
 
     descriptors = _history_descriptors(ex, show_ids, max_hist)
     if not descriptors:
@@ -136,7 +165,16 @@ def _history_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
 
 
 def _options_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """Return the options section, always including the header."""
+    """
+    Build the options subsection for the prompt.
+
+    :param ex: Interaction row containing candidate slate information.
+    :type ex: Dict[str, Any]
+    :param show_ids: Flag controlling whether identifiers should always be emitted.
+    :type show_ids: bool
+    :returns: Lines describing available recommendation candidates.
+    :rtype: List[str]
+    """
 
     section: List[str] = ["", "OPTIONS:"]
     items = as_list_json(ex.get("slate_items_json"))

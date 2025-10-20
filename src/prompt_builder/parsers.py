@@ -20,7 +20,16 @@ except ImportError:  # pragma: no cover - optional dependency
 
 
 def as_list_json(x: Any, default: str = "[]") -> List[Any]:
-    """Return ``x`` as a Python list, accepting JSON strings and Arrow arrays."""
+    """
+    Convert ``x`` into a Python list, accepting JSON strings and Arrow arrays.
+
+    :param x: Source value that may already be a list or serialised representation.
+    :type x: Any
+    :param default: Fallback JSON array used when ``x`` is empty.
+    :type default: str
+    :returns: Parsed list representation, or an empty list when conversion fails.
+    :rtype: List[Any]
+    """
 
     if isinstance(x, list):
         return x
@@ -36,7 +45,14 @@ def as_list_json(x: Any, default: str = "[]") -> List[Any]:
 
 
 def secs(x: Any) -> str:
-    """Format a duration in seconds, returning ``"?"`` when parsing fails."""
+    """
+    Format ``x`` as an integer number of seconds.
+
+    :param x: Duration-like value (numeric or string).
+    :type x: Any
+    :returns: Seconds expressed as ``"<int>s"`` or ``"?"`` when parsing fails.
+    :rtype: str
+    """
 
     try:
         return f"{int(round(float(x)))}s"
@@ -60,13 +76,27 @@ def _is_nanlike(x: Any) -> bool:
 
 
 def is_nanlike(value: Any) -> bool:
-    """Public wrapper for :func:`_is_nanlike`."""
+    """
+    Determine whether ``value`` should be treated as a missing entry.
+
+    :param value: Candidate value that may represent ``NaN`` or null-ish text.
+    :type value: Any
+    :returns: ``True`` when the value is considered missing, ``False`` otherwise.
+    :rtype: bool
+    """
 
     return _is_nanlike(value)
 
 
 def truthy(value: Any) -> Optional[bool]:
-    """Interpret common boolean representations, returning ``None`` when unknown."""
+    """
+    Interpret common boolean representations.
+
+    :param value: Input that may encode boolean information.
+    :type value: Any
+    :returns: ``True`` or ``False`` when recognised, otherwise ``None``.
+    :rtype: Optional[bool]
+    """
 
     if value is None:
         return None
@@ -89,7 +119,18 @@ def truthy(value: Any) -> Optional[bool]:
 
 
 def format_yes_no(value: Any, *, yes: str = "yes", no: str = "no") -> Optional[str]:
-    """Return ``yes``/``no`` strings when ``value`` contains a truthy marker."""
+    """
+    Render ``value`` as a ``yes``/``no`` string when a boolean marker is present.
+
+    :param value: Input that may encode a boolean concept.
+    :type value: Any
+    :param yes: Text to return when ``value`` evaluates to ``True``.
+    :type yes: str
+    :param no: Text to return when ``value`` evaluates to ``False``.
+    :type no: str
+    :returns: ``yes`` or ``no`` strings, or ``None`` when the value is indeterminate.
+    :rtype: Optional[str]
+    """
 
     verdict = truthy(value)
     if verdict is True:
@@ -100,7 +141,14 @@ def format_yes_no(value: Any, *, yes: str = "yes", no: str = "no") -> Optional[s
 
 
 def format_count(value: Any) -> Optional[str]:
-    """Format counts using thousands separators, falling back to raw text."""
+    """
+    Present ``value`` as a human-readable count with thousands separators.
+
+    :param value: Numeric or textual count.
+    :type value: Any
+    :returns: Formatted count string, or ``None`` for missing/invalid input.
+    :rtype: Optional[str]
+    """
 
     if _is_nanlike(value):
         return None
@@ -123,7 +171,14 @@ def format_count(value: Any) -> Optional[str]:
 
 
 def format_age(value: Any) -> Optional[str]:
-    """Return a normalised age string when ``value`` contains a valid number."""
+    """
+    Normalise age-related text into a canonical string representation.
+
+    :param value: Age value supplied as text or numeric.
+    :type value: Any
+    :returns: Cleaned age string, or ``None`` when the age cannot be inferred.
+    :rtype: Optional[str]
+    """
 
     if value is None:
         return None

@@ -21,7 +21,7 @@ Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounde
 ├── recipes/                  # Training configuration files organised by model family
 ├── src/
 │   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
-│   ├── gpt-4o/               # GPT-4o slate-prediction baselines
+│   ├── gpt4o/                # GPT-4o slate-prediction baselines
 │   ├── knn/                  # Non-generative k-nearest-neighbour baseline
 │   └── visualization/        # Graphviz-based session and recommendation-tree renderers
 ├── training/                 # SLURM launchers for baseline and GRAIL runs
@@ -143,7 +143,7 @@ sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
 
 Baselines:
 
-- GPT‑4o slate predictor: `python src/gpt-4o/gpt-4o-baseline.py`
+- GPT‑4o slate predictor: `python -m gpt4o.cli`
 - k-NN slate baseline: `bash training/training-knn.sh`
 
 ## Citation

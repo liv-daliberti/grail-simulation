@@ -292,7 +292,11 @@ def load_trajectories(
                 for line in handle:
                     line = line.strip()
                     if line:
-                        parts = [segment.strip() for segment in line.split(delimiter) if segment.strip()]
+                        parts = [
+                            segment.strip()
+                            for segment in line.split(delimiter)
+                            if segment.strip()
+                        ]
                         if parts:
                             sequences.append(parts)
     normalized: List[List[str]] = []
@@ -348,7 +352,9 @@ def aggregate_counts(sequences: Iterable[Sequence[str]]) -> Tuple[Counter, Count
     return node_counts, edge_counts
 
 
-def _group_rows_by_session(rows: Sequence[Mapping[str, object]]) -> Dict[str, List[Mapping[str, object]]]:
+def _group_rows_by_session(
+    rows: Sequence[Mapping[str, object]]
+) -> Dict[str, List[Mapping[str, object]]]:
     """Group dataset rows by session identifier and sort within each session.
 
     :param rows: Iterable of dataset rows emitted by the cleaned dataset.
@@ -400,8 +406,20 @@ def build_graph(
     highlight_edges = set(zip(highlight_path, highlight_path[1:]))
     graph = Digraph(engine=engine)
     graph.attr(rankdir=rankdir)
-    graph.attr("node", shape="box", style="rounded,filled", fillcolor="white", color="#4c566a", fontname="Helvetica")
-    graph.attr("edge", color="#4c566a", arrowsize="0.7", fontname="Helvetica")
+    graph.attr(
+        "node",
+        shape="box",
+        style="rounded,filled",
+        fillcolor="white",
+        color="#4c566a",
+        fontname="Helvetica",
+    )
+    graph.attr(
+        "edge",
+        color="#4c566a",
+        arrowsize="0.7",
+        fontname="Helvetica",
+    )
     allowed_nodes = set(tree.nodes)
     if max_depth is not None:
         allowed_nodes = {node for node, depth in depths.items() if depth <= max_depth}
@@ -457,14 +475,16 @@ def _load_cleaned_dataset(path: Path):
     :returns: Dataset object compatible with the HuggingFace datasets API.
     :raises ValueError: If the file extension is not supported.
     """
-    from datasets import load_dataset, load_from_disk  # type: ignore  # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
+    from datasets import load_dataset, load_from_disk  # type: ignore
     if path.is_dir():
         return load_from_disk(str(path))
     suffix = path.suffix.lower()
     if suffix in {".json", ".jsonl"}:
         return load_dataset("json", data_files=str(path))
     if suffix in {".csv", ".tsv"}:
-        return load_dataset("csv", data_files=str(path), delimiter="," if suffix == ".csv" else "\t")
+        delimiter = "," if suffix == ".csv" else "\t"
+        return load_dataset("csv", data_files=str(path), delimiter=delimiter)
     raise ValueError(f"Unsupported cleaned dataset format: {path}")
 
 
@@ -526,7 +546,9 @@ def _extract_session_rows(
     session_rows = [row for row in rows if str(row.get("session_id")) == session_id]
     if not session_rows:
         available = sorted({str(row.get("session_id")) for row in rows})
-        raise ValueError(f"Session '{session_id}' not found. Available session IDs: {available[:10]}")
+        raise ValueError(
+            f"Session '{session_id}' not found. Available session IDs: {available[:10]}"
+        )
 
     session_rows.sort(key=lambda r: (r.get("step_index") or 0, r.get("display_step") or 0))
     if max_steps is not None and max_steps > 0:
@@ -570,7 +592,7 @@ def build_session_graph(
     :param highlight_path: Sequence of video identifiers to highlight.
     :returns: Configured :class:`graphviz.Digraph` instance.
     """
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
     graph = Digraph(comment="Viewer session", engine=engine, format="png")
     graph.attr(rankdir=rankdir)
     highlight_set = {vid.strip() for vid in highlight_path if vid.strip()}
@@ -620,7 +642,7 @@ def build_session_graph(
         if isinstance(options, str):
             try:
                 options = json.loads(options)
-            except Exception:
+            except (json.JSONDecodeError, TypeError):
                 options = []
 
         for rank, item in enumerate(options, start=1):
@@ -717,15 +739,24 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--cleaned-data",
         type=Path,
-        help="Path to a cleaned dataset produced by clean_data/clean_data.py (datasets.save_to_disk).",
+        help=(
+            "Path to a cleaned dataset produced by clean_data/clean_data.py "
+            "(datasets.save_to_disk)."
+        ),
     )
     parser.add_argument(
         "--session-id",
-        help="Session ID to visualize when using --cleaned-data. Defaults to the first session found.",
+        help=(
+            "Session ID to visualize when using --cleaned-data. Defaults to the first "
+            "session found."
+        ),
     )
     parser.add_argument(
         "--split",
-        help="Dataset split to read from when using --cleaned-data (defaults to every available split).",
+        help=(
+            "Dataset split to read from when using --cleaned-data "
+            "(defaults to every available split)."
+        ),
     )
     parser.add_argument(
         "--issue",
@@ -849,6 +880,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     :param argv: Optional list of CLI arguments.
     :raises SystemExit: When the command arguments are inconsistent.
     """
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     args = parse_args(argv)
     highlight_path: List[str] = []
     if args.highlight:
@@ -862,11 +894,13 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         if not dataset:
             raise SystemExit("--batch-output-dir requires --cleaned-data.")
         if args.issue:
-            raise SystemExit("--batch-output-dir is incompatible with --issue. Use --batch-issues instead.")
+            raise SystemExit(
+                "--batch-output-dir is incompatible with --issue. Use --batch-issues instead."
+            )
         try:
             issue_targets = parse_issue_counts(args.batch_issues)
         except ValueError as exc:
-            raise SystemExit(str(exc))
+            raise SystemExit(str(exc)) from exc
         if not issue_targets:
             raise SystemExit("No issue counts provided for batch rendering.")
         output_dir = args.batch_output_dir
@@ -881,7 +915,8 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             sessions = _group_rows_by_session(rows)
             if len(sessions) < count:
                 raise SystemExit(
-                    f"Requested {count} session(s) for issue '{issue}', but only {len(sessions)} found."
+                    f"Requested {count} session(s) for issue '{issue}', "
+                    f"but only {len(sessions)} found."
                 )
             for idx, session_id in enumerate(sorted(sessions)[:count], start=1):
                 session_rows = sessions[session_id]
@@ -901,7 +936,9 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
                 print(f"Wrote {output_path}", file=sys.stderr)
                 emitted += 1
         if emitted == 0:
-            raise SystemExit("No sessions rendered. Check --batch-issues counts and dataset filters.")
+            raise SystemExit(
+                "No sessions rendered. Check --batch-issues counts and dataset filters."
+            )
         return
 
     if args.cleaned_data:
@@ -922,7 +959,11 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             highlight_path=highlight_path,
         )
     else:
-        child_prefixes = tuple(prefix.strip() for prefix in args.child_prefixes.split(",") if prefix.strip())
+        child_prefixes = tuple(
+            prefix.strip()
+            for prefix in args.child_prefixes.split(",")
+            if prefix.strip()
+        )
         tree = load_tree_csv(args.tree, id_column=args.id_column, child_prefixes=child_prefixes)
         metadata = load_metadata(args.metadata, id_column=args.metadata_id_column)
         sequences = load_trajectories(args.trajectories, delimiter=args.trajectory_delimiter)

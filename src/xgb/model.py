@@ -41,6 +41,7 @@ class XGBoostSlateModel:
     extra_fields: Tuple[str, ...]
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class XGBoostBoosterParams:
     """
@@ -78,6 +79,7 @@ class XGBoostBoosterParams:
     extra_kwargs: Dict[str, Any] | None = None
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class XGBoostTrainConfig:
     """
@@ -263,6 +265,7 @@ def predict_among_slate(
 def _fit_vectorizer(
     *, documents: Sequence[str], max_features: Optional[int]
 ) -> Tuple[TfidfVectorizer, Any]:
+    """Fit a TF-IDF vectoriser on ``documents`` and return the vectoriser plus matrix."""
     tfidf_max_features = max_features if max_features and max_features > 0 else None
     vectorizer = TfidfVectorizer(
         lowercase=True,
@@ -277,6 +280,7 @@ def _fit_vectorizer(
 
 
 def _encode_labels(labels_id: Sequence[str]) -> Tuple[LabelEncoder, Any]:
+    """Return an encoder and numeric labels derived from ``labels_id``."""
     encoder = LabelEncoder()
     encoded = encoder.fit_transform(labels_id)
     if len(encoder.classes_) < 2:
@@ -292,6 +296,7 @@ def _train_booster(
     matrix,
     labels,
 ) -> Any:
+    """Instantiate and fit the XGBoost booster component."""
     params = train_config.booster
     booster_kwargs = dict(params.extra_kwargs or {})
     booster = XGBClassifier(

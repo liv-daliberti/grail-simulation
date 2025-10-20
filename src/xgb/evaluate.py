@@ -22,6 +22,7 @@ from .data import (
 )
 from .features import extract_slate_items
 from .model import (
+    XGBoostBoosterParams,
     XGBoostSlateModel,
     XGBoostTrainConfig,
     fit_xgboost_model,
@@ -70,16 +71,47 @@ class IssueMetrics:
 
 @dataclass(frozen=True)
 class EvaluationConfig:
-    """Configuration bundle shared across evaluation helpers."""
+    """
+    Configuration bundle shared across evaluation helpers.
+
+    :ivar dataset_source: Identifier for the dataset source (path or HF id).
+    :vartype dataset_source: str
+    :ivar extra_fields: Additional column names appended to prompt documents.
+    :vartype extra_fields: Sequence[str]
+    :ivar eval_max: Optional cap on the number of evaluation rows (0 evaluates all).
+    :vartype eval_max: int
+    """
 
     dataset_source: str
     extra_fields: Sequence[str]
     eval_max: int
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
 class PredictionOutcome:
-    """Result bundle for a single evaluation example."""
+    """
+    Result bundle for a single evaluation example.
+
+    :ivar prediction_index: 1-based index of the chosen slate option (``None`` when unknown).
+    :vartype prediction_index: Optional[int]
+    :ivar predicted_id: Video identifier selected by the model.
+    :vartype predicted_id: str
+    :ivar gold_video_id: Ground-truth video identifier.
+    :vartype gold_video_id: str
+    :ivar candidate_probs: Mapping of slate positions to probabilities.
+    :vartype candidate_probs: Dict[int, float]
+    :ivar best_probability: Probability associated with the predicted option.
+    :vartype best_probability: float
+    :ivar known_candidate_seen: Flag indicating whether any slate ids were present in the probability map.
+    :vartype known_candidate_seen: bool
+    :ivar known_candidate_hit: Flag indicating the predicted option matched the ground-truth id and was known.
+    :vartype known_candidate_hit: bool
+    :ivar record_probability: Flag indicating whether ``best_probability`` should be included in aggregates.
+    :vartype record_probability: bool
+    :ivar correct: ``True`` when the predicted option matches the gold id.
+    :vartype correct: bool
+    """
 
     prediction_index: Optional[int]
     predicted_id: str
@@ -260,6 +292,69 @@ def evaluate_issue(
         xgboost_params=_model_params(model),
     )
     return metrics, predictions
+
+
+def _evaluate_single_example(
+    *,
+    model: XGBoostSlateModel,
+    example: dict,
+    extra_fields: Sequence[str],
+) -> PredictionOutcome:
+    """Return the prediction outcome for a single example."""
+    prediction_idx, probability_map = predict_among_slate(
+        model,
+        example,
+        extra_fields=extra_fields,
+    )
+    slate = extract_slate_items(example)
+    gold_id = example.get(SOLUTION_COLUMN) or ""
+    gold_id_canon = canon_video_id(gold_id)
+
+    if prediction_idx is None and slate:
+        prediction_idx = 1
+
+    if prediction_idx is not None and 1 <= prediction_idx <= len(slate):
+        predicted_id = slate[prediction_idx - 1][1]
+    else:
+        predicted_id = ""
+
+    candidate_probs = {
+        slate_idx + 1: probability_map.get(canon_video_id(candidate_id), 0.0)
+        for slate_idx, (_, candidate_id) in enumerate(slate)
+    }
+
+    known_candidates = {
+        slate_idx + 1: canon_video_id(candidate_id)
+        for slate_idx, (_, candidate_id) in enumerate(slate)
+        if canon_video_id(candidate_id) in probability_map
+    }
+
+    best_probability = (
+        candidate_probs.get(prediction_idx, 0.0)
+        if prediction_idx is not None
+        else 0.0
+    )
+    record_probability = bool(prediction_idx and prediction_idx in known_candidates)
+    known_candidate_hit = False
+    if record_probability and prediction_idx is not None:
+        known_candidate_hit = known_candidates[prediction_idx] == gold_id_canon
+
+    predicted_id_canon = canon_video_id(predicted_id)
+    correct = predicted_id_canon == gold_id_canon and bool(predicted_id_canon)
+
+    return PredictionOutcome(
+        prediction_index=prediction_idx,
+        predicted_id=predicted_id,
+        gold_video_id=gold_id,
+        candidate_probs=candidate_probs,
+        best_probability=best_probability,
+        known_candidate_seen=bool(known_candidates),
+        known_candidate_hit=known_candidate_hit,
+        record_probability=record_probability,
+        correct=correct,
+    )
+
+
 def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:
     """
     Return a serialisable view of relevant XGBoost parameters.

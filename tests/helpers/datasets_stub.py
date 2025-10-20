@@ -1,11 +1,4 @@
-"""Lightweight stub for the Hugging Face ``datasets`` library used in tests.
-
-This stub is deliberately minimal—only the behaviours exercised by the unit
-tests are implemented.  When the real library is available it is left
-undisturbed; otherwise we register stand-in classes that mimic the APIs needed
-by the test suite (``Dataset``, ``DatasetDict``, ``Value``, ``Sequence``,
-``Features`` and a handful of helper functions).
-"""
+"""Lightweight stub for the Hugging Face ``datasets`` library used in tests."""
 
 from __future__ import annotations
 
@@ -16,19 +9,10 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
 
 
-def _infer_feature(values: List[Any]) -> "Value | Sequence":
-    for value in values:
-        if value is not None:
-            if isinstance(value, list):
-                return Sequence(Value("string"))
-            return Value(type(value).__name__)
-    return Value("null")
-
-
 def ensure_datasets_stub() -> None:
-    """Install the datasets stub if the real library is unavailable."""
+    """Install a minimal datasets stub when the real library is unavailable."""
 
-    try:  # pragma: no cover - exercised implicitly when dependency exists
+    try:  # pragma: no cover - executed only when dependency exists
         import datasets  # type: ignore
     except ModuleNotFoundError:
         module = type(sys)("datasets")
@@ -43,6 +27,14 @@ def ensure_datasets_stub() -> None:
 
         class Features(dict):  # type: ignore[type-arg]
             pass
+
+        def _infer_feature(values: List[Any]) -> "Value | Sequence":
+            for value in values:
+                if value is not None:
+                    if isinstance(value, list):
+                        return Sequence(Value("string"))
+                    return Value(type(value).__name__)
+            return Value("null")
 
         class Dataset:
             def __init__(self, data: Dict[str, List[Any]], features: Optional[Features] = None) -> None:
@@ -88,9 +80,9 @@ def ensure_datasets_stub() -> None:
                 function: Callable[[Dict[str, Any]], Dict[str, Any]],
                 *,
                 remove_columns: Optional[Iterable[str]] = None,
-                load_from_cache_file: Optional[bool] = None,  # noqa: ARG002 - kept for compatibility
+                load_from_cache_file: Optional[bool] = None,  # noqa: ARG002
             ) -> "Dataset":
-                del remove_columns  # Our simplified implementation always starts from fresh outputs.
+                del remove_columns
                 outputs: List[Dict[str, Any]] = []
                 for index in range(len(self)):
                     row = self._row(index)
@@ -115,7 +107,6 @@ def ensure_datasets_stub() -> None:
                 return Dataset(data, features)
 
             def cast(self, features: Features) -> "Dataset":
-                # Casting is a no-op for the stub; we simply record the requested features.
                 return Dataset(self._data, Features(features))
 
             def filter(self, predicate: Callable[[Dict[str, Any]], bool]) -> "Dataset":
@@ -128,7 +119,11 @@ def ensure_datasets_stub() -> None:
                 return Dataset(data, Features(self._features))
 
             def unique(self, column_name: str) -> List[Any]:
-                return list(dict.fromkeys(self._data[column_name]))
+                seen = []
+                for value in self._data[column_name]:
+                    if value not in seen:
+                        seen.append(value)
+                return seen
 
             def select_columns(self, column_names: Iterable[str]) -> "Dataset":
                 data = {name: self._data[name] for name in column_names if name in self._data}
@@ -140,7 +135,7 @@ def ensure_datasets_stub() -> None:
                 data = {key: [self._data[key][i] for i in idx_list] for key in self._data}
                 return Dataset(data, Features(self._features))
 
-            def shuffle(self, seed: Optional[int] = None) -> "Dataset":  # noqa: ARG002 - parity with HF API
+            def shuffle(self, seed: Optional[int] = None) -> "Dataset":  # noqa: ARG002
                 return Dataset(self._data, Features(self._features))
 
             def save_to_disk(self, path: str | Path) -> None:
@@ -150,7 +145,7 @@ def ensure_datasets_stub() -> None:
                 payload = {
                     "data": rows,
                     "features": {
-                        key: {"type": ("sequence" if isinstance(feature, Sequence) else "value")}
+                        key: {"type": "sequence" if isinstance(feature, Sequence) else "value"}
                         for key, feature in self._features.items()
                     },
                 }
@@ -161,19 +156,18 @@ def ensure_datasets_stub() -> None:
             def _load(cls, path: Path) -> "Dataset":
                 with (path / "dataset.json").open("r", encoding="utf-8") as handle:
                     payload = json.load(handle)
-                data = {key: [row.get(key) for row in payload.get("data", [])] for key in payload.get("data", [{}])[0].keys()} if payload.get("data") else {}
-                rows = payload.get("data", [])
+                rows: List[Dict[str, Any]] = payload.get("data", [])
                 if rows:
-                    columns = {key: [row.get(key) for row in rows] for key in rows[0].keys()}
+                    data = {key: [row.get(key) for row in rows] for key in rows[0].keys()}
                 else:
-                    columns = {}
+                    data = {}
                 features = Features(
                     {
                         key: Sequence(Value("string")) if meta.get("type") == "sequence" else Value("string")
                         for key, meta in payload.get("features", {}).items()
                     }
                 )
-                return Dataset(columns, features)
+                return Dataset(data, features)
 
         class DatasetDict:
             def __init__(self, mapping: Optional[Dict[str, Dataset]] = None) -> None:
@@ -220,9 +214,7 @@ def ensure_datasets_stub() -> None:
             if (base / "splits.json").exists():
                 with (base / "splits.json").open("r", encoding="utf-8") as handle:
                     manifest = json.load(handle)
-                mapping = {
-                    name: Dataset._load(base / name) for name in manifest.get("splits", [])
-                }
+                mapping = {name: Dataset._load(base / name) for name in manifest.get("splits", [])}
                 return DatasetDict(mapping)
             if (base / "dataset.json").exists():
                 return Dataset._load(base)

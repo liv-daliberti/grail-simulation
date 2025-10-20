@@ -11,3 +11,9 @@ SRC_DIR = os.path.join(ROOT_DIR, "src")
 for path in (ROOT_DIR, SRC_DIR):
     if path not in sys.path:
         sys.path.insert(0, path)
+
+from tests.helpers.datasets_stub import ensure_datasets_stub  # noqa: E402
+from tests.helpers.pandas_stub import ensure_pandas_stub  # noqa: E402
+
+ensure_datasets_stub()
+ensure_pandas_stub()

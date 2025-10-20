@@ -8,6 +8,8 @@ from dataclasses import dataclass
 
 import pytest
 
+from tests.helpers.datasets_stub import ensure_datasets_stub
+
 
 def _install_reward_dep_stubs() -> None:
     """Provide minimal stubs for optional dependencies required to import the module."""
@@ -81,29 +83,7 @@ def _install_reward_dep_stubs() -> None:
         sys.modules["transformers.utils"] = utils_module
         sys.modules["transformers.utils.import_utils"] = import_utils_module
 
-    try:  # pragma: no cover - only runs when deps already installed
-        import datasets  # type: ignore
-    except ModuleNotFoundError:
-        datasets_stub = types.ModuleType("datasets")
-
-        class _DownloadConfig:
-            def __init__(self, **_kwargs):
-                pass
-
-        class _DatasetDict(dict):
-            pass
-
-        def _load_dataset(*_args, **_kwargs):
-            raise RuntimeError("datasets stub invoked unexpectedly")
-
-        def _concatenate_datasets(_datasets):
-            raise RuntimeError("datasets stub invoked unexpectedly")
-
-        datasets_stub.DownloadConfig = _DownloadConfig
-        datasets_stub.DatasetDict = _DatasetDict
-        datasets_stub.concatenate_datasets = _concatenate_datasets
-        datasets_stub.load_dataset = _load_dataset
-        sys.modules["datasets"] = datasets_stub
+    ensure_datasets_stub()
 
     trl_stub = sys.modules.get("trl")
     if trl_stub is None:

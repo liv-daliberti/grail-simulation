@@ -6,7 +6,7 @@ This directory contains a light-weight, non-generative baseline that selects the
 
 `knn-baseline.py` transforms the cleaned dataset into the same chat-style prompt used by the GRPO/GRAIL trainers, then:
 
-1. **Prompt construction** – Each row is passed to `build_user_prompt`, giving the KNN model the full PROFILE / HISTORY / CURRENT VIDEO / OPTIONS context. The prompt builder lives in `src/prompt_builder.py` and is shared across baselines and trainers.
+1. **Prompt construction** – Each row is passed to `build_user_prompt`, giving the KNN model the full PROFILE / HISTORY / CURRENT VIDEO / OPTIONS context. The prompt builder now lives in the `prompt_builder` package (see `src/prompt_builder/`) and is shared across baselines and trainers.
 2. **TF-IDF index** – The train split is vectorised with scikit-learn’s `TfidfVectorizer`. Each slate size (1, 2, 3, 4, 5+) gets its own sparse matrix so candidate comparisons remain fair.
 3. **Candidate-aware ranking** – For a slate item, we combine the prompt text and the candidate’s surface form (title or id) into a query, compute cosine similarity against the rows where that candidate was gold in the train split, and sum the top-k scores. The argmax becomes the predicted option index.
 4. **Evaluation outputs** – The script produces per-example JSONL with predictions, along with overall accuracy and option-level metrics. The file layout mirrors the GPT-4o evaluation artifacts.

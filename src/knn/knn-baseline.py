@@ -42,7 +42,9 @@ from collections import defaultdict, Counter
 import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
 
-from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
+from prompt_builder.formatters import clean_text
+from prompt_builder.prompt import build_user_prompt
+from prompt_builder.profiles import synthesize_viewer_sentence
 
 # ─────────────────────────── Data config (no YAML) ─────────────────────────────
 DEFAULT_DATASET_SOURCE = "data/cleaned_grail"

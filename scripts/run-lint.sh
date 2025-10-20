@@ -11,3 +11,6 @@ cd "${ROOT_DIR}"
 
 echo "Running pylint on clean_data..."
 "${PYTHON_BIN}" -m pylint clean_data "$@"
+
+echo "Running pylint on prompt_builder..."
+"${PYTHON_BIN}" -m pylint prompt_builder src/prompt_builder.py "$@"

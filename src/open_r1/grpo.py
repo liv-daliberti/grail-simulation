@@ -25,13 +25,10 @@ from trl import ModelConfig, TrlParser, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
-from prompt_builder import (
-    as_list_json,
-    build_user_prompt,
-    clean_text,
-    is_nanlike,
-    synthesize_viewer_sentence,
-)
+from prompt_builder.formatters import clean_text
+from prompt_builder.parsers import as_list_json, is_nanlike
+from prompt_builder.prompt import build_user_prompt
+from prompt_builder.profiles import synthesize_viewer_sentence
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_model, get_tokenizer
 

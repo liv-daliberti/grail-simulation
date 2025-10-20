@@ -2,7 +2,7 @@
 
 This submodule contains the reinforcement-learning tooling used in the GRAIL simulation project. It ships:
 
-- **Prompt authoring** utilities (`prompt_builder.py`) that turn raw viewer logs into model-ready chat prompts.
+- **Prompt authoring** utilities (the `prompt_builder` package) that turn raw viewer logs into model-ready chat prompts.
 - **Baseline GRPO training** (`grpo.py`) which mirrors the vanilla TRL pipeline.
 - **GRAIL + discriminator training** (`grail.py`) which augments GRPO with an online GAIL-style reward.
 

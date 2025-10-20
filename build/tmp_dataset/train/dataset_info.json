@@ -1,0 +1,2983 @@
+{
+  "citation": "",
+  "description": "",
+  "features": {
+    "session_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "step_index": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "display_step": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "current_video_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "current_video_raw_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "current_video_title": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "current_video_channel": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "current_video_channel_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "start_time_ms": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "end_time_ms": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "percent_visible": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "session_finished": {
+      "dtype": "bool",
+      "_type": "Value"
+    },
+    "trajectory_json": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "participant_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "participant_study": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "issue": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "urlid": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "topic_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "selected_survey_row": {
+      "AV_check_vid_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "PRIN0016_W2_ids_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q12_a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q12_b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q12_c": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q13": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q46": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q48": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q50": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q52": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q54": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_a_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_b_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_c": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_c_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_d": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q58_d_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_a_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_b_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_c": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_c_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_d": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q5_d_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q61": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q61_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q62": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q62_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_c": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_d": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_e": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_f": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q76_g": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q77": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q81_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q82_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q87a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q87b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q88": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q89a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q89b": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q89b_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q90": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q90_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q91": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q92_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q94_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "Q_vid_code_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "RTWA_v1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "RTWA_v1_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "RTWA_v2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "RTWA_v2_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ads_open_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affectivepolarization_pre_survey_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_comfort": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_comfort_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_comfort_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_ft": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_ft_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_ft_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_smart": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_smart_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "affpol_smart_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat_18-29": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat_30-44": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat_45-64": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat_65+": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "age_cat_NA": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "anonymous_firebase_auth_uid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "anti": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "anti_down": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "anti_save": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "anti_up": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "any_video_watched": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assault_ban": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assault_ban_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assault_ban_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assignment_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assignment_id_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "assignment_id_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "birthyr": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "black": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "caseid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "caseid_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "child18": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "college": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_dems": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_dems_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_dems_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_dems_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_reps": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_reps_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_reps_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comfort_reps_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comment_open": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comments": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comments_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "comments_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "concealed_safe": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "concealed_safe_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "concealed_safe_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "consent": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "consent_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "conservatives_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "democrat_friends": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "democrat_smart": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "display_orders": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "distribution_channel": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "distribution_channel_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "distribution_channel_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "dupes": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "duration": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "duration_in_seconds": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "duration_in_seconds_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "duration_in_seconds_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "educ": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "employ": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "employed": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_date": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_date_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_date_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_date_w2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_date_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_time": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "end_time2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "endtime": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "endtime_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "external_id": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "external_reference": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "external_reference_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "external_reference_w2": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "fabricate_majornews": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_majornews_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_majornews_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_majornews_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_youtube": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_youtube_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_youtube_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fabricate_youtube_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "faminc_new": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "fav_channels": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "female": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "finished": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "finished_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "finished_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "first_session": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "freq_youtube": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "freq_youtube_v2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_dems": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_dems_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_dems_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_dems_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_reps": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_reps_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_reps_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ft_reps_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gender": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gender4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gender_3_text": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_enthusiasm": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_importance": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index_2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index_2_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_index_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "gun_own": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "handgun_ban": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "handgun_ban_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "handgun_ban_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "highest_education": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "hit_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "hit_id_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "hit_id_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ideo5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ignored_videos": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "income": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "income_gt50k": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "info_trust_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "info_trust_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "info_trust_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "info_trust_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "inputstate": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "interface_duration": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ip_address": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ip_address_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ip_address_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "learned_free_resp": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "learned_something": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "liberals_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_latitude": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_latitude_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_latitude_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_longitude": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_longitude_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "location_longitude_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "m_turk_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mainstream_fakenews": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "male": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "marstat": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "max_duration": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "media_trust": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "media_trust_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "media_trust_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "media_trust_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "min_wage_outcomes_post_survey_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "min_wage_outcomes_pre_survey_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage15": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage15_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage15_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage15_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage15_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_howhigh": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_howhigh_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_howhigh_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_howhigh_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_howhigh_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_support": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_r": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_r_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_r_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_r_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "minwage_text_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "moderates_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_a": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_a_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_pre_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_help_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_index": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_index_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_index_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_index_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_restrict_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_restrict_1_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_restrict_pre_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_restrict_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_restrict_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_support": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_support_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_support_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_support_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "mw_support_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "newsint": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "optional_instructions": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "p_id": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "p_id_hash": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "pause_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "percent_visible": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pew_bornagain": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pew_churatd": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pew_prayer": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pew_religimp": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pid7": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "play_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pol_interest": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_interest": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_lead_feels_11": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_lead_feels_12": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_lead_feels_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_lead_feels_5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "political_lead_feels_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "popular_channels": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "positive_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "presvote16post": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "presvote20post": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pro": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pro_down": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pro_fraction_chosen": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pro_save": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "pro_up": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "progress": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "progress_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "progress_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q10": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q100": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q100_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q100_do": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "q110": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q12_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q12_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q12_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q13": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q15": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q18": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q19": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q20": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q21": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q22": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q23": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q23_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q23_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q26": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q26_3_text": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q27": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q28": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q29": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q30": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q31": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q32": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q33": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q33_14_text": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q34": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q45_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q45_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q45_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q45_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q46": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q47_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q47_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q47_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q47_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q48": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q49_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q49_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q49_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q49_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q50": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q51_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q51_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q51_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q51_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q52": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q53_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q53_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q53_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q53_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q54": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q55_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q55_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q55_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q55_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q56": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_1_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_1_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_2_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_3_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_3_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_4_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_4_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_5_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_5_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_6_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q57_6_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q58_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q58_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q58_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q58_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_1_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_1_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_2_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_3_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_3_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_4_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q59_4_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_11": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_11_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_12": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_12_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_2_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q5_5_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q6": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q61": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q61_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q61_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62_1_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62_1_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q62_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q66_click_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q66_first_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q66_last_click": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q66_page_submit": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q6_46_text": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_10": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_6": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_7": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_8": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q76_9": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q77": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q78": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q79": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q79_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q8": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q81": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q81_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q81_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q81_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q82": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q82_do": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q82_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q82_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q83": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q83_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q87": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q87_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q88": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q88_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q88_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q88_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q88_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q89": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q89_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q9": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90_11": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90_12": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90_5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q90_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q91": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q92": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q92_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q94": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q94_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q96": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q96_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q96_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q96_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q96_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q97": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "q98": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q99": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q99_do": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "q_straightlining_count": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q_straightlining_percentage": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q_straightlining_questions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q_unanswered_percentage": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "q_unanswered_questions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "qid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "qid_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "qid_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "race": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "race_ethnicity": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rating_events": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rating_results": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "recipient_email": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_email_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_email_w2": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_first_name": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_first_name_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_first_name_w2": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_last_name": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_last_name_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recipient_last_name_w2": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "recorded_date": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "recorded_date_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "recorded_date_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "religpew": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "replay_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "republican_friends": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "republican_smart": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "response_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "response_id_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "response_id_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "right_to_own_importance": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "right_to_own_importance_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "right_to_own_importance_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v1_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v1_updated": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v1_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v1_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v2_pre": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v2_updated": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v2_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "rtwa_v2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "sample": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "save_list": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "seed": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "seek_backward_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "seek_forward_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "session_finished": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "session_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "session_visa_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "skip_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_dems": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_dems_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_dems_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_dems_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_reps": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_reps_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_reps_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "smart_reps_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "socialmedia_datause_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "socialmedia_datause_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "socialmedia_datause_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_date": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_date_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_date_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_date_w2_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_date_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_time": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "start_time2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "starttime": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "starttime_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "startvid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "status": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "status_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "status_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "stricter_laws": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "stricter_laws_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "stricter_laws_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "survey_time": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "survey_time_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "survey_time_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "thirds": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "thumb_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "thumb_states": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "topic_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "total_dislikes": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "total_interactions": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "total_likes": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "total_saved": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "total_thumbs": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "treatment_arm": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "treatment_arm_W2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "treatment_dose": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "treatment_seed": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_localnews": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_localnews_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_localnews_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_localnews_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_majornews": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_majornews_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_majornews_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_majornews_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_social": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_social_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_social_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_social_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_youtube": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_youtube_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_youtube_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "trust_youtube_w3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "urlid": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "user_language": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "user_language_w1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "user_language_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vid_end_times": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vid_pref": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vid_start_times": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vid_total_lengths": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vid_watch_times": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "video_link": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "video_link_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "video_link_w2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vids": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "vids_ads": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "visit_shooting_sites": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "votereg": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_1": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_3": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_4": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_5": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_6": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "voting_issues_7": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "weight": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "white": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "worker_id": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "year_born": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "youtube_fakenews": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "youtube_freq": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "youtube_freq_v2": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "youtube_recs_dec": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "youtube_time": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "ytid": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "ytid_w1": {
+        "dtype": "null",
+        "_type": "Value"
+      },
+      "ytid_w2": {
+        "dtype": "null",
+        "_type": "Value"
+      }
+    },
+    "slate_items_json": {
+      "feature": {
+        "channel_id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "channel_title": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "title": {
+          "dtype": "string",
+          "_type": "Value"
+        }
+      },
+      "_type": "List"
+    },
+    "slate_source": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "n_options": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "next_video_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "next_video_raw_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "next_video_title": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "watched_vids_json": {
+      "feature": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "_type": "List"
+    },
+    "watched_detailed_json": {
+      "feature": {
+        "channel_id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "channel_missing": {
+          "dtype": "bool",
+          "_type": "Value"
+        },
+        "channel_title": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "end_ms": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "idx": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "raw_id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "recommendations": {
+          "feature": {
+            "id": {
+              "dtype": "string",
+              "_type": "Value"
+            },
+            "raw_id": {
+              "dtype": "string",
+              "_type": "Value"
+            }
+          },
+          "_type": "List"
+        },
+        "start_delay_ms": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "start_ms": {
+          "dtype": "int64",
+          "_type": "Value"
+        },
+        "title": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "title_missing": {
+          "dtype": "bool",
+          "_type": "Value"
+        },
+        "total_length_ms": {
+          "dtype": "float64",
+          "_type": "Value"
+        },
+        "watch_ms": {
+          "dtype": "int64",
+          "_type": "Value"
+        }
+      },
+      "_type": "List"
+    },
+    "age": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gender": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q26": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q29": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "race": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q31": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "income": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "pid1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "ideo1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "freq_youtube": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "college": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "inputstate": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "educ": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "employ": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "child18": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "religpew": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "pew_religimp": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "pid2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "ideo2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "pol_interest": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "political_interest": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "presvote16post": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "presvote20post": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q5_2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Q5_a": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Q5_a_W2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "political_lead_feels_2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q5_5": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Q5_b": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Q5_b_W2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "political_lead_feels_5": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage_text_r_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage_text_r_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage_text_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage_text_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "mw_index_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "mw_index_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage15_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "minwage15_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "mw_support_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "mw_support_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q77": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Q77": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "youtube_freq": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "youtube_freq_v2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "youtube_time": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "newsint": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_majornews_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_localnews_w1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_majornews_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_localnews_w2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q8": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "fav_channels": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "q78": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "popular_channels": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_majornews_w3": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "trust_localnews_w3": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gun_own": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "right_to_own_importance": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "assault_ban": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "handgun_ban": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "concealed_safe": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "stricter_laws": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gun_index": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gun_index_2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gun_enthusiasm": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gun_importance": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "prompt": {
+      "feature": {
+        "content": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "role": {
+          "dtype": "string",
+          "_type": "Value"
+        }
+      },
+      "_type": "List"
+    },
+    "answer": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "gold_index": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "gold_id": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "viewer_profile": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "state_text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "state_disc_text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "slate_items": {
+      "feature": {
+        "id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "title": {
+          "dtype": "string",
+          "_type": "Value"
+        }
+      },
+      "_type": "List"
+    },
+    "slate_text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "task": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "is_replay": {
+      "dtype": "bool",
+      "_type": "Value"
+    },
+    "accuracy": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "mix_group_id": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "mix_copy_idx": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "slate_items_with_meta": {
+      "feature": {
+        "channel_id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "channel_title": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "id": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "title": {
+          "dtype": "string",
+          "_type": "Value"
+        }
+      },
+      "_type": "List"
+    }
+  },
+  "homepage": "",
+  "license": ""
+}

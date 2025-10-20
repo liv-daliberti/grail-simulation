@@ -43,6 +43,9 @@ from .index import (
 )
 
 
+BUCKET_LABELS = ["unknown", "1", "2", "3", "4", "5+"]
+
+
 def parse_k_values(k_default: int, sweep: str) -> List[int]:
     """Return the sorted list of k values derived from CLI configuration."""
 
@@ -274,6 +277,7 @@ def run_eval(args) -> None:
             extra_fields=extra_fields,
             args=args,
         )
+        feature_space = str(knn_index.get("feature_space", "tfidf")).lower()
 
         evaluate_issue(
             issue_slug=issue_slug,
@@ -282,6 +286,7 @@ def run_eval(args) -> None:
             k_values=k_values,
             knn_index=knn_index,
             extra_fields=extra_fields,
+            feature_space=feature_space,
             args=args,
         )
 
@@ -296,28 +301,34 @@ def evaluate_issue(
     k_values: Sequence[int],
     knn_index: Dict[str, Any],
     extra_fields: Sequence[str],
+    feature_space: str,
     args,
 ) -> None:
     """Evaluate a single issue split and write metrics/predictions."""
+    k_values = [int(k) for k in k_values]
     indices = list(range(len(eval_ds)))
     if args.eval_max and args.eval_max > 0:
         indices = indices[: args.eval_max]
 
     rows: List[Dict[str, Any]] = []
     gold_hist: Dict[int, int] = {}
-    buckets = ["unknown", "1", "2", "3", "4", "5+"]
-    pos_stats = {b: 0 for b in buckets}
-    corr_pos = {b: 0 for b in buckets}
-    seen_opts = {b: 0 for b in buckets}
-    elig_opts = {b: 0 for b in buckets}
-    corr_opts = {b: 0 for b in buckets}
+    bucket_stats = {
+        "position_seen": {b: 0 for b in BUCKET_LABELS},
+        "options_seen": {b: 0 for b in BUCKET_LABELS},
+        "options_eligible": {b: 0 for b in BUCKET_LABELS},
+        "options_correct": {b: 0 for b in BUCKET_LABELS},
+    }
 
-    eligible_by_k = {k: 0 for k in k_values}
-    correct_by_k = {k: 0 for k in k_values}
+    per_k_stats = {k: {"eligible": 0, "correct": 0} for k in k_values}
 
-    seen_single = seen_multi = 0
-    elig_single = elig_multi = 0
-    corr_single = corr_multi = 0
+    single_multi_stats = {
+        "seen_single": 0,
+        "seen_multi": 0,
+        "elig_single": 0,
+        "elig_multi": 0,
+        "corr_single": 0,
+        "corr_multi": 0,
+    }
 
     all_gold_indices: List[int] = []
     all_n_options: List[int] = []
@@ -335,7 +346,7 @@ def evaluate_issue(
         slate_pairs = extract_slate_items(example)
         n_options = len(slate_pairs)
         n_bucket = bin_nopts(n_options)
-        seen_opts[n_bucket] += 1
+        bucket_stats["options_seen"][n_bucket] += 1
 
         position_raw = example.get("video_index")
         try:
@@ -343,7 +354,7 @@ def evaluate_issue(
         except (TypeError, ValueError):
             position = -1
         pos_bucket = bucket_from_pos(position)
-        pos_stats[pos_bucket] += 1
+        bucket_stats["position_seen"][pos_bucket] += 1
 
         gold_index = int(example.get("gold_index") or -1)
         gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
@@ -362,24 +373,25 @@ def evaluate_issue(
 
         eligible = gold_index > 0 and n_options > 0
         if eligible:
-            elig_opts[n_bucket] += 1
+            bucket_stats["options_eligible"][n_bucket] += 1
             gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
             all_gold_indices.append(gold_index)
             all_n_options.append(n_options)
             if n_options == 1:
-                elig_single += 1
+                single_multi_stats["elig_single"] += 1
             else:
-                elig_multi += 1
+                single_multi_stats["elig_multi"] += 1
         if n_options == 1:
-            seen_single += 1
+            single_multi_stats["seen_single"] += 1
         elif n_options > 1:
-            seen_multi += 1
+            single_multi_stats["seen_multi"] += 1
 
         for k, pred in predictions.items():
             if eligible:
-                eligible_by_k[k] += 1
+                k_stats = per_k_stats[k]
+                k_stats["eligible"] += 1
                 if pred is not None and int(pred) == gold_index:
-                    correct_by_k[k] += 1
+                    k_stats["correct"] += 1
 
         rows.append(
             {
@@ -397,7 +409,11 @@ def evaluate_issue(
         if idx % 25 == 0:
             elapsed = time.time() - start_time
             interim = max(
-                (safe_div(correct_by_k[k], eligible_by_k[k]) for k in k_values if eligible_by_k[k]),
+                (
+                    safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
+                    for k in k_values
+                    if per_k_stats[k]["eligible"]
+                ),
                 default=0.0,
             )
             logging.info(
@@ -409,10 +425,13 @@ def evaluate_issue(
                 elapsed,
             )
 
-    accuracy_by_k = {k: safe_div(correct_by_k[k], eligible_by_k[k]) for k in k_values}
+    accuracy_by_k = {
+        k: safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
+        for k in k_values
+    }
     best_k = select_best_k(k_values, accuracy_by_k)
     best_accuracy = accuracy_by_k.get(best_k, 0.0)
-    eligible_overall = int(eligible_by_k.get(best_k, 0))
+    eligible_overall = int(per_k_stats.get(best_k, {}).get("eligible", 0))
 
     for row in rows:
         if not row["eligible"]:
@@ -421,17 +440,16 @@ def evaluate_issue(
         if prediction is None:
             continue
         if int(prediction) == row["gold_index"]:
-            corr_pos[row["position_bucket"]] += 1
-            corr_opts[row["n_options_bucket"]] += 1
+            bucket_stats["options_correct"][row["n_options_bucket"]] += 1
             if row["n_options"] == 1:
-                corr_single += 1
+                single_multi_stats["corr_single"] += 1
             else:
-                corr_multi += 1
+                single_multi_stats["corr_multi"] += 1
 
-    out_dir = Path(args.out_dir) / issue_slug
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_jsonl = out_dir / f"knn_eval_{issue_slug}_{EVAL_SPLIT}.jsonl"
-    metrics_json = out_dir / f"knn_eval_{issue_slug}_{EVAL_SPLIT}_metrics.json"
+    issue_dir = Path(args.out_dir) / issue_slug
+    issue_dir.mkdir(parents=True, exist_ok=True)
+    out_jsonl = issue_dir / f"knn_eval_{issue_slug}_{EVAL_SPLIT}.jsonl"
+    metrics_json = issue_dir / f"knn_eval_{issue_slug}_{EVAL_SPLIT}_metrics.json"
 
     with open(out_jsonl, "w", encoding="utf-8") as handle:
         for row in rows:
@@ -453,10 +471,16 @@ def evaluate_issue(
             }
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    pos_stats_out = {bucket: int(pos_stats[bucket]) for bucket in buckets}
+    pos_stats_out = {
+        bucket: int(bucket_stats["position_seen"][bucket])
+        for bucket in BUCKET_LABELS
+    }
     accuracy_opts_out = {
-        bucket: safe_div(corr_opts[bucket], elig_opts[bucket])
-        for bucket in buckets
+        bucket: safe_div(
+            bucket_stats["options_correct"][bucket],
+            bucket_stats["options_eligible"][bucket],
+        )
+        for bucket in BUCKET_LABELS
     }
 
     gold_distribution = {str(k): int(v) for k, v in sorted(gold_hist.items())}
@@ -478,13 +502,14 @@ def evaluate_issue(
         for k in k_values
     }
 
-    reports_dir = resolve_reports_dir(Path(args.out_dir)) / "knn"
+    reports_dir = resolve_reports_dir(Path(args.out_dir)) / "knn" / feature_space
     reports_dir.mkdir(parents=True, exist_ok=True)
     elbow_path = reports_dir / f"elbow_{issue_slug}.png"
     plot_elbow(k_values, accuracy_by_k, best_k, elbow_path)
 
     metrics = {
         "model": "knn",
+        "feature_space": feature_space,
         "dataset": dataset_source,
         "issue": issue_slug,
         "split": EVAL_SPLIT,
@@ -496,20 +521,26 @@ def evaluate_issue(
         "position_stats": pos_stats_out,
         "by_n_options": {
             bucket: {
-                "hist_seen": int(seen_opts[bucket]),
-                "hist_eligible": int(elig_opts[bucket]),
-                "hist_correct": int(corr_opts[bucket]),
+                "hist_seen": int(bucket_stats["options_seen"][bucket]),
+                "hist_eligible": int(bucket_stats["options_eligible"][bucket]),
+                "hist_correct": int(bucket_stats["options_correct"][bucket]),
                 "accuracy": accuracy_opts_out[bucket],
             }
-            for bucket in buckets
+            for bucket in BUCKET_LABELS
         },
         "split_single_vs_multi": {
-            "n_single": int(seen_single),
-            "n_multi": int(seen_multi),
-            "eligible_single": int(elig_single),
-            "eligible_multi": int(elig_multi),
-            "accuracy_single": safe_div(corr_single, elig_single),
-            "accuracy_multi": safe_div(corr_multi, elig_multi),
+            "n_single": int(single_multi_stats["seen_single"]),
+            "n_multi": int(single_multi_stats["seen_multi"]),
+            "eligible_single": int(single_multi_stats["elig_single"]),
+            "eligible_multi": int(single_multi_stats["elig_multi"]),
+            "accuracy_single": safe_div(
+                single_multi_stats["corr_single"],
+                single_multi_stats["elig_single"],
+            ),
+            "accuracy_multi": safe_div(
+                single_multi_stats["corr_multi"],
+                single_multi_stats["elig_multi"],
+            ),
         },
         "gold_index_distribution": gold_distribution,
         "baseline_most_frequent_gold_index": {
@@ -528,11 +559,52 @@ def evaluate_issue(
             "text_fields": list(extra_fields),
         },
         "elbow_plot": str(elbow_path),
+        "per_k_directories": {
+            str(k): str((issue_dir / f"k-{int(k)}"))
+            for k in k_values
+        },
         "notes": "Accuracy computed over eligible rows (gold_index>0).",
     }
 
     with open(metrics_json, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, ensure_ascii=False, indent=2)
+
+    for k in k_values:
+        k_int = int(k)
+        k_dir = issue_dir / f"k-{k_int}"
+        k_dir.mkdir(parents=True, exist_ok=True)
+        k_predictions_path = k_dir / f"predictions_{issue_slug}_{EVAL_SPLIT}.jsonl"
+        with open(k_predictions_path, "w", encoding="utf-8") as handle:
+            for row in rows:
+                pred_value = row["predictions_by_k"].get(k)
+                record = {
+                    "k": k_int,
+                    "knn_pred_index": int(pred_value) if pred_value is not None else None,
+                    "gold_index": row["gold_index"],
+                    "eligible": row["eligible"],
+                    "correct": bool(pred_value is not None and int(pred_value) == row["gold_index"]),
+                    "n_options": row["n_options"],
+                    "position_index": row["position_index"],
+                    "issue": issue_slug if issue_slug != "all" else row.get("issue_value"),
+                }
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        k_stats = per_k_stats[k_int]
+        k_metrics = {
+            "model": "knn",
+            "feature_space": feature_space,
+            "dataset": dataset_source,
+            "issue": issue_slug,
+            "split": EVAL_SPLIT,
+            "k": k_int,
+            "n_total": int(len(indices)),
+            "n_eligible": int(k_stats["eligible"]),
+            "n_correct": int(k_stats["correct"]),
+            "accuracy": float(accuracy_by_k.get(k_int, 0.0)),
+            "elbow_plot": str(elbow_path),
+        }
+        with open(k_dir / f"metrics_{issue_slug}_{EVAL_SPLIT}.json", "w", encoding="utf-8") as handle:
+            json.dump(k_metrics, handle, ensure_ascii=False, indent=2)
 
     logging.info(
         "[DONE][%s] split=%s n=%d eligible=%d knn_acc=%.4f (best_k=%d)",

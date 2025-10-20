@@ -10,7 +10,12 @@ from .evaluate import run_eval
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Return the argument parser for the XGBoost baseline CLI."""
+    """
+    Return the argument parser for the XGBoost baseline CLI.
+
+    :returns: Configured argument parser exposing training and evaluation options.
+    :rtype: argparse.ArgumentParser
+    """
 
     parser = argparse.ArgumentParser(description="XGBoost slate baseline for GRAIL")
     parser.add_argument(
@@ -121,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--out_dir",
-        default=str(Path("models") / "xgboost"),
+        default=str(Path("models") / "xgb"),
         help="Directory for predictions, metrics, and saved models.",
     )
     parser.add_argument(
@@ -138,7 +143,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Parse CLI arguments and execute the evaluation routine."""
+    """
+    Parse CLI arguments and execute the evaluation routine.
+
+    :param argv: Optional override for command-line arguments.
+    :type argv: list[str], optional
+    """
 
     parser = build_parser()
     args = parser.parse_args(argv)

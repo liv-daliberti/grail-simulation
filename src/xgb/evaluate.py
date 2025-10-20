@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
-import re
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -23,18 +21,35 @@ from .data import (
     load_dataset_source,
 )
 from .features import extract_slate_items
-from .model import XGBoostSlateModel, fit_xgboost_model, load_xgboost_model, predict_among_slate, save_xgboost_model
-from .utils import ensure_directory, get_logger
+from .model import (
+    XGBoostSlateModel,
+    XGBoostTrainConfig,
+    fit_xgboost_model,
+    load_xgboost_model,
+    predict_among_slate,
+    save_xgboost_model,
+)
+from .utils import canon_video_id, ensure_directory, get_logger
 
-logger = get_logger("xgboost.eval")
+logger = get_logger("xgb.eval")
 
 
 def safe_div(numerator: float, denominator: float) -> float:
-    """Return the division result guarding against a zero denominator."""
+    """
+    Return the division result guarding against a zero denominator.
+
+    :param numerator: Value forming the numerator.
+    :type numerator: float
+    :param denominator: Value forming the denominator.
+    :type denominator: float
+    :returns: ``numerator / denominator`` or ``0.0`` when the denominator is zero.
+    :rtype: float
+    """
 
     return numerator / denominator if denominator else 0.0
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class IssueMetrics:
     """Container describing evaluation metrics for a single issue."""
@@ -53,8 +68,37 @@ class IssueMetrics:
     xgboost_params: Dict[str, Any]
 
 
+@dataclass(frozen=True)
+class EvaluationConfig:
+    """Configuration bundle shared across evaluation helpers."""
+
+    dataset_source: str
+    extra_fields: Sequence[str]
+    eval_max: int
+
+
+@dataclass(frozen=True)
+class PredictionOutcome:
+    """Result bundle for a single evaluation example."""
+
+    prediction_index: Optional[int]
+    predicted_id: str
+    gold_video_id: str
+    candidate_probs: Dict[int, float]
+    best_probability: float
+    known_candidate_seen: bool
+    known_candidate_hit: bool
+    record_probability: bool
+    correct: bool
+
+
 def run_eval(args) -> None:
-    """Evaluate the XGBoost baseline across the requested issues."""
+    """
+    Evaluate the XGBoost baseline across the requested issues.
+
+    :param args: Parsed CLI arguments produced via :func:`xgb.cli.build_parser`.
+    :type args: argparse.Namespace
+    """
 
     os_env = os.environ
     os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
@@ -85,12 +129,10 @@ def run_eval(args) -> None:
 
         if args.fit_model:
             logger.info("[XGBoost] Training model for issue=%s", issue_slug)
-            model = fit_xgboost_model(
-                train_ds,
+            train_config = XGBoostTrainConfig(
                 max_train=args.max_train,
                 seed=args.seed,
-                extra_fields=extra_fields,
-                max_features=args.max_features,
+                max_features=args.max_features if args.max_features else None,
                 learning_rate=args.xgb_learning_rate,
                 max_depth=args.xgb_max_depth,
                 n_estimators=args.xgb_n_estimators,
@@ -100,6 +142,11 @@ def run_eval(args) -> None:
                 reg_lambda=args.xgb_reg_lambda,
                 reg_alpha=args.xgb_reg_alpha,
             )
+            model = fit_xgboost_model(
+                train_ds,
+                config=train_config,
+                extra_fields=extra_fields,
+            )
             if args.save_model:
                 save_xgboost_model(model, Path(args.save_model) / issue_slug)
         elif args.load_model:
@@ -108,13 +155,16 @@ def run_eval(args) -> None:
         else:
             raise ValueError("Set either --fit_model or --load_model to obtain an XGBoost model.")
 
+        eval_config = EvaluationConfig(
+            dataset_source=dataset_source,
+            extra_fields=tuple(extra_fields),
+            eval_max=args.eval_max,
+        )
         metrics, predictions = evaluate_issue(
             model=model,
             eval_ds=eval_ds,
             issue_slug=issue_slug,
-            dataset_source=dataset_source,
-            extra_fields=extra_fields,
-            eval_max=args.eval_max,
+            config=eval_config,
         )
 
         out_dir = Path(args.out_dir) / issue_slug
@@ -140,79 +190,64 @@ def evaluate_issue(
     model: XGBoostSlateModel,
     eval_ds,
     issue_slug: str,
-    dataset_source: str,
-    extra_fields: Sequence[str],
-    eval_max: int,
+    config: EvaluationConfig,
 ) -> tuple[IssueMetrics, List[Dict[str, Any]]]:
-    """Evaluate a trained XGBoost model on the provided evaluation split."""
+    """
+    Evaluate a trained XGBoost model on the provided evaluation split.
 
-    total = 0
+    :param model: Trained model bundle used to score slate options.
+    :type model: XGBoostSlateModel
+    :param eval_ds: Dataset split representing evaluation rows.
+    :type eval_ds: datasets.Dataset or sequence-like
+    :param issue_slug: Slug-ified representation of the issue being evaluated.
+    :type issue_slug: str
+    :param config: Evaluation configuration bundle (dataset info, extra fields, limits).
+    :type config: EvaluationConfig
+    :returns: Pair of summary metrics and per-example prediction details.
+    :rtype: tuple[IssueMetrics, List[Dict[str, Any]]]
+    """
+
     correct = 0
     known_candidate_hits = 0
     known_candidate_total = 0
     probability_accumulator: List[float] = []
     predictions: List[Dict[str, Any]] = []
 
-    for index in range(len(eval_ds)):
-        if eval_max and total >= eval_max:
+    for index, example in enumerate(eval_ds):
+        if config.eval_max and len(predictions) >= config.eval_max:
             break
-        example = eval_ds[index]
-        total += 1
-        prediction_idx, probability_map = predict_among_slate(
-            model,
-            example,
-            extra_fields=extra_fields,
+        outcome = _evaluate_single_example(
+            model=model,
+            example=example,
+            extra_fields=config.extra_fields,
         )
-        slate = extract_slate_items(example)
-        gold_id = example.get(SOLUTION_COLUMN) or ""
-        gold_id_canon = _canon_vid(gold_id)
 
-        if prediction_idx is None and slate:
-            prediction_idx = 1
-
-        if prediction_idx is not None and 1 <= prediction_idx <= len(slate):
-            predicted_id = slate[prediction_idx - 1][1]
-        else:
-            predicted_id = ""
-
-        predicted_id_canon = _canon_vid(predicted_id)
-
-        candidate_probs = {
-            slate_idx + 1: probability_map.get(_canon_vid(candidate_id), 0.0)
-            for slate_idx, (_, candidate_id) in enumerate(slate)
-        }
-        known_candidates = {
-            slate_idx + 1: _canon_vid(candidate_id)
-            for slate_idx, (_, candidate_id) in enumerate(slate)
-            if _canon_vid(candidate_id) in probability_map
-        }
-
-        if known_candidates:
+        if outcome.known_candidate_seen:
             known_candidate_total += 1
-        best_probability = candidate_probs.get(prediction_idx, 0.0) if prediction_idx else 0.0
-        if prediction_idx in known_candidates:
-            probability_accumulator.append(best_probability)
-            if known_candidates[prediction_idx] == gold_id_canon:
-                known_candidate_hits += 1
-
-        is_correct = predicted_id_canon == gold_id_canon and bool(predicted_id_canon)
-        correct += int(is_correct)
+        if outcome.known_candidate_hit:
+            known_candidate_hits += 1
+        if outcome.record_probability:
+            probability_accumulator.append(outcome.best_probability)
+        if outcome.correct:
+            correct += 1
 
         predictions.append(
             {
                 "issue": issue_slug,
                 "index": index,
-                "prediction_index": prediction_idx,
-                "predicted_video_id": predicted_id,
-                "gold_video_id": gold_id,
-                "correct": is_correct,
-                "probabilities": candidate_probs,
+                "prediction_index": outcome.prediction_index,
+                "predicted_video_id": outcome.predicted_id,
+                "gold_video_id": outcome.gold_video_id,
+                "correct": outcome.correct,
+                "probabilities": outcome.candidate_probs,
             }
         )
 
+    total = len(predictions)
+
     metrics = IssueMetrics(
         issue=issue_slug,
-        dataset_source=dataset_source,
+        dataset_source=config.dataset_source,
         evaluated=total,
         correct=correct,
         accuracy=safe_div(correct, total),
@@ -221,24 +256,19 @@ def evaluate_issue(
         coverage=safe_div(known_candidate_hits, known_candidate_total),
         avg_probability=float(np.mean(probability_accumulator)) if probability_accumulator else 0.0,
         timestamp=time.time(),
-        extra_fields=tuple(extra_fields),
+        extra_fields=tuple(config.extra_fields),
         xgboost_params=_model_params(model),
     )
     return metrics, predictions
-
-
-_YTID_RE = re.compile(r"([A-Za-z0-9_-]{11})")
-
-
-def _canon_vid(value: Any) -> str:
-    if not isinstance(value, str):
-        return ""
-    match = _YTID_RE.search(value)
-    return match.group(1) if match else value.strip()
-
-
 def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:
-    """Return a serialisable view of relevant XGBoost parameters."""
+    """
+    Return a serialisable view of relevant XGBoost parameters.
+
+    :param model: Model bundle whose configuration should be summarised.
+    :type model: XGBoostSlateModel
+    :returns: Dictionary containing key training parameters.
+    :rtype: Dict[str, Any]
+    """
 
     params = model.booster.get_params()
     selected = {
@@ -262,4 +292,4 @@ def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:
     return selected
 
 
-__all__ = ["IssueMetrics", "evaluate_issue", "run_eval", "safe_div"]
+__all__ = ["EvaluationConfig", "IssueMetrics", "evaluate_issue", "run_eval", "safe_div"]

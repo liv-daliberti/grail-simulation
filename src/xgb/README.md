@@ -3,12 +3,14 @@
 This package mirrors the structure of the refactored `knn` baseline while
 swapping the neighbourhood search for an XGBoost multi-class classifier. The
 goal is to provide a fast, non-generative baseline that can be compared against
-the kNN approach and any future neural models.
+the kNN approach and any future neural models. The module lives under
+`xgb` rather than `xgboost` to avoid clashing with the upstream `xgboost`
+library on `sys.path`.
 
 ## Package layout
 
 ```
-src/xgboost/
+src/xgb/
 ├── __init__.py          # package entry point
 ├── cli.py               # argument parsing / orchestration
 ├── data.py              # dataset loading helpers (re-exported from knn)
@@ -29,22 +31,22 @@ require touching `model.py`.
 Train and evaluate on all available issues:
 
 ```bash
-python -m xgboost.cli \
+python -m xgb.cli \
   --fit_model \
   --dataset data/cleaned_grail \
-  --out_dir models/xgboost/run-001
+  --out_dir models/xgb/run-001
 ```
 
 To speed up experimentation you can pre-train per-issue models and reuse them:
 
 ```bash
-python -m xgboost.cli \
+python -m xgb.cli \
   --fit_model \
-  --save_model models/xgboost/checkpoints
+  --save_model models/xgb/checkpoints
 
-python -m xgboost.cli \
-  --load_model models/xgboost/checkpoints \
-  --out_dir models/xgboost/eval \
+python -m xgb.cli \
+  --load_model models/xgb/checkpoints \
+  --out_dir models/xgb/eval \
   --issues minimum_wage,gun_control
 ```
 

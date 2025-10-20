@@ -24,7 +24,20 @@ def prepare_prompt_documents(
     seed: int,
     extra_fields: Sequence[str] | None = None,
 ) -> Tuple[list[str], list[str], list[str]]:
-    """Convenience wrapper around :func:`knn.features.prepare_training_documents`."""
+    """
+    Convenience wrapper around :func:`knn.features.prepare_training_documents`.
+
+    :param train_ds: Dataset providing prompt rows.
+    :type train_ds: datasets.Dataset or sequence-like
+    :param max_train: Maximum number of rows sampled (0 keeps all rows).
+    :type max_train: int
+    :param seed: Random seed applied during subsampling.
+    :type seed: int
+    :param extra_fields: Optional column names appended to the generated documents.
+    :type extra_fields: Sequence[str], optional
+    :returns: Tuple of documents, canonical video ids, and friendly titles.
+    :rtype: Tuple[list[str], list[str], list[str]]
+    """
 
     return prepare_training_documents(
         train_ds,

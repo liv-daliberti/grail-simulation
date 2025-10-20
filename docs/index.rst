@@ -15,6 +15,7 @@ API Reference
    clean_data
    prompt_builder
    knn
+   xgb
 
 Additional API pages provide more detailed module-level documentation:
 
@@ -23,3 +24,4 @@ Additional API pages provide more detailed module-level documentation:
 
    api/prompt_builder
    api/knn
+   api/xgb

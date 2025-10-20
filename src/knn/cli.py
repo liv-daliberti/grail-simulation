@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 from .evaluate import run_eval
+from .features import Word2VecConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -99,6 +100,38 @@ def build_parser() -> argparse.ArgumentParser:
         default=256,
         dest="word2vec_size",
         help="Embedding size when using the Word2Vec feature space.",
+    )
+    parser.add_argument(
+        "--word2vec-window",
+        "--word2vec_window",
+        type=int,
+        default=Word2VecConfig().window,
+        dest="word2vec_window",
+        help="Context window size for Word2Vec training.",
+    )
+    parser.add_argument(
+        "--word2vec-min-count",
+        "--word2vec_min_count",
+        type=int,
+        default=Word2VecConfig().min_count,
+        dest="word2vec_min_count",
+        help="Minimum token frequency retained in the Word2Vec vocabulary.",
+    )
+    parser.add_argument(
+        "--word2vec-epochs",
+        "--word2vec_epochs",
+        type=int,
+        default=Word2VecConfig().epochs,
+        dest="word2vec_epochs",
+        help="Number of training epochs for Word2Vec.",
+    )
+    parser.add_argument(
+        "--word2vec-workers",
+        "--word2vec_workers",
+        type=int,
+        default=Word2VecConfig().workers,
+        dest="word2vec_workers",
+        help="Worker threads for Word2Vec training (set >1 for faster but non-deterministic runs).",
     )
     parser.add_argument(
         "--word2vec-model-dir",

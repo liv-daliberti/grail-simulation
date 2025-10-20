@@ -105,8 +105,17 @@ def plot_elbow(
     accuracy_by_k: Dict[int, float],
     best_k: int,
     output_path: Path,
+    *,
+    data_split: str = "validation",
 ) -> None:
-    """Create an error-rate vs ``k`` plot for diagnostic purposes."""
+    """Create an error-rate vs ``k`` plot for diagnostic purposes.
+
+    :param k_values: Iterable of evaluated ``k`` values.
+    :param accuracy_by_k: Mapping from ``k`` to accuracy on the requested split.
+    :param best_k: Selected ``k`` value for reporting.
+    :param output_path: Destination path for the generated figure.
+    :param data_split: Human-readable label describing the data split used.
+    """
 
     if plt is None:
         logging.warning("[KNN] Skipping elbow plot (matplotlib not installed)")
@@ -123,7 +132,8 @@ def plot_elbow(
         best_error = 1.0 - float(accuracy_by_k[best_k])
         plt.axvline(best_k, color="red", linestyle="--", alpha=0.6)
         plt.scatter([best_k], [best_error], color="red", label="Selected k")
-    plt.title("KNN error vs k")
+    split_label = data_split.strip() or "validation"
+    plt.title(f"KNN error vs k ({split_label} split)")
     plt.xlabel("k")
     plt.ylabel("Error rate")
     plt.ylim(0.0, 1.0)
@@ -131,6 +141,13 @@ def plot_elbow(
     handles, labels = plt.gca().get_legend_handles_labels()
     if handles:
         plt.legend(handles, labels)
+    plt.figtext(
+        0.5,
+        -0.05,
+        f"Error computed on {split_label} data (eligible examples only)",
+        ha="center",
+        fontsize=9,
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
@@ -184,12 +201,12 @@ def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
     model_root = Path(args.word2vec_model_dir) if args.word2vec_model_dir else default_cfg.model_dir
     return Word2VecConfig(
         vector_size=int(args.word2vec_size),
-        window=default_cfg.window,
-        min_count=default_cfg.min_count,
-        epochs=default_cfg.epochs,
+        window=int(getattr(args, "word2vec_window", default_cfg.window)),
+        min_count=int(getattr(args, "word2vec_min_count", default_cfg.min_count)),
+        epochs=int(getattr(args, "word2vec_epochs", default_cfg.epochs)),
         model_dir=Path(model_root) / issue_slug,
         seed=int(getattr(args, "knn_seed", default_cfg.seed)),
-        workers=default_cfg.workers,
+        workers=int(getattr(args, "word2vec_workers", default_cfg.workers)),
     )
 
 
@@ -458,7 +475,7 @@ def _write_issue_outputs(
     reports_dir = resolve_reports_dir(Path(args.out_dir)) / "knn" / feature_space
     reports_dir.mkdir(parents=True, exist_ok=True)
     elbow_path = reports_dir / f"elbow_{issue_slug}.png"
-    plot_elbow(k_values, accuracy_by_k, best_k, elbow_path)
+    plot_elbow(k_values, accuracy_by_k, best_k, elbow_path, data_split=EVAL_SPLIT)
 
     curve_json = issue_dir / f"knn_curves_{issue_slug}.json"
     with open(curve_json, "w", encoding="utf-8") as handle:

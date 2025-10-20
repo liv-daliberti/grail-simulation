@@ -15,6 +15,27 @@ KNN_METRIC="${KNN_METRIC:-cosine}"
 KNN_MAX_TRAIN="${KNN_MAX_TRAIN:-200000}"
 EVAL_MAX="${EVAL_MAX:-0}"
 WORD2VEC_SIZE="${WORD2VEC_SIZE:-256}"
+WORD2VEC_WINDOW="${WORD2VEC_WINDOW:-5}"
+WORD2VEC_MIN_COUNT="${WORD2VEC_MIN_COUNT:-2}"
+WORD2VEC_EPOCHS="${WORD2VEC_EPOCHS:-10}"
+
+if command -v nproc >/dev/null 2>&1; then
+  NUM_CPUS=$(nproc)
+elif command -v getconf >/dev/null 2>&1; then
+  NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
+else
+  NUM_CPUS=1
+fi
+MAX_WORD2VEC_WORKERS="${MAX_WORD2VEC_WORKERS:-40}"
+if [ "$NUM_CPUS" -lt 1 ]; then
+  NUM_CPUS=1
+fi
+if [ "$NUM_CPUS" -gt "$MAX_WORD2VEC_WORKERS" ]; then
+  WORD2VEC_WORKERS_DEFAULT=$MAX_WORD2VEC_WORKERS
+else
+  WORD2VEC_WORKERS_DEFAULT=$NUM_CPUS
+fi
+WORD2VEC_WORKERS="${WORD2VEC_WORKERS:-$WORD2VEC_WORKERS_DEFAULT}"
 
 ISSUES=("minimum_wage" "gun_control")
 
@@ -48,5 +69,9 @@ for issue in "${ISSUES[@]}"; do
     --issues "$issue" \
     --word2vec-size "$WORD2VEC_SIZE" \
     --word2vec-model-dir "$WORD2VEC_MODEL_DIR" \
+    --word2vec-window "$WORD2VEC_WINDOW" \
+    --word2vec-min-count "$WORD2VEC_MIN_COUNT" \
+    --word2vec-epochs "$WORD2VEC_EPOCHS" \
+    --word2vec-workers "$WORD2VEC_WORKERS" \
     "$@"
 done

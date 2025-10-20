@@ -5,6 +5,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 - Dataset: `data/cleaned_grail`
 - Splits: train for neighbour lookup, validation for evaluation
 - Metrics: MAE / RMSE / R² on the predicted post index, plus comparison to a no-change baseline (predicting the pre index)
+- Predictions now anchor each participant’s pre-study index and add the KNN-estimated opinion shift from similar viewers.
 
 ## TF-IDF Feature Space
 

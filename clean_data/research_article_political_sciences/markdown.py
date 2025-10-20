@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, List, Mapping
+from typing import Iterable, List, Mapping, Optional
 
 import math
 

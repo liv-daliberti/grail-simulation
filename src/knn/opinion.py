@@ -335,6 +335,7 @@ def predict_post_indices(
     )
 
     per_k_predictions: Dict[int, List[float]] = {k: [] for k in unique_k}
+    per_k_change_predictions: Dict[int, List[float]] = {k: [] for k in unique_k}
     rows: List[Dict[str, Any]] = []
 
     for row_idx, example in enumerate(eval_examples):
@@ -342,14 +343,22 @@ def predict_post_indices(
         indices = neighbour_indices[row_idx]
         similarities = _similarity_from_distances(distances, metric=index.metric)
 
-        record: Dict[int, float] = {}
+        record_after: Dict[int, float] = {}
+        record_change: Dict[int, float] = {}
         for k in unique_k:
             top_indices = indices[:k]
             top_weights = similarities[:k]
-            top_targets = index.targets_after[top_indices]
-            prediction = _weighted_mean(top_targets, top_weights)
-            per_k_predictions[k].append(prediction)
-            record[k] = prediction
+            top_targets_after = index.targets_after[top_indices]
+            top_targets_before = index.targets_before[top_indices]
+            top_changes = top_targets_after - top_targets_before
+
+            predicted_change = _weighted_mean(top_changes, top_weights)
+            anchored_prediction = float(example.before) + predicted_change
+
+            per_k_predictions[k].append(anchored_prediction)
+            per_k_change_predictions[k].append(predicted_change)
+            record_after[k] = float(anchored_prediction)
+            record_change[k] = float(predicted_change)
 
         rows.append(
             {
@@ -359,13 +368,15 @@ def predict_post_indices(
                 "session_id": example.session_id,
                 "before_index": example.before,
                 "after_index": example.after,
-                "predictions_by_k": record,
+                "predictions_by_k": record_after,
+                "predicted_change_by_k": record_change,
             }
         )
 
     return {
         "rows": rows,
         "per_k_predictions": per_k_predictions,
+        "per_k_change_predictions": per_k_change_predictions,
     }
 
 
@@ -539,14 +550,21 @@ def _write_outputs(
             continue
         before = float(row["before_index"])
         actual_changes.append(float(row["after_index"]) - before)
-        predicted_changes.append(float(prediction) - before)
+        predicted_change = row.get("predicted_change_by_k", {}).get(best_k)
+        if predicted_change is None:
+            predicted_change = float(prediction) - before
+        predicted_changes.append(float(predicted_change))
 
     predictions_path = study_dir / f"opinion_knn_{spec.key}_{EVAL_SPLIT}.jsonl"
     with open(predictions_path, "w", encoding="utf-8") as handle:
         for row in rows:
+            change_dict = {
+                str(k): float(v) for k, v in row.get("predicted_change_by_k", {}).items()
+            }
             serializable = {
                 **row,
                 "predictions_by_k": {str(k): float(v) for k, v in row["predictions_by_k"].items()},
+                "predicted_change_by_k": change_dict,
             }
             handle.write(json.dumps(serializable, ensure_ascii=False) + "\n")
 

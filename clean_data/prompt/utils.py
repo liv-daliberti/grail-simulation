@@ -225,6 +225,13 @@ def count_prior_history(row: pd.Series) -> int:
     """Count the number of prior videos available in the interaction history."""
 
     def _last_index(items: Iterable, target: Optional[str]) -> Optional[int]:
+        """Return the last index of ``target`` inside ``items``.
+
+        :param items: Iterable of values to scan.
+        :param target: Target string to locate.
+        :returns: Zero-based index or ``None`` when not found.
+        """
+
         if target is None:
             return None
         idx = None
@@ -238,6 +245,12 @@ def count_prior_history(row: pd.Series) -> int:
     watched_det = row.get("watched_detailed_json")
 
     def _coerce_sequence(value: Any) -> List[Any]:
+        """Convert various sequence encodings into a Python list.
+
+        :param value: Raw value that may already be a list or serialized JSON.
+        :returns: List representation with ``[]`` as the default fallback.
+        """
+
         if value is None or (isinstance(value, float) and np.isnan(value)):
             return []
         if isinstance(value, list):

@@ -38,6 +38,14 @@ from .utils import core_prompt_mask, ensure_dir, load_dataset_any
 
 
 def _validate_dataset(dataset: DatasetDict, train_split: str, validation_split: str) -> None:
+    """Ensure that the requested train/validation splits exist.
+
+    :param dataset: Dataset dictionary produced by :func:`load_dataset_any`.
+    :param train_split: Name of the training split.
+    :param validation_split: Name of the validation split.
+    :raises ValueError: If either split is missing.
+    """
+
     if train_split not in dataset:
         raise ValueError(f"Split '{train_split}' not found in dataset")
     if validation_split not in dataset:
@@ -45,6 +53,12 @@ def _validate_dataset(dataset: DatasetDict, train_split: str, validation_split: 
 
 
 def _choose_profile_column(df: pd.DataFrame) -> Optional[str]:
+    """Return the preferred profile column present in ``df``.
+
+    :param df: Dataframe containing prompt rows.
+    :returns: Column name for viewer profile text or ``None`` if not present.
+    """
+
     if "viewer_profile_sentence" in df.columns:
         return "viewer_profile_sentence"
     if "viewer_profile" in df.columns:
@@ -53,12 +67,24 @@ def _choose_profile_column(df: pd.DataFrame) -> Optional[str]:
 
 
 def _write_summary_json(output_dir: Path, payload: Dict[str, Any]) -> None:
+    """Write the aggregated prompt statistics to ``summary.json``.
+
+    :param output_dir: Directory where the summary should be saved.
+    :param payload: JSON-serialisable dictionary of summary data.
+    """
+
     summary_path = output_dir / "summary.json"
     with summary_path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
 
 
 def _write_markdown(output_dir: Path, lines: Optional[list[str]]) -> None:
+    """Write the Markdown report if ``lines`` are provided.
+
+    :param output_dir: Destination directory for the README file.
+    :param lines: Markdown content split into lines. ``None`` skips writing.
+    """
+
     if lines is None:
         return
     readme_path = output_dir / "README.md"
@@ -89,6 +115,13 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
     val_df = val_raw.loc[val_mask].reset_index(drop=True)
 
     def _coverage_stats(df: pd.DataFrame, mask: pd.Series) -> Dict[str, Any]:
+        """Compute inclusion/exclusion counts for a split.
+
+        :param df: Raw dataframe containing all rows.
+        :param mask: Boolean mask selecting prompt-ready examples.
+        :returns: Dictionary describing coverage statistics.
+        """
+
         total = int(len(df))
         included = int(mask.sum())
         excluded = total - included

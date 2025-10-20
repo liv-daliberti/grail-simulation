@@ -33,6 +33,8 @@ def filter_prompt_ready(dataset: DatasetDict, sol_key: Optional[str] = None) -> 
     """
 
     def _ok(example: dict) -> bool:
+        """Return ``True`` when ``example`` has a valid slate and gold target."""
+
         items = load_slate_items(example)
         if not items:
             return False

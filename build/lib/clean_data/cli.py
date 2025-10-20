@@ -17,6 +17,7 @@ from typing import Optional
 from clean_data.clean_data import (
     BuildOptions,
     build_clean_dataset,
+    dedupe_by_participant_issue,
     export_issue_datasets,
     generate_prompt_stats,
     parse_issue_repo_specs,
@@ -99,13 +100,11 @@ def main(argv: Optional[list[str]] = None) -> None:
         sol_key=args.sol_key,
         max_history=args.max_history,
     )
-    dataset = build_clean_dataset(args.dataset_name, options=build_options)
-
-    save_dataset(dataset, Path(args.output_dir))
+    full_dataset = build_clean_dataset(args.dataset_name, options=build_options)
 
     if args.prompt_stats_dir:
-        if {"train", "validation"}.issubset(dataset.keys()):
-            generate_prompt_stats(dataset, Path(args.prompt_stats_dir))
+        if {"train", "validation"}.issubset(full_dataset.keys()):
+            generate_prompt_stats(full_dataset, Path(args.prompt_stats_dir))
             logging.getLogger("clean_grail").info(
                 "Prompt statistics package executed; artifacts written to %s",
                 args.prompt_stats_dir,
@@ -116,6 +115,10 @@ def main(argv: Optional[list[str]] = None) -> None:
                 "and 'validation' splits; skipping.",
                 args.prompt_stats_dir,
             )
+
+    dataset = dedupe_by_participant_issue(full_dataset)
+
+    save_dataset(dataset, Path(args.output_dir))
 
     issue_repo_map = parse_issue_repo_specs(args.issue_repo)
     export_issue_datasets(

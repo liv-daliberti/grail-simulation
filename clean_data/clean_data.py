@@ -160,6 +160,13 @@ def ensure_shared_schema(datasets_map: Dict[str, datasets.Dataset]) -> Dict[str,
             feature_template.setdefault(name, feature)
 
     def _default_for_feature(feature: Value | HFSequence, length: int) -> list:
+        """Return a filler column matching the provided feature spec.
+
+        :param feature: Hugging Face feature describing the target column.
+        :param length: Desired column length.
+        :returns: List of placeholder values respecting the feature type.
+        """
+
         if isinstance(feature, HFSequence):
             return [[] for _ in range(length)]
         return [None] * length
@@ -234,6 +241,56 @@ def build_clean_dataset(
     final = DatasetDict(ensure_shared_schema(desired))
     validate_required_columns(final)
     return final
+
+
+def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
+    """Drop duplicate rows sharing the same participant and issue.
+
+    The cleaning pipeline now retains every interaction row long enough to
+    run prompt diagnostics (e.g., prior-history coverage).  Downstream
+    consumers that require the historical one-row-per-participant-and-issue
+    view can apply this helper to recover the previous behaviour.
+    """
+
+    deduped_splits: Dict[str, datasets.Dataset] = {}
+    for split_name, split_ds in dataset.items():
+        if not len(split_ds):
+            deduped_splits[split_name] = split_ds
+            continue
+
+        required_columns = {"participant_id", "issue"}
+        if not required_columns.issubset(split_ds.column_names):
+            deduped_splits[split_name] = split_ds
+            continue
+
+        frame = split_ds.to_pandas()
+        if frame.empty:
+            deduped_splits[split_name] = split_ds
+            continue
+
+        participant = frame["participant_id"].fillna("").astype(str).str.strip()
+        issue = frame["issue"].fillna("").astype(str).str.strip()
+        keys = participant + "||" + issue
+        keep_mask = ~keys.duplicated()
+        deduped_frame = frame.loc[keep_mask].copy()
+
+        removed = len(frame) - len(deduped_frame)
+        if removed:
+            log.info(
+                "Removed %d duplicate participant/issue rows from split '%s' (kept %d of %d).",
+                removed,
+                split_name,
+                len(deduped_frame),
+                len(frame),
+            )
+
+        deduped_splits[split_name] = datasets.Dataset.from_pandas(
+            deduped_frame,
+            preserve_index=False,
+            features=split_ds.features,
+        )
+
+    return DatasetDict(deduped_splits)
 
 
 def save_dataset(dataset: DatasetDict, output_dir: Path | str) -> None:

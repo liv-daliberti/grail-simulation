@@ -186,6 +186,12 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     ]
 
     def _demo_missing_series(df: pd.DataFrame) -> pd.Series:
+        """Return a boolean mask indicating rows missing all demographic fields.
+
+        :param df: Dataframe to evaluate.
+        :returns: Boolean series aligned with ``df``.
+        """
+
         existing = [col for col in demo_columns if col in df.columns]
         if not existing:
             return pd.Series([False] * len(df), index=df.index)
@@ -198,6 +204,13 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     val_missing = _demo_missing_series(val_df)
 
     def _summary(df: pd.DataFrame, mask: pd.Series) -> Dict[str, float]:
+        """Compute missing counts and share for a split.
+
+        :param df: Dataframe representing the split.
+        :param mask: Boolean series with ``True`` indicating missing rows.
+        :returns: Dictionary describing missing totals and share.
+        """
+
         total = int(len(df))
         missing = int(mask.sum())
         share = float(missing) / float(total) if total else 0.0
@@ -234,13 +247,13 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     else:
         offset = max(upper_bound * 0.03, 0.5)
         ax.set_ylim(0, upper_bound + offset * 4)
-    for idx, bar in enumerate(bars):
+    for idx, bar_patch in enumerate(bars):
         split = splits[idx]
         data = summaries[split]
         label = f"{values[idx]:.1f}% ({int(data['missing'])}/{int(data['total'])})"
         ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + offset,
+            bar_patch.get_x() + bar_patch.get_width() / 2,
+            bar_patch.get_height() + offset,
             label,
             ha="center",
             va="bottom",
@@ -258,6 +271,13 @@ def unique_content_counts(
     """Return counts of unique content per split."""
 
     def _count_unique(df: pd.DataFrame, column: str) -> int:
+        """Return the number of unique non-empty values for ``column``.
+
+        :param df: Dataframe containing the column.
+        :param column: Column name to inspect.
+        :returns: Count of distinct non-empty values.
+        """
+
         series = df.get(column, pd.Series(dtype=object))
         if series is None or series.empty:
             return 0
@@ -265,6 +285,12 @@ def unique_content_counts(
         return int(cleaned.nunique())
 
     def _canonical_slates(df: pd.DataFrame) -> pd.Series:
+        """Return a series of canonicalised slate tuples for each row.
+
+        :param df: Dataframe potentially containing slate columns.
+        :returns: Series of canonical slates; empty series when unavailable.
+        """
+
         for column_name in ("slate_items_json", "slate_items_with_meta", "slate_items"):
             column = df.get(column_name)
             if column is None:
@@ -278,12 +304,24 @@ def unique_content_counts(
         return pd.Series([], dtype=object)
 
     def _candidate_video_count(slate_series: pd.Series) -> int:
+        """Count distinct candidate video ids appearing across slates.
+
+        :param slate_series: Series of canonical slate tuples.
+        :returns: Number of unique candidate video identifiers.
+        """
+
         candidates = set()
         for entry in slate_series:
             candidates.update(entry)
         return len(candidates)
 
     def _counts_for_split(df: pd.DataFrame) -> Dict[str, int]:
+        """Compute unique content counts for a single split dataframe.
+
+        :param df: Dataframe representing a dataset split.
+        :returns: Dictionary of unique content counts for various identifiers.
+        """
+
         slates = _canonical_slates(df)
         slate_count = int(slates.nunique()) if not slates.empty else 0
         return {

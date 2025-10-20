@@ -344,6 +344,13 @@ def _build_watched_details(
     # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
 
     def _video_meta(base_id: str, raw_id: str = "") -> Dict[str, Any]:
+        """Return augmented metadata for a watched video.
+
+        :param base_id: Canonical video identifier.
+        :param raw_id: Optional raw identifier associated with the session.
+        :returns: Metadata dictionary combining tree metadata and fallbacks.
+        """
+
         info = dict(tree_meta.get(base_id) or {})
         if raw_id and raw_id != base_id:
             raw_ids = list(info.get("raw_ids") or [])
@@ -362,12 +369,27 @@ def _build_watched_details(
         return info
 
     def _resolve_title(meta: Dict[str, Any], fallback_id: str) -> Tuple[str, bool]:
+        """Return a title for the candidate along with a missing flag.
+
+        :param meta: Metadata dictionary returned by :func:`_video_meta`.
+        :param fallback_id: Identifier used when no title is available.
+        :returns: Tuple of ``(title_text, missing)`` where ``missing`` is ``True``
+            when only a placeholder title could be produced.
+        """
+
         title = str(meta.get("title") or "").strip()
         if title:
             return title, False
         return f"(title missing for {fallback_id})", True
 
     def _resolve_channel(meta: Dict[str, Any]) -> Tuple[str, bool]:
+        """Return the channel title with a missing flag.
+
+        :param meta: Metadata dictionary returned by :func:`_video_meta`.
+        :returns: Tuple ``(channel_name, missing)`` where ``missing`` indicates
+            a placeholder string.
+        """
+
         channel = str(meta.get("channel_title") or "").strip()
         if channel:
             return channel, False
@@ -998,8 +1020,8 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
             participant_issue_key = (participant_identifier, canonical_issue)
             if participant_issue_key in seen_participant_issue:
                 interaction_stats["sessions_duplicate_participant_issue"] += 1
-                continue
-            seen_participant_issue.add(participant_issue_key)
+            else:
+                seen_participant_issue.add(participant_issue_key)
 
             row["participant_id"] = participant_identifier
             row["participant_study"] = participant_study_label or "unknown"
@@ -1042,6 +1064,12 @@ def split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[str
         return {"train": df}
 
     def _pick_group(row_idx: int) -> str:
+        """Return a partition key for the participant/session of ``row_idx``.
+
+        :param row_idx: Dataframe row index.
+        :returns: Group key ensuring participants remain in a single split.
+        """
+
         urlid = str(df.iloc[row_idx].get("urlid") or "").strip()
         session = str(df.iloc[row_idx].get("session_id") or "").strip()
         if urlid and urlid.lower() != "nan":

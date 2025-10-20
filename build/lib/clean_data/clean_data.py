@@ -236,6 +236,50 @@ def build_clean_dataset(
     return final
 
 
+def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
+    """Drop duplicate rows sharing the same participant and issue."""
+
+    deduped_splits: Dict[str, datasets.Dataset] = {}
+    for split_name, split_ds in dataset.items():
+        if not len(split_ds):
+            deduped_splits[split_name] = split_ds
+            continue
+
+        required_columns = {"participant_id", "issue"}
+        if not required_columns.issubset(split_ds.column_names):
+            deduped_splits[split_name] = split_ds
+            continue
+
+        frame = split_ds.to_pandas()
+        if frame.empty:
+            deduped_splits[split_name] = split_ds
+            continue
+
+        participant = frame["participant_id"].fillna("").astype(str).str.strip()
+        issue = frame["issue"].fillna("").astype(str).str.strip()
+        keys = participant + "||" + issue
+        keep_mask = ~keys.duplicated()
+        deduped_frame = frame.loc[keep_mask].copy()
+
+        removed = len(frame) - len(deduped_frame)
+        if removed:
+            log.info(
+                "Removed %d duplicate participant/issue rows from split '%s' (kept %d of %d).",
+                removed,
+                split_name,
+                len(deduped_frame),
+                len(frame),
+            )
+
+        deduped_splits[split_name] = datasets.Dataset.from_pandas(
+            deduped_frame,
+            preserve_index=False,
+            features=split_ds.features,
+        )
+
+    return DatasetDict(deduped_splits)
+
+
 def save_dataset(dataset: DatasetDict, output_dir: Path | str) -> None:
     """Persist a cleaned dataset to disk using ``Dataset.save_to_disk``.
 

@@ -147,6 +147,12 @@ def _format_youtube_freq(freq: Any) -> Optional[str]:
 
 
 def _synthesize_viewer_sentence(ex: dict) -> str:
+    """Construct a fallback viewer profile sentence from demographics.
+
+    :param ex: Dataset row containing demographic fields.
+    :returns: Short sentence summarising age, gender, race, etc.
+    """
+
     bits: List[str] = []
     formatters = (
         lambda: _format_age(ex.get("age")),
@@ -249,6 +255,13 @@ def _history_lines(ex: dict, show_ids: bool, max_hist: int) -> List[str]:
 
 
 def _build_user_prompt_from_columns(ex: dict, max_hist: int = 12) -> str:
+    """Render the user-facing portion of the prompt from row columns.
+
+    :param ex: Dataset row containing viewer, slate, and history columns.
+    :param max_hist: Maximum number of history entries to include.
+    :returns: Multiline prompt string describing the viewer and slate.
+    """
+
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
     lines: List[str] = ["PROFILE:"]
 
@@ -299,6 +312,12 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
         return []
 
     def _key(row: dict) -> tuple[int, float]:
+        """Sort key for trajectory rows prioritising explicit indices.
+
+        :param row: Trajectory dictionary element.
+        :returns: Tuple used to sort rows by index then end timestamp.
+        """
+
         try:
             return (0, int(row.get("idx")))
         except (TypeError, ValueError):

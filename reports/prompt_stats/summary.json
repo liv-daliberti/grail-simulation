@@ -2,84 +2,84 @@
   "coverage_summary": {
     "overall": {
       "excluded_by_study": {
-        "study4": 51,
-        "unknown": 376
+        "study4": 733,
+        "unknown": 1563
       },
-      "excluded_rows": 427,
-      "included_rows": 4449,
-      "total_rows": 4876
+      "excluded_rows": 2296,
+      "included_rows": 5879,
+      "total_rows": 8175
     },
     "train": {
       "excluded_by_study": {
-        "study4": 42,
-        "unknown": 355
+        "study4": 665,
+        "unknown": 1436
       },
-      "excluded_rows": 397,
-      "included_rows": 3992,
-      "total_rows": 4389
+      "excluded_rows": 2101,
+      "included_rows": 5293,
+      "total_rows": 7394
     },
     "validation": {
       "excluded_by_study": {
-        "study4": 9,
-        "unknown": 21
+        "study4": 68,
+        "unknown": 127
       },
-      "excluded_rows": 30,
-      "included_rows": 457,
-      "total_rows": 487
+      "excluded_rows": 195,
+      "included_rows": 586,
+      "total_rows": 781
     }
   },
   "demographic_missing_counts": {
     "overall": {
       "missing": 0,
       "share": 0.0,
-      "total": 4449
+      "total": 5879
     },
     "train": {
       "missing": 0,
       "share": 0.0,
-      "total": 3992
+      "total": 5293
     },
     "validation": {
       "missing": 0,
       "share": 0.0,
-      "total": 457
+      "total": 586
     }
   },
   "feature_summary": {
     "age": {
       "train": {
-        "count": 3992.0,
-        "mean": 47.520791583166336,
-        "std": 15.61435829435646
+        "count": 5292.0,
+        "mean": 45.75132275132275,
+        "std": 15.214544926256098
       },
       "validation": {
-        "count": 457.0,
-        "mean": 47.33698030634573,
-        "std": 15.427539744442461
+        "count": 586.0,
+        "mean": 45.781569965870304,
+        "std": 14.933758225462617
       }
     },
     "assault_ban": {
       "train": {
-        "count": 83.0,
-        "mean": 0.20180722891566266,
-        "std": 0.3163654459156839
+        "count": 1383.0,
+        "mean": 0.30441070137382503,
+        "std": 0.3408955229563305
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.2,
-        "std": 0.1
+        "count": 134.0,
+        "mean": 0.2798507462686567,
+        "std": 0.3442555998409193
       }
     },
     "biden_approval": {
       "train": {
-        "count": 3969.0,
-        "mean": 44.945578231292515,
-        "std": 34.59001586448255
+        "count": 5270.0,
+        "mean": 47.38557874762808,
+        "std": 33.97672075021802
       },
       "validation": {
-        "count": 456.0,
-        "mean": 47.271929824561404,
-        "std": 33.78954086273404
+        "count": 585.0,
+        "mean": 49.07692307692308,
+        "std": 33.56859385045264
       }
     },
     "children_in_household": {
@@ -96,26 +96,26 @@
     },
     "college": {
       "train": {
-        "count": 3992.0,
-        "mean": 0.499749498997996,
-        "std": 0.499999937249244
+        "count": 5293.0,
+        "mean": 0.5499716606839221,
+        "std": 0.4974965659464304
       },
       "validation": {
-        "count": 457.0,
-        "mean": 0.487964989059081,
-        "std": 0.4998551375265158
+        "count": 586.0,
+        "mean": 0.5255972696245734,
+        "std": 0.4993443499107274
       }
     },
     "concealed_safe": {
       "train": {
-        "count": 83.0,
-        "mean": 0.4186746987951807,
-        "std": 0.2828119179350723
+        "count": 1383.0,
+        "mean": 0.46529284164859,
+        "std": 0.27102021493728284
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.4,
-        "std": 0.25495097567963926
+        "count": 134.0,
+        "mean": 0.458955223880597,
+        "std": 0.30724162463043136
       }
     },
     "education": {
@@ -144,248 +144,167 @@
     },
     "favorite_channels": {
       "train": {
-        "0": 1,
-        "As Told By Kenya\nHasanAbi": 1,
-        "Bailey Sarian\nMrBallen\nChelcie Lynn": 1,
-        "Brandon Walsh\nDavid Dobrik\nLiza Koshy": 1,
-        "Buzzfeed\nGood Morning America\nAmerica's funniest Videos\nJeopardy\nMaroon 5\nJonas Brothers\nLana Del Rey\nNate and Kara\n": 1,
-        "C-SPAN\nABC World News\nBBC News": 1,
-        "CNN\nThe New York times\nBBC news": 1,
-        "CNN\nWashington Post\nSeatinManofLegend\nRichTheMan": 1,
-        "CNN,FOX NEWS,BBC": 1,
-        "Cafe Music BGM": 1,
-        "Carissa Barzee\nJeffrey Star\n": 1,
-        "Character Design Forge\nvarious musicians": 1,
-        "Chris Smoove": 1,
-        "Clear Value Tax\nLogan Allec CPA\nCNN \n": 1,
-        "DW\nTIK": 1,
-        "DarkHorse\nJAMA\nPlebity\nFruityKnitting\nDr. John Campbell\nTriggernometry\nUnHerd\nRoxanne Richardson": 1,
-        "DefunctLand \nAlex Meyers \nGiant Bomb": 1,
-        "Fox News, OAN, New York Times, NPR": 1,
-        "Foxes and Fossils\nInvisible People\nOtis Gibbs\nPlaying for Change\nU. S. Department of Veteran Affairs\nBrandi Carlile": 1,
-        "Greg Adams\nNick Milo": 1,
-        "H3H3/trisha paytas": 1,
-        "I don't have an favorite broadcasters.\nI don't have an favorite channels.": 1,
-        "I don't have any; I just search mostly for video game reviews and content and click on whatever looks interesting.  Also watch music videos, again on any channel that I find.": 1,
-        "I enjoy watching travel videos and tutorials; however, I use Netflix and Prime for entertainment. I use news apps for news.": 1,
-        "I have no favorites.  I generally click on a link from a Facebook post.\nMixed Media Girl": 1,
-        "I have no favorites.  I watch an eclectic mix of music from random channels and a variety of exercise videos.  Any news related content I watch is not specific me.": 1,
-        "I just pull up whatever I'm looking for , I really don't have any broadcaster or channel": 1,
-        "I like FOX news broadcaster.": 1,
-        "I like news channels random religion and religious history stuff and I also watch a lot of lectures on university websites.": 1,
-        "I like to watch beauty influencers, how-to videos, and comedians": 1,
-        "I like to watch music videos and without a Crystal Ball on youtube. Additionally, I will watch stuff about the Bates family.": 1,
-        "I like watching flograppling for sports related content": 1,
-        "I no longer use youtube. They prop up literal propaganda, censor anyone who criticizes the official narrative of the political establishment and have become far too involved in government and policy.": 1,
-        "I only use YouTube for housekeeping skills.": 1,
-        "I really enjoy watching videos on music production.  The company that makes the product I use is called Reason Studios and they have a great channel with information on how the software can be used.": 1,
-        "I usually listen to music streams or look how to's. I do watch videos that are on FB that click thru to Youtube. Mostly about animals and creatives, spiritual and outdoors stuff.": 1,
-        "I usually watch music videos.  My favorites are Counting Crows.": 1,
-        "I watch Fox News\nand NBC news": 1,
-        "INDYCAR\nFormula 1": 1,
-        "JCS\nPewdiepie\nH3H3\nSteve Wilkos\nDr. Phil": 1,
-        "Jenna marbles\nMarkiplier\nRomanAtwoodsVlog": 1,
-        "Laura Lee\nManny Mua\nABC News": 1,
-        "Laura in the Kitchen\nPhillip Defranco\nMyFroggyStuff\nemmymade\nJazza": 1,
-        "Lex Fridmen\nSelf Sufficient Me\nThought Imperium\nMarcus House\nMIT Opencourseware\nIsaac Arthur\nLearn Your Land\n...and many more": 1,
-        "MKBHD\nUnbox Therapy\nCNN\nARISE TV\nMRWHOSETHEBOSS": 1,
-        "MLB\nDivine Mercy": 1,
-        "Make up channels jaclyn hill": 1,
-        "Matt Kohrs\nTrey's Trades\nMarc Rebillet\nMeet Kevin\n": 1,
-        "Meatcanyon\nJoel Haver\nJosh Turner\n": 1,
-        "Meet Kevin\nThe Late Show with Steven Colbert\nTrent Shelton\nMusic Videos": 1,
-        "Minutephysics\nScreen Junkies\nWoWCrendor\nPhillip de Franco": 1,
-        "Motivator Kristina\nThe Project Life Mastery\nGillian Perkins\n": 1,
-        "Music videos by searching.": 1,
-        "NBC news\nTrevor Noah\nBrendan Kavanagh\nChrisFix": 1,
-        "NPR Music\nTom goes Disney\nwaxandherbalt": 1,
-        "No particular favorites, I enjoy watching dog videos and music videos of bands/genres that I like.": 1,
-        "PBS\nYoutube Movies\n": 1,
-        "Philip DeFranco\nDonut Operator\nHasanabi": 1,
-        "Redlettermedia\nTaskmaster": 1,
-        "Roland Martin\nThe Kabs Family\nJack Reacts": 1,
-        "Rooster Teeth\nAchievement Hunter\nCrankgameplays\nMarkiplier\nJacksepticeye": 1,
-        "Sarabeth Yoga\nPregnancy and Postpartum TV\nBlogilates\nTravis Eliot\nAlo Yoga": 1,
-        "Sonic The Hedgehog\nGeekdom101\nCallMeKevin\nDeadwingDork": 1,
-        "Strictly dumplings\nCreamHeroes\nBuzzfeed Unsolved Network\n": 1,
-        "Synapse\nShroud\nAdam Ragusea\nAgadmator\nThe First Take": 1,
-        "The Dodo\nMr Ballen\nDDS TV\nBuzzfeed\nNowThis News": 1,
-        "The Rollin Martin Channel": 1,
-        "There are some YouTubers I follow:\nI love \"Kitboga\" because he raises awareness about scams directed toward the elderly. \nI love \"TheBeauticianChic\" because she does beautiful makeup.\nI adore \"DeMiRanchoATuCocina\" because she makes delicious food with easy recipes.": 1,
-        "Theyoungturks\nCalmingescape\nBbc\nAngelica\nGamegrumps": 1,
-        "Traversy Media\nFreecodecamp.org\nCNN \nDesign course": 1,
-        "USA Today\nGood Morning America": 1,
-        "Various channels. No favorites.": 1,
-        "Voya - My Deep Guide product reviews": 1,
-        "Yes Theory and Linguamarina.": 1,
-        "fashion channel for all the latest fashion videos, parties, and events. About Youtuber Learn about outer space, leading scientific exploration, new technology, earth science basics, & more with science videos & news from Science Channel.": 1,
-        "how to videos": 1,
-        "lovely tea\nphil de fracnio": 1,
-        "mbw.com\n": 1,
-        "msnbc, the young turks": 1,
-        "munchkin": 1,
-        "peter schiff": 1,
-        "scedtv\ncnn": 1,
-        "streetbeefs\n": 1
+        "count": 22.0,
+        "mean": 0.0,
+        "std": 0.0
       },
       "validation": {
-        "According to Vin\nMoney Done Right\nCNN": 1,
-        "Bald and bankrupt\nSonny Side/most delicious food show ever": 1,
-        "Last Week Tonight\nLate Show with Stephen Colbert\nLate Night with Seth Meyers\nNYTimes\nCNN \nMSNBC Rachel Maddow": 1,
-        "NA- I don't use YouTube often except to watch the occasional makeup tutorial/review.": 1,
-        "The Piano Guys\nCNBC": 1
+        "count": 1.0,
+        "mean": 0.0,
+        "std": 0.0
       }
     },
     "freq_youtube": {
       "train": {
-        "count": 3992.0,
-        "mean": 2.813376753507014,
-        "std": 1.7409921100899546
+        "count": 5293.0,
+        "mean": 2.8858870205932363,
+        "std": 1.7257168294827097
       },
       "validation": {
-        "count": 457.0,
-        "mean": 2.612691466083151,
-        "std": 1.671256808680744
+        "count": 586.0,
+        "mean": 2.744027303754266,
+        "std": 1.6747492785525193
       }
     },
     "gender": {
       "train": {
-        "Man": 732,
-        "Other (please specify)": 15,
-        "Woman": 801
+        "Man": 1367,
+        "Other (please specify)": 23,
+        "Woman": 1459
       },
       "validation": {
-        "Man": 87,
+        "Man": 153,
         "Other (please specify)": 2,
-        "Woman": 97
+        "Woman": 160
       }
     },
     "gun_enthusiasm": {
       "train": {
-        "count": 83.0,
-        "mean": 0.43373493975903615,
-        "std": 0.6621027307968234
+        "count": 1383.0,
+        "mean": 0.4374548083875633,
+        "std": 0.6086504879091524
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.6,
-        "std": 0.48989794855663565
+        "count": 134.0,
+        "mean": 0.4925373134328358,
+        "std": 0.6663138592701408
       }
     },
     "gun_importance": {
       "train": {
-        "count": 83.0,
-        "mean": 3.036144578313253,
-        "std": 0.8842093075618686
+        "count": 1383.0,
+        "mean": 2.890817064352856,
+        "std": 0.9386508127697386
       },
       "validation": {
-        "count": 5.0,
-        "mean": 3.0,
-        "std": 0.6324555320336759
+        "count": 134.0,
+        "mean": 2.9029850746268657,
+        "std": 0.9686843130167309
       }
     },
     "gun_index": {
       "train": {
-        "count": 83.0,
-        "mean": 0.3307228915662651,
-        "std": 0.2616941244605637
+        "count": 1383.0,
+        "mean": 0.41024945770065074,
+        "std": 0.2795129776136378
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.29000000000000004,
-        "std": 0.17435595774162696
+        "count": 134.0,
+        "mean": 0.41417910447761197,
+        "std": 0.3000380535752555
       }
     },
     "gun_index_2": {
       "train": {
-        "count": 83.0,
-        "mean": 0.3621987951807229,
-        "std": 0.25901644293247444
+        "count": 1383.0,
+        "mean": 0.4379669799951796,
+        "std": 0.2777685350733373
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.3375,
-        "std": 0.2076655965729519
+        "count": 134.0,
+        "mean": 0.44636194029850745,
+        "std": 0.30381139445749133
       }
     },
     "gun_ownership": {
       "train": {
-        "count": 83.0,
-        "mean": 0.3132530120481928,
-        "std": 0.46381630252819656
+        "count": 1383.0,
+        "mean": 0.3232104121475054,
+        "std": 0.4677023002155806
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.6,
-        "std": 0.48989794855663565
+        "count": 134.0,
+        "mean": 0.3805970149253731,
+        "std": 0.4855336519287499
       }
     },
     "handgun_ban": {
       "train": {
-        "count": 83.0,
-        "mean": 0.6174698795180723,
-        "std": 0.34566451934806686
+        "count": 1383.0,
+        "mean": 0.6518438177874186,
+        "std": 0.32959340654870134
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.55,
-        "std": 0.291547594742265
+        "count": 134.0,
+        "mean": 0.6884328358208955,
+        "std": 0.35675330009793055
       }
     },
     "household_income": {
       "train": {
-        "$10,000-$14,999": 51,
-        "$100,000-$119,999": 99,
-        "$120,000-$149,999": 76,
-        "$15,000-$19,999": 57,
-        "$150,000 or more": 106,
-        "$20,000-$24,999": 78,
-        "$25,000-$29,999": 98,
-        "$30,000-$39,999": 178,
-        "$40,000-$49,999": 133,
-        "$50,000-$59,999": 160,
-        "$60,000-$69,999": 133,
-        "$70,000-$79,999": 115,
-        "$80,000-$99,999": 171,
-        "Less than $10,000": 68,
-        "Prefer not to say": 25
+        "$10,000-$14,999": 91,
+        "$100,000-$119,999": 171,
+        "$120,000-$149,999": 167,
+        "$15,000-$19,999": 98,
+        "$150,000 or more": 184,
+        "$20,000-$24,999": 151,
+        "$25,000-$29,999": 164,
+        "$30,000-$39,999": 311,
+        "$40,000-$49,999": 261,
+        "$50,000-$59,999": 293,
+        "$60,000-$69,999": 243,
+        "$70,000-$79,999": 222,
+        "$80,000-$99,999": 322,
+        "Less than $10,000": 115,
+        "Prefer not to say": 56
       },
       "validation": {
-        "$10,000-$14,999": 7,
-        "$100,000-$119,999": 15,
-        "$120,000-$149,999": 15,
-        "$15,000-$19,999": 5,
-        "$150,000 or more": 14,
-        "$20,000-$24,999": 12,
-        "$25,000-$29,999": 7,
-        "$30,000-$39,999": 19,
-        "$40,000-$49,999": 20,
-        "$50,000-$59,999": 15,
-        "$60,000-$69,999": 16,
-        "$70,000-$79,999": 14,
-        "$80,000-$99,999": 18,
-        "Less than $10,000": 9
+        "$10,000-$14,999": 14,
+        "$100,000-$119,999": 21,
+        "$120,000-$149,999": 28,
+        "$15,000-$19,999": 9,
+        "$150,000 or more": 24,
+        "$20,000-$24,999": 19,
+        "$25,000-$29,999": 15,
+        "$30,000-$39,999": 30,
+        "$40,000-$49,999": 25,
+        "$50,000-$59,999": 32,
+        "$60,000-$69,999": 22,
+        "$70,000-$79,999": 24,
+        "$80,000-$99,999": 33,
+        "Less than $10,000": 12,
+        "Prefer not to say": 7
       }
     },
     "ideology": {
       "train": {
-        "Conservative": 349,
-        "Haven't thought much about it": 54,
-        "Liberal": 726,
-        "Moderate": 419
+        "Conservative": 641,
+        "Haven't thought much about it": 77,
+        "Liberal": 1404,
+        "Moderate": 726
       },
       "validation": {
-        "Conservative": 41,
-        "Haven't thought much about it": 8,
-        "Liberal": 86,
-        "Moderate": 51
+        "Conservative": 73,
+        "Haven't thought much about it": 10,
+        "Liberal": 154,
+        "Moderate": 78
       }
     },
     "minwage15_w1": {
       "train": {
-        "count": 3909.0,
-        "mean": 0.30576873880787925,
-        "std": 0.3640581701120677
+        "count": 3910.0,
+        "mean": 0.3059462915601023,
+        "std": 0.36418084119698435
       },
       "validation": {
         "count": 452.0,
@@ -395,9 +314,9 @@
     },
     "minwage15_w2": {
       "train": {
-        "count": 3870.0,
-        "mean": 0.3402454780361757,
-        "std": 0.3781565740812865
+        "count": 3871.0,
+        "mean": 0.34041591320072334,
+        "std": 0.3782563533714413
       },
       "validation": {
         "count": 450.0,
@@ -407,9 +326,9 @@
     },
     "minwage_text_r_w1": {
       "train": {
-        "count": 3884.0,
-        "mean": 0.43655643666323385,
-        "std": 0.20228808580174346
+        "count": 3885.0,
+        "mean": 0.4367014671814672,
+        "std": 0.20246390343971335
       },
       "validation": {
         "count": 450.0,
@@ -419,9 +338,9 @@
     },
     "minwage_text_r_w2": {
       "train": {
-        "count": 3864.0,
-        "mean": 0.45696366459627336,
-        "std": 0.20676264065349811
+        "count": 3865.0,
+        "mean": 0.45702137128072445,
+        "std": 0.2067670087828747
       },
       "validation": {
         "count": 449.0,
@@ -431,9 +350,9 @@
     },
     "minwage_text_w1": {
       "train": {
-        "count": 1465.0,
-        "mean": 14.268116040955633,
-        "std": 4.54769129442637
+        "count": 1466.0,
+        "mean": 14.258383356070942,
+        "std": 4.5613770978759485
       },
       "validation": {
         "count": 181.0,
@@ -443,9 +362,9 @@
     },
     "minwage_text_w2": {
       "train": {
-        "count": 1425.0,
-        "mean": 14.813326315789473,
-        "std": 39.70431381426883
+        "count": 1426.0,
+        "mean": 14.808548387096772,
+        "std": 39.690799608461155
       },
       "validation": {
         "count": 179.0,
@@ -455,9 +374,9 @@
     },
     "mw_index_w1": {
       "train": {
-        "count": 3909.0,
-        "mean": 0.29481221986705486,
-        "std": 0.2543626169578386
+        "count": 3910.0,
+        "mean": 0.2949579413794503,
+        "std": 0.25449322226237847
       },
       "validation": {
         "count": 452.0,
@@ -467,9 +386,9 @@
     },
     "mw_index_w2": {
       "train": {
-        "count": 3871.0,
-        "mean": 0.32220011993947667,
-        "std": 0.2811158735297826
+        "count": 3872.0,
+        "mean": 0.3223415254410993,
+        "std": 0.28121722449075487
       },
       "validation": {
         "count": 450.0,
@@ -479,9 +398,9 @@
     },
     "mw_support_w1": {
       "train": {
-        "count": 3908.0,
-        "mean": 0.2115532241555783,
-        "std": 0.3072960757648807
+        "count": 3909.0,
+        "mean": 0.21169096955743158,
+        "std": 0.30737740723114065
       },
       "validation": {
         "count": 452.0,
@@ -491,9 +410,9 @@
     },
     "mw_support_w2": {
       "train": {
-        "count": 3870.0,
-        "mean": 0.24890180878552973,
-        "std": 0.3374485634791536
+        "count": 3871.0,
+        "mean": 0.24909584086799277,
+        "std": 0.3376208167816653
       },
       "validation": {
         "count": 450.0,
@@ -515,60 +434,60 @@
     },
     "news_trust": {
       "train": {
-        "count": 3992.0,
-        "mean": 0.553941215764863,
-        "std": 0.3146687458467597
+        "count": 5293.0,
+        "mean": 0.5638264374330877,
+        "std": 0.3084137483617281
       },
       "validation": {
-        "count": 457.0,
-        "mean": 0.5835156819839533,
-        "std": 0.30617375604144637
+        "count": 586.0,
+        "mean": 0.5887372013651877,
+        "std": 0.3007294222265233
       }
     },
     "party_identification": {
       "train": {
-        "Democrat": 726,
-        "Independent": 450,
-        "Other Party": 47,
-        "Republican": 324
+        "Democrat": 1382,
+        "Independent": 803,
+        "Other Party": 76,
+        "Republican": 586
       },
       "validation": {
-        "Democrat": 82,
-        "Independent": 59,
-        "Other Party": 9,
-        "Republican": 36
+        "Democrat": 147,
+        "Independent": 88,
+        "Other Party": 14,
+        "Republican": 66
       }
     },
     "party_lean": {
       "train": {
-        "Not very strong Democrat": 338,
-        "Strong Democrat": 388
+        "Not very strong Democrat": 643,
+        "Strong Democrat": 739
       },
       "validation": {
-        "Not very strong Democrat": 40,
-        "Strong Democrat": 42
+        "Not very strong Democrat": 58,
+        "Strong Democrat": 89
       }
     },
     "political_interest": {
       "train": {
-        "count": 3951.0,
-        "mean": 1.732557158525268,
-        "std": 1.4038212081946366
+        "count": 5252.0,
+        "mean": 2.1160192942371157,
+        "std": 1.4703333412355502
       },
       "validation": {
-        "count": 453.0,
-        "mean": 1.8344370860927153,
-        "std": 1.4222766930833637
+        "count": 582.0,
+        "mean": 2.1924398625429555,
+        "std": 1.504988562236319
       }
     },
     "popular_channels_followed": {
       "train": {
-        "count": 33.0,
+        "count": 644.0,
         "mean": 0.0,
         "std": 0.0
       },
       "validation": {
-        "count": 3.0,
+        "count": 63.0,
         "mean": 0.0,
         "std": 0.0
       }
@@ -611,14 +530,14 @@
     },
     "right_to_own_importance": {
       "train": {
-        "count": 82.0,
-        "mean": 0.2073170731707317,
-        "std": 0.4053846375266991
+        "count": 1381.0,
+        "mean": 0.33019551049963797,
+        "std": 0.47028335644111563
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.2,
-        "std": 0.4000000000000001
+        "count": 134.0,
+        "mean": 0.3582089552238806,
+        "std": 0.47947398221519444
       }
     },
     "state": {
@@ -635,26 +554,26 @@
     },
     "stricter_laws": {
       "train": {
-        "count": 83.0,
-        "mean": 0.20481927710843373,
-        "std": 0.31081068287986585
+        "count": 1383.0,
+        "mean": 0.2993492407809111,
+        "std": 0.3340405523468997
       },
       "validation": {
-        "count": 5.0,
-        "mean": 0.1,
-        "std": 0.20000000000000004
+        "count": 134.0,
+        "mean": 0.28544776119402987,
+        "std": 0.3361782924075148
       }
     },
     "trump_approval": {
       "train": {
-        "count": 3967.0,
-        "mean": 31.68086715402067,
-        "std": 37.79145532715215
+        "count": 5268.0,
+        "mean": 29.45292331055429,
+        "std": 36.59160534618736
       },
       "validation": {
-        "count": 455.0,
-        "mean": 30.318681318681318,
-        "std": 35.75886245974452
+        "count": 584.0,
+        "mean": 28.47945205479452,
+        "std": 35.102339456454956
       }
     },
     "vote_2016": {
@@ -710,66 +629,69 @@
   "n_options_counts": {
     "train": {
       "1": 4,
+      "2": 397,
       "3": 293,
-      "4": 3695
+      "4": 3695,
+      "5": 904
     },
     "validation": {
-      "2": 1,
+      "2": 33,
       "3": 33,
-      "4": 423
+      "4": 423,
+      "5": 97
     }
   },
   "participant_counts": {
     "overall": {
       "by_issue": {
-        "gun_control": 88,
-        "minimum_wage": 4361
+        "gun_control": 1517,
+        "minimum_wage": 4362
       },
       "by_issue_study": {
         "gun_control": {
-          "study1": 88
+          "study1": 1517
         },
         "minimum_wage": {
-          "study2": 1646,
+          "study2": 1647,
           "study3": 2715
         }
       },
       "by_study": {
-        "study1": 88,
-        "study2": 1646,
+        "study1": 1517,
+        "study2": 1647,
         "study3": 2715
       },
-      "overall": 4449
+      "overall": 5879
     },
     "train": {
       "by_issue": {
-        "gun_control": 83,
-        "minimum_wage": 3909
+        "gun_control": 1383,
+        "minimum_wage": 3910
       },
       "by_issue_study": {
         "gun_control": {
-          "study1": 83
+          "study1": 1383
         },
         "minimum_wage": {
-          "study2": 1465,
+          "study2": 1466,
           "study3": 2444
         }
       },
       "by_study": {
-        "study1": 83,
-        "study2": 1465,
+        "study1": 1383,
+        "study2": 1466,
         "study3": 2444
       },
-      "overall": 3992
+      "overall": 5293
     },
     "validation": {
       "by_issue": {
-        "gun_control": 5,
+        "gun_control": 134,
         "minimum_wage": 452
       },
       "by_issue_study": {
         "gun_control": {
-          "study1": 5
+          "study1": 134
         },
         "minimum_wage": {
           "study2": 181,
@@ -777,59 +699,61 @@
         }
       },
       "by_study": {
-        "study1": 5,
+        "study1": 134,
         "study2": 181,
         "study3": 271
       },
-      "overall": 457
+      "overall": 586
     }
   },
   "prior_history_counts": {
     "train": {
-      "0": 3967,
-      "1": 19,
-      "2": 2,
-      "3": 4
+      "0": 4867,
+      "1": 336,
+      "2": 57,
+      "3": 33
     },
     "validation": {
-      "0": 454,
-      "1": 3
+      "0": 552,
+      "1": 28,
+      "2": 5,
+      "3": 1
     }
   },
   "profile_summary": {
     "train": {
       "missing_profile": 0.0,
-      "rows": 3992.0
+      "rows": 5293.0
     },
     "validation": {
       "missing_profile": 0.0,
-      "rows": 457.0
+      "rows": 586.0
     }
   },
   "unique_counts": {
     "overall": {
-      "candidate_video_ids": 100,
-      "current_video_ids": 16,
-      "gold_video_ids": 77,
-      "prompt_texts": 4447,
-      "slate_combinations": 2738,
-      "state_texts": 4447
+      "candidate_video_ids": 188,
+      "current_video_ids": 44,
+      "gold_video_ids": 171,
+      "prompt_texts": 5877,
+      "slate_combinations": 2987,
+      "state_texts": 5877
     },
     "train": {
-      "candidate_video_ids": 100,
-      "current_video_ids": 16,
-      "gold_video_ids": 77,
-      "prompt_texts": 3990,
-      "slate_combinations": 2550,
-      "state_texts": 3990
+      "candidate_video_ids": 188,
+      "current_video_ids": 43,
+      "gold_video_ids": 170,
+      "prompt_texts": 5291,
+      "slate_combinations": 2792,
+      "state_texts": 5291
     },
     "validation": {
-      "candidate_video_ids": 73,
-      "current_video_ids": 7,
-      "gold_video_ids": 61,
-      "prompt_texts": 457,
-      "slate_combinations": 426,
-      "state_texts": 457
+      "candidate_video_ids": 128,
+      "current_video_ids": 24,
+      "gold_video_ids": 100,
+      "prompt_texts": 586,
+      "slate_combinations": 494,
+      "state_texts": 586
     }
   }
 }

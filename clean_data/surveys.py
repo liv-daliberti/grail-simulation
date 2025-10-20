@@ -186,14 +186,33 @@ def load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[s
     }
 
     def _normalize_series(series: pd.Series) -> pd.Series:
+        """Return a trimmed string series with missing values coerced to empty strings.
+
+        :param series: Input pandas series containing identifier values.
+        :returns: Normalised series with whitespace stripped and ``NaN`` replaced.
+        """
+
         return series.fillna("").astype(str).str.strip()
 
     def _nonempty_mask(series: pd.Series) -> pd.Series:
+        """Return a boolean mask selecting non-missing entries.
+
+        :param series: Input series to threshold.
+        :returns: Boolean series where ``True`` indicates a usable value.
+        """
+
         normalized = _normalize_series(series)
         lower = normalized.str.lower()
         return ~(normalized.eq("") | lower.isin(_MISSING_STRINGS))
 
     def _dedupe_earliest(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
+        """Keep the earliest row per identifier column.
+
+        :param df: Dataframe potentially containing duplicate identifiers.
+        :param id_column: Column name used to deduplicate rows.
+        :returns: Dataframe with only the earliest occurrence of each identifier.
+        """
+
         if df.empty or id_column not in df.columns:
             return df
         working = df.copy()

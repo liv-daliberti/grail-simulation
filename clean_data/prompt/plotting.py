@@ -70,6 +70,12 @@ def plot_numeric_hist_by_issue(  # pylint: disable=too-many-locals
     """Render per-issue numeric histograms, falling back to global plots."""
 
     def _clean_numeric(values: pd.Series) -> pd.Series:
+        """Return numeric series with invalid entries removed.
+
+        :param values: Input series containing numeric-like values.
+        :returns: Series of floats with ``NaN`` values dropped.
+        """
+
         return pd.to_numeric(values.dropna().astype(str), errors="coerce").dropna()
 
     if not pair.has_issue():
@@ -184,6 +190,12 @@ def plot_categorical_hist_by_issue(  # pylint: disable=too-many-locals,cell-var-
     """Render per-issue categorical histograms, falling back to global plots."""
 
     def _clean(series: pd.Series) -> pd.Series:
+        """Return trimmed categorical series with missing entries removed.
+
+        :param series: Input series containing categorical values.
+        :returns: Series of non-empty, stripped strings.
+        """
+
         return (
             series.dropna()
             .astype(str)

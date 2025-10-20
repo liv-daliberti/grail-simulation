@@ -63,6 +63,13 @@ def _relative_path(path: Path, base: Path) -> str:
 
 
 def _format_table(header: List[str], rows: List[List[str]]) -> List[str]:
+    """Return Markdown table lines for the given header and rows.
+
+    :param header: List of column headers.
+    :param rows: Sequence of rows, each already converted to strings.
+    :returns: List of Markdown-formatted strings representing the table.
+    """
+
     lines = ["| " + " | ".join(header) + " |"]
     lines.append("|" + "|".join(["-" * (len(h) + 2) for h in header]) + "|")
     for row in rows:
@@ -71,6 +78,12 @@ def _format_table(header: List[str], rows: List[List[str]]) -> List[str]:
 
 
 def _profile_section(context: ReportContext) -> List[str]:
+    """Render the profile availability section.
+
+    :param context: Report context containing profile summaries.
+    :returns: Markdown lines describing profile coverage per split.
+    """
+
     rows: List[List[str]] = []
     summaries = context.summaries.profile
     for split in ("train", "validation"):
@@ -93,6 +106,12 @@ def _profile_section(context: ReportContext) -> List[str]:
 
 
 def _demographic_section(context: ReportContext) -> List[str]:
+    """Render the demographic completeness section.
+
+    :param context: Report context containing demographic counts.
+    :returns: Markdown lines describing demographic coverage per split.
+    """
+
     counts = context.summaries.counts.demographic_missing
     rows: List[List[str]] = []
     for split in ("train", "validation", "overall"):
@@ -121,6 +140,12 @@ def _demographic_section(context: ReportContext) -> List[str]:
 
 
 def _prior_history_section(context: ReportContext) -> List[str]:
+    """Render the prior-history summary section.
+
+    :param context: Report context containing prior history counts.
+    :returns: Markdown lines describing prior-history distributions.
+    """
+
     rows: List[List[str]] = []
     counts = context.summaries.counts.prior_history
     all_keys = sorted(set(counts["train"]).union(counts["validation"]))
@@ -135,6 +160,12 @@ def _prior_history_section(context: ReportContext) -> List[str]:
 
 
 def _n_options_section(context: ReportContext) -> List[str]:
+    """Render the slate size summary section.
+
+    :param context: Report context containing ``n_options`` counts.
+    :returns: Markdown lines describing slate-size distributions.
+    """
+
     rows: List[List[str]] = []
     counts = context.summaries.counts.n_options
     all_keys = sorted(set(counts["train"]).union(counts["validation"]))
@@ -149,6 +180,12 @@ def _n_options_section(context: ReportContext) -> List[str]:
 
 
 def _unique_content_section(context: ReportContext) -> List[str]:
+    """Render the unique content coverage section.
+
+    :param context: Report context containing unique content counts.
+    :returns: Markdown lines describing coverage per split.
+    """
+
     counts = context.summaries.counts.unique_content
     rows: List[List[str]] = []
     for split in ("train", "validation", "overall"):
@@ -189,6 +226,12 @@ def _unique_content_section(context: ReportContext) -> List[str]:
 
 
 def _participant_section(context: ReportContext) -> List[str]:
+    """Render the participant coverage section.
+
+    :param context: Report context containing participant counts.
+    :returns: Markdown lines listing participant totals per split.
+    """
+
     counts = context.summaries.counts.participant
     rows: List[List[str]] = []
     for split in ("train", "validation", "overall"):
@@ -206,6 +249,12 @@ def _participant_section(context: ReportContext) -> List[str]:
 
 
 def _skipped_features_section(skipped_features: List[str]) -> List[str]:
+    """Render the skipped-features section.
+
+    :param skipped_features: List of feature identifiers omitted from reporting.
+    :returns: Markdown lines documenting skipped features.
+    """
+
     if not skipped_features:
         return []
     lines = ["## Features skipped due to missing data", ""]
@@ -310,6 +359,12 @@ def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
 
 
 def _coverage_section(context: ReportContext) -> List[str]:
+    """Render the dataset coverage notes section.
+
+    :param context: Report context containing coverage summaries.
+    :returns: Markdown lines documenting dataset coverage decisions.
+    """
+
     coverage = context.summaries.coverage
     lines = ["## Dataset coverage notes", ""]
     lines.append(

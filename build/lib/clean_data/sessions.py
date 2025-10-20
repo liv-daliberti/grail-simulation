@@ -958,8 +958,8 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
             participant_issue_key = (participant_identifier, canonical_issue)
             if participant_issue_key in seen_participant_issue:
                 interaction_stats["sessions_duplicate_participant_issue"] += 1
-                continue
-            seen_participant_issue.add(participant_issue_key)
+            else:
+                seen_participant_issue.add(participant_issue_key)
 
             row["participant_id"] = participant_identifier
             row["participant_study"] = participant_study_label or "unknown"

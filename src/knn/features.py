@@ -383,6 +383,8 @@ class Word2VecConfig:
     min_count: int = 2
     epochs: int = 10
     model_dir: Path = Path("models/knn_word2vec")
+    seed: int = 42
+    workers: int = 1
 
 
 class Word2VecFeatureBuilder:
@@ -409,6 +411,8 @@ class Word2VecFeatureBuilder:
             min_count=self.config.min_count,
             sg=1,
             epochs=self.config.epochs,
+            seed=self.config.seed,
+            workers=self.config.workers,
         )
         self.save(self.config.model_dir)
 

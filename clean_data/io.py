@@ -1,4 +1,4 @@
-"""Input/output primitives for ingesting capsule artefacts and metadata.
+"""Input/output primitives for ingesting capsule artifacts and metadata.
 
 The functions in this module know how to locate capsule directories,
 read CSV/RDS exports from the CodeOcean bundle, parse supplemental

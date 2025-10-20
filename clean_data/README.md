@@ -46,7 +46,7 @@ Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists
 
 Shorts participants remain in the allow-list summaries so shortfall analyses match the original paper, but prompt rows are emitted only for Studies 1–3.
 
-## Output Artefacts
+## Output Artifacts
 
 Running `python -m clean_data.cli` now produces two complementary datasets:
 

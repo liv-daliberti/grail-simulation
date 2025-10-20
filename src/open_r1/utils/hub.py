@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helpers for pushing training artefacts to the Hugging Face Hub."""
+"""Helpers for pushing training artifacts to the Hugging Face Hub."""
 
 from __future__ import annotations
 

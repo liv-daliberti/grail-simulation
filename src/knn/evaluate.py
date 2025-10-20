@@ -106,22 +106,31 @@ def plot_elbow(
     best_k: int,
     output_path: Path,
 ) -> None:
-    """Create an accuracy vs k plot for diagnostic purposes."""
+    """Create an error-rate vs ``k`` plot for diagnostic purposes."""
 
     if plt is None:
         logging.warning("[KNN] Skipping elbow plot (matplotlib not installed)")
         return
 
+    if not k_values:
+        logging.warning("[KNN] Skipping elbow plot (no k values supplied)")
+        return
+
     plt.figure(figsize=(6, 4))
-    ys = [accuracy_by_k.get(k, 0.0) for k in k_values]
-    plt.plot(k_values, ys, marker="o", label="Accuracy")
+    error_rates = [1.0 - float(accuracy_by_k.get(k, 0.0)) for k in k_values]
+    plt.plot(k_values, error_rates, marker="o", label="Error rate")
     if best_k in accuracy_by_k:
-        plt.scatter([best_k], [accuracy_by_k[best_k]], color="red", label=f"Best k={best_k}")
-    plt.title("KNN accuracy vs k")
+        best_error = 1.0 - float(accuracy_by_k[best_k])
+        plt.axvline(best_k, color="red", linestyle="--", alpha=0.6)
+        plt.scatter([best_k], [best_error], color="red", label="Selected k")
+    plt.title("KNN error vs k")
     plt.xlabel("k")
-    plt.ylabel("Accuracy")
+    plt.ylabel("Error rate")
+    plt.ylim(0.0, 1.0)
     plt.grid(True, alpha=0.3)
-    plt.legend()
+    handles, labels = plt.gca().get_legend_handles_labels()
+    if handles:
+        plt.legend(handles, labels)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
@@ -179,6 +188,8 @@ def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
         min_count=default_cfg.min_count,
         epochs=default_cfg.epochs,
         model_dir=Path(model_root) / issue_slug,
+        seed=int(getattr(args, "knn_seed", default_cfg.seed)),
+        workers=default_cfg.workers,
     )
 
 
@@ -197,7 +208,7 @@ def _fit_index_for_issue(
     :param issue_slug: Normalised issue identifier.
     :param extra_fields: Optional text fields to concatenate into documents.
     :param args: CLI namespace for additional parameters.
-    :returns: Dictionary describing the fitted index artefacts.
+    :returns: Dictionary describing the fitted index artifacts.
     :raises ValueError: If the requested feature space is unsupported.
     """
 
@@ -242,7 +253,7 @@ def _load_index_for_issue(
     :param feature_space: ``tfidf`` or ``word2vec``.
     :param issue_slug: Normalised issue identifier.
     :param args: CLI namespace providing the ``--load-index`` directory.
-    :returns: Dictionary with the loaded index artefacts.
+    :returns: Dictionary with the loaded index artifacts.
     :raises ValueError: If the feature space is not recognised.
     """
 
@@ -370,7 +381,7 @@ def _write_issue_outputs(
     extra_fields: Sequence[str],
     curve_metrics: Dict[str, Any],
 ) -> None:
-    """Persist evaluation artefacts and per-``k`` directories for an issue.
+    """Persist evaluation artifacts and per-``k`` directories for an issue.
 
     :param args: CLI namespace controlling output directories.
     :param issue_slug: Issue slug associated with the evaluation batch.
@@ -585,7 +596,7 @@ def _accumulate_row(
     :param single_multi_stats: Mutable dictionary tracking single vs multi-option stats.
     :param gold_hist: Mutable histogram of observed gold indices.
     :param k_values: Sequence of ``k`` values to score.
-    :param knn_index: Prepared KNN index artefacts.
+    :param knn_index: Prepared KNN index artifacts.
     :param query_config: Configuration controlling query generation.
     :returns: Serialised per-example record including predictions for each ``k``.
     """
@@ -667,7 +678,7 @@ def _evaluate_dataset_split(
 
     :param dataset: Dataset slice to iterate.
     :param k_values: Sequence of ``k`` values to evaluate.
-    :param knn_index: Prepared KNN index artefacts.
+    :param knn_index: Prepared KNN index artifacts.
     :param extra_fields: Extra text fields appended to the query.
     :param metric: Distance metric for candidate scoring (``l2`` or ``cosine``).
     :param capture_rows: Whether to retain per-example prediction rows.
@@ -839,7 +850,7 @@ def evaluate_issue(
     :param train_ds: Training split dataset for optional curve diagnostics.
     :param eval_ds: Evaluation split dataset.
     :param k_values: Sequence of ``k`` values to assess.
-    :param knn_index: Prepared KNN index artefacts.
+    :param knn_index: Prepared KNN index artifacts.
     :param extra_fields: Extra text fields appended to queries.
     :param feature_space: Active feature space (``tfidf`` or ``word2vec``).
     :param args: CLI namespace controlling evaluation options.

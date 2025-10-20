@@ -272,7 +272,7 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SlateIndexData</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed index artefacts used during slate scoring.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed index artifacts used during slate scoring.&quot;&quot;&quot;</span>
 
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">vectorizer</span><span class="p">:</span> <span class="n">Any</span>
@@ -422,7 +422,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the TF-IDF index to ``out_dir`` for later reuse.</span>
 
 <span class="sd">    :param index: Dictionary returned by :func:`build_tfidf_index`.</span>
-<span class="sd">    :param out_dir: Target directory where artefacts will be written.</span>
+<span class="sd">    :param out_dir: Target directory where artifacts will be written.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
@@ -454,7 +454,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">load_tfidf_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a TF-IDF index previously saved via :func:`save_tfidf_index`.</span>
 
-<span class="sd">    :param in_dir: Directory containing the persisted TF-IDF artefacts.</span>
+<span class="sd">    :param in_dir: Directory containing the persisted TF-IDF artifacts.</span>
 <span class="sd">    :returns: Dictionary with the loaded vectoriser, matrix, and labels.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -527,7 +527,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">load_word2vec_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a Word2Vec index previously saved via :func:`save_word2vec_index`.</span>
 
-<span class="sd">    :param in_dir: Directory containing the persisted Word2Vec artefacts.</span>
+<span class="sd">    :param in_dir: Directory containing the persisted Word2Vec artifacts.</span>
 <span class="sd">    :returns: Dictionary with the restored Word2Vec model, embeddings, and labels.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -773,7 +773,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>  <span class="c1"># pylint: disable=too-many-branches</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Score each slate option using candidate-aware TF-IDF kNN.</span>
 
-<span class="sd">    :param knn_index: Dictionary describing the fitted index artefacts.</span>
+<span class="sd">    :param knn_index: Dictionary describing the fitted index artifacts.</span>
 <span class="sd">    :param example: Dataset row containing the slate to score.</span>
 <span class="sd">    :param k_values: Sequence of ``k`` values to evaluate.</span>
 <span class="sd">    :param config: Optional :class:`~knn.index.SlateQueryConfig` overriding defaults.</span>
@@ -820,7 +820,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_index_data</span><span class="p">(</span><span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SlateIndexData</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct :class:`SlateIndexData` from a raw index dictionary.</span>
 
-<span class="sd">    :param knn_index: Dictionary describing the fitted index artefacts.</span>
+<span class="sd">    :param knn_index: Dictionary describing the fitted index artifacts.</span>
 <span class="sd">    :returns: :class:`SlateIndexData` instance or ``None`` when the index is invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 

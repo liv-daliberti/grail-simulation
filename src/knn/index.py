@@ -34,7 +34,7 @@ class SlateQueryConfig:
 
 @dataclass(frozen=True)
 class SlateIndexData:
-    """Pre-computed index artefacts used during slate scoring."""
+    """Pre-computed index artifacts used during slate scoring."""
 
     feature_space: str
     vectorizer: Any
@@ -176,7 +176,7 @@ def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     """Persist the TF-IDF index to ``out_dir`` for later reuse.
 
     :param index: Dictionary returned by :func:`build_tfidf_index`.
-    :param out_dir: Target directory where artefacts will be written.
+    :param out_dir: Target directory where artifacts will be written.
     """
 
     directory = Path(out_dir)
@@ -205,7 +205,7 @@ def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
 def load_tfidf_index(in_dir: str) -> Dict[str, Any]:
     """Load a TF-IDF index previously saved via :func:`save_tfidf_index`.
 
-    :param in_dir: Directory containing the persisted TF-IDF artefacts.
+    :param in_dir: Directory containing the persisted TF-IDF artifacts.
     :returns: Dictionary with the loaded vectoriser, matrix, and labels.
     """
 
@@ -263,6 +263,8 @@ def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
             "window": int(config.get("window", 5)),
             "min_count": int(config.get("min_count", 2)),
             "epochs": int(config.get("epochs", 10)),
+            "seed": int(config.get("seed", 42)),
+            "workers": int(config.get("workers", 1)),
         },
     }
     with open(directory / "meta.json", "w", encoding="utf-8") as handle:
@@ -272,7 +274,7 @@ def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
 def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
     """Load a Word2Vec index previously saved via :func:`save_word2vec_index`.
 
-    :param in_dir: Directory containing the persisted Word2Vec artefacts.
+    :param in_dir: Directory containing the persisted Word2Vec artifacts.
     :returns: Dictionary with the restored Word2Vec model, embeddings, and labels.
     """
 
@@ -291,6 +293,8 @@ def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
         min_count=int(config_kwargs.get("min_count", 2)),
         epochs=int(config_kwargs.get("epochs", 10)),
         model_dir=directory / "word2vec_model",
+        seed=int(config_kwargs.get("seed", 42)),
+        workers=int(config_kwargs.get("workers", 1)),
     )
     builder = Word2VecFeatureBuilder(config)
     builder.load(config.model_dir)
@@ -462,9 +466,13 @@ def _score_vector_from_similarity(
         return sims_masked
 
     if metric == "l2":
-        subset = index_data.matrix[mask].astype(np.float32)
-        diff = subset - query
-        dists = np.sqrt(diff.power(2).sum(axis=1)).A.ravel()
+        subset_sparse = index_data.matrix[mask]
+        if subset_sparse.shape[0] == 0:
+            return np.asarray([], dtype=np.float32)
+        subset = subset_sparse.toarray().astype(np.float32, copy=False)
+        query_dense = query.toarray().astype(np.float32, copy=False).ravel()
+        diff = subset - query_dense
+        dists = np.linalg.norm(diff, axis=1)
         return -dists
     return sims_masked
 
@@ -515,7 +523,7 @@ def knn_predict_among_slate_multi(
 ) -> Dict[int, Optional[int]]:  # pylint: disable=too-many-branches
     """Score each slate option using candidate-aware TF-IDF kNN.
 
-    :param knn_index: Dictionary describing the fitted index artefacts.
+    :param knn_index: Dictionary describing the fitted index artifacts.
     :param example: Dataset row containing the slate to score.
     :param k_values: Sequence of ``k`` values to evaluate.
     :param config: Optional :class:`~knn.index.SlateQueryConfig` overriding defaults.
@@ -561,7 +569,7 @@ def knn_predict_among_slate_multi(
 def _build_index_data(knn_index: Dict[str, Any]) -> Optional[SlateIndexData]:
     """Construct :class:`SlateIndexData` from a raw index dictionary.
 
-    :param knn_index: Dictionary describing the fitted index artefacts.
+    :param knn_index: Dictionary describing the fitted index artifacts.
     :returns: :class:`SlateIndexData` instance or ``None`` when the index is invalid.
     """
 

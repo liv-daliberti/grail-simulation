@@ -2,10 +2,10 @@
 
 ## Dataset coverage notes
 
-Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues.
+Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues, using the full retained rows (no within-session subsetting).
 
-- Train: 5292 of 5292 rows retained (100.0% coverage)
-- Validation: 587 of 587 rows retained (100.0% coverage)
+- Train: 21460 rows (89.9% of dataset)
+- Validation: 2419 rows (10.1% of dataset)
 
 > "The short answer is that sessions.json contains EVERYTHING.
 Every test run, every study.
@@ -44,43 +44,47 @@ Figures directory: `figures`
 
 | Split | Rows | Missing all demographics | Share |
 |-------|------|--------------------------|-------|
-| train | 5292 | 0 | 0.00% |
-| validation | 587 | 0 | 0.00% |
-| overall | 5879 | 0 | 0.00% |
+| train | 21460 | 0 | 0.00% |
+| validation | 2419 | 0 | 0.00% |
+| overall | 23879 | 0 | 0.00% |
 
 ## Profile availability
 
 | Split | Rows | Missing profile | Share missing |
 |-------|------|-----------------|---------------|
-| train | 5292 | 0 | 0.00% |
-| validation | 587 | 0 | 0.00% |
+| train | 21460 | 0 | 0.00% |
+| validation | 2419 | 0 | 0.00% |
 
 ## Prior video counts
 
 | Prior videos | Train | Validation |
 |--------------|-------|------------|
-| 0 | 4879 | 540 |
-| 1 | 327 | 37 |
-| 2 | 56 | 6 |
-| 3 | 30 | 4 |
+| 0 | 5673 | 630 |
+| 1 | 5602 | 633 |
+| 2 | 5279 | 596 |
+| 3 | 4890 | 560 |
+| 4 | 14 | 0 |
+| 5 | 1 | 0 |
+| 6 | 1 | 0 |
 
 ## Slate size distribution (`n_options`)
 
 | Slate size | Train | Validation |
 |------------|-------|------------|
-| 1 | 4 | 0 |
-| 2 | 379 | 51 |
-| 3 | 291 | 35 |
-| 4 | 3718 | 400 |
-| 5 | 900 | 101 |
+| 1 | 14 | 0 |
+| 2 | 1865 | 232 |
+| 3 | 995 | 102 |
+| 4 | 16227 | 1785 |
+| 5 | 2358 | 300 |
+| 8 | 1 | 0 |
 
 ## Unique content coverage
 
 | Split | Current videos | Gold videos | Candidate videos | Unique slates | Prompt texts |
 |-------|----------------|-------------|------------------|---------------|--------------|
-| train | 44 | 167 | 185 | 2778 | 5291 |
-| validation | 27 | 104 | 135 | 488 | 586 |
-| overall | 44 | 171 | 188 | 2987 | 5877 |
+| train | 198 | 393 | 406 | 14465 | 21361 |
+| validation | 158 | 252 | 299 | 2068 | 2403 |
+| overall | 199 | 399 | 412 | 15770 | 23764 |
 
 ## Unique participants
 
@@ -89,6 +93,16 @@ Figures directory: `figures`
 | train | 5292 |
 | validation | 587 |
 | overall | 5879 |
+
+### Participants by study
+
+| Split | Study 1 | Study 2 | Study 3 |
+|-------|---------|---------|---------|
+| train | 1355 | 1479 | 2458 |
+| validation | 162 | 168 | 257 |
+| overall | 1517 | 1647 | 2715 |
+
+_Study labels: study1 = gun control (MTurk), study2 = minimum wage (MTurk), study3 = minimum wage (YouGov)._
 
 ## Features skipped due to missing data
 

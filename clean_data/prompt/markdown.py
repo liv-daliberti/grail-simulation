@@ -240,12 +240,51 @@ def _participant_section(context: ReportContext) -> List[str]:
             continue
         rows.append([split, str(split_counts.get("overall", 0))])
 
-    return [
+    lines: List[str] = [
         "## Unique participants",
         "",
-        *_format_table(["Split", "Participants (all issues)"], rows),
-        "",
     ]
+
+    if rows:
+        lines.extend(_format_table(["Split", "Participants (all issues)"], rows))
+        lines.append("")
+
+    study_keys = sorted(
+        {
+            study
+            for split_stats in counts.values()
+            for study in split_stats.get("by_study", {}).keys()
+        }
+    )
+    if study_keys:
+        def _study_header(name: str) -> str:
+            if name.lower().startswith("study"):
+                suffix = name[len("study") :]
+                return f"Study {suffix}" if suffix else "Study"
+            return name.replace("_", " ").title()
+
+        study_headers = ["Split"] + [_study_header(study) for study in study_keys]
+        study_rows: List[List[str]] = []
+        for split in ("train", "validation", "overall"):
+            split_stats = counts.get(split)
+            if not split_stats:
+                continue
+            study_counts = split_stats.get("by_study", {})
+            study_rows.append(
+                [split]
+                + [str(study_counts.get(study, 0)) for study in study_keys]
+            )
+        lines.append("### Participants by study")
+        lines.append("")
+        lines.extend(_format_table(study_headers, study_rows))
+        lines.append("")
+        lines.append(
+            "_Study labels: study1 = gun control (MTurk), "
+            "study2 = minimum wage (MTurk), study3 = minimum wage (YouGov)._"
+        )
+        lines.append("")
+
+    return lines
 
 
 def _skipped_features_section(skipped_features: List[str]) -> List[str]:
@@ -369,21 +408,21 @@ def _coverage_section(context: ReportContext) -> List[str]:
     lines = ["## Dataset coverage notes", ""]
     lines.append(
         "Statistics and charts focus on the core study sessions (study1–study3) "
-        "covering the `gun_control` and `minimum_wage` issues."
+        "covering the `gun_control` and `minimum_wage` issues, using the full "
+        "retained rows (no within-session subsetting)."
     )
     lines.append("")
+    overall_stats = coverage.get("overall", {})
+    overall_total = int(overall_stats.get("total_rows", 0))
     for split in ("train", "validation"):
         stats = coverage.get(split, {})
         total = int(stats.get("total_rows", 0))
-        included = int(stats.get("included_rows", 0))
         excluded = int(stats.get("excluded_rows", 0))
-        share = (included / total * 100) if total else 0.0
-        message = (
-            f"- {split.title()}: {included} of {total} rows retained "
-            f"({share:.1f}% coverage)"
-        )
+        share = (total / overall_total * 100) if overall_total else 0.0
+        message = f"- {split.title()}: {total} rows ({share:.1f}% of dataset)"
         if excluded:
             breakdown = stats.get("excluded_by_study", {})
+            message += f"; {excluded} excluded rows"
             if breakdown:
                 parts = ", ".join(
                     f"{study}: {count}"

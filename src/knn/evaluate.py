@@ -965,5 +965,14 @@ def canon(text: str) -> str:
 
 
 __all__ = [
+    "parse_k_values",
+    "select_best_k",
+    "resolve_reports_dir",
+    "plot_elbow",
+    "compute_auc_from_curve",
+    "evaluate_issue",
+    "bin_nopts",
+    "bucket_from_pos",
+    "canon",
     "run_eval",
 ]

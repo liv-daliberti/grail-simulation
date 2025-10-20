@@ -8,14 +8,21 @@ from typing import Iterable, List, Mapping
 import math
 
 
+def _is_nan(value: object) -> bool:
+    try:
+        return math.isnan(float(value))
+    except (TypeError, ValueError):
+        return True
+
+
 def _format_float(value: float, precision: int = 3) -> str:
-    if math.isnan(value):
+    if _is_nan(value):
         return "n/a"
     return f"{value:.{precision}f}"
 
 
 def _format_percent(value: float, precision: int = 1) -> str:
-    if math.isnan(value):
+    if _is_nan(value):
         return "n/a"
     return f"{value * 100:.{precision}f}%"
 

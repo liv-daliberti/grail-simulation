@@ -129,7 +129,13 @@ def plot_elbow(
 
 
 def compute_auc_from_curve(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> tuple[float, float]:
-    """Return raw and normalised area under the accuracy vs k curve."""
+    """Return raw and normalised area under the accuracy vs k curve.
+
+    :param k_values: Iterable of ``k`` values considered during evaluation.
+    :param accuracy_by_k: Mapping from ``k`` to observed accuracy.
+    :returns: Tuple of ``(auc_area, auc_normalized)`` where ``auc_area`` is the
+        trapezoidal integral and ``auc_normalized`` divides by the span of ``k``.
+    """
 
     if not k_values:
         return 0.0, 0.0
@@ -144,7 +150,12 @@ def compute_auc_from_curve(k_values: Sequence[int], accuracy_by_k: Dict[int, flo
 
 
 def _normalise_feature_space(feature_space: str | None) -> str:
-    """Return the validated feature space identifier."""
+    """Return the validated feature space identifier.
+
+    :param feature_space: Raw feature-space string supplied via CLI.
+    :returns: Lowercase feature-space token (``tfidf`` or ``word2vec``).
+    :raises ValueError: If an unsupported feature space is supplied.
+    """
 
     value = (feature_space or "tfidf").lower()
     if value not in {"tfidf", "word2vec"}:
@@ -153,7 +164,12 @@ def _normalise_feature_space(feature_space: str | None) -> str:
 
 
 def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
-    """Return the Word2Vec configuration derived from CLI arguments."""
+    """Return the Word2Vec configuration derived from CLI arguments.
+
+    :param args: Parsed CLI namespace containing Word2Vec options.
+    :param issue_slug: Current issue being processed (used to namespace models).
+    :returns: Populated :class:`~knn.features.Word2VecConfig` instance.
+    """
 
     default_cfg = Word2VecConfig()
     model_root = Path(args.word2vec_model_dir) if args.word2vec_model_dir else default_cfg.model_dir
@@ -174,7 +190,16 @@ def _fit_index_for_issue(
     extra_fields: Sequence[str],
     args,
 ):
-    """Build an index for the requested feature space and handle persistence."""
+    """Build an index for the requested feature space and handle persistence.
+
+    :param feature_space: ``tfidf`` or ``word2vec``.
+    :param train_ds: Training split (Hugging Face dataset slice).
+    :param issue_slug: Normalised issue identifier.
+    :param extra_fields: Optional text fields to concatenate into documents.
+    :param args: CLI namespace for additional parameters.
+    :returns: Dictionary describing the fitted index artefacts.
+    :raises ValueError: If the requested feature space is unsupported.
+    """
 
     if feature_space == "tfidf":
         logging.info("[KNN] Building TF-IDF index for issue=%s", issue_slug)
@@ -212,7 +237,14 @@ def _load_index_for_issue(
     issue_slug: str,
     args,
 ):
-    """Load a persisted index for the requested feature space."""
+    """Load a persisted index for the requested feature space.
+
+    :param feature_space: ``tfidf`` or ``word2vec``.
+    :param issue_slug: Normalised issue identifier.
+    :param args: CLI namespace providing the ``--load-index`` directory.
+    :returns: Dictionary with the loaded index artefacts.
+    :raises ValueError: If the feature space is not recognised.
+    """
 
     load_path = Path(args.load_index) / issue_slug
     if feature_space == "tfidf":
@@ -231,7 +263,15 @@ def _build_or_load_index(
     extra_fields: Sequence[str],
     args,
 ):
-    """Return the KNN index for ``issue_slug`` based on CLI arguments."""
+    """Return the KNN index for ``issue_slug`` based on CLI arguments.
+
+    :param train_ds: Training split dataset.
+    :param issue_slug: Normalised issue identifier.
+    :param extra_fields: Optional extra text fields.
+    :param args: CLI namespace containing ``--fit-index`` or ``--load-index``.
+    :returns: Dictionary describing the fitted or loaded KNN index.
+    :raises ValueError: When neither ``--fit-index`` nor ``--load-index`` is used.
+    """
 
     feature_space = _normalise_feature_space(getattr(args, "feature_space", None))
     if args.fit_index:
@@ -252,7 +292,10 @@ def _build_or_load_index(
 
 
 def run_eval(args) -> None:  # pylint: disable=too-many-locals
-    """Evaluate the KNN baseline across the requested issues."""
+    """Evaluate the KNN baseline across the requested issues.
+
+    :param args: Parsed CLI namespace returned by :func:`knn.cli.build_parser`.
+    """
 
     os_env = os.environ
     os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
@@ -327,7 +370,23 @@ def _write_issue_outputs(
     extra_fields: Sequence[str],
     curve_metrics: Dict[str, Any],
 ) -> None:
-    """Persist evaluation artefacts and per-k directories for an issue."""
+    """Persist evaluation artefacts and per-``k`` directories for an issue.
+
+    :param args: CLI namespace controlling output directories.
+    :param issue_slug: Issue slug associated with the evaluation batch.
+    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).
+    :param dataset_source: Source dataset label written to metrics.
+    :param rows: Per-example records produced during evaluation.
+    :param k_values: Sequence of ``k`` values scored for the issue.
+    :param accuracy_by_k: Accuracy measured for each ``k``.
+    :param best_k: Elbow-selected ``k`` value.
+    :param bucket_stats: Aggregated slate-position statistics.
+    :param single_multi_stats: Aggregated single vs multi option metrics.
+    :param gold_hist: Histogram of gold indices encountered.
+    :param per_k_stats: Eligibility and correctness tallies per ``k``.
+    :param extra_fields: Extra text fields contributing to the query document.
+    :param curve_metrics: Serialised evaluation/train curve diagnostics.
+    """
 
     best_accuracy = accuracy_by_k.get(best_k, 0.0)
     eligible_overall = int(per_k_stats.get(best_k, {}).get("eligible", 0))
@@ -518,7 +577,18 @@ def _accumulate_row(
     knn_index: Dict[str, Any],
     query_config: SlateQueryConfig,
 ) -> Dict[str, Any]:
-    """Process a single evaluation example and update aggregate statistics."""
+    """Process a single evaluation example and update aggregate statistics.
+
+    :param example: Dataset row representing one recommendation slate.
+    :param bucket_stats: Mutable dictionary tracking per-bucket counts.
+    :param per_k_stats: Mutable dictionary storing eligible/correct tallies per ``k``.
+    :param single_multi_stats: Mutable dictionary tracking single vs multi-option stats.
+    :param gold_hist: Mutable histogram of observed gold indices.
+    :param k_values: Sequence of ``k`` values to score.
+    :param knn_index: Prepared KNN index artefacts.
+    :param query_config: Configuration controlling query generation.
+    :returns: Serialised per-example record including predictions for each ``k``.
+    """
 
     slate_pairs = extract_slate_items(example)
     n_options = len(slate_pairs)
@@ -593,7 +663,19 @@ def _evaluate_dataset_split(
     max_examples: int | None,
     log_k: int | None = None,
 ) -> Dict[str, Any]:
-    """Return aggregate statistics for ``dataset`` using the provided index."""
+    """Return aggregate statistics for ``dataset`` using the provided index.
+
+    :param dataset: Dataset slice to iterate.
+    :param k_values: Sequence of ``k`` values to evaluate.
+    :param knn_index: Prepared KNN index artefacts.
+    :param extra_fields: Extra text fields appended to the query.
+    :param metric: Distance metric for candidate scoring (``l2`` or ``cosine``).
+    :param capture_rows: Whether to retain per-example prediction rows.
+    :param log_label: Label emitted in progress logs.
+    :param max_examples: Optional limit on the number of processed examples.
+    :param log_k: Optional ``k`` to report accuracy for in progress logs.
+    :returns: Dictionary containing rows, aggregate stats, and counts.
+    """
 
     rows: List[Dict[str, Any]] = [] if capture_rows else []
     gold_hist: Dict[int, int] = {}
@@ -680,7 +762,13 @@ def _update_correct_counts(
     bucket_stats: Dict[str, Dict[str, int]],
     single_multi_stats: Dict[str, int],
 ) -> None:
-    """Update bucket-level correctness tallies for the selected ``best_k``."""
+    """Update bucket-level correctness tallies for the selected ``best_k``.
+
+    :param rows: Iterable of per-example prediction records.
+    :param best_k: Elbow-selected ``k`` used to judge correctness.
+    :param bucket_stats: Mutable dictionary storing per-bucket correctness.
+    :param single_multi_stats: Mutable dictionary tracking single vs multi counts.
+    """
 
     for row in rows:
         if not row["eligible"]:
@@ -744,7 +832,18 @@ def evaluate_issue(
     feature_space: str,
     args,
 ) -> None:  # pylint: disable=too-many-locals
-    """Evaluate a single issue split and write metrics/predictions."""
+    """Evaluate a single issue split and write metrics/predictions.
+
+    :param issue_slug: Normalised issue identifier.
+    :param dataset_source: Name or path of the dataset originated from.
+    :param train_ds: Training split dataset for optional curve diagnostics.
+    :param eval_ds: Evaluation split dataset.
+    :param k_values: Sequence of ``k`` values to assess.
+    :param knn_index: Prepared KNN index artefacts.
+    :param extra_fields: Extra text fields appended to queries.
+    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).
+    :param args: CLI namespace controlling evaluation options.
+    """
 
     k_values_int = sorted({int(k) for k in k_values if int(k) > 0})
     eval_max = args.eval_max if args.eval_max and args.eval_max > 0 else None

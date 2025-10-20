@@ -968,6 +968,23 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
                 interaction_stats["pairs_missing_slates"] += 1
                 continue
 
+            if (
+                slate_source == "tree_metadata"
+                and next_base
+                and not any(item.get("id") == next_base for item in slate_items)
+            ):
+                fallback_title = ""
+                if idx + 1 < len(watched_details):
+                    fallback_title = watched_details[idx + 1].get("title") or ""
+                if not fallback_title:
+                    fallback_title = next_base
+                slate_items = slate_items + [{"id": next_base, "title": fallback_title}]
+                row["slate_items_json"] = slate_items
+                row["n_options"] = len(slate_items)
+            else:
+                row["slate_items_json"] = slate_items
+                row["n_options"] = len(slate_items)
+
             participant_identifier, fallback_participant_counter = participant_key(
                 ParticipantIdentifiers(
                     worker_id=worker_id_value,
@@ -992,7 +1009,6 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
             row["selected_survey_row"] = selected_survey_row
             row["slate_items_json"] = slate_items
             row["slate_source"] = slate_source
-            row["n_options"] = len(slate_items)
             row["next_video_id"] = next_base
             row["next_video_raw_id"] = raw_vids[idx + 1]
             row["next_video_title"] = (

@@ -29,7 +29,12 @@ def _default_max_history() -> int:
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
+    """Parse command-line arguments.
+
+    :param argv: Optional list of command-line arguments. When ``None`` the
+        values are read from :data:`sys.argv`.
+    :returns: Parsed :class:`argparse.Namespace` with CLI options.
+    """
 
     parser = argparse.ArgumentParser(
         description="Build cleaned GRAIL datasets suitable for GRPO training."
@@ -83,7 +88,10 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
 
 
 def main(argv: Optional[list[str]] = None) -> None:
-    """Entry point invoked by the CLI scripts."""
+    """Entry point invoked by the CLI scripts.
+
+    :param argv: Optional command-line argument list.
+    """
 
     args = parse_args(argv)
     logging.basicConfig(

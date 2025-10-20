@@ -10,7 +10,10 @@ from .evaluate import run_eval
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Return the argument parser for the KNN baseline CLI."""
+    """Return the argument parser for the KNN baseline CLI.
+
+    :returns: Configured :class:`argparse.ArgumentParser` instance with all KNN options.
+    """
 
     parser = argparse.ArgumentParser(description="KNN baselines for GRAIL (TF-IDF / Word2Vec)")
     parser.add_argument(
@@ -154,7 +157,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Parse CLI arguments and execute the evaluation routine."""
+    """Parse CLI arguments and execute the evaluation routine.
+
+    :param argv: Optional list of command-line arguments. When ``None`` the values
+        are read from :data:`sys.argv`.
+    """
 
     parser = build_parser()
     args = parser.parse_args(argv)

@@ -72,7 +72,11 @@ def _truthy(value: Any) -> bool:
 
 
 def viewer_profile_sentence(example: dict) -> str:
-    """Return the viewer profile sentence for ``example``."""
+    """Return the viewer profile sentence for ``example``.
+
+    :param example: Dataset row containing viewer metadata.
+    :returns: Cleaned viewer profile sentence (may be empty).
+    """
 
     sentence = clean_text(example.get("viewer_profile_sentence"))
     if not sentence:
@@ -86,7 +90,11 @@ def viewer_profile_sentence(example: dict) -> str:
 
 
 def prompt_from_builder(example: dict) -> str:
-    """Return the prompt text for ``example`` using the shared builder."""
+    """Return the prompt text for ``example`` using the shared builder.
+
+    :param example: Dataset row used to construct the prompt.
+    :returns: Prompt string derived from shared builder logic.
+    """
 
     existing = example.get("state_text") or example.get("prompt")
     if isinstance(existing, str) and existing.strip():
@@ -191,19 +199,32 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
 
 
 def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
-    """Public wrapper returning the slate as ``(title, video_id)`` pairs."""
+    """Return the slate as ``(title, video_id)`` pairs.
+
+    :param example: Dataset row containing slate metadata.
+    :returns: Ordered list of candidate tuples for the slate.
+    """
 
     return _extract_slate_items(example)
 
 
 def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
-    """Public wrapper returning the currently-watched title/id, if known."""
+    """Return the currently watched title/id, if known.
+
+    :param example: Dataset row containing now-watching metadata.
+    :returns: ``(title, video_id)`` tuple when available, otherwise ``None``.
+    """
 
     return _extract_now_watching(example)
 
 
 def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
-    """Return concatenated text used to featurise ``example``."""
+    """Return concatenated text used to featurise ``example``.
+
+    :param example: Dataset row containing prompt and slate context.
+    :param extra_fields: Iterable of additional field names to append.
+    :returns: Single text string describing the viewer + slate.
+    """
 
     extra_fields = extra_fields or []
 
@@ -252,7 +273,15 @@ def prepare_training_documents(
     seed: int,
     extra_fields: Sequence[str] | None = None,
 ):
-    """Return TF-IDF training documents and associated labels."""
+    """Return TF-IDF training documents and associated labels.
+
+    :param train_ds: Training dataset split.
+    :param max_train: Maximum number of rows to sample.
+    :param seed: Random seed for subsampling.
+    :param extra_fields: Optional iterable of additional text fields.
+    :returns: Tuple ``(documents, label_ids, label_titles)``.
+    :raises RuntimeError: If no valid documents are produced.
+    """
 
     n_rows = len(train_ds)
     if n_rows == 0:

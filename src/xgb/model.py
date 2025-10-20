@@ -8,7 +8,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
-import joblib
+try:  # pragma: no cover - optional dependency
+    import joblib
+except ImportError:  # pragma: no cover - optional dependency
+    joblib = None  # type: ignore[assignment]
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 
@@ -151,6 +154,9 @@ def save_xgboost_model(model: XGBoostSlateModel, out_dir: Path | str) -> None:
     :type out_dir: Path or str
     """
 
+    if joblib is None:
+        raise ImportError("Install joblib to save the XGBoost baseline artifacts.")
+
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
     joblib.dump(model.vectorizer, directory / "vectorizer.joblib")
@@ -169,6 +175,9 @@ def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
     :returns: Restored model bundle.
     :rtype: XGBoostSlateModel
     """
+
+    if joblib is None:
+        raise ImportError("Install joblib to load the XGBoost baseline artifacts.")
 
     directory = Path(in_dir)
     vectorizer: TfidfVectorizer = joblib.load(directory / "vectorizer.joblib")

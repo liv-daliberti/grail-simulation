@@ -8,11 +8,19 @@ import pytest
 
 pytest.importorskip("sklearn")
 pytest.importorskip("joblib")
+pytest.importorskip("gensim")
 
 from knn import cli
 from knn.data import DEFAULT_DATASET_SOURCE
-from knn.features import prepare_training_documents
-from knn.index import (SlateQueryConfig, build_tfidf_index, knn_predict_among_slate_multi)
+from knn.features import Word2VecConfig, prepare_training_documents
+from knn.index import (
+    SlateQueryConfig,
+    build_tfidf_index,
+    build_word2vec_index,
+    knn_predict_among_slate_multi,
+    load_word2vec_index,
+    save_word2vec_index,
+)
 
 pytestmark = pytest.mark.knn
 
@@ -95,3 +103,40 @@ def test_cli_parser_hyphenated_options() -> None:
     assert args.knn_k == 13
     assert args.eval_max == 5
     assert args.issues == "minimum_wage"
+
+
+def test_build_word2vec_index_roundtrip(tmp_path) -> None:
+    dataset = DummyDataset([_example_row()])
+    config = Word2VecConfig(
+        vector_size=16,
+        window=2,
+        min_count=1,
+        epochs=1,
+        model_dir=tmp_path / "w2v_model",
+    )
+    index = build_word2vec_index(
+        dataset,
+        max_train=10,
+        seed=0,
+        config=config,
+    )
+    assert index["feature_space"] == "word2vec"
+    predictions = knn_predict_among_slate_multi(
+        knn_index=index,
+        example=_example_row(),
+        k_values=[1, 5],
+        config=SlateQueryConfig(),
+    )
+    assert predictions[1] == 1
+
+    save_path = tmp_path / "persisted"
+    save_word2vec_index(index, save_path)
+    loaded = load_word2vec_index(save_path)
+    assert loaded["feature_space"] == "word2vec"
+    predictions_loaded = knn_predict_among_slate_multi(
+        knn_index=loaded,
+        example=_example_row(),
+        k_values=[1, 5],
+        config=SlateQueryConfig(),
+    )
+    assert predictions_loaded[1] == predictions[1]

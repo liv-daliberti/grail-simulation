@@ -325,10 +325,20 @@ def dedupe_participants(df: pd.DataFrame) -> pd.DataFrame:
     if issue_series is None:
         issue_series = pd.Series(["unknown"] * len(df), index=df.index)
     issue_series = issue_series.fillna("unknown").astype(str).str.strip()
+    study_series = df.get("participant_study")
+    if study_series is None:
+        study_series = pd.Series(["unknown"] * len(df), index=df.index)
+    study_series = study_series.fillna("unknown").astype(str).str.strip()
     dedup = df.copy()
     dedup = dedup.assign(
         _participant_internal_id=ids,
-        _participant_issue_key=ids.astype(str).str.strip() + "||" + issue_series,
+        _participant_issue_key=(
+            ids.astype(str).str.strip()
+            + "||"
+            + study_series
+            + "||"
+            + issue_series
+        ),
     )
     dedup = dedup.drop_duplicates(subset=["_participant_issue_key"])
     dedup = dedup.drop(
@@ -373,12 +383,21 @@ def participant_stats(df: pd.DataFrame) -> Dict[str, Any]:
     mask = lower_participant.isin({"", "nan", "none", "null"})
     ids_df = ids_df.loc[~mask]
 
-    overall = int(ids_df["participant"].nunique())
-    by_issue = {k: int(v) for k, v in ids_df.groupby("issue")["participant"].nunique().items()}
-    by_study = {k: int(v) for k, v in ids_df.groupby("study")["participant"].nunique().items()}
+    ids_df = ids_df.assign(
+        participant_study_key=ids_df["participant"] + "||" + ids_df["study"]
+    )
+
+    overall = int(ids_df["participant_study_key"].nunique())
+    by_issue = {
+        k: int(v)
+        for k, v in ids_df.groupby("issue")["participant_study_key"].nunique().items()
+    }
+    by_study = {
+        k: int(v) for k, v in ids_df.groupby("study")["participant_study_key"].nunique().items()
+    }
 
     by_issue_study: Dict[str, Dict[str, int]] = {}
-    grouped = ids_df.groupby(["issue", "study"])["participant"].nunique()
+    grouped = ids_df.groupby(["issue", "study"])["participant_study_key"].nunique()
     for (issue_name, study_name), count in grouped.items():
         by_issue_study.setdefault(issue_name, {})[study_name] = int(count)
 

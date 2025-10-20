@@ -13,3 +13,11 @@ API Reference
    :recursive:
 
    clean_data
+   prompt_builder
+
+Additional API pages provide more detailed module-level documentation:
+
+.. toctree::
+   :maxdepth: 2
+
+   api/prompt_builder

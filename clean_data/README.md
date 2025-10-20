@@ -1,134 +1,88 @@
-# Cleaned GRAIL Dataset: Alignment With CodeOcean Pipelines
+# Clean Data Pipeline
 
-This document explains how the Python builder (invoked via `python -m clean_data.cli`) replicates the preprocessing that the PNAS authors performed in their CodeOcean capsule. It is the detailed companion to the high‑level overview in the [repository README](../README.md), and the reusable functions live in `clean_data/clean_data.py`.
+This document describes how the Python implementation in `clean_data/` mirrors the CodeOcean preprocessing used in the PNAS “Filter Bubble” studies. It complements the high-level project README and focuses on provenance, filtering rules, and module responsibilities.
 
-## Overview
+## Package Overview
 
-## Module Guide
+| Module | Responsibility |
+| ------ | -------------- |
+| `clean_data.sessions` | Parses CodeOcean session logs, enforces allow-lists, deduplicates participants, and emits the intermediate dataframe. |
+| `clean_data.prompting` | Converts each interaction row into a GRPO-style prompt (`row_to_example`) and manages all prompt formatting helpers. |
+| `clean_data.clean_data` | Public façade: loads datasets, filters unusable rows, builds cleaned splits, validates schema, saves/pushes outputs, and runs prompt stats. |
+| `clean_data.codeocean` | Thin compatibility shim that reconstructs datasets directly from the capsule directory. |
+| `clean_data.prompt` | Prompt analytics (plots + Markdown report) exposed via `python -m clean_data.prompt.cli`. |
+| `clean_data.filters` | Simple predicates for prompt readiness and issue-count summaries used during dataset assembly. |
+| `clean_data.surveys` / `clean_data.io` / `clean_data.helpers` | Shared utilities for reading survey exports, normalising identifiers, and synthesising viewer attributes. |
 
-- **Session pipeline**: `clean_data.sessions` houses the canonical `build_codeocean_rows` function plus helpers for session normalization, allow-list enforcement, and participant deduplication.  Any new prompt builder should depend on these APIs rather than re-parsing the capsule.
-- **Prompt builder**: `clean_data.prompting` (with constants in `clean_data/prompt/constants.py`) owns all prompt formatting logic.  `clean_data/clean_data.py` re-exports `row_to_example` for convenience, and prompt_builder.py should import from these modules directly.
-- **Dataset façade**: `clean_data/codeocean.py` offers `load_codeocean_dataset` for consumers that want a ready-made `DatasetDict`.  The CLI `python -m clean_data.cli` wraps this functionality for end-to-end builds.
-- **Prompt analytics**: The statistics/Markdown tooling lives under `clean_data/prompt`.  Invoke it with `python -m clean_data.prompt.cli ...` and point it at any cleaned dataset.
+## Input Data and Allow-Lists
 
-The allow-list CSVs consumed during cleaning come from the CodeOcean capsule’s `results/intermediate data/...` directories—e.g. `results/intermediate data/gun control (issue 1)/guncontrol_qualtrics_w123_clean.csv` for Study 1 and the corresponding minimum-wage folders for Studies 2–4.  Shorts (Study 4) surveys are still read from `results/intermediate data/shorts/qualtrics_w12_clean_ytrecs_may2024.csv`, but interactions are excluded from prompt rows because the released sessions lack recommendation slates.
+The builder consumes the intermediate CSV/RDS exports bundled with the CodeOcean capsule:
 
-The builder reads the same intermediate CSV exports the CodeOcean R scripts emit and applies the study‑specific filters before combining them with the YouTube session logs. Every retained training row is keyed on the participant identifier that the paper used (worker IDs for MTurk/Shorts, case IDs for YouGov), and we deduplicate on `(participant_id, issue)` to ensure each person contributes at most one trajectory per domain.
+- `results/intermediate data/gun control (issue 1)/guncontrol_qualtrics_w1_clean.csv`
+- `results/intermediate data/gun control (issue 1)/guncontrol_qualtrics_w123_clean.csv`
+- `results/intermediate data/minimum wage (issue 2)/qualtrics_w12_clean.csv`
+- `results/intermediate data/minimum wage (issue 2)/yg_w12_clean.csv`
+- `results/intermediate data/shorts/qualtrics_w12_clean_ytrecs_may2024.csv`
+- Session logs under `data/platform session data/sessions.json` and `data/shorts/ytrecs_sessions_may2024.rds`
 
-> Looking for the prompt-level diagnostics (feature coverage plots, participant counts, etc.)? They now live in [`clean_data/prompt/`](./prompt), a small package that powers the CLI shim `clean_data/prompt_stats.py`. You can invoke it either via that wrapper or with `python -m clean_data.prompt.cli`.
+Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists`. Identifiers are normalised and deduplicated so each viewer contributes at most one trajectory per issue.
 
-The implementation mirrors three buckets of logic from the R code:
+## Processing Pipeline
 
-1. **Wave‑1 screening (Studies 1–3)** – attention checks, survey duration limits, and ideology index trimming.
-2. **Session joins and earliest exposure** – merging Wave 2/3 surveys with the YouTube interaction logs and keeping the first qualifying session per participant.
-3. **Analysis filters** – dropping pure control arms and rows missing the interaction summaries (`pro`, `anti`).
+1. **Reconstruct allow-lists** – attention checks, survey-duration limits, ideology index trimming, and control-arm removal mirror the R scripts.
+2. **Merge surveys with sessions** – join cleaned survey exports to the YouTube logs, keeping the earliest valid session per participant (`clean_data.sessions.build_codeocean_rows`).
+3. **Filter unusable rows** – drop interactions missing a usable slate or gold choice (`clean_data.filters.filter_prompt_ready`).
+4. **Convert to prompts** – build GRPO-friendly prompt dictionaries with metadata passthrough (`clean_data.prompting.row_to_example`).
+5. **Validate & save** – enforce required columns, write the dataset to disk, emit prompt stats, and optionally push to the Hugging Face Hub.
 
-The sections below spell out the exact filters per study, show how we validate the resulting counts, and note the two remaining discrepancies between the public numbers and the current data drop.
+## Study-Specific Filters
 
-## Study‑Specific Filters
+| Study | Audience | Key Filters | Resulting IDs |
+| ----- | -------- | ----------- | ------------- |
+| Study 1 – Gun Control (MTurk) | `guncontrol_qualtrics_w1_clean.csv` + `w123` follow-up | Attention checks (`q87/q89`), ≥120s survey time, ideology index ∈ [0.05, 0.95], drop control arm, require `pro`/`anti`, earliest `worker_id` session | 1,650 worker IDs |
+| Study 2 – Minimum Wage (MTurk/CloudResearch) | `qualtrics_w12_clean.csv` | Same attention checks, ≥120s, wage index ∈ [0.025, 0.975], drop control arm, require `pro`/`anti`, earliest `worker_id` session | 1,678 worker IDs (paper lists 1,679; one respondent fails audio check) |
+| Study 3 – Minimum Wage (YouGov) | `yg_w12_clean.csv` | Drop control arm, require `pro`/`anti`, earliest `caseid` session | 2,715 case IDs |
+| Study 4 – Shorts experiment | `qualtrics_w12_clean_ytrecs_may2024.csv` + `ytrecs_sessions_may2024.rds` | Allow-list recorded for auditing, but sessions excluded from prompts because logs lack recommendation slates | 931 worker IDs retained in reporting |
 
-### Study 1 — Gun Control (MTurk)
-
-Source scripts: `code/gun control (issue 1)/02_clean_merge.R`, `03_analysis_multipletesting.R`
-
-Steps reproduced in Python:
-
-- Load `guncontrol_qualtrics_w1_clean.csv`.
-- Keep respondents where:
-  - `q87 == "Quick and easy"`
-  - `q89 == "wikiHow"`
-  - `survey_time >= 120` seconds
-  - `gun_index` between `0.05` and `0.95` (inclusive).
-- Join Wave 2/3 data (`guncontrol_qualtrics_w123_clean.csv`) and filter to the workers passing Wave 1.
-- Drop sessions whose `treatment_arm` is `"control"` or missing.
-- Require non‑missing `pro` and `anti`.
-- Deduplicate on `worker_id`, keeping the earliest `start_time2`.
-
-Result: **1,650** unique worker IDs (control matches the paper exactly). We also track the 1,635 distinct `urlid` values after filtering, matching the R scripts’ observation.
-
-### Study 2 — Minimum Wage (MTurk / CloudResearch)
-
-Source scripts: `code/minimum wage (issue 2)/02_clean_merge.R`, `03_analysis_multipletesting.R`
-
-Filters:
-
-- Load `qualtrics_w12_clean.csv`.
-- Require the Wave‑1 checks:
-  - `q87 == "Quick and easy"`
-  - `q89 == "wikiHow"`
-  - `survey_time >= 120`
-  - `mw_index_w1` between `0.025` and `0.975`.
-- Drop `treatment_arm == "control"` (case‑insensitive).
-- Require non‑missing `pro` and `anti`.
-- Deduplicate on `worker_id` using the earliest `start_time2`.
-
-Output: **1,678** unique worker IDs. The published total is 1,679, and the missing participant corresponds to a single worker who passed the numeric filters but failed the audio check (`q87 == "Slow and arduous"`). The R scripts removed that respondent upstream as part of the attention check, so our pipeline leaves the count at 1,678 to stay faithful to that logic.
-
-### Study 3 — Minimum Wage (YouGov)
-
-Source scripts: `code/minimum wage (issue 2)/02b_clean_merge_yg.R`, `03b_analysis_multipletesting_yg.R`
-
-Filters:
-
-- Load `yg_w12_clean.csv` (YouGov’s merged panel export).
-- Treat `caseid` as the participant key.
-- Drop `treatment_arm == "control"`.
-- Require non‑missing `pro` and `anti`.
-- Deduplicate on `caseid` by earliest `start_time2`.
-
-Result: **2,715** unique case IDs, matching the paper.
-
-### Study 4 — Minimum Wage Shorts Experiment (prompt rows excluded)
-
-Source script: `code/shorts/05_clean_shorts_data.R`
-
-- Load `qualtrics_w12_clean_ytrecs_may2024.csv` to recover the list of 932 recruited participants and their attention-check status.
-- The interaction log lives in `data/shorts/ytrecs_sessions_may2024.rds`; many entries contain only the auto-play “startvid” clip and no follow-up recommendations.
-- Because prompt rows require a recommendation slate and a chosen next video, we currently **exclude Study 4 from the cleaned dataset**. We still ingest the survey allow-list so the shortfall can be tracked (see below), but we do not synthesize rows for sessions with no usable decision pairs.
-
-Implication: counts derived from `clean_data.py` reflect Studies 1–3 only. When reporting headline numbers, include a note that the Shorts experiment is omitted due to missing recommendation slates in the released interaction logs.
+Shorts participants remain in the allow-list summaries so shortfall analyses match the original paper, but prompt rows are emitted only for Studies 1–3.
 
 ## Validation and Logging
 
-During the build step the script records:
+Running `python -m clean_data.cli ...` produces informative logs:
 
-- Allow‑list sizes per study (`log.info` statements when reading the CSVs).
-- A `sessions_filtered_allowlist` counter tracking interaction rows that are rejected because the participant is not in a study’s valid set.
-- `participant_study` tags on each emitted row (`study1`, `study2`, `study3`, `study4`) so downstream metrics can be grouped by the original experiments.
+- Allow-list sizes per study (“Allow-list (gun control): …”).
+- Interaction statistics (`sessions_total`, `pairs_total`, `sessions_filtered_allowlist`, `pairs_missing_slates`, etc.).
+- Confirmation when prompt analytics run and when cleaned splits are pushed to the Hugging Face Hub.
 
-You can re‑run the allow‑list sizing without rebuilding the entire dataset by executing:
+Replay the logging without writing to disk by invoking the CLI with a throwaway output directory.
+
+## Known Discrepancies
+
+| Study | Published | Builder | Delta | Explanation |
+| ----- | --------- | ------- | ----- | ----------- |
+| Study 1 | 1,650 | 1,650 | 0 | Matches R pipeline exactly |
+| Study 2 | 1,679 | 1,678 | −1 | One worker fails the audio-attention check after R filtering |
+| Study 3 | 2,715 | 2,715 | 0 | Matches R pipeline exactly |
+| Study 4 | 932 | 931 | −1 | Duplicate `worker_id`; earliest session kept |
+
+Relaxing the Study 2 audio check or retaining both Shorts sessions would recover the headline counts, but the default configuration stays aligned with the published preprocessing.
+
+## Prompt Analytics
+
+The reporting package lives in `clean_data/prompt/` and can be executed either through `python -m clean_data.cli --prompt-stats-dir ...` or directly:
 
 ```bash
-python -m compileall clean_data  # ensures the package imports
-python -m clean_data.cli --dataset-name <capsule_dir>/data --output-dir /tmp/check
+python -m clean_data.prompt.cli \
+  --dataset data/cleaned_grail \
+  --output-dir reports/prompt_stats
 ```
 
-Inspect the logs for the “Allow-list” summaries to confirm the counts above.
-
-## Discrepancies Versus Published Counts
-
-| Study | Published | Python Builder | Gap | Cause |
-|-------|-----------|----------------|-----|-------|
-| Study 1 (gun control) | 1,650 | 1,650 | 0 | Perfect match |
-| Study 2 (minimum wage MTurk) | 1,679 | 1,678 | −1 | One participant fails the audio attention check (`q87`) after R filtering |
-| Study 3 (minimum wage YouGov) | 2,715 | 2,715 | 0 | Perfect match |
-| Study 4 (minimum wage Shorts) | 932 | 931 | −1 | Duplicate `worker_id`; we keep the earliest session |
-
-If you need to match the headline tallies exactly, you can relax the Wave‑1 audio check in Study 2 and keep both Shorts sessions. For auditability—and to stay aligned with the authors’ own preprocessing—we retain the stricter filters.
-
-## Relationship to the Gun Control Pipeline
-
-Gun control and minimum wage studies now share the same mechanics:
-
-- Study allow‑lists are enforced before joining session logs.
-- Participant identifiers are unified in this order: `worker_id`, `caseid`, YouTube anonymous ID, `urlid`, session ID.
-- Deduplication occurs per `(participant_id, issue)`.
-
-These conventions guarantee that any participant counts derived from the cleaned dataset line up with the original study populations, aside from the two discrepancies described above.
+Outputs include histogram PNGs, JSON summaries, and a Markdown README summarising feature coverage, participant counts, and demographic completeness.
 
 ## Summary
 
-- The Python builder mirrors the published filters for Studies 1–3. Study 4 (Shorts) participants are kept in the allow-list for auditing but are not converted into prompt rows because their interaction log lacks recommendation slates.
-- Only minor count differences remain for Studies 1–3, both explained by attention checks or duplicate sessions.
-- Validation happens via logged allow-list sizes, per-session filtering counters, and the `participant_study` labels embedded in every output row.
-- For an at-a-glance description of the data products and how to run the builder, see the top-level [project README](../README.md). This file serves as the deep-dive reference for researchers verifying provenance and reproducibility.
+- Python faithfully mirrors the CodeOcean R preprocessing while exposing reusable modules.
+- Allow-list enforcement, deduplication, and prompt synthesis live in separate modules for clarity.
+- Shortfall and validation metrics are logged automatically, making it easy to audit runs or compare against the original studies.
+
+See the top-level README for setup instructions, training commands, and published artifacts.

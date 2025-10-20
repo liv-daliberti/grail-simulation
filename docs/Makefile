@@ -21,5 +21,5 @@ clean:
 	rm -rf "$(BUILDDIR)" "$(SOURCEDIR)/_autosummary"
 
 html:
-	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(MAKE) clean
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

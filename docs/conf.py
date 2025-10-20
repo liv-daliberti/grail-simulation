@@ -8,9 +8,7 @@ from datetime import datetime
 
 # Make the project root and src directory importable so autodoc can find modules.
 ROOT_DIR = os.path.abspath("..")
-SRC_DIR = os.path.join(ROOT_DIR, "src")
-sys.path.insert(0, ROOT_DIR)
-sys.path.insert(0, SRC_DIR)
+sys.path.insert(0, os.path.abspath(".."))
 
 project = "GRAIL Simulation"
 author = "GRAIL Simulation Team"
@@ -35,6 +33,7 @@ autodoc_mock_imports = [
     "e2b_code_interpreter",
     "einops",
     "graphviz",
+    "knn",
     "hf_transfer",
     "huggingface_hub",
     "jieba",
@@ -46,10 +45,13 @@ autodoc_mock_imports = [
     "matplotlib",
     "morphcloud",
     "numpy",
+    "open_r1",
     "pandas",
     "peft",
+    "prompt_builder",
     "pyarrow",
     "safetensors",
+    "visualization",
     "scikit_learn",
     "sklearn",
     "sentencepiece",

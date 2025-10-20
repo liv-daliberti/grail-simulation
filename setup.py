@@ -23,8 +23,22 @@ def read_long_description() -> str:
     return ""
 
 
+def read_requirements(relative_path: str) -> list[str]:
+    """Return requirement specifiers from a requirements-style text file."""
+    path = PROJECT_ROOT / relative_path
+    if not path.exists():
+        return []
+    requirements: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            requirements.append(stripped)
+    return requirements
+
+
 src_packages = find_packages(where="src")
 clean_data_packages = find_packages(include=["clean_data", "clean_data.*"])
+dev_requirements = read_requirements("requirements-dev.txt")
 
 setup(
     name="grail-simulation",
@@ -80,5 +94,8 @@ setup(
         "tqdm>=4.66.0",
         "wandb>=0.19.1",
     ],
+    extras_require={
+        "dev": sorted(set(dev_requirements)),
+    },
     include_package_data=True,
 )

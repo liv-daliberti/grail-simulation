@@ -100,6 +100,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
 ]
 
 autodoc_mock_imports = [
@@ -154,3 +155,68 @@ exclude_patterns: list[str] = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "alabaster"
 html_static_path = ["_static"]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", {}),
+    "numpy": ("https://numpy.org/doc/stable/", {}),
+    "pandas": ("https://pandas.pydata.org/docs/", {}),
+    "torch": ("https://pytorch.org/docs/stable/", {}),
+    "transformers": ("https://huggingface.co/docs/transformers/main/en", {}),
+    "sklearn": ("https://scikit-learn.org/stable/", {}),
+    "graphviz": ("https://graphviz.readthedocs.io/en/stable/", {}),
+    "datasets": ("https://huggingface.co/docs/datasets/main/en", {}),
+}
+
+_nitpick_targets = {
+    "py:class": [
+        "DatasetDict",
+        "Execution",
+        "ModelConfig",
+        "Path",
+        "argparse.ArgumentParser",
+        "argparse.Namespace",
+        "abc.ABC",
+        "collections.Counter",
+        "common.title_index.TitleResolver",
+        "datasets.Dataset",
+        "datasets.DatasetDict",
+        "distilabel.pipeline.Pipeline",
+        "graphviz.Digraph",
+        "knn.index.SlateQueryConfig",
+        "numpy.ndarray",
+        "openai.AzureOpenAI",
+        "optional",
+        "pandas.DataFrame",
+        "pandas.Series",
+        "pathlib.Path",
+        "sequence-like",
+        "sklearn.feature_extraction.text.TfidfVectorizer",
+        "sklearn.preprocessing.LabelEncoder",
+        "torch.device",
+        "torch.utils.data.Dataset",
+        "transformers.PreTrainedModel",
+        "transformers.PreTrainedTokenizer",
+        "transformers.PreTrainedTokenizerBase",
+        "transformers.TrainerCallback",
+        "transformers.TrainerControl",
+        "transformers.TrainerState",
+        "transformers.TrainingArguments",
+        "transformers.generation.utils.GenerationMixin",
+        "trl.GRPOConfig",
+        "trl.ModelConfig",
+        "trl.SFTConfig",
+        "trl.ScriptArguments",
+        "trl._ensure_trl_stub.<locals>.GRPOTrainer",
+        "xgboost.XGBClassifier",
+    ],
+    "py:func": [
+        "load_participant_allowlists",
+    ],
+    "py:mod": [
+        "xgboost",
+    ],
+}
+
+nitpick_ignore: list[tuple[str, str]] = []
+for domain, targets in _nitpick_targets.items():
+    nitpick_ignore.extend((domain, target) for target in targets)

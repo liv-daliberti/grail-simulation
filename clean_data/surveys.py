@@ -22,10 +22,11 @@ from clean_data.helpers import (
     _normalize_urlid,
 )
 from clean_data.io import read_csv_if_exists
+from clean_data.prompt_constants import PROMPT_FEATURE_GROUPS
 
 log = logging.getLogger("clean_grail")
 
-DEMOGRAPHIC_COLUMNS = [
+_BASE_DEMOGRAPHIC_COLUMNS = [
     "age",
     "gender",
     "q26",
@@ -40,6 +41,17 @@ DEMOGRAPHIC_COLUMNS = [
     "freq_youtube",
     "college",
 ]
+
+_PROMPT_FEATURE_COLUMNS = [
+    column
+    for group in PROMPT_FEATURE_GROUPS.values()
+    for column in group
+]
+
+# Preserve original order while adding any missing prompt feature columns.
+DEMOGRAPHIC_COLUMNS = list(
+    dict.fromkeys(_BASE_DEMOGRAPHIC_COLUMNS + _PROMPT_FEATURE_COLUMNS)
+)
 
 
 def build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:

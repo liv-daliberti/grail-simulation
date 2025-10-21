@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .formatters import clean_text
 from .parsers import as_list_json, format_count, secs
@@ -172,15 +172,33 @@ def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
     :returns: Descriptor string describing watch progress and metadata.
     """
     title = clean_text(
-        record.get("title")
-        or record.get("name")
-        or record.get("video_title"),
+        record.get("title") or record.get("name") or record.get("video_title"),
         limit=160,
     )
     rid = clean_text(record.get("id"))
     channel = clean_text(record.get("channel_title") or record.get("channel"))
-    watch_seconds = secs(record.get("watch_seconds"))
-    total_length = secs(record.get("total_length"))
+    watch_seconds_value = _extract_duration_seconds(
+        record,
+        (
+            "watch_seconds",
+            "watch_duration",
+            "watch_time",
+            "watch_ms",
+        ),
+    )
+    total_length_value = _extract_duration_seconds(
+        record,
+        (
+            "total_length",
+            "total_duration",
+            "duration_seconds",
+            "length_seconds",
+            "total_length_ms",
+            "duration",
+        ),
+    )
+    watch_seconds = secs(watch_seconds_value) if watch_seconds_value is not None else "?"
+    total_length = secs(total_length_value) if total_length_value is not None else "?"
     descriptor = f"[{watch_seconds}/{total_length}] {title or '(untitled)'}"
     extras: List[str] = []
     if channel:
@@ -190,6 +208,30 @@ def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
     if extras:
         descriptor = f"{descriptor} — {', '.join(extras)}"
     return descriptor
+
+
+def _extract_duration_seconds(
+    record: Dict[str, Any],
+    keys: Sequence[str],
+) -> Optional[float]:
+    """Return the first positive duration found in ``record`` for ``keys``."""
+
+    for key in keys:
+        if key not in record:
+            continue
+        raw_value = record.get(key)
+        if raw_value is None:
+            continue
+        try:
+            duration = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if duration <= 0:
+            continue
+        if key.endswith("_ms") and duration > 1000:
+            duration /= 1000.0
+        return duration
+    return None
 
 
 def _options_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
@@ -212,19 +254,19 @@ def _options_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
     for index, item in enumerate(items, 1):
         if not isinstance(item, dict):
             continue
-        section.append(_option_line(index, item, show_ids))
+        section.extend(_option_lines(index, item, show_ids))
     if len(section) == 2:  # only header produced lines
         section.append("(no options provided)")
     return section
 
 
-def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
+def _option_lines(position: int, item: Dict[str, Any], show_ids: bool) -> List[str]:
     """Render a single recommendation option for inclusion in the prompt.
 
     :param position: 1-based index of the option.
     :param item: Dictionary containing option metadata.
     :param show_ids: Whether to include identifiers in the output.
-    :returns: Formatted option line.
+    :returns: Formatted option lines (primary line plus engagement summary).
     """
     title = clean_text(item.get("title"), limit=160)
     option_id = clean_text(item.get("id"))
@@ -244,7 +286,11 @@ def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
     parts.extend(_option_stats(item))
     if option_id and (show_ids or not title):
         parts.append(f"id: {option_id}")
-    return f"{position}. {' — '.join(parts)}"
+    lines = [f"{position}. {' — '.join(parts)}"]
+    engagement_summary = _option_engagement_summary(item)
+    if engagement_summary:
+        lines.append(f"   {engagement_summary}")
+    return lines
 
 
 def _format_duration(item: Dict[str, Any]) -> str:
@@ -270,22 +316,46 @@ def _format_duration(item: Dict[str, Any]) -> str:
 
 
 def _option_stats(item: Dict[str, Any]) -> Iterable[str]:
-    """Yield formatted statistics (views, likes, etc.) for the option.
+    """Yield formatted statistics (views, dislikes, etc.) for the option.
 
     :param item: Dictionary containing count fields.
     :returns: Iterator over formatted ``label: value`` strings.
     """
     stat_labels = [
         ("view_count", "views"),
-        ("like_count", "likes"),
         ("dislike_count", "dislikes"),
         ("favorite_count", "favorites"),
-        ("comment_count", "comments"),
     ]
     for key, label in stat_labels:
         formatted = format_count(item.get(key))
         if formatted is not None:
             yield f"{label}: {formatted}"
+
+
+def _option_engagement_summary(item: Dict[str, Any]) -> str:
+    """Return a summary line covering likes, comments, and shares."""
+
+    def first_present(keys: Sequence[str]) -> Any:
+        for key in keys:
+            value = item.get(key)
+            if value is None:
+                continue
+            text = str(value).strip()
+            if not text:
+                continue
+            return value
+        return None
+
+    metrics = [
+        ("likes", ("like_count", "likes", "likeCount")),
+        ("comments", ("comment_count", "comments", "commentCount")),
+        ("shares", ("share_count", "shares", "shareCount")),
+    ]
+    parts: List[str] = []
+    for label, keys in metrics:
+        formatted = format_count(first_present(keys))
+        parts.append(f"{label}: {formatted if formatted is not None else 'n/a'}")
+    return " — ".join(parts)
 
 
 __all__ = [

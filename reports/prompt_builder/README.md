@@ -14,11 +14,13 @@ CURRENT VIDEO:
 How to Create a Gun-Free America in 5 Easy Steps — channel: ReasonTV
 
 RECENTLY WATCHED (NEWEST LAST):
-1. [?/?] Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
+1. [259s/259s] Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
 
 OPTIONS:
 1. Democrats Need to Listen to Gun Owners — channel: The Atlantic
+   likes: n/a — comments: n/a — shares: n/a
 2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain
+   likes: n/a — comments: n/a — shares: n/a
 ```
 
 ### Sample 2 (Issue: Minimum Wage, Split: train, Study: study3)
@@ -31,11 +33,15 @@ CURRENT VIDEO:
 Price Floors: The Minimum Wage — channel: Marginal Revolution University
 
 RECENTLY WATCHED (NEWEST LAST):
-1. [?/?] Seattle's $15 Minimum Wage Experiment is Working — channel: Alicé Anil
+1. [222s/222s] Seattle's $15 Minimum Wage Experiment is Working — channel: Alicé Anil
 
 OPTIONS:
 1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News
+   likes: n/a — comments: n/a — shares: n/a
 2. Republicans Block Minimum Wage Increase — channel: Senator Bernie Sanders
+   likes: n/a — comments: n/a — shares: n/a
 3. Caller: Increasing Minimum Wage will Bring Inflation — channel: Thom Hartmann Program
+   likes: n/a — comments: n/a — shares: n/a
 4. Milton Friedman on Minimum Wage — channel: amagilly
+   likes: n/a — comments: n/a — shares: n/a
 ```

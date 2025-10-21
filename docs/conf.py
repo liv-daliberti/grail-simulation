@@ -209,6 +209,7 @@ _nitpick_targets = {
         "collections.Counter",
         "common.title_index.TitleResolver",
         "concurrent.futures._base.Future",
+        "concurrent.futures.Future",
         "datasets.Dataset",
         "datasets.DatasetDict",
         "distilabel.pipeline.Pipeline",

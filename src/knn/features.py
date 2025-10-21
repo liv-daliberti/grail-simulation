@@ -2,371 +2,74 @@
 
 from __future__ import annotations
 
-import importlib
-import logging
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
-from numpy.random import default_rng
-
-from common.text import canon_video_id
-from common.title_index import TitleResolver
-from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
-
-_PROMPT_CONSTANTS = importlib.import_module("prompt_builder.constants")
-_PROMPT_VALUE_MAPS = importlib.import_module("prompt_builder.value_maps")
-
-GUN_FIELD_LABELS = _PROMPT_CONSTANTS.GUN_FIELD_LABELS
-MIN_WAGE_FIELD_LABELS = _PROMPT_CONSTANTS.MIN_WAGE_FIELD_LABELS
-format_field_value = _PROMPT_VALUE_MAPS.format_field_value
 
 try:  # pragma: no cover - optional dependency
     from gensim.models import Word2Vec  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     Word2Vec = None
 
+from common import get_logger
+from common.prompt_docs import (
+    DEFAULT_TITLE_DIRS as _DEFAULT_TITLE_DIRS,
+    EXTRA_FIELD_LABELS as _COMMON_EXTRA_FIELD_LABELS,
+    PromptDocumentBuilder,
+    default_title_resolver,
+)
+
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
-# ---------------------------------------------------------------------------
-# Title index helpers
-# ---------------------------------------------------------------------------
+DEFAULT_TITLE_DIRS = _DEFAULT_TITLE_DIRS
+EXTRA_FIELD_LABELS = _COMMON_EXTRA_FIELD_LABELS
 
-_TITLE_INDEX_ROOT = (
-    "/n/fs/similarity/trees/data/results/"
-    "capsule-5416997-data/recommendation trees"
+_PROMPT_DOC_BUILDER = PromptDocumentBuilder(
+    prompt_column=PROMPT_COLUMN,
+    solution_column=SOLUTION_COLUMN,
+    max_history=PROMPT_MAX_HISTORY,
+    title_lookup=default_title_resolver(),
+    log_prefix="[KNN]",
+    logger=get_logger("knn.features"),
 )
-DEFAULT_TITLE_DIRS = [
-    f"{_TITLE_INDEX_ROOT}/trees_gun",
-    f"{_TITLE_INDEX_ROOT}/trees_wage",
-]
-
-CANON_RE = re.compile(r"[^a-z0-9]+")
-
-_TITLE_RESOLVER = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
 
 
 def title_for(video_id: str) -> Optional[str]:
     """Return a human-readable title for a YouTube id if available."""
 
-    title = _TITLE_RESOLVER.resolve(video_id)
-    return title
-
-
-# ---------------------------------------------------------------------------
-# Prompt/document assembly helpers
-# ---------------------------------------------------------------------------
-
-
-def _canon(text: str) -> str:
-    """Normalise free-form text into an alphanumeric lowercase token.
-
-    :param text: Source text to canonicalise.
-    :returns: Lowercased alphanumeric representation with delimiters removed.
-    """
-    return CANON_RE.sub("", (text or "").lower().strip())
-
-
-def _is_nanlike(value: Any) -> bool:
-    """Return ``True`` when ``value`` behaves like a missing sentinel.
-
-    :param value: Arbitrary value drawn from the dataset.
-    :returns: Whether the value should be treated as missing data.
-    """
-    if value is None:
-        return True
-    string = str(value).strip().lower()
-    return string in {"", "nan", "none", "null", "na", "n/a"}
-
-
-def _truthy(value: Any) -> bool:
-    """Return ``True`` when ``value`` is semantically truthy.
-
-    :param value: Raw flag value (numeric/string/bool).
-    :returns: Whether the value indicates truth.
-    """
-    if value is None:
-        return False
-    if isinstance(value, (int, float)):
-        return value != 0
-    return str(value).strip().lower() in {"1", "true", "t", "yes", "y", "on"}
+    return _PROMPT_DOC_BUILDER.title_for(video_id)
 
 
 def viewer_profile_sentence(example: dict) -> str:
-    """Return the viewer profile sentence for ``example``.
+    """Return the viewer profile sentence for ``example``."""
 
-    :param example: Dataset row containing viewer metadata.
-    :returns: Cleaned viewer profile sentence (may be empty).
-    """
-
-    sentence = clean_text(example.get("viewer_profile_sentence"))
-    if not sentence:
-        sentence = clean_text(example.get("viewer_profile"))
-    if not sentence:
-        try:
-            sentence = synthesize_viewer_sentence(example)
-        except ValueError:  # pragma: no cover - defensive
-            sentence = ""
-    return sentence or ""
+    return _PROMPT_DOC_BUILDER.viewer_profile_sentence(example)
 
 
 def prompt_from_builder(example: dict) -> str:
-    """Return the prompt text for ``example`` using the shared builder.
+    """Return the prompt text for ``example`` using the shared builder."""
 
-    :param example: Dataset row used to construct the prompt.
-    :returns: Prompt string derived from shared builder logic.
-    """
-
-    existing = example.get("state_text") or example.get("prompt")
-    if isinstance(existing, str):
-        stripped = existing.strip()
-        if stripped and not _looks_like_legacy_prompt(stripped):
-            return stripped
-    try:
-        return build_user_prompt(example, max_hist=PROMPT_MAX_HISTORY)
-    except (TypeError, ValueError):  # pragma: no cover - defensive
-        return ""
-
-
-def _looks_like_legacy_prompt(prompt_text: str) -> bool:
-    """Return ``True`` when ``prompt_text`` matches the legacy bullet style."""
-
-    legacy_tokens = (
-        "PROFILE:",
-        "ATTRIBUTES:",
-        "CURRENT VIDEO:",
-        "RECENTLY WATCHED",
-        "OPTIONS:",
-    )
-    return any(token in prompt_text for token in legacy_tokens)
-
-
-def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
-    """Pick a case-insensitive value from ``mapping`` using fallback keys.
-
-    :param mapping: Dictionary that may contain the desired key.
-    :param alternates: Candidate key names (case-insensitive).
-    :returns: Stripped value when found, otherwise ``None``.
-    """
-    if not isinstance(mapping, dict):
-        return None
-    lower = {key.lower(): key for key in mapping.keys()}
-    for candidate in alternates:
-        original = lower.get(candidate.lower())
-        if original:
-            value = mapping.get(original)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-    return None
-
-
-def _extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
-    """Return the current (title, video_id) tuple if present."""
-
-    video_id = _pick_ci(example, "video_id", "videoId")
-    if video_id and not _is_nanlike(video_id):
-        title = _pick_ci(
-            example,
-            "current_video_title",
-            "now_playing_title",
-            "watching_title",
-            "currentVideoTitle",
-            "nowPlayingTitle",
-            "watchingTitle",
-            "now_title",
-            "current_title",
-            "meta_originTitle",
-        )
-        title = title or title_for(video_id) or ""
-        return (title or "(untitled)", video_id)
-    title = _pick_ci(
-        example,
-        "current_video_title",
-        "now_playing_title",
-        "watching_title",
-        "currentVideoTitle",
-        "nowPlayingTitle",
-        "watchingTitle",
-        "now_title",
-        "current_title",
-    )
-    video_id = _pick_ci(
-        example,
-            "current_video_id",
-            "now_playing_id",
-            "watching_id",
-            "currentVideoId",
-            "nowPlayingId",
-            "watchingId",
-            "now_id",
-            "current_id",
-            "originId",
-            "video_id",
-            "videoId",
-        )
-    if (title and not _is_nanlike(title)) or (video_id and not _is_nanlike(video_id)):
-        if _is_nanlike(title) and video_id:
-            title = title_for(video_id) or ""
-        return (title or "(untitled)", video_id or "")
-    return None
-
-
-def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
-    """Return the slate contents as a list of ``(title, video_id)`` pairs."""
-
-    def _clean_title(value: Any) -> str:
-        """Return a stripped string when ``value`` is textual.
-
-        :param value: Raw title candidate.
-        :returns: Stripped string or an empty string when unavailable.
-        """
-        return value.strip() if isinstance(value, str) else ""
-
-    def _clean_id(value: Any) -> str:
-        """Normalise a potential video id to an 11-character YouTube id.
-
-        :param value: Raw identifier candidate.
-        :returns: Canonical YouTube id or an empty string.
-        """
-        if not value:
-            return ""
-        candidate = canon_video_id(str(value))
-        return candidate if len(candidate) == 11 else ""
-
-    def _from_structured(array: Any) -> List[Tuple[str, str]]:
-        """Extract slate items from structured dictionaries.
-
-        :param array: Iterable of dictionaries containing slate metadata.
-        :returns: Structured list of ``(title, video_id)`` pairs.
-        """
-        structured: List[Tuple[str, str]] = []
-        if not isinstance(array, list):
-            return structured
-        for entry in array:
-            if not isinstance(entry, dict):
-                continue
-            title = (
-                entry.get("title")
-                or entry.get("video_title")
-                or entry.get("name")
-                or entry.get("surface")
-                or entry.get("text")
-                or ""
-            )
-            video_id = (
-                entry.get("id")
-                or entry.get("video_id")
-                or entry.get("videoId")
-                or entry.get("ytid")
-                or entry.get("yt_id")
-                or entry.get("candidate_id")
-                or entry.get("content_id")
-                or ""
-            )
-            cleaned_title = _clean_title(title)
-            cleaned_id = _clean_id(video_id)
-            if cleaned_title or cleaned_id:
-                structured.append((cleaned_title, cleaned_id))
-        return structured
-
-    for key in ("slate_items", "options", "slate_items_with_meta"):
-        structured_items = _from_structured(example.get(key))
-        if structured_items:
-            return structured_items
-
-    items: List[Tuple[str, str]] = []
-    slate_text = example.get("slate_text")
-    if isinstance(slate_text, str) and slate_text.strip():
-        for line in slate_text.splitlines():
-            token = line.strip()
-            if not token:
-                continue
-            parts = token.split("\t") if "\t" in token else token.split("|", maxsplit=1)
-            if len(parts) == 2:
-                title_raw, vid_raw = parts
-            else:
-                title_raw, vid_raw = token, ""
-            title = _clean_title(title_raw)
-            video_id = _clean_id(vid_raw)
-            if title or video_id:
-                items.append((title, video_id))
-    return items
-
-
-def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
-    """Return the slate as ``(title, video_id)`` pairs.
-
-    :param example: Dataset row containing slate metadata.
-    :returns: Ordered list of candidate tuples for the slate.
-    """
-
-    return _extract_slate_items(example)
+    return _PROMPT_DOC_BUILDER.prompt_from_builder(example)
 
 
 def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
-    """Return the currently watched title/id, if known.
+    """Return the currently watched title/id, if known."""
 
-    :param example: Dataset row containing now-watching metadata.
-    :returns: ``(title, video_id)`` tuple when available, otherwise ``None``.
-    """
+    return _PROMPT_DOC_BUILDER.extract_now_watching(example)
 
-    return _extract_now_watching(example)
+
+def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
+    """Return the slate as ``(title, video_id)`` pairs."""
+
+    return _PROMPT_DOC_BUILDER.extract_slate_items(example)
 
 
 def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
-    """Return concatenated text used to featurise ``example``.
+    """Return concatenated text used to featurise ``example``."""
 
-    :param example: Dataset row containing prompt and slate context.
-    :param extra_fields: Iterable of additional field names to append.
-    :returns: Single text string describing the viewer + slate.
-    """
-
-    extra_fields = extra_fields or []
-
-    def _good(text: str) -> bool:
-        """Return ``True`` if ``text`` contains non-empty content.
-
-        :param text: Candidate text fragment.
-        :returns: Whether the fragment is meaningful.
-        """
-        return bool(text and text.lower() not in {"", "nan", "none", "(none)"})
-
-    parts: List[str] = []
-    prompt_text = prompt_from_builder(example)
-    if not _good(prompt_text):
-        fallback_candidates = (
-            viewer_profile_sentence(example),
-            clean_text(example.get(PROMPT_COLUMN)),
-        )
-        prompt_text = next((value for value in fallback_candidates if _good(value)), "")
-    if prompt_text:
-        parts.append(prompt_text)
-
-    now_watching = _extract_now_watching(example)
-    if now_watching:
-        now_title, now_id = now_watching
-        if _good(now_title):
-            parts.append(now_title)
-        if _good(now_id):
-            parts.append(now_id)
-
-    for title, video_id in _extract_slate_items(example):
-        surface = (
-            title
-            if _good(title) and title != "(untitled)"
-            else (title_for(video_id) or video_id or "")
-        )
-        if _good(surface):
-            parts.append(surface)
-
-    for field in extra_fields:
-        formatted = _format_extra_field(example, field)
-        if _good(formatted):
-            parts.append(formatted)
-
-    return " ".join(parts).strip()
+    return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
 
 
 def prepare_training_documents(
@@ -375,68 +78,14 @@ def prepare_training_documents(
     seed: int,
     extra_fields: Sequence[str] | None = None,
 ):
-    """Return TF-IDF training documents and associated labels.
+    """Return TF-IDF training documents and associated labels."""
 
-    :param train_ds: Training dataset split.
-    :param max_train: Maximum number of rows to sample.
-    :param seed: Random seed for subsampling.
-    :param extra_fields: Optional iterable of additional text fields.
-    :returns: Tuple ``(documents, label_ids, label_titles)``.
-    :raises RuntimeError: If no valid documents are produced.
-    """
-
-    n_rows = len(train_ds)
-    if n_rows == 0:
-        raise RuntimeError("Train split is empty.")
-    rng = default_rng(seed)
-    if max_train and max_train > 0:
-        take = min(max_train, n_rows)
-        order = rng.permutation(n_rows)[:take].tolist()
-    else:
-        order = list(range(n_rows))
-
-    records: List[tuple[str, str, str]] = []
-    for index in order:
-        record = _record_from_example(train_ds[int(index)], extra_fields)
-        if record:
-            records.append(record)
-
-    if not records:
-        raise RuntimeError(
-            "All training documents are empty. Check columns on TRAIN split.\n"
-            f"Seen columns: {sorted(list(train_ds.features.keys()))}\n"
-            "Fixes: add slate items/current video text or use --knn_text_fields."
-        )
-
-    dropped = len(order) - len(records)
-    if dropped:
-        logging.warning("[KNN] Dropped %d empty docs out of %d.", dropped, len(order))
-
-    filtered_docs = [doc for doc, _, _ in records]
-    filtered_labels_id = [label_id for _, label_id, _ in records]
-    filtered_labels_title = [label_title for _, _, label_title in records]
-    logging.info("[KNN] Assembled %d documents (kept %d non-empty).", len(order), len(records))
-    logging.info("[KNN] Example doc: %r", filtered_docs[0][:200])
-    return filtered_docs, filtered_labels_id, filtered_labels_title
-
-
-def _record_from_example(
-    example: dict,
-    extra_fields: Sequence[str] | None,
-) -> Optional[tuple[str, str, str]]:
-    """Assemble a training record tuple for the given example.
-
-    :param example: Dataset row from the training split.
-    :param extra_fields: Optional iterable of additional text fields.
-    :returns: Tuple of ``(document, label_id, label_title)`` or ``None``.
-    """
-    document = assemble_document(example, extra_fields).strip()
-    if not document:
-        return None
-    video_id = str(example.get(SOLUTION_COLUMN) or "")
-    label_id = canon_video_id(video_id)
-    label_title = title_for(video_id) or ""
-    return document, label_id, label_title
+    return _PROMPT_DOC_BUILDER.prepare_training_documents(
+        train_ds,
+        max_train,
+        seed,
+        extra_fields,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -538,6 +187,7 @@ class Word2VecFeatureBuilder:
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
+    "EXTRA_FIELD_LABELS",
     "Word2VecConfig",
     "Word2VecFeatureBuilder",
     "assemble_document",
@@ -548,43 +198,3 @@ __all__ = [
     "title_for",
     "viewer_profile_sentence",
 ]
-EXTRA_FIELD_LABELS: Dict[str, str] = {
-    "pid1": "Party identification",
-    "pid2": "Party lean",
-    "ideo1": "Political ideology",
-    "ideo2": "Ideology intensity",
-    "pol_interest": "Political interest",
-    "religpew": "Religion",
-    "freq_youtube": "YouTube frequency",
-    "youtube_time": "YouTube time",
-    "newsint": "News attention",
-    "participant_study": "Participant study",
-    "slate_source": "Slate source",
-    "educ": "Education level",
-    "employ": "Employment status",
-    "child18": "Children in household",
-    "inputstate": "State",
-    "q31": "Household income",
-    "income": "Household income",
-}
-EXTRA_FIELD_LABELS.update(MIN_WAGE_FIELD_LABELS)
-EXTRA_FIELD_LABELS.update(GUN_FIELD_LABELS)
-
-
-def _format_extra_field(example: dict, field: str) -> str:
-    """Return a formatted label/value string for an extra document field."""
-
-    value = example.get(field)
-    formatted = format_field_value(field, value)
-    if not formatted:
-        return ""
-    label = EXTRA_FIELD_LABELS.get(field)
-    if not label:
-        label = field.replace("_", " ").strip().capitalize()
-    if field == "child18":
-        lowered = formatted.lower()
-        if lowered.startswith("no"):
-            formatted = "no"
-        elif "children" in lowered:
-            formatted = "yes"
-    return f"{label}: {formatted}"

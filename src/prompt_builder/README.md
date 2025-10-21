@@ -66,21 +66,17 @@ report.
 ### Gun control (validation split)
 
 ```text
-PROFILE:
-31-year-old, woman, Black or African-American (non-Hispanic), democrat liberal, $70,000-$79,999, college-educated, watches YouTube weekly. This viewer is a 31-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are college educated. Their household income is reported as $70,000-$79,999. The survey was completed in English. Politics include party identification Democrat, party lean Not very strong Democrat, ideology Liberal, political interest 3, trump approval 30, and biden approval 80. Gun policy views include gun ownership does not own a gun, right-to-own importance no, supports assault weapons ban 0.25, supports handgun ban yes, believes concealed carry is safe no, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm no, and gun importance yes. Media habits include YouTube frequency weekly, favorite channels CBS,
-CNN
-NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.6666666666666666.
-
-CURRENT VIDEO:
-Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
-
-RECENTLY WATCHED (NEWEST LAST):
+VIEWER 31-year-old, Black or African-American (non-Hispanic) woman; democrat liberal; $70,000-$79,999; college-educated; watches YouTube weekly.
+Initial Viewpoint: Opposes stricter gun laws
+CURRENTLY WATCHING Do We Need Stricter Gun Control? - The People Speak (from VICE News)
+RECENTLY WATCHED (NEWEST LAST)
 (no recently watched videos available)
-
-OPTIONS:
-1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain
-2. Why America Will NEVER Have Real Gun Control — channel: The Young Turks
-3. Gun Control and The Violence in Chicago — channel: Colion Noir
-4. Gun Banners Say the Darndest Things — channel: Rob Doar
-5. How to Create a Gun-Free America in 5 Easy Steps
+SURVEY HIGHLIGHTS
+party identification is Democrat, ideology is liberal, and watches YouTube weekly.
+OPTIONS
+1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain (Good Morning Britain, 382s long) — Engagement: views 18,834, comments 40
+2. Why America Will NEVER Have Real Gun Control (The Young Turks, 264s long) — Engagement: views 2,162, comments 40
+3. Gun Control and The Violence in Chicago (Colion Noir, 388s long) — Engagement: views 9,368, comments 40
+4. Gun Banners Say the Darndest Things (Rob Doar, 259s long) — Engagement: views 39, comments 40
+5. How to Create a Gun-Free America in 5 Easy Steps (ReasonTV) — Engagement: views 31,996
 ```

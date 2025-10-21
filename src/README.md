@@ -34,7 +34,7 @@ single packaging story.
 - Keep imports side-effect free; modules should be safe to import in tests and
   documentation builds.
 - Treat external dependencies as optional unless they already appear in
-  `requirements.txt` or `requirements-dev.txt`. Guard optional imports with
+  `requirements.txt` or `development/requirements-dev.txt`. Guard optional imports with
   helpful error messages.
 - New public functions and classes require docstrings because Sphinx consumes
   these modules directly (`docs/api/**`).

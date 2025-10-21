@@ -28,12 +28,14 @@ YAMLs and translate them into trainer arguments.
 All trainers rely on `prompt_builder.build_user_prompt`. Each row from the
 cleaned dataset is converted into a multi-section message containing:
 
-- `PROFILE:` – human-readable viewer summary synthesized from survey exports (see
+- `VIEWER` – single-line viewer summary synthesized from survey exports (see
   `clean_data/prompt/question_mapping.py` for the field mapping).
-- `HISTORY:` – recent watches; governed by `GRAIL_MAX_HISTORY` (set to `0` for
-  unbounded history).
-- `CURRENT VIDEO:` – contextualizes the slate being evaluated.
-- `OPTIONS:` – candidate slate entries, optionally including YouTube IDs when
+- `Initial Viewpoint` – optional issue-specific stance synthesized from the survey.
+- `CURRENTLY WATCHING` – contextualizes the slate being evaluated.
+- `RECENTLY WATCHED (NEWEST LAST)` – recent watches; governed by `GRAIL_MAX_HISTORY`
+  (set to `0` for unbounded history).
+- `SURVEY HIGHLIGHTS` – optional recap of salient survey responses.
+- `OPTIONS` – candidate slate entries, optionally including YouTube IDs when
   `GRAIL_SHOW_IDS=1`.
 
 The `_row_to_example` helpers in `grpo.py`/`grail.py` drop examples without a

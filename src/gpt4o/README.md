@@ -19,7 +19,7 @@ focused modules so it mirrors the structure of the `knn/` and `xgb/` baselines.
 2. **Install dependencies** (from the project root):
 
    ```bash
-   pip install -r requirements-dev.txt
+   pip install -r development/requirements-dev.txt
    ```
 
 3. **Launch an evaluation**:

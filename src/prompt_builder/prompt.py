@@ -72,18 +72,6 @@ def _first_value(
     return None
 
 
-def _render_profile_text(profile: ProfileRender) -> str:
-    """Join profile sentences into a single descriptive paragraph.
-
-    :param profile: Rendered profile object.
-    :returns: Combined profile text or a fallback string.
-    """
-    profile_text = " ".join(sentence for sentence in profile.sentences if sentence)
-    if not profile_text:
-        return "Profile information is unavailable."
-    return profile_text
-
-
 def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     """
     Assemble the user prompt used for recommendation tasks.
@@ -98,60 +86,293 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
 
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
     profile = render_profile(ex)
+    selected = _selected_row(ex)
 
     lines: List[str] = []
 
-    def _append_section(title: str, body: Sequence[str], fallback: Optional[str] = None) -> None:
-        body_lines = [line.strip() for line in body if line and line.strip()]
-        lines.append(title)
-        if body_lines:
-            lines.extend(body_lines)
-        elif fallback is not None:
-            lines.append(fallback)
-        lines.append("")
+    viewer_line = _viewer_summary_line(ex, selected, profile)
+    if viewer_line:
+        lines.append(f"VIEWER {viewer_line}")
+    else:
+        lines.append("VIEWER (profile information unavailable)")
 
-    _append_section(
-        "PROFILE:",
-        _profile_lines(profile),
-        "(profile information unavailable)",
-    )
-    _append_section(
-        "CURRENT VIDEO:",
-        _current_video_lines(ex, show_ids),
-        "(current video unavailable)",
-    )
-    _append_section(
-        "RECENTLY WATCHED (NEWEST LAST):",
-        _history_lines(ex, show_ids, max_hist),
-        "(no recently watched videos available)",
-    )
+    viewpoint_line = _initial_viewpoint_line(ex, selected)
+    if viewpoint_line:
+        lines.append(f"Initial Viewpoint: {viewpoint_line}")
+
+    lines.append("")
+
+    current_line = _current_video_line(ex, show_ids)
+    if current_line:
+        lines.append(f"CURRENTLY WATCHING {current_line}")
+    else:
+        lines.append("CURRENTLY WATCHING (current video unavailable)")
+
+    lines.append("")
+    lines.append("RECENTLY WATCHED (NEWEST LAST)")
+    history_lines = _history_lines(ex, show_ids, max_hist)
+    if history_lines:
+        lines.extend(history_lines)
+    else:
+        lines.append("(no recently watched videos available)")
 
     survey_lines = _survey_lines(ex)
     if survey_lines:
-        _append_section("SURVEY HIGHLIGHTS:", survey_lines)
+        lines.append("")
+        lines.append("SURVEY HIGHLIGHTS")
+        lines.extend(survey_lines)
 
-    _append_section(
-        "OPTIONS:",
-        _options_lines(ex, show_ids),
-        "(no recommendation options available)",
-    )
+    option_lines = _options_lines(ex, show_ids)
+    lines.append("")
+    lines.append("OPTIONS")
+    if option_lines:
+        lines.extend(option_lines)
+    else:
+        lines.append("(no recommendation options available)")
 
-    while lines and not lines[-1]:
+    while lines and not lines[-1].strip():
         lines.pop()
-    return "\n".join(lines).strip()
+    return "\n".join(lines)
 
 
-def _profile_lines(profile: ProfileRender) -> List[str]:
-    """Return lines describing the viewer profile."""
+def _viewer_summary_line(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+    profile: ProfileRender,
+) -> str:
+    """Return a condensed single-line viewer description."""
 
-    text = _render_profile_text(profile).strip()
-    if text.lower() == "profile information is unavailable.":
+    merged: Dict[str, Any] = dict(selected)
+    merged.update(ex)
+    raw = synthesize_viewer_sentence(merged).strip()
+    fragments: List[str]
+    if raw and raw.lower() not in {"(no profile provided)", "no profile provided"}:
+        fragments = _normalize_viewer_fragments(raw)
+    else:
+        fragments = _fragments_from_profile(profile)
+
+    location = _location_fragment(profile)
+    if location:
+        fragments.append(location)
+
+    seen: set[str] = set()
+    cleaned_fragments: List[str] = []
+    for fragment in fragments:
+        cleaned = fragment.strip().rstrip(".")
+        if not cleaned:
+            continue
+        lowered = cleaned.lower()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        cleaned_fragments.append(cleaned)
+
+    sentence = "; ".join(cleaned_fragments)
+    return f"{sentence}." if sentence else ""
+
+
+def _fragments_from_profile(profile: ProfileRender) -> List[str]:
+    """Fallback viewer fragments derived from existing profile sentences."""
+
+    for sentence in profile.sentences:
+        cleaned = sentence.strip()
+        if cleaned:
+            return [cleaned.rstrip(".")]
+    return []
+
+
+def _normalize_viewer_fragments(raw: str) -> List[str]:
+    """Convert the synthesised viewer sentence into semicolon-ready fragments."""
+
+    text = raw.strip().rstrip(".").replace(",\n", ", ").replace("\n", " ")
+    parts = [part.strip() for part in text.split(", ") if part.strip()]
+    if not parts:
         return []
-    return [text] if text else []
+
+    fragments: List[str] = []
+    age = parts[0]
+    idx = 1
+    gender = None
+    race = None
+    if idx < len(parts) and _looks_like_gender_fragment(parts[idx]):
+        gender = parts[idx]
+        idx += 1
+    if idx < len(parts) and _looks_like_race_fragment(parts[idx]):
+        race = parts[idx]
+        idx += 1
+
+    identity_bits: List[str] = []
+    if age:
+        identity_bits.append(age)
+    if race and gender:
+        identity_bits.append(f"{race} {gender}")
+    else:
+        if race:
+            identity_bits.append(race)
+        if gender:
+            identity_bits.append(gender)
+    if identity_bits:
+        fragments.append(", ".join(identity_bits))
+    else:
+        fragments.append(age)
+
+    fragments.extend(parts[idx:])
+    return fragments
 
 
-def _current_video_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """Return lines describing the currently playing video."""
+def _looks_like_gender_fragment(text: str) -> bool:
+    lowered = text.lower()
+    gender_keywords = [
+        "man",
+        "woman",
+        "non-binary",
+        "nonbinary",
+        "trans",
+        "prefers not to state",
+        "gender",
+    ]
+    return any(keyword in lowered for keyword in gender_keywords)
+
+
+def _looks_like_race_fragment(text: str) -> bool:
+    lowered = text.lower()
+    race_keywords = [
+        "white",
+        "black",
+        "african",
+        "asian",
+        "hispanic",
+        "latino",
+        "latinx",
+        "pacific",
+        "alaska",
+        "native",
+        "multiracial",
+        "mixed",
+        "american indian",
+        "race",
+    ]
+    return any(keyword in lowered for keyword in race_keywords)
+
+
+def _location_fragment(profile: ProfileRender) -> str:
+    """Extract a location fragment from profile sentences when available."""
+
+    for sentence in profile.sentences:
+        stripped = sentence.strip()
+        lowered = stripped.lower()
+        if lowered.startswith("they live in "):
+            fragment = stripped[12:].strip().rstrip(".")
+            return f"lives in {fragment}"
+        if lowered.startswith("they reside in "):
+            fragment = stripped[14:].strip().rstrip(".")
+            return f"resides in {fragment}"
+    return ""
+
+
+def _initial_viewpoint_line(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+) -> str:
+    """Return a concise description of the viewer's initial stance on the issue."""
+
+    issue_raw = _first_value(ex, selected, "issue") or ex.get("topic")
+    issue = str(issue_raw or "").strip().lower()
+    if issue == "minimum_wage":
+        return _minimum_wage_viewpoint(ex, selected)
+    if issue == "gun_control":
+        return _gun_control_viewpoint(ex, selected)
+    return ""
+
+
+def _first_yes_no(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+    keys: Sequence[str],
+) -> Optional[str]:
+    """Return the first yes/no text resolved across ``keys``."""
+
+    for key in keys:
+        value = _first_value(ex, selected, key)
+        if value is None:
+            continue
+        verdict = format_yes_no(value)
+        if verdict:
+            return verdict.lower()
+    return None
+
+
+def _minimum_wage_viewpoint(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+) -> str:
+    """Return a single-sentence summary of minimum wage attitudes."""
+
+    yes_no = _first_yes_no(ex, selected, ("minwage15_w2", "minwage15_w1"))
+    if yes_no == "yes":
+        return "Supports a $15 minimum wage"
+    if yes_no == "no":
+        return "Opposes a $15 minimum wage"
+
+    yes_no = _first_yes_no(ex, selected, ("mw_support_w2", "mw_support_w1"))
+    if yes_no == "yes":
+        return "Supports raising the minimum wage"
+    if yes_no == "no":
+        return "Opposes raising the minimum wage"
+
+    for key in ("minwage_text_r_w2", "minwage_text_r_w1", "minwage_text_w2", "minwage_text_w1"):
+        value = _first_value(ex, selected, key)
+        formatted = format_field_value(key, value) if value is not None else ""
+        if formatted:
+            return f"Preferred minimum wage is about {formatted}"
+
+    for key in ("mw_index_w2", "mw_index_w1"):
+        value = _first_value(ex, selected, key)
+        formatted = format_field_value(key, value) if value is not None else ""
+        if formatted:
+            return f"Minimum wage support score is {formatted}"
+    return ""
+
+
+def _gun_control_viewpoint(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+) -> str:
+    """Return a single-sentence summary of gun policy attitudes."""
+
+    for key, (yes_phrase, no_phrase) in (
+        ("stricter_laws", ("Supports stricter gun laws", "Opposes stricter gun laws")),
+        ("handgun_ban", ("Supports a handgun ban", "Opposes a handgun ban")),
+        ("assault_ban", ("Supports an assault weapons ban", "Opposes an assault weapons ban")),
+        ("concealed_safe", ("Believes concealed carry is safe", "Believes concealed carry is unsafe")),
+    ):
+        verdict = _first_yes_no(ex, selected, (key,))
+        if verdict == "yes":
+            return yes_phrase
+        if verdict == "no":
+            return no_phrase
+
+    for key in ("gun_policy", "gun_identity", "gun_priority"):
+        value = _first_value(ex, selected, key)
+        formatted = format_field_value(key, value) if value is not None else ""
+        if formatted:
+            return formatted[0].upper() + formatted[1:] if formatted else ""
+
+    for key, template in (
+        ("gun_importance", "Gun policy importance is {value}"),
+        ("gun_index", "Gun regulation support score is {value}"),
+        ("gun_index_2", "Gun regulation support score (alt) is {value}"),
+        ("gun_enthusiasm", "Gun enthusiasm is {value}"),
+    ):
+        value = _first_value(ex, selected, key)
+        formatted = format_field_value(key, value) if value is not None else ""
+        if formatted:
+            return template.format(value=formatted)
+    return ""
+
+
+def _current_video_line(ex: Dict[str, Any], show_ids: bool) -> str:
+    """Return a single-line description of the currently playing video."""
 
     title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
@@ -159,18 +380,13 @@ def _current_video_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
         ex.get("current_video_channel") or ex.get("current_video_channel_title")
     )
     if not (title or channel or current_id):
-        return []
-    sentence = "They are currently watching "
-    if title:
-        sentence += title
-    else:
-        sentence += "a video"
+        return ""
+    descriptor = title or (f"video id {current_id}" if current_id else "a video")
     if channel:
-        sentence += f" from {channel}"
+        descriptor += f" (from {channel})"
     if current_id and (show_ids or not title):
-        sentence += f" (id {current_id})"
-    sentence += "."
-    return [sentence]
+        descriptor += f" [id {current_id}]"
+    return descriptor
 
 
 def _history_lines(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
@@ -190,16 +406,7 @@ def _history_lines(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[st
             descriptors.append(descriptor)
     if not descriptors:
         return []
-    if len(descriptors) > 3:
-        displayed = descriptors[-3:]
-    else:
-        displayed = descriptors
-    remaining = len(descriptors) - len(displayed)
-    numbered = [f"{idx}. {value}" for idx, value in enumerate(displayed, 1)]
-    if remaining > 0:
-        plural = "videos" if remaining > 1 else "video"
-        numbered.append(f"(+{remaining} more {plural})")
-    return numbered
+    return [f"{idx}. {value}" for idx, value in enumerate(descriptors, 1)]
 
 
 def _survey_lines(ex: Dict[str, Any]) -> List[str]:
@@ -220,12 +427,14 @@ def _options_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
     items = as_list_json(ex.get("slate_items_json"))
     if not items:
         return []
-    sentences = [
-        _option_sentence(index, item, show_ids)
-        for index, item in enumerate(items, 1)
-        if isinstance(item, dict)
-    ]
-    return [sentence for sentence in sentences if sentence]
+    lines: List[str] = []
+    for index, item in enumerate(items, 1):
+        if not isinstance(item, dict):
+            continue
+        line = _option_line(index, item, show_ids)
+        if line:
+            lines.append(line)
+    return lines
 
 
 SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (
@@ -281,25 +490,8 @@ def _survey_highlights(ex: Dict[str, Any]) -> str:
     return f"Survey highlights: {human_join(highlights)}."
 
 
-def _options_block(ex: Dict[str, Any], show_ids: bool) -> str:
-    """Return a paragraph describing the recommendation slate options."""
-
-    items = as_list_json(ex.get("slate_items_json"))
-    if not items:
-        return "No recommendation options are available in this slate."
-    sentences = [
-        _option_sentence(index, item, show_ids)
-        for index, item in enumerate(items, 1)
-        if isinstance(item, dict)
-    ]
-    sentences = [sentence for sentence in sentences if sentence]
-    if not sentences:
-        return ""
-    return "OPTIONS:\n" + "\n".join(sentences)
-
-
-def _option_sentence(position: int, item: Dict[str, Any], show_ids: bool) -> str:
-    """Return a human-readable sentence for a specific slate option."""
+def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
+    """Return a human-readable line for a specific slate option."""
 
     title = clean_text(item.get("title"), limit=160)
     option_id = clean_text(item.get("id"))
@@ -312,7 +504,7 @@ def _option_sentence(position: int, item: Dict[str, Any], show_ids: bool) -> str
     duration_text = _format_duration(item)
     descriptors: List[str] = []
     if channel:
-        descriptors.append(f"from {channel}")
+        descriptors.append(channel)
     if duration_text:
         descriptors.append(f"{duration_text} long")
     if option_id and (show_ids or not title):
@@ -321,13 +513,12 @@ def _option_sentence(position: int, item: Dict[str, Any], show_ids: bool) -> str
     if stats is None:
         stats = {}
     engagement = _option_engagement_summary(item, stats)
-    sentence = f"Option {position}: {display_title}"
+    line = f"{position}. {display_title}"
     if descriptors:
-        sentence += f" ({', '.join(descriptors)})"
-    sentence += "."
+        line += f" ({', '.join(descriptors)})"
     if engagement:
-        sentence += f" Engagement: {engagement}."
-    return sentence
+        line += f" — Engagement: {engagement}"
+    return line
 
 
 def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
@@ -472,6 +663,19 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
         return None
 
     metrics = [
+        (
+            "views",
+            (
+                "view_count",
+                "views",
+                "viewCount",
+                "ViewCount",
+                "viewer_count",
+                "viewerCount",
+                "Viewers",
+            ),
+            ("view_count", "views", "viewCount", "ViewCount", "viewer_count", "viewerCount"),
+        ),
         (
             "likes",
             ("like_count", "likes", "likeCount", "LikeCount", "Likes"),

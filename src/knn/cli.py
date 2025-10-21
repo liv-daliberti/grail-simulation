@@ -9,6 +9,14 @@ from pathlib import Path
 from .evaluate import run_eval
 from .features import Word2VecConfig
 
+DEFAULT_KNN_TEXT_FIELDS = (
+    "pid1,pid2,ideo1,ideo2,pol_interest,religpew,educ,employ,child18,inputstate,"
+    "freq_youtube,youtube_time,newsint,q31,participant_study,slate_source,"
+    "minwage_text_w2,minwage_text_w1,mw_support_w2,mw_support_w1,minwage15_w2,"
+    "minwage15_w1,mw_index_w2,mw_index_w1,gun_importance,gun_index,gun_enthusiasm,"
+    "gun_identity"
+)
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Return the argument parser for the KNN baseline CLI.
@@ -176,7 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--knn-text-fields",
         "--knn_text_fields",
-        default="",
+        default=DEFAULT_KNN_TEXT_FIELDS,
         dest="knn_text_fields",
         help="Comma-separated extra columns to append to the viewer prompt text.",
     )

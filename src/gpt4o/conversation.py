@@ -681,52 +681,6 @@ def _format_history_lines(sequence: List[dict]) -> List[str]:
 def make_conversation_record(example: dict) -> Dict[str, Any]:
     """Transform a dataset row into the prompt payload consumed by GPT-4o."""
 
-    raw_context = str(example.get(PROMPT_COLUMN, "") or "").strip()
-    if is_nan_like(raw_context):
-        raw_context = ""
-
-    viewer_sentence = humanise_profile(example)
-    profile_block = build_profile_block(example)
-
-    now_watching = _extract_now_watching(example)
-    if now_watching:
-        now_title, now_id = now_watching
-        now_line_user = now_title or now_id or "(untitled)"
-        now_line_state = f"{now_title or '(untitled)'}{(' — id: ' + now_id) if now_id else ''}"
-    else:
-        now_title = now_id = ""
-        now_line_user = "(none)"
-        now_line_state = "(none)"
-
-    if str(now_line_user).strip().lower() == "nan":
-        now_line_user = "(none)"
-
-    current_idx, current_end = _get_history_pointer(example)
-    prior_sequence = _extract_history(
-        example,
-        up_to_idx=current_idx,
-        up_to_end_ms=current_end,
-        include_current=False,
-    )
-
-    now_id_canon = canon_video_id(now_id if isinstance(now_id, str) else "")
-    now_title_canon = canon_text(now_title if isinstance(now_title, str) else "")
-
-    def _is_current(row: dict) -> bool:
-        """Return ``True`` when the row matches the derived now-watching item.
-
-        :param row: History entry from the trajectory list.
-        :returns: Whether the entry corresponds to the current video.
-        """
-        rid = canon_video_id(row.get("video_id") or "")
-        rtitle = canon_text(row.get("title") or "")
-        return (
-            (now_id_canon and rid == now_id_canon)
-            or (now_title_canon and rtitle == now_title_canon)
-        )
-
-    prior_sequence = [row for row in prior_sequence if not _is_current(row)]
-
     max_history = int(os.environ.get("GRAIL_MAX_HISTORY", "8"))
     history_full_env = str(os.environ.get("GRAIL_HISTORY_FULL", "0")).lower()
     history_full_mode = str(os.environ.get("GRAIL_HISTORY_MODE_FULL", "0")).lower()
@@ -736,57 +690,50 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
         or max_history <= 0
     )
 
-    full_history_lines: list[str] = []
-    if show_full:
-        full_sequence = _extract_history(
-            example,
-            include_current=str(os.environ.get("GRAIL_HISTORY_INCLUDES_CURRENT", "0")).lower()
-            in {"1", "true", "t", "yes", "y"},
-        )
-        full_history_lines = _format_history_lines(full_sequence)
+    builder_history = 0 if show_full else max_history
+    _PROMPT_DOC_BUILDER.max_history = builder_history
 
-    if prior_sequence:
-        truncated_history_lines = list(
-            reversed(_format_history_lines(prior_sequence))
-        )[:max_history]
-    else:
-        truncated_history_lines = []
+    raw_context = str(example.get(PROMPT_COLUMN, "") or "").strip()
+    if is_nan_like(raw_context):
+        raw_context = ""
 
-    slate_pairs = _extract_slate_items(example)
-    options_lines: list[str] = []
-    for idx, (title, video_id) in enumerate(slate_pairs, start=1):
-        surface = title if (title and title != "(untitled)") else (video_id or "(untitled)")
-        options_lines.append(f"{idx}. {surface}")
+    base_prompt = _PROMPT_DOC_BUILDER.prompt_from_builder(example)
+    if not base_prompt and raw_context:
+        base_prompt = raw_context
 
+    instruction_tail = (
+        "\n\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and"
+        " return ONLY its NUMBER in <answer>."
+    )
+    user_message = (
+        f"{base_prompt}{instruction_tail}" if base_prompt else instruction_tail.lstrip()
+    )
+
+    slate_pairs = _PROMPT_DOC_BUILDER.extract_slate_items(example)
     gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
     gold_index = -1
-    if slate_pairs:
+    if gold_raw and slate_pairs:
+        gold_id_canon = canon_video_id(gold_raw)
+        gold_title_canon = canon_text(gold_raw)
         for idx, (title, video_id) in enumerate(slate_pairs, start=1):
-            if gold_raw and (gold_raw == video_id or canon_text(gold_raw) == canon_text(title)):
+            vid_canon = canon_video_id(video_id)
+            title_canon = canon_text(title)
+            if (
+                gold_raw == video_id
+                or (gold_id_canon and vid_canon == gold_id_canon)
+                or (gold_title_canon and title_canon == gold_title_canon)
+            ):
                 gold_index = idx
                 break
 
-    user_lines: list[str] = []
-    user_lines.append(f"Viewer: {viewer_sentence}.")
-    if raw_context:
-        user_lines.append(f"CONTEXT: {raw_context}")
-    user_lines.append("\nCURRENTLY WATCHING:")
-    user_lines.append(now_line_user)
+    now_watching = _PROMPT_DOC_BUILDER.extract_now_watching(example)
+    if now_watching:
+        now_title, now_id = now_watching
+        now_line_state = f"{now_title or '(untitled)'}{(' — id: ' + now_id) if now_id else ''}"
+    else:
+        now_line_state = "(none)"
 
-    if show_full and full_history_lines:
-        user_lines.append("\nHISTORY (full sequence):")
-        user_lines.extend(full_history_lines)
-    elif truncated_history_lines:
-        user_lines.append("\nHISTORY (most recent first):")
-        user_lines.extend(truncated_history_lines)
-
-    user_lines.append("\nOPTIONS:")
-    user_lines.extend(options_lines if options_lines else ["(no options provided)"])
-    user_lines.append(
-        "\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and"
-        " return ONLY its NUMBER in <answer>."
-    )
-    user_message = "\n".join(user_lines)
+    profile_block = build_profile_block(example)
 
     position_index = example.get("video_index")
     try:

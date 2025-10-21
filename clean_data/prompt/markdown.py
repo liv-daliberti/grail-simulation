@@ -302,7 +302,9 @@ def _skipped_features_section(skipped_features: List[str]) -> List[str]:
     return lines
 
 
-def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
+def _shortfall_lines(  # pylint: disable=too-many-locals
+    overall_counts: Dict[str, Any]
+) -> List[str]:
     """Summaries comparing expected and cleaned participant totals."""
 
     overall_by_issue = overall_counts.get("by_issue", {})
@@ -333,7 +335,10 @@ def _shortfall_lines(overall_counts: Dict[str, Any]) -> List[str]:
                 f"so the unique total is {overall_total}."
             )
     else:
-        issue_line = f"- Cleaned dataset participants captured here (all issues): {overall_counts.get('overall', 0)}."
+        issue_line = (
+            "- Cleaned dataset participants captured here (all issues): "
+            f"{overall_counts.get('overall', 0)}."
+        )
 
     lines = [
         "- Original study participants: 1,650 (Study 1 — gun rights)",

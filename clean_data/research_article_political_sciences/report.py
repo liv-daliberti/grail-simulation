@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import pandas as pd
 from datasets import DatasetDict
@@ -60,7 +60,7 @@ def _policy_summary_rows(stratified: pd.DataFrame) -> List[Dict[str, object]]:
     return rows
 
 
-def generate_research_article_report(
+def generate_research_article_report(  # pylint: disable=too-many-locals
     dataset: DatasetDict,
     output_dir: Path | str,
     *,
@@ -107,14 +107,26 @@ def generate_research_article_report(
         assignment_frame = load_assignment_frame(spec)
         summaries = summarise_assignments(assignment_frame)
         assignment_panels.append((spec.label, summaries))
-        control_entry = next((item for item in summaries if item["assignment"] == "control"), None)
-        treatment_entry = next((item for item in summaries if item["assignment"] == "treatment"), None)
+        control_entry = next(
+            (item for item in summaries if item["assignment"] == "control"),
+            None,
+        )
+        treatment_entry = next(
+            (item for item in summaries if item["assignment"] == "treatment"),
+            None,
+        )
         if control_entry or treatment_entry:
             table_rows.append(
                 {
                     "label": spec.label,
-                    "control_mean_change": control_entry["mean_change"] if control_entry else float("nan"),
-                    "treatment_mean_change": treatment_entry["mean_change"] if treatment_entry else float("nan"),
+                    "control_mean_change": (
+                        control_entry["mean_change"] if control_entry else float("nan")
+                    ),
+                    "treatment_mean_change": (
+                        treatment_entry["mean_change"]
+                        if treatment_entry
+                        else float("nan")
+                    ),
                 }
             )
         if not assignment_frame.empty:

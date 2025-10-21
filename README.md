@@ -27,9 +27,10 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 ├── models/                   # Trained model checkpoints and evaluation curves
 ├── recipes/                  # Training configuration files organized by model family
 ├── reports/                  # Markdown reports rendered from analyses
+├── .github/                  # GitHub Actions workflows
 ├── .gitignore                # Repository-wide ignore rules (must live at root)
-├── development/              # Centralized tooling configs (CI, linting, packaging)
-│   ├── .github/workflows/    # GitHub Actions workflows
+├── .readthedocs.yaml         # Read the Docs configuration (root path required)
+├── development/              # Centralized tooling configs (linting, packaging helpers)
 │   ├── .pylintrc             # Pylint configuration
 │   ├── pytest.ini            # Pytest configuration
 │   ├── requirements-dev.txt  # Development-only dependencies
@@ -145,7 +146,7 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- CI (see `development/.github/workflows/ci.yml`) installs `development/requirements-dev.txt` and runs both scripts on push/PR.
+- CI (see `.github/workflows/ci.yml`) installs `development/requirements-dev.txt` and runs both scripts on push/PR.
 
 Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
 

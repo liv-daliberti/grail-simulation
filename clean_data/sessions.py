@@ -419,7 +419,9 @@ def _build_watched_details(
     return details
 
 
-def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
+def normalize_display_orders(  # pylint: disable=too-many-branches
+    display_orders: Any,
+) -> Dict[int, List[str]]:
     """Convert display order mappings into canonical id sequences."""
 
     normalized: Dict[int, List[str]] = {}

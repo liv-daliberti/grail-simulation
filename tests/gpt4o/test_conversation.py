@@ -29,7 +29,7 @@ class _StubTitleResolver:
 @pytest.fixture(autouse=True)
 def stub_title_resolver(monkeypatch: pytest.MonkeyPatch) -> _StubTitleResolver:
     resolver = _StubTitleResolver()
-    monkeypatch.setattr(conversation, "TITLE_RESOLVER", resolver)
+    monkeypatch.setattr(conversation._PROMPT_DOC_BUILDER, "title_lookup", resolver.resolve)
     return resolver
 
 
@@ -187,6 +187,7 @@ def test_make_conversation_record_integrates_components(monkeypatch: pytest.Monk
         "pid": "Democrat",
         "freq_youtube": "2",
         "college": 1,
+        "viewer_profile_sentence": "This viewer is a 35-year-old woman.",
         "current_video_title": "Now Playing Title",
         "current_video_id": "nowplaying01",
         "trajectory_json": json.dumps(
@@ -199,6 +200,7 @@ def test_make_conversation_record_integrates_components(monkeypatch: pytest.Monk
             }
         ),
         "slate_text": "1. dQw4w9WgXcQ",
+        "slate_items": [{"id": "dQw4w9WgXcQ", "title": ""}],
         "video_id": "dQw4w9WgXcQ",
         "state_text": "Prior context about the viewer.",
         "video_index": "3",
@@ -208,8 +210,12 @@ def test_make_conversation_record_integrates_components(monkeypatch: pytest.Monk
     assert record["gold_index"] == 1
     assert record["n_options"] == 1
     assert record["metadata"]["now_playing"].startswith("Now Playing Title")
+
     user_prompt = record["prompt"][1]["content"]
-    assert "Viewer: " in user_prompt
-    assert "CONTEXT: Prior context about the viewer." in user_prompt
-    assert "OPTIONS:" in user_prompt
-    assert "1. Rick Astley - Never Gonna Give You Up" in user_prompt
+    expected_base = conversation._PROMPT_DOC_BUILDER.prompt_from_builder(example)
+    expected_tail = (
+        "\n\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and"
+        " return ONLY its NUMBER in <answer>."
+    )
+    assert user_prompt == f"{expected_base}{expected_tail}"
+    assert "OPTIONS" in user_prompt

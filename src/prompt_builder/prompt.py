@@ -445,7 +445,6 @@ SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (
     ("religpew", "religious affiliation is {value}"),
     ("freq_youtube", "watches YouTube {value}"),
     ("newsint", "{value}"),
-    ("participant_study", "participated in {value}"),
 )
 
 MIN_WAGE_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
@@ -457,8 +456,21 @@ MIN_WAGE_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
 GUN_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
     (("gun_importance",), "gun policy importance is {value}"),
     (("gun_index",), "gun regulation support score is {value}"),
-    (("gun_enthusiasm",), "gun enthusiasm is {value}"),
+    (("gun_enthusiasm",), "{value}"),
 )
+
+
+def _highlight_value(field: str, raw_value: Any) -> str:
+    """Return a human-readable survey highlight value for ``field``."""
+
+    if field == "gun_enthusiasm":
+        verdict = format_yes_no(raw_value, yes="yes", no="no")
+        if verdict == "yes":
+            return "identifies as enthusiastic about guns"
+        if verdict == "no":
+            return "does not identify as enthusiastic about guns"
+    value = format_field_value(field, raw_value)
+    return value or ""
 
 
 def _survey_highlights(ex: Dict[str, Any]) -> str:
@@ -466,7 +478,7 @@ def _survey_highlights(ex: Dict[str, Any]) -> str:
 
     highlights: List[str] = []
     for field, template in SURVEY_HIGHLIGHT_SPECS:
-        value = format_field_value(field, ex.get(field))
+        value = _highlight_value(field, ex.get(field))
         if not value:
             continue
         highlights.append(template.format(value=value))
@@ -478,7 +490,7 @@ def _survey_highlights(ex: Dict[str, Any]) -> str:
     for fields, template in issue_specs:
         value: Optional[str] = None
         for field in fields:
-            candidate = format_field_value(field, ex.get(field))
+            candidate = _highlight_value(field, ex.get(field))
             if candidate:
                 value = candidate
                 break

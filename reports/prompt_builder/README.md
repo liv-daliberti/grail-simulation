@@ -14,7 +14,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Do We Need Stricter Gun Control? - The People Speak (watched 259s of 259s (100% complete), from VICE News)
 
 SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube weekly, participated in Study 1 (gun control MTurk), gun policy importance is not at all important, gun regulation support score is 25%, and gun enthusiasm is 0.
+party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube weekly, gun policy importance is not at all important, gun regulation support score is 25%, and does not identify as enthusiastic about guns.
 
 OPTIONS
 1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
@@ -24,7 +24,7 @@ OPTIONS
 ### Sample 2 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
-VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube 6.
+VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
 Initial Viewpoint: Opposes stricter gun laws
 
 CURRENTLY WATCHING GUN CONTROL: WHY YOU CAN'T COMPARE AUSTRALIA AND THE U.S (from Sydney Watson)
@@ -33,7 +33,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
 
 SURVEY HIGHLIGHTS
-party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube 6, participated in Study 1 (gun control MTurk), gun policy importance is very important, gun regulation support score is 25%, and gun enthusiasm is 1.
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
 
 OPTIONS
 1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
@@ -46,7 +46,7 @@ OPTIONS
 ### Sample 3 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
-VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube 6.
+VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
 Initial Viewpoint: Opposes stricter gun laws
 
 CURRENTLY WATCHING Trevor Reacts to the Orlando Shooting: The Daily Show (from The Daily Show with Trevor Noah)
@@ -56,7 +56,7 @@ RECENTLY WATCHED (NEWEST LAST)
 2. GUN CONTROL: WHY YOU CAN'T COMPARE AUSTRALIA AND THE U.S (watched 35s of 544s (6% complete), from Sydney Watson)
 
 SURVEY HIGHLIGHTS
-party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube 6, participated in Study 1 (gun control MTurk), gun policy importance is very important, gun regulation support score is 25%, and gun enthusiasm is 1.
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
 
 OPTIONS
 1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
@@ -66,7 +66,7 @@ OPTIONS
 ### Sample 4 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
-VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube 6.
+VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
 Initial Viewpoint: Opposes stricter gun laws
 
 CURRENTLY WATCHING Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain (from Good Morning Britain)
@@ -77,7 +77,7 @@ RECENTLY WATCHED (NEWEST LAST)
 3. Trevor Reacts to the Orlando Shooting: The Daily Show (watched 44s of 526s (8% complete), from The Daily Show with Trevor Noah)
 
 SURVEY HIGHLIGHTS
-party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube 6, participated in Study 1 (gun control MTurk), gun policy importance is very important, gun regulation support score is 25%, and gun enthusiasm is 1.
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
 
 OPTIONS
 1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
@@ -99,7 +99,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
 
 SURVEY HIGHLIGHTS
-party identification is Independent, ideology is Moderate, political interest is not very interested in politics, watches YouTube a few times a month, participated in Study 1 (gun control MTurk), gun policy importance is somewhat important, gun regulation support score is 50%, and gun enthusiasm is 1.
+party identification is Independent, ideology is Moderate, political interest is not very interested in politics, watches YouTube a few times a month, gun policy importance is somewhat important, gun regulation support score is 50%, and identifies as enthusiastic about guns.
 
 OPTIONS
 1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
@@ -121,7 +121,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Seattle's $15 Minimum Wage Experiment is Working (watched 222s of 222s (100% complete), from Alicé Anil)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, participated in Study 3 (minimum wage YouGov), minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
 
 OPTIONS
 1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
@@ -143,7 +143,7 @@ RECENTLY WATCHED (NEWEST LAST)
 2. Price Floors: The Minimum Wage (watched 585s of 586s (100% complete), from Marginal Revolution University)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, participated in Study 3 (minimum wage YouGov), minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
 
 OPTIONS
 1. Should We Raise the Minimum Wage? (vlogbrothers, 227s long) — Engagement: views 1,305,252, likes 28,589, comments 40
@@ -166,7 +166,7 @@ RECENTLY WATCHED (NEWEST LAST)
 3. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (watched 158s of 159s (99% complete), from NowThis News)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, participated in Study 3 (minimum wage YouGov), minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
 
 OPTIONS
 1. Amazon hikes minimum wage to $15 for all employees (Fox Business, 294s long) — Engagement: views 15,460, likes 200, comments 40
@@ -187,7 +187,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Seattle's $15 Minimum Wage Experiment is Working (watched 221s of 222s (100% complete), from Alicé Anil)
 
 SURVEY HIGHLIGHTS
-political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, participated in Study 3 (minimum wage YouGov), minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
 
 OPTIONS
 1. What Amazon's New Minimum Wage Means For Inflation And The Future | Velshi & Ruhle | MSNBC (MSNBC, 367s long) — Engagement: views 79,653, likes 1,040, comments 40
@@ -209,7 +209,7 @@ RECENTLY WATCHED (NEWEST LAST)
 2. What the US gets wrong about minimum wage (watched 306s of 306s (100% complete), from Vox)
 
 SURVEY HIGHLIGHTS
-political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, participated in Study 3 (minimum wage YouGov), minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
 
 OPTIONS
 1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40

@@ -33,9 +33,9 @@ class OutcomeFamily:
     """Group of outcomes sharing controls for hierarchical adjustments."""
 
     key: str
-   label: str
-   outcomes: Tuple[str, ...]
-   controls: Tuple[str, ...]
+    label: str
+    outcomes: Tuple[str, ...]
+    controls: Tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -100,8 +100,16 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
         StudyConfig(
             key="study1",
             label="Study 1 – Gun Control (MTurk)",
-            data_path=base / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv",
-            attitude_mapping={1: "anti", 2: "neutral", 3: "pro"},
+            data_path=(
+                base
+                / "gun control (issue 1)"
+                / "guncontrol_qualtrics_w123_clean.csv"
+            ),
+            attitude_mapping={
+                1: "anti",
+                2: "neutral",
+                3: "pro",
+            },
             liberal_attitude="anti",
             conservative_attitude="pro",
             seed_mapping={"anti": "liberal", "pro": "conservative"},
@@ -109,7 +117,11 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="platform",
                     label="Platform interactions",
-                    outcomes=("pro_fraction_chosen", "positive_interactions", "platform_duration"),
+                    outcomes=(
+                        "pro_fraction_chosen",
+                        "positive_interactions",
+                        "platform_duration",
+                    ),
                     controls=gun_platform_controls,
                 ),
                 OutcomeFamily(
@@ -121,7 +133,12 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="media",
                     label="Media trust",
-                    outcomes=("trust_majornews_w2", "trust_youtube_w2", "fabricate_majornews_w2", "fabricate_youtube_w2"),
+                    outcomes=(
+                        "trust_majornews_w2",
+                        "trust_youtube_w2",
+                        "fabricate_majornews_w2",
+                        "fabricate_youtube_w2",
+                    ),
                     controls=gun_media_controls,
                 ),
                 OutcomeFamily(
@@ -135,8 +152,16 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
         StudyConfig(
             key="study2",
             label="Study 2 – Minimum Wage (MTurk)",
-            data_path=base / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv",
-            attitude_mapping={1: "pro", 2: "neutral", 3: "anti"},
+            data_path=(
+                base
+                / "minimum wage (issue 2)"
+                / "qualtrics_w12_clean.csv"
+            ),
+            attitude_mapping={
+                1: "pro",
+                2: "neutral",
+                3: "anti",
+            },
             liberal_attitude="pro",
             conservative_attitude="anti",
             seed_mapping={"pro": "liberal", "anti": "conservative"},
@@ -144,7 +169,11 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="platform",
                     label="Platform interactions",
-                    outcomes=("pro_fraction_chosen", "positive_interactions", "platform_duration"),
+                    outcomes=(
+                        "pro_fraction_chosen",
+                        "positive_interactions",
+                        "platform_duration",
+                    ),
                     controls=mw_controls_common,
                 ),
                 OutcomeFamily(
@@ -156,7 +185,12 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="media",
                     label="Media trust",
-                    outcomes=("trust_majornews_w2", "trust_youtube_w2", "fabricate_majornews_w2", "fabricate_youtube_w2"),
+                    outcomes=(
+                        "trust_majornews_w2",
+                        "trust_youtube_w2",
+                        "fabricate_majornews_w2",
+                        "fabricate_youtube_w2",
+                    ),
                     controls=mw_media_controls,
                 ),
                 OutcomeFamily(
@@ -170,8 +204,14 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
         StudyConfig(
             key="study3",
             label="Study 3 – Minimum Wage (YouGov)",
-            data_path=base / "minimum wage (issue 2)" / "yg_w12_clean.csv",
-            attitude_mapping={1: "pro", 2: "neutral", 3: "anti"},
+            data_path=(
+                base / "minimum wage (issue 2)" / "yg_w12_clean.csv"
+            ),
+            attitude_mapping={
+                1: "pro",
+                2: "neutral",
+                3: "anti",
+            },
             liberal_attitude="pro",
             conservative_attitude="anti",
             seed_mapping={"pro": "liberal", "anti": "conservative"},
@@ -179,7 +219,11 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="platform",
                     label="Platform interactions",
-                    outcomes=("pro_fraction_chosen", "positive_interactions", "platform_duration"),
+                    outcomes=(
+                        "pro_fraction_chosen",
+                        "positive_interactions",
+                        "platform_duration",
+                    ),
                     controls=mw_controls_common,
                 ),
                 OutcomeFamily(
@@ -191,13 +235,22 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
                 OutcomeFamily(
                     key="media",
                     label="Media trust",
-                    outcomes=("trust_majornews_w2", "trust_youtube_w2", "fabricate_majornews_w2", "fabricate_youtube_w2"),
+                    outcomes=(
+                        "trust_majornews_w2",
+                        "trust_youtube_w2",
+                        "fabricate_majornews_w2",
+                        "fabricate_youtube_w2",
+                    ),
                     controls=mw_media_controls,
                 ),
                 OutcomeFamily(
                     key="affective",
                     label="Affective polarization",
-                    outcomes=("affpol_ft_w2", "affpol_smart_w2", "affpol_comfort_w2"),
+                    outcomes=(
+                        "affpol_ft_w2",
+                        "affpol_smart_w2",
+                        "affpol_comfort_w2",
+                    ),
                     controls=mw_affpol_controls,
                 ),
             ),
@@ -250,13 +303,25 @@ def _prepare_study_frame(config: StudyConfig) -> pd.DataFrame:
     thirds = pd.to_numeric(frame.get("thirds"), errors="coerce").round().astype("Int64")
     frame["attitude"] = thirds.map(config.attitude_mapping).astype("object")
 
-    seed_series = frame.get("treatment_seed", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    seed_series = (
+        frame.get("treatment_seed", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
     frame["seed_code"] = seed_series.replace({"nan": ""})
 
     seed = frame.get("treatment_seed").astype("object")
     frame["seed_orientation"] = seed.map(config.seed_mapping)
 
-    arm_series = frame.get("treatment_arm", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    arm_series = (
+        frame.get("treatment_arm", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
     frame["recsys_code"] = arm_series.str.extract(r"_(\d+)$", expand=False).fillna("")
     frame["recsys_indicator"] = frame["treatment_arm"].str.contains("31", na=False).astype(float)
 
@@ -335,18 +400,50 @@ def _treatment_term_name(attitude: str, recsys: str, seed: Optional[str] = None)
 def _build_treatment_matrix(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame:
     frame = frame.copy()
     frame["_attitude"] = frame["attitude"].fillna("").astype(str)
-    frame["_seed"] = frame.get("seed_code", pd.Series("", index=frame.index)).fillna("").astype(str)
-    frame["_recsys"] = frame.get("recsys_code", pd.Series("", index=frame.index)).fillna("").astype(str)
+    frame["_seed"] = (
+        frame.get("seed_code", pd.Series("", index=frame.index))
+        .fillna("")
+        .astype(str)
+    )
+    frame["_recsys"] = (
+        frame.get("recsys_code", pd.Series("", index=frame.index))
+        .fillna("")
+        .astype(str)
+    )
 
     terms: List[Tuple[str, Dict[str, Optional[str]]]] = [
-        (_treatment_term_name(config.conservative_attitude, "22"), {"attitude": config.conservative_attitude, "seed": None, "recsys": "22"}),
-        (_treatment_term_name(config.conservative_attitude, "31"), {"attitude": config.conservative_attitude, "seed": None, "recsys": "31"}),
-        (_treatment_term_name("neutral", "22", "anti"), {"attitude": "neutral", "seed": "anti", "recsys": "22"}),
-        (_treatment_term_name("neutral", "22", "pro"), {"attitude": "neutral", "seed": "pro", "recsys": "22"}),
-        (_treatment_term_name("neutral", "31", "anti"), {"attitude": "neutral", "seed": "anti", "recsys": "31"}),
-        (_treatment_term_name("neutral", "31", "pro"), {"attitude": "neutral", "seed": "pro", "recsys": "31"}),
-        (_treatment_term_name(config.liberal_attitude, "22"), {"attitude": config.liberal_attitude, "seed": None, "recsys": "22"}),
-        (_treatment_term_name(config.liberal_attitude, "31"), {"attitude": config.liberal_attitude, "seed": None, "recsys": "31"}),
+        (
+            _treatment_term_name(config.conservative_attitude, "22"),
+            {"attitude": config.conservative_attitude, "seed": None, "recsys": "22"},
+        ),
+        (
+            _treatment_term_name(config.conservative_attitude, "31"),
+            {"attitude": config.conservative_attitude, "seed": None, "recsys": "31"},
+        ),
+        (
+            _treatment_term_name("neutral", "22", "anti"),
+            {"attitude": "neutral", "seed": "anti", "recsys": "22"},
+        ),
+        (
+            _treatment_term_name("neutral", "22", "pro"),
+            {"attitude": "neutral", "seed": "pro", "recsys": "22"},
+        ),
+        (
+            _treatment_term_name("neutral", "31", "anti"),
+            {"attitude": "neutral", "seed": "anti", "recsys": "31"},
+        ),
+        (
+            _treatment_term_name("neutral", "31", "pro"),
+            {"attitude": "neutral", "seed": "pro", "recsys": "31"},
+        ),
+        (
+            _treatment_term_name(config.liberal_attitude, "22"),
+            {"attitude": config.liberal_attitude, "seed": None, "recsys": "22"},
+        ),
+        (
+            _treatment_term_name(config.liberal_attitude, "31"),
+            {"attitude": config.liberal_attitude, "seed": None, "recsys": "31"},
+        ),
     ]
 
     data = {}
@@ -421,13 +518,15 @@ def _contrast_specs(config: StudyConfig) -> List[Dict[str, object]]:
     ]
 
 
-def _run_single_regression(
+def _run_single_regression(  # pylint: disable=too-many-locals
     frame: pd.DataFrame,
     controls: pd.DataFrame,
     design_terms: pd.DataFrame,
     contrast: Mapping[str, object],
     outcome: str,
 ) -> Dict[str, float]:
+    """Fit a robust OLS contrast between treatment and control terms."""
+
     if outcome not in frame.columns:
         return {
             "estimate": float("nan"),
@@ -491,7 +590,7 @@ def _run_single_regression(
     }
 
 
-def _hierarchical_adjust(
+def _hierarchical_adjust(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     records: Sequence[Mapping[str, object]],
     alpha: float = 0.05,
 ) -> Tuple[Dict[str, float], Dict[Tuple[str, str], float], Dict[Tuple[str, str, str], float]]:
@@ -523,7 +622,8 @@ def _hierarchical_adjust(
         adjusted = {contrast: float("nan") for contrast in contrasts}
         if math.isnan(layer1_adj.get(family, float("nan"))) or layer1_adj[family] >= alpha:
             layer2_nonnull[family] = 0.0
-            layer2_adj.update({(family, contrast): value for contrast, value in adjusted.items()})
+            for contrast_name, value in adjusted.items():
+                layer2_adj[(family, contrast_name)] = value
             continue
 
         bh_values = _benjamini_hochberg(contrasts)
@@ -536,8 +636,15 @@ def _hierarchical_adjust(
             adjusted[contrast] = inflated
             if inflated < alpha:
                 valid.append(inflated)
-        layer2_nonnull[family] = float(len(valid)) / float(len([v for v in adjusted.values() if not math.isnan(v)])) if adjusted else 0.0
-        layer2_adj.update({(family, contrast): adjusted[contrast] for contrast in adjusted})
+        non_nan_values = [val for val in adjusted.values() if not math.isnan(val)]
+        if adjusted:
+            layer2_nonnull[family] = (
+                float(len(valid)) / float(len(non_nan_values)) if non_nan_values else 0.0
+            )
+        else:
+            layer2_nonnull[family] = 0.0
+        for contrast_name, value in adjusted.items():
+            layer2_adj[(family, contrast_name)] = value
 
     layer3_adj: Dict[Tuple[str, str, str], float] = {}
     for family, contrasts in layer3.items():
@@ -550,7 +657,8 @@ def _hierarchical_adjust(
                 or math.isnan(layer2_adj.get(key2, float("nan")))
                 or layer2_adj[key2] >= alpha
             ):
-                layer3_adj.update({(family, contrast, outcome): adjusted[outcome] for outcome in adjusted})
+                for outcome_name in adjusted:
+                    layer3_adj[(family, contrast, outcome_name)] = adjusted[outcome_name]
                 continue
 
             bh_values = _benjamini_hochberg(outcomes)
@@ -562,12 +670,18 @@ def _hierarchical_adjust(
                 denominator = prop_level1 * prop_level2 if prop_level1 and prop_level2 else 0.0
                 inflated = value if denominator == 0 else min(value / denominator, 1.0)
                 adjusted[outcome] = inflated
-            layer3_adj.update({(family, contrast, outcome): adjusted[outcome] for outcome in adjusted})
+            for outcome_name, value in adjusted.items():
+                layer3_adj[(family, contrast, outcome_name)] = value
 
     return layer1_adj, layer2_adj, layer3_adj
 
 
-def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame:
+def run_study_analysis(  # pylint: disable=too-many-locals
+    frame: pd.DataFrame,
+    config: StudyConfig,
+) -> pd.DataFrame:
+    """Compute preregistered contrasts for a single study configuration."""
+
     records: List[Dict[str, object]] = []
     treatment_terms = _build_treatment_matrix(frame, config)
     contrasts = _contrast_specs(config)
@@ -576,7 +690,13 @@ def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame
         controls = _transform_controls(frame, family.controls)
         for contrast in contrasts:
             for outcome in family.outcomes:
-                regression = _run_single_regression(frame, controls, treatment_terms, contrast, outcome)
+                regression = _run_single_regression(
+                    frame,
+                    controls,
+                    treatment_terms,
+                    contrast,
+                    outcome,
+                )
                 stderr = regression["stderr"]
                 estimate = regression["estimate"]
                 ci_margin = 1.96 * stderr if not math.isnan(stderr) else float("nan")
@@ -592,8 +712,12 @@ def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame
                         "outcome": outcome,
                         "estimate": estimate,
                         "stderr": stderr,
-                        "ci_low": estimate - ci_margin if not math.isnan(ci_margin) else float("nan"),
-                        "ci_high": estimate + ci_margin if not math.isnan(ci_margin) else float("nan"),
+                        "ci_low": (
+                            estimate - ci_margin if not math.isnan(ci_margin) else float("nan")
+                        ),
+                        "ci_high": (
+                            estimate + ci_margin if not math.isnan(ci_margin) else float("nan")
+                        ),
                         "p_value": regression["p_value"],
                         "mde": _compute_mde(stderr),
                         "n": regression["n"],
@@ -613,6 +737,8 @@ def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame
 
 
 def analyze_preregistered_effects(output_dir: Path | str) -> Dict[str, Path]:
+    """Run stratified regressions for all studies and persist CSV outputs."""
+
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 

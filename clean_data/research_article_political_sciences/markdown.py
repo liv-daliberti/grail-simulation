@@ -33,7 +33,7 @@ def _format_interval(center: float, lower: float, upper: float, precision: int =
     return f"{center:+.{precision}f} [{lower:+.{precision}f}, {upper:+.{precision}f}]"
 
 
-def build_markdown(
+def build_markdown(  # pylint: disable=too-many-arguments
     output_dir: Path,
     study_rows: Iterable[Mapping[str, object]],
     heatmap_paths: Iterable[Path],
@@ -71,11 +71,13 @@ def build_markdown(
     lines: List[str] = [
         "# RESEARCH ARTICLE POLITICAL SCIENCES",
         "",
-        "## Short-term exposure to filter-bubble recommendation systems has limited polarization effects",
+        "## Short-term exposure to filter-bubble recommendation systems has limited "
+        "polarization effects",
         "",
         "This section replicates headline opinion-shift findings from "
-        "_Short-term exposure to filter-bubble recommendation systems has limited polarization effects: "
-        "Naturalistic experiments on YouTube_ (Liu et al., PNAS 2025) using the cleaned data in this repository.",
+        "_Short-term exposure to filter-bubble recommendation systems has limited "
+        "polarization effects: Naturalistic experiments on YouTube_ (Liu et al., "
+        "PNAS 2025) using the cleaned data in this repository.",
         "",
         "### Opinion shift summary",
         "",
@@ -100,8 +102,9 @@ def build_markdown(
     lines.extend(
         [
             "",
-            "The minimal mean shifts and high share of small opinion changes (|Δ| ≤ 0.05 on a 0–1 scale) "
-            "mirror the paper's conclusion that short-term algorithmic perturbations produced limited "
+            "The minimal mean shifts and high share of small opinion changes "
+            "(|Δ| ≤ 0.05 on a 0–1 scale) mirror the paper's conclusion that "
+            "short-term algorithmic perturbations produced limited "
             "polarization in Studies 1–3.",
             "",
             "### Pre/post opinion heatmaps",
@@ -137,7 +140,8 @@ def build_markdown(
     lines.append(
         "Replication notes: opinion indices are scaled to [0, 1] and "
         "computed from the same survey composites used in the published study. "
-        "Participants lacking a post-wave response are excluded from the relevant heatmap and summary."
+        "Participants lacking a post-wave response are excluded from the relevant "
+        "heatmap and summary."
     )
 
     assignment_rows = list(assignment_rows)
@@ -192,7 +196,8 @@ def build_markdown(
                 f"{int(row.get('n', 0))} |"
             )
         lines.append(
-            "q-values reflect the paper's hierarchical FDR correction applied within each outcome family."
+            "q-values reflect the paper's hierarchical FDR correction applied "
+            "within each outcome family."
         )
 
     return lines

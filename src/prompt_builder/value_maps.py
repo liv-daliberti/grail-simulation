@@ -301,6 +301,16 @@ PERCENTAGE_FIELDS = {
     "trust_localnews_w3",
 }
 
+NEWS_TRUST_FIELDS = {
+    "news_trust",
+    "trust_majornews_w1",
+    "trust_localnews_w1",
+    "trust_majornews_w2",
+    "trust_localnews_w2",
+    "trust_majornews_w3",
+    "trust_localnews_w3",
+}
+
 CURRENCY_FIELDS = {
     "minwage_text_w1",
     "minwage_text_w2",
@@ -322,6 +332,21 @@ SCALE_0_100_FIELDS = {
     "political_lead_feels_5",
     "biden_approve",
     "trump_approve",
+}
+
+FEELING_THERMOMETER_FIELDS = {
+    "trump_approve",
+    "trump_job_approval",
+    "q5_2",
+    "q5_a",
+    "q5_a_w2",
+    "political_lead_feels_2",
+    "biden_approve",
+    "biden_job_approval",
+    "q5_5",
+    "q5_b",
+    "q5_b_w2",
+    "political_lead_feels_5",
 }
 
 IDEOLOGY_FIELDS = {"ideo1", "ideo2", "ideo3", "ideo4", "ideo5", "ideology", "ideology_text"}
@@ -412,6 +437,79 @@ def _format_state(field: str, value: Any) -> Optional[str]:
     return text
 
 
+def _normalize_mapping_lookup(mapping: Dict[str, str], key: str) -> Optional[str]:
+    """Return the best-effort value from ``mapping`` handling numeric variants."""
+
+    if key in mapping:
+        return mapping[key]
+    simplified = key.lstrip("0")
+    if simplified in mapping:
+        return mapping[simplified]
+    if key.endswith(".0"):
+        trimmed = key[:-2]
+        if trimmed in mapping:
+            return mapping[trimmed]
+    try:
+        numeric = float(key)
+    except (TypeError, ValueError):
+        return None
+    if math.isfinite(numeric) and numeric.is_integer():
+        candidate = str(int(numeric))
+        if candidate in mapping:
+            return mapping[candidate]
+    formatted = f"{numeric:g}"
+    if formatted in mapping:
+        return mapping[formatted]
+    return None
+
+
+def _format_feeling_thermometer(raw: Any) -> Optional[str]:
+    """Convert 0–100 feeling thermometer scores into descriptive phrases."""
+
+    numeric = _as_float(raw)
+    if numeric is None:
+        text = str(raw).strip()
+        return text or None
+    clamped = max(0.0, min(100.0, numeric))
+    score = int(round(clamped))
+    if clamped <= 20:
+        descriptor = "strongly unfavorable"
+    elif clamped <= 40:
+        descriptor = "unfavorable"
+    elif clamped < 60:
+        descriptor = "neutral"
+    elif clamped < 80:
+        descriptor = "favorable"
+    else:
+        descriptor = "strongly favorable"
+    return f"{descriptor} ({score} out of 100)"
+
+
+def _format_news_trust(raw: Any) -> Optional[str]:
+    """Render fractional news-trust scores as qualitative descriptions."""
+
+    numeric = _as_float(raw)
+    if numeric is None:
+        text = str(raw).strip()
+        return text or None
+    percent = numeric
+    if abs(percent) <= 1.0:
+        percent *= 100.0
+    percent = max(0.0, min(100.0, percent))
+    score = int(round(percent))
+    if percent < 20:
+        descriptor = "very low"
+    elif percent < 40:
+        descriptor = "low"
+    elif percent < 60:
+        descriptor = "moderate"
+    elif percent < 80:
+        descriptor = "high"
+    else:
+        descriptor = "very high"
+    return f"{descriptor} (about {score}%)"
+
+
 def format_field_value(field: str, value: Any) -> str:
     """
     Convert dataset field ``value`` into human-readable text based on ``field``.
@@ -441,9 +539,7 @@ def format_field_value(field: str, value: Any) -> str:
         mapping = FIELD_VALUE_MAPS.get(field_lower)
         if mapping:
             key = text
-            if key not in mapping:
-                key = key.lstrip("0")
-            result = mapping.get(key)
+            result = _normalize_mapping_lookup(mapping, key)
         elif field_lower in YT_FREQ_MAP and text in YT_FREQ_MAP:
             result = YT_FREQ_MAP[text]
 
@@ -452,6 +548,10 @@ def format_field_value(field: str, value: Any) -> str:
 
     if field_lower in POLITICAL_INTEREST_FIELDS:
         result = _format_percentage_field(value, precision=1)
+    if not result and field_lower in FEELING_THERMOMETER_FIELDS:
+        result = _format_feeling_thermometer(value)
+    if not result and field_lower in NEWS_TRUST_FIELDS:
+        result = _format_news_trust(value)
     if not result and field_lower in PERCENTAGE_FIELDS:
         result = _format_percentage_field(value)
     if not result and field_lower in CURRENCY_FIELDS:

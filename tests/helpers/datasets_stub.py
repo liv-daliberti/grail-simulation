@@ -55,6 +55,24 @@ def ensure_datasets_stub() -> None:
             def from_dict(cls, data: Dict[str, List[Any]]) -> "Dataset":
                 return cls(data)
 
+            @classmethod
+            def from_list(cls, rows: List[Dict[str, Any]]) -> "Dataset":
+                if not rows:
+                    return cls({})
+                keys = set().union(*(row.keys() for row in rows))
+                data: Dict[str, List[Any]] = {key: [] for key in keys}
+                for row in rows:
+                    for key in keys:
+                        data[key].append(row.get(key))
+                return cls(data)
+
+            def to_pandas(self):
+                try:
+                    import pandas as pd  # type: ignore
+                except ImportError as exc:  # pragma: no cover - pandas is a test dependency
+                    raise ImportError("pandas is required for Dataset.to_pandas() in the stub.") from exc
+                return pd.DataFrame(self._data)
+
             @property
             def column_names(self) -> List[str]:
                 return list(self._data.keys())

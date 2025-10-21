@@ -179,38 +179,58 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
 
     for split_name, file_list in split_files.items():
         frames = []
-        for file_ref in file_list:
-            handle = None
+
+        def _resolve_file_ref(file_ref_obj):
+            open_fs = fs  # type: ignore[attr-defined]
+            open_path = file_ref_obj
+            if isinstance(file_ref_obj, str) and "://" in file_ref_obj:
+                if url_to_fs is None:
+                    raise RuntimeError(
+                        "Encountered remote data file '%s' but fsspec is unavailable. "
+                        "Install fsspec to enable remote downloads." % file_ref_obj
+                    )
+                remote_fs, remote_path = url_to_fs(file_ref_obj)
+                return remote_fs, remote_path
             try:
-                open_fs = fs  # type: ignore[attr-defined]
-                open_path = file_ref
-                if isinstance(file_ref, str) and "://" in file_ref:
-                    if url_to_fs is None:
-                        raise RuntimeError(
-                            "Encountered remote data file '%s' but fsspec is unavailable. "
-                            "Install fsspec to enable remote downloads." % file_ref
-                        )
-                    remote_fs, remote_path = url_to_fs(file_ref)
-                    open_fs = remote_fs
-                    open_path = remote_path
+                with open_fs.open(open_path, "rb"):  # type: ignore[attr-defined]
+                    pass
+            except FileNotFoundError:
+                if (
+                    url_to_fs is not None
+                    and isinstance(file_ref_obj, str)
+                    and "://" not in file_ref_obj
+                ):
+                    remote_fs, remote_path = url_to_fs(file_ref_obj)
+                    return remote_fs, remote_path
+                raise
+            return open_fs, open_path
+
+        def _read_csv_frame(active_fs, active_path):
+            last_err: Optional[Exception] = None
+            for encoding in ("utf-8", "utf-8-sig", "latin-1"):
                 try:
-                    handle = open_fs.open(open_path, "rb")  # type: ignore[attr-defined]
-                except FileNotFoundError:
-                    if (
-                        url_to_fs is not None
-                        and isinstance(file_ref, str)
-                        and "://" not in file_ref
-                    ):
-                        remote_fs, remote_path = url_to_fs(file_ref)
-                        handle = remote_fs.open(remote_path, "rb")
-                    else:
-                        raise
-                frame = pd.read_csv(handle)
-            finally:
-                if handle is not None:
-                    handle.close()
+                    with active_fs.open(active_path, "rb") as handle:  # type: ignore[attr-defined]
+                        frame = pd.read_csv(handle, encoding=encoding)
+                except UnicodeDecodeError as err:
+                    last_err = err
+                    continue
+                return frame
+            if last_err is not None:
+                raise last_err
+            raise RuntimeError(f"Unable to read CSV file '{active_path}' using fallback encodings")
+
+        for file_ref in file_list:
+            open_fs, open_path = _resolve_file_ref(file_ref)
+            frame = _read_csv_frame(open_fs, open_path)
             if "Unnamed: 0" in frame.columns:
                 frame = frame.drop(columns=["Unnamed: 0"])
+            rename_map = {
+                col: col[:-4]
+                for col in frame.columns
+                if col.endswith("_pre") and col[:-4] and col[:-4] not in frame.columns
+            }
+            if rename_map:
+                frame = frame.rename(columns=rename_map)
             frames.append(frame)
 
         if not frames:

@@ -526,17 +526,9 @@ def _build_hyperparameter_report(
         )
         for issue, outcome in selection.per_issue.items():
             lines.append(
-                "| {feature} | {metric} | {text} | {size} | {window} | {min_count} | {issue} | {acc} | {k} |".format(
-                    feature=feature_space.upper(),
-                    metric=config.metric,
-                    text=text_label,
-                    size=size,
-                    window=window,
-                    min_count=min_count,
-                    issue=_snake_to_title(issue),
-                    acc=_format_float(outcome.accuracy),
-                    k=outcome.best_k,
-                )
+                f"| {feature_space.upper()} | {config.metric} | {text_label} | {size} | "
+                f"{window} | {min_count} | {_snake_to_title(issue)} | "
+                f"{_format_float(outcome.accuracy)} | {outcome.best_k} |"
             )
     lines.append("")
     lines.append("### Observations")
@@ -611,12 +603,10 @@ def _build_next_video_report(
             baseline = data.get("baseline_most_frequent_gold_index", {})
             baseline_acc = float(baseline.get("accuracy", 0.0))
             lines.append(
-                "| {issue} | {acc} | {k} | {baseline} |".format(
-                    issue=_snake_to_title(issue),
-                    acc=_format_float(float(data.get("accuracy_overall", 0.0))),
-                    k=int(data.get("best_k", 0)),
-                    baseline=_format_float(baseline_acc),
-                )
+                f"| {_snake_to_title(issue)} | "
+                f"{_format_float(float(data.get('accuracy_overall', 0.0)))} | "
+                f"{int(data.get('best_k', 0))} | "
+                f"{_format_float(baseline_acc)} |"
             )
         lines.append("")
         if config:
@@ -704,15 +694,12 @@ def _build_opinion_report(
             baseline = data.get("baseline", {})
             label = data.get("label", _snake_to_title(study_key))
             lines.append(
-                "| {label} | {participants} | {k} | {mae} | {rmse} | {r2} | {baseline} |".format(
-                    label=label,
-                    participants=int(data.get("n_participants", 0)),
-                    k=int(data.get("best_k", 0)),
-                    mae=_format_float(float(best_metrics.get("mae_after", 0.0))),
-                    rmse=_format_float(float(best_metrics.get("rmse_after", 0.0))),
-                    r2=_format_float(float(best_metrics.get("r2_after", 0.0))),
-                    baseline=_format_float(float(baseline.get("mae_using_before", 0.0))),
-                )
+                f"| {label} | {int(data.get('n_participants', 0))} | "
+                f"{int(data.get('best_k', 0))} | "
+                f"{_format_float(float(best_metrics.get('mae_after', 0.0)))} | "
+                f"{_format_float(float(best_metrics.get('rmse_after', 0.0)))} | "
+                f"{_format_float(float(best_metrics.get('r2_after', 0.0)))} | "
+                f"{_format_float(float(baseline.get('mae_using_before', 0.0)))} |"
             )
         lines.append("")
         if selection:
@@ -879,4 +866,3 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 if __name__ == "__main__":  # pragma: no cover
     main()
-

@@ -15,9 +15,9 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 2 – Minimum Wage (MTurk) | 165 | 25 | 0.173 | 0.219 | 0.374 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.185 | 0.236 | 0.181 | 0.084 |
 
-- Plots: `reports/knn/tfidf/opinion/mae_*.png`, `reports/knn/tfidf/opinion/r2_*.png`
-- Heatmaps benchmark predicted vs actual change: `reports/knn/tfidf/opinion/change_heatmap_*.png`
-- Opinion-change heatmaps: `reports/knn/tfidf/opinion/change_heatmap_*.png`
+- Plots: `tfidf/mae_*.png`, `tfidf/r2_*.png`
+- Heatmaps benchmark predicted vs actual change: `tfidf/change_heatmap_*.png`
+- Opinion-change heatmaps: `tfidf/change_heatmap_*.png`
 
 ## Word2Vec Feature Space
 
@@ -27,9 +27,9 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 2 – Minimum Wage (MTurk) | 165 | 10 | 0.162 | 0.207 | 0.440 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.177 | 0.226 | 0.251 | 0.084 |
 
-- Plots: `reports/knn/word2vec/opinion/mae_*.png`, `reports/knn/word2vec/opinion/r2_*.png`
-- Heatmaps benchmark predicted vs actual change: `reports/knn/word2vec/opinion/change_heatmap_*.png`
-- Opinion-change heatmaps: `reports/knn/word2vec/opinion/change_heatmap_*.png`
+- Plots: `word2vec/mae_*.png`, `word2vec/r2_*.png`
+- Heatmaps benchmark predicted vs actual change: `word2vec/change_heatmap_*.png`
+- Opinion-change heatmaps: `word2vec/change_heatmap_*.png`
 
 ### Opinion Change Heatmaps
 
@@ -37,15 +37,15 @@ Below are the 2D histograms comparing the observed shift in opinion index (post 
 
 #### TF-IDF
 
-![Study 1 – Gun Control (MTurk)](../tfidf/opinion/change_heatmap_study1.png)
-![Study 2 – Minimum Wage (MTurk)](../tfidf/opinion/change_heatmap_study2.png)
-![Study 3 – Minimum Wage (YouGov)](../tfidf/opinion/change_heatmap_study3.png)
+![Study 1 – Gun Control (MTurk)](tfidf/change_heatmap_study1.png)
+![Study 2 – Minimum Wage (MTurk)](tfidf/change_heatmap_study2.png)
+![Study 3 – Minimum Wage (YouGov)](tfidf/change_heatmap_study3.png)
 
 #### Word2Vec
 
-![Study 1 – Gun Control (MTurk)](../word2vec/opinion/change_heatmap_study1.png)
-![Study 2 – Minimum Wage (MTurk)](../word2vec/opinion/change_heatmap_study2.png)
-![Study 3 – Minimum Wage (YouGov)](../word2vec/opinion/change_heatmap_study3.png)
+![Study 1 – Gun Control (MTurk)](word2vec/change_heatmap_study1.png)
+![Study 2 – Minimum Wage (MTurk)](word2vec/change_heatmap_study2.png)
+![Study 3 – Minimum Wage (YouGov)](word2vec/change_heatmap_study3.png)
 
 ## Takeaways
 

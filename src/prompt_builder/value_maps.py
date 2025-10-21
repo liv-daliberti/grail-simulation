@@ -341,19 +341,20 @@ def _format_ideology(raw: Any) -> Optional[str]:
     if numeric is None:
         text = str(raw).strip()
         return text or None
+    label = "extremely conservative"
     if numeric <= 1.5:
-        return "extremely liberal"
-    if numeric <= 2.5:
-        return "liberal"
-    if numeric <= 3.5:
-        return "slightly liberal"
-    if numeric <= 4.5:
-        return "moderate"
-    if numeric <= 5.5:
-        return "slightly conservative"
-    if numeric <= 6.5:
-        return "conservative"
-    return "extremely conservative"
+        label = "extremely liberal"
+    elif numeric <= 2.5:
+        label = "liberal"
+    elif numeric <= 3.5:
+        label = "slightly liberal"
+    elif numeric <= 4.5:
+        label = "moderate"
+    elif numeric <= 5.5:
+        label = "slightly conservative"
+    elif numeric <= 6.5:
+        label = "conservative"
+    return label
 
 
 def _format_news_minutes(raw: Any) -> Optional[str]:
@@ -362,13 +363,15 @@ def _format_news_minutes(raw: Any) -> Optional[str]:
         text = str(raw).strip()
         return text or None
     if numeric <= 0:
-        return "0 minutes"
-    if numeric < 1:
+        result = "0 minutes"
+    elif numeric < 1:
         minutes = numeric * 60
-        return f"{minutes:.0f} minutes"
-    if numeric <= 6:
-        return f"{numeric:.1f} hours"
-    return f"{numeric:.0f} hours"
+        result = f"{minutes:.0f} minutes"
+    elif numeric <= 6:
+        result = f"{numeric:.1f} hours"
+    else:
+        result = f"{numeric:.0f} hours"
+    return result
 
 
 CUSTOM_FIELD_RENDERERS: Dict[str, Callable[[Any], Optional[str]]] = {
@@ -430,54 +433,40 @@ def format_field_value(field: str, value: Any) -> str:
         return ""
 
     field_lower = field.lower()
+    result: Optional[str] = None
 
     if field_lower in STATE_FIELD_NAMES:
-        formatted_state = _format_state(field_lower, value)
-        return formatted_state or ""
+        result = _format_state(field_lower, value)
+    else:
+        mapping = FIELD_VALUE_MAPS.get(field_lower)
+        if mapping:
+            key = text
+            if key not in mapping:
+                key = key.lstrip("0")
+            result = mapping.get(key)
+        elif field_lower in YT_FREQ_MAP and text in YT_FREQ_MAP:
+            result = YT_FREQ_MAP[text]
 
-    mapping = FIELD_VALUE_MAPS.get(field_lower)
-    if mapping:
-        key = text
-        if key not in mapping:
-            key = key.lstrip("0")
-        if key in mapping:
-            return mapping[key]
-
-    if field_lower in YT_FREQ_MAP and text in YT_FREQ_MAP:
-        return YT_FREQ_MAP[text]
+    if result:
+        return result
 
     if field_lower in POLITICAL_INTEREST_FIELDS:
-        formatted_interest = _format_percentage_field(value, precision=1)
-        if formatted_interest:
-            return formatted_interest
-
-    if field_lower in PERCENTAGE_FIELDS:
-        formatted = _format_percentage_field(value)
-        if formatted:
-            return formatted
-
-    if field_lower in CURRENCY_FIELDS:
-        formatted_currency = _format_currency_field(value)
-        if formatted_currency:
-            return formatted_currency
-
-    if field_lower in SCALE_0_100_FIELDS:
-        formatted_scale = _format_percentage_field(value)
-        if formatted_scale:
-            return formatted_scale
-
-    if field_lower in GUN_IMPORTANCE_FIELDS:
+        result = _format_percentage_field(value, precision=1)
+    if not result and field_lower in PERCENTAGE_FIELDS:
+        result = _format_percentage_field(value)
+    if not result and field_lower in CURRENCY_FIELDS:
+        result = _format_currency_field(value)
+    if not result and field_lower in SCALE_0_100_FIELDS:
+        result = _format_percentage_field(value)
+    if not result and field_lower in GUN_IMPORTANCE_FIELDS:
         key = text.rstrip(".0")
-        if key in GUN_IMPORTANCE_MAP:
-            return GUN_IMPORTANCE_MAP[key]
+        result = GUN_IMPORTANCE_MAP.get(key)
+    if not result:
+        renderer = CUSTOM_FIELD_RENDERERS.get(field_lower)
+        if renderer:
+            result = renderer(value)
 
-    renderer = CUSTOM_FIELD_RENDERERS.get(field_lower)
-    if renderer:
-        rendered = renderer(value)
-        if rendered:
-            return rendered
-
-    return text
+    return result or text
 
 
 __all__ = [

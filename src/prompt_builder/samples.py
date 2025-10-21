@@ -44,7 +44,7 @@ def _iter_splits(ds: DatasetDict) -> Iterable[tuple[str, any]]:
     :returns: Iterator of ``(split_name, split_dataset)`` tuples.
     """
     for split_name, split in ds.items():
-        if split is None or not len(split):
+        if split is None or len(split) == 0:
             continue
         yield split_name, split
 

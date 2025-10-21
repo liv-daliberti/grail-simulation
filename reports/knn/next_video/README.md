@@ -13,7 +13,7 @@ This report summarises the existing slate-ranking KNN model that predicts the ne
 | Gun control | 0.894 | 2 | 0.540 |
 | Minimum wage | 0.306 | 3 | 0.439 |
 
-- Plots: `reports/knn/tfidf/elbow_gun_control.png`, `reports/knn/tfidf/elbow_minimum_wage.png`
+- Plots: `tfidf/elbow_gun_control.png`, `tfidf/elbow_minimum_wage.png`
 
 ## Word2Vec Feature Space
 
@@ -22,7 +22,7 @@ This report summarises the existing slate-ranking KNN model that predicts the ne
 | Gun control | 0.870 | 2 | 0.540 |
 | Minimum wage | 0.288 | 3 | 0.439 |
 
-- Plots: `reports/knn/word2vec/elbow_gun_control.png`, `reports/knn/word2vec/elbow_minimum_wage.png`
+- Plots: `word2vec/elbow_gun_control.png`, `word2vec/elbow_minimum_wage.png`
 
 ## Observations
 

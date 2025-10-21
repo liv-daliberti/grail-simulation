@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -69,21 +70,25 @@ def _coerce_int(value: object) -> Optional[int]:
 
     if value is None:
         return None
+
+    result: Optional[int]
     if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        if value != value:  # NaN check
-            return None
-        return int(round(value))
-    if isinstance(value, str):
+        result = int(value)
+    elif isinstance(value, int):
+        result = value
+    elif isinstance(value, float):
+        result = None if math.isnan(value) else int(round(value))
+    elif isinstance(value, str):
         text = value.replace(",", "").strip()
         if not text:
-            return None
-        try:
-            number = float(text)
-        except ValueError:
-            return None
-        return int(round(number))
-    return None
+            result = None
+        else:
+            try:
+                number = float(text)
+            except ValueError:
+                result = None
+            else:
+                result = int(round(number))
+    else:
+        result = None
+    return result

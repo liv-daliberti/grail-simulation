@@ -54,7 +54,7 @@ for issue in minimum_wage gun_control; do
 done
 ```
 
-and the Word2Vec grid (mirrors the curated sweeps in `reports/knn/hyperparameter_tuning.md`):
+and the Word2Vec grid (mirrors the curated sweeps in `reports/knn/hyperparameter_tuning/README.md`):
 
 ```bash
 export DATASET=data/cleaned_grail OUT_DIR=models/knn/sweeps/word2vec WORD2VEC_WORKERS=40

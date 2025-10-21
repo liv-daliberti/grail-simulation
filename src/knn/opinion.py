@@ -183,7 +183,7 @@ def collect_examples(
         len(dataset),
     )
 
-    if max_examples and max_examples > 0 and len(collapsed) > max_examples:
+    if max_examples and 0 < max_examples < len(collapsed):
         rng = default_rng(seed)
         order = rng.permutation(len(collapsed))[:max_examples]
         collapsed = [collapsed[i] for i in order]
@@ -708,7 +708,7 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
         )
 
         if metrics_by_k:
-            best_k = max(metrics_by_k.keys(), key=lambda k: metrics_by_k[k]["r2_after"])
+            best_k, _ = max(metrics_by_k.items(), key=lambda item: item[1]["r2_after"])
         else:
             best_k = k_values[0]
 

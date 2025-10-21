@@ -26,7 +26,6 @@ logging.getLogger("httpx").setLevel(logging.ERROR)
 
 class MorphCloudError(Exception):
     """Raised when a MorphCloud operation fails."""
-    pass
 
 
 class MorphCloudExecutionClient:

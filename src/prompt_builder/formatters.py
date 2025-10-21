@@ -156,19 +156,21 @@ def describe_gender_fragment(value: Any) -> Optional[str]:
     if not text:
         return None
     lowered = text.lower()
-    if lowered in {"male", "man", "m", "1"}:
-        return "man"
-    if lowered in {"female", "woman", "f", "2"}:
-        return "woman"
-    if lowered in {"3"}:
-        return "non-binary person"
-    if lowered in {"4"}:
-        return "someone who prefers not to state their gender"
-    if lowered in {"non-binary", "nonbinary", "non binary"}:
-        return "non-binary person"
-    if "prefer" in lowered and "say" in lowered:
-        return "someone who prefers not to state their gender"
-    return text
+    alias_map = [
+        ({"male", "man", "m", "1"}, "man"),
+        ({"female", "woman", "f", "2"}, "woman"),
+        ({"3", "non-binary", "nonbinary", "non binary"}, "non-binary person"),
+        ({"4"}, "someone who prefers not to state their gender"),
+    ]
+    result = text
+    for aliases, canonical in alias_map:
+        if lowered in aliases:
+            result = canonical
+            break
+    else:
+        if "prefer" in lowered and "say" in lowered:
+            result = "someone who prefers not to state their gender"
+    return result
 
 
 def normalize_language_text(value: Any) -> str:

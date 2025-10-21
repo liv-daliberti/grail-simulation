@@ -603,19 +603,24 @@ def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     if children_raw is None:
         return []
     flag = format_yes_no(children_raw, yes="yes", no="no")
+    sentence = ""
     if flag == "yes":
-        return [_ensure_sentence("They have children in their household.")]
-    if flag == "no":
-        return [_ensure_sentence("They do not have children in their household.")]
-    formatted = format_field_value("child18", children_raw)
-    if not formatted:
+        sentence = "They have children in their household."
+    elif flag == "no":
+        sentence = "They do not have children in their household."
+    else:
+        formatted = format_field_value("child18", children_raw)
+        if formatted:
+            lowered = formatted.lower()
+            if lowered.startswith("no "):
+                sentence = "They do not have children in their household."
+            elif "children" in lowered:
+                sentence = "They have children in their household."
+            else:
+                sentence = f"Children in household: {formatted}."
+    if not sentence:
         return []
-    lowered = formatted.lower()
-    if lowered.startswith("no "):
-        return [_ensure_sentence("They do not have children in their household.")]
-    if "children" in lowered:
-        return [_ensure_sentence("They have children in their household.")]
-    return [_ensure_sentence(f"Children in household: {formatted}.")]
+    return [_ensure_sentence(sentence)]
 
 
 def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:

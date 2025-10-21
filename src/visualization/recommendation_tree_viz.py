@@ -1,5 +1,7 @@
 """Render Guns and GRAIL recommendation trees as Graphviz diagrams."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import argparse

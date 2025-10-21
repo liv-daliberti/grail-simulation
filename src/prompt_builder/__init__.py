@@ -7,6 +7,10 @@ organising the implementation across smaller, testable modules.
 
 from __future__ import annotations
 
+import importlib
+
+constants = importlib.import_module(".constants", __name__)
+value_maps = importlib.import_module(".value_maps", __name__)
 from .formatters import clean_text
 from .parsers import as_list_json, is_nanlike, secs, truthy
 from .profiles import render_profile, synthesize_viewer_sentence
@@ -19,8 +23,10 @@ __all__ = [
     "clean_text",
     "is_nanlike",
     "generate_prompt_samples",
+    "constants",
     "render_profile",
     "secs",
+    "value_maps",
     "PromptSample",
     "synthesize_viewer_sentence",
     "truthy",

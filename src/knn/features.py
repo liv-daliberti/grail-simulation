@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 import re
 from dataclasses import dataclass
@@ -14,8 +15,13 @@ from numpy.random import default_rng
 from common.text import canon_video_id
 from common.title_index import TitleResolver
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
-from prompt_builder.constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS
-from prompt_builder.value_maps import format_field_value
+
+_PROMPT_CONSTANTS = importlib.import_module("prompt_builder.constants")
+_PROMPT_VALUE_MAPS = importlib.import_module("prompt_builder.value_maps")
+
+GUN_FIELD_LABELS = _PROMPT_CONSTANTS.GUN_FIELD_LABELS
+MIN_WAGE_FIELD_LABELS = _PROMPT_CONSTANTS.MIN_WAGE_FIELD_LABELS
+format_field_value = _PROMPT_VALUE_MAPS.format_field_value
 
 try:  # pragma: no cover - optional dependency
     from gensim.models import Word2Vec  # type: ignore

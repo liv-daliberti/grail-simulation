@@ -445,25 +445,22 @@ def _score_vector_from_similarity(
     """
     if index_data.feature_space == "word2vec":
         subset = index_data.matrix[mask]
-        if subset.ndim == 1:
+        if subset.ndim == 1 and subset.size > 0:
             subset = subset.reshape(1, -1)
-        if subset.size == 0:
-            return sims_masked
-
-        if metric == "l2":
-            diff = subset - query
-            if diff.ndim == 1:
-                diff = diff.reshape(1, -1)
-            dists = np.linalg.norm(diff, axis=1)
-            return -dists
-
-        if metric == "cosine":
-            query_norm = float(np.linalg.norm(query)) or 1.0
-            subset_norms = np.linalg.norm(subset, axis=1)
-            denom = np.maximum(subset_norms * query_norm, 1e-8)
-            return (subset @ query) / denom
-
-        return sims_masked
+        result = sims_masked
+        if subset.size > 0:
+            if metric == "l2":
+                diff = subset - query
+                if diff.ndim == 1:
+                    diff = diff.reshape(1, -1)
+                dists = np.linalg.norm(diff, axis=1)
+                result = -dists
+            elif metric == "cosine":
+                query_norm = float(np.linalg.norm(query)) or 1.0
+                subset_norms = np.linalg.norm(subset, axis=1)
+                denom = np.maximum(subset_norms * query_norm, 1e-8)
+                result = (subset @ query) / denom
+        return result
 
     if metric == "l2":
         subset_sparse = index_data.matrix[mask]

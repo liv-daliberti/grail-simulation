@@ -12,7 +12,6 @@ import aiohttp
 
 class PistonError(Exception):
     """Raised when all available Piston endpoints fail to satisfy a request."""
-    pass
 
 
 @lru_cache(maxsize=1)

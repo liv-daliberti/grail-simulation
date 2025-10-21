@@ -142,6 +142,7 @@ autodoc_mock_imports = [
     "openai",
     "pandas",
     "peft",
+    "sentence_transformers",
     "pyarrow",
     "pydantic",
     "safetensors",

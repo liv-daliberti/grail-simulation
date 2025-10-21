@@ -425,6 +425,20 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     vectorizer_values = [token.lower() for token in _split_tokens(args.text_vectorizer_grid) or ["tfidf"]]
 
     def _vectorizer_cli(kind: str) -> Tuple[str, Tuple[str, ...]]:
+        """
+        Translate a vectorizer identifier into CLI overrides.
+
+        Parameters
+        ----------
+        kind:
+            Name of the vectorizer (``tfidf``, ``word2vec``, ``sentence_transformer``).
+
+        Returns
+        -------
+        tuple[str, tuple[str, ...]]:
+            Pair containing a short configuration tag and the command-line arguments.
+        """
+
         if kind == "tfidf":
             return "tfidf", ()
         if kind == "word2vec":

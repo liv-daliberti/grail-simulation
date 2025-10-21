@@ -26,9 +26,18 @@ class SentenceTransformerConfig:
 
 
 class SentenceTransformerEncoder:
-    """Thin wrapper over :mod:`sentence_transformers` with lazy loading."""
+    """Thin wrapper over ``sentence_transformers`` with lazy loading."""
 
     def __init__(self, config: SentenceTransformerConfig) -> None:
+        """
+        Initialise the encoder with runtime configuration.
+
+        Parameters
+        ----------
+        config:
+            Behavioural options used when loading and invoking the model.
+        """
+
         self.config = config
         self._model: SentenceTransformer | None = None  # type: ignore[valid-type]
 

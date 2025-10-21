@@ -16,6 +16,11 @@ XGBoost Baseline API
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: xgb.vectorizers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: xgb.evaluate
    :members:
    :undoc-members:

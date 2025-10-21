@@ -267,6 +267,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sparse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span><span class="p">,</span> <span class="n">SentenceTransformerEncoder</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">assemble_document</span><span class="p">,</span>
     <span class="n">extract_slate_items</span><span class="p">,</span>
@@ -432,6 +434,49 @@
 
 
 
+<div class="viewcode-block" id="build_sentence_transformer_index">
+<a class="viewcode-back" href="../../api/knn.html#knn.index.build_sentence_transformer_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_sentence_transformer_index</span><span class="p">(</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">max_train</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100_000</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SentenceTransformerConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a sentence-transformer index from the training split.</span>
+
+<span class="sd">    :param train_ds: Training dataset split.</span>
+<span class="sd">    :param max_train: Maximum number of rows to sample.</span>
+<span class="sd">    :param seed: Random seed used for subsampling.</span>
+<span class="sd">    :param extra_fields: Extra textual columns concatenated into each document.</span>
+<span class="sd">    :param config: Optional :class:`~common.embeddings.SentenceTransformerConfig` override.</span>
+<span class="sd">    :returns: Dictionary containing the encoder, dense matrix, and label metadata.</span>
+<span class="sd">    :raises ImportError: If ``sentence_transformers`` is unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
+        <span class="n">train_ds</span><span class="p">,</span>
+        <span class="n">max_train</span><span class="o">=</span><span class="n">max_train</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">st_config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span>
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">SentenceTransformerEncoder</span><span class="p">(</span><span class="n">st_config</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;vectorizer&quot;</span><span class="p">:</span> <span class="n">encoder</span><span class="p">,</span>
+        <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="n">matrix</span><span class="p">,</span>
+        <span class="s2">&quot;labels_id&quot;</span><span class="p">:</span> <span class="n">labels_id</span><span class="p">,</span>
+        <span class="s2">&quot;labels_title&quot;</span><span class="p">:</span> <span class="n">labels_title</span><span class="p">,</span>
+        <span class="s2">&quot;sentence_transformer_config&quot;</span><span class="p">:</span> <span class="n">st_config</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
 <div class="viewcode-block" id="save_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_tfidf_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -540,6 +585,44 @@
 
 
 
+<div class="viewcode-block" id="save_sentence_transformer_index">
+<a class="viewcode-back" href="../../api/knn.html#knn.index.save_sentence_transformer_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_sentence_transformer_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the sentence-transformer index to ``out_dir`` for later reuse.&quot;&quot;&quot;</span>
+
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;X.npy&quot;</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;labels_id.npy&quot;</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s2">&quot;labels_id&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+        <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;labels_title.npy&quot;</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s2">&quot;labels_title&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+        <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">config_obj</span><span class="p">:</span> <span class="n">SentenceTransformerConfig</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sentence_transformer_config&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;n_docs&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;vector_size&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="n">config_obj</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="n">config_obj</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config_obj</span><span class="o">.</span><span class="n">batch_size</span><span class="p">),</span>
+            <span class="s2">&quot;normalize&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">config_obj</span><span class="o">.</span><span class="n">normalize</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;meta.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="load_word2vec_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_word2vec_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -581,6 +664,36 @@
         <span class="s2">&quot;labels_id&quot;</span><span class="p">:</span> <span class="n">labels_id</span><span class="p">,</span>
         <span class="s2">&quot;labels_title&quot;</span><span class="p">:</span> <span class="n">labels_title</span><span class="p">,</span>
         <span class="s2">&quot;word2vec_config&quot;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="load_sentence_transformer_index">
+<a class="viewcode-back" href="../../api/knn.html#knn.index.load_sentence_transformer_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_sentence_transformer_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`.&quot;&quot;&quot;</span>
+
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;X.npy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">labels_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;labels_id.npy&quot;</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">labels_title</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;labels_title.npy&quot;</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">meta_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;meta.json&quot;</span>
+    <span class="k">if</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">meta_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">SentenceTransformerConfig</span><span class="p">(</span><span class="o">**</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span>
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">SentenceTransformerEncoder</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;vectorizer&quot;</span><span class="p">:</span> <span class="n">encoder</span><span class="p">,</span>
+        <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="n">matrix</span><span class="p">,</span>
+        <span class="s2">&quot;labels_id&quot;</span><span class="p">:</span> <span class="n">labels_id</span><span class="p">,</span>
+        <span class="s2">&quot;labels_title&quot;</span><span class="p">:</span> <span class="n">labels_title</span><span class="p">,</span>
+        <span class="s2">&quot;sentence_transformer_config&quot;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -687,7 +800,7 @@
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_safe_str</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">lowercase</span><span class="p">))</span>
     <span class="n">query_text</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">part</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;word2vec&quot;</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">}:</span>
         <span class="n">query_matrix</span> <span class="o">=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">query_text</span><span class="p">])</span>
         <span class="n">query_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">query_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="n">sims</span> <span class="o">=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">matrix</span> <span class="o">@</span> <span class="n">query_vec</span>
@@ -715,7 +828,7 @@
 <span class="sd">    :param metric: Distance metric (``l2`` or ``cosine``) or ``None`` for dot product.</span>
 <span class="sd">    :returns: Vector of scores aligned with ``sims_masked`` ordering.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;word2vec&quot;</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">}:</span>
         <span class="n">subset</span> <span class="o">=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">subset</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">subset</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">subset</span> <span class="o">=</span> <span class="n">subset</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -885,11 +998,14 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;build_tfidf_index&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_word2vec_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_sentence_transformer_index&quot;</span><span class="p">,</span>
     <span class="s2">&quot;knn_predict_among_slate_multi&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_tfidf_index&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_word2vec_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_sentence_transformer_index&quot;</span><span class="p">,</span>
     <span class="s2">&quot;save_tfidf_index&quot;</span><span class="p">,</span>
     <span class="s2">&quot;save_word2vec_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;save_sentence_transformer_index&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
         </article>

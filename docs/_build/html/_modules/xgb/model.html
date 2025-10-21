@@ -271,18 +271,24 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_document</span><span class="p">,</span> <span class="n">extract_slate_items</span><span class="p">,</span> <span class="n">prepare_prompt_documents</span><span class="p">,</span> <span class="n">title_for</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">canon_video_id</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseTextVectorizer</span><span class="p">,</span>
+    <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">,</span>
+    <span class="n">TfidfConfig</span><span class="p">,</span>
+    <span class="n">Word2VecVectorizerConfig</span><span class="p">,</span>
+    <span class="n">create_vectorizer</span><span class="p">,</span>
+    <span class="n">load_vectorizer</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LabelEncoder</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="n">TfidfVectorizer</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="n">LabelEncoder</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_sklearn_available</span><span class="p">(</span><span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_label_encoder_available</span><span class="p">(</span><span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure optional scikit-learn dependency is present before continuing.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">TfidfVectorizer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">LabelEncoder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="k">if</span> <span class="n">LabelEncoder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Install scikit-learn to </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
@@ -297,8 +303,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Container bundling the vectoriser, label encoder, and trained model.</span>
 
-<span class="sd">    :ivar vectorizer: TF-IDF vectoriser fitted on training documents.</span>
-<span class="sd">    :vartype vectorizer: sklearn.feature_extraction.text.TfidfVectorizer</span>
+<span class="sd">    :ivar vectorizer: Text vectoriser fitted on training documents.</span>
+<span class="sd">    :vartype vectorizer: BaseTextVectorizer</span>
 <span class="sd">    :ivar label_encoder: Encoder mapping video identifiers to numeric labels.</span>
 <span class="sd">    :vartype label_encoder: sklearn.preprocessing.LabelEncoder</span>
 <span class="sd">    :ivar booster: Trained XGBoost booster instance.</span>
@@ -307,7 +313,7 @@
 <span class="sd">    :vartype extra_fields: Tuple[str, ...]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">vectorizer</span><span class="p">:</span> <span class="n">TfidfVectorizer</span>
+    <span class="n">vectorizer</span><span class="p">:</span> <span class="n">BaseTextVectorizer</span>
     <span class="n">label_encoder</span><span class="p">:</span> <span class="n">LabelEncoder</span>
     <span class="n">booster</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span></div>
@@ -369,6 +375,8 @@
 <span class="sd">    :vartype seed: int</span>
 <span class="sd">    :ivar max_features: Maximum number of TF-IDF features (``None`` for unlimited).</span>
 <span class="sd">    :vartype max_features: int | None</span>
+<span class="sd">    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``, or ``sentence_transformer``).</span>
+<span class="sd">    :vartype vectorizer_kind: str</span>
 <span class="sd">    :ivar booster: Hyper-parameter bundle applied when initialising the booster.</span>
 <span class="sd">    :vartype booster: XGBoostBoosterParams</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -376,6 +384,12 @@
     <span class="n">max_train</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200_000</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span>
     <span class="n">max_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">200_000</span>
+    <span class="n">vectorizer_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tfidf&quot;</span>
+    <span class="n">tfidf</span><span class="p">:</span> <span class="n">TfidfConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TfidfConfig</span><span class="p">)</span>
+    <span class="n">word2vec</span><span class="p">:</span> <span class="n">Word2VecVectorizerConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Word2VecVectorizerConfig</span><span class="p">)</span>
+    <span class="n">sentence_transformer</span><span class="p">:</span> <span class="n">SentenceTransformerVectorizerConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">SentenceTransformerVectorizerConfig</span>
+    <span class="p">)</span>
     <span class="n">booster</span><span class="p">:</span> <span class="n">XGBoostBoosterParams</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">XGBoostBoosterParams</span><span class="p">)</span></div>
 
 
@@ -406,9 +420,12 @@
 
     <span class="k">if</span> <span class="n">XGBClassifier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install xgboost to train the XGBoost baseline.&quot;</span><span class="p">)</span>
-    <span class="n">_ensure_sklearn_available</span><span class="p">(</span><span class="s2">&quot;train the XGBoost baseline&quot;</span><span class="p">)</span>
+    <span class="n">_ensure_label_encoder_available</span><span class="p">(</span><span class="s2">&quot;train the XGBoost baseline&quot;</span><span class="p">)</span>
 
     <span class="n">train_config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">XGBoostTrainConfig</span><span class="p">()</span>
+    <span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">capped</span> <span class="o">=</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="ow">and</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">train_config</span><span class="o">.</span><span class="n">tfidf</span><span class="o">.</span><span class="n">max_features</span> <span class="o">=</span> <span class="n">capped</span>
     <span class="n">vectorizer</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">booster</span> <span class="o">=</span> <span class="n">_build_model_components</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
         <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
@@ -438,15 +455,23 @@
 
     <span class="k">if</span> <span class="n">joblib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install joblib to save the XGBoost baseline artifacts.&quot;</span><span class="p">)</span>
-    <span class="n">_ensure_sklearn_available</span><span class="p">(</span><span class="s2">&quot;serialize XGBoost vectorizer and label encoder&quot;</span><span class="p">)</span>
+    <span class="n">_ensure_label_encoder_available</span><span class="p">(</span><span class="s2">&quot;serialize XGBoost label encoders&quot;</span><span class="p">)</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">vectorizer</span><span class="p">,</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
+    <span class="n">vectorizer_dir</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer&quot;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">vectorizer_dir</span><span class="p">)</span>
     <span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">label_encoder</span><span class="p">,</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;label_encoder.joblib&quot;</span><span class="p">)</span>
     <span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">booster</span><span class="p">,</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;xgboost_model.joblib&quot;</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;config.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">({</span><span class="s2">&quot;extra_fields&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">)},</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;extra_fields&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">),</span>
+                <span class="s2">&quot;vectorizer&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">metadata</span><span class="p">(),</span>
+            <span class="p">},</span>
+            <span class="n">handle</span><span class="p">,</span>
+            <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 
@@ -464,10 +489,14 @@
 
     <span class="k">if</span> <span class="n">joblib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install joblib to load the XGBoost baseline artifacts.&quot;</span><span class="p">)</span>
-    <span class="n">_ensure_sklearn_available</span><span class="p">(</span><span class="s2">&quot;load the XGBoost baseline artifacts&quot;</span><span class="p">)</span>
+    <span class="n">_ensure_label_encoder_available</span><span class="p">(</span><span class="s2">&quot;load the XGBoost baseline artifacts&quot;</span><span class="p">)</span>
 
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
-    <span class="n">vectorizer</span><span class="p">:</span> <span class="n">TfidfVectorizer</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
+    <span class="n">vectorizer_dir</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer&quot;</span>
+    <span class="k">if</span> <span class="n">vectorizer_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">load_vectorizer</span><span class="p">(</span><span class="n">vectorizer_dir</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Backwards compatibility with pre-vectorizer refactor bundles.</span>
+        <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
     <span class="n">encoder</span><span class="p">:</span> <span class="n">LabelEncoder</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;label_encoder.joblib&quot;</span><span class="p">)</span>
     <span class="n">booster</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;xgboost_model.joblib&quot;</span><span class="p">)</span>
     <span class="n">config_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;config.json&quot;</span>
@@ -528,27 +557,9 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_fit_vectorizer</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TfidfVectorizer</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit a TF-IDF vectoriser on ``documents`` and return the vectoriser plus matrix.&quot;&quot;&quot;</span>
-    <span class="n">_ensure_sklearn_available</span><span class="p">(</span><span class="s2">&quot;vectorise prompt documents for XGBoost&quot;</span><span class="p">)</span>
-    <span class="n">tfidf_max_features</span> <span class="o">=</span> <span class="n">max_features</span> <span class="k">if</span> <span class="n">max_features</span> <span class="ow">and</span> <span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span>
-        <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">strip_accents</span><span class="o">=</span><span class="s2">&quot;unicode&quot;</span><span class="p">,</span>
-        <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="n">min_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">stop_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">token_pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;(?u)\b[\w\-]{2,}\b&quot;</span><span class="p">,</span>
-        <span class="n">max_features</span><span class="o">=</span><span class="n">tfidf_max_features</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">vectorizer</span><span class="p">,</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_encode_labels</span><span class="p">(</span><span class="n">labels_id</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an encoder and numeric labels derived from ``labels_id``.&quot;&quot;&quot;</span>
-    <span class="n">_ensure_sklearn_available</span><span class="p">(</span><span class="s2">&quot;encode prompt labels for XGBoost&quot;</span><span class="p">)</span>
+    <span class="n">_ensure_label_encoder_available</span><span class="p">(</span><span class="s2">&quot;encode prompt labels for XGBoost&quot;</span><span class="p">)</span>
     <span class="n">encoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
     <span class="n">encoded</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">labels_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
@@ -593,7 +604,7 @@
     <span class="n">train_ds</span><span class="p">,</span>
     <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TfidfVectorizer</span><span class="p">,</span> <span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">BaseTextVectorizer</span><span class="p">,</span> <span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return fitted vectoriser, label encoder, and trained booster.&quot;&quot;&quot;</span>
 
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">prepare_prompt_documents</span><span class="p">(</span>
@@ -605,10 +616,15 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">docs</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No training documents were produced for XGBoost fitting.&quot;</span><span class="p">)</span>
 
-    <span class="n">vectorizer</span><span class="p">,</span> <span class="n">matrix</span> <span class="o">=</span> <span class="n">_fit_vectorizer</span><span class="p">(</span>
-        <span class="n">documents</span><span class="o">=</span><span class="n">docs</span><span class="p">,</span>
-        <span class="n">max_features</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span><span class="p">,</span>
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_vectorizer</span><span class="p">(</span>
+        <span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span><span class="p">,</span>
+        <span class="n">tfidf</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">tfidf</span><span class="p">,</span>
+        <span class="n">word2vec</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">word2vec</span><span class="p">,</span>
+        <span class="n">sentence_transformer</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">sentence_transformer</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="s2">&quot;astype&quot;</span><span class="p">):</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="n">encoder</span><span class="p">,</span> <span class="n">encoded_labels</span> <span class="o">=</span> <span class="n">_encode_labels</span><span class="p">(</span><span class="n">labels_id</span><span class="p">)</span>
     <span class="n">booster</span> <span class="o">=</span> <span class="n">_train_booster</span><span class="p">(</span>
         <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
@@ -669,6 +685,9 @@
     <span class="s2">&quot;XGBoostSlateModel&quot;</span><span class="p">,</span>
     <span class="s2">&quot;XGBoostBoosterParams&quot;</span><span class="p">,</span>
     <span class="s2">&quot;XGBoostTrainConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TfidfConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Word2VecVectorizerConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SentenceTransformerVectorizerConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;fit_xgboost_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_xgboost_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;predict_among_slate&quot;</span><span class="p">,</span>

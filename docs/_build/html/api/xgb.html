@@ -435,6 +435,115 @@
 
 <p id="module-xgb.model">XGBoost training and inference utilities for slate prediction.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="xgb.model.SentenceTransformerVectorizerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerVectorizerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.SentenceTransformerVectorizerConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration bundle for SentenceTransformer vectorisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>)</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.SentenceTransformerVectorizerConfig.batch_size">
+<span class="sig-name descname"><span class="pre">batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#xgb.model.SentenceTransformerVectorizerConfig.batch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.SentenceTransformerVectorizerConfig.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.model.SentenceTransformerVectorizerConfig.device" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.SentenceTransformerVectorizerConfig.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></em><a class="headerlink" href="#xgb.model.SentenceTransformerVectorizerConfig.model_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.SentenceTransformerVectorizerConfig.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#xgb.model.SentenceTransformerVectorizerConfig.normalize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.model.TfidfConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">TfidfConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.TfidfConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration parameters for TF-IDF vectorisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.TfidfConfig.max_features">
+<span class="sig-name descname"><span class="pre">max_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">200000</span></em><a class="headerlink" href="#xgb.model.TfidfConfig.max_features" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">Word2VecVectorizerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration for Word2Vec-based embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>window</strong> (<em>int</em>)</p></li>
+<li><p><strong>min_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>epochs</strong> (<em>int</em>)</p></li>
+<li><p><strong>workers</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>model_dir</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.epochs">
+<span class="sig-name descname"><span class="pre">epochs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.epochs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.min_count">
+<span class="sig-name descname"><span class="pre">min_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.min_count" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.model_dir">
+<span class="sig-name descname"><span class="pre">model_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.model_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">42</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.vector_size">
+<span class="sig-name descname"><span class="pre">vector_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">256</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.vector_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.window">
+<span class="sig-name descname"><span class="pre">window</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.window" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.Word2VecVectorizerConfig.workers">
+<span class="sig-name descname"><span class="pre">workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#xgb.model.Word2VecVectorizerConfig.workers" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="xgb.model.XGBoostBoosterParams">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">XGBoostBoosterParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colsample_bytree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hist'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_lambda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/model.html#XGBoostBoosterParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.XGBoostBoosterParams" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -523,7 +632,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vectorizer</strong> (<em>sklearn.feature_extraction.text.TfidfVectorizer</em>) – TF-IDF vectoriser fitted on training documents.</p></li>
+<li><p><strong>vectorizer</strong> (<a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><em>BaseTextVectorizer</em></a>) – Text vectoriser fitted on training documents.</p></li>
 <li><p><strong>label_encoder</strong> (<em>sklearn.preprocessing.LabelEncoder</em>) – Encoder mapping video identifiers to numeric labels.</p></li>
 <li><p><strong>booster</strong> (<em>Any</em>) – Trained XGBoost booster instance.</p></li>
 <li><p><strong>extra_fields</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Additional prompt fields captured during training.</p></li>
@@ -531,7 +640,7 @@
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>vectorizer</strong> (<em>sklearn.feature_extraction.text.TfidfVectorizer</em>)</p></li>
+<li><p><strong>vectorizer</strong> (<a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><em>BaseTextVectorizer</em></a>)</p></li>
 <li><p><strong>label_encoder</strong> (<em>sklearn.preprocessing.LabelEncoder</em>)</p></li>
 <li><p><strong>booster</strong> (<em>Any</em>)</p></li>
 <li><p><strong>extra_fields</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
@@ -555,14 +664,14 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.model.XGBoostSlateModel.vectorizer">
-<span class="sig-name descname"><span class="pre">vectorizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">sklearn.feature_extraction.text.TfidfVectorizer</span></em><a class="headerlink" href="#xgb.model.XGBoostSlateModel.vectorizer" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">vectorizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><span class="pre">BaseTextVectorizer</span></a></em><a class="headerlink" href="#xgb.model.XGBoostSlateModel.vectorizer" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">XGBoostTrainConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_train=200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features=200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">booster=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/model.html#XGBoostTrainConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.XGBoostTrainConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.model.</span></span><span class="sig-name descname"><span class="pre">XGBoostTrainConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_train=200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed=42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features=200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorizer_kind='tfidf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tfidf=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">booster=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/model.html#XGBoostTrainConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.model.XGBoostTrainConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration options controlling training behaviour.</p>
 <dl class="field-list simple">
@@ -571,6 +680,7 @@
 <li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows sampled from the training split (0 keeps all).</p></li>
 <li><p><strong>seed</strong> (<em>int</em>) – Random seed used for subsampling.</p></li>
 <li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>) – Maximum number of TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> for unlimited).</p></li>
+<li><p><strong>vectorizer_kind</strong> (<em>str</em>) – Feature extraction strategy (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>, or <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p></li>
 <li><p><strong>booster</strong> (<a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams"><em>XGBoostBoosterParams</em></a>) – Hyper-parameter bundle applied when initialising the booster.</p></li>
 </ul>
 </dd>
@@ -579,6 +689,10 @@
 <li><p><strong>max_train</strong> (<em>int</em>)</p></li>
 <li><p><strong>seed</strong> (<em>int</em>)</p></li>
 <li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>vectorizer_kind</strong> (<em>str</em>)</p></li>
+<li><p><strong>tfidf</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a>)</p></li>
+<li><p><strong>word2vec</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a>)</p></li>
+<li><p><strong>sentence_transformer</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a>)</p></li>
 <li><p><strong>booster</strong> (<a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams"><em>XGBoostBoosterParams</em></a>)</p></li>
 </ul>
 </dd>
@@ -601,6 +715,26 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig.seed">
 <span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">42</span></em><a class="headerlink" href="#xgb.model.XGBoostTrainConfig.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig.sentence_transformer">
+<span class="sig-name descname"><span class="pre">sentence_transformer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><span class="pre">SentenceTransformerVectorizerConfig</span></a></em><a class="headerlink" href="#xgb.model.XGBoostTrainConfig.sentence_transformer" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig.tfidf">
+<span class="sig-name descname"><span class="pre">tfidf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><span class="pre">TfidfConfig</span></a></em><a class="headerlink" href="#xgb.model.XGBoostTrainConfig.tfidf" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig.vectorizer_kind">
+<span class="sig-name descname"><span class="pre">vectorizer_kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tfidf'</span></em><a class="headerlink" href="#xgb.model.XGBoostTrainConfig.vectorizer_kind" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.model.XGBoostTrainConfig.word2vec">
+<span class="sig-name descname"><span class="pre">word2vec</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><span class="pre">Word2VecVectorizerConfig</span></a></em><a class="headerlink" href="#xgb.model.XGBoostTrainConfig.word2vec" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -685,6 +819,509 @@ per-video probabilities.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-xgb.vectorizers">Text vectoriser abstractions for the XGBoost baseline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">BaseTextVectorizer</span></span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Interface for text vectorisers used by the XGBoost slate model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.feature_dimension">
+<span class="sig-name descname"><span class="pre">feature_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.feature_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.feature_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Return the number of features produced during transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Width of the feature representation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.fit_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Fit the vectoriser on <code class="docutils literal notranslate"><span class="pre">documents</span></code> and return the resulting features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Corpus used to establish model parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Implementation-specific feature matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.kind" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.load" title="Link to this definition">¶</a></dt>
+<dd><p>Reconstruct a vectoriser from <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Location containing saved model artefacts.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Fully initialised subclass instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer">BaseTextVectorizer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.metadata" title="Link to this definition">¶</a></dt>
+<dd><p>Return serialisable metadata describing the vectoriser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.save" title="Link to this definition">¶</a></dt>
+<dd><p>Persist the trained vectoriser into <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Destination folder for serialised artefacts.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.BaseTextVectorizer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Encode <code class="docutils literal notranslate"><span class="pre">documents</span></code> using the fitted vectoriser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Inputs to transform with the learned representation.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Feature matrix aligned with the fitted model state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration controlling SentenceTransformer inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>)</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerConfig.batch_size">
+<span class="sig-name descname"><span class="pre">batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerConfig.batch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerConfig.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerConfig.device" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerConfig.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></em><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerConfig.model_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerConfig.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerConfig.normalize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerVectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTextVectorizer</span></code></a></p>
+<p>Vectoriser using pre-trained sentence-transformer encoders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Create a vectoriser backed by a sentence-transformer model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a>) – Encoder settings forwarded to <code class="xref py py-class docutils literal notranslate"><span class="pre">SentenceTransformerEncoder</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.feature_dimension">
+<span class="sig-name descname"><span class="pre">feature_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.feature_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.feature_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Return the dimensionality of the sentence-transformer embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Embedding width either cached from training or derived on demand.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.fit_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Encode <code class="docutils literal notranslate"><span class="pre">documents</span></code> while caching the embedding dimensionality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Texts to embed via the underlying sentence-transformer.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dense array of unit-normalised document embeddings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sentence_transformer'</span></em><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.kind" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.load" title="Link to this definition">¶</a></dt>
+<dd><p>Restore configuration needed to rebuild the sentence-transformer encoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Folder containing metadata generated by <a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.save" title="xgb.vectorizers.SentenceTransformerVectorizer.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Vectoriser initialised with the persisted configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer" title="xgb.vectorizers.SentenceTransformerVectorizer">SentenceTransformerVectorizer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.save" title="Link to this definition">¶</a></dt>
+<dd><p>Persist the vectoriser configuration metadata to <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Destination folder receiving the serialised configuration.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.SentenceTransformerVectorizer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#SentenceTransformerVectorizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.SentenceTransformerVectorizer.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Encode <code class="docutils literal notranslate"><span class="pre">documents</span></code> using the cached sentence-transformer model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Text inputs to convert into embeddings.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dense embedding array reusing the cached model instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">TfidfVectorizerWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTextVectorizer</span></code></a></p>
+<p>Wrapper around scikit-learn’s TF-IDF vectoriser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Create a TF-IDF vectoriser wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a>) – Hyper-parameters controlling vocabulary size and tokenisation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.feature_dimension">
+<span class="sig-name descname"><span class="pre">feature_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.feature_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.feature_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Return the number of TF-IDF features exposed by the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Vocabulary size reflected in the vectoriser.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.fit_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Fit the TF-IDF vectoriser and transform <code class="docutils literal notranslate"><span class="pre">documents</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Corpus used for fitting and transformation.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sparse matrix of TF-IDF features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tfidf'</span></em><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.kind" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.load" title="Link to this definition">¶</a></dt>
+<dd><p>Restore a TF-IDF vectoriser previously saved with <a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.save" title="xgb.vectorizers.TfidfVectorizerWrapper.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Folder containing the saved estimator and metadata.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reconstructed wrapper ready for inference.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper" title="xgb.vectorizers.TfidfVectorizerWrapper">TfidfVectorizerWrapper</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.save" title="Link to this definition">¶</a></dt>
+<dd><p>Persist the fitted TF-IDF vectoriser to <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Destination folder receiving the serialised model artefacts.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.TfidfVectorizerWrapper.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#TfidfVectorizerWrapper.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.TfidfVectorizerWrapper.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">documents</span></code> using the fitted TF-IDF model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Input texts to encode.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sparse matrix of TF-IDF features matching the fitted vocabulary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">Word2VecVectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTextVectorizer</span></code></a></p>
+<p>Vectoriser that averages Word2Vec embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Build a Word2Vec-backed vectoriser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a>) – Training and inference options for the Word2Vec feature builder.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.feature_dimension">
+<span class="sig-name descname"><span class="pre">feature_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.feature_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.feature_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Return the dimensionality of the produced Word2Vec embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Embedding size configured for the model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.fit_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Train the Word2Vec model and encode <code class="docutils literal notranslate"><span class="pre">documents</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Corpus used for model fitting and embedding aggregation.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dense embedding matrix with one row per document.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'word2vec'</span></em><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.kind" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load a Word2Vec vectoriser from <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Folder containing a previous call to <a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.save" title="xgb.vectorizers.Word2VecVectorizer.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rehydrated vectoriser with weights and configuration applied.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer" title="xgb.vectorizers.Word2VecVectorizer">Word2VecVectorizer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.save" title="Link to this definition">¶</a></dt>
+<dd><p>Store the Word2Vec model artefacts in <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Destination folder receiving the trained embeddings and metadata.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.vectorizers.Word2VecVectorizer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#Word2VecVectorizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.Word2VecVectorizer.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Encode <code class="docutils literal notranslate"><span class="pre">documents</span></code> using the fitted Word2Vec model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Texts to convert into averaged embeddings.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dense embedding matrix using the cached embeddings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="xgb.vectorizers.create_vectorizer">
+<span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">create_vectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tfidf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#create_vectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.create_vectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Return a vectoriser instance for <code class="docutils literal notranslate"><span class="pre">kind</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kind</strong> (<em>str</em>)</p></li>
+<li><p><strong>tfidf</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>word2vec</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sentence_transformer</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer">BaseTextVectorizer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="xgb.vectorizers.load_vectorizer">
+<span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">load_vectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#load_vectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.load_vectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Load a vectoriser saved via <a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.save" title="xgb.vectorizers.BaseTextVectorizer.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseTextVectorizer.save()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><em>BaseTextVectorizer</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1015,6 +1652,27 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#xgb.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.features.title_for"><code class="docutils literal notranslate"><span class="pre">title_for()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.features.viewer_profile_sentence"><code class="docutils literal notranslate"><span class="pre">viewer_profile_sentence()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizerConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizerConfig.batch_size</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig.device"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizerConfig.device</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig.model_name"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizerConfig.model_name</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig.normalize"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizerConfig.normalize</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.model.TfidfConfig"><code class="docutils literal notranslate"><span class="pre">TfidfConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.model.TfidfConfig.max_features"><code class="docutils literal notranslate"><span class="pre">TfidfConfig.max_features</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.epochs"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.epochs</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.min_count"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.min_count</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.model_dir"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.model_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.seed"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.vector_size"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.vector_size</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.window"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.window</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig.workers"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizerConfig.workers</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#xgb.model.XGBoostBoosterParams"><code class="docutils literal notranslate"><span class="pre">XGBoostBoosterParams</span></code></a><ul>
 <li><a class="reference internal" href="#xgb.model.XGBoostBoosterParams.colsample_bytree"><code class="docutils literal notranslate"><span class="pre">XGBoostBoosterParams.colsample_bytree</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.XGBoostBoosterParams.extra_kwargs"><code class="docutils literal notranslate"><span class="pre">XGBoostBoosterParams.extra_kwargs</span></code></a></li>
@@ -1039,12 +1697,65 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.max_features"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.max_features</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.max_train"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.max_train</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.seed"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.sentence_transformer"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.sentence_transformer</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.tfidf"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.tfidf</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.vectorizer_kind"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.vectorizer_kind</span></code></a></li>
+<li><a class="reference internal" href="#xgb.model.XGBoostTrainConfig.word2vec"><code class="docutils literal notranslate"><span class="pre">XGBoostTrainConfig.word2vec</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.model.fit_xgboost_model"><code class="docutils literal notranslate"><span class="pre">fit_xgboost_model()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.load_xgboost_model"><code class="docutils literal notranslate"><span class="pre">load_xgboost_model()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.predict_among_slate"><code class="docutils literal notranslate"><span class="pre">predict_among_slate()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.model.save_xgboost_model"><code class="docutils literal notranslate"><span class="pre">save_xgboost_model()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.feature_dimension"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.feature_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.fit_transform"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.fit_transform()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.kind"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.kind</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.load"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.load()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.metadata"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.metadata()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.save"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.save()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.transform"><code class="docutils literal notranslate"><span class="pre">BaseTextVectorizer.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerConfig"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.batch_size</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerConfig.device"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.device</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerConfig.model_name"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.model_name</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerConfig.normalize"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.normalize</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.__init__"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.feature_dimension"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.feature_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.fit_transform"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.fit_transform()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.kind"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.kind</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.load"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.load()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.save"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.save()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.SentenceTransformerVectorizer.transform"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerVectorizer.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.__init__"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.feature_dimension"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.feature_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.fit_transform"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.fit_transform()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.kind"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.kind</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.load"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.load()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.save"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.save()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.TfidfVectorizerWrapper.transform"><code class="docutils literal notranslate"><span class="pre">TfidfVectorizerWrapper.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.__init__"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.feature_dimension"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.feature_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.fit_transform"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.fit_transform()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.kind"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.kind</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.load"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.load()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.save"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.save()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.Word2VecVectorizer.transform"><code class="docutils literal notranslate"><span class="pre">Word2VecVectorizer.transform()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.vectorizers.create_vectorizer"><code class="docutils literal notranslate"><span class="pre">create_vectorizer()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.vectorizers.load_vectorizer"><code class="docutils literal notranslate"><span class="pre">load_vectorizer()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig</span></code></a><ul>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.dataset_source"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.dataset_source</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.eval_max"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.eval_max</span></code></a></li>

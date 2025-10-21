@@ -291,7 +291,7 @@
         <span class="s2">&quot;--feature-space&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--feature_space&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">],</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">],</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;feature_space&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Feature space used to build the KNN index.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -410,6 +410,43 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;word2vec_model_dir&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional directory to store/load Word2Vec models (defaults to models/knn_word2vec).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--sentence-transformer-model&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--sentence_transformer_model&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_model&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SentenceTransformer model identifier when using the sentence_transformer feature space.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--sentence-transformer-device&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--sentence_transformer_device&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_device&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional device string (cpu, cuda) forwarded to SentenceTransformer.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--sentence-transformer-batch-size&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--sentence_transformer_batch_size&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_batch_size&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Batch size applied during sentence-transformer encoding.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable L2-normalisation for sentence-transformer embeddings (default).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_false&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">sentence_transformer_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--train-curve-max&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--train_curve_max&quot;</span><span class="p">,</span>

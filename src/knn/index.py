@@ -190,7 +190,7 @@ def build_sentence_transformer_index(
     :param extra_fields: Extra textual columns concatenated into each document.
     :param config: Optional :class:`~common.embeddings.SentenceTransformerConfig` override.
     :returns: Dictionary containing the encoder, dense matrix, and label metadata.
-    :raises ImportError: If :mod:`sentence_transformers` is unavailable.
+    :raises ImportError: If ``sentence_transformers`` is unavailable.
     """
 
     docs, labels_id, labels_title = prepare_training_documents(

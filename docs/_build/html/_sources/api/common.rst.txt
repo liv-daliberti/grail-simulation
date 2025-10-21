@@ -24,3 +24,7 @@ title resolution, and safe numerical operations used across the baselines.
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: common.embeddings
+   :members:
+   :undoc-members:
+   :show-inheritance:

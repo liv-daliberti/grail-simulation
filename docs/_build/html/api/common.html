@@ -593,6 +593,109 @@ caller-provided override).</p>
 
 </dd></dl>
 
+<p id="module-common.embeddings">Lightweight wrappers around optional embedding backends.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.embeddings.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration controlling SentenceTransformer inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>)</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig.batch_size">
+<span class="sig-name descname"><span class="pre">batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig.batch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig.device" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></em><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig.model_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig.normalize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.embeddings.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Thin wrapper over <code class="docutils literal notranslate"><span class="pre">sentence_transformers</span></code> with lazy loading.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the encoder with runtime configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>) – Behavioural options used when loading and invoking the model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder.embedding_dimension">
+<span class="sig-name descname"><span class="pre">embedding_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.embedding_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.embedding_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Return the dimensionality of the produced embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder.encode">
+<span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.encode" title="Link to this definition">¶</a></dt>
+<dd><p>Return embeddings for <code class="docutils literal notranslate"><span class="pre">texts</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>texts</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder.encode_iter">
+<span class="sig-name descname"><span class="pre">encode_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.encode_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.encode_iter" title="Link to this definition">¶</a></dt>
+<dd><p>Encode an iterable of texts by materialising it once.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>texts</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -678,6 +781,20 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.csv_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.csv_var</span></code></a></li>
 <li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.dirs_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.dirs_var</span></code></a></li>
 <li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.glob_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.glob_var</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerConfig"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig</span></code></a><ul>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerConfig.batch_size"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.batch_size</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerConfig.device"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.device</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerConfig.model_name"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.model_name</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerConfig.normalize"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig.normalize</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerEncoder"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder</span></code></a><ul>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerEncoder.__init__"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerEncoder.embedding_dimension"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder.embedding_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerEncoder.encode"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder.encode()</span></code></a></li>
+<li><a class="reference internal" href="#common.embeddings.SentenceTransformerEncoder.encode_iter"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder.encode_iter()</span></code></a></li>
 </ul>
 </li>
 </ul>

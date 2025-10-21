@@ -2,7 +2,7 @@
 
 This directory centralizes the artifacts and write-ups for the KNN baselines we maintain:
 
-- `next_video/` – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in `tfidf/` and `word2vec/`.
+- `next_video/` – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in `tfidf/`, `word2vec/`, and `sentence_transformer/`.
 - `opinion/` – post-study opinion regression analysis, including metric tables and heatmaps grouped by feature space.
 - `hyperparameter_tuning/` – consolidated notes from the k-sweeps that produced the current configurations.
 
@@ -63,7 +63,7 @@ PYTHONPATH=src python -m knn.pipeline \
   --train-curve-max 2000
 ```
 
-The command above prepares prompt documents, fits the requested feature space (TF-IDF by default, switchable to Word2Vec via `--feature-space word2vec`), trains the FAISS-backed index, and writes per-`k` metrics. Evaluation runs through the validation split and refreshes Markdown assets under `reports/knn/`.
+The command above prepares prompt documents, fits the requested feature space (TF-IDF by default, switchable to Word2Vec via `--feature-space word2vec` or Sentence-Transformer via `--feature-space sentence_transformer`), trains the FAISS-backed index, and writes per-`k` metrics. Evaluation runs through the validation split and refreshes Markdown assets under `reports/knn/`.
 
 **Validation snapshot**
 | Issue | Feature space | Best k | Accuracy | Majority baseline |
@@ -75,4 +75,4 @@ The command above prepares prompt documents, fits the requested feature space (T
 
 - Accuracy values come from `knn_eval_*_validation_metrics.json` under `models/knn/(tfidf|word2vec)/(issue)/` (for example, `models/knn/tfidf/gun_control/knn_eval_gun_control_validation_metrics.json`).
 - The sweep over `k ∈ {1,2,3,4,5,10,15,20,25,50,100}` ensures we surface the most competitive neighborhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signaling that richer features or additional filtering are required to close the gap.
-- For gun-control slates, both TF-IDF and Word2Vec comfortably beat the 0.540 most-frequent baseline, and TF-IDF with `k=2` delivers the strongest validation accuracy while preserving high coverage.
+- For gun-control slates, the dense embeddings (Word2Vec or Sentence-Transformer) comfortably beat the 0.540 most-frequent baseline, while TF-IDF with `k=2` still delivers the strongest validation accuracy with high coverage.

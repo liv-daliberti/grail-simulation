@@ -112,6 +112,7 @@ GUN_BOOLEAN_PHRASES: Dict[str, tuple[str, str]] = {
 GUN_METRIC_LABELS: Dict[str, str] = {
     "gun_index": "a gun index score around {value}",
     "gun_index_2": "an alternate gun index score around {value}",
+    "assault_ban": "support for an assault weapons ban is about {value}",
 }
 
 GUN_GENERIC_LABELS: Dict[str, str] = {

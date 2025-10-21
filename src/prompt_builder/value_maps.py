@@ -286,6 +286,8 @@ PERCENTAGE_FIELDS = {
     "mw_index_w2",
     "mw_support",
     "gun_index",
+    "gun_index_2",
+    "assault_ban",
     "affpol_ft",
     "affpol_ft_w2",
     "affpol_comfort",

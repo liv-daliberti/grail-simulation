@@ -34,6 +34,11 @@ try:
 except ImportError:  # pragma: no cover - optional dependency for linting
     pd = None  # type: ignore
 
+try:
+    from fsspec.core import url_to_fs
+except ImportError:  # pragma: no cover - optional dependency for linting
+    url_to_fs = None  # type: ignore
+
 from clean_data.filters import compute_issue_counts, filter_prompt_ready
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
 from clean_data.prompting import row_to_example
@@ -175,8 +180,35 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     for split_name, file_list in split_files.items():
         frames = []
         for file_ref in file_list:
-            with fs.open(file_ref, "rb") as handle:  # type: ignore[attr-defined]
+            handle = None
+            try:
+                open_fs = fs  # type: ignore[attr-defined]
+                open_path = file_ref
+                if isinstance(file_ref, str) and "://" in file_ref:
+                    if url_to_fs is None:
+                        raise RuntimeError(
+                            "Encountered remote data file '%s' but fsspec is unavailable. "
+                            "Install fsspec to enable remote downloads." % file_ref
+                        )
+                    remote_fs, remote_path = url_to_fs(file_ref)
+                    open_fs = remote_fs
+                    open_path = remote_path
+                try:
+                    handle = open_fs.open(open_path, "rb")  # type: ignore[attr-defined]
+                except FileNotFoundError:
+                    if (
+                        url_to_fs is not None
+                        and isinstance(file_ref, str)
+                        and "://" not in file_ref
+                    ):
+                        remote_fs, remote_path = url_to_fs(file_ref)
+                        handle = remote_fs.open(remote_path, "rb")
+                    else:
+                        raise
                 frame = pd.read_csv(handle)
+            finally:
+                if handle is not None:
+                    handle.close()
             if "Unnamed: 0" in frame.columns:
                 frame = frame.drop(columns=["Unnamed: 0"])
             frames.append(frame)

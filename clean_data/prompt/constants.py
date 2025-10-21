@@ -49,6 +49,7 @@ YOUTUBE_FREQ_MAP = {
     "3": "weekly",
     "4": "several times a week",
     "5": "daily",
+    "6": "multiple times per day",
 }
 
 __all__ = [

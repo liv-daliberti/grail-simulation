@@ -6,13 +6,24 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from common.prompt_docs import PromptDocumentBuilder, default_title_resolver
+
 from .config import PROMPT_COLUMN, SOLUTION_COLUMN, SYSTEM_PROMPT
-from .titles import TitleResolver
 from .utils import canon_text, canon_video_id, is_nan_like, truthy
+
+_PROMPT_DOC_BUILDER = PromptDocumentBuilder(
+    prompt_column=PROMPT_COLUMN,
+    solution_column=SOLUTION_COLUMN,
+    max_history=int(os.environ.get("GRAIL_MAX_HISTORY", "8")),
+    title_lookup=default_title_resolver(),
+    log_prefix="[GPT4O]",
+    logger=logging.getLogger("gpt4o.prompts"),
+)
 
 _INCOME_HINT_KEYS = ["income", "income_bracket", "q30", "q31", "q32", "q34"]
 _INCOME_PATTERN = re.compile(r"\$\s?\d{1,3}(?:,\d{3})?(?:\s*-\s*\$\s?\d{1,3}(?:,\d{3})?)?")
@@ -42,8 +53,6 @@ _RACE_MAP = {
     "prefernottoanswer": "Unspecified",
     "unknown": "Unspecified",
 }
-
-TITLE_RESOLVER = TitleResolver()
 
 
 def pick_case_insensitive(record: dict, *candidates: str) -> Optional[str]:
@@ -358,7 +367,7 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
                 "current_title",
                 "meta_originTitle",
             )
-            or TITLE_RESOLVER.resolve(video_id)
+            or _PROMPT_DOC_BUILDER.title_for(video_id)
             or ""
         )
         return (title or "(untitled)"), video_id
@@ -389,7 +398,7 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
     )
     if (title and not is_nan_like(title)) or (video_id and not is_nan_like(video_id)):
         if is_nan_like(title) and video_id:
-            title = TITLE_RESOLVER.resolve(video_id) or ""
+            title = _PROMPT_DOC_BUILDER.title_for(video_id) or ""
         return (title or "(untitled)"), (video_id or "")
 
     trajectory_json = example.get("trajectory_json")
@@ -424,7 +433,7 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
                         "origin_id",
                     )
                     if video_id and not title:
-                        title = TITLE_RESOLVER.resolve(video_id) or ""
+                        title = _PROMPT_DOC_BUILDER.title_for(video_id) or ""
                     if title or video_id:
                         return (title or "(untitled)"), (video_id or "")
         except Exception:
@@ -585,7 +594,7 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
             surface = match.group(1).strip() if match else entry
             video_id = canon_video_id(surface)
             if len(video_id) == 11:
-                title = TITLE_RESOLVER.resolve(video_id) or ""
+                title = _PROMPT_DOC_BUILDER.title_for(video_id) or ""
                 items.append((title, video_id))
             else:
                 items.append((surface, ""))
@@ -620,7 +629,7 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
                             or ""
                         ).strip()
                         if is_nan_like(title) and raw_id:
-                            title = TITLE_RESOLVER.resolve(raw_id) or ""
+                            title = _PROMPT_DOC_BUILDER.title_for(raw_id) or ""
                         if raw_id or title:
                             items.append((title or "(untitled)", raw_id))
             except Exception:

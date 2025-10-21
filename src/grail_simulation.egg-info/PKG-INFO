@@ -1,235 +1,233 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: grail-simulation
 Version: 0.1.0
 Summary: Grounded-Retrieval Adversarial Imitation Loop (GRAIL) simulation toolkit
+Home-page: UNKNOWN
 Author: GRAIL Simulation Team
+License: UNKNOWN
+Description: # GRAIL Simulation
+        
+        Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounded human-behavior simulation that unifies language, agent, and world models. The agent retrieves realistic action slates, reasons about them with a ReAct-style loop, predicts counterfactual outcomes, and aligns to real trajectories through adversarial training.
+        
+        ![GRAIL overview](docs/Simulation.drawio.png)
+        
+        The interaction logs trace back to the public behavioral dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule. Across Studies 1–3 the mean opinion shift per issue remains below 0.05, underscoring how rare substantive changes were in the original experiments. Detailed replication tables and plots live in [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md).
+        
+        ## Key Components
+        
+        - **Environment model** – retrieves candidate next actions from behavior logs to keep the agent grounded.
+        - **Action model (ReAct)** – reasons over the retrieved slate and emits the next action.
+        - **Predictor / world model** – estimates outcomes and counterfactuals for the selected action.
+        - **Sequential discriminator** – provides adversarial rewards that align generated trajectories with human data.
+        
+        ## Repository Layout
+        
+        ```
+        .
+        ├── capsule-5416997/          # Snapshot of the CodeOcean capsule inputs/metadata
+        ├── clean_data/               # Data cleaning pipeline and publication replicas
+        │   ├── prompt/               # Prompt analytics plots and Markdown builders
+        │   └── research_article_political_sciences/  # Replication figures + summaries
+        ├── data/                     # Local cleaned datasets (gitignored artifacts)
+        ├── docs/                     # Sphinx project that powers the Read the Docs site
+        ├── logs/                     # Default output location for training/eval runs
+        ├── models/                   # Trained model checkpoints and evaluation curves
+        ├── recipes/                  # Training configuration files organized by model family
+        ├── reports/                  # Markdown reports rendered from analyses
+        ├── .gitignore                # Repository-wide ignore rules (must live at root)
+        ├── development/              # Centralized tooling configs (CI, linting, packaging)
+        │   ├── .github/workflows/    # GitHub Actions workflows
+        │   ├── .pylintrc             # Pylint configuration
+        │   ├── pytest.ini            # Pytest configuration
+        │   ├── requirements-dev.txt  # Development-only dependencies
+        │   └── setup.py              # Editable package definition (pip install -e development)
+        ├── scripts/                  # Utility entrypoints (linting, testing, exports)
+        ├── src/                      # Python packages for agents, models, and visualization
+        │   ├── common/               # Shared utilities
+        │   ├── gpt4o/                # GPT-4o slate-prediction baselines
+        │   ├── knn/                  # Non-generative k-nearest-neighbor baseline
+        │   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
+        │   ├── prompt_builder/       # Prompt templating helpers
+        │   ├── visualization/        # Recommendation-tree renderers / plotting tools
+        │   └── xgb/                  # Gradient-boosted baselines + evaluation
+        ├── tests/                    # Pytest suite covering data + model components
+        └── training/                 # SLURM launchers and experiment configs
+        ```
+        
+        ## Data Sources
+        
+        Raw data mirrors the CodeOcean capsule at <https://codeocean.com/capsule/5416997/tree/v1>. The commands below reproduce the original download:
+        
+        ```bash
+        git clone https://git.codeocean.com/capsule-5416997.git
+        cd capsule-5416997
+        mkdir results
+        curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/.../results.zip'
+        unzip results-*.zip
+        mkdir ../data
+        cd ../data
+        curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
+        ```
+        
+        The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
+        
+        See [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md) for the replication report that shows the pipeline mirrors the PNAS capsule while tracing the per-participant delta movement we model for individual-level prediction.
+        
+        ## Quickstart
+        
+        ### 1. Environment Setup
+        
+        ```bash
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install -e development
+        ```
+        
+        The editable install pulls in everything required for cleaning, training, and evaluation. For development tasks (linting, tests, docs) install the extras with `pip install -r development/requirements-dev.txt`.
+        
+        ### 2. Clean the Dataset
+        
+        Recreate the CodeOcean preprocessing pipeline with:
+        
+        ```bash
+        python -m clean_data.cli \
+          --dataset-name capsule-5416997/data \
+          --output-dir data/cleaned_grail \
+          --prompt-stats-dir reports/prompt_stats \
+          --issue-repo gun_control=my-org/grail-gun \
+          --issue-repo minimum_wage=my-org/grail-wage \
+          --push-to-hub --hub-token $HF_TOKEN
+        ```
+        
+        The command:
+        
+        1. Rebuilds the session dataframe (`clean_data.sessions.build_codeocean_rows`).
+        2. Converts each interaction into a GRPO-style prompt example (`clean_data.prompting.row_to_example`).
+        3. Runs prompt analytics (plots + Markdown) if `--prompt-stats-dir` is provided, using a deduplicated `(participant_id, issue)` view for historical comparability.
+        4. Saves the full cleaned dataset (all interactions) to disk and optionally pushes per-issue splits to the Hugging Face Hub.
+        
+        Builder notes:
+        
+        - Rows missing all survey demographics are removed so every prompt has viewer context (~22 % of raw interactions).
+        - The on-disk dataset preserves the complete interaction history for each participant across Studies 1–3; use `clean_data.clean_data.dedupe_by_participant_issue` if you need the legacy one-row-per-participant layout.
+        - Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from saved prompt rows because the released logs lack recommendation slates.
+        - Additional prompt coverage methodology is documented in [reports/prompt_stats/README.md](reports/prompt_stats/README.md).
+        
+        #### Output artifacts
+        
+        Running the CLI yields two complementary views:
+        
+        - `--output-dir`: full cleaned dataset with every promptable interaction.
+        - `--prompt-stats-dir`: figures + markdown computed from the deduped `(participant_id, issue)` view so coverage charts remain comparable with earlier reports.
+        
+        ### 3. Prompt Analytics
+        
+        Re-run the prompt coverage report later without rebuilding the dataset:
+        
+        ```bash
+        python -m clean_data.prompt.cli \
+          --dataset data/cleaned_grail \
+          --output-dir reports/prompt_stats
+        ```
+        
+        The package generates histograms, participant summaries, and a Markdown README in the target directory; browse the curated write-up at [reports/prompt_stats/README.md](reports/prompt_stats/README.md).
+        
+        ### 4. Visualize Recommendation Trees
+        
+        Render individual sessions or entire recommendation trees:
+        
+        ```bash
+        python src/visualization/recommendation_tree_viz.py \
+          --cleaned-data data/cleaned_grail \
+          --session-id 004QUceaM2cVUOrEO1iD \
+          --max-steps 5 \
+          --output docs/session_example.svg
+        ```
+        
+        Batch mode (`--batch-output-dir`, `--batch-issues`) produces per-issue session samples ready for documentation or inspection.
+        See [reports/visualized_recommendation_trees/README.md](reports/visualized_recommendation_trees/README.md) for curated exports and interpretation notes.
+        
+        ### 5. Automated Checks
+        
+        - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
+        - `scripts/run-tests.sh` – `pytest` for the unit test suite.
+        - CI (see `development/.github/workflows/ci.yml`) installs `development/requirements-dev.txt` and runs both scripts on push/PR.
+        
+        Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
+        
+        - `clean_data` - Dataset ingestion, filtering, and research article statistics.
+        - `filters` - Filter reporting helpers.
+        - `prompt_builder` - Prompt assembly utilities and package entry points.
+        - `prompt_smoke` - End-to-end prompt generation smoke tests.
+        - `sessions` - Session and slate construction helpers.
+        - `surveys` - Survey processing and allowlist checks.
+        - `knn` - k-NN feature extraction, index building, and inference.
+        - `xgb` - XGBoost baseline training and CLI helpers.
+        - `gpt4o` - GPT-4o conversation utilities.
+        - `open_r1` - Open-R1 reinforcement learning helpers.
+        - `integration` - Cross-package integration flows.
+        - `visualization` - Visualization and reporting helpers.
+        
+        Run for example `pytest -m knn` to exercise only the k-NN pipeline.
+        
+        ### 6. Documentation
+        
+        ```bash
+        pip install -r development/requirements-dev.txt
+        make -C docs html
+        ```
+        
+        The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_build/html`; browse the latest build on [Read the Docs](https://grail-simulation.readthedocs.io/en/latest/index.html).
+        
+        ## End-to-End Pipeline
+        
+        The repository stitches together several subsystems to turn raw CodeOcean logs into reproducible training/evaluation runs. The core stages are:
+        
+        1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
+        2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
+        3. **Model training & evaluation** – consult the package READMEs under `src/` (e.g., `src/knn/README.md`, `src/gpt4o/README.md`, `src/xgb/README.md`) for baseline-specific pipelines, CLI commands, and reporting details.
+        
+        ## Published Artifacts
+        
+        - Minimum wage split: <https://huggingface.co/datasets/od2961/grail-wage>
+        - Gun control split: <https://huggingface.co/datasets/od2961/grail-gun>
+        - Prompt statistics (plots + Markdown): `reports/prompt_stats`
+        
+        ## Training
+        
+        Launch the reinforcement-learning recipes via SLURM:
+        
+        ```bash
+        sbatch training/training-grail.sh    # RL + discriminator shaping (src/open_r1/grail.py)
+        sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
+        ```
+        
+        Baselines:
+        
+        - GPT‑4o slate predictor: `python -m gpt4o.cli`
+        - k-NN slate baseline: `bash training/training-knn.sh`
+        - XGBoost slate + opinion pipeline: `bash training/training-xgb.sh`
+        
+        ## Citation
+        
+        ```bibtex
+        @inproceedings{GRAIL-2025,
+          title     = {GRAIL Simulation: Grounded Retrieval for Human Behavior Alignment},
+          author    = {Liv G. d'Aliberti and Manoel Horta Ribeiro},
+          booktitle = {NeurIPS 2025 (Non-Archival Track)},
+          year      = {2025},
+          note      = {NeurIPS non-archival},
+          url       = {https://openreview.net/pdf?id=MdmszyLpVu}
+        }
+        ```
+        
+        ## License
+        
+        This project is licensed under the [Apache License 2.0](LICENSE).
+        
+Platform: UNKNOWN
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
-License-File: LICENSE
-Requires-Dist: accelerate==1.4.0
-Requires-Dist: aiofiles>=24.1.0
-Requires-Dist: async-lru>=2.0.5
-Requires-Dist: bitsandbytes>=0.43.0
-Requires-Dist: datasets>=3.2.0
-Requires-Dist: deepspeed==0.16.8
-Requires-Dist: distilabel[openai,ray,vllm]>=1.5.2
-Requires-Dist: e2b-code-interpreter>=1.0.5
-Requires-Dist: einops>=0.8.0
-Requires-Dist: flake8>=6.0.0
-Requires-Dist: hf_transfer>=0.1.4
-Requires-Dist: huggingface-hub[cli,hf_xet]<1.0,>=0.30.2
-Requires-Dist: isort>=5.12.0
-Requires-Dist: jieba
-Requires-Dist: langdetect
-Requires-Dist: latex2sympy2_extended>=1.0.6
-Requires-Dist: liger-kernel>=0.5.10
-Requires-Dist: lighteval@ git+https://github.com/huggingface/lighteval.git@d3da6b9bbf38104c8b5e1acc86f83541f9a502d1
-Requires-Dist: math-verify==0.5.2
-Requires-Dist: matplotlib>=3.7.0
-Requires-Dist: morphcloud==0.1.67
-Requires-Dist: numpy>=1.24.0
-Requires-Dist: packaging>=23.0
-Requires-Dist: pandas>=2.2.3
-Requires-Dist: parameterized>=0.9.0
-Requires-Dist: peft>=0.14.0
-Requires-Dist: pyarrow>=14.0.0
-Requires-Dist: pytest
-Requires-Dist: python-dotenv
-Requires-Dist: ruff>=0.9.0
-Requires-Dist: safetensors>=0.3.3
-Requires-Dist: scikit-learn>=1.3.0
-Requires-Dist: joblib>=1.3.0
-Requires-Dist: sentencepiece>=0.1.99
-Requires-Dist: torch==2.6.0
-Requires-Dist: transformers==4.52.3
-Requires-Dist: trl[vllm]==0.18.0
-Requires-Dist: tqdm>=4.66.0
-Requires-Dist: wandb>=0.19.1
 Provides-Extra: dev
-Requires-Dist: datasets>=3.2.0; extra == "dev"
-Requires-Dist: joblib>=1.3.0; extra == "dev"
-Requires-Dist: matplotlib>=3.7.0; extra == "dev"
-Requires-Dist: numpy>=1.24.0; extra == "dev"
-Requires-Dist: pandas>=2.2.3; extra == "dev"
-Requires-Dist: pyarrow>=14.0.0; extra == "dev"
-Requires-Dist: pylint>=3.2.0; extra == "dev"
-Requires-Dist: pytest>=8.0.0; extra == "dev"
-Requires-Dist: python-dotenv>=1.0.0; extra == "dev"
-Requires-Dist: scikit-learn>=1.3.0; extra == "dev"
-Requires-Dist: sphinx>=7.3.0; extra == "dev"
-Requires-Dist: torch==2.6.0; extra == "dev"
-Requires-Dist: transformers==4.52.3; extra == "dev"
-Requires-Dist: xgboost>=1.7.0; extra == "dev"
-Dynamic: author
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: license-file
-Dynamic: provides-extra
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
-
-# GRAIL Simulation
-
-Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounded human-behaviour simulation that unifies language, agent, and world models. The agent retrieves realistic action slates, reasons about them with a ReAct-style loop, predicts counterfactual outcomes, and aligns to real trajectories through adversarial training.
-
-![GRAIL overview](docs/Simulation.drawio.png)
-
-## Key Components
-
-- **Environment model** – retrieves candidate next actions from behaviour logs to keep the agent grounded.
-- **Action model (ReAct)** – reasons over the retrieved slate and emits the next action.
-- **Predictor / world model** – estimates outcomes and counterfactuals for the selected action.
-- **Sequential discriminator** – provides adversarial rewards that align generated trajectories with human data.
-
-## Repository Layout
-
-```
-.
-├── clean_data/               # Data cleaning pipeline and prompt analytics helpers
-│   └── prompt/               # Plotting + Markdown utilities for prompt diagnostics
-├── docs/                     # Sphinx configuration, figures, and rendered reports
-├── recipes/                  # Training configuration files organised by model family
-├── src/
-│   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
-│   ├── gpt4o/                # GPT-4o slate-prediction baselines
-│   ├── knn/                  # Non-generative k-nearest-neighbour baseline
-│   └── visualization/        # Graphviz-based session and recommendation-tree renderers
-├── training/                 # SLURM launchers for baseline and GRAIL runs
-└── setup.py                  # Editable package definition (pip install -e .)
-```
-
-## Quickstart
-
-### 1. Environment Setup
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -e .
-```
-
-The editable install pulls in everything required for cleaning, training, and evaluation. For development tasks (linting, tests, docs) install the extras with `pip install -r requirements-dev.txt`.
-
-### 2. Clean the Dataset
-
-Recreate the CodeOcean preprocessing pipeline with:
-
-```bash
-python -m clean_data.cli \
-  --dataset-name capsule-5416997/data \
-  --output-dir data/cleaned_grail \
-  --prompt-stats-dir reports/prompt_stats \
-  --issue-repo gun_control=my-org/grail-gun \
-  --issue-repo minimum_wage=my-org/grail-wage \
-  --push-to-hub --hub-token $HF_TOKEN
-```
-
-The command:
-
-1. Rebuilds the session dataframe (`clean_data.sessions.build_codeocean_rows`).
-2. Converts each interaction into a GRPO-style prompt example (`clean_data.prompting.row_to_example`).
-3. Runs prompt analytics (plots + Markdown) if `--prompt-stats-dir` is provided.
-4. Saves the cleaned dataset to disk and optionally pushes per-issue splits to the Hugging Face Hub.
-
-Builder notes:
-
-- Rows missing all survey demographics are removed so every prompt has viewer context (~22 % of raw interactions).
-- Each participant contributes at most one trajectory per issue via `(participant_id, issue)` deduplication.
-- Study 4 (YouTube Shorts) remains in the allow-list reporting but is excluded from prompt rows because the released logs lack recommendation slates.
-
-### 3. Prompt Analytics
-
-Re-run the prompt coverage report later without rebuilding the dataset:
-
-```bash
-python -m clean_data.prompt.cli \
-  --dataset data/cleaned_grail \
-  --output-dir reports/prompt_stats
-```
-
-The package generates histograms, participant summaries, and a Markdown README in the target directory.
-
-### 4. Visualise Recommendation Trees
-
-Render individual sessions or entire recommendation trees:
-
-```bash
-python src/visualization/recommendation_tree_viz.py \
-  --cleaned-data data/cleaned_grail \
-  --session-id 004QUceaM2cVUOrEO1iD \
-  --max-steps 5 \
-  --output docs/session_example.svg
-```
-
-Batch mode (`--batch-output-dir`, `--batch-issues`) produces per-issue session samples ready for documentation or inspection.
-
-### 5. Automated Checks
-
-- `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
-- `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- CI (see `.github/workflows/ci.yml`) installs `requirements-dev.txt` and runs both scripts on push/PR.
-
-### 6. Documentation
-
-```bash
-pip install -r requirements-dev.txt
-make -C docs html
-```
-
-The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_build/html`.
-
-## Data Sources
-
-Raw data mirrors the CodeOcean capsule at <https://codeocean.com/capsule/5416997/tree/v1>. The commands below reproduce the original download:
-
-```bash
-git clone https://git.codeocean.com/capsule-5416997.git
-cd capsule-5416997
-mkdir results
-curl -fL -OJ 'https://codeocean-temp.s3.amazonaws.com/.../results.zip'
-unzip results-*.zip
-mkdir ../data
-cd ../data
-curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
-```
-
-The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks, control-arm drops, and deduplication logic as the R scripts.
-
-## Published Artifacts
-
-- Minimum wage split: <https://huggingface.co/datasets/od2961/grail-wage>
-- Gun control split: <https://huggingface.co/datasets/od2961/grail-gun>
-- Prompt statistics (plots + Markdown): `reports/prompt_stats`
-
-## Training
-
-Launch the reinforcement-learning recipes via SLURM:
-
-```bash
-sbatch training/training-grail.sh    # RL + discriminator shaping (src/open_r1/grail.py)
-sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
-```
-
-Baselines:
-
-- GPT‑4o slate predictor: `python -m gpt4o.cli`
-- k-NN slate baseline: `bash training/training-knn.sh`
-
-## Citation
-
-```bibtex
-@inproceedings{GRAIL-2025,
-  title     = {GRAIL Simulation: Grounded Retrieval for Human Behavior Alignment},
-  author    = {Liv G. d'Aliberti and Manoel Horta Ribeiro},
-  booktitle = {NeurIPS 2025 (Non-Archival Track)},
-  year      = {2025},
-  note      = {NeurIPS non-archival},
-  url       = {https://openreview.net/pdf?id=MdmszyLpVu}
-}
-```
-
-## License
-
-This project is licensed under the [Apache License 2.0](LICENSE).
+License-File: LICENSE

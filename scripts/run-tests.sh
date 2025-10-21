@@ -10,4 +10,4 @@ export PYTHONPATH="${ROOT_DIR}/src:${ROOT_DIR}:${PYTHONPATH:-}"
 cd "${ROOT_DIR}"
 
 echo "Running pytest..."
-"${PYTHON_BIN}" -m pytest "$@"
+"${PYTHON_BIN}" -m pytest -c development/pytest.ini "$@"

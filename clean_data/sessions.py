@@ -322,6 +322,51 @@ def _build_session_timings(sess: dict, raw_vids: List[str], base_vids: List[str]
     )
 
 
+def _video_meta(
+    base_id: str,
+    raw_id: str,
+    tree_meta: Dict[str, Any],
+    fallback_titles: Dict[str, Any],
+    tree_issue_map: Dict[str, str],
+) -> Dict[str, Any]:
+    """Return augmented metadata for a watched video."""
+
+    info = dict(tree_meta.get(base_id) or {})
+    if raw_id and raw_id != base_id:
+        raw_ids = list(info.get("raw_ids") or [])
+        if raw_id not in raw_ids:
+            raw_ids.append(raw_id)
+        if raw_ids:
+            info["raw_ids"] = raw_ids
+    if not info.get("title"):
+        title = fallback_titles.get(base_id) or fallback_titles.get(raw_id)
+        if title:
+            info["title"] = title
+    if not info.get("issue"):
+        issue_guess = tree_issue_map.get(base_id)
+        if issue_guess:
+            info["issue"] = issue_guess
+    return info
+
+
+def _resolve_title(meta: Dict[str, Any], fallback_id: str) -> Tuple[str, bool]:
+    """Return a title for the candidate along with a missing flag."""
+
+    title = str(meta.get("title") or "").strip()
+    if title:
+        return title, False
+    return f"(title missing for {fallback_id})", True
+
+
+def _resolve_channel(meta: Dict[str, Any]) -> Tuple[str, bool]:
+    """Return the channel title with a missing flag."""
+
+    channel = str(meta.get("channel_title") or "").strip()
+    if channel:
+        return channel, False
+    return "(channel missing)", True
+
+
 def _build_watched_details(
     raw_vids: List[str],
     base_vids: List[str],
@@ -330,75 +375,14 @@ def _build_watched_details(
     tree_issue_map: Dict[str, str],
     timings: SessionTiming,
 ) -> List[Dict[str, Any]]:
-    """Return per-video metadata entries for the watched sequence.
-
-    :param raw_vids: Ordered list of raw video identifiers.
-    :param base_vids: Ordered list of canonical video identifiers.
-    :param tree_meta: Metadata derived from recommendation tree CSVs.
-    :param fallback_titles: Supplemental mapping of video id to title.
-    :param tree_issue_map: Mapping of video id to inferred issue.
-    :param timings: Timing information for the current session.
-    :returns: List of dictionaries describing each watched video.
-    """
+    """Return per-video metadata entries for the watched sequence."""
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
-
-    def _video_meta(base_id: str, raw_id: str = "") -> Dict[str, Any]:
-        """Return augmented metadata for a watched video.
-
-        :param base_id: Canonical video identifier.
-        :param raw_id: Optional raw identifier associated with the session.
-        :returns: Metadata dictionary combining tree metadata and fallbacks.
-        """
-
-        info = dict(tree_meta.get(base_id) or {})
-        if raw_id and raw_id != base_id:
-            raw_ids = list(info.get("raw_ids") or [])
-            if raw_id not in raw_ids:
-                raw_ids.append(raw_id)
-            if raw_ids:
-                info["raw_ids"] = raw_ids
-        if not info.get("title"):
-            title = fallback_titles.get(base_id) or fallback_titles.get(raw_id)
-            if title:
-                info["title"] = title
-        if not info.get("issue"):
-            issue_guess = tree_issue_map.get(base_id)
-            if issue_guess:
-                info["issue"] = issue_guess
-        return info
-
-    def _resolve_title(meta: Dict[str, Any], fallback_id: str) -> Tuple[str, bool]:
-        """Return a title for the candidate along with a missing flag.
-
-        :param meta: Metadata dictionary returned by :func:`_video_meta`.
-        :param fallback_id: Identifier used when no title is available.
-        :returns: Tuple of ``(title_text, missing)`` where ``missing`` is ``True``
-            when only a placeholder title could be produced.
-        """
-
-        title = str(meta.get("title") or "").strip()
-        if title:
-            return title, False
-        return f"(title missing for {fallback_id})", True
-
-    def _resolve_channel(meta: Dict[str, Any]) -> Tuple[str, bool]:
-        """Return the channel title with a missing flag.
-
-        :param meta: Metadata dictionary returned by :func:`_video_meta`.
-        :returns: Tuple ``(channel_name, missing)`` where ``missing`` indicates
-            a placeholder string.
-        """
-
-        channel = str(meta.get("channel_title") or "").strip()
-        if channel:
-            return channel, False
-        return "(channel missing)", True
 
     details: List[Dict[str, Any]] = []
     for idx, raw_vid in enumerate(raw_vids):
         base = base_vids[idx]
-        meta = _video_meta(base, raw_vid)
+        meta = _video_meta(base, raw_vid, tree_meta, fallback_titles, tree_issue_map)
         title_val, title_missing = _resolve_title(meta, base)
         channel_val, channel_missing = _resolve_channel(meta)
         entry: Dict[str, Any] = {
@@ -412,25 +396,17 @@ def _build_watched_details(
         }
         if meta.get("channel_id"):
             entry["channel_id"] = meta["channel_id"]
-        delay_val = lookup_session_value(timings.delay, raw_vid, base)
-        if delay_val is not None:
-            entry["start_delay_ms"] = delay_val
-
-        start_val = lookup_session_value(timings.start, raw_vid, base)
-        if start_val is not None:
-            entry["start_ms"] = start_val
-
-        end_val = lookup_session_value(timings.end, raw_vid, base)
-        if end_val is not None:
-            entry["end_ms"] = end_val
-
-        watch_val = lookup_session_value(timings.watch, raw_vid, base)
-        if watch_val is not None:
-            entry["watch_ms"] = watch_val
-
-        total_val = lookup_session_value(timings.total, raw_vid, base)
-        if total_val is not None:
-            entry["total_length_ms"] = total_val
+        timing_fields = {
+            "start_delay_ms": timings.delay,
+            "start_ms": timings.start,
+            "end_ms": timings.end,
+            "watch_ms": timings.watch,
+            "total_length_ms": timings.total,
+        }
+        for field_name, timing_map in timing_fields.items():
+            value = lookup_session_value(timing_map, raw_vid, base)
+            if value is not None:
+                entry[field_name] = value
 
         recs = meta.get("recs")
         if isinstance(recs, list):

@@ -117,8 +117,8 @@ def clean_example(raw_clean_row: dict) -> dict:
 
 def test_prompt_builder_handles_clean_example(clean_example: dict) -> None:
     prompt_text = build_user_prompt(clean_example, max_hist=3)
-    assert "PROFILE:" in prompt_text
-    assert "OPTIONS:" in prompt_text
+    assert prompt_text.startswith("VIEWER ")
+    assert "\nOPTIONS" in prompt_text
 
     document = assemble_document(clean_example, extra_fields=None)
     assert document, "assemble_document should generate non-empty training text"

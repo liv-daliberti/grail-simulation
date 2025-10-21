@@ -78,7 +78,7 @@ echo "Python: $(which python)"
 python --version
 
 python -m pip install --upgrade pip
-python -m pip install -e "$ROOT_DIR"
+python -m pip install -e "$ROOT_DIR/development"
 python -m pip install yq
 
 python - <<'PY'

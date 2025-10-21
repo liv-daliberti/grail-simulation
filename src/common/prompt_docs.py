@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
-from common import canon_video_id, get_logger
+from common import canon_text, canon_video_id, get_logger
 from common.title_index import TitleResolver
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
 from prompt_builder.constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS
@@ -158,6 +160,19 @@ def _extract_slate_items(
         candidate = canon_video_id(str(value))
         return candidate if len(candidate) == 11 else ""
 
+    def _append_item(title: object, video_id: object) -> None:
+        cleaned_title = _clean_title(title)
+        cleaned_id = _clean_id(video_id)
+        if not cleaned_id and isinstance(title, str):
+            possible_id = _clean_id(title)
+            if possible_id:
+                cleaned_id = possible_id
+                cleaned_title = ""
+        if not cleaned_title and cleaned_id and title_lookup is not None:
+            cleaned_title = title_lookup(cleaned_id) or ""
+        if cleaned_title or cleaned_id:
+            items.append((cleaned_title or "(untitled)", cleaned_id))
+
     def _from_structured(array: object) -> List[Tuple[str, str]]:
         structured: List[Tuple[str, str]] = []
         if not isinstance(array, list):
@@ -183,34 +198,78 @@ def _extract_slate_items(
                 or entry.get("content_id")
                 or ""
             )
-            cleaned_title = _clean_title(title)
-            cleaned_id = _clean_id(video_id)
-            if cleaned_title or cleaned_id:
-                structured.append((cleaned_title, cleaned_id))
+            structured.append((title, video_id))
         return structured
+
+    items: List[Tuple[str, str]] = []
 
     for key in ("slate_items", "options", "slate_items_with_meta"):
         structured_items = _from_structured(example.get(key))
         if structured_items:
-            return structured_items
+            for title, video_id in structured_items:
+                _append_item(title, video_id)
+            break
 
-    items: List[Tuple[str, str]] = []
-    slate_text = example.get("slate_text")
-    if isinstance(slate_text, str) and slate_text.strip():
-        for line in slate_text.splitlines():
-            token = line.strip()
-            if not token:
+    if not items:
+        slate_text = example.get("slate_text")
+        if isinstance(slate_text, str) and slate_text.strip():
+            for line in slate_text.splitlines():
+                token = line.strip()
+                if not token:
+                    continue
+                token = re.sub(r"^\s*(?:-|\d+\s*[\.\)])\s*", "", token)
+                parts = token.split("\t") if "\t" in token else token.split("|", maxsplit=1)
+                if len(parts) == 2:
+                    title_raw, vid_raw = parts
+                else:
+                    title_raw, vid_raw = token, ""
+                _append_item(title_raw, vid_raw)
+
+    if not items:
+        trajectory_json = example.get("trajectory_json")
+        if isinstance(trajectory_json, str) and trajectory_json.strip():
+            try:
+                data = json.loads(trajectory_json)
+            except (TypeError, ValueError, json.JSONDecodeError):  # pragma: no cover - defensive
+                data = None
+            if isinstance(data, dict):
+                rows = data.get("order") or data.get("videos") or data.get("history") or []
+                if isinstance(rows, list):
+                    for entry in rows:
+                        if not isinstance(entry, dict):
+                            continue
+                        raw_id = _pick_ci(
+                            entry,
+                            "video_id",
+                            "id",
+                            "videoId",
+                            "originId",
+                            "content_id",
+                        )
+                        title = _pick_ci(
+                            entry,
+                            "title",
+                            "video_title",
+                            "name",
+                            "surface",
+                            "text",
+                            "videoTitle",
+                        )
+                        _append_item(title, raw_id)
+
+    if not items:
+        return []
+
+    seen: set[str] = set()
+    deduped: List[Tuple[str, str]] = []
+    for title, video_id in items:
+        key = canon_video_id(video_id) or canon_text(title)
+        if key:
+            if key in seen:
                 continue
-            parts = token.split("\t") if "\t" in token else token.split("|", maxsplit=1)
-            if len(parts) == 2:
-                title_raw, vid_raw = parts
-            else:
-                title_raw, vid_raw = token, ""
-            title = _clean_title(title_raw)
-            video_id = _clean_id(vid_raw)
-            if title or video_id:
-                items.append((title, video_id))
-    return items
+            seen.add(key)
+        deduped.append((title, video_id))
+    return deduped
 
 
 def _format_extra_field(example: dict, field: str) -> str:

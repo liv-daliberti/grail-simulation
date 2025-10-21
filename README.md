@@ -27,6 +27,13 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 ├── models/                   # Trained model checkpoints and evaluation curves
 ├── recipes/                  # Training configuration files organized by model family
 ├── reports/                  # Markdown reports rendered from analyses
+├── .gitignore                # Repository-wide ignore rules (must live at root)
+├── development/              # Centralized tooling configs (CI, linting, packaging)
+│   ├── .github/workflows/    # GitHub Actions workflows
+│   ├── .pylintrc             # Pylint configuration
+│   ├── pytest.ini            # Pytest configuration
+│   ├── requirements-dev.txt  # Development-only dependencies
+│   └── setup.py              # Editable package definition (pip install -e development)
 ├── scripts/                  # Utility entrypoints (linting, testing, exports)
 ├── src/                      # Python packages for agents, models, and visualization
 │   ├── common/               # Shared utilities
@@ -37,8 +44,7 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 │   ├── visualization/        # Recommendation-tree renderers / plotting tools
 │   └── xgb/                  # Gradient-boosted baselines + evaluation
 ├── tests/                    # Pytest suite covering data + model components
-├── training/                 # SLURM launchers and experiment configs
-└── setup.py                  # Editable package definition (pip install -e .)
+└── training/                 # SLURM launchers and experiment configs
 ```
 
 ## Data Sources
@@ -68,10 +74,10 @@ See [reports/research_article_political_sciences/README.md](reports/research_art
 python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install -e .
+pip install -e development
 ```
 
-The editable install pulls in everything required for cleaning, training, and evaluation. For development tasks (linting, tests, docs) install the extras with `pip install -r requirements-dev.txt`.
+The editable install pulls in everything required for cleaning, training, and evaluation. For development tasks (linting, tests, docs) install the extras with `pip install -r development/requirements-dev.txt`.
 
 ### 2. Clean the Dataset
 
@@ -139,9 +145,9 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- CI (see `.github/workflows/ci.yml`) installs `requirements-dev.txt` and runs both scripts on push/PR.
+- CI (see `development/.github/workflows/ci.yml`) installs `development/requirements-dev.txt` and runs both scripts on push/PR.
 
-Pytest markers in `pytest.ini` scope the suites that back the workflows above:
+Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
 
 - `clean_data` - Dataset ingestion, filtering, and research article statistics.
 - `filters` - Filter reporting helpers.
@@ -161,7 +167,7 @@ Run for example `pytest -m knn` to exercise only the k-NN pipeline.
 ### 6. Documentation
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r development/requirements-dev.txt
 make -C docs html
 ```
 

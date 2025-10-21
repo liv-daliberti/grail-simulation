@@ -5,18 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Mapping
 
-import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+
+plt.switch_backend("Agg")
 
 
 def _ensure_output_dir(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def plot_mean_change(
+def plot_mean_change(  # pylint: disable=too-many-locals
     summaries: Iterable[Mapping[str, float]],
     labels: Iterable[str],
     output_path: Path,
@@ -150,7 +149,7 @@ def plot_heatmap(
     plt.close(fig)
 
 
-def plot_assignment_panels(
+def plot_assignment_panels(  # pylint: disable=too-many-locals,too-many-statements
     study_panels: Iterable[tuple[str, Iterable[Mapping[str, float]]]],
     regression: Mapping[str, float],
     output_path: Path,
@@ -177,7 +176,13 @@ def plot_assignment_panels(
             ax.axis("off")
             continue
 
-        sorted_entries = sorted(entries, key=lambda item: (0 if item["assignment"] == "control" else 1, item["assignment"]))
+        sorted_entries = sorted(
+            entries,
+            key=lambda item: (
+                0 if item["assignment"] == "control" else 1,
+                item["assignment"],
+            ),
+        )
         means = [entry["mean_change"] for entry in sorted_entries]
         ci = [entry.get("ci95", float("nan")) for entry in sorted_entries]
         n_values = [entry.get("n", 0) for entry in sorted_entries]
@@ -200,7 +205,9 @@ def plot_assignment_panels(
             capsize=6,
         )
         ax.axhline(0.0, color="#222222", linewidth=1, linestyle="--")
-        tick_labels = [f"{name.title()} (n={int(n)})" for name, n in zip(assign_names, n_values)]
+        tick_labels = [
+            f"{name.title()} (n={int(n)})" for name, n in zip(assign_names, n_values)
+        ]
         ax.set_xticks(positions)
         ax.set_xticklabels(tick_labels, rotation=15, ha="right")
         ax.set_ylabel("Mean Δ (post - pre)")

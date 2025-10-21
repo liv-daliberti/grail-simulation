@@ -85,10 +85,10 @@ def test_render_profile_produces_sentences(sample_example: dict) -> None:
 
 def test_build_user_prompt_structure(sample_example: dict) -> None:
     prompt_text = build_user_prompt(sample_example, max_hist=2)
-    assert "PROFILE:" in prompt_text
-    assert "CURRENT VIDEO:" in prompt_text
-    assert "RECENTLY WATCHED (NEWEST LAST):" in prompt_text
-    assert "OPTIONS:" in prompt_text
+    assert prompt_text.startswith("VIEWER ")
+    assert "CURRENTLY WATCHING" in prompt_text
+    assert "RECENTLY WATCHED (NEWEST LAST)" in prompt_text
+    assert "\nOPTIONS" in prompt_text
     assert "Recommended Video" in prompt_text
 
 
@@ -96,17 +96,19 @@ def test_recently_watched_duration_has_seconds(sample_example: dict) -> None:
     prompt_text = build_user_prompt(sample_example, max_hist=2)
     lines = prompt_text.splitlines()
     try:
-        start = lines.index("RECENTLY WATCHED (NEWEST LAST):")
+        start = lines.index("RECENTLY WATCHED (NEWEST LAST)")
     except ValueError as exc:  # pragma: no cover - defensive
         raise AssertionError("Recently watched section missing") from exc
     history_lines = []
     for line in lines[start + 1 :]:
         stripped = line.strip()
         if not stripped:
+            if history_lines:
+                break
             continue
         if stripped == "(no recently watched videos available)":
             continue
-        if stripped == "OPTIONS:":
+        if stripped in {"SURVEY HIGHLIGHTS", "OPTIONS"}:
             break
         history_lines.append(stripped)
     assert history_lines, "Expected watch history entries to be present"
@@ -123,11 +125,21 @@ def test_option_engagement_summary_lists_metrics(sample_example: dict, monkeypat
         lambda video_id: {"like_count": 42, "comment_count": 7, "share_count": 3},
     )
     prompt_text = build_user_prompt(sample_example, max_hist=1)
-    option_lines = [
-        line.strip()
-        for line in prompt_text.splitlines()
-        if line.strip().startswith("Option ")
-    ]
+    option_lines: list[str] = []
+    in_options = False
+    for line in prompt_text.splitlines():
+        stripped = line.strip()
+        if stripped == "OPTIONS":
+            in_options = True
+            continue
+        if not in_options or not stripped:
+            continue
+        if stripped[0].isdigit() and stripped[1:2] == ".":
+            option_lines.append(stripped)
+        elif in_options and not stripped[0].isdigit():
+            break
     assert option_lines, "Expected option lines with engagement summary"
-    expected_fragment = "Engagement: likes 42, comments 7, shares 3."
-    assert all(expected_fragment in line for line in option_lines)
+    for line in option_lines:
+        assert "— Engagement:" in line
+        for fragment in ("likes 42", "comments 7", "shares 3"):
+            assert fragment in line

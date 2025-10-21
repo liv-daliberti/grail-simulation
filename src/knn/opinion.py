@@ -16,6 +16,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import NearestNeighbors
 
+from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+
 from .data import (
     DEFAULT_DATASET_SOURCE,
     EVAL_SPLIT,
@@ -70,7 +72,7 @@ class OpinionIndex:
     metric: str
     matrix: Any
     vectorizer: Any
-    embeds: Optional[Word2VecFeatureBuilder]
+    embeds: Optional[Any]
     targets_after: np.ndarray
     targets_before: np.ndarray
     participant_keys: List[Tuple[str, str]]
@@ -216,6 +218,7 @@ def build_index(
     seed: int,
     metric: str,
     word2vec_config: Optional[Word2VecConfig] = None,
+    sentence_config: Optional[SentenceTransformerConfig] = None,
 ) -> OpinionIndex:
     """Vectorise ``examples`` and construct a neighbour index."""
 
@@ -229,6 +232,13 @@ def build_index(
         embeds = Word2VecFeatureBuilder(word2vec_config)
         embeds.train(documents)
         matrix = embeds.transform(documents)
+        vectorizer = None
+    elif feature_space == "sentence_transformer":
+        encoder = SentenceTransformerEncoder(sentence_config or SentenceTransformerConfig())
+        matrix = encoder.encode(documents).astype(np.float32, copy=False)
+        if not hasattr(encoder, "transform"):
+            setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
+        embeds = encoder
         vectorizer = None
     else:
         raise ValueError(f"Unsupported feature space '{feature_space}'.")
@@ -281,10 +291,11 @@ def _transform_documents(
         if index.vectorizer is None:
             raise RuntimeError("TF-IDF vectoriser missing from index.")
         return index.vectorizer.transform(documents).astype(np.float32)
-    if index.feature_space == "word2vec":
-        if index.embeds is None:
-            raise RuntimeError("Word2Vec builder missing from index.")
-        return index.embeds.transform(list(documents))
+    if index.feature_space in {"word2vec", "sentence_transformer"}:
+        if index.embeds is None or not hasattr(index.embeds, "transform"):
+            raise RuntimeError("Embedding encoder missing from index.")
+        transformed = index.embeds.transform(list(documents))  # type: ignore[attr-defined]
+        return np.asarray(transformed, dtype=np.float32)
     raise ValueError(f"Unsupported feature space '{index.feature_space}'.")
 
 
@@ -659,6 +670,15 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             seed=int(getattr(args, "knn_seed", Word2VecConfig().seed)),
             workers=int(getattr(args, "word2vec_workers", Word2VecConfig().workers)),
         )
+    sentence_cfg = None
+    if feature_space == "sentence_transformer":
+        device_raw = getattr(args, "sentence_transformer_device", "")
+        sentence_cfg = SentenceTransformerConfig(
+            model_name=getattr(args, "sentence_transformer_model", SentenceTransformerConfig().model_name),
+            device=device_raw or None,
+            batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
+            normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
+        )
 
     outputs_root = Path(args.out_dir) / "opinion" / feature_space
     outputs_root.mkdir(parents=True, exist_ok=True)
@@ -683,6 +703,7 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             seed=int(getattr(args, "knn_seed", 42)),
             metric=str(getattr(args, "knn_metric", "cosine")),
             word2vec_config=word2vec_cfg,
+            sentence_config=sentence_cfg,
         )
 
         eval_examples = collect_examples(

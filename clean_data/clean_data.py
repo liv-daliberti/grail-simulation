@@ -10,8 +10,13 @@ need to build or persist cleaned prompt datasets.
 
 from __future__ import annotations
 
-import logging
+import bz2
 import csv
+import gzip
+import io
+import logging
+import lzma
+import zipfile
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -212,14 +217,44 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             return open_fs, open_path
 
         def _read_csv_frame(active_fs, active_path):
+            with active_fs.open(active_path, "rb") as raw_handle:  # type: ignore[attr-defined]
+                raw_bytes = raw_handle.read()
+
+            def _decompress_payload(payload: bytes) -> bytes:
+                try:
+                    if payload.startswith(b"\x1f\x8b\x08"):
+                        return gzip.decompress(payload)
+                    if payload.startswith(b"PK\x03\x04"):
+                        with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+                            for name in zf.namelist():
+                                if not name.endswith("/"):
+                                    return zf.read(name)
+                        log.debug(
+                            "Zip archive '%s' does not contain file entries; using raw bytes",
+                            active_path,
+                        )
+                        return payload
+                    if payload.startswith(b"BZh"):
+                        return bz2.decompress(payload)
+                    if payload.startswith(b"\xfd7zXZ\x00") or payload.startswith(b"\x5d\x00\x00"):
+                        return lzma.decompress(payload)
+                except (OSError, zipfile.BadZipFile, lzma.LZMAError) as err:
+                    log.debug(
+                        "Failed to decompress '%s' despite matching signature; falling back to raw "
+                        "bytes (%s)",
+                        active_path,
+                        err,
+                    )
+                return payload
+
+            data_bytes = _decompress_payload(raw_bytes)
+            sample_bytes = data_bytes[:16384]
             last_decode_err: Optional[UnicodeDecodeError] = None
             last_parser_err: Optional[Exception] = None
             last_generic_err: Optional[Exception] = None
 
             for encoding in ("utf-8", "utf-8-sig", "latin-1"):
                 try:
-                    with active_fs.open(active_path, "rb") as sample_handle:  # type: ignore[attr-defined]
-                        sample_bytes = sample_handle.read(16384)
                     sample_text = sample_bytes.decode(encoding)
                     last_decode_err = None
                 except UnicodeDecodeError as err:
@@ -279,8 +314,7 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
                     if attempt.get("on_bad_lines") and attempt["engine"] == "python":
                         kwargs["on_bad_lines"] = attempt["on_bad_lines"]
                     try:
-                        with active_fs.open(active_path, "rb") as handle:  # type: ignore[attr-defined]
-                            frame = pd.read_csv(handle, **kwargs)
+                        frame = pd.read_csv(io.BytesIO(data_bytes), **kwargs)
                     except UnicodeDecodeError as err:
                         last_decode_err = err
                         break

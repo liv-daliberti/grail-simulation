@@ -21,6 +21,7 @@ import argparse
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
@@ -48,6 +49,10 @@ class SweepConfig:
     word2vec_min_count: int | None = None
     word2vec_epochs: int | None = None
     word2vec_workers: int | None = None
+    sentence_transformer_model: str | None = None
+    sentence_transformer_device: str | None = None
+    sentence_transformer_batch_size: int | None = None
+    sentence_transformer_normalize: bool | None = None
 
     @property
     def label(self) -> str:
@@ -65,6 +70,10 @@ class SweepConfig:
                     f"min{self.word2vec_min_count}",
                 ]
             )
+        if self.feature_space == "sentence_transformer" and self.sentence_transformer_model:
+            model_name = Path(self.sentence_transformer_model).name or self.sentence_transformer_model
+            cleaned = re.sub(r"[^a-zA-Z0-9]+", "", model_name)
+            parts.append(f"model-{cleaned or 'st'}")
         return "_".join(parts)
 
     def cli_args(self, *, word2vec_model_dir: Path | None) -> List[str]:
@@ -101,6 +110,21 @@ class SweepConfig:
                 args.extend(["--word2vec-workers", str(self.word2vec_workers)])
             if word2vec_model_dir is not None:
                 args.extend(["--word2vec-model-dir", str(word2vec_model_dir)])
+        if self.feature_space == "sentence_transformer":
+            if self.sentence_transformer_model:
+                args.extend(["--sentence-transformer-model", self.sentence_transformer_model])
+            if self.sentence_transformer_device:
+                args.extend(["--sentence-transformer-device", self.sentence_transformer_device])
+            if self.sentence_transformer_batch_size is not None:
+                args.extend(
+                    ["--sentence-transformer-batch-size", str(self.sentence_transformer_batch_size)]
+                )
+            if self.sentence_transformer_normalize is not None:
+                args.append(
+                    "--sentence-transformer-normalize"
+                    if self.sentence_transformer_normalize
+                    else "--sentence-transformer-no-normalize"
+                )
         return args
 
 
@@ -178,6 +202,11 @@ class PipelineContext:
     study_tokens: Tuple[str, ...]
     word2vec_epochs: int
     word2vec_workers: int
+    sentence_model: str
+    sentence_device: str | None
+    sentence_batch_size: int
+    sentence_normalize: bool
+    feature_spaces: Tuple[str, ...]
     reuse_sweeps: bool = False
 
 
@@ -191,6 +220,8 @@ class ReportBundle:
     opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     k_sweep: str
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None
+    feature_spaces: Tuple[str, ...] = ("tfidf", "word2vec", "sentence_transformer")
+    sentence_model: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -219,6 +250,40 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--word2vec-model-dir",
         default=None,
         help="Directory for persisted Word2Vec models (default: <out-dir>/word2vec_models).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-model",
+        default=None,
+        help="SentenceTransformer model name used during sweeps (default: sentence-transformers/all-mpnet-base-v2).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-device",
+        default=None,
+        help="Optional device override for sentence-transformer encoding (e.g. cuda, cpu).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-batch-size",
+        type=int,
+        default=None,
+        help="Batch size for sentence-transformer encoding during sweeps (default: 32).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-normalize",
+        dest="sentence_transformer_normalize",
+        action="store_true",
+        help="Enable L2-normalisation for sentence-transformer embeddings (default).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-no-normalize",
+        dest="sentence_transformer_normalize",
+        action="store_false",
+        help="Disable L2-normalisation for sentence-transformer embeddings.",
+    )
+    parser.set_defaults(sentence_transformer_normalize=True)
+    parser.add_argument(
+        "--feature-spaces",
+        default="",
+        help="Comma-separated feature spaces to evaluate (default: tfidf,word2vec,sentence_transformer).",
     )
     parser.add_argument(
         "--issues",
@@ -307,6 +372,37 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
     )
     word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
     word2vec_workers = _default_word2vec_workers()
+    sentence_model = (
+        args.sentence_transformer_model
+        or os.environ.get("SENTENCE_TRANSFORMER_MODEL")
+        or "sentence-transformers/all-mpnet-base-v2"
+    )
+    sentence_device_raw = (
+        args.sentence_transformer_device
+        or os.environ.get("SENTENCE_TRANSFORMER_DEVICE")
+        or ""
+    )
+    sentence_device = sentence_device_raw or None
+    sentence_batch_size = int(
+        args.sentence_transformer_batch_size
+        or os.environ.get("SENTENCE_TRANSFORMER_BATCH_SIZE", "32")
+    )
+    if "SENTENCE_TRANSFORMER_NORMALIZE" in os.environ and not getattr(args, "sentence_transformer_normalize", None) == False:
+        sentence_normalize_env = os.environ.get("SENTENCE_TRANSFORMER_NORMALIZE", "1")
+        sentence_normalize = sentence_normalize_env not in {"0", "false", "False"}
+    else:
+        sentence_normalize = bool(getattr(args, "sentence_transformer_normalize", True))
+    feature_spaces_tokens = (
+        _split_tokens(getattr(args, "feature_spaces", ""))
+        or _split_tokens(os.environ.get("KNN_FEATURE_SPACES", ""))
+    )
+    allowed_spaces = {"tfidf", "word2vec", "sentence_transformer"}
+    resolved_feature_spaces = tuple(
+        space
+        for space in (token.lower() for token in feature_spaces_tokens) if space in allowed_spaces
+    )
+    if not resolved_feature_spaces:
+        resolved_feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
     reuse_sweeps = bool(getattr(args, "reuse_sweeps", False))
     return PipelineContext(
         dataset=dataset,
@@ -318,6 +414,11 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
         study_tokens=study_tokens,
         word2vec_epochs=word2vec_epochs,
         word2vec_workers=word2vec_workers,
+        sentence_model=sentence_model,
+        sentence_device=sentence_device,
+        sentence_batch_size=sentence_batch_size,
+        sentence_normalize=sentence_normalize,
+        feature_spaces=resolved_feature_spaces,
         reuse_sweeps=reuse_sweeps,
     )
 
@@ -455,61 +556,89 @@ def _log_dry_run(configs: Sequence[SweepConfig]) -> None:
     LOGGER.info("[DRY RUN] Planned %d sweep configurations.", len(configs))
 
 
-def _build_sweep_configs(
-    *,
-    word2vec_epochs: int,
-    word2vec_workers: int,
-) -> List[SweepConfig]:
+def _build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     """Return the grid of configurations evaluated during sweeps."""
 
     text_options: Tuple[Tuple[str, ...], ...] = ((), ("viewer_profile", "state_text"))
-    tfidf_metrics = ("cosine", "l2")
-    word2vec_metrics = ("cosine", "l2")
-    word2vec_sizes = tuple(
-        int(token)
-        for token in os.environ.get("WORD2VEC_SWEEP_SIZES", "128,256").split(",")
-        if token.strip()
-    )
-    word2vec_windows = tuple(
-        int(token)
-        for token in os.environ.get("WORD2VEC_SWEEP_WINDOWS", "5,10").split(",")
-        if token.strip()
-    )
-    word2vec_min_counts = tuple(
-        int(token)
-        for token in os.environ.get("WORD2VEC_SWEEP_MIN_COUNTS", "1").split(",")
-        if token.strip()
-    )
+    feature_spaces = context.feature_spaces
 
     configs: List[SweepConfig] = []
 
-    for metric in tfidf_metrics:
-        for fields in text_options:
-            configs.append(
-                SweepConfig(
-                    feature_space="tfidf",
-                    metric=metric,
-                    text_fields=fields,
+    if "tfidf" in feature_spaces:
+        tfidf_metrics = ("cosine", "l2")
+        for metric in tfidf_metrics:
+            for fields in text_options:
+                configs.append(
+                    SweepConfig(
+                        feature_space="tfidf",
+                        metric=metric,
+                        text_fields=fields,
+                    )
                 )
-            )
 
-    for metric in word2vec_metrics:
-        for fields in text_options:
-            for size in word2vec_sizes:
-                for window in word2vec_windows:
-                    for min_count in word2vec_min_counts:
-                        configs.append(
-                            SweepConfig(
-                                feature_space="word2vec",
-                                metric=metric,
-                                text_fields=fields,
-                                word2vec_size=size,
-                                word2vec_window=window,
-                                word2vec_min_count=min_count,
-                                word2vec_epochs=word2vec_epochs,
-                                word2vec_workers=word2vec_workers,
-                            )
-                        )
+    if "word2vec" in feature_spaces:
+        word2vec_metrics = ("cosine", "l2")
+        word2vec_sizes = tuple(
+            int(token)
+            for token in os.environ.get("WORD2VEC_SWEEP_SIZES", "128,256").split(",")
+            if token.strip()
+        )
+        word2vec_windows = tuple(
+            int(token)
+            for token in os.environ.get("WORD2VEC_SWEEP_WINDOWS", "5,10").split(",")
+            if token.strip()
+        )
+        word2vec_min_counts = tuple(
+            int(token)
+            for token in os.environ.get("WORD2VEC_SWEEP_MIN_COUNTS", "1").split(",")
+            if token.strip()
+        )
+        word2vec_epochs_options = tuple(
+            int(token)
+            for token in os.environ.get("WORD2VEC_SWEEP_EPOCHS", str(context.word2vec_epochs)).split(",")
+            if token.strip()
+        )
+        word2vec_workers_options = tuple(
+            int(token)
+            for token in os.environ.get("WORD2VEC_SWEEP_WORKERS", str(context.word2vec_workers)).split(",")
+            if token.strip()
+        )
+        for metric in word2vec_metrics:
+            for fields in text_options:
+                for size in word2vec_sizes:
+                    for window in word2vec_windows:
+                        for min_count in word2vec_min_counts:
+                            for epochs in word2vec_epochs_options:
+                                for workers in word2vec_workers_options:
+                                    configs.append(
+                                        SweepConfig(
+                                            feature_space="word2vec",
+                                            metric=metric,
+                                            text_fields=fields,
+                                            word2vec_size=size,
+                                            word2vec_window=window,
+                                            word2vec_min_count=min_count,
+                                            word2vec_epochs=epochs,
+                                            word2vec_workers=workers,
+                                        )
+                                    )
+
+    if "sentence_transformer" in feature_spaces:
+        st_metrics = ("cosine", "l2")
+        for metric in st_metrics:
+            for fields in text_options:
+                configs.append(
+                    SweepConfig(
+                        feature_space="sentence_transformer",
+                        metric=metric,
+                        text_fields=fields,
+                        sentence_transformer_model=context.sentence_model,
+                        sentence_transformer_device=context.sentence_device,
+                        sentence_transformer_batch_size=context.sentence_batch_size,
+                        sentence_transformer_normalize=context.sentence_normalize,
+                    )
+                )
+
     return configs
 
 
@@ -841,25 +970,38 @@ def _run_cross_study_evaluations(
 # ---------------------------------------------------------------------------
 
 
-def _hyperparameter_report_intro(k_sweep: str) -> List[str]:
+def _hyperparameter_report_intro(
+    k_sweep: str,
+    feature_spaces: Sequence[str],
+    sentence_model: Optional[str],
+) -> List[str]:
     """Return the Markdown header introducing the hyperparameter report."""
 
-    return [
+    feature_label = ", ".join(space.replace("_", "-" ).upper() for space in feature_spaces)
+    lines = [
         "# KNN Hyperparameter Tuning Notes",
         "",
         "This document consolidates the selected grid searches for the KNN baselines.",
         "",
         "## Next-Video Prediction",
         "",
-        "The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:",
+        f"The latest sweeps cover the {feature_label} feature spaces with:",
         f"- `k ∈ {{{k_sweep}}}`",
         "- Distance metrics: cosine and L2",
         "- Text-field augmentations: none, `viewer_profile,state_text`",
-        "- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}",
-        "",
-        "| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |",
-        "| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |",
     ]
+    if "word2vec" in feature_spaces:
+        lines.append("- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}")
+    if "sentence_transformer" in feature_spaces and sentence_model:
+        lines.append(f"- Sentence-transformer model: `{sentence_model}`")
+    lines.extend(
+        [
+            "",
+            "| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy | Best k |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |",
+        ]
+    )
+    return lines
 
 
 def _hyperparameter_table_section(
@@ -869,7 +1011,15 @@ def _hyperparameter_table_section(
     """Render the hyperparameter summary table for each feature space."""
 
     lines: List[str] = []
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in selections
+    ]
+    for space in selections:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         per_study = selections.get(feature_space, {})
         lines.extend(_hyperparameter_feature_rows(feature_space, per_study, studies))
     lines.append("")
@@ -904,10 +1054,15 @@ def _format_hyperparameter_row(
     size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
     window = str(config.word2vec_window) if config.word2vec_window is not None else "—"
     min_count = str(config.word2vec_min_count) if config.word2vec_min_count is not None else "—"
+    if feature_space == "sentence_transformer":
+        model = config.sentence_transformer_model or "sentence-transformer"
+    elif feature_space == "word2vec":
+        model = "word2vec"
+    else:
+        model = "tfidf"
     return (
-        f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | "
-        f"{size} | {window} | {min_count} | {_format_float(selection.accuracy)} | "
-        f"{selection.best_k} |"
+        f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | {model} | "
+        f"{size} | {window} | {min_count} | {_format_float(selection.accuracy)} | {selection.best_k} |"
     )
 
 
@@ -935,7 +1090,15 @@ def _hyperparameter_observations_section(
     """Build a bullet list summarising key sweep observations."""
 
     lines: List[str] = ["### Observations", ""]
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in selections
+    ]
+    for space in selections:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         per_study = selections.get(feature_space, {})
         summary = _hyperparameter_feature_observation(feature_space, per_study, studies)
         if summary:
@@ -960,6 +1123,9 @@ def _hyperparameter_feature_observation(
         text_info = _describe_text_fields(config.text_fields)
         if feature_space == "word2vec":
             config_bits = _format_word2vec_descriptor(config, text_info)
+        elif feature_space == "sentence_transformer":
+            model_name = config.sentence_transformer_model or "sentence-transformer"
+            config_bits = f"{config.metric} distance, {text_info}, model={model_name}"
         else:
             config_bits = f"{config.metric} distance with {text_info}"
         detail = (
@@ -1014,7 +1180,13 @@ def _next_video_intro(dataset_name: str, split: str) -> List[str]:
 def _feature_space_heading(feature_space: str) -> str:
     """Return the Markdown heading for ``feature_space``."""
 
-    return "## TF-IDF Feature Space" if feature_space == "tfidf" else "## Word2Vec Feature Space"
+    if feature_space == "tfidf":
+        return "## TF-IDF Feature Space"
+    if feature_space == "word2vec":
+        return "## Word2Vec Feature Space"
+    if feature_space == "sentence_transformer":
+        return "## Sentence-Transformer Feature Space"
+    return f"## {feature_space.replace('_', ' ').title()} Feature Space"
 
 
 def _baseline_accuracy(data: Mapping[str, object]) -> float:
@@ -1079,7 +1251,11 @@ def _next_video_loso_section(
         "| Feature space | Holdout study | Accuracy ↑ | 95% CI | Most-frequent baseline ↑ |",
         "| --- | --- | ---: | --- | ---: |",
     ]
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [space for space in ("tfidf", "word2vec", "sentence_transformer") if space in loso_metrics]
+    for space in loso_metrics:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         feature_data = loso_metrics.get(feature_space, {})
         if not feature_data:
             continue
@@ -1109,7 +1285,15 @@ def _next_video_observations(
     """Generate bullet-point observations comparing feature spaces."""
 
     lines: List[str] = ["## Observations", ""]
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in metrics_by_feature
+    ]
+    for space in metrics_by_feature:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         metrics = metrics_by_feature.get(feature_space, {})
         if not metrics:
             continue
@@ -1134,11 +1318,13 @@ def _build_hyperparameter_report(
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
     k_sweep: str,
+    feature_spaces: Sequence[str],
+    sentence_model: Optional[str],
 ) -> None:
     """Write the hyperparameter tuning summary to ``output_path``."""
 
     lines: List[str] = []
-    lines.extend(_hyperparameter_report_intro(k_sweep))
+    lines.extend(_hyperparameter_report_intro(k_sweep, feature_spaces, sentence_model))
     lines.extend(_hyperparameter_table_section(selections, studies))
     lines.extend(_hyperparameter_observations_section(selections, studies))
     lines.extend(_hyperparameter_opinion_section())
@@ -1150,6 +1336,7 @@ def _build_next_video_report(
     output_path: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
+    feature_spaces: Sequence[str],
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
 ) -> None:
     """Compose the next-video evaluation report at ``output_path``."""
@@ -1160,7 +1347,15 @@ def _build_next_video_report(
     dataset_name, split = _next_video_dataset_info(metrics_by_feature)
     lines: List[str] = []
     lines.extend(_next_video_intro(dataset_name, split))
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in feature_spaces
+    ]
+    for space in feature_spaces:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         metrics = metrics_by_feature.get(feature_space, {})
         lines.extend(_next_video_feature_section(feature_space, metrics, studies))
     lines.extend(_next_video_observations(metrics_by_feature, studies))
@@ -1190,7 +1385,15 @@ def _opinion_feature_sections(
     """Render opinion metrics tables grouped by feature space."""
 
     lines: List[str] = []
-    for feature_space in ("tfidf", "word2vec"):
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in metrics
+    ]
+    for space in metrics:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for feature_space in ordered_spaces:
         per_feature = metrics.get(feature_space, {})
         if not per_feature:
             continue
@@ -1306,16 +1509,20 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
     """Write refreshed Markdown reports under ``reports/knn``."""
 
     reports_root = repo_root / "reports" / "knn"
+    feature_spaces = report_bundle.feature_spaces
     _build_hyperparameter_report(
         output_path=reports_root / "hyperparameter_tuning.md",
         selections=report_bundle.selections,
         studies=report_bundle.studies,
         k_sweep=report_bundle.k_sweep,
+        feature_spaces=feature_spaces,
+        sentence_model=report_bundle.sentence_model,
     )
     _build_next_video_report(
         output_path=reports_root / "next_video.md",
         metrics_by_feature=report_bundle.metrics_by_feature,
         studies=report_bundle.studies,
+        feature_spaces=feature_spaces,
         loso_metrics=report_bundle.loso_metrics,
     )
     _build_opinion_report(
@@ -1347,10 +1554,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     _log_run_configuration(studies, context)
 
     base_cli = _build_base_cli(context)
-    configs = _build_sweep_configs(
-        word2vec_epochs=context.word2vec_epochs,
-        word2vec_workers=context.word2vec_workers,
-    )
+    configs = _build_sweep_configs(context)
 
     if args.dry_run:
         _log_dry_run(configs)
@@ -1402,6 +1606,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         opinion_metrics=opinion_metrics,
         k_sweep=context.k_sweep,
         loso_metrics=loso_metrics,
+        feature_spaces=context.feature_spaces,
+        sentence_model=context.sentence_model if "sentence_transformer" in context.feature_spaces else None,
     )
     _generate_reports(root, report_bundle)
 

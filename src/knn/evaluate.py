@@ -17,6 +17,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 import numpy as np
 from numpy.random import default_rng
 
+from common.embeddings import SentenceTransformerConfig
 from common.eval_utils import safe_div
 
 try:  # pragma: no cover - optional dependency
@@ -39,11 +40,14 @@ from .features import Word2VecConfig, extract_slate_items
 from .index import (
     SlateQueryConfig,
     build_tfidf_index,
+    build_sentence_transformer_index,
     build_word2vec_index,
     knn_predict_among_slate_multi,
     load_tfidf_index,
+    load_sentence_transformer_index,
     load_word2vec_index,
     save_tfidf_index,
+    save_sentence_transformer_index,
     save_word2vec_index,
 )
 
@@ -394,7 +398,7 @@ def _normalise_feature_space(feature_space: str | None) -> str:
     """
 
     value = (feature_space or "tfidf").lower()
-    if value not in {"tfidf", "word2vec"}:
+    if value not in {"tfidf", "word2vec", "sentence_transformer"}:
         raise ValueError(f"Unsupported feature space '{feature_space}'")
     return value
 
@@ -417,6 +421,19 @@ def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
         model_dir=Path(model_root) / issue_slug,
         seed=int(getattr(args, "knn_seed", default_cfg.seed)),
         workers=int(getattr(args, "word2vec_workers", default_cfg.workers)),
+    )
+
+
+def _sentence_transformer_config_from_args(args) -> SentenceTransformerConfig:
+    """Return the SentenceTransformer configuration derived from CLI arguments."""
+
+    device_raw = getattr(args, "sentence_transformer_device", "")
+    device = device_raw if device_raw else None
+    return SentenceTransformerConfig(
+        model_name=getattr(args, "sentence_transformer_model", SentenceTransformerConfig().model_name),
+        device=device,
+        batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
+        normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
     )
 
 
@@ -466,6 +483,20 @@ def _fit_index_for_issue(
             save_word2vec_index(index, Path(args.save_index) / issue_slug)
         return index
 
+    if feature_space == "sentence_transformer":
+        logging.info("[KNN] Building SentenceTransformer index for issue=%s", issue_slug)
+        config = _sentence_transformer_config_from_args(args)
+        index = build_sentence_transformer_index(
+            train_ds,
+            max_train=args.knn_max_train,
+            seed=args.knn_seed,
+            extra_fields=extra_fields,
+            config=config,
+        )
+        if args.save_index:
+            save_sentence_transformer_index(index, Path(args.save_index) / issue_slug)
+        return index
+
     raise ValueError(f"Unsupported feature space '{feature_space}'")
 
 
@@ -491,6 +522,9 @@ def _load_index_for_issue(
     if feature_space == "word2vec":
         logging.info("[KNN] Loading Word2Vec index for issue=%s", issue_slug)
         return load_word2vec_index(load_path)
+    if feature_space == "sentence_transformer":
+        logging.info("[KNN] Loading SentenceTransformer index for issue=%s", issue_slug)
+        return load_sentence_transformer_index(load_path)
     raise ValueError(f"Unsupported feature space '{feature_space}'")
 
 

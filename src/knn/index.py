@@ -13,6 +13,8 @@ import numpy as np
 from scipy import sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+
 from .features import (
     assemble_document,
     extract_slate_items,
@@ -172,6 +174,46 @@ def build_word2vec_index(
     }
 
 
+def build_sentence_transformer_index(
+    train_ds,
+    *,
+    max_train: int = 100_000,
+    seed: int = 42,
+    extra_fields: Sequence[str] | None = None,
+    config: SentenceTransformerConfig | None = None,
+):
+    """Create a sentence-transformer index from the training split.
+
+    :param train_ds: Training dataset split.
+    :param max_train: Maximum number of rows to sample.
+    :param seed: Random seed used for subsampling.
+    :param extra_fields: Extra textual columns concatenated into each document.
+    :param config: Optional :class:`~common.embeddings.SentenceTransformerConfig` override.
+    :returns: Dictionary containing the encoder, dense matrix, and label metadata.
+    :raises ImportError: If :mod:`sentence_transformers` is unavailable.
+    """
+
+    docs, labels_id, labels_title = prepare_training_documents(
+        train_ds,
+        max_train=max_train,
+        seed=seed,
+        extra_fields=extra_fields,
+    )
+    st_config = config or SentenceTransformerConfig()
+    encoder = SentenceTransformerEncoder(st_config)
+    if not hasattr(encoder, "transform"):
+        setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
+    matrix = encoder.encode(docs).astype(np.float32, copy=False)
+    return {
+        "feature_space": "sentence_transformer",
+        "vectorizer": encoder,
+        "X": matrix,
+        "labels_id": labels_id,
+        "labels_title": labels_title,
+        "sentence_transformer_config": st_config,
+    }
+
+
 def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     """Persist the TF-IDF index to ``out_dir`` for later reuse.
 
@@ -271,6 +313,41 @@ def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
         json.dump(meta, handle, indent=2)
 
 
+def save_sentence_transformer_index(index: Dict[str, Any], out_dir: str) -> None:
+    """Persist the sentence-transformer index to ``out_dir`` for later reuse."""
+
+    directory = Path(out_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    matrix = np.asarray(index["X"], dtype=np.float32)
+    np.save(directory / "X.npy", matrix, allow_pickle=False)
+    np.save(
+        directory / "labels_id.npy",
+        np.asarray(index["labels_id"], dtype=object),
+        allow_pickle=True,
+    )
+    np.save(
+        directory / "labels_title.npy",
+        np.asarray(index["labels_title"], dtype=object),
+        allow_pickle=True,
+    )
+
+    config_obj: SentenceTransformerConfig = index.get("sentence_transformer_config") or SentenceTransformerConfig()
+    meta = {
+        "feature_space": "sentence_transformer",
+        "n_docs": int(matrix.shape[0]),
+        "vector_size": int(matrix.shape[1]) if matrix.size else 0,
+        "config": {
+            "model_name": config_obj.model_name,
+            "device": config_obj.device,
+            "batch_size": int(config_obj.batch_size),
+            "normalize": bool(config_obj.normalize),
+        },
+    }
+    with open(directory / "meta.json", "w", encoding="utf-8") as handle:
+        json.dump(meta, handle, indent=2)
+
+
 def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
     """Load a Word2Vec index previously saved via :func:`save_word2vec_index`.
 
@@ -310,6 +387,33 @@ def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
         "labels_id": labels_id,
         "labels_title": labels_title,
         "word2vec_config": config,
+    }
+
+
+def load_sentence_transformer_index(in_dir: str) -> Dict[str, Any]:
+    """Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`."""
+
+    directory = Path(in_dir)
+    matrix = np.load(directory / "X.npy").astype(np.float32, copy=False)
+    labels_id = np.load(directory / "labels_id.npy", allow_pickle=True).tolist()
+    labels_title = np.load(directory / "labels_title.npy", allow_pickle=True).tolist()
+    meta_path = directory / "meta.json"
+    if meta_path.exists():
+        with open(meta_path, "r", encoding="utf-8") as handle:
+            meta = json.load(handle)
+        config = SentenceTransformerConfig(**meta.get("config", {}))
+    else:
+        config = SentenceTransformerConfig()
+    encoder = SentenceTransformerEncoder(config)
+    if not hasattr(encoder, "transform"):
+        setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
+    return {
+        "feature_space": "sentence_transformer",
+        "vectorizer": encoder,
+        "X": matrix,
+        "labels_id": labels_id,
+        "labels_title": labels_title,
+        "sentence_transformer_config": config,
     }
 
 
@@ -415,7 +519,7 @@ def _candidate_query(
         parts.append(_safe_str(surface, lowercase=config.lowercase))
     query_text = "\n".join(part for part in parts if part)
 
-    if index_data.feature_space == "word2vec":
+    if index_data.feature_space in {"word2vec", "sentence_transformer"}:
         query_matrix = index_data.vectorizer.transform([query_text])
         query_vec = np.asarray(query_matrix[0], dtype=np.float32)
         sims = index_data.matrix @ query_vec
@@ -443,7 +547,7 @@ def _score_vector_from_similarity(
     :param metric: Distance metric (``l2`` or ``cosine``) or ``None`` for dot product.
     :returns: Vector of scores aligned with ``sims_masked`` ordering.
     """
-    if index_data.feature_space == "word2vec":
+    if index_data.feature_space in {"word2vec", "sentence_transformer"}:
         subset = index_data.matrix[mask]
         if subset.ndim == 1 and subset.size > 0:
             subset = subset.reshape(1, -1)
@@ -610,9 +714,12 @@ def _canon_vid(value: str) -> str:
 __all__ = [
     "build_tfidf_index",
     "build_word2vec_index",
+    "build_sentence_transformer_index",
     "knn_predict_among_slate_multi",
     "load_tfidf_index",
     "load_word2vec_index",
+    "load_sentence_transformer_index",
     "save_tfidf_index",
     "save_word2vec_index",
+    "save_sentence_transformer_index",
 ]

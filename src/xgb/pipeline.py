@@ -276,6 +276,75 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         help="Comma-separated L1 regularisation weights explored during sweeps.",
     )
     parser.add_argument(
+        "--text-vectorizer-grid",
+        default="tfidf",
+        help="Comma-separated list of text vectorisers explored during sweeps.",
+    )
+    parser.add_argument(
+        "--word2vec-size",
+        type=int,
+        default=256,
+        help="Word2Vec vector size applied when evaluating the word2vec feature space.",
+    )
+    parser.add_argument(
+        "--word2vec-window",
+        type=int,
+        default=5,
+        help="Word2Vec context window size during training.",
+    )
+    parser.add_argument(
+        "--word2vec_min_count",
+        type=int,
+        default=2,
+        help="Minimum token frequency retained in the Word2Vec vocabulary.",
+    )
+    parser.add_argument(
+        "--word2vec-epochs",
+        type=int,
+        default=10,
+        help="Number of epochs used when training Word2Vec embeddings.",
+    )
+    parser.add_argument(
+        "--word2vec-workers",
+        type=int,
+        default=1,
+        help="Worker threads allocated to Word2Vec training.",
+    )
+    parser.add_argument(
+        "--word2vec-model-dir",
+        default="",
+        help="Optional directory where Word2Vec models should be stored.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-model",
+        default="sentence-transformers/all-mpnet-base-v2",
+        help="SentenceTransformer model name evaluated when using the sentence_transformer feature space.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-device",
+        default="",
+        help="Optional device string (cpu/cuda) forwarded to SentenceTransformer.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-batch-size",
+        type=int,
+        default=32,
+        help="Encoding batch size for sentence-transformer embeddings.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-normalize",
+        dest="sentence_transformer_normalize",
+        action="store_true",
+        help="Enable L2-normalisation for sentence-transformer embeddings (default).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-no-normalize",
+        dest="sentence_transformer_normalize",
+        action="store_false",
+        help="Disable L2-normalisation for sentence-transformer embeddings.",
+    )
+    parser.set_defaults(sentence_transformer_normalize=True)
+    parser.add_argument(
         "--save-model-dir",
         default=None,
         help="Optional directory used to persist the final slate models.",
@@ -332,6 +401,17 @@ def _split_tokens(raw: str) -> List[str]:
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
+def _sanitize_token(value: str) -> str:
+    """Return a filesystem-friendly representation of ``value``."""
+
+    return (
+        value.replace("/", "_")
+        .replace("\\", "_")
+        .replace(".", "p")
+        .replace(" ", "_")
+    )
+
+
 def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     """Return the hyper-parameter sweep configurations resolved from CLI grids."""
 
@@ -342,28 +422,72 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     colsample_values = [float(x) for x in _split_tokens(args.colsample_grid)]
     reg_lambda_values = [float(x) for x in _split_tokens(args.reg_lambda_grid)]
     reg_alpha_values = [float(x) for x in _split_tokens(args.reg_alpha_grid)]
+    vectorizer_values = [token.lower() for token in _split_tokens(args.text_vectorizer_grid) or ["tfidf"]]
+
+    def _vectorizer_cli(kind: str) -> Tuple[str, Tuple[str, ...]]:
+        if kind == "tfidf":
+            return "tfidf", ()
+        if kind == "word2vec":
+            cli: List[str] = [
+                "--word2vec_size",
+                str(args.word2vec_size),
+                "--word2vec_window",
+                str(args.word2vec_window),
+                "--word2vec_min_count",
+                str(args.word2vec_min_count),
+                "--word2vec_epochs",
+                str(args.word2vec_epochs),
+                "--word2vec_workers",
+                str(args.word2vec_workers),
+            ]
+            if args.word2vec_model_dir:
+                cli.extend(["--word2vec_model_dir", args.word2vec_model_dir])
+            tag = f"w2v{args.word2vec_size}"
+            return tag, tuple(cli)
+        if kind == "sentence_transformer":
+            cli = [
+                "--sentence_transformer_model",
+                args.sentence_transformer_model,
+                "--sentence_transformer_batch_size",
+                str(args.sentence_transformer_batch_size),
+            ]
+            if args.sentence_transformer_device:
+                cli.extend(["--sentence_transformer_device", args.sentence_transformer_device])
+            if args.sentence_transformer_normalize:
+                cli.append("--sentence_transformer_normalize")
+            else:
+                cli.append("--sentence_transformer_no_normalize")
+            model_name = args.sentence_transformer_model.split("/")[-1] if args.sentence_transformer_model else kind
+            tag = f"st_{_sanitize_token(model_name)}"
+            return tag, tuple(cli)
+        raise ValueError(f"Unsupported text vectorizer '{kind}' in sweep grid.")
 
     configs: List[SweepConfig] = []
-    for values in product(
-        lr_values,
-        depth_values,
-        estimator_values,
-        subsample_values,
-        colsample_values,
-        reg_lambda_values,
-        reg_alpha_values,
-    ):
-        configs.append(
-            SweepConfig(
-                learning_rate=values[0],
-                max_depth=values[1],
-                n_estimators=values[2],
-                subsample=values[3],
-                colsample_bytree=values[4],
-                reg_lambda=values[5],
-                reg_alpha=values[6],
+    for vectorizer in vectorizer_values:
+        tag, vectorizer_cli = _vectorizer_cli(vectorizer)
+        for values in product(
+            lr_values,
+            depth_values,
+            estimator_values,
+            subsample_values,
+            colsample_values,
+            reg_lambda_values,
+            reg_alpha_values,
+        ):
+            configs.append(
+                SweepConfig(
+                    text_vectorizer=vectorizer,
+                    vectorizer_tag=tag,
+                    learning_rate=values[0],
+                    max_depth=values[1],
+                    n_estimators=values[2],
+                    subsample=values[3],
+                    colsample_bytree=values[4],
+                    reg_lambda=values[5],
+                    reg_alpha=values[6],
+                    vectorizer_cli=vectorizer_cli,
+                )
             )
-        )
     return configs
 
 

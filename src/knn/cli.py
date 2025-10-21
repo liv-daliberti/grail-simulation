@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--feature-space",
         "--feature_space",
         default="tfidf",
-        choices=["tfidf", "word2vec"],
+        choices=["tfidf", "word2vec", "sentence_transformer"],
         dest="feature_space",
         help="Feature space used to build the KNN index.",
     )
@@ -154,6 +154,43 @@ def build_parser() -> argparse.ArgumentParser:
         dest="word2vec_model_dir",
         help="Optional directory to store/load Word2Vec models (defaults to models/knn_word2vec).",
     )
+    parser.add_argument(
+        "--sentence-transformer-model",
+        "--sentence_transformer_model",
+        default="sentence-transformers/all-mpnet-base-v2",
+        dest="sentence_transformer_model",
+        help="SentenceTransformer model identifier when using the sentence_transformer feature space.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-device",
+        "--sentence_transformer_device",
+        default="",
+        dest="sentence_transformer_device",
+        help="Optional device string (cpu, cuda) forwarded to SentenceTransformer.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-batch-size",
+        "--sentence_transformer_batch_size",
+        type=int,
+        default=32,
+        dest="sentence_transformer_batch_size",
+        help="Batch size applied during sentence-transformer encoding.",
+    )
+    parser.add_argument(
+        "--sentence-transformer-normalize",
+        "--sentence_transformer_normalize",
+        dest="sentence_transformer_normalize",
+        action="store_true",
+        help="Enable L2-normalisation for sentence-transformer embeddings (default).",
+    )
+    parser.add_argument(
+        "--sentence-transformer-no-normalize",
+        "--sentence_transformer_no_normalize",
+        dest="sentence_transformer_normalize",
+        action="store_false",
+        help="Disable L2-normalisation for sentence-transformer embeddings.",
+    )
+    parser.set_defaults(sentence_transformer_normalize=True)
     parser.add_argument(
         "--train-curve-max",
         "--train_curve_max",

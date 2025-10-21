@@ -59,6 +59,11 @@ examples feed into the training curve diagnostics.
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: knn.opinion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: knn.cli
    :members:
    :undoc-members:

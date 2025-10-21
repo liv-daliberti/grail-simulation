@@ -35,3 +35,13 @@ by each module.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: prompt_builder.samples
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: prompt_builder.video_stats
+   :members:
+   :undoc-members:
+   :show-inheritance:

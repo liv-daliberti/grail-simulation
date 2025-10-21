@@ -25,3 +25,8 @@ XGBoost Baseline API
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: xgb.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -11,6 +11,7 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
+   api/common
    api/clean_data
    api/prompt_builder
    api/knn

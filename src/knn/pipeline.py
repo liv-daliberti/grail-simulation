@@ -178,6 +178,7 @@ class PipelineContext:
     study_tokens: Tuple[str, ...]
     word2vec_epochs: int
     word2vec_workers: int
+    reuse_sweeps: bool = False
 
 
 @dataclass(frozen=True)
@@ -306,6 +307,7 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
     )
     word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
     word2vec_workers = _default_word2vec_workers()
+    reuse_sweeps = bool(getattr(args, "reuse_sweeps", False))
     return PipelineContext(
         dataset=dataset,
         out_dir=out_dir,
@@ -316,6 +318,7 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
         study_tokens=study_tokens,
         word2vec_epochs=word2vec_epochs,
         word2vec_workers=word2vec_workers,
+        reuse_sweeps=reuse_sweeps,
     )
 
 
@@ -1360,6 +1363,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_cli=extra_cli,
         sweep_dir=context.sweep_dir,
         word2vec_model_base=context.word2vec_model_dir,
+        reuse_existing=context.reuse_sweeps,
     )
 
     selections = _select_best_configs(outcomes=sweep_outcomes, studies=studies)

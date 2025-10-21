@@ -215,12 +215,15 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             last_decode_err: Optional[UnicodeDecodeError] = None
             last_parser_err: Optional[Exception] = None
             last_generic_err: Optional[Exception] = None
+            successful_decode = False
 
             for encoding in ("utf-8", "utf-8-sig", "latin-1"):
                 try:
                     with active_fs.open(active_path, "rb") as sample_handle:  # type: ignore[attr-defined]
                         sample_bytes = sample_handle.read(16384)
                     sample_text = sample_bytes.decode(encoding)
+                    successful_decode = True
+                    last_decode_err = None
                 except UnicodeDecodeError as err:
                     last_decode_err = err
                     continue
@@ -312,9 +315,8 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
                 candidate = candidate.strip("_")
                 if not candidate or candidate == column:
                     continue
-                if candidate in expected_columns or candidate in canonical_columns:
-                    if candidate not in frame_columns:
-                        return candidate
+                if candidate not in frame_columns and candidate not in canonical_columns:
+                    return candidate
             return column
 
         for file_ref in file_list:

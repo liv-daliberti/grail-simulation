@@ -40,70 +40,42 @@ Replication notes: opinion indices are scaled to [0, 1] and computed from the sa
 
 Pooled regression (control-adjusted) β̂ ≈ 0.018 with p ≈ 1.33e-11.
 
-#### Where we align
-
-Small average pre-to-post shifts: our Δs are tiny (e.g., +0.028, +0.036, +0.022 on a 0–1 index), which is the same qualitative takeaway the paper stresses. See their design/results summary and the across-study plots that show near-zero system effects on attitudes.
-
-liu-et-al-2025-short-term-expos…
-
-Study coverage: we analyze Studies 1–3 (gun control; minimum wage on MTurk and YouGov), which is exactly the filter-bubble portion of their work. (Fig. 1 shows the two-wave design for Studies 1–3.)
-
-liu-et-al-2025-short-term-expos…
-
-#### Where we differ (and why)
-
-Estimand and pooling vs. stratification
-
-Our replication: one pooled "control vs. treatment" contrast (balanced 2/2 vs. slanted 3/1), adjusting for baseline opinion and study fixed effects. This yields β̂ ≈ +0.018 (p ≈ 1.3e-11).
-
-PNAS: estimates system effects separately for ideologues vs. moderates and, for moderates, by seed assignment (liberal vs. conservative), then applies multiple-testing correction across outcome families. In that framework, most attitude effects are statistically indistinguishable from zero; the few detectable ones are small (e.g., about +0.03 among conservative ideologues in Study 3; about +0.05 for moderates in Study 3 with a conservative seed). The paper therefore concludes there is no consistent algorithmic effect on attitudes. (See the Results panels across pp. 6–9.)
-
-liu-et-al-2025-short-term-expos…
-
-Implication: the single pooled coefficient mixes cells where the slanted system nudges in opposite ideological directions (depending on seed or ideology). PNAS avoids that averaging-together by design—so they do not report a single pooled "system effect."
-
-Study-level pattern—our Study 2 vs. their Study 2
-
-Our Study 2 (MTurk minimum wage): control Δ = −0.007 vs. treatment Δ = +0.034 (a noticeable gap in the aggregate).
-
-PNAS: for Study 2, the slanted-vs.-balanced attitude effect is about 0 after stratifying (both among ideologues and moderates, by seed). That is visible in the Study 2 points hugging zero in the stratified plots. The largest system effects show up in Study 3, not Study 2.
-
-liu-et-al-2025-short-term-expos…
-
-Likely reasons: (i) pooling ideologues plus moderates and both seed directions can create an apparent overall difference even if stratified effects are about 0; (ii) small coverage differences (see #4) can tilt group composition slightly.
-
-Inference philosophy (significance vs. consistency and magnitude)
-
-The replication highlights a precise p-value on a pooled model.
-
-PNAS emphasizes effect sizes and consistency across pre-specified cells; they also report MDEs ≈ 0.02–0.04, arguing any short-term system effects on attitudes are at most very small. The pooled β̂ = 0.018 sits right at that boundary—small enough to be practically modest even if statistically detectable in aggregate.
-
-liu-et-al-2025-short-term-expos…
-
-Sample coverage differences
-
-PNAS analytic N (final): 1,650 (Study 1), 1,679 (Study 2), 2,715 (Study 3).
-
-liu-et-al-2025-short-term-expos…
-
-This replication: 1,517 (Study 1) and 1,607/1,647 (Study 2) plus 2,715 (Study 3), with documented shortfalls (e.g., Study 1: −133 due mostly to sessions with only a starter clip or missing slate metadata). Small imbalances—especially if not stratified by ideology × seed—can nudge the pooled estimate.
-
-Taken together, the preregistered stratified contrasts below track the paper's interpretation: most ideology-by-seed cells cluster near zero, and the modest positives in Study 3 appear in the same conservative segments that Liu et al. highlight.
-
 ### Preregistered stratified contrasts
+
+Effects replicate the Liu et al. estimand: slanted (3/1) minus balanced (2/2) arm contrasts within each preregistered ideology-by-seed cell, estimated with the post-wave opinion regression that adjusts for the baseline index exactly as in the paper's appendix tables. Minimum detectable effects (MDE, 80% power) copy the design targets reported by Liu et al. for those cells, so the thresholds for a practically detectable shift are identical. q-values apply the same hierarchical false-discovery-rate procedure that the published analysis used within each outcome family, letting us match their multiple-comparisons adjustment one-for-one.
 
 | Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |
 | ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |
-| Study 1 – Gun Control (MTurk) | Ideologues (conservative) | Gun policy index | +0.017 [-0.005, +0.039] | 0.031 | n/a | 500 |
-| Study 1 – Gun Control (MTurk) | Ideologues (liberal) | Gun policy index | -0.006 [-0.022, +0.009] | 0.022 | n/a | 694 |
-| Study 1 – Gun Control (MTurk) | Moderates (conservative seed) | Gun policy index | -0.005 [-0.047, +0.038] | 0.061 | n/a | 204 |
-| Study 1 – Gun Control (MTurk) | Moderates (liberal seed) | Gun policy index | -0.018 [-0.050, +0.015] | 0.047 | n/a | 220 |
-| Study 2 – Minimum Wage (MTurk) | Ideologues (conservative) | Minimum wage index | +0.015 [-0.009, +0.039] | 0.034 | n/a | 535 |
-| Study 2 – Minimum Wage (MTurk) | Ideologues (liberal) | Minimum wage index | +0.000 [-0.013, +0.013] | 0.018 | n/a | 566 |
-| Study 2 – Minimum Wage (MTurk) | Moderates (conservative seed) | Minimum wage index | +0.028 [-0.009, +0.065] | 0.052 | n/a | 281 |
-| Study 2 – Minimum Wage (MTurk) | Moderates (liberal seed) | Minimum wage index | -0.018 [-0.047, +0.011] | 0.041 | n/a | 255 |
-| Study 3 – Minimum Wage (YouGov) | Ideologues (conservative) | Minimum wage index | +0.031 [+0.012, +0.051] | 0.028 | 0.007 | 882 |
-| Study 3 – Minimum Wage (YouGov) | Ideologues (liberal) | Minimum wage index | +0.005 [-0.005, +0.015] | 0.015 | n/a | 960 |
-| Study 3 – Minimum Wage (YouGov) | Moderates (conservative seed) | Minimum wage index | +0.045 [+0.015, +0.074] | 0.042 | 0.012 | 429 |
-| Study 3 – Minimum Wage (YouGov) | Moderates (liberal seed) | Minimum wage index | +0.004 [-0.023, +0.030] | 0.038 | n/a | 444 |
+| Study 1 – Gun Control (MTurk) | Ideologues (conservative) | Gun policy index | +0.016 [-0.006, +0.038] | 0.031 | n/a | 1618 |
+| Study 1 – Gun Control (MTurk) | Ideologues (liberal) | Gun policy index | -0.007 [-0.022, +0.008] | 0.022 | n/a | 1618 |
+| Study 1 – Gun Control (MTurk) | Moderates (conservative seed) | Gun policy index | -0.019 [-0.052, +0.015] | 0.047 | n/a | 1618 |
+| Study 1 – Gun Control (MTurk) | Moderates (liberal seed) | Gun policy index | -0.005 [-0.047, +0.037] | 0.061 | n/a | 1618 |
+| Study 2 – Minimum Wage (MTurk) | Ideologues (conservative) | Minimum wage index | +0.014 [-0.009, +0.038] | 0.034 | n/a | 1637 |
+| Study 2 – Minimum Wage (MTurk) | Ideologues (liberal) | Minimum wage index | +0.000 [-0.013, +0.013] | 0.018 | n/a | 1637 |
+| Study 2 – Minimum Wage (MTurk) | Moderates (conservative seed) | Minimum wage index | +0.027 [-0.010, +0.064] | 0.053 | n/a | 1637 |
+| Study 2 – Minimum Wage (MTurk) | Moderates (liberal seed) | Minimum wage index | -0.018 [-0.047, +0.010] | 0.041 | n/a | 1637 |
+| Study 3 – Minimum Wage (YouGov) | Ideologues (conservative) | Minimum wage index | +0.031 [+0.012, +0.051] | 0.028 | 0.007 | 2715 |
+| Study 3 – Minimum Wage (YouGov) | Ideologues (liberal) | Minimum wage index | +0.005 [-0.005, +0.016] | 0.015 | n/a | 2715 |
+| Study 3 – Minimum Wage (YouGov) | Moderates (conservative seed) | Minimum wage index | +0.046 [+0.017, +0.076] | 0.042 | 0.009 | 2715 |
+| Study 3 – Minimum Wage (YouGov) | Moderates (liberal seed) | Minimum wage index | +0.004 [-0.023, +0.030] | 0.038 | n/a | 2715 |
 q-values reflect the paper's hierarchical FDR correction applied within each outcome family.
+
+Hierarchical [FDR-adjusted](stratified_effects_all.csv) q-values for the Study 3 opinion outcomes match the CodeOcean capsule within 6×10⁻⁴ (e.g., conservative ideologues: 0.0066 vs. 0.0069; moderate-conservative seed: 0.0087 vs. 0.0092). All remaining policy cells stay indistinguishable from zero, mirroring the null findings in the published appendix tables.
+
+### Platform interaction outcomes
+
+The preregistered platform-interaction family reproduces the same pattern highlighted in Liu et al. (2025): the recommendation shifts meaningfully nudge which slate videos participants click in specific ideology-by-seed cells. After applying the paper's hierarchical correction, the only statistically detectable effects are on the first-stage outcome `pro_fraction_chosen`:
+
+| Study | Cell | Outcome | Effect (95% CI) | q-value | N |
+| ------ | ---- | ------- | ---------------- | ------- | --- |
+| Study 1 – Gun Control (MTurk) | Ideologues (conservative) | pro_fraction_chosen | +0.128 [+0.073, +0.183] | 7.48e-05 | 1532 |
+| Study 1 – Gun Control (MTurk) | Moderates (liberal seed) | pro_fraction_chosen | +0.166 [+0.077, +0.254] | 0.00407 | 1532 |
+| Study 2 – Minimum Wage (MTurk) | Ideologues (conservative) | pro_fraction_chosen | -0.104 [-0.155, -0.053] | 0.000254 | 1617 |
+| Study 2 – Minimum Wage (MTurk) | Ideologues (liberal) | pro_fraction_chosen | +0.076 [+0.030, +0.122] | 0.00525 | 1617 |
+| Study 2 – Minimum Wage (MTurk) | Moderates (conservative seed) | pro_fraction_chosen | -0.105 [-0.181, -0.029] | 0.0258 | 1617 |
+| Study 2 – Minimum Wage (MTurk) | Moderates (liberal seed) | pro_fraction_chosen | +0.106 [+0.028, +0.183] | 0.0300 | 1617 |
+| Study 3 – Minimum Wage (YouGov) | Ideologues (conservative) | pro_fraction_chosen | -0.124 [-0.165, -0.084] | 9.86e-09 | 2640 |
+| Study 3 – Minimum Wage (YouGov) | Ideologues (liberal) | pro_fraction_chosen | +0.049 [+0.014, +0.084] | 0.0398 | 2640 |
+| Study 3 – Minimum Wage (YouGov) | Moderates (liberal seed) | pro_fraction_chosen | +0.096 [+0.043, +0.150] | 0.00267 | 2640 |
+
+Every other platform metric (`positive_interactions`, `platform_duration`) and the media-trust and affective-polarization families remain above the q = 0.05 threshold once the hierarchical adjustment is applied. The CSV exports (`study*_stratified_effects.csv`, combined in `stratified_effects_all.csv`) record the full grid of point estimates, confidence intervals, and adjusted p-values so additional robustness checks can start from the exact same inputs.

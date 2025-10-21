@@ -75,7 +75,13 @@ def filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
 def _normalise_study_tokens(studies: Iterable[str]) -> set[str]:
     """Return a normalised set of study tokens."""
 
-    return {str(value).strip().lower() for value in studies if str(value).strip()}
+    normalised: set[str] = set()
+    for value in studies:
+        token = str(value).strip().lower()
+        if not token or token == "all":
+            continue
+        normalised.add(token)
+    return normalised
 
 
 def filter_split_for_participant_studies(split_ds, studies: Sequence[str]):

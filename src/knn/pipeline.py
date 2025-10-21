@@ -898,10 +898,14 @@ def _next_video_intro(dataset_name: str, split: str) -> List[str]:
 
 
 def _feature_space_heading(feature_space: str) -> str:
+    """Return the Markdown heading for ``feature_space``."""
+
     return "## TF-IDF Feature Space" if feature_space == "tfidf" else "## Word2Vec Feature Space"
 
 
 def _baseline_accuracy(data: Mapping[str, object]) -> float:
+    """Return the baseline most-frequent gold-index accuracy from ``data``."""
+
     baseline = data.get("baseline_most_frequent_gold_index", {})
     getter = getattr(baseline, "get", None)
     if callable(getter):
@@ -914,6 +918,8 @@ def _next_video_feature_section(
     metrics: Mapping[str, Mapping[str, object]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Render the next-video metrics table for ``feature_space``."""
+
     if not metrics:
         return []
     lines: List[str] = [
@@ -938,6 +944,8 @@ def _next_video_observations(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Generate bullet-point observations comparing feature spaces."""
+
     lines: List[str] = ["## Observations", ""]
     for feature_space in ("tfidf", "word2vec"):
         metrics = metrics_by_feature.get(feature_space, {})
@@ -965,6 +973,8 @@ def _build_hyperparameter_report(
     studies: Sequence[StudySpec],
     k_sweep: str,
 ) -> None:
+    """Write the hyperparameter tuning summary to ``output_path``."""
+
     lines: List[str] = []
     lines.extend(_hyperparameter_report_intro(k_sweep))
     lines.extend(_hyperparameter_table_section(selections, studies))
@@ -979,6 +989,8 @@ def _build_next_video_report(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> None:
+    """Compose the next-video evaluation report at ``output_path``."""
+
     if not metrics_by_feature:
         raise RuntimeError("No slate metrics available to build the next-video report.")
 
@@ -993,6 +1005,8 @@ def _build_next_video_report(
 
 
 def _opinion_report_intro() -> List[str]:
+    """Return the introductory Markdown section for the opinion report."""
+
     return [
         "# KNN Opinion Shift Study",
         "",
@@ -1008,6 +1022,8 @@ def _opinion_feature_sections(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Render opinion metrics tables grouped by feature space."""
+
     lines: List[str] = []
     for feature_space in ("tfidf", "word2vec"):
         per_feature = metrics.get(feature_space, {})
@@ -1031,6 +1047,8 @@ def _opinion_feature_sections(
 
 
 def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
+    """Return a Markdown table row for opinion metrics."""
+
     best_metrics = data.get("best_metrics", {})
     baseline = data.get("baseline", {})
     label = data.get("label", study.label)

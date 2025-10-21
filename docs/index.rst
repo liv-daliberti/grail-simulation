@@ -19,3 +19,11 @@ API Reference
    api/open_r1
    api/xgb
    api/visualization
+
+Reports
+-------
+
+.. toctree::
+   :maxdepth: 2
+
+   reports/index

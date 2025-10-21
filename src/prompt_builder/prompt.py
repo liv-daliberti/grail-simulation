@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
-from .formatters import clean_text
-from .parsers import as_list_json, format_count, secs
+from .formatters import clean_text, human_join
+from .parsers import as_list_json, format_count
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
+from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
 
 
@@ -47,97 +48,199 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
     :type ex: Dict[str, Any]
     :param max_hist: Maximum number of prior videos to include in the history section.
     :type max_hist: int
-    :returns: Multi-line prompt describing the viewer, viewing context, and options.
+    :returns: Natural-language prompt describing the viewer, viewing context, and options.
     :rtype: str
     """
 
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
-    lines: List[str] = []
-
     profile = render_profile(ex)
-    lines.append("PROFILE:")
-    lines.append(_render_profile_text(profile))
+    paragraphs: List[str] = []
 
-    current_section = _current_video_section(ex, show_ids)
-    if current_section:
-        lines.extend(current_section)
+    profile_paragraph = _profile_paragraph(profile)
+    if profile_paragraph:
+        paragraphs.append(profile_paragraph)
 
-    lines.extend(_recently_watched_section(ex, show_ids, max_hist))
+    context_sentences: List[str] = []
+    current_sentence = _current_video_sentence(ex, show_ids)
+    if current_sentence:
+        context_sentences.append(current_sentence)
+    history_sentence = _history_sentence(ex, show_ids, max_hist)
+    if history_sentence:
+        context_sentences.append(history_sentence)
+    if context_sentences:
+        paragraphs.append(" ".join(context_sentences))
 
-    lines.extend(_options_section(ex, show_ids))
+    survey_sentence = _survey_highlights(ex)
+    if survey_sentence:
+        paragraphs.append(survey_sentence)
 
-    return "\n".join(lines)
+    options_block = _options_block(ex, show_ids)
+    if options_block:
+        paragraphs.append(options_block)
+
+    return "\n\n".join(paragraphs).strip()
 
 
-def _current_video_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """
-    Build the current video subsection for the prompt.
+def _profile_paragraph(profile: ProfileRender) -> str:
+    """Return a paragraph describing the viewer profile."""
 
-    :param ex: Interaction row containing information about the active video.
-    :type ex: Dict[str, Any]
-    :param show_ids: Flag controlling whether identifiers should always be emitted.
-    :type show_ids: bool
-    :returns: Lines describing the active video, or an empty list when unavailable.
-    :rtype: List[str]
-    """
+    text = _render_profile_text(profile)
+    return text.strip()
+
+
+def _current_video_sentence(ex: Dict[str, Any], show_ids: bool) -> str:
+    """Return a sentence describing the currently playing video."""
 
     title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
-    channel = clean_text(ex.get("current_video_channel") or ex.get("current_video_channel_title"))
-    parts: List[str] = []
+    channel = clean_text(
+        ex.get("current_video_channel") or ex.get("current_video_channel_title")
+    )
+    if not (title or channel or current_id):
+        return ""
+    sentence = "They are currently watching "
     if title:
-        parts.append(title)
-    if channel:
-        parts.append(f"channel: {channel}")
-    if current_id:
-        if show_ids or not title:
-            parts.append(f"id: {current_id}")
-    if not parts:
-        return []
-    return ["", "CURRENT VIDEO:", " — ".join(parts)]
-
-
-def _recently_watched_section(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
-    """
-    Build the recently watched subsection for the prompt.
-
-    :param ex: Interaction row containing history-related fields.
-    :type ex: Dict[str, Any]
-    :param show_ids: Flag controlling whether identifiers should always be emitted.
-    :type show_ids: bool
-    :param max_hist: Maximum number of historical items to include.
-    :type max_hist: int
-    :returns: Lines summarising previously watched videos, newest entry last.
-    :rtype: List[str]
-    """
-
-    descriptors = _recently_watched_descriptors(ex, show_ids, max_hist)
-    section: List[str] = ["", "RECENTLY WATCHED (NEWEST LAST):"]
-    if descriptors:
-        section.extend(f"{idx}. {entry}" for idx, entry in enumerate(descriptors, 1))
+        sentence += title
     else:
-        section.append("(no recently watched videos available)")
-    return section
+        sentence += "a video"
+    if channel:
+        sentence += f" from {channel}"
+    if current_id and (show_ids or not title):
+        sentence += f" (id {current_id})"
+    sentence += "."
+    return sentence
 
 
-def _recently_watched_descriptors(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
-    """Return formatted descriptors for recently watched videos.
+def _history_sentence(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
+    """Return a sentence summarising prior session history."""
 
-    :param ex: Interaction row containing history arrays.
-    :param show_ids: Whether to include video identifiers.
-    :param max_hist: Maximum number of entries to inspect.
-    :returns: List of descriptor strings ordered oldest → newest.
-    """
-    prior = _prior_entries(ex)
-    if not prior:
-        return []
-    limit = max_hist if max_hist and max_hist > 0 else len(prior)
-    recent = prior[-limit:]
+    prior_entries = _prior_entries(ex)
+    if not prior_entries:
+        return ""
+    limit = max_hist if max_hist and max_hist > 0 else len(prior_entries)
+    recent = prior_entries[-limit:]
     descriptors: List[str] = []
     for record in recent:
-        if isinstance(record, dict):
-            descriptors.append(_watched_descriptor(record, show_ids))
-    return descriptors
+        if not isinstance(record, dict):
+            continue
+        descriptor = _watched_descriptor(record, show_ids)
+        if descriptor:
+            descriptors.append(descriptor)
+    if not descriptors:
+        return ""
+    if len(descriptors) > 3:
+        displayed = descriptors[-3:]
+    else:
+        displayed = descriptors
+    summary = human_join(displayed)
+    remaining = len(descriptors) - len(displayed)
+    sentence = f"Earlier in the session they watched {summary}."
+    if remaining > 0:
+        plural = "videos" if remaining > 1 else "video"
+        sentence += f" (+{remaining} more {plural})"
+    return sentence
+
+
+SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (
+    ("pid1", "party identification is {value}"),
+    ("pid2", "party lean is {value}"),
+    ("ideo1", "ideology is {value}"),
+    ("pol_interest", "is {value}"),
+    ("religpew", "religious affiliation is {value}"),
+    ("freq_youtube", "watches YouTube {value}"),
+    ("newsint", "{value}"),
+    ("participant_study", "participated in {value}"),
+)
+
+MIN_WAGE_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
+    (("minwage_text_w2", "minwage_text_w1"), "preferred minimum wage target is {value}"),
+    (("mw_support_w2", "mw_support_w1"), "minimum wage support score is {value}"),
+    (("minwage15_w2", "minwage15_w1"), "$15 minimum wage support is {value}"),
+)
+
+GUN_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
+    (("gun_importance",), "gun policy importance is {value}"),
+    (("gun_index",), "gun regulation support score is {value}"),
+    (("gun_enthusiasm",), "gun enthusiasm is {value}"),
+)
+
+
+def _survey_highlights(ex: Dict[str, Any]) -> str:
+    """Return a sentence summarising key survey features."""
+
+    highlights: List[str] = []
+    for field, template in SURVEY_HIGHLIGHT_SPECS:
+        value = format_field_value(field, ex.get(field))
+        if not value:
+            continue
+        highlights.append(template.format(value=value))
+
+    issue = str(ex.get("issue") or "").strip().lower()
+    issue_specs = MIN_WAGE_HIGHLIGHT_SPECS if issue == "minimum_wage" else ()
+    if issue == "gun_control":
+        issue_specs = GUN_HIGHLIGHT_SPECS
+    for fields, template in issue_specs:
+        value: Optional[str] = None
+        for field in fields:
+            candidate = format_field_value(field, ex.get(field))
+            if candidate:
+                value = candidate
+                break
+        if value:
+            highlights.append(template.format(value=value))
+
+    if not highlights:
+        return ""
+    return f"Survey highlights: {human_join(highlights)}."
+
+
+def _options_block(ex: Dict[str, Any], show_ids: bool) -> str:
+    """Return a paragraph describing the recommendation slate options."""
+
+    items = as_list_json(ex.get("slate_items_json"))
+    if not items:
+        return "No recommendation options are available in this slate."
+    sentences = [
+        _option_sentence(index, item, show_ids)
+        for index, item in enumerate(items, 1)
+        if isinstance(item, dict)
+    ]
+    sentences = [sentence for sentence in sentences if sentence]
+    if not sentences:
+        return ""
+    return "Today's slate offers:\n" + "\n".join(sentences)
+
+
+def _option_sentence(position: int, item: Dict[str, Any], show_ids: bool) -> str:
+    """Return a human-readable sentence for a specific slate option."""
+
+    title = clean_text(item.get("title"), limit=160)
+    option_id = clean_text(item.get("id"))
+    display_title = title or option_id or "(untitled)"
+    channel = clean_text(
+        item.get("channel_title")
+        or item.get("channel")
+        or item.get("channel_name")
+    )
+    duration_text = _format_duration(item)
+    descriptors: List[str] = []
+    if channel:
+        descriptors.append(f"from {channel}")
+    if duration_text:
+        descriptors.append(f"{duration_text} long")
+    if option_id and (show_ids or not title):
+        descriptors.append(f"id {option_id}")
+    stats = lookup_video_stats(option_id) if option_id else {}
+    if stats is None:
+        stats = {}
+    engagement = _option_engagement_summary(item, stats)
+    sentence = f"Option {position}: {display_title}"
+    if descriptors:
+        sentence += f" ({', '.join(descriptors)})"
+    sentence += "."
+    if engagement:
+        sentence += f" Engagement: {engagement}."
+    return sentence
 
 
 def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
@@ -198,17 +301,25 @@ def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
             "duration",
         ),
     )
-    watch_seconds = secs(watch_seconds_value) if watch_seconds_value is not None else "?"
-    total_length = secs(total_length_value) if total_length_value is not None else "?"
-    descriptor = f"[{watch_seconds}/{total_length}] {title or '(untitled)'}"
-    extras: List[str] = []
+    name = title or "(untitled)"
+    descriptors: List[str] = []
+    if watch_seconds_value is not None and watch_seconds_value > 0:
+        watch_int = int(round(watch_seconds_value))
+        if total_length_value is not None and total_length_value > 0:
+            total_int = int(round(total_length_value))
+            ratio = min(1.0, watch_seconds_value / max(total_length_value, 1e-6))
+            descriptors.append(
+                f"watched {watch_int}s of {total_int}s ({int(round(ratio * 100))}% complete)"
+            )
+        else:
+            descriptors.append(f"watched for {watch_int}s")
     if channel:
-        extras.append(f"channel: {channel}")
+        descriptors.append(f"from {channel}")
     if show_ids and rid:
-        extras.append(f"id: {rid}")
-    if extras:
-        descriptor = f"{descriptor} — {', '.join(extras)}"
-    return descriptor
+        descriptors.append(f"id {rid}")
+    if descriptors:
+        return f"{name} ({', '.join(descriptors)})"
+    return name
 
 
 def _extract_duration_seconds(
@@ -235,66 +346,6 @@ def _extract_duration_seconds(
     return None
 
 
-def _options_section(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """
-    Build the options subsection for the prompt.
-
-    :param ex: Interaction row containing candidate slate information.
-    :type ex: Dict[str, Any]
-    :param show_ids: Flag controlling whether identifiers should always be emitted.
-    :type show_ids: bool
-    :returns: Lines describing available recommendation candidates.
-    :rtype: List[str]
-    """
-
-    section: List[str] = ["", "OPTIONS:"]
-    items = as_list_json(ex.get("slate_items_json"))
-    if not items:
-        section.append("(no options provided)")
-        return section
-    for index, item in enumerate(items, 1):
-        if not isinstance(item, dict):
-            continue
-        section.extend(_option_lines(index, item, show_ids))
-    if len(section) == 2:  # only header produced lines
-        section.append("(no options provided)")
-    return section
-
-
-def _option_lines(position: int, item: Dict[str, Any], show_ids: bool) -> List[str]:
-    """Render a single recommendation option for inclusion in the prompt.
-
-    :param position: 1-based index of the option.
-    :param item: Dictionary containing option metadata.
-    :param show_ids: Whether to include identifiers in the output.
-    :returns: Formatted option lines (primary line plus engagement summary).
-    """
-    title = clean_text(item.get("title"), limit=160)
-    option_id = clean_text(item.get("id"))
-    if not title and option_id:
-        title = option_id
-    channel = clean_text(
-        item.get("channel_title")
-        or item.get("channel")
-        or item.get("channel_name")
-    )
-    duration_text = _format_duration(item)
-    stats = lookup_video_stats(option_id) if option_id else {}
-    parts: List[str] = [title or "(untitled)"]
-    if channel:
-        parts.append(f"channel: {channel}")
-    if duration_text:
-        parts.append(f"duration: {duration_text}")
-    parts.extend(_option_stats(item, stats))
-    if option_id and (show_ids or not title):
-        parts.append(f"id: {option_id}")
-    lines = [f"{position}. {' — '.join(parts)}"]
-    engagement_summary = _option_engagement_summary(item, stats)
-    if engagement_summary:
-        lines.append(f"   {engagement_summary}")
-    return lines
-
-
 def _format_duration(item: Dict[str, Any]) -> str:
     """Return a formatted duration string for a slate item.
 
@@ -315,27 +366,6 @@ def _format_duration(item: Dict[str, Any]) -> str:
     if duration_val <= 0:
         return ""
     return f"{int(round(duration_val))}s"
-
-
-def _option_stats(item: Dict[str, Any], stats: Dict[str, Any]) -> Iterable[str]:
-    """Yield formatted statistics (views, dislikes, etc.) for the option.
-
-    :param item: Dictionary containing count fields.
-    :param stats: Supplemental statistics sourced from metadata caches.
-    :returns: Iterator over formatted ``label: value`` strings.
-    """
-    stat_labels = [
-        ("view_count", "views"),
-        ("dislike_count", "dislikes"),
-        ("favorite_count", "favorites"),
-    ]
-    for key, label in stat_labels:
-        value = item.get(key)
-        if value is None:
-            value = stats.get(key)
-        formatted = format_count(value)
-        if formatted is not None:
-            yield f"{label}: {formatted}"
 
 
 def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> str:
@@ -363,8 +393,10 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
         if value is None and stats:
             value = stats.get(stat_key)
         formatted = format_count(value)
-        parts.append(f"{label}: {formatted if formatted is not None else 'n/a'}")
-    return " — ".join(parts)
+        if formatted is None:
+            continue
+        parts.append(f"{label} {formatted}")
+    return ", ".join(parts)
 
 
 __all__ = [

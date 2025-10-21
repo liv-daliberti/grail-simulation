@@ -14,6 +14,8 @@ from numpy.random import default_rng
 from common.text import canon_video_id
 from common.title_index import TitleResolver
 from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
+from prompt_builder.constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS
+from prompt_builder.value_maps import format_field_value
 
 try:  # pragma: no cover - optional dependency
     from gensim.models import Word2Vec  # type: ignore
@@ -339,9 +341,9 @@ def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) 
             parts.append(surface)
 
     for field in extra_fields:
-        cleaned = clean_text(example.get(field))
-        if _good(cleaned):
-            parts.append(cleaned)
+        formatted = _format_extra_field(example, field)
+        if _good(formatted):
+            parts.append(formatted)
 
     return " ".join(parts).strip()
 
@@ -525,3 +527,37 @@ __all__ = [
     "title_for",
     "viewer_profile_sentence",
 ]
+EXTRA_FIELD_LABELS: Dict[str, str] = {
+    "pid1": "Party identification",
+    "pid2": "Party lean",
+    "ideo1": "Political ideology",
+    "ideo2": "Ideology intensity",
+    "pol_interest": "Political interest",
+    "religpew": "Religion",
+    "freq_youtube": "YouTube frequency",
+    "youtube_time": "YouTube time",
+    "newsint": "News attention",
+    "participant_study": "Participant study",
+    "slate_source": "Slate source",
+    "educ": "Education level",
+    "employ": "Employment status",
+    "child18": "Children in household",
+    "inputstate": "State",
+    "q31": "Household income",
+    "income": "Household income",
+}
+EXTRA_FIELD_LABELS.update(MIN_WAGE_FIELD_LABELS)
+EXTRA_FIELD_LABELS.update(GUN_FIELD_LABELS)
+
+
+def _format_extra_field(example: dict, field: str) -> str:
+    """Return a formatted label/value string for an extra document field."""
+
+    value = example.get(field)
+    formatted = format_field_value(field, value)
+    if not formatted:
+        return ""
+    label = EXTRA_FIELD_LABELS.get(field)
+    if not label:
+        label = field.replace("_", " ").strip().capitalize()
+    return f"{label}: {formatted}"

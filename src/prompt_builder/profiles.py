@@ -18,6 +18,7 @@ from .formatters import (
     with_indefinite_article,
 )
 from .parsers import format_yes_no, is_nanlike
+from .value_maps import format_field_value
 
 MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
     (("q8", "fav_channels"), "Favorite channels", True),
@@ -110,11 +111,12 @@ def synthesize_viewer_sentence(ex: Dict[str, Any]) -> str:
     gender_text = describe_gender_fragment(ex.get("q26") or ex.get("gender"))
     if gender_text:
         bits.append(gender_text)
-    race_text = clean_text(ex.get("q29") or ex.get("race"))
-    if race_text and not is_nanlike(race_text):
+    race_raw = ex.get("q29") or ex.get("race")
+    race_text = format_field_value("race", race_raw)
+    if race_text:
         bits.append(race_text)
-    pid1 = clean_text(ex.get("pid1"))
-    ideo1 = clean_text(ex.get("ideo1"))
+    pid1 = format_field_value("pid1", ex.get("pid1"))
+    ideo1 = format_field_value("ideo1", ex.get("ideo1"))
     if pid1 and pid1.lower() != "nan":
         if ideo1 and ideo1.lower() != "nan":
             bits.append(f"{pid1} {ideo1}".lower())
@@ -122,15 +124,15 @@ def synthesize_viewer_sentence(ex: Dict[str, Any]) -> str:
             bits.append(pid1)
     elif ideo1 and ideo1.lower() != "nan":
         bits.append(ideo1.lower())
-    income = clean_text(ex.get("q31") or ex.get("income"))
-    if income and income.lower() != "nan":
+    income = format_field_value("income", ex.get("q31") or ex.get("income"))
+    if income:
         bits.append(income)
-    college = str(ex.get("college") or "").strip().lower()
-    if college in {"1", "true", "t", "yes", "y"}:
+    college = format_field_value("college", ex.get("college"))
+    if college and college.lower() in {"yes", "college educated", "college-educated"}:
         bits.append("college-educated")
-    freq = str(ex.get("freq_youtube") or "").strip()
-    if freq in YT_FREQ_MAP:
-        bits.append(f"watches YouTube {YT_FREQ_MAP[freq]}")
+    freq = format_field_value("freq_youtube", ex.get("freq_youtube"))
+    if freq:
+        bits.append(f"watches YouTube {freq}")
     return ", ".join(bits) if bits else "(no profile provided)"
 
 
@@ -255,10 +257,16 @@ def _first_text(
     :param limit: Optional maximum length passed to :func:`clean_text`.
     :returns: Cleaned text fragment or an empty string.
     """
-    value = _first_raw(ex, selected, *keys)
-    if value is None:
-        return ""
-    return clean_text(value, limit=limit)
+        for dataset in (ex, selected):
+            if key in dataset:
+                value = dataset.get(key)
+                if value is None or is_nanlike(value):
+                    continue
+                formatted = format_field_value(key, value) or str(value)
+                cleaned = clean_text(formatted, limit=limit)
+                if cleaned:
+                    return cleaned
+    return ""
 
 
 def _clean_fragment(text: str) -> str:

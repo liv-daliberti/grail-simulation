@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -68,7 +68,7 @@ class OpinionTrainConfig:
     max_participants: int = 0
     seed: int = 42
     max_features: Optional[int] = None
-    booster: XGBoostBoosterParams = XGBoostBoosterParams()
+    booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
 
 
 DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (

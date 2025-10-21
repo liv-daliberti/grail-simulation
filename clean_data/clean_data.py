@@ -284,11 +284,21 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
                 len(frame),
             )
 
-        deduped_splits[split_name] = datasets.Dataset.from_pandas(
-            deduped_frame,
-            preserve_index=False,
-            features=split_ds.features,
-        )
+        from_pandas = getattr(datasets.Dataset, "from_pandas", None)
+        if callable(from_pandas):
+            deduped_splits[split_name] = from_pandas(
+                deduped_frame,
+                preserve_index=False,
+                features=split_ds.features,
+            )
+        else:
+            frame_data = {
+                column: deduped_frame[column].tolist() for column in deduped_frame.columns
+            }
+            deduped_splits[split_name] = datasets.Dataset(
+                frame_data,
+                features=split_ds.features,
+            )
 
     return DatasetDict(deduped_splits)
 

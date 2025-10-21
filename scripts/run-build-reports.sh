@@ -12,18 +12,71 @@ log() {
 export PYTHONPATH="${PYTHONPATH:-}:${REPO_ROOT}/src:${REPO_ROOT}"
 
 DATASET="${REPORTS_DATASET:-${REPO_ROOT}/data/cleaned_grail}"
-log "Using dataset: ${DATASET}"
+log "Using dataset target: ${DATASET}"
+export REPORTS_DATASET="${DATASET}"
 
-if [ ! -d "${DATASET}" ]; then
-  case "${DATASET}" in
-    */* | *:*)
-      log "Dataset path does not exist locally. The pipeline will attempt to load it via datasets.load_dataset."
-      ;;
-    *)
-      log "Dataset directory '${DATASET}' not found. Set REPORTS_DATASET to a valid local path or HF dataset id."
-      exit 1
-      ;;
-  esac
+if [ -d "${DATASET}" ]; then
+  log "Found local dataset directory."
+elif [[ "${DATASET}" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(:[A-Za-z0-9_.-]+)?$ ]]; then
+  log "Dataset will be loaded from the Hugging Face Hub id '${DATASET}'."
+else
+  if [ -n "${REPORTS_ISSUE_DATASETS:-}" ]; then
+    log "Local dataset missing. Will attempt to assemble it from issue datasets: ${REPORTS_ISSUE_DATASETS}"
+    python - <<'PY'
+import os
+from pathlib import Path
+
+from datasets import DatasetDict, concatenate_datasets, load_dataset
+
+issue_env = os.environ.get("REPORTS_ISSUE_DATASETS", "")
+dataset_path = Path(os.environ["REPORTS_DATASET"])
+dataset_path.parent.mkdir(parents=True, exist_ok=True)
+
+pairs = []
+for raw in issue_env.split(","):
+    raw = raw.strip()
+    if not raw:
+        continue
+    if "=" not in raw:
+        raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'. Expected issue=dataset_id format.")
+    issue, dataset_id = [token.strip() for token in raw.split("=", 1)]
+    if not issue or not dataset_id:
+        raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'.")
+    pairs.append((issue, dataset_id))
+
+if not pairs:
+    raise SystemExit("REPORTS_ISSUE_DATASETS provided but no valid entries were found.")
+
+combined: dict[str, list] = {}
+for issue, dataset_id in pairs:
+    ds = load_dataset(dataset_id)
+    for split_name, split_ds in ds.items():
+        if "issue" not in split_ds.column_names:
+            split_ds = split_ds.add_column("issue", [issue] * len(split_ds))
+        combined.setdefault(split_name, []).append(split_ds)
+
+merged = DatasetDict(
+    {
+        split_name: concatenate_datasets(splits)
+        for split_name, splits in combined.items()
+    }
+)
+merged.save_to_disk(str(dataset_path))
+metadata = {
+    "sources": pairs,
+    "note": "Assembled by scripts/run-build-reports.sh from issue-level datasets."
+}
+with open(dataset_path / "_assembly_metadata.json", "w", encoding="utf-8") as handle:
+    import json
+    json.dump(metadata, handle, indent=2)
+PY
+    log "Dataset assembled at ${DATASET}"
+  else
+    log "Dataset directory '${DATASET}' not found."
+    log "Set REPORTS_DATASET to an existing local path or a Hugging Face dataset id (e.g. user/repo),"
+    log "or provide REPORTS_ISSUE_DATASETS (e.g. 'gun_control=user/gun,minimum_wage=user/wage') so it can be assembled automatically."
+    exit 1
+  fi
 fi
 
 KNN_OUT_DIR="${KNN_REPORTS_OUT_DIR:-${REPO_ROOT}/models/knn}"

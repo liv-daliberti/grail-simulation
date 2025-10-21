@@ -28,6 +28,7 @@ jobs:
       - name: Build reports
         env:
           REPORTS_DATASET: ${{ secrets.REPORTS_DATASET }}
+          REPORTS_ISSUE_DATASETS: ${{ secrets.REPORTS_ISSUE_DATASETS }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HUGGINGFACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
         run: scripts/run-build-reports.sh

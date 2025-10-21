@@ -198,6 +198,10 @@ def test_generate_research_article_report_creates_artifacts(tmp_path):
     assert set(result["summaries"]) == set(study_labels)
     for path in result["heatmaps"]:
         assert Path(path).exists()
+    stratified_paths = result.get("stratified_paths", {})
+    assert "combined" in stratified_paths
+    assert Path(stratified_paths["combined"]).exists()
+    assert isinstance(result.get("stratified_policy_rows"), list)
     assert Path(result["mean_change_plot"]).exists()
     markdown_path = Path(result["markdown"])
     assert markdown_path.exists()

@@ -27,6 +27,12 @@ def _format_percent(value: float, precision: int = 1) -> str:
     return f"{value * 100:.{precision}f}%"
 
 
+def _format_interval(center: float, lower: float, upper: float, precision: int = 3) -> str:
+    if any(_is_nan(item) for item in (center, lower, upper)):
+        return "n/a"
+    return f"{center:+.{precision}f} [{lower:+.{precision}f}, {upper:+.{precision}f}]"
+
+
 def build_markdown(
     output_dir: Path,
     study_rows: Iterable[Mapping[str, object]],
@@ -35,6 +41,7 @@ def build_markdown(
     *,
     assignment_rows: Iterable[Mapping[str, object]] = (),
     regression_summary: Optional[Mapping[str, float]] = None,
+    policy_rows: Iterable[Mapping[str, object]] = (),
 ) -> List[str]:
     """Render Markdown lines describing the replication results."""
 
@@ -161,6 +168,31 @@ def build_markdown(
                 f"with p ≈ {regression_summary.get('p_value', float('nan')):.2e}.",
                 "",
             ]
+        )
+
+    policy_rows = list(policy_rows)
+    if policy_rows:
+        lines.extend(
+            [
+                "### Preregistered stratified contrasts",
+                "",
+                "| Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |",
+                "| ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |",
+            ]
+        )
+        for row in policy_rows:
+            lines.append(
+                "| "
+                f"{row['study_label']} | "
+                f"{row['contrast_label']} | "
+                f"{row['outcome_label']} | "
+                f"{_format_interval(row['estimate'], row['ci_low'], row['ci_high'])} | "
+                f"{_format_float(row['mde'])} | "
+                f"{_format_float(row['p_adjusted'])} | "
+                f"{int(row.get('n', 0))} |"
+            )
+        lines.append(
+            "q-values reflect the paper's hierarchical FDR correction applied within each outcome family."
         )
 
     return lines

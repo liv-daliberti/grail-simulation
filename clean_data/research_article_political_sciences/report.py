@@ -22,6 +22,41 @@ from .analysis import (
 )
 from .markdown import build_markdown
 from .plotting import plot_heatmap, plot_assignment_panels
+from .stratified import analyze_preregistered_effects
+
+
+def _policy_summary_rows(stratified: pd.DataFrame) -> List[Dict[str, object]]:
+    if stratified.empty:
+        return []
+
+    outcome_labels = {
+        "study1": ("gun_index_w2", "Gun policy index"),
+        "study2": ("mw_index_w2", "Minimum wage index"),
+        "study3": ("mw_index_w2", "Minimum wage index"),
+    }
+
+    rows: List[Dict[str, object]] = []
+    for study_key, (outcome, outcome_label) in outcome_labels.items():
+        subset = stratified[
+            (stratified["study_key"] == study_key)
+            & (stratified["family_key"] == "policy")
+            & (stratified["outcome"] == outcome)
+        ].sort_values(["contrast_label"])
+        for _, record in subset.iterrows():
+            rows.append(
+                {
+                    "study_label": record["study_label"],
+                    "contrast_label": record["contrast_label"],
+                    "outcome_label": outcome_label,
+                    "estimate": float(record.get("estimate", float("nan"))),
+                    "ci_low": float(record.get("ci_low", float("nan"))),
+                    "ci_high": float(record.get("ci_high", float("nan"))),
+                    "mde": float(record.get("mde", float("nan"))),
+                    "p_adjusted": float(record.get("p_adjusted", float("nan"))),
+                    "n": int(record.get("n", 0)),
+                }
+            )
+    return rows
 
 
 def generate_research_article_report(
@@ -91,6 +126,16 @@ def generate_research_article_report(
     )
     regression_stats = compute_treatment_regression(regression_df)
 
+    stratified_rows: List[Dict[str, object]] = []
+    stratified_paths = analyze_preregistered_effects(output_path)
+    combined_path = stratified_paths.get("combined") if stratified_paths else None
+    if combined_path and Path(combined_path).exists():
+        stratified_df = pd.read_csv(combined_path)
+        if not stratified_df.empty:
+            stratified_rows = _policy_summary_rows(stratified_df)
+    else:
+        stratified_df = pd.DataFrame()
+
     mean_change_plot = output_path / "mean_opinion_change.png"
     plot_assignment_panels(
         study_panels=assignment_panels,
@@ -108,6 +153,7 @@ def generate_research_article_report(
         mean_change_path=mean_change_plot,
         assignment_rows=table_rows,
         regression_summary=regression_stats,
+        policy_rows=stratified_rows,
     )
     (output_path / "README.md").write_text(
         "\n".join(markdown_lines) + "\n",
@@ -121,4 +167,6 @@ def generate_research_article_report(
         "heatmaps": [str(path) for path in heatmap_paths],
         "mean_change_plot": str(mean_change_plot),
         "markdown": str(output_path / "README.md"),
+        "stratified_paths": {key: str(path) for key, path in stratified_paths.items()},
+        "stratified_policy_rows": stratified_rows,
     }

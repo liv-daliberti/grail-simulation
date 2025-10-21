@@ -48,14 +48,18 @@ def register_lighteval_task(
         - Custom tasks requiring bespoke metrics or scripts should live in
           `scripts/evaluation/extended_lighteval_tasks`.
 
-    Args:
-        configs: Dictionary used to store the task configuration.
-        eval_suite: Evaluation suite to pull tasks from.
-        task_name: Display name for the task.
-        task_list: Comma-separated task list using the LightEval format:
-            ``extended|{task_name}|{num_fewshot}|0`` or
-            ``lighteval|{task_name}|{num_fewshot}|0``.
-        num_fewshot: Number of few-shot examples.
+    :param configs: Dictionary used to store the task configuration.
+    :type configs: dict[str, str]
+    :param eval_suite: Evaluation suite to pull tasks from.
+    :type eval_suite: str
+    :param task_name: Display name for the task.
+    :type task_name: str
+    :param task_list: Comma-separated task list using the LightEval format:
+        ``extended|{task_name}|{num_fewshot}|0`` or
+        ``lighteval|{task_name}|{num_fewshot}|0``.
+    :type task_list: str
+    :param num_fewshot: Number of few-shot examples.
+    :type num_fewshot: int
     """
     # Format task list in lighteval format
     task_list = ",".join(

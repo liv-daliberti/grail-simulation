@@ -46,27 +46,26 @@ class ScriptArguments(trl.ScriptArguments):
     """
     Extended version of ScriptArguments with support for dataset mixtures.
 
-    Args:
-        dataset_mixture (`dict[str, Any]` or `None`, *optional*, defaults to `None`):
-            Configuration for creating dataset mixtures with advanced options.
-            Example::
+    :param dataset_mixture: Configuration for creating dataset mixtures with advanced
+        options. Example::
 
-                dataset_mixture:
-                  datasets:
-                    - id: dataset_id1
-                      config: config_name
-                      columns:
-                        - col1
-                        - col2
-                      weight: 0.5
-                    - id: dataset_id2
-                      config: config_name
-                      columns:
-                        - col1
-                        - col2
-                      weight: 0.5
-                  seed: 42
-                  test_split_size: 0.1
+            dataset_mixture:
+              datasets:
+                - id: dataset_id1
+                  config: config_name
+                  columns:
+                    - col1
+                    - col2
+                  weight: 0.5
+                - id: dataset_id2
+                  config: config_name
+                  columns:
+                    - col1
+                    - col2
+                  weight: 0.5
+              seed: 42
+              test_split_size: 0.1
+    :type dataset_mixture: dict[str, Any] | None
     """
 
     # Override the dataset_name to make it optional
@@ -254,28 +253,27 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
     """
     Script arguments for the GRPO training script.
 
-    Args:
-        reward_funcs (`list[str]`):
-            List of reward functions.
-            Possible values: 'accuracy', 'format', 'reasoning_steps', 'cosine',
-            'repetition_penalty', 'length', 'tag_count', 'code', 'ioi_code',
-            'code_format', 'soft_overlong_punishment'.
-        cosine_min_value_wrong (`float`):
-            Minimum reward for cosine scaling for wrong answers.
-        cosine_max_value_wrong (`float`):
-            Maximum reward for cosine scaling for wrong answers.
-        cosine_min_value_correct (`float`):
-            Minimum reward for cosine scaling for correct answers.
-        cosine_max_value_correct (`float`):
-            Maximum reward for cosine scaling for correct answers.
-        cosine_max_len (`int`):
-            Maximum length for cosine scaling.
-        code_language (`str`):
-            Language for code format reward.
-        max_completion_len (`int`):
-            Maximum number of tokens in completion.
-        soft_punish_cache (`int`):
-            Minimum number of tokens in completion.
+    :param reward_funcs: List of reward functions. Possible values: ``"accuracy"``,
+        ``"format"``, ``"reasoning_steps"``, ``"cosine"``, ``"repetition_penalty"``,
+        ``"length"``, ``"tag_count"``, ``"code"``, ``"ioi_code"``, ``"code_format"``,
+        ``"soft_overlong_punishment"``.
+    :type reward_funcs: list[str]
+    :param cosine_min_value_wrong: Minimum reward for cosine scaling for wrong answers.
+    :type cosine_min_value_wrong: float
+    :param cosine_max_value_wrong: Maximum reward for cosine scaling for wrong answers.
+    :type cosine_max_value_wrong: float
+    :param cosine_min_value_correct: Minimum reward for cosine scaling for correct answers.
+    :type cosine_min_value_correct: float
+    :param cosine_max_value_correct: Maximum reward for cosine scaling for correct answers.
+    :type cosine_max_value_correct: float
+    :param cosine_max_len: Maximum length for cosine scaling.
+    :type cosine_max_len: int
+    :param code_language: Language for the code format reward.
+    :type code_language: str
+    :param max_completion_len: Maximum number of tokens in a completion.
+    :type max_completion_len: int
+    :param soft_punish_cache: Minimum number of tokens in a completion before the hard penalty applies.
+    :type soft_punish_cache: int
     """
 
     # pylint: disable=too-many-instance-attributes

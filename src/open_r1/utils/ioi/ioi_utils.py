@@ -1,7 +1,10 @@
 from collections import defaultdict
 from functools import lru_cache
 
-from datasets import load_dataset
+try:  # pragma: no cover - optional dependency
+    from datasets import load_dataset  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    load_dataset = None  # type: ignore
 
 
 def add_includes(code: str, problem_id: str) -> str:
@@ -27,6 +30,11 @@ def load_ioi_tests_for_year(year: int) -> dict[str, dict[str, tuple[str, str]]]:
     """
     Load IOI tests for a given year.
     """
+    if load_dataset is None:
+        raise ImportError(
+            "The 'datasets' package is required to load IOI test cases. "
+            "Install it with `pip install datasets`."
+        )
     tests_dataset = load_dataset("open-r1/ioi-test-cases", name=f"{year}", split="train")
     test_cases = defaultdict(dict)
     for test_case in tests_dataset:

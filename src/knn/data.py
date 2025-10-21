@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 try:  # pragma: no cover - optional dependency
     from datasets import DatasetDict, load_dataset, load_from_disk  # type: ignore
@@ -72,6 +72,26 @@ def filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
     return DatasetDict(filtered)
 
 
+def filter_dataset_for_participant_studies(ds: DatasetDict, studies: Iterable[str]) -> DatasetDict:
+    """Return a dataset filtered to rows whose ``participant_study`` matches ``studies``."""
+
+    normalized = {str(value).strip().lower() for value in studies if str(value).strip()}
+    if not normalized:
+        return ds
+
+    def _match_study(row: Dict[str, Any]) -> bool:
+        value = row.get("participant_study")
+        return str(value).strip().lower() in normalized
+
+    filtered: Dict[str, Any] = {}
+    for split_name, split_ds in ds.items():
+        if "participant_study" not in split_ds.column_names:
+            filtered[split_name] = split_ds
+        else:
+            filtered[split_name] = split_ds.filter(_match_study)
+    return DatasetDict(filtered)
+
+
 __all__ = [
     "DEFAULT_DATASET_SOURCE",
     "EVAL_SPLIT",
@@ -80,6 +100,7 @@ __all__ = [
     "SOLUTION_COLUMN",
     "TRAIN_SPLIT",
     "filter_dataset_for_issue",
+    "filter_dataset_for_participant_studies",
     "issues_in_dataset",
     "load_dataset_source",
 ]

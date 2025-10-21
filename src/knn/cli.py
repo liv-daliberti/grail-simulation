@@ -201,6 +201,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated list of issues to evaluate (defaults to all).",
     )
     parser.add_argument(
+        "--participant-studies",
+        "--participant_studies",
+        default="",
+        dest="participant_studies",
+        help=(
+            "Comma-separated list of participant study keys (e.g. study1,study2). "
+            "When supplied, next-video evaluation filters to those studies."
+        ),
+    )
+    parser.add_argument(
         "--opinion-studies",
         "--opinion_studies",
         default="",

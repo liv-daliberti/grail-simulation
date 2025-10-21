@@ -27,7 +27,7 @@ Elbow & Curve Metrics
 
 Each evaluation issue produces:
 
-- ``reports/knn/<feature-space>/elbow_<issue>.png`` – accuracy vs. ``k`` with the
+- ``reports/knn/next_video/<feature-space>/elbow_<issue>.png`` – accuracy vs. ``k`` with the
   elbow-selected point highlighted.
 - ``models/knn/<issue>/knn_curves_<issue>.json`` – serialised curves for the
   evaluation split (and optionally the training split) containing accuracy-by-``k``,

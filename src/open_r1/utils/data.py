@@ -1,28 +1,64 @@
 """Helpers for loading datasets and mixtures used by the training scripts."""
 
 import logging
+from typing import TYPE_CHECKING, Any
 
-import datasets
-from datasets import DatasetDict, concatenate_datasets
+try:  # pragma: no cover - optional dependency
+    import datasets as _DATASETS  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    _DATASETS = None  # type: ignore
+
+try:  # pragma: no cover - optional dependency
+    from datasets import concatenate_datasets  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    concatenate_datasets = None  # type: ignore
 
 from ..configs import ScriptArguments
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from datasets import DatasetDict
+else:  # pragma: no cover - runtime fallback
+    DatasetDict = Any  # type: ignore
 
 
 logger = logging.getLogger(__name__)
 
 
+def _require_datasets_module():
+    """Return the optional datasets module or raise a helpful error."""
+
+    if _DATASETS is None:
+        raise ImportError(
+            "The 'datasets' package is required to load training data. "
+            "Install it with `pip install datasets`."
+        )
+    return _DATASETS
+
+
+def _require_concatenate():
+    """Return the concatenate_datasets helper or raise when unavailable."""
+
+    if concatenate_datasets is None:
+        raise ImportError(
+            "concatenate_datasets is unavailable because the 'datasets' package is not installed. "
+            "Install it with `pip install datasets`."
+        )
+    return concatenate_datasets
+
+
 def get_dataset(args: ScriptArguments) -> DatasetDict:
     """Load a dataset or a mixture of datasets based on the configuration.
 
-    Args:
-        args (ScriptArguments): Script arguments containing dataset configuration.
-
-    Returns:
-        DatasetDict: The loaded datasets.
+    :param args: Script arguments containing dataset configuration.
+    :type args: ScriptArguments
+    :return: Loaded dataset dictionary.
+    :rtype: DatasetDict
     """
+    datasets_module = _require_datasets_module()
+
     if args.dataset_name and not args.dataset_mixture:
         logger.info("Loading dataset: %s", args.dataset_name)
-        return datasets.load_dataset(args.dataset_name, args.dataset_config)
+        return datasets_module.load_dataset(args.dataset_name, args.dataset_config)
     if args.dataset_mixture:
         logger.info(
             "Creating dataset mixture with %s datasets",
@@ -37,7 +73,7 @@ def get_dataset(args: ScriptArguments) -> DatasetDict:
                 dataset_config.id,
                 dataset_config.config,
             )
-            ds = datasets.load_dataset(
+            ds = datasets_module.load_dataset(
                 dataset_config.id,
                 dataset_config.config,
                 split=dataset_config.split,
@@ -59,7 +95,8 @@ def get_dataset(args: ScriptArguments) -> DatasetDict:
             datasets_list.append(ds)
 
         if datasets_list:
-            combined_dataset = concatenate_datasets(datasets_list)
+            concat_fn = _require_concatenate()
+            combined_dataset = concat_fn(datasets_list)
             combined_dataset = combined_dataset.shuffle(seed=seed)
             logger.info(
                 "Created dataset mixture with %s examples",
@@ -76,7 +113,7 @@ def get_dataset(args: ScriptArguments) -> DatasetDict:
                     args.dataset_mixture.test_split_size,
                 )
                 return combined_dataset
-            return DatasetDict({"train": combined_dataset})
+            return datasets_module.DatasetDict({"train": combined_dataset})
         raise ValueError("No datasets were loaded from the mixture configuration")
 
     raise ValueError("Either `dataset_name` or `dataset_mixture` must be provided")

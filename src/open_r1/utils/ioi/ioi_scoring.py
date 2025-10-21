@@ -114,12 +114,12 @@ def _extract_single_status(score: float, feedback: str) -> str:
     """
     Determines the status code based on the score and feedback message.
 
-    Args:
-        score: The numeric score (0.0 to 1.0)
-        feedback: The feedback message from the execution
-
-    Returns:
-        str: Status code ('CE', 'MLE', 'TLE', 'WA', 'RE', 'AC', or 'PA')
+    :param score: Numeric score between 0.0 and 1.0.
+    :type score: float
+    :param feedback: Feedback message from the execution.
+    :type feedback: str
+    :return: Status code (``"CE"``, ``"MLE"``, ``"TLE"``, ``"WA"``, ``"RE"``, ``"AC"``, or ``"PA"``).
+    :rtype: str
     """
     if score == 0.0:
         feedback_text = feedback or ""
@@ -139,28 +139,41 @@ def _extract_single_status(score: float, feedback: str) -> str:
 
 
 async def score_single_test_case(
-    client: PistonClient, subtask: dict, test_name: str, test_input: str, test_output: str, submission: str
+    client: PistonClient,
+    subtask: dict,
+    *,
+    test_name: str,
+    test_input: str,
+    test_output: str,
+    submission: str,
 ) -> TestResult:
     """
     Scores a single test case by running the submission against the provided input and output.
 
-    Args:
-        client: PistonClient instance for executing code
-        subtask: Dictionary containing subtask configuration
-        test_name: Name of the test case
-        test_input: Input data for the test case
-        test_output: Expected output for the test case
-        submission: Source code of the submission
-
-    Returns:
-        TestResult: Result of the test case execution
+    :param client: Piston client used to execute code.
+    :type client: PistonClient
+    :param subtask: Subtask configuration dictionary.
+    :type subtask: dict
+    :param test_name: Name of the test case.
+    :type test_name: str
+    :param test_input: Input data for the test case.
+    :type test_input: str
+    :param test_output: Expected output for the test case.
+    :type test_output: str
+    :param submission: Source code being evaluated.
+    :type submission: str
+    :return: Result of the test case execution.
+    :rtype: TestResult
     """
     # Run submission for this test case
     score, feedback = await run_submission(client, subtask, test_input, submission, test_output)
     score = float(score)
 
     return TestResult(
-        test_name=test_name, score=score, status=_extract_single_status(score, feedback), feedback=feedback
+        test_name=test_name,
+        score=score,
+        status=_extract_single_status(score, feedback),
+        feedback=feedback,
     )
 
 
@@ -174,16 +187,19 @@ async def score_subtask(
     """
     Scores all test cases in a subtask.
 
-    Args:
-        client: PistonClient instance for executing code
-        subtask: Dictionary containing subtask configuration
-        test_cases: Dictionary mapping test names to (input, output) tuples
-        submission: Source code of the submission
-        test_case_run_cache: Optional cache of previously run test cases
-        test_batch_size: evaluate these many test cases in parallel, then check if any of them failed (0 score): if so stop evaluating; otherwise continue with the next batch of test cases.
-        -1 to evaluate all test cases in parallel
-    Returns:
-        SubtaskResult: Result of the subtask evaluation
+    :param client: Piston client instance used to execute code.
+    :type client: PistonClient
+    :param subtask: Subtask configuration dictionary.
+    :type subtask: dict
+    :param submission: Source code of the submission.
+    :type submission: str
+    :param test_case_run_cache: Optional cache of previously run test cases.
+    :type test_case_run_cache: dict | None
+    :param test_batch_size: Number of test cases to evaluate in parallel before checking for failures;
+        ``-1`` evaluates all test cases concurrently.
+    :type test_batch_size: int
+    :return: Result of the subtask evaluation.
+    :rtype: SubtaskResult
     """
     subtask_result = SubtaskResult(
         problem=subtask["id"],
@@ -228,7 +244,12 @@ async def score_subtask(
             *[
                 asyncio.create_task(
                     score_single_test_case(
-                        client, subtask, test_name, test_cases[test_name][0], test_cases[test_name][1], submission
+                        client,
+                        subtask,
+                        test_name=test_name,
+                        test_input=test_cases[test_name][0],
+                        test_output=test_cases[test_name][1],
+                        submission=submission,
                     )
                 )
                 for _, test_name in test_batch_to_run
@@ -252,14 +273,17 @@ async def score_subtasks(
     """
     Scores multiple subtasks for a submission.
 
-    Args:
-        client: PistonClient instance for executing code
-        subtasks: List of dictionaries containing subtask configurations
-        submission: Source code of the submission
-        skip_mode: If True, evaluates test by test and stops after the first failure. Otherwise, runs all tests in parallel. Should be True when evaluating a large number of submissions.
-
-    Returns:
-        list[SubtaskResult]: Results for all subtasks
+    :param client: Piston client instance for executing code.
+    :type client: PistonClient
+    :param subtasks: Subtask configuration dictionaries.
+    :type subtasks: list[dict]
+    :param submission: Source code of the submission.
+    :type submission: str
+    :param skip_mode: If ``True``, evaluate test by test and stop after the first failure;
+        otherwise run all tests in parallel. Recommended for large batches.
+    :type skip_mode: bool
+    :return: Results for all subtasks.
+    :rtype: list[SubtaskResult]
     """
     # avoid rerunning tests present in multiple subtasks
     test_case_run_cache = {}
@@ -277,15 +301,18 @@ async def run_submission(
     """
     Executes a submission against a test case using the Piston execution environment.
 
-    Args:
-        client: PistonClient instance for executing code
-        problem: Dictionary containing problem configuration
-        test_input: Input data for the test case
-        submission: Source code of the submission
-        test_output: Optional expected output for the test case
-
-    Returns:
-        tuple[str, str]: A tuple containing (score, feedback)
+    :param client: Piston client instance for executing code.
+    :type client: PistonClient
+    :param problem: Problem configuration dictionary.
+    :type problem: dict
+    :param test_input: Input data for the test case.
+    :type test_input: str
+    :param submission: Source code of the submission.
+    :type submission: str
+    :param test_output: Optional expected output for the test case.
+    :type test_output: str | None
+    :return: Tuple containing ``(score, feedback)``.
+    :rtype: tuple[str, str]
     """
     data = {
         "files": [

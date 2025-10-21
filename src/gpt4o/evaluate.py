@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import numpy as np
-from datasets import DownloadConfig, load_dataset
+
+try:  # pragma: no cover - optional dependency
+    from datasets import DownloadConfig, load_dataset  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    DownloadConfig = None  # type: ignore
+    load_dataset = None  # type: ignore
 
 from common.eval_utils import safe_div
 
@@ -103,8 +108,8 @@ def run_eval(args: Any) -> None:
     """
     Evaluate GPT-4o on the configured dataset.
 
-    Args:
-        args: Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)
+    :param args: Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)
+    :type args: Any
     """
 
     logging.info("Loading dataset %s", DATASET_NAME)
@@ -115,6 +120,12 @@ def run_eval(args: Any) -> None:
 
     os.environ.setdefault("HF_DATASETS_CACHE", args.cache_dir)
     os.environ.setdefault("HF_HOME", args.cache_dir)
+
+    if load_dataset is None or DownloadConfig is None:
+        raise ImportError(
+            "The 'datasets' package is required to run GPT-4o evaluations. "
+            "Install it with `pip install datasets`."
+        )
 
     download_config = DownloadConfig(resume_download=True, max_retries=2)
     use_streaming = False

@@ -107,7 +107,7 @@ class SweepConfig:
 class SweepOutcome:
     """Captures metrics for a configuration/issue pair."""
 
-    issue: str
+    study: "StudySpec"
     feature_space: str
     config: SweepConfig
     accuracy: float
@@ -117,25 +117,41 @@ class SweepOutcome:
     metrics: Mapping[str, object]
 
 
+@dataclass(frozen=True)
+class StudySpec:
+    """Describe a participant study and its associated issue."""
+
+    key: str
+    issue: str
+    label: str
+
+    @property
+    def study_slug(self) -> str:
+        return self.key.replace(" ", "_")
+
+    @property
+    def issue_slug(self) -> str:
+        return self.issue.replace(" ", "_")
+
+
 @dataclass
-class SweepSelection:
-    """Best configuration chosen for a feature space."""
+class StudySelection:
+    """Selected configuration for a specific study within a feature space."""
 
-    config: SweepConfig
-    per_issue: "OrderedDict[str, SweepOutcome]"
-    weighted_accuracy: float
-
-    @property
-    def primary_issue(self) -> str:
-        """Return the issue contributing the largest eligible population."""
-
-        return max(self.per_issue.items(), key=lambda item: item[1].eligible)[0]
+    study: StudySpec
+    outcome: SweepOutcome
 
     @property
-    def primary_best_k(self) -> int:
-        """Return the best ``k`` for the primary issue."""
+    def config(self) -> SweepConfig:
+        return self.outcome.config
 
-        return self.per_issue[self.primary_issue].best_k
+    @property
+    def accuracy(self) -> float:
+        return self.outcome.accuracy
+
+    @property
+    def best_k(self) -> int:
+        return self.outcome.best_k
 
 
 # ---------------------------------------------------------------------------
@@ -723,7 +739,7 @@ def _build_opinion_report(
     lines.append("### Opinion Change Heatmaps")
     lines.append("")
     lines.append(
-        "Plots are refreshed under `reports/knn/<feature-space>/opinion/` for MAE, R², and change heatmaps."
+        "Plots are refreshed under `reports/knn/opinion/<feature-space>/` for MAE, R², and change heatmaps."
     )
     lines.append("")
 

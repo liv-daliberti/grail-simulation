@@ -36,10 +36,12 @@ class RoutedMorphSandbox:
         """
         Initialize the routed MorphCloud sandbox client.
 
-        Args:
-            router_url: The URL of the MorphCloud router, including host and port.
-            timeout: Default execution timeout in seconds.
-            request_timeout: Default HTTP request timeout in seconds.
+        :param router_url: URL of the MorphCloud router, including host and port.
+        :type router_url: str
+        :param timeout: Default execution timeout in seconds.
+        :type timeout: int
+        :param request_timeout: Default HTTP request timeout in seconds.
+        :type request_timeout: int
         """
         self.router_url = router_url
         self.timeout = timeout
@@ -55,14 +57,16 @@ class RoutedMorphSandbox:
         """
         Execute multiple scripts using MorphCloud via the router.
 
-        Args:
-            scripts: List of code scripts to execute.
-            languages: List of programming languages for each script. If None, defaults to Python for all scripts.
-            timeout: Execution timeout in seconds. If None, uses the instance timeout.
-            request_timeout: HTTP request timeout in seconds. If None, uses the instance request_timeout.
-
-        Returns:
-            List of execution results with text and exception_str properties.
+        :param scripts: Code scripts to execute.
+        :type scripts: list[str]
+        :param languages: Programming languages for each script; defaults to Python when omitted.
+        :type languages: list[str] | None
+        :param timeout: Execution timeout in seconds; defaults to the instance timeout.
+        :type timeout: int | None
+        :param request_timeout: HTTP request timeout in seconds; defaults to the instance setting.
+        :type request_timeout: int | None
+        :return: Execution results with ``text`` and ``exception_str`` attributes.
+        :rtype: list
         """
 
         actual_timeout = timeout if timeout is not None else self.timeout

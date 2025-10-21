@@ -29,6 +29,7 @@ from .data import (
     SOLUTION_COLUMN,
     TRAIN_SPLIT,
     filter_dataset_for_issue,
+    filter_dataset_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
@@ -335,6 +336,13 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
     base_ds = load_dataset_source(dataset_source, args.cache_dir)
     available_issues = issues_in_dataset(base_ds)
 
+    raw_participant_studies = getattr(args, "participant_studies", "") or ""
+    participant_filters = [
+        token.strip().lower()
+        for token in raw_participant_studies.split(",")
+        if token.strip()
+    ]
+
     if args.issues:
         requested = [
             token.strip()
@@ -349,10 +357,33 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
     logging.info("[KNN] Evaluating k values: %s", k_values)
 
     for issue in issues:
-        issue_slug = issue.replace(" ", "_")
+        base_issue_slug = issue.replace(" ", "_")
         ds = filter_dataset_for_issue(base_ds, issue)
-        train_ds = ds[TRAIN_SPLIT]
-        eval_ds = ds[EVAL_SPLIT]
+        if participant_filters:
+            ds = filter_dataset_for_participant_studies(ds, participant_filters)
+            train_ds = ds[TRAIN_SPLIT]
+            eval_ds = ds[EVAL_SPLIT]
+            if len(train_ds) == 0 or len(eval_ds) == 0:
+                logging.warning(
+                    "[KNN] Skipping issue=%s (no rows after participant_study filter: %s)",
+                    base_issue_slug,
+                    ", ".join(participant_filters),
+                )
+                continue
+            suffix_parts: List[str] = []
+            seen_suffix: set[str] = set()
+            for token in participant_filters:
+                slug = token.replace(" ", "_")
+                if slug and slug not in seen_suffix:
+                    suffix_parts.append(slug)
+                    seen_suffix.add(slug)
+            issue_slug = (
+                f"{base_issue_slug}_{'_'.join(suffix_parts)}" if suffix_parts else base_issue_slug
+            )
+        else:
+            train_ds = ds[TRAIN_SPLIT]
+            eval_ds = ds[EVAL_SPLIT]
+            issue_slug = base_issue_slug
 
         extra_fields = [
             token.strip()

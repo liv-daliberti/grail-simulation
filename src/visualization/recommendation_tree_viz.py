@@ -490,7 +490,13 @@ def _load_cleaned_dataset(path: Path):
     :raises ValueError: If the file extension is not supported.
     """
     # pylint: disable=import-outside-toplevel
-    from datasets import load_dataset, load_from_disk  # type: ignore
+    try:  # pragma: no cover - optional dependency
+        from datasets import load_dataset, load_from_disk  # type: ignore
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Loading recommendation tree datasets requires the 'datasets' package. "
+            "Install it with `pip install datasets`."
+        ) from exc
     if path.is_dir():
         return load_from_disk(str(path))
     suffix = path.suffix.lower()

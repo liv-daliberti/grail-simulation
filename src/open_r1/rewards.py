@@ -407,14 +407,16 @@ def len_reward(
 
     Taken from the Kimi 1.5 tech report: https://huggingface.co/papers/2501.12599
 
-    Args:
-        completions: List of model completions
-        solution: List of ground truth solutions
-
-    Returns:
-        List of rewards where:
+    :param completions: List of model completions.
+    :type completions: list[Dict[str, str]]
+    :param solution: List of ground truth solutions.
+    :type solution: list[str]
+    :param kwargs: Additional keyword arguments (unused).
+    :type kwargs: dict
+    :return: List of rewards where:
         - For correct answers: reward = 0.5 - (len - min_len)/(max_len - min_len)
         - For incorrect answers: reward = min(0, 0.5 - (len - min_len)/(max_len - min_len))
+    :rtype: list[float]
     """
     _ = kwargs
     contents = [completion[0]["content"] for completion in completions]
@@ -459,16 +461,16 @@ def get_cosine_scaled_reward(
         Shorter correct solutions are rewarded more than longer ones.
         Longer incorrect solutions are penalized less than shorter ones.
 
-        Args:
-            completions: List of model completions
-            solution: List of ground truth solutions
-
-        This function is parameterized by the following arguments:
-            min_value_wrong: Minimum reward for wrong answers
-            max_value_wrong: Maximum reward for wrong answers
-            min_value_correct: Minimum reward for correct answers
-            max_value_correct: Maximum reward for correct answers
-            max_len: Maximum length for scaling
+        :param completions: List of model completions.
+        :type completions: list[Dict[str, str]]
+        :param solution: List of ground truth solutions.
+        :type solution: list[str]
+        :param kwargs: Additional keyword arguments (unused).
+        :type kwargs: dict
+        :return: Reward list computed with the cosine schedule defined by
+            ``min_value_wrong``, ``max_value_wrong``, ``min_value_correct``,
+            ``max_value_correct``, and ``max_len`` captured from the outer scope.
+        :rtype: list[float]
         """
         _ = kwargs
         contents = [completion[0]["content"] for completion in completions]
@@ -522,10 +524,14 @@ def get_repetition_penalty_reward(
     Compute an n‑gram repetition penalty (Appendix C.2 of
     https://huggingface.co/papers/2502.03373).
 
-    Args:
-        ngram_size: size of the n‑grams to inspect
-        max_penalty: most negative reward; must be ≤ 0
-        language: "en" (whitespace split) or "zh" (jieba split)
+    :param ngram_size: Size of the n-grams to inspect.
+    :type ngram_size: int
+    :param max_penalty: Most negative reward; must be ≤ 0.
+    :type max_penalty: float
+    :param language: ``"en"`` (whitespace split) or ``"zh"`` (jieba split).
+    :type language: str
+    :return: Function that scores completions with the configured repetition penalty.
+    :rtype: Callable[[list[Any]], list[float]]
     """
     if max_penalty > 0:
         raise ValueError("max_penalty should be non‑positive")
@@ -557,12 +563,14 @@ def get_repetition_penalty_reward(
     # ---------- helper: normalise each completion ----------
     def _extract_content(completion):
         """
-        Accepts:
-            • "string"  (plain completion)
-            • [{"role": "...", "content": "…"}]  (chat list style)
-            • {"role": "...", "content": "…"}    (single‑dict style)
-        Returns:
-            str
+        Normalise various completion formats into a plain string.
+
+        :param completion: Completion represented as a string, chat message dict,
+            or list of chat message dicts.
+        :type completion: str | dict[str, str] | list[dict[str, str]]
+        :return: Extracted completion text.
+        :rtype: str
+        :raises TypeError: If the completion format is unsupported.
         """
         if isinstance(completion, str):
             return completion
@@ -581,10 +589,13 @@ def get_repetition_penalty_reward(
     # ---------- the actual reward ----------
     def repetition_penalty_reward(completions, **kwargs):
         """
-        Args:
-            completions: list[str | list[dict] | dict]
-        Returns:
-            list[float]  (one reward per completion)
+        :param completions: Sequence of completions to score; accepts raw strings, a
+            single completion dict, or a list of role/content dicts.
+        :type completions: list[str | list[dict[str, str]] | dict[str, str]]
+        :param kwargs: Additional keyword arguments (unused).
+        :type kwargs: dict
+        :return: One reward per completion.
+        :rtype: list[float]
         """
         _ = kwargs
         rewards = []
@@ -727,12 +738,18 @@ def code_reward(  # pylint: disable=too-many-locals
 
     Assumes the dataset contains a `verification_info` column with test cases.
 
-    Args:
-        completions: List of model completions to evaluate
-        num_parallel: Number of parallel code executions (default: 2)
-        provider_type: Which code execution provider to use (default: "e2b")
-        enforce_same_language: If True, verify all problems use the same language (default: False)
-        **kwargs: Additional arguments passed to the verification
+    :param completions: List of model completions to evaluate.
+    :type completions: list[Any]
+    :param num_parallel: Number of parallel code executions.
+    :type num_parallel: int
+    :param provider_type: Code execution provider to use (default ``"e2b"``).
+    :type provider_type: str
+    :param enforce_same_language: Whether to verify all problems share the same language.
+    :type enforce_same_language: bool
+    :param kwargs: Additional arguments passed to the verification layer.
+    :type kwargs: dict
+    :return: Reward values for each completion.
+    :rtype: list[float]
     """
     evaluation_script_template = """
     import subprocess
@@ -813,8 +830,10 @@ def code_reward(  # pylint: disable=too-many-locals
 def get_code_format_reward(language: str = "python"):
     """Format reward function specifically for code responses.
 
-    Args:
-        language: Programming language supported by E2B.
+    :param language: Programming language supported by E2B.
+    :type language: str
+    :return: Reward function that checks the language-specific format.
+    :rtype: Callable[[list[Any]], list[float]]
     """
     pattern = rf"^<think>\n.*?\n</think>\n<answer>\n.*?```{language}.*?```.*?\n</answer>$"
 
@@ -839,9 +858,12 @@ def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
     Reference: Eq. (13) from the DAPO paper
     (https://huggingface.co/papers/2503.14476)
 
-    Args:
-        max_completion_len: Maximum length of the completion.
-        soft_punish_cache: Buffer length before the hard penalty applies.
+    :param max_completion_len: Maximum allowed completion length.
+    :type max_completion_len: int
+    :param soft_punish_cache: Buffer length before the hard penalty applies.
+    :type soft_punish_cache: int
+    :return: Reward function that softly penalises long completions.
+    :rtype: Callable[[list[list[int]]], list[float]]
     """
 
     def soft_overlong_punishment_reward(

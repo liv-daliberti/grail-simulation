@@ -107,7 +107,7 @@ the XGBoost and GPT-4o baselines so results remain comparable.
 
 Each run also materializes elbow plots and curve summaries:
 
-- Elbow charts are saved to `reports/knn/<feature-space>/elbow_<issue>.png`.
+- Elbow charts are saved to `reports/knn/next_video/<feature-space>/elbow_<issue>.png`.
 - Per-`k` predictions and metrics live under `models/knn/<issue>/k-<k>/`.
 - Curve diagnostics (accuracy-by-k, AUC, best-k) for both evaluation and training
   splits are written to `models/knn/<issue>/knn_curves_<issue>.json`. Use
@@ -116,7 +116,7 @@ Each run also materializes elbow plots and curve summaries:
 ## Hyperparameter sweeps
 
 We keep curated sweeps for both feature spaces under `models/knn/sweeps/` (see
-`reports/knn/hyperparameter_tuning.md` for the latest summary). Each configuration
+`reports/knn/hyperparameter_tuning/README.md` for the latest summary). Each configuration
 evaluates
 
 - `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100}`

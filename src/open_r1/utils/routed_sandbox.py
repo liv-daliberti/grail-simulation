@@ -33,8 +33,8 @@ class RoutedSandbox:
         """
         Initializes the RoutedSandbox with the specified router URL.
 
-        Args:
-            router_url (str): The URL of the E2B Router.
+        :param router_url: URL of the E2B Router.
+        :type router_url: str
         """
         self.router_url = router_url
 
@@ -48,14 +48,16 @@ class RoutedSandbox:
         """
         Executes a batch of scripts in the sandbox environment.
 
-        Args:
-            scripts (list[str]): A list of code scripts to execute.
-            languages (list[str], optional): List of programming languages for each script. If None, defaults to Python for all scripts.
-            timeout (Optional[int], optional): The maximum execution time for each script in seconds. Defaults to 300 seconds.
-            request_timeout (Optional[int], optional): The timeout for the HTTP request in seconds. Defaults to 30 seconds.
-
-        Returns:
-            list[Execution]: A list of Execution objects containing the results, logs, and errors (if any) for each script.
+        :param scripts: Code scripts to execute.
+        :type scripts: list[str]
+        :param languages: Programming languages for each script; defaults to Python when omitted.
+        :type languages: list[str] | None
+        :param timeout: Maximum execution time for each script in seconds.
+        :type timeout: int | None
+        :param request_timeout: HTTP request timeout in seconds.
+        :type request_timeout: int | None
+        :return: Execution objects containing results, logs, and errors (if any) per script.
+        :rtype: list[Execution]
         """
         # Set default values for timeouts if not provided
         if timeout is None:

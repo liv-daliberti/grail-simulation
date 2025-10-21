@@ -14,12 +14,10 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import datasets  # pylint: disable=unused-import  # ensures HF dataset scripts are registered
 import torch  # pylint: disable=unused-import
 import transformers  # pylint: disable=unused-import
-from datasets import DatasetDict
 from transformers import set_seed
 from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 from trl import ModelConfig, TrlParser, get_peft_config
@@ -36,6 +34,11 @@ from prompt_builder import (
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_model, get_tokenizer
+
+if TYPE_CHECKING:  # pragma: no cover - typing-only import
+    from datasets import DatasetDict
+else:  # pragma: no cover - fallback when datasets is unavailable at lint time
+    DatasetDict = Any
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"

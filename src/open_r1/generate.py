@@ -22,8 +22,9 @@ from distilabel.steps import StepResources
 from distilabel.steps.tasks import TextGeneration
 
 
-def build_distilabel_pipeline(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def build_distilabel_pipeline(
     model: str,
+    *,
     base_url: str = "http://localhost:8000/v1",
     prompt_column: Optional[str] = None,
     prompt_template: str = "{{ instruction }}",
@@ -71,7 +72,13 @@ def build_distilabel_pipeline(  # pylint: disable=too-many-arguments,too-many-po
 if __name__ == "__main__":
     import argparse
 
-    from datasets import load_dataset
+    try:
+        from datasets import load_dataset  # type: ignore
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "The 'datasets' package is required to run open_r1.generate as a script. "
+            "Install it with `pip install datasets`."
+        ) from exc
 
     parser = argparse.ArgumentParser(
         description=(

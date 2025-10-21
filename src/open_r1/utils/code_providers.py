@@ -22,7 +22,7 @@ import abc
 import asyncio
 import logging
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 try:
     from dotenv import load_dotenv
@@ -33,6 +33,38 @@ from ..utils import is_e2b_available, is_morph_available
 
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_numeric_tail(payload: str) -> Optional[float]:
+    """Return the last float present in ``payload`` or ``None`` when absent."""
+
+    if not payload:
+        return None
+    lines = [line.strip() for line in payload.strip().splitlines() if line.strip()]
+    for line in reversed(lines):
+        try:
+            return float(line)
+        except ValueError:
+            continue
+    try:
+        return float(payload.strip())
+    except ValueError:
+        return None
+
+
+def _extract_reward_from_result(result: Any) -> float:
+    """Extract a numeric reward from morph/piston execution results."""
+
+    candidates = []
+    for attr in ("text", "stdout"):
+        value = getattr(result, attr, None)
+        if isinstance(value, str) and value.strip():
+            candidates.append(value)
+    for candidate in candidates:
+        reward = _parse_numeric_tail(candidate)
+        if reward is not None:
+            return reward
+    return 0.0
 
 
 if is_e2b_available():
@@ -61,12 +93,12 @@ class CodeExecutionProvider(abc.ABC):  # pylint: disable=too-few-public-methods
     def execute_scripts(self, scripts: List[str], languages: List[str]) -> List[float]:
         """Execute multiple scripts and return their reward values.
 
-        Args:
-            scripts: List of code scripts to execute
-            language: The programming language of the scripts
-
-        Returns:
-            List of float rewards (one per script)
+        :param scripts: Code scripts to execute.
+        :type scripts: list[str]
+        :param languages: Programming language for each script.
+        :type languages: list[str]
+        :return: Float rewards (one per script).
+        :rtype: list[float]
         """
         raise NotImplementedError
 
@@ -77,9 +109,10 @@ class E2BProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-meth
     def __init__(self, num_parallel: int = 2, e2b_router_url: Optional[str] = None):
         """Initialize the E2B provider.
 
-        Args:
-            num_parallel: Number of parallel sandboxes to use
-            e2b_router_url: URL for the E2B router (if using router mode)
+        :param num_parallel: Number of parallel sandboxes to use.
+        :type num_parallel: int
+        :param e2b_router_url: URL for the E2B router (when using router mode).
+        :type e2b_router_url: str | None
         """
         if not is_e2b_available():
             raise ImportError(
@@ -222,9 +255,10 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
     def __init__(self, num_parallel: int = 2, morph_router_url: Optional[str] = None):
         """Initialize the Morph provider.
 
-        Args:
-            num_parallel: Number of parallel executions to use
-            morph_router_url: URL for the MorphCloud router (if using router mode)
+        :param num_parallel: Number of parallel executions to use.
+        :type num_parallel: int
+        :param morph_router_url: URL for the MorphCloud router (when using router mode).
+        :type morph_router_url: str | None
         """
         if not is_morph_available():
             raise ImportError(
@@ -264,12 +298,12 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
     def execute_scripts(self, scripts: List[str], languages: List[str]) -> List[float]:
         """Execute scripts using MorphCloud Sandbox API.
 
-        Args:
-            scripts: List of Python scripts to execute
-            language: Programming language
-
-        Returns:
-            List of float rewards (one per script)
+        :param scripts: Python scripts to execute.
+        :type scripts: list[str]
+        :param languages: Programming language for each script.
+        :type languages: list[str]
+        :return: Float rewards (one per script).
+        :rtype: list[float]
         """
 
         if hasattr(self, "routed_sandbox"):
@@ -309,13 +343,14 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
     ) -> List[float]:
         """Run multiple scripts concurrently with limited parallelism.
 
-        Args:
-            scripts: List of scripts to execute
-            language: Programming language
-            num_parallel: Maximum number of concurrent executions
-
-        Returns:
-            List of rewards
+        :param scripts: Scripts to execute.
+        :type scripts: list[str]
+        :param languages: Programming language for each script.
+        :type languages: list[str]
+        :param num_parallel: Maximum number of concurrent executions.
+        :type num_parallel: int
+        :return: Reward values.
+        :rtype: list[float]
         """
 
         semaphore = asyncio.Semaphore(num_parallel)
@@ -334,13 +369,14 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
     ) -> float:
         """Execute a single script in a MorphCloud Sandbox.
 
-        Args:
-            script: The script to execute
-            language: Programming language
-            semaphore: Semaphore to limit concurrency
-
-        Returns:
-            Float reward from script execution
+        :param script: Script to execute.
+        :type script: str
+        :param languages: Programming language collection for execution.
+        :type languages: list[str]
+        :param semaphore: Semaphore limiting concurrency.
+        :type semaphore: asyncio.Semaphore
+        :return: Reward from script execution.
+        :rtype: float
         """
         SANDBOX_TIMEOUT = 90
         MARGIN = 6
@@ -364,29 +400,7 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
                     timeout=ASYNCIO_TIMEOUT,
                 )
 
-                reward = 0.0
-                try:
-                    if hasattr(result, "text") and result.text:
-                        lines = result.text.strip().split("\n")
-                        if lines:
-                            try:
-                                reward = float(lines[-1])
-                            except ValueError:
-                                try:
-                                    reward = float(result.text.strip())
-                                except ValueError:
-                                    pass
-                    elif hasattr(result, "stdout") and result.stdout:
-                        lines = result.stdout.strip().split("\n")
-                        if lines:
-                            try:
-                                reward = float(lines[-1])
-                            except ValueError:
-                                pass
-                except (ValueError, AttributeError):
-                    pass
-
-                return reward
+                return _extract_reward_from_result(result)
 
             except asyncio.TimeoutError:
                 logger.warning("MorphCloud sandbox execution timed out")
@@ -406,12 +420,12 @@ class MorphProvider(CodeExecutionProvider):  # pylint: disable=too-few-public-me
 def get_provider(provider_type: str = "e2b", **kwargs) -> CodeExecutionProvider:
     """Factory function to get the appropriate code execution provider.
 
-    Args:
-        provider_type: Type of provider to use ("e2b", "morph")
-        **kwargs: Additional arguments to pass to the provider
-
-    Returns:
-        An instance of CodeExecutionProvider
+    :param provider_type: Provider type to use (``"e2b"`` or ``"morph"``).
+    :type provider_type: str
+    :param kwargs: Additional arguments forwarded to the provider constructor.
+    :type kwargs: dict
+    :return: Instantiated code execution provider.
+    :rtype: CodeExecutionProvider
     """
     num_parallel = kwargs.pop("num_parallel", 2)
 

@@ -12,6 +12,7 @@ from .utils import batched
 async def score_single_test_case(
     client: PistonClient,
     problem_data: dict,
+    *,
     test_input: str,
     test_output: str,
     submission: str,
@@ -117,6 +118,7 @@ async def score_submission(
     client: PistonClient,
     problem_data: dict,
     submission: str,
+    *,
     test_batch_size: int = 1,
     scoring_mode: Literal["pass_fail", "partial", "weighted_sum"] = "weighted_sum",
     no_compile_reward: float = -0.1,
@@ -153,7 +155,12 @@ async def score_submission(
             *[
                 asyncio.create_task(
                     score_single_test_case(
-                        client, problem_data, test_case["input"], test_case["output"], submission, submission_language
+                        client,
+                        problem_data,
+                        test_input=test_case["input"],
+                        test_output=test_case["output"],
+                        submission=submission,
+                        submission_language=submission_language,
                     )
                 )
                 for test_case in test_batch_to_run

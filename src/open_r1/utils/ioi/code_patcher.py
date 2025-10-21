@@ -5,11 +5,10 @@ def fix_python3_imports(source_code):
     """
     Fix common import and function changes between Python 3 versions
 
-    Args:
-        source_code (str): The Python source code to update
-
-    Returns:
-        str: The updated source code
+    :param source_code: Python source code to update.
+    :type source_code: str
+    :return: Updated source code.
+    :rtype: str
     """
     # Dictionary of patterns to replacements
     replacements = [

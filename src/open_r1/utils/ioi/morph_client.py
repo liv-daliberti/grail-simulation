@@ -51,14 +51,12 @@ class MorphCloudExecutionClient:
         """
         Prepare and start a MorphCloud instance.
 
-        Args:
-          snapshot_id: Optional snapshot ID to use. If None, will get or create base snapshot.
-
-        Returns:
-          Instance: The ready-to-use MorphCloud instance
-
-        Raises:
-          TimeoutError: If instance fails to start or become ready
+        :param snapshot_id: Optional snapshot identifier; when ``None`` a base snapshot
+            is located or created.
+        :type snapshot_id: str | None
+        :return: Ready-to-use MorphCloud instance.
+        :rtype: Instance
+        :raises TimeoutError: If the instance fails to start or become ready.
         """
 
         if not snapshot_id:
@@ -84,15 +82,13 @@ class MorphCloudExecutionClient:
         """
         Process files, determine problem ID, and prepare configuration.
 
-        Args:
-            data: Dictionary containing file information
-            temp_dir: Local temporary directory for file operations
-
-        Returns:
-            tuple: (problem_id, grader_config, local_files)
-
-        Raises:
-            ValueError: If problem ID cannot be determined
+        :param data: File metadata including grader files and submission content.
+        :type data: dict[str, Any]
+        :param temp_dir: Local temporary directory for file operations.
+        :type temp_dir: str
+        :return: Tuple of ``(problem_id, grader_config, local_files)``.
+        :rtype: tuple[str, dict[str, Any], dict[str, str]]
+        :raises ValueError: If the problem ID cannot be determined.
         """
         # Extract problem ID
         problem_id = None
@@ -141,15 +137,13 @@ class MorphCloudExecutionClient:
         """
         Upload all necessary files to the instance.
 
-        Args:
-            instance: The MorphCloud instance
-            local_files: Dictionary mapping remote paths to local file paths
-
-        Returns:
-            bool: True if all uploads were successful
-
-        Raises:
-            TimeoutError: If uploads time out
+        :param instance: MorphCloud instance receiving the files.
+        :type instance: Instance
+        :param local_files: Mapping of remote paths to local file paths.
+        :type local_files: dict[str, str]
+        :return: ``True`` when all uploads succeed.
+        :rtype: bool
+        :raises TimeoutError: If uploads time out.
         """
         for remote_name, local_path in local_files.items():
             target_path = f"/workspace/{remote_name}"
@@ -168,14 +162,11 @@ class MorphCloudExecutionClient:
         """
         Compile the code on the instance.
 
-        Args:
-            instance: The MorphCloud instance
-
-        Returns:
-            InstanceExecResponse: Result of compilation
-
-        Raises:
-            RuntimeError: If compilation fails
+        :param instance: MorphCloud instance executing the compilation.
+        :type instance: Instance
+        :return: Compilation result.
+        :rtype: InstanceExecResponse
+        :raises RuntimeError: If compilation fails.
         """
         compile_result = await instance.aexec("cd /workspace && ./compile")
 
@@ -188,15 +179,13 @@ class MorphCloudExecutionClient:
         """
         Run tests and evaluate results.
 
-        Args:
-            instance: The MorphCloud instance
-            data: Dictionary containing runtime parameters
-
-        Returns:
-            tuple: (score, feedback)
-
-        Raises:
-            TimeoutError: If test execution times out
+        :param instance: MorphCloud instance where tests are executed.
+        :type instance: Instance
+        :param data: Runtime parameters for execution.
+        :type data: dict[str, Any]
+        :return: Tuple of ``(score, feedback)``.
+        :rtype: tuple[str, str]
+        :raises TimeoutError: If test execution times out.
         """
         hard_timeout = data["run_timeout"] / 1000 + 3
         run_command = f"cd /workspace && timeout {hard_timeout}s ./run"
@@ -223,16 +212,15 @@ class MorphCloudExecutionClient:
     async def _execute_with_instance(self, instance: Instance, data: Dict[str, Any], temp_dir: str) -> Tuple[str, str]:
         """Execute code using a prepared instance.
 
-        Args:
-            instance: Ready MorphCloud instance
-            data: Execution data
-            temp_dir: Temporary directory for file operations
-
-        Returns:
-            Tuple of (score, feedback)
-
-        Raises:
-            Exception: Passes through exceptions for retry handling
+        :param instance: Ready MorphCloud instance.
+        :type instance: Instance
+        :param data: Execution payload.
+        :type data: dict[str, Any]
+        :param temp_dir: Temporary directory for file operations.
+        :type temp_dir: str
+        :return: Tuple of ``(score, feedback)``.
+        :rtype: tuple[str, str]
+        :raises Exception: Propagates exceptions for retry handling.
         """
         await instance.await_until_ready(timeout=300)
 
@@ -252,14 +240,11 @@ class MorphCloudExecutionClient:
         """
         Internal implementation of execute with no retry logic.
 
-        Args:
-            data: Dictionary containing execution data
-
-        Returns:
-            Tuple of (score, feedback)
-
-        Raises:
-            Exception: If execution fails
+        :param data: Execution payload.
+        :type data: dict[str, Any]
+        :return: Tuple of ``(score, feedback)``.
+        :rtype: tuple[str, str]
+        :raises Exception: If execution fails.
         """
         instance = None
 
@@ -291,16 +276,13 @@ class MorphCloudExecutionClient:
         4. Compile code (with retry)
         5. Run tests (with retry)
 
-        Args:
-            data: Dictionary containing:
-                - files: List of file objects with name and content fields
-                - run_timeout: Timeout in milliseconds
-                - run_memory_limit: Memory limit in MB
-
-        Returns:
-            Tuple of (score, feedback) where:
-                - score is a string representation of a float between 0.0 and 1.0
-                - feedback is a string with execution details
+        :param data: Execution payload containing keys such as ``files`` (list of file
+            objects with ``name`` and ``content``), ``run_timeout`` (milliseconds), and
+            ``run_memory_limit`` (megabytes).
+        :type data: dict[str, Any]
+        :return: Tuple ``(score, feedback)`` where ``score`` is a stringified float in
+            ``[0.0, 1.0]`` and ``feedback`` summarises execution details.
+        :rtype: tuple[str, str]
         """
         # NOTE: passing subtask metadata could enable snapshot reuse per subtask
         # would cache the uploads of all files other than the submission: input.txt, correct_output.txt, grader files
@@ -720,11 +702,10 @@ def get_morph_client_from_env(session=None) -> MorphCloudExecutionClient:
     Environment variables:
         MORPH_API_KEY: API key for MorphCloud
 
-    Args:
-        session: Optional aiohttp.ClientSession to use for HTTP requests
-
-    Returns:
-        MorphCloudExecutionClient: A configured MorphCloud execution client
+    :param session: Optional ``aiohttp.ClientSession`` for HTTP requests.
+    :type session: aiohttp.ClientSession | None
+    :return: Configured MorphCloud execution client.
+    :rtype: MorphCloudExecutionClient
     """
     if not is_morph_available():
         raise ImportError(

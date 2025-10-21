@@ -15,11 +15,10 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from datasets import DatasetDict
 from torch import nn, optim
 from transformers import (
     AutoConfig,
@@ -41,6 +40,11 @@ from prompt_builder import (
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_model, get_tokenizer
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from datasets import DatasetDict
+else:  # pragma: no cover - fallback for optional dependency
+    DatasetDict = Any
 
 logger = logging.getLogger(__name__)
 
@@ -517,10 +521,11 @@ def _safe_int(value: Any, default: int = -1) -> int:
         return default
 
 
-def _context_from_completion(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def _context_from_completion(
     completion: Any,
     viewer: Any,
     state: Any,
+    *,
     items: Any,
     gold_id: Any,
     gold_idx: Any,
@@ -575,7 +580,14 @@ def _build_reward_contexts(
     gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, n)
 
     return [
-        _context_from_completion(completion, viewer, state, items, gold_id, gold_idx)
+        _context_from_completion(
+            completion,
+            viewer,
+            state,
+            items=items,
+            gold_id=gold_id,
+            gold_idx=gold_idx,
+        )
         for completion, viewer, state, items, gold_id, gold_idx in zip(
             completions,
             viewer_list,

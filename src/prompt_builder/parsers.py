@@ -120,6 +120,16 @@ def truthy(value: Any) -> Optional[bool]:
                 result = True
             elif text in FALSE_STRINGS:
                 result = False
+            else:
+                try:
+                    number = float(text)
+                except ValueError:
+                    number = None
+                if number is not None:
+                    if math.isclose(number, 1.0, rel_tol=0.0, abs_tol=1e-9):
+                        result = True
+                    elif math.isclose(number, 0.0, rel_tol=0.0, abs_tol=1e-9):
+                        result = False
     return result
 
 

@@ -30,14 +30,18 @@ def _capsule_results_dir() -> Path:
 
 @dataclass(frozen=True)
 class OutcomeFamily:
+    """Group of outcomes sharing controls for hierarchical adjustments."""
+
     key: str
-    label: str
-    outcomes: Tuple[str, ...]
-    controls: Tuple[str, ...]
+   label: str
+   outcomes: Tuple[str, ...]
+   controls: Tuple[str, ...]
 
 
 @dataclass(frozen=True)
-class StudyConfig:
+class StudyConfig:  # pylint: disable=too-many-instance-attributes
+    """Study-specific configuration for the preregistered stratified analyses."""
+
     key: str
     label: str
     data_path: Path

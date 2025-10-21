@@ -371,11 +371,11 @@ def _format_duration(item: Dict[str, Any]) -> str:
 def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> str:
     """Return a summary line covering likes, comments, and shares."""
 
-    def first_present(keys: Sequence[str]) -> Any:
+    def first_present(source: Dict[str, Any], keys: Sequence[str]) -> Any:
         for key in keys:
-            if key not in item:
+            if key not in source:
                 continue
-            value = item.get(key)
+            value = source.get(key)
             if is_nanlike(value):
                 continue
             text = str(value).strip()
@@ -385,15 +385,29 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
         return None
 
     metrics = [
-        ("likes", ("like_count", "likes", "likeCount"), "like_count"),
-        ("comments", ("comment_count", "comments", "commentCount"), "comment_count"),
-        ("shares", ("share_count", "shares", "shareCount"), "share_count"),
+        (
+            "likes",
+            ("like_count", "likes", "likeCount", "LikeCount", "Likes"),
+            ("like_count", "likes", "likeCount", "LikeCount"),
+        ),
+        (
+            "comments",
+            ("comment_count", "comments", "commentCount", "CommentCount", "Comments"),
+            ("comment_count", "comments", "commentCount", "CommentCount"),
+        ),
+        (
+            "shares",
+            ("share_count", "shares", "shareCount", "ShareCount", "Shares"),
+            ("share_count", "shares", "shareCount", "ShareCount"),
+        ),
     ]
     parts: List[str] = []
-    for label, keys, stat_key in metrics:
-        value = first_present(keys)
+    for label, item_keys, stat_keys in metrics:
+        value = first_present(item, item_keys)
         if value is None and stats:
-            value = stats.get(stat_key)
+            value = first_present(stats, stat_keys)
+            if value is None and stat_keys:
+                value = stats.get(stat_keys[0])
         formatted = format_count(value)
         if formatted is None:
             continue

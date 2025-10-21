@@ -156,7 +156,12 @@ def _history_block(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
             descriptors.append(descriptor)
     if not descriptors:
         return "RECENTLY WATCHED (NEWEST LAST):\n(no recently watched videos available)"
-    return "RECENTLY WATCHED (NEWEST LAST):\n" + "\n".join(descriptors)
+    lines = list(descriptors)
+    remaining_total = max(0, len(prior_entries) - len(recent))
+    if remaining_total > 0:
+        plural = "videos" if remaining_total > 1 else "video"
+        lines.append(f"(+{remaining_total} more {plural})")
+    return "RECENTLY WATCHED (NEWEST LAST):\n" + "\n".join(lines)
 
 
 SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (
@@ -226,7 +231,7 @@ def _options_block(ex: Dict[str, Any], show_ids: bool) -> str:
     sentences = [sentence for sentence in sentences if sentence]
     if not sentences:
         return ""
-    return "Today's slate offers:\n" + "\n".join(sentences)
+    return "OPTIONS:\n" + "\n".join(sentences)
 
 
 def _option_sentence(position: int, item: Dict[str, Any], show_ids: bool) -> str:

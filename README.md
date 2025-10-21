@@ -156,43 +156,7 @@ The repository stitches together several subsystems to turn raw CodeOcean logs i
 
 1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
 2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
-3. **KNN feature extraction & evaluation** – see `src/knn/README.md` for how `src/knn/features.py`, `src/knn/index.py`, and `src/knn/evaluate.py` build feature spaces, train indexes, select elbow-based `k`, and record reports.
-
-High-level progression (training + evaluation):
-
-```
-        Raw Capsule Exports
-                  |
-                  v
-        clean_data.sessions
-                  |
-                  v
-         Prompt Builder (GRPO)
-                  |
-                  v
-        +-----------------------+
-        |  Feature Extraction   |
-        |  - TF-IDF (default)   |
-        |  - Word2Vec (optional)|
-        +-----------+-----------+
-                    |
-            +-------v-------+
-            |  KNN Index   |
-            |  Training    |
-            +-------+------+
-                    |
-      +-------------v--------------+
-      | KNN Evaluation (metrics,   |
-      | elbow curve, acc@k logs)   |
-      +-------------+--------------+
-                    |
-        +-----------+-----------+
-        | Reports & Artifacts  |
-        |  models/, reports/   |
-        +----------------------+
-```
-
-Both `bash training/training-knn.sh` and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
+3. **Model training & evaluation** – consult the package READMEs under `src/` (e.g., `src/knn/README.md`, `src/gpt4o/README.md`, `src/xgb/README.md`) for baseline-specific pipelines, CLI commands, and reporting details.
 
 ## Published Artifacts
 

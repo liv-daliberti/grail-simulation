@@ -51,6 +51,42 @@ predictions, metrics, and optional embeddings under the specified `out_dir`.
 3. **Evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and picks the elbow-derived `k`.
 4. **Reporting** – evaluation metrics, per-`k` predictions, elbow plots, and curve diagnostics write to `models/` and `reports/`.
 
+High-level progression (training + evaluation):
+
+```
+        Raw Capsule Exports
+                  |
+                  v
+        clean_data.sessions
+                  |
+                  v
+         Prompt Builder (GRPO)
+                  |
+                  v
+        +-----------------------+
+        |  Feature Extraction   |
+        |  - TF-IDF (default)   |
+        |  - Word2Vec (optional)|
+        +-----------+-----------+
+                    |
+            +-------v-------+
+            |  KNN Index   |
+            |  Training    |
+            +-------+------+
+                    |
+      +-------------v--------------+
+      | KNN Evaluation (metrics,   |
+      | elbow curve, acc@k logs)   |
+      +-------------+--------------+
+                    |
+        +-----------+-----------+
+        | Reports & Artifacts  |
+        |  models/, reports/   |
+        +----------------------+
+```
+
+Both `bash training/training-knn.sh` and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
+
 ## Feature helpers
 
 `features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same

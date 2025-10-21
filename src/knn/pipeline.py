@@ -760,7 +760,8 @@ def _build_opinion_report(
     *,
     output_path: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
-    selections: Mapping[str, SweepSelection],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
 ) -> None:
     if not metrics:
         raise RuntimeError("No opinion metrics available to build the opinion report.")
@@ -771,10 +772,6 @@ def _build_opinion_report(
     lines.append(
         "This study evaluates a second KNN baseline that predicts each participant's post-study opinion index."
     )
-    lines.append(
-        "Models reuse the slate-selected feature configurations and compare against a no-change baseline."
-    )
-    lines.append("")
     lines.append("- Dataset: `data/cleaned_grail`")
     lines.append("- Splits: train for neighbour lookup, validation for evaluation")
     lines.append(
@@ -783,10 +780,9 @@ def _build_opinion_report(
     lines.append("")
 
     for feature_space in ("tfidf", "word2vec"):
-        studies = metrics.get(feature_space, {})
-        if not studies:
+        per_feature = metrics.get(feature_space, {})
+        if not per_feature:
             continue
-        selection = selections.get(feature_space)
         if feature_space == "tfidf":
             lines.append("## TF-IDF Feature Space")
         else:
@@ -796,11 +792,13 @@ def _build_opinion_report(
             "| Study | Participants | Best k | MAE ↓ | RMSE ↓ | R² ↑ | No-change MAE ↓ |"
         )
         lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
-        for study_key in sorted(studies.keys()):
-            data = studies[study_key]
+        for study in studies:
+            data = per_feature.get(study.key)
+            if not data:
+                continue
             best_metrics = data.get("best_metrics", {})
             baseline = data.get("baseline", {})
-            label = data.get("label", _snake_to_title(study_key))
+            label = data.get("label", study.label)
             lines.append(
                 f"| {label} | {int(data.get('n_participants', 0))} | "
                 f"{int(data.get('best_k', 0))} | "
@@ -810,23 +808,6 @@ def _build_opinion_report(
                 f"{_format_float(float(baseline.get('mae_using_before', 0.0)))} |"
             )
         lines.append("")
-        if selection:
-            if feature_space == "word2vec":
-                config_bits = (
-                    f"{selection.config.metric} distance, "
-                    f"size={selection.config.word2vec_size}, "
-                    f"window={selection.config.word2vec_window}, "
-                    f"min_count={selection.config.word2vec_min_count}"
-                )
-            else:
-                config_bits = f"{selection.config.metric} distance"
-            text_label = (
-                "no extra fields"
-                if not selection.config.text_fields
-                else f"extra fields `{','.join(selection.config.text_fields)}`"
-            )
-            lines.append(f"Configuration: {config_bits} with {text_label}.")
-            lines.append("")
 
     lines.append("### Opinion Change Heatmaps")
     lines.append("")
@@ -838,9 +819,11 @@ def _build_opinion_report(
     lines.append("## Takeaways")
     lines.append("")
     if "tfidf" in metrics and "word2vec" in metrics:
-        for study_key in sorted(metrics["tfidf"].keys()):
-            tfidf_metrics = metrics["tfidf"][study_key]
-            word2vec_metrics = metrics["word2vec"].get(study_key)
+        for study in studies:
+            tfidf_metrics = metrics["tfidf"].get(study.key)
+            if not tfidf_metrics:
+                continue
+            word2vec_metrics = metrics["word2vec"].get(study.key)
             tfidf_r2 = float(tfidf_metrics.get("best_metrics", {}).get("r2_after", 0.0))
             best_space = "TF-IDF"
             best_r2 = tfidf_r2
@@ -852,7 +835,7 @@ def _build_opinion_report(
                     best_r2 = word2vec_r2
                     best_k = int(word2vec_metrics.get("best_k", 0))
             lines.append(
-                f"- {tfidf_metrics.get('label', _snake_to_title(study_key))}: "
+                f"- {tfidf_metrics.get('label', study.label)}: "
                 f"{best_space} achieves the highest R² ({best_r2:.3f}) at k={best_k}."
             )
     lines.append("")
@@ -862,7 +845,8 @@ def _build_opinion_report(
 def _generate_reports(
     *,
     repo_root: Path,
-    selections: Mapping[str, SweepSelection],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     k_sweep: str,
@@ -873,17 +857,20 @@ def _generate_reports(
     _build_hyperparameter_report(
         output_path=reports_root / "hyperparameter_tuning.md",
         selections=selections,
+        studies=studies,
         k_sweep=k_sweep,
     )
     _build_next_video_report(
         output_path=reports_root / "next_video.md",
         metrics_by_feature=metrics_by_feature,
         selections=selections,
+        studies=studies,
     )
     _build_opinion_report(
         output_path=reports_root / "opinion" / "README.md",
         metrics=opinion_metrics,
         selections=selections,
+        studies=studies,
     )
 
 
@@ -905,21 +892,26 @@ def main(argv: Sequence[str] | None = None) -> None:
         args.word2vec_model_dir or os.environ.get("WORD2VEC_MODEL_DIR") or (out_dir / "word2vec_models")
     )
     k_sweep = args.k_sweep or os.environ.get("KNN_K_SWEEP") or "1,2,3,4,5,10,15,20,25,50,100"
-    issues_arg = args.issues or os.environ.get("KNN_ISSUES", "")
+    study_tokens = (
+        _split_tokens(getattr(args, "studies", ""))
+        or _split_tokens(os.environ.get("KNN_STUDIES", ""))
+        or _split_tokens(args.issues or "")
+        or _split_tokens(os.environ.get("KNN_ISSUES", ""))
+    )
+    if not _split_tokens(getattr(args, "studies", "")) and _split_tokens(args.issues or ""):
+        LOGGER.warning("`--issues` is deprecated for the pipeline; interpreting as study keys.")
     word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
     word2vec_workers = _default_word2vec_workers()
 
-    if issues_arg:
-        issues = [token.strip() for token in issues_arg.split(",") if token.strip()]
-    else:
-        dataset_obj = load_dataset_source(dataset, cache_dir)
-        issues = issues_in_dataset(dataset_obj)
-    if not issues:
-        raise RuntimeError("No issues available for evaluation.")
-    issues = sorted(issues)
+    studies = _resolve_studies(study_tokens)
+    if not studies:
+        raise RuntimeError("No studies available for evaluation.")
 
     LOGGER.info("Dataset: %s", dataset)
-    LOGGER.info("Issues: %s", ", ".join(issues))
+    LOGGER.info(
+        "Studies: %s",
+        ", ".join(f"{spec.key} ({spec.issue})" for spec in studies),
+    )
     LOGGER.info("Output directory: %s", out_dir)
 
     base_cli = ["--dataset", dataset, "--cache-dir", cache_dir, "--fit-index", "--overwrite"]
@@ -936,7 +928,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     sweep_outcomes = _run_sweeps(
-        issues=issues,
+        studies=studies,
         configs=configs,
         base_cli=base_cli,
         extra_cli=extra_cli,
@@ -944,11 +936,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         word2vec_model_base=word2vec_model_dir,
     )
 
-    selections = _select_best_configs(outcomes=sweep_outcomes, issues=issues)
+    selections = _select_best_configs(outcomes=sweep_outcomes, studies=studies)
 
     slate_metrics = _run_final_evaluations(
         selections=selections,
-        issues=issues,
+        studies=studies,
         base_cli=base_cli,
         extra_cli=extra_cli,
         out_dir=out_dir,
@@ -957,6 +949,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     opinion_metrics = _run_opinion_evaluations(
         selections=selections,
+        studies=studies,
         base_cli=base_cli,
         extra_cli=extra_cli,
         out_dir=out_dir,
@@ -966,6 +959,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     _generate_reports(
         repo_root=root,
         selections=selections,
+        studies=studies,
         metrics_by_feature=slate_metrics,
         opinion_metrics=opinion_metrics,
         k_sweep=k_sweep,

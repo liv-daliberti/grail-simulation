@@ -6,7 +6,7 @@ single packaging story.
 
 ## Baseline Packages
 
-- `knn/` – k-nearest-neighbour slate selector with modular CLIs, TF-IDF and
+- `knn/` – k-nearest-neighbor slate selector with modular CLIs, TF-IDF and
   optional Word2Vec features, and issue-aware dataset filtering. Typical run:
   `python -m knn.cli --dataset data/cleaned_grail --out_dir models/knn/run-001 --fit-index`.
 - `xgb/` – XGBoost slate baseline that reuses the `knn` prompt/document pipeline
@@ -39,7 +39,7 @@ single packaging story.
 - New public functions and classes require docstrings because Sphinx consumes
   these modules directly (`docs/api/**`).
 - Add test coverage under `tests/` or the package-specific test suites when
-  introducing new behaviour.
+  introducing new behavior.
 - Scripts that double as CLIs should expose a `main()` entry point guarded by
   `if __name__ == "__main__":` so they can be imported without immediately
   executing.

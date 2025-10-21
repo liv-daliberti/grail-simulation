@@ -28,16 +28,16 @@ YAMLs and translate them into trainer arguments.
 All trainers rely on `prompt_builder.build_user_prompt`. Each row from the
 cleaned dataset is converted into a multi-section message containing:
 
-- `PROFILE:` – human-readable viewer summary synthesised from survey exports (see
+- `PROFILE:` – human-readable viewer summary synthesized from survey exports (see
   `clean_data/prompt/question_mapping.py` for the field mapping).
 - `HISTORY:` – recent watches; governed by `GRAIL_MAX_HISTORY` (set to `0` for
   unbounded history).
-- `CURRENT VIDEO:` – contextualises the slate being evaluated.
+- `CURRENT VIDEO:` – contextualizes the slate being evaluated.
 - `OPTIONS:` – candidate slate entries, optionally including YouTube IDs when
   `GRAIL_SHOW_IDS=1`.
 
 The `_row_to_example` helpers in `grpo.py`/`grail.py` drop examples without a
-resolvable gold click, normalise slate metadata, and surface pass-through fields
+resolvable gold click, normalize slate metadata, and surface pass-through fields
 required by reward functions.
 
 ## Running GRPO
@@ -71,9 +71,9 @@ python src/open_r1/grail.py \
 Additional environment switches:
 
 - `GAIL_USE=0` disables the discriminator path and falls back to pure GRPO.
-- `GAIL_WEIGHT` rescales the discriminator reward before normalisation.
+- `GAIL_WEIGHT` rescales the discriminator reward before normalization.
 - `GAIL_ALPHA`, `GAIL_LR`, `GAIL_DISC_MODEL`, `GAIL_DEVICE` configure the
-  discriminator backbone and optimiser.
+  discriminator backbone and optimizer.
 - `GAIL_EVAL_MODE=1` can be exported to ensure the discriminator stays frozen
   during evaluation-only runs.
 
@@ -113,7 +113,7 @@ All trainers load YAML recipes that share a common schema:
 - **Trainer knobs** – batch sizes, gradient checkpointing, eval cadence, save
   cadence, logging frequency.
 - **Rewards** – names mapped to callables in `rewards.py` with optional weights;
-  weights are normalised automatically.
+  weights are normalized automatically.
 - **Reproducibility / Hub** – seeds, `push_to_hub`, hub repo IDs, and revisions.
 
 Metrics stream to stdout and Weights & Biases when the relevant environment

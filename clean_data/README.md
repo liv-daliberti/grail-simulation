@@ -12,7 +12,7 @@ This document describes how the Python implementation in `clean_data/` mirrors t
 | `clean_data.codeocean` | Thin compatibility shim that reconstructs datasets directly from the capsule directory. |
 | `clean_data.prompt` | Prompt analytics (plots + Markdown report) exposed via `python -m clean_data.prompt.cli`. |
 | `clean_data.filters` | Simple predicates for prompt readiness and issue-count summaries used during dataset assembly. |
-| `clean_data.surveys` / `clean_data.io` / `clean_data.helpers` | Shared utilities for reading survey exports, normalising identifiers, and synthesising viewer attributes. |
+| `clean_data.surveys` / `clean_data.io` / `clean_data.helpers` | Shared utilities for reading survey exports, normalizing identifiers, and synthesizing viewer attributes. |
 
 ## Input Data and Allow-Lists
 
@@ -25,7 +25,7 @@ The builder consumes the intermediate CSV/RDS exports bundled with the CodeOcean
 - `results/intermediate data/shorts/qualtrics_w12_clean_ytrecs_may2024.csv`
 - Session logs under `data/platform session data/sessions.json` and `data/shorts/ytrecs_sessions_may2024.rds`
 
-Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists`. Identifiers are normalised and deduplicated so each viewer contributes at most one trajectory per issue.
+Allow-lists are reconstructed by `clean_data.surveys.load_participant_allowlists`. Identifiers are normalized and deduplicated so each viewer contributes at most one trajectory per issue.
 
 ## Processing Pipeline
 
@@ -53,7 +53,7 @@ Running `python -m clean_data.cli` now produces two complementary datasets:
 - **Full cleaned dataset** – persisted under `--output-dir`, retaining every promptable interaction for each `(participant, issue)` pair within Studies 1–3.
 - **Deduped analytics view** – computed in-memory via `clean_data.clean_data.dedupe_by_participant_issue` so prompt statistics still mirror the historical “one row per participant/issue” summaries.
 
-Downstream tooling that expects the deduped layout can invoke the helper directly, while modelling workflows can make use of the richer full-history export.
+Downstream tooling that expects the deduped layout can invoke the helper directly, while modeling workflows can make use of the richer full-history export.
 
 ## Validation and Logging
 
@@ -86,7 +86,7 @@ python -m clean_data.prompt.cli \
   --output-dir reports/prompt_stats
 ```
 
-Outputs include histogram PNGs, JSON summaries, and a Markdown README summarising feature coverage, participant counts, and demographic completeness.
+Outputs include histogram PNGs, JSON summaries, and a Markdown README summarizing feature coverage, participant counts, and demographic completeness.
 
 ## Summary
 

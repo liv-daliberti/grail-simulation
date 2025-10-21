@@ -44,7 +44,7 @@ automatically falls back to streaming mode.
 
 - `client.py` — thin wrapper around the Azure OpenAI client plus the `ds_call`
   helper used during evaluation.
-- `config.py` — centralised configuration, dataset identifiers, and prompt
+- `config.py` — centralized configuration, dataset identifiers, and prompt
   template defaults.
 - `conversation.py` — constructs messages from cleaned rows, including option
   formatting and answer-tag insertion for reliable parsing.
@@ -52,7 +52,7 @@ automatically falls back to streaming mode.
   buckets, and the retry loop around API calls.
 - `cli.py` — argument parser and runtime entry point (mirrors `knn`/`xgb` CLIs).
 - `titles.py` / `utils.py` — shared helpers for title resolution, text
-  canonicalisation, and response parsing.
+  canonicalization, and response parsing.
 
 Each module has a narrow responsibility, making it easy to swap components or
 reuse the prompt builder in other workflows.

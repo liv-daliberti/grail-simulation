@@ -257,15 +257,17 @@ def _first_text(
     :param limit: Optional maximum length passed to :func:`clean_text`.
     :returns: Cleaned text fragment or an empty string.
     """
+    for key in keys:
         for dataset in (ex, selected):
-            if key in dataset:
-                value = dataset.get(key)
-                if value is None or is_nanlike(value):
-                    continue
-                formatted = format_field_value(key, value) or str(value)
-                cleaned = clean_text(formatted, limit=limit)
-                if cleaned:
-                    return cleaned
+            if key not in dataset:
+                continue
+            value = dataset.get(key)
+            if value is None or is_nanlike(value):
+                continue
+            formatted = format_field_value(key, value) or str(value)
+            cleaned = clean_text(formatted, limit=limit)
+            if cleaned:
+                return cleaned
     return ""
 
 
@@ -605,10 +607,15 @@ def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         return [_ensure_sentence("They have children in their household.")]
     if flag == "no":
         return [_ensure_sentence("They do not have children in their household.")]
-    text = clean_text(children_raw)
-    if not text:
+    formatted = format_field_value("child18", children_raw)
+    if not formatted:
         return []
-    return [_ensure_sentence(f"Children in household: {text}.")]
+    lowered = formatted.lower()
+    if lowered.startswith("no "):
+        return [_ensure_sentence("They do not have children in their household.")]
+    if "children" in lowered:
+        return [_ensure_sentence("They have children in their household.")]
+    return [_ensure_sentence(f"Children in household: {formatted}.")]
 
 
 def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
@@ -856,7 +863,7 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
             continue
         text = format_yes_no(value)
         if text is None:
-            text = clean_text(value, limit=220)
+            text = format_field_value(key, value) or clean_text(value, limit=220)
         if text:
             wage_section.append(f"{label}: {text}")
     known_keys = {k.lower() for k in MIN_WAGE_FIELD_LABELS}
@@ -867,7 +874,7 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
         value = ex.get(key)
         if is_nanlike(value):
             continue
-        text = clean_text(value, limit=220)
+        text = format_field_value(key, value) or clean_text(value, limit=220)
         if not text:
             continue
         label = (

@@ -114,12 +114,27 @@ def prompt_from_builder(example: dict) -> str:
     """
 
     existing = example.get("state_text") or example.get("prompt")
-    if isinstance(existing, str) and existing.strip():
-        return existing.strip()
+    if isinstance(existing, str):
+        stripped = existing.strip()
+        if stripped and not _looks_like_legacy_prompt(stripped):
+            return stripped
     try:
         return build_user_prompt(example, max_hist=PROMPT_MAX_HISTORY)
     except (TypeError, ValueError):  # pragma: no cover - defensive
         return ""
+
+
+def _looks_like_legacy_prompt(prompt_text: str) -> bool:
+    """Return ``True`` when ``prompt_text`` matches the legacy bullet style."""
+
+    legacy_tokens = (
+        "PROFILE:",
+        "ATTRIBUTES:",
+        "CURRENT VIDEO:",
+        "RECENTLY WATCHED",
+        "OPTIONS:",
+    )
+    return any(token in prompt_text for token in legacy_tokens)
 
 
 def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
@@ -560,4 +575,10 @@ def _format_extra_field(example: dict, field: str) -> str:
     label = EXTRA_FIELD_LABELS.get(field)
     if not label:
         label = field.replace("_", " ").strip().capitalize()
+    if field == "child18":
+        lowered = formatted.lower()
+        if lowered.startswith("no"):
+            formatted = "no"
+        elif "children" in lowered:
+            formatted = "yes"
     return f"{label}: {formatted}"

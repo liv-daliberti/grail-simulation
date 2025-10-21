@@ -57,6 +57,32 @@ RELIGION_CODE_MAP = {
     "13": "Prefer not to answer",
 }
 
+RELIG_IMPORTANCE_MAP = {
+    "1": "very important",
+    "2": "somewhat important",
+    "3": "not too important",
+    "4": "not at all important",
+}
+
+VOTE_2016_MAP = {
+    "1": "voted for Hillary Clinton",
+    "2": "voted for Donald Trump",
+    "3": "voted for Gary Johnson",
+    "4": "voted for Jill Stein",
+    "5": "voted for another candidate",
+    "6": "did not vote",
+    "7": "did not vote",
+}
+
+VOTE_2020_MAP = {
+    "1": "voted for Joe Biden",
+    "2": "voted for Donald Trump",
+    "3": "voted for Jo Jorgensen",
+    "4": "voted for Howie Hawkins",
+    "5": "voted for another candidate",
+    "6": "did not vote",
+}
+
 POLITICAL_INTEREST_MAP = {
     "1": "very interested in politics",
     "2": "somewhat interested in politics",
@@ -64,6 +90,8 @@ POLITICAL_INTEREST_MAP = {
     "4": "not at all interested in politics",
     "5": "unsure about political interest",
 }
+
+POLITICAL_INTEREST_FIELDS = {"pol_interest", "interest_politics", "political_interest"}
 
 NEWS_INTEREST_MAP = {
     "1": "pays attention to news most of the time",
@@ -218,6 +246,7 @@ FIELD_VALUE_MAPS: Dict[str, Dict[str, str]] = {
     "religion": RELIGION_CODE_MAP,
     "religious_affiliation": RELIGION_CODE_MAP,
     "religion_text": RELIGION_CODE_MAP,
+    "pew_religimp": RELIG_IMPORTANCE_MAP,
     "freq_youtube": YT_FREQ_MAP,
     "youtube_freq": YT_FREQ_MAP,
     "youtube_freq_v2": YT_FREQ_MAP,
@@ -230,6 +259,10 @@ FIELD_VALUE_MAPS: Dict[str, Dict[str, str]] = {
     "children_in_house": CHILDREN_MAP,
     "college": {"1": "yes", "0": "no"},
     "college_grad": {"1": "yes", "0": "no"},
+    "presvote16post": VOTE_2016_MAP,
+    "vote_2016": VOTE_2016_MAP,
+    "vote_2020": VOTE_2020_MAP,
+    "presvote20post": VOTE_2020_MAP,
     "participant_study": STUDY_LABEL_MAP,
     "slate_source": SLATE_SOURCE_MAP,
 }
@@ -259,6 +292,13 @@ PERCENTAGE_FIELDS = {
     "affpol_comfort_w2",
     "affpol_smart",
     "affpol_smart_w2",
+    "news_trust",
+    "trust_majornews_w1",
+    "trust_localnews_w1",
+    "trust_majornews_w2",
+    "trust_localnews_w2",
+    "trust_majornews_w3",
+    "trust_localnews_w3",
 }
 
 CURRENCY_FIELDS = {
@@ -273,12 +313,12 @@ CURRENCY_FIELDS = {
 
 SCALE_0_100_FIELDS = {
     "q5_2",
-    "Q5_a",
-    "Q5_a_W2",
+    "q5_a",
+    "q5_a_w2",
     "political_lead_feels_2",
     "q5_5",
-    "Q5_b",
-    "Q5_b_W2",
+    "q5_b",
+    "q5_b_w2",
     "political_lead_feels_5",
     "biden_approve",
     "trump_approve",
@@ -344,7 +384,7 @@ def _format_percentage_field(value: Any, precision: int = 0) -> Optional[str]:
     numeric = _as_float(value)
     if numeric is None:
         return None
-    if abs(numeric) <= 1.0:
+    if abs(numeric) < 1.0:
         return _format_percentage(numeric, precision=precision)
     return _format_scale_percentage(numeric)
 
@@ -405,6 +445,11 @@ def format_field_value(field: str, value: Any) -> str:
 
     if field_lower in YT_FREQ_MAP and text in YT_FREQ_MAP:
         return YT_FREQ_MAP[text]
+
+    if field_lower in POLITICAL_INTEREST_FIELDS:
+        formatted_interest = _format_percentage_field(value, precision=1)
+        if formatted_interest:
+            return formatted_interest
 
     if field_lower in PERCENTAGE_FIELDS:
         formatted = _format_percentage_field(value)

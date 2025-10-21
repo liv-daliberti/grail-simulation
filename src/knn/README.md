@@ -1,6 +1,6 @@
 # KNN Slate Baselines
 
-Modular implementation of the k-nearest-neighbour slate selector. The package
+Modular implementation of the k-nearest-neighbor slate selector. The package
 supersedes the legacy `knn-baseline.py` script while keeping the single-file
 entry point for backwards compatibility.
 
@@ -13,7 +13,7 @@ src/knn/
 ├── evaluate.py     # accuracy + coverage metrics and evaluation loop
 ├── features.py     # TF-IDF + optional Word2Vec document builders
 ├── index.py        # Faiss / sklearn KNN wrapper with persistence helpers
-├── utils.py        # logging, prompt helpers, and video-id canonicalisation
+├── utils.py        # logging, prompt helpers, and video-id canonicalization
 └── knn-baseline.py # legacy entry point delegating to knn.cli:main
 ```
 
@@ -44,6 +44,13 @@ python -m knn.cli \
 All CLI switches are documented via `python -m knn.cli --help`. The script writes
 predictions, metrics, and optional embeddings under the specified `out_dir`.
 
+## Pipeline overview
+
+1. **Feature extraction** – `src/knn/features.py` assembles per-issue text documents and can train either TF-IDF vectors or Word2Vec embeddings via `Word2VecFeatureBuilder`.
+2. **Index training** – `src/knn/index.py` fits the requested space (`build_tfidf_index` / `build_word2vec_index`) and persists artifacts so later runs can reuse them.
+3. **Evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and picks the elbow-derived `k`.
+4. **Reporting** – evaluation metrics, per-`k` predictions, elbow plots, and curve diagnostics write to `models/` and `reports/`.
+
 ## Feature helpers
 
 `features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same
@@ -62,13 +69,13 @@ PROFILE/HISTORY context seen by other baselines:
 the gold video appears in the candidate slate. Metrics mirror those reported by
 the XGBoost and GPT-4o baselines so results remain comparable.
 
-Each run also materialises elbow plots and curve summaries:
+Each run also materializes elbow plots and curve summaries:
 
 - Elbow charts are saved to `reports/knn/<feature-space>/elbow_<issue>.png`.
 - Per-`k` predictions and metrics live under `models/knn/<issue>/k-<k>/`.
 - Curve diagnostics (accuracy-by-k, AUC, best-k) for both evaluation and training
   splits are written to `models/knn/<issue>/knn_curves_<issue>.json`. Use
-  `--train-curve-max` to cap the number of training examples analysed.
+  `--train-curve-max` to cap the number of training examples analyzed.
 
 ## Hyperparameter sweeps
 

@@ -145,7 +145,7 @@ SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (
     ("pid1", "party identification is {value}"),
     ("pid2", "party lean is {value}"),
     ("ideo1", "ideology is {value}"),
-    ("pol_interest", "is {value}"),
+    ("pol_interest", "political interest is {value}"),
     ("religpew", "religious affiliation is {value}"),
     ("freq_youtube", "watches YouTube {value}"),
     ("newsint", "{value}"),

@@ -9,11 +9,11 @@ layout while preserving the same public API.
 
 - `prompt.py` exposes the top-level `build_user_prompt(...)` helper that stitches
   together profile, current video, recently watched, and slate sections.
-- `profiles.py` synthesises viewer sentences (`render_profile`,
+- `profiles.py` synthesizes viewer sentences (`render_profile`,
   `synthesize_viewer_sentence`) and keeps the friendly feature metadata in sync
   with `clean_data/prompt/question_mapping.py`.
 - `formatters.py` houses generic text utilities (`clean_text`, `join_kv_section`)
-  that normalise whitespace and convert structured data into readable strings.
+  that normalize whitespace and convert structured data into readable strings.
 - `parsers.py` provides convenience helpers (`truthy`, `secs`, `as_list_json`)
   used throughout the codebase to safely coerce survey values.
 - `constants.py` defines prompt labels, ordering rules, and default limits (e.g.,
@@ -27,7 +27,7 @@ The package root re-exports the public entry points so existing imports such as
 The builder expects rows that already passed through `clean_data/clean_data.py`.
 At a minimum the following columns should be present:
 
-- `viewer_profile_sentence` or the fields required to synthesise one (see
+- `viewer_profile_sentence` or the fields required to synthesize one (see
   `profiles.py`).
 - `watch_history_json` and/or `slate_items_json` for contextual sections.
 - `gold_id` when a downstream consumer needs the clicked option.

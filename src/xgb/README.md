@@ -12,8 +12,8 @@ src/xgb/
 ├── data.py              # dataset loading + issue filtering (reuses knn helpers)
 ├── evaluate.py          # evaluation loop, metrics writer, CLI orchestration
 ├── features.py          # prompt assembly + slate extraction utilities
-├── model.py             # TF-IDF vectoriser + XGBoost training / inference code
-├── utils.py             # assorted helpers (video-id canonicalisation, logging)
+├── model.py             # TF-IDF vectorizer + XGBoost training / inference code
+├── utils.py             # assorted helpers (video-id canonicalization, logging)
 └── xgboost-baseline.py  # legacy shim that now calls xgb.cli:main
 ```
 
@@ -44,7 +44,7 @@ python -m xgb.cli \
 CLI arguments cover common experimentation knobs:
 
 - `--extra_text_fields` appends additional columns to the prompt document before
-  vectorisation (useful for ablations).
+  vectorization (useful for ablations).
 - `--max_train`, `--max_features`, and `--seed` control subsampling and TF-IDF
   vocabulary size.
 - `--xgb_*` flags forward hyper-parameters directly to `xgboost.XGBClassifier`.

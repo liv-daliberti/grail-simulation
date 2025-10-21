@@ -1,14 +1,14 @@
 # GRAIL Simulation
 
-Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounded human-behaviour simulation that unifies language, agent, and world models. The agent retrieves realistic action slates, reasons about them with a ReAct-style loop, predicts counterfactual outcomes, and aligns to real trajectories through adversarial training.
+Grounded-Retrieval Adversarial Imitation Loop (GRAIL) is a framework for grounded human-behavior simulation that unifies language, agent, and world models. The agent retrieves realistic action slates, reasons about them with a ReAct-style loop, predicts counterfactual outcomes, and aligns to real trajectories through adversarial training.
 
 ![GRAIL overview](docs/Simulation.drawio.png)
 
-The interaction logs trace back to the public behavioural dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule. Across Studies 1–3 the mean opinion shift per issue remains below 0.05, underscoring how rare substantive changes were in the original experiments. Detailed replication tables and plots live in [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md).
+The interaction logs trace back to the public behavioral dataset introduced in [PNAS (2024)](https://www.pnas.org/doi/epdf/10.1073/pnas.2318127122) and distributed via the companion CodeOcean capsule. Across Studies 1–3 the mean opinion shift per issue remains below 0.05, underscoring how rare substantive changes were in the original experiments. Detailed replication tables and plots live in [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md).
 
 ## Key Components
 
-- **Environment model** – retrieves candidate next actions from behaviour logs to keep the agent grounded.
+- **Environment model** – retrieves candidate next actions from behavior logs to keep the agent grounded.
 - **Action model (ReAct)** – reasons over the retrieved slate and emits the next action.
 - **Predictor / world model** – estimates outcomes and counterfactuals for the selected action.
 - **Sequential discriminator** – provides adversarial rewards that align generated trajectories with human data.
@@ -25,13 +25,13 @@ The interaction logs trace back to the public behavioural dataset introduced in 
 ├── docs/                     # Sphinx project that powers the Read the Docs site
 ├── logs/                     # Default output location for training/eval runs
 ├── models/                   # Trained model checkpoints and evaluation curves
-├── recipes/                  # Training configuration files organised by model family
+├── recipes/                  # Training configuration files organized by model family
 ├── reports/                  # Markdown reports rendered from analyses
 ├── scripts/                  # Utility entrypoints (linting, testing, exports)
 ├── src/                      # Python packages for agents, models, and visualization
 │   ├── common/               # Shared utilities
 │   ├── gpt4o/                # GPT-4o slate-prediction baselines
-│   ├── knn/                  # Non-generative k-nearest-neighbour baseline
+│   ├── knn/                  # Non-generative k-nearest-neighbor baseline
 │   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
 │   ├── prompt_builder/       # Prompt templating helpers
 │   ├── visualization/        # Recommendation-tree renderers / plotting tools
@@ -57,6 +57,8 @@ curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeo
 ```
 
 The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
+
+See [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md) for the replication report that shows the pipeline mirrors the PNAS capsule while tracing the per-participant delta movement we model for individual-level prediction.
 
 ## Quickstart
 
@@ -118,7 +120,7 @@ python -m clean_data.prompt.cli \
 
 The package generates histograms, participant summaries, and a Markdown README in the target directory.
 
-### 4. Visualise Recommendation Trees
+### 4. Visualize Recommendation Trees
 
 Render individual sessions or entire recommendation trees:
 
@@ -153,10 +155,7 @@ The repository stitches together several subsystems to turn raw CodeOcean logs i
 
 1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
 2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
-3. **Feature extraction** – `src/knn/features.py` assembles text documents and optionally trains Word2Vec embeddings (`Word2VecFeatureBuilder`) or TF-IDF vectors.
-4. **Index training** – `src/knn/index.py` fits the chosen feature space (`build_tfidf_index` / `build_word2vec_index`) and persists per-issue artifacts.
-5. **KNN evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and selects the elbow-based `k`.
-6. **Reporting** – metrics, per-`k` predictions, elbow plots, and curve diagnostics are written to `models/` and `reports/`.
+3. **KNN feature extraction & evaluation** – see `src/knn/README.md` for how `src/knn/features.py`, `src/knn/index.py`, and `src/knn/evaluate.py` build feature spaces, train indexes, select elbow-based `k`, and record reports.
 
 High-level progression (training + evaluation):
 
@@ -213,6 +212,7 @@ Baselines:
 
 - GPT‑4o slate predictor: `python -m gpt4o.cli`
 - k-NN slate baseline: `bash training/training-knn.sh`
+- XGBoost slate baseline: `bash training/training-xgb.sh`
 
 ## Citation
 

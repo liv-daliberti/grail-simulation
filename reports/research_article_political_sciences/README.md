@@ -22,6 +22,8 @@ The minimal mean shifts and high share of small opinion changes (|Δ| ≤ 0.05 o
 
 ### Pre/post opinion heatmaps
 
+Each heatmap crosses the study-specific policy opinion index—scaled to the [0, 1] interval from the paper’s gun-policy or minimum-wage composites—at baseline (x-axis) versus follow-up (y-axis), so cell intensity tracks how respondents’ overall policy positions moved across waves.
+
 ![Heatmap Study1 Gun Control](heatmap_study1_gun_control.png)
 
 ![Heatmap Study2 Minimum Wage](heatmap_study2_minimum_wage.png)

@@ -250,6 +250,76 @@ def _ensure_dir(path: Path) -> Path:
     return path
 
 
+_STUDY_SPECS_CACHE: Tuple[StudySpec, ...] | None = None
+
+
+def _study_specs() -> Tuple[StudySpec, ...]:
+    """Return the cached participant-study specifications."""
+
+    global _STUDY_SPECS_CACHE  # pylint: disable=global-statement
+    if _STUDY_SPECS_CACHE is None:
+        from .opinion import DEFAULT_SPECS as _DEFAULT_OPINION_SPECS  # lazy import
+
+        _STUDY_SPECS_CACHE = tuple(
+            StudySpec(spec.key, spec.issue, spec.label) for spec in _DEFAULT_OPINION_SPECS
+        )
+    return _STUDY_SPECS_CACHE
+
+
+def _split_tokens(raw: str | None) -> List[str]:
+    """Return a cleaned list of comma-separated tokens."""
+
+    if not raw:
+        return []
+    return [token.strip() for token in raw.split(",") if token.strip()]
+
+
+def _issue_slug_for_study(study: StudySpec) -> str:
+    """Return the slug used for filesystem artifacts for ``study``."""
+
+    return f"{study.issue_slug}_{study.study_slug}"
+
+
+def _resolve_studies(tokens: Sequence[str]) -> List[StudySpec]:
+    """Return participant studies matching ``tokens``."""
+
+    available = list(_study_specs())
+    if not tokens:
+        return available
+
+    key_map = {spec.key.lower(): spec for spec in available}
+    issue_map: Dict[str, List[StudySpec]] = {}
+    for spec in available:
+        issue_map.setdefault(spec.issue.lower(), []).append(spec)
+
+    resolved: List[StudySpec] = []
+    seen: set[str] = set()
+
+    for token in tokens:
+        normalised = token.strip().lower()
+        if not normalised or normalised == "all":
+            for spec in available:
+                if spec.key not in seen:
+                    resolved.append(spec)
+                    seen.add(spec.key)
+            continue
+        if normalised in key_map:
+            spec = key_map[normalised]
+            if spec.key not in seen:
+                resolved.append(spec)
+                seen.add(spec.key)
+            continue
+        if normalised in issue_map:
+            for spec in issue_map[normalised]:
+                if spec.key not in seen:
+                    resolved.append(spec)
+                    seen.add(spec.key)
+            continue
+        valid = sorted({spec.key for spec in available} | {spec.issue for spec in available})
+        raise ValueError(f"Unknown study token '{token}'. Expected one of {valid}.")
+    return resolved
+
+
 def _build_sweep_configs(
     *,
     word2vec_epochs: int,
@@ -354,7 +424,7 @@ def _load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mappin
 
 def _run_sweeps(
     *,
-    issues: Sequence[str],
+    studies: Sequence[StudySpec],
     configs: Sequence[SweepConfig],
     base_cli: Sequence[str],
     extra_cli: Sequence[str],
@@ -365,29 +435,35 @@ def _run_sweeps(
 
     outcomes: List[SweepOutcome] = []
     for config in configs:
-        for issue in issues:
-            issue_slug = issue.replace(" ", "_")
-            run_root = _ensure_dir(sweep_dir / config.feature_space / issue_slug / config.label)
+        for study in studies:
+            issue_slug = _issue_slug_for_study(study)
+            run_root = _ensure_dir(
+                sweep_dir / config.feature_space / study.study_slug / config.label
+            )
             model_dir = None
             if config.feature_space == "word2vec":
-                model_dir = _ensure_dir(word2vec_model_base / "sweeps" / issue_slug / config.label)
+                model_dir = _ensure_dir(
+                    word2vec_model_base / "sweeps" / study.study_slug / config.label
+                )
             cli_args: List[str] = []
             cli_args.extend(base_cli)
             cli_args.extend(config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--issues", issue])
+            cli_args.extend(["--issues", study.issue])
+            cli_args.extend(["--participant-studies", study.key])
             cli_args.extend(["--out-dir", str(run_root)])
             cli_args.extend(extra_cli)
             LOGGER.info(
-                "[SWEEP] feature=%s issue=%s label=%s",
+                "[SWEEP] feature=%s study=%s issue=%s label=%s",
                 config.feature_space,
-                issue_slug,
+                study.key,
+                study.issue,
                 config.label,
             )
             _run_knn_cli(cli_args)
             metrics, metrics_path = _load_metrics(run_root, issue_slug)
             outcomes.append(
                 SweepOutcome(
-                    issue=issue,
+                    study=study,
                     feature_space=config.feature_space,
                     config=config,
                     accuracy=float(metrics.get("accuracy_overall", 0.0)),
@@ -403,37 +479,36 @@ def _run_sweeps(
 def _select_best_configs(
     *,
     outcomes: Sequence[SweepOutcome],
-    issues: Sequence[str],
-) -> Dict[str, SweepSelection]:
-    """Select the aggregate best configuration per feature space."""
+    studies: Sequence[StudySpec],
+) -> Dict[str, Dict[str, StudySelection]]:
+    """Select the best configuration per feature space and study."""
 
-    grouped: Dict[Tuple[str, str], MutableMapping[str, SweepOutcome]] = {}
+    def _is_better(candidate: SweepOutcome, incumbent: SweepOutcome) -> bool:
+        if candidate.accuracy > incumbent.accuracy + 1e-9:
+            return True
+        if candidate.accuracy + 1e-9 < incumbent.accuracy:
+            return False
+        if candidate.eligible > incumbent.eligible:
+            return True
+        if candidate.eligible < incumbent.eligible:
+            return False
+        return candidate.best_k < incumbent.best_k
+
+    selections: Dict[str, Dict[str, StudySelection]] = {}
     for outcome in outcomes:
-        key = (outcome.feature_space, outcome.config.label)
-        per_issue = grouped.setdefault(key, {})
-        per_issue[outcome.issue] = outcome
+        per_feature = selections.setdefault(outcome.feature_space, {})
+        study_key = outcome.study.key
+        current = per_feature.get(study_key)
+        if current is None or _is_better(outcome, current.outcome):
+            per_feature[study_key] = StudySelection(study=outcome.study, outcome=outcome)
 
-    selections: Dict[str, SweepSelection] = {}
-    for (feature_space, _label), per_issue in grouped.items():
-        if any(issue not in per_issue for issue in issues):
-            continue
-        ordered = OrderedDict(
-            (issue, per_issue[issue]) for issue in issues if issue in per_issue
-        )
-        eligible_total = sum(item.eligible for item in ordered.values())
-        if eligible_total <= 0:
-            continue
-        weighted_accuracy = sum(
-            item.accuracy * item.eligible for item in ordered.values()
-        ) / eligible_total
-        selection = SweepSelection(
-            config=next(iter(ordered.values())).config,
-            per_issue=ordered,
-            weighted_accuracy=weighted_accuracy,
-        )
-        incumbent = selections.get(feature_space)
-        if incumbent is None or selection.weighted_accuracy > incumbent.weighted_accuracy:
-            selections[feature_space] = selection
+    expected_keys = [study.key for study in studies]
+    for feature_space, per_feature in selections.items():
+        missing = [key for key in expected_keys if key not in per_feature]
+        if missing:
+            raise RuntimeError(
+                f"Missing sweep selections for feature={feature_space}: {', '.join(missing)}"
+            )
     if not selections:
         raise RuntimeError("Failed to select a best configuration for any feature space.")
     return selections
@@ -441,8 +516,8 @@ def _select_best_configs(
 
 def _run_final_evaluations(
     *,
-    selections: Mapping[str, SweepSelection],
-    issues: Sequence[str],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
     base_cli: Sequence[str],
     extra_cli: Sequence[str],
     out_dir: Path,
@@ -451,34 +526,44 @@ def _run_final_evaluations(
     """Run final slate evaluations and return metrics grouped by feature space."""
 
     metrics_by_feature: Dict[str, Dict[str, Mapping[str, object]]] = {}
-    for feature_space, selection in selections.items():
-        LOGGER.info(
-            "[FINAL] feature=%s weighted_accuracy=%.3f",
-            feature_space,
-            selection.weighted_accuracy,
-        )
-        feature_out_dir = _ensure_dir(out_dir / feature_space)
-        model_dir = word2vec_model_dir if feature_space == "word2vec" else None
-        cli_args: List[str] = []
-        cli_args.extend(base_cli)
-        cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-        cli_args.extend(["--issues", ",".join(issues)])
-        cli_args.extend(["--out-dir", str(feature_out_dir)])
-        cli_args.extend(["--knn-k", str(selection.primary_best_k)])
-        cli_args.extend(extra_cli)
-        _run_knn_cli(cli_args)
+    for feature_space, per_study in selections.items():
         feature_metrics: Dict[str, Mapping[str, object]] = {}
-        for issue in issues:
-            issue_slug = issue.replace(" ", "_")
+        for study in studies:
+            selection = per_study.get(study.key)
+            if selection is None:
+                continue
+            LOGGER.info(
+                "[FINAL] feature=%s study=%s issue=%s accuracy=%.3f",
+                feature_space,
+                study.key,
+                study.issue,
+                selection.accuracy,
+            )
+            feature_out_dir = _ensure_dir(out_dir / feature_space / study.study_slug)
+            model_dir = None
+            if feature_space == "word2vec":
+                model_dir = _ensure_dir(word2vec_model_dir / study.study_slug)
+            cli_args: List[str] = []
+            cli_args.extend(base_cli)
+            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
+            cli_args.extend(["--issues", study.issue])
+            cli_args.extend(["--participant-studies", study.key])
+            cli_args.extend(["--out-dir", str(feature_out_dir)])
+            cli_args.extend(["--knn-k", str(selection.best_k)])
+            cli_args.extend(extra_cli)
+            _run_knn_cli(cli_args)
+            issue_slug = _issue_slug_for_study(study)
             metrics, _path = _load_metrics(feature_out_dir, issue_slug)
-            feature_metrics[issue] = metrics
-        metrics_by_feature[feature_space] = feature_metrics
+            feature_metrics[study.key] = metrics
+        if feature_metrics:
+            metrics_by_feature[feature_space] = feature_metrics
     return metrics_by_feature
 
 
 def _run_opinion_evaluations(
     *,
-    selections: Mapping[str, SweepSelection],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
     base_cli: Sequence[str],
     extra_cli: Sequence[str],
     out_dir: Path,
@@ -487,18 +572,26 @@ def _run_opinion_evaluations(
     """Run opinion regression for each feature space and return metrics."""
 
     metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
-    for feature_space, selection in selections.items():
+    for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
         feature_out_dir = _ensure_dir(out_dir)
-        model_dir = word2vec_model_dir if feature_space == "word2vec" else None
-        cli_args: List[str] = []
-        cli_args.extend(base_cli)
-        cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-        cli_args.extend(["--task", "opinion"])
-        cli_args.extend(["--out-dir", str(feature_out_dir)])
-        cli_args.extend(["--knn-k", str(selection.primary_best_k)])
-        cli_args.extend(extra_cli)
-        _run_knn_cli(cli_args)
+        for study in studies:
+            selection = per_study.get(study.key)
+            if selection is None:
+                continue
+            LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
+            model_dir = None
+            if feature_space == "word2vec":
+                model_dir = _ensure_dir(word2vec_model_dir / study.study_slug)
+            cli_args: List[str] = []
+            cli_args.extend(base_cli)
+            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
+            cli_args.extend(["--task", "opinion"])
+            cli_args.extend(["--out-dir", str(feature_out_dir)])
+            cli_args.extend(["--knn-k", str(selection.best_k)])
+            cli_args.extend(["--opinion-studies", study.key])
+            cli_args.extend(extra_cli)
+            _run_knn_cli(cli_args)
         metrics[feature_space] = _load_opinion_metrics(feature_out_dir, feature_space)
     return metrics
 
@@ -511,7 +604,8 @@ def _run_opinion_evaluations(
 def _build_hyperparameter_report(
     *,
     output_path: Path,
-    selections: Mapping[str, SweepSelection],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
     k_sweep: str,
 ) -> None:
     lines: List[str] = []
@@ -527,50 +621,60 @@ def _build_hyperparameter_report(
     lines.append("- Text-field augmentations: none, `viewer_profile,state_text`")
     lines.append("- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}")
     lines.append("")
-    lines.append("| Feature space | Metric | Text fields | Vec size | Window | Min count | Issue | Accuracy | Best k |")
+    lines.append("| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |")
     lines.append("| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |")
     for feature_space in ("tfidf", "word2vec"):
-        selection = selections.get(feature_space)
-        if not selection:
-            continue
-        config = selection.config
-        text_label = ",".join(config.text_fields) if config.text_fields else "none"
-        size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
-        window = str(config.word2vec_window) if config.word2vec_window is not None else "—"
-        min_count = (
-            str(config.word2vec_min_count) if config.word2vec_min_count is not None else "—"
-        )
-        for issue, outcome in selection.per_issue.items():
+        per_study = selections.get(feature_space, {})
+        for study in studies:
+            selection = per_study.get(study.key)
+            if not selection:
+                continue
+            config = selection.config
+            text_label = ",".join(config.text_fields) if config.text_fields else "none"
+            size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
+            window = str(config.word2vec_window) if config.word2vec_window is not None else "—"
+            min_count = (
+                str(config.word2vec_min_count) if config.word2vec_min_count is not None else "—"
+            )
             lines.append(
-                f"| {feature_space.upper()} | {config.metric} | {text_label} | {size} | "
-                f"{window} | {min_count} | {_snake_to_title(issue)} | "
-                f"{_format_float(outcome.accuracy)} | {outcome.best_k} |"
+                f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | {size} | "
+                f"{window} | {min_count} | {_format_float(selection.accuracy)} | {selection.best_k} |"
             )
     lines.append("")
     lines.append("### Observations")
     lines.append("")
     for feature_space in ("tfidf", "word2vec"):
-        selection = selections.get(feature_space)
-        if not selection:
+        per_study = selections.get(feature_space, {})
+        if not per_study:
             continue
-        config = selection.config
-        text_label = "no extra fields" if not config.text_fields else f"extra fields `{','.join(config.text_fields)}`"
-        if feature_space == "word2vec":
-            config_bits = (
-                f"{config.metric} distance, {text_label}, size={config.word2vec_size}, "
-                f"window={config.word2vec_window}, min_count={config.word2vec_min_count}"
+        bullet_bits: List[str] = []
+        for study in studies:
+            selection = per_study.get(study.key)
+            if not selection:
+                continue
+            config = selection.config
+            text_label = (
+                "no extra fields"
+                if not config.text_fields
+                else f"extra fields `{','.join(config.text_fields)}`"
             )
-        else:
-            config_bits = f"{config.metric} distance with {text_label}"
-        per_issue_summary = ", ".join(
-            f"{_snake_to_title(issue)} accuracy {_format_float(outcome.accuracy)} (k={outcome.best_k})"
-            for issue, outcome in selection.per_issue.items()
-        )
-        lines.append(f"- {feature_space.upper()}: {per_issue_summary} using {config_bits}.")
+            if feature_space == "word2vec":
+                config_bits = (
+                    f"{config.metric} distance, {text_label}, size={config.word2vec_size}, "
+                    f"window={config.word2vec_window}, min_count={config.word2vec_min_count}"
+                )
+            else:
+                config_bits = f"{config.metric} distance with {text_label}"
+            bullet_bits.append(
+                f"{study.label}: accuracy {_format_float(selection.accuracy)} "
+                f"(k={selection.best_k}) using {config_bits}"
+            )
+        if bullet_bits:
+            lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
     lines.append("")
     lines.append("## Post-Study Opinion Regression")
     lines.append("")
-    lines.append("Opinion runs reuse the slate-selected configurations per feature space.")
+    lines.append("Opinion runs reuse the per-study slate configurations gathered above.")
     lines.append("See `reports/knn/opinion/README.md` for detailed metrics and plots.")
     lines.append("")
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -580,15 +684,18 @@ def _build_next_video_report(
     *,
     output_path: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
-    selections: Mapping[str, SweepSelection],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
 ) -> None:
     if not metrics_by_feature:
         raise RuntimeError("No slate metrics available to build the next-video report.")
 
-    any_feature = next(iter(metrics_by_feature.values()))
-    any_issue = next(iter(any_feature.values()))
-    dataset_name = any_issue.get("dataset", DEFAULT_DATASET_SOURCE)
-    split = any_issue.get("split", "validation")
+    any_feature = next(iter(metrics_by_feature.values()), {})
+    any_study = next(iter(any_feature.values()), None)
+    if not any_study:
+        raise RuntimeError("No slate metrics available to build the next-video report.")
+    dataset_name = any_study.get("dataset", DEFAULT_DATASET_SOURCE)
+    split = any_study.get("split", "validation")
 
     lines: List[str] = []
     lines.append("# KNN Next-Video Baseline")
@@ -603,47 +710,29 @@ def _build_next_video_report(
     lines.append("")
 
     for feature_space in ("tfidf", "word2vec"):
-        selection = selections.get(feature_space)
         metrics = metrics_by_feature.get(feature_space, {})
         if not metrics:
             continue
-        config = selection.config if selection else None
         if feature_space == "tfidf":
             lines.append("## TF-IDF Feature Space")
         else:
             lines.append("## Word2Vec Feature Space")
         lines.append("")
-        lines.append("| Issue | Accuracy ↑ | Best k | Most-frequent baseline ↑ |")
+        lines.append("| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |")
         lines.append("| --- | ---: | ---: | ---: |")
-        for issue, data in metrics.items():
+        for study in studies:
+            data = metrics.get(study.key)
+            if not data:
+                continue
             baseline = data.get("baseline_most_frequent_gold_index", {})
             baseline_acc = float(baseline.get("accuracy", 0.0))
             lines.append(
-                f"| {_snake_to_title(issue)} | "
+                f"| {study.label} | "
                 f"{_format_float(float(data.get('accuracy_overall', 0.0)))} | "
                 f"{int(data.get('best_k', 0))} | "
                 f"{_format_float(baseline_acc)} |"
             )
         lines.append("")
-        if config:
-            if feature_space == "word2vec":
-                config_desc = (
-                    f"{config.metric} distance, "
-                    f"size={config.word2vec_size}, window={config.word2vec_window}, "
-                    f"min_count={config.word2vec_min_count}"
-                )
-            else:
-                config_desc = f"{config.metric} distance"
-            text_label = (
-                "no extra fields"
-                if not config.text_fields
-                else f"extra fields `{','.join(config.text_fields)}`"
-            )
-            lines.append(
-                f"Selected configuration: {config_desc} with {text_label} "
-                f"(weighted accuracy {selection.weighted_accuracy:.3f})."
-            )
-            lines.append("")
 
     lines.append("## Observations")
     lines.append("")
@@ -652,11 +741,14 @@ def _build_next_video_report(
         if not metrics:
             continue
         bullet_bits = []
-        for issue, data in metrics.items():
+        for study in studies:
+            data = metrics.get(study.key)
+            if not data:
+                continue
             baseline = data.get("baseline_most_frequent_gold_index", {})
             baseline_acc = float(baseline.get("accuracy", 0.0))
             bullet_bits.append(
-                f"{_snake_to_title(issue)} accuracy {_format_float(float(data.get('accuracy_overall', 0.0)))} "
+                f"{study.label} accuracy {_format_float(float(data.get('accuracy_overall', 0.0)))} "
                 f"(baseline {_format_float(baseline_acc)})"
             )
         lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")

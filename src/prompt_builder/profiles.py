@@ -152,13 +152,14 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
         viewer = synthesize_viewer_sentence(ex)
     sentences: List[str] = []
     viewer_placeholder = False
+    viewer_sentence = ""
     if viewer:
         normalized = viewer.strip().lower()
         if normalized in {"(no profile provided)", "no profile provided"}:
             viewer_placeholder = True
-        sentence = _ensure_sentence(viewer)
-        if sentence:
-            sentences.append(sentence)
+        viewer_sentence = _ensure_sentence(viewer)
+        if viewer_placeholder:
+            sentences.append(viewer_sentence)
 
     demographics = _demographic_sentences(ex, selected_row)
     politics = _politics_sentences(ex, selected_row)
@@ -179,6 +180,8 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
     if viewer_placeholder and sentences:
         if all("(no profile provided)" in s.lower() for s in sentences):
             sentences = []
+    if not viewer_placeholder and not sentences and viewer_sentence:
+        sentences.append(viewer_sentence)
 
     return ProfileRender(sentences=sentences, viewer_placeholder=viewer_placeholder)
 

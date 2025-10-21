@@ -113,7 +113,8 @@ def run_eval(args: Any) -> None:
     :type args: Any
     """
 
-    logging.info("Loading dataset %s", DATASET_NAME)
+    dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
+    logging.info("Loading dataset %s", dataset_name)
     out_dir = Path(args.out_dir)
     _ensure_output_dir(out_dir, args.overwrite)
     out_jsonl = out_dir / "predictions.jsonl"
@@ -122,36 +123,46 @@ def run_eval(args: Any) -> None:
     os.environ.setdefault("HF_DATASETS_CACHE", args.cache_dir)
     os.environ.setdefault("HF_HOME", args.cache_dir)
 
-    if load_dataset is None or DownloadConfig is None:
+    dataset_path = Path(dataset_name)
+    if dataset_path.exists() and load_from_disk is None:
+        raise ImportError(
+            "The 'datasets' package with load_from_disk support is required to load local datasets."
+        )
+    if not dataset_path.exists() and (load_dataset is None or DownloadConfig is None):
         raise ImportError(
             "The 'datasets' package is required to run GPT-4o evaluations. "
             "Install it with `pip install datasets`."
         )
 
-    download_config = DownloadConfig(resume_download=True, max_retries=2)
     use_streaming = False
-    try:
-        dataset = load_dataset(
-            DATASET_NAME,
-            cache_dir=args.cache_dir,
-            download_config=download_config,
-        )
-    except Exception as exc:
-        message = str(exc)
-        if "Not enough disk space" in message or "Insufficient space" in message:
-            logging.warning("Low disk space detected; falling back to streaming mode.")
-            use_streaming = True
-        else:
-            raise
+    dataset = None
+    if dataset_path.exists():
+        logging.info("Detected local dataset at %s", dataset_path)
+        dataset = load_from_disk(str(dataset_path))
+    else:
+        download_config = DownloadConfig(resume_download=True, max_retries=2)
+        try:
+            dataset = load_dataset(
+                dataset_name,
+                cache_dir=args.cache_dir,
+                download_config=download_config,
+            )
+        except Exception as exc:
+            message = str(exc)
+            if "Not enough disk space" in message or "Insufficient space" in message:
+                logging.warning("Low disk space detected; falling back to streaming mode.")
+                use_streaming = True
+            else:
+                raise
 
     if use_streaming:
         eval_split = EVAL_SPLIT
         try:
-            data_iter = load_dataset(DATASET_NAME, split=eval_split, streaming=True)
+            data_iter = load_dataset(dataset_name, split=eval_split, streaming=True)
         except Exception as exc:
             for fallback in ("validation", "eval", "test"):
                 try:
-                    data_iter = load_dataset(DATASET_NAME, split=fallback, streaming=True)
+                    data_iter = load_dataset(dataset_name, split=fallback, streaming=True)
                     eval_split = fallback
                     break
                 except Exception:
@@ -159,27 +170,43 @@ def run_eval(args: Any) -> None:
             else:
                 raise RuntimeError("Unable to load evaluation split in streaming mode.") from exc
     else:
-        available_splits = list(dataset.keys())
-        eval_split = next(
-            (
-                split
-                for split in (EVAL_SPLIT, "validation", "eval", "test")
-                if split in available_splits
-            ),
-            None,
-        )
-        if not eval_split:
-            available_msg = ", ".join(available_splits)
-            raise RuntimeError(
-                "Evaluation split not found in dataset. "
-                f"Available: {available_msg}"
+        eval_split = EVAL_SPLIT
+        available_splits: list[str] = []
+        if hasattr(dataset, "keys"):
+            try:
+                available_splits = list(dataset.keys())  # type: ignore[assignment]
+            except Exception:
+                available_splits = []
+        if available_splits:
+            eval_split = next(
+                (
+                    split
+                    for split in (EVAL_SPLIT, "validation", "eval", "test")
+                    if split in available_splits
+                ),
+                available_splits[0],
             )
-        data_iter = dataset[eval_split]
-        if args.eval_max:
+            data_iter = dataset[eval_split]  # type: ignore[index]
+        else:
+            eval_split = getattr(dataset, "split", None) or EVAL_SPLIT  # type: ignore[attr-defined]
+            data_iter = dataset
+        if args.eval_max and hasattr(data_iter, "select"):
             data_iter = data_iter.select(range(min(args.eval_max, len(data_iter))))
 
     if use_streaming and args.eval_max:
         data_iter = data_iter.take(args.eval_max)
+
+    raw_issues = str(getattr(args, "issues", "") or "")
+    requested_issues = [token.strip() for token in raw_issues.split(",") if token.strip()]
+    issues_filter = {token.lower() for token in requested_issues if token}
+    if "all" in issues_filter:
+        issues_filter.clear()
+
+    raw_studies = str(getattr(args, "studies", "") or "")
+    requested_studies = [token.strip() for token in raw_studies.split(",") if token.strip()]
+    studies_filter = {token.lower() for token in requested_studies if token}
+    if "all" in studies_filter:
+        studies_filter.clear()
 
     n_eval_target = args.eval_max if args.eval_max else None
     with open(out_jsonl, "w", encoding="utf-8") as writer:
@@ -194,6 +221,18 @@ def run_eval(args: Any) -> None:
         correct_by_opts = defaultdict(int)
         parsed_by_opts = defaultdict(int)
         formatted_by_opts = defaultdict(int)
+
+        seen_by_issue = defaultdict(int)
+        eligible_by_issue = defaultdict(int)
+        correct_by_issue = defaultdict(int)
+        parsed_by_issue = defaultdict(int)
+        formatted_by_issue = defaultdict(int)
+
+        seen_by_study = defaultdict(int)
+        eligible_by_study = defaultdict(int)
+        correct_by_study = defaultdict(int)
+        parsed_by_study = defaultdict(int)
+        formatted_by_study = defaultdict(int)
 
         seen_single = seen_multi = 0
         elig_single = elig_multi = 0
@@ -211,6 +250,18 @@ def run_eval(args: Any) -> None:
         seen_rows = 0
 
         for example in data_iter:
+            issue_raw = str(example.get("issue", "") or "").strip()
+            issue_label = issue_raw if issue_raw else "unspecified"
+            issue_key = issue_label.lower()
+            if issues_filter and issue_key not in issues_filter:
+                continue
+
+            study_raw = str(example.get("participant_study", "") or "").strip()
+            study_label = study_raw if study_raw else "unspecified"
+            study_key = study_label.lower()
+            if studies_filter and study_key not in studies_filter:
+                continue
+
             seen_rows += 1
             record = make_conversation_record(example)
             messages = record["prompt"]
@@ -220,6 +271,8 @@ def run_eval(args: Any) -> None:
 
             pos_bucket = _bucket_from_position(position_index)
             seen_by_pos[pos_bucket] += 1
+            seen_by_issue[issue_label] += 1
+            seen_by_study[study_label] += 1
 
             try:
                 raw_output = ds_call(
@@ -234,10 +287,14 @@ def run_eval(args: Any) -> None:
             is_formatted = bool(ANS_TAG.search(raw_output))
             if is_formatted:
                 format_ok += 1
+                formatted_by_issue[issue_label] += 1
+                formatted_by_study[study_label] += 1
 
             parsed_index = _parse_index_from_output(raw_output)
             if parsed_index is not None:
                 parsed_ok += 1
+                parsed_by_issue[issue_label] += 1
+                parsed_by_study[study_label] += 1
 
             option_bucket = _bucket_from_options(option_count)
             seen_by_opts[option_bucket] += 1
@@ -260,6 +317,8 @@ def run_eval(args: Any) -> None:
                 eligible_overall += 1
                 eligible_by_pos[pos_bucket] += 1
                 eligible_by_opts[option_bucket] += 1
+                eligible_by_issue[issue_label] += 1
+                eligible_by_study[study_label] += 1
 
                 gold_hist[gold_index] = gold_hist.get(gold_index, 0) + 1
                 all_gold_indices.append(gold_index)
@@ -272,6 +331,8 @@ def run_eval(args: Any) -> None:
                 correct_overall += 1
                 correct_by_pos[pos_bucket] += 1
                 correct_by_opts[option_bucket] += 1
+                correct_by_issue[issue_label] += 1
+                correct_by_study[study_label] += 1
 
             if eligible:
                 if option_count == 1:
@@ -293,6 +354,8 @@ def run_eval(args: Any) -> None:
                         "n_options": option_count,
                         "correct": bool(is_correct),
                         "eligible": bool(eligible),
+                        "issue": issue_label,
+                        "participant_study": study_label,
                         "position_index": position_index,
                         "position_bucket": pos_bucket,
                     },
@@ -359,6 +422,45 @@ def run_eval(args: Any) -> None:
         "format_rate_multi": safe_div(formatted_multi, max(1, seen_multi)),
     }
 
+    def _summarise_group(
+        seen_map: Dict[str, int],
+        eligible_map: Dict[str, int],
+        correct_map: Dict[str, int],
+        parsed_map: Dict[str, int],
+        formatted_map: Dict[str, int],
+    ) -> Dict[str, Dict[str, float | int]]:
+        summary: Dict[str, Dict[str, float | int]] = {}
+        for key in sorted(seen_map.keys()):
+            seen = seen_map[key]
+            if seen <= 0:
+                continue
+            summary[key] = {
+                "n_seen": int(seen),
+                "n_eligible": int(eligible_map.get(key, 0)),
+                "correct": int(correct_map.get(key, 0)),
+                "accuracy": safe_div(correct_map.get(key, 0), eligible_map.get(key, 0)),
+                "parsed_rate": safe_div(parsed_map.get(key, 0), seen),
+                "format_rate": safe_div(formatted_map.get(key, 0), seen),
+            }
+        return summary
+
+    group_metrics = {
+        "by_issue": _summarise_group(
+            seen_by_issue,
+            eligible_by_issue,
+            correct_by_issue,
+            parsed_by_issue,
+            formatted_by_issue,
+        ),
+        "by_participant_study": _summarise_group(
+            seen_by_study,
+            eligible_by_study,
+            correct_by_study,
+            parsed_by_study,
+            formatted_by_study,
+        ),
+    }
+
     gold_index_distribution = {str(key): int(value) for key, value in sorted(gold_hist.items())}
     if gold_hist:
         top_index = max(gold_hist.items(), key=lambda kv: kv[1])[0]
@@ -382,7 +484,7 @@ def run_eval(args: Any) -> None:
 
     metrics: Dict[str, Any] = {
         "model": getattr(args, "deployment", None) or DEPLOYMENT_NAME,
-        "dataset": DATASET_NAME,
+        "dataset": dataset_name,
         "split": eval_split,
         "n_total": int(total_seen),
         "n_eligible": int(eligible_overall),
@@ -392,6 +494,11 @@ def run_eval(args: Any) -> None:
         "position_stats": position_stats,
         "by_n_options": by_options,
         "split_single_vs_multi": split_single_multi,
+        "group_metrics": group_metrics,
+        "filters": {
+            "issues": requested_issues,
+            "studies": requested_studies,
+        },
         "gold_index_distribution": gold_index_distribution,
         "baseline_most_frequent_gold_index": baseline_most_frequent,
         "random_baseline_expected_accuracy": random_baseline_accuracy,
@@ -402,7 +509,7 @@ def run_eval(args: Any) -> None:
         json.dump(metrics, handle, ensure_ascii=False, indent=2)
 
     summary = (
-        f"[DONE] split={eval_split}  n={total_seen}  eligible={eligible_overall} "
+        f"[DONE] dataset={dataset_name} split={eval_split}  n={total_seen}  eligible={eligible_overall} "
         f"accuracy={overall_accuracy:.4f}  parsed_ok={parsed_rate:.3f}  "
         f"format_rate={format_rate:.3f}"
     )

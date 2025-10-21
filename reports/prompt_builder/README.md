@@ -121,7 +121,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Seattle's $15 Minimum Wage Experiment is Working (watched 222s of 222s (100% complete), from Alicé Anil)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
 1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
@@ -143,7 +143,7 @@ RECENTLY WATCHED (NEWEST LAST)
 2. Price Floors: The Minimum Wage (watched 585s of 586s (100% complete), from Marginal Revolution University)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
 1. Should We Raise the Minimum Wage? (vlogbrothers, 227s long) — Engagement: views 1,305,252, likes 28,589, comments 40
@@ -166,7 +166,7 @@ RECENTLY WATCHED (NEWEST LAST)
 3. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (watched 158s of 159s (99% complete), from NowThis News)
 
 SURVEY HIGHLIGHTS
-political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
 1. Amazon hikes minimum wage to $15 for all employees (Fox Business, 294s long) — Engagement: views 15,460, likes 200, comments 40
@@ -187,7 +187,7 @@ RECENTLY WATCHED (NEWEST LAST)
 1. Seattle's $15 Minimum Wage Experiment is Working (watched 221s of 222s (100% complete), from Alicé Anil)
 
 SURVEY HIGHLIGHTS
-political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is about sixty-seven percent, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
 1. What Amazon's New Minimum Wage Means For Inflation And The Future | Velshi & Ruhle | MSNBC (MSNBC, 367s long) — Engagement: views 79,653, likes 1,040, comments 40
@@ -209,7 +209,7 @@ RECENTLY WATCHED (NEWEST LAST)
 2. What the US gets wrong about minimum wage (watched 306s of 306s (100% complete), from Vox)
 
 SURVEY HIGHLIGHTS
-political interest is 66.7%, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is 0%, and $15 minimum wage support is 0%.
+political interest is about sixty-seven percent, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
 1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40

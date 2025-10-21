@@ -342,8 +342,8 @@ def _simes(p_values: Iterable[float]) -> float:
     if not cleaned:
         return float("nan")
     sorted_values = np.sort(np.clip(cleaned, 0.0, 1.0))
-    n = sorted_values.size
-    adjusted = sorted_values * n / (np.arange(n) + 1)
+    value_count = sorted_values.size
+    adjusted = sorted_values * value_count / (np.arange(value_count) + 1)
     return float(np.nanmin(adjusted))
 
 
@@ -355,12 +355,12 @@ def _benjamini_hochberg(p_values: Mapping[str, float]) -> Dict[str, float]:
     raw = np.array([p_values[key] for key in keys], dtype=float)
     order = np.argsort(raw)
     ordered = raw[order]
-    n = float(len(ordered))
+    sample_count = float(len(ordered))
     adjusted = np.empty_like(ordered)
     running = 1.0
     for idx in range(len(ordered) - 1, -1, -1):
         rank = idx + 1.0
-        candidate = ordered[idx] * n / rank
+        candidate = ordered[idx] * sample_count / rank
         running = min(running, candidate)
         adjusted[idx] = min(running, 1.0)
     result = {key: float("nan") for key in p_values}

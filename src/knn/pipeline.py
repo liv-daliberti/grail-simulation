@@ -153,6 +153,32 @@ class StudySelection:
         return self.outcome.best_k
 
 
+@dataclass(frozen=True)
+class PipelineContext:
+    """Normalized configuration for a pipeline run."""
+
+    dataset: str
+    out_dir: Path
+    cache_dir: str
+    sweep_dir: Path
+    word2vec_model_dir: Path
+    k_sweep: str
+    study_tokens: Tuple[str, ...]
+    word2vec_epochs: int
+    word2vec_workers: int
+
+
+@dataclass(frozen=True)
+class ReportBundle:
+    """Inputs required to render the Markdown summaries."""
+
+    selections: Mapping[str, Mapping[str, StudySelection]]
+    studies: Sequence[StudySpec]
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+    opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    k_sweep: str
+
+
 # ---------------------------------------------------------------------------
 # Argument parsing helpers
 # ---------------------------------------------------------------------------
@@ -232,6 +258,43 @@ def _default_out_dir(root: Path) -> str:
     return str(root / "models" / "knn")
 
 
+def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineContext:
+    """Normalise CLI/environment options into a reusable context object."""
+
+    dataset = args.dataset or os.environ.get("DATASET") or _default_dataset(root)
+    out_dir_value = args.out_dir or os.environ.get("OUT_DIR") or _default_out_dir(root)
+    out_dir = Path(out_dir_value)
+    cache_dir_value = args.cache_dir or os.environ.get("CACHE_DIR") or _default_cache_dir(root)
+    sweep_dir = Path(
+        args.sweep_dir or os.environ.get("KNN_SWEEP_DIR") or (out_dir / "sweeps")
+    )
+    word2vec_model_dir = Path(
+        args.word2vec_model_dir
+        or os.environ.get("WORD2VEC_MODEL_DIR")
+        or (out_dir / "word2vec_models")
+    )
+    k_sweep = args.k_sweep or os.environ.get("KNN_K_SWEEP") or "1,2,3,4,5,10,15,20,25,50,100"
+    study_tokens = tuple(
+        _split_tokens(getattr(args, "studies", ""))
+        or _split_tokens(os.environ.get("KNN_STUDIES", ""))
+        or _split_tokens(args.issues or "")
+        or _split_tokens(os.environ.get("KNN_ISSUES", ""))
+    )
+    word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
+    word2vec_workers = _default_word2vec_workers()
+    return PipelineContext(
+        dataset=dataset,
+        out_dir=out_dir,
+        cache_dir=str(cache_dir_value),
+        sweep_dir=sweep_dir,
+        word2vec_model_dir=word2vec_model_dir,
+        k_sweep=k_sweep,
+        study_tokens=study_tokens,
+        word2vec_epochs=word2vec_epochs,
+        word2vec_workers=word2vec_workers,
+    )
+
+
 def _default_word2vec_workers() -> int:
     env_value = os.environ.get("WORD2VEC_WORKERS")
     if env_value:
@@ -278,6 +341,13 @@ def _split_tokens(raw: str | None) -> List[str]:
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
+def _warn_if_issue_tokens_used(args: argparse.Namespace) -> None:
+    """Log a gentle reminder that ``--issues`` is deprecated for the pipeline."""
+
+    if not _split_tokens(getattr(args, "studies", "")) and _split_tokens(args.issues or ""):
+        LOGGER.warning("`--issues` is deprecated for the pipeline; interpreting as study keys.")
+
+
 def _issue_slug_for_study(study: StudySpec) -> str:
     """Return the slug used for filesystem artifacts for ``study``."""
 
@@ -322,6 +392,32 @@ def _resolve_studies(tokens: Sequence[str]) -> List[StudySpec]:
         valid = sorted({spec.key for spec in available} | {spec.issue for spec in available})
         raise ValueError(f"Unknown study token '{token}'. Expected one of {valid}.")
     return resolved
+
+
+def _build_base_cli(context: PipelineContext) -> List[str]:
+    """Return the base CLI arguments shared across pipeline steps."""
+
+    base_cli = ["--dataset", context.dataset, "--cache-dir", context.cache_dir, "--fit-index", "--overwrite"]
+    if context.k_sweep:
+        base_cli.extend(["--knn-k-sweep", context.k_sweep])
+    return base_cli
+
+
+def _log_run_configuration(studies: Sequence[StudySpec], context: PipelineContext) -> None:
+    """Emit a concise summary of the resolved pipeline configuration."""
+
+    LOGGER.info("Dataset: %s", context.dataset)
+    LOGGER.info(
+        "Studies: %s",
+        ", ".join(f"{spec.key} ({spec.issue})" for spec in studies),
+    )
+    LOGGER.info("Output directory: %s", context.out_dir)
+
+
+def _log_dry_run(configs: Sequence[SweepConfig]) -> None:
+    """Log the number of configurations planned during ``--dry-run``."""
+
+    LOGGER.info("[DRY RUN] Planned %d sweep configurations.", len(configs))
 
 
 def _build_sweep_configs(
@@ -605,6 +701,215 @@ def _run_opinion_evaluations(
 # ---------------------------------------------------------------------------
 
 
+def _hyperparameter_report_intro(k_sweep: str) -> List[str]:
+    return [
+        "# KNN Hyperparameter Tuning Notes",
+        "",
+        "This document consolidates the selected grid searches for the KNN baselines.",
+        "",
+        "## Next-Video Prediction",
+        "",
+        "The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:",
+        f"- `k ∈ {{{k_sweep}}}`",
+        "- Distance metrics: cosine and L2",
+        "- Text-field augmentations: none, `viewer_profile,state_text`",
+        "- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}",
+        "",
+        "| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |",
+        "| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |",
+    ]
+
+
+def _hyperparameter_table_section(
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    lines: List[str] = []
+    for feature_space in ("tfidf", "word2vec"):
+        per_study = selections.get(feature_space, {})
+        lines.extend(_hyperparameter_feature_rows(feature_space, per_study, studies))
+    lines.append("")
+    return lines
+
+
+def _hyperparameter_feature_rows(
+    feature_space: str,
+    per_study: Mapping[str, StudySelection],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    rows: List[str] = []
+    for study in studies:
+        selection = per_study.get(study.key)
+        if not selection:
+            continue
+        rows.append(_format_hyperparameter_row(feature_space, study, selection))
+    return rows
+
+
+def _format_hyperparameter_row(
+    feature_space: str,
+    study: StudySpec,
+    selection: StudySelection,
+) -> str:
+    config = selection.config
+    text_label = ",".join(config.text_fields) if config.text_fields else "none"
+    size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
+    window = str(config.word2vec_window) if config.word2vec_window is not None else "—"
+    min_count = str(config.word2vec_min_count) if config.word2vec_min_count is not None else "—"
+    return (
+        f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | "
+        f"{size} | {window} | {min_count} | {_format_float(selection.accuracy)} | "
+        f"{selection.best_k} |"
+    )
+
+
+def _describe_text_fields(fields: Sequence[str]) -> str:
+    return "no extra fields" if not fields else f"extra fields `{','.join(fields)}`"
+
+
+def _format_word2vec_descriptor(config: SweepConfig, text_info: str) -> str:
+    return (
+        f"{config.metric} distance, {text_info}, "
+        f"size={config.word2vec_size}, "
+        f"window={config.word2vec_window}, "
+        f"min_count={config.word2vec_min_count}"
+    )
+
+
+def _hyperparameter_observations_section(
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    lines: List[str] = ["### Observations", ""]
+    for feature_space in ("tfidf", "word2vec"):
+        per_study = selections.get(feature_space, {})
+        summary = _hyperparameter_feature_observation(feature_space, per_study, studies)
+        if summary:
+            lines.append(f"- {feature_space.upper()}: {summary}.")
+    lines.append("")
+    return lines
+
+
+def _hyperparameter_feature_observation(
+    feature_space: str,
+    per_study: Mapping[str, StudySelection],
+    studies: Sequence[StudySpec],
+) -> str | None:
+    bullet_bits: List[str] = []
+    for study in studies:
+        selection = per_study.get(study.key)
+        if not selection:
+            continue
+        config = selection.config
+        text_info = _describe_text_fields(config.text_fields)
+        if feature_space == "word2vec":
+            config_bits = _format_word2vec_descriptor(config, text_info)
+        else:
+            config_bits = f"{config.metric} distance with {text_info}"
+        detail = (
+            f"{study.label}: accuracy {_format_float(selection.accuracy)} "
+            f"(k={selection.best_k}) using {config_bits}"
+        )
+        bullet_bits.append(detail)
+    return "; ".join(bullet_bits) if bullet_bits else None
+
+
+def _hyperparameter_opinion_section() -> List[str]:
+    return [
+        "",
+        "## Post-Study Opinion Regression",
+        "",
+        "Opinion runs reuse the per-study slate configurations gathered above.",
+        "See `reports/knn/opinion/README.md` for detailed metrics and plots.",
+        "",
+    ]
+
+
+def _next_video_dataset_info(
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+) -> Tuple[str, str]:
+    for per_feature in metrics_by_feature.values():
+        for study_metrics in per_feature.values():
+            dataset = study_metrics.get("dataset", DEFAULT_DATASET_SOURCE)
+            split = study_metrics.get("split", "validation")
+            return str(dataset), str(split)
+    raise RuntimeError("No slate metrics available to build the next-video report.")
+
+
+def _next_video_intro(dataset_name: str, split: str) -> List[str]:
+    return [
+        "# KNN Next-Video Baseline",
+        "",
+        "This report summarises the slate-ranking KNN model that predicts the next video a viewer will click.",
+        "",
+        f"- Dataset: `{dataset_name}`",
+        f"- Split: {split}",
+        "- Metric: accuracy on eligible slates (gold index present)",
+        "",
+    ]
+
+
+def _feature_space_heading(feature_space: str) -> str:
+    return "## TF-IDF Feature Space" if feature_space == "tfidf" else "## Word2Vec Feature Space"
+
+
+def _baseline_accuracy(data: Mapping[str, object]) -> float:
+    baseline = data.get("baseline_most_frequent_gold_index", {})
+    getter = getattr(baseline, "get", None)
+    if callable(getter):
+        return float(baseline.get("accuracy", 0.0))
+    return 0.0
+
+
+def _next_video_feature_section(
+    feature_space: str,
+    metrics: Mapping[str, Mapping[str, object]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    if not metrics:
+        return []
+    lines: List[str] = [
+        _feature_space_heading(feature_space),
+        "",
+        "| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for study in studies:
+        data = metrics.get(study.key)
+        if not data:
+            continue
+        accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
+        best_k = int(data.get("best_k", 0))
+        baseline_acc = _format_float(_baseline_accuracy(data))
+        lines.append(f"| {study.label} | {accuracy} | {best_k} | {baseline_acc} |")
+    lines.append("")
+    return lines
+
+
+def _next_video_observations(
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    lines: List[str] = ["## Observations", ""]
+    for feature_space in ("tfidf", "word2vec"):
+        metrics = metrics_by_feature.get(feature_space, {})
+        if not metrics:
+            continue
+        bullet_bits: List[str] = []
+        for study in studies:
+            data = metrics.get(study.key)
+            if not data:
+                continue
+            accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
+            baseline_acc = _format_float(_baseline_accuracy(data))
+            detail = f"{study.label} accuracy {accuracy} (baseline {baseline_acc})"
+            bullet_bits.append(detail)
+        if bullet_bits:
+            lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
+    lines.append("")
+    return lines
+
+
 def _build_hyperparameter_report(
     *,
     output_path: Path,
@@ -613,151 +918,132 @@ def _build_hyperparameter_report(
     k_sweep: str,
 ) -> None:
     lines: List[str] = []
-    lines.append("# KNN Hyperparameter Tuning Notes")
-    lines.append("")
-    lines.append("This document consolidates the selected grid searches for the KNN baselines.")
-    lines.append("")
-    lines.append("## Next-Video Prediction")
-    lines.append("")
-    lines.append("The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:")
-    lines.append(f"- `k ∈ {{{k_sweep}}}`")
-    lines.append("- Distance metrics: cosine and L2")
-    lines.append("- Text-field augmentations: none, `viewer_profile,state_text`")
-    lines.append("- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}")
-    lines.append("")
-    lines.append("| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |")
-    lines.append("| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |")
-    for feature_space in ("tfidf", "word2vec"):
-        per_study = selections.get(feature_space, {})
-        for study in studies:
-            selection = per_study.get(study.key)
-            if not selection:
-                continue
-            config = selection.config
-            text_label = ",".join(config.text_fields) if config.text_fields else "none"
-            size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
-            window = str(config.word2vec_window) if config.word2vec_window is not None else "—"
-            min_count = (
-                str(config.word2vec_min_count) if config.word2vec_min_count is not None else "—"
-            )
-            lines.append(
-                f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | {size} | "
-                f"{window} | {min_count} | {_format_float(selection.accuracy)} | {selection.best_k} |"
-            )
-    lines.append("")
-    lines.append("### Observations")
-    lines.append("")
-    for feature_space in ("tfidf", "word2vec"):
-        per_study = selections.get(feature_space, {})
-        if not per_study:
-            continue
-        bullet_bits: List[str] = []
-        for study in studies:
-            selection = per_study.get(study.key)
-            if not selection:
-                continue
-            config = selection.config
-            text_label = (
-                "no extra fields"
-                if not config.text_fields
-                else f"extra fields `{','.join(config.text_fields)}`"
-            )
-            if feature_space == "word2vec":
-                config_bits = (
-                    f"{config.metric} distance, {text_label}, size={config.word2vec_size}, "
-                    f"window={config.word2vec_window}, min_count={config.word2vec_min_count}"
-                )
-            else:
-                config_bits = f"{config.metric} distance with {text_label}"
-            bullet_bits.append(
-                f"{study.label}: accuracy {_format_float(selection.accuracy)} "
-                f"(k={selection.best_k}) using {config_bits}"
-            )
-        if bullet_bits:
-            lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
-    lines.append("")
-    lines.append("## Post-Study Opinion Regression")
-    lines.append("")
-    lines.append("Opinion runs reuse the per-study slate configurations gathered above.")
-    lines.append("See `reports/knn/opinion/README.md` for detailed metrics and plots.")
-    lines.append("")
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    lines.extend(_hyperparameter_report_intro(k_sweep))
+    lines.extend(_hyperparameter_table_section(selections, studies))
+    lines.extend(_hyperparameter_observations_section(selections, studies))
+    lines.extend(_hyperparameter_opinion_section())
+    output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _build_next_video_report(
     *,
     output_path: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
-    selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> None:
     if not metrics_by_feature:
         raise RuntimeError("No slate metrics available to build the next-video report.")
 
-    any_feature = next(iter(metrics_by_feature.values()), {})
-    any_study = next(iter(any_feature.values()), None)
-    if not any_study:
-        raise RuntimeError("No slate metrics available to build the next-video report.")
-    dataset_name = any_study.get("dataset", DEFAULT_DATASET_SOURCE)
-    split = any_study.get("split", "validation")
-
+    dataset_name, split = _next_video_dataset_info(metrics_by_feature)
     lines: List[str] = []
-    lines.append("# KNN Next-Video Baseline")
-    lines.append("")
-    lines.append(
-        "This report summarises the slate-ranking KNN model that predicts the next video a viewer will click."
+    lines.extend(_next_video_intro(dataset_name, split))
+    for feature_space in ("tfidf", "word2vec"):
+        metrics = metrics_by_feature.get(feature_space, {})
+        lines.extend(_next_video_feature_section(feature_space, metrics, studies))
+    lines.extend(_next_video_observations(metrics_by_feature, studies))
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _opinion_report_intro() -> List[str]:
+    return [
+        "# KNN Opinion Shift Study",
+        "",
+        "This study evaluates a second KNN baseline that predicts each participant's post-study opinion index.",
+        "- Dataset: `data/cleaned_grail`",
+        "- Splits: train for neighbour lookup, validation for evaluation",
+        "- Metrics: MAE / RMSE / R² on the predicted post index, plus a no-change (pre-index) baseline",
+        "",
+    ]
+
+
+def _opinion_feature_sections(
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    lines: List[str] = []
+    for feature_space in ("tfidf", "word2vec"):
+        per_feature = metrics.get(feature_space, {})
+        if not per_feature:
+            continue
+        lines.extend(
+            [
+                _feature_space_heading(feature_space),
+                "",
+                "| Study | Participants | Best k | MAE ↓ | RMSE ↓ | R² ↑ | No-change MAE ↓ |",
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for study in studies:
+            data = per_feature.get(study.key)
+            if not data:
+                continue
+            lines.append(_format_opinion_row(study, data))
+        lines.append("")
+    return lines
+
+
+def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
+    best_metrics = data.get("best_metrics", {})
+    baseline = data.get("baseline", {})
+    label = data.get("label", study.label)
+    participants = int(data.get("n_participants", 0))
+    best_k = int(data.get("best_k", 0))
+    mae_after = _format_float(float(best_metrics.get("mae_after", 0.0)))
+    rmse_after = _format_float(float(best_metrics.get("rmse_after", 0.0)))
+    r2_after = _format_float(float(best_metrics.get("r2_after", 0.0)))
+    mae_baseline = _format_float(float(baseline.get("mae_using_before", 0.0)))
+    return (
+        f"| {label} | {participants} | {best_k} | {mae_after} | "
+        f"{rmse_after} | {r2_after} | {mae_baseline} |"
     )
-    lines.append("")
-    lines.append(f"- Dataset: `{dataset_name}`")
-    lines.append(f"- Split: {split}")
-    lines.append("- Metric: accuracy on eligible slates (gold index present)")
-    lines.append("")
 
-    for feature_space in ("tfidf", "word2vec"):
-        metrics = metrics_by_feature.get(feature_space, {})
-        if not metrics:
-            continue
-        if feature_space == "tfidf":
-            lines.append("## TF-IDF Feature Space")
-        else:
-            lines.append("## Word2Vec Feature Space")
-        lines.append("")
-        lines.append("| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |")
-        lines.append("| --- | ---: | ---: | ---: |")
+
+def _opinion_heatmap_section() -> List[str]:
+    return [
+        "### Opinion Change Heatmaps",
+        "",
+        "Plots are refreshed under `reports/knn/opinion/<feature-space>/` for MAE, R², and change heatmaps.",
+        "",
+    ]
+
+
+def _best_opinion_space(
+    tfidf_metrics: Mapping[str, object],
+    word2vec_metrics: Mapping[str, object] | None,
+) -> Tuple[str, float, int]:
+    tfidf_r2 = float(tfidf_metrics.get("best_metrics", {}).get("r2_after", 0.0))
+    best_space = "TF-IDF"
+    best_r2 = tfidf_r2
+    best_k = int(tfidf_metrics.get("best_k", 0))
+    if word2vec_metrics:
+        word2vec_r2 = float(word2vec_metrics.get("best_metrics", {}).get("r2_after", 0.0))
+        if word2vec_r2 > best_r2:
+            best_space = "Word2Vec"
+            best_r2 = word2vec_r2
+            best_k = int(word2vec_metrics.get("best_k", 0))
+    return best_space, best_r2, best_k
+
+
+def _opinion_takeaways(
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    lines: List[str] = ["## Takeaways", ""]
+    tfidf_metrics = metrics.get("tfidf")
+    word2vec_metrics = metrics.get("word2vec")
+    if tfidf_metrics and word2vec_metrics:
         for study in studies:
-            data = metrics.get(study.key)
-            if not data:
+            tfidf_data = tfidf_metrics.get(study.key)
+            if not tfidf_data:
                 continue
-            baseline = data.get("baseline_most_frequent_gold_index", {})
-            baseline_acc = float(baseline.get("accuracy", 0.0))
+            word2vec_data = word2vec_metrics.get(study.key)
+            best_space, best_r2, best_k = _best_opinion_space(tfidf_data, word2vec_data)
+            label = tfidf_data.get("label", study.label)
             lines.append(
-                f"| {study.label} | "
-                f"{_format_float(float(data.get('accuracy_overall', 0.0)))} | "
-                f"{int(data.get('best_k', 0))} | "
-                f"{_format_float(baseline_acc)} |"
+                f"- {label}: {best_space} achieves the highest R² ({best_r2:.3f}) at k={best_k}."
             )
-        lines.append("")
-
-    lines.append("## Observations")
     lines.append("")
-    for feature_space in ("tfidf", "word2vec"):
-        metrics = metrics_by_feature.get(feature_space, {})
-        if not metrics:
-            continue
-        bullet_bits = []
-        for study in studies:
-            data = metrics.get(study.key)
-            if not data:
-                continue
-            baseline = data.get("baseline_most_frequent_gold_index", {})
-            baseline_acc = float(baseline.get("accuracy", 0.0))
-            bullet_bits.append(
-                f"{study.label} accuracy {_format_float(float(data.get('accuracy_overall', 0.0)))} "
-                f"(baseline {_format_float(baseline_acc)})"
-            )
-        lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
-    lines.append("")
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return lines
 
 
 def _build_opinion_report(
@@ -770,109 +1056,32 @@ def _build_opinion_report(
         raise RuntimeError("No opinion metrics available to build the opinion report.")
 
     lines: List[str] = []
-    lines.append("# KNN Opinion Shift Study")
-    lines.append("")
-    lines.append(
-        "This study evaluates a second KNN baseline that predicts each participant's post-study opinion index."
-    )
-    lines.append("- Dataset: `data/cleaned_grail`")
-    lines.append("- Splits: train for neighbour lookup, validation for evaluation")
-    lines.append(
-        "- Metrics: MAE / RMSE / R² on the predicted post index, plus a no-change (pre-index) baseline"
-    )
-    lines.append("")
-
-    for feature_space in ("tfidf", "word2vec"):
-        per_feature = metrics.get(feature_space, {})
-        if not per_feature:
-            continue
-        if feature_space == "tfidf":
-            lines.append("## TF-IDF Feature Space")
-        else:
-            lines.append("## Word2Vec Feature Space")
-        lines.append("")
-        lines.append(
-            "| Study | Participants | Best k | MAE ↓ | RMSE ↓ | R² ↑ | No-change MAE ↓ |"
-        )
-        lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
-        for study in studies:
-            data = per_feature.get(study.key)
-            if not data:
-                continue
-            best_metrics = data.get("best_metrics", {})
-            baseline = data.get("baseline", {})
-            label = data.get("label", study.label)
-            lines.append(
-                f"| {label} | {int(data.get('n_participants', 0))} | "
-                f"{int(data.get('best_k', 0))} | "
-                f"{_format_float(float(best_metrics.get('mae_after', 0.0)))} | "
-                f"{_format_float(float(best_metrics.get('rmse_after', 0.0)))} | "
-                f"{_format_float(float(best_metrics.get('r2_after', 0.0)))} | "
-                f"{_format_float(float(baseline.get('mae_using_before', 0.0)))} |"
-            )
-        lines.append("")
-
-    lines.append("### Opinion Change Heatmaps")
-    lines.append("")
-    lines.append(
-        "Plots are refreshed under `reports/knn/opinion/<feature-space>/` for MAE, R², and change heatmaps."
-    )
-    lines.append("")
-
-    lines.append("## Takeaways")
-    lines.append("")
-    if "tfidf" in metrics and "word2vec" in metrics:
-        for study in studies:
-            tfidf_metrics = metrics["tfidf"].get(study.key)
-            if not tfidf_metrics:
-                continue
-            word2vec_metrics = metrics["word2vec"].get(study.key)
-            tfidf_r2 = float(tfidf_metrics.get("best_metrics", {}).get("r2_after", 0.0))
-            best_space = "TF-IDF"
-            best_r2 = tfidf_r2
-            best_k = int(tfidf_metrics.get("best_k", 0))
-            if word2vec_metrics:
-                word2vec_r2 = float(word2vec_metrics.get("best_metrics", {}).get("r2_after", 0.0))
-                if word2vec_r2 > best_r2:
-                    best_space = "Word2Vec"
-                    best_r2 = word2vec_r2
-                    best_k = int(word2vec_metrics.get("best_k", 0))
-            lines.append(
-                f"- {tfidf_metrics.get('label', study.label)}: "
-                f"{best_space} achieves the highest R² ({best_r2:.3f}) at k={best_k}."
-            )
-    lines.append("")
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    lines.extend(_opinion_report_intro())
+    lines.extend(_opinion_feature_sections(metrics, studies))
+    lines.extend(_opinion_heatmap_section())
+    lines.extend(_opinion_takeaways(metrics, studies))
+    output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _generate_reports(
-    *,
-    repo_root: Path,
-    selections: Mapping[str, Mapping[str, StudySelection]],
-    studies: Sequence[StudySpec],
-    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
-    opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
-    k_sweep: str,
-) -> None:
+def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
     """Write refreshed Markdown reports under ``reports/knn``."""
 
     reports_root = repo_root / "reports" / "knn"
     _build_hyperparameter_report(
         output_path=reports_root / "hyperparameter_tuning.md",
-        selections=selections,
-        studies=studies,
-        k_sweep=k_sweep,
+        selections=report_bundle.selections,
+        studies=report_bundle.studies,
+        k_sweep=report_bundle.k_sweep,
     )
     _build_next_video_report(
         output_path=reports_root / "next_video.md",
-        metrics_by_feature=metrics_by_feature,
-        selections=selections,
-        studies=studies,
+        metrics_by_feature=report_bundle.metrics_by_feature,
+        studies=report_bundle.studies,
     )
     _build_opinion_report(
         output_path=reports_root / "opinion" / "README.md",
-        metrics=opinion_metrics,
-        studies=studies,
+        metrics=report_bundle.opinion_metrics,
+        studies=report_bundle.studies,
     )
 
 
@@ -882,51 +1091,29 @@ def _generate_reports(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """Coordinate sweeps, evaluations, and report generation for the KNN pipeline."""
+
     args, extra_cli = _parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 
     root = _repo_root()
-    dataset = args.dataset or os.environ.get("DATASET") or _default_dataset(root)
-    out_dir = Path(args.out_dir or os.environ.get("OUT_DIR") or _default_out_dir(root))
-    cache_dir = args.cache_dir or os.environ.get("CACHE_DIR") or _default_cache_dir(root)
-    sweep_dir = Path(args.sweep_dir or os.environ.get("KNN_SWEEP_DIR") or (out_dir / "sweeps"))
-    word2vec_model_dir = Path(
-        args.word2vec_model_dir or os.environ.get("WORD2VEC_MODEL_DIR") or (out_dir / "word2vec_models")
-    )
-    k_sweep = args.k_sweep or os.environ.get("KNN_K_SWEEP") or "1,2,3,4,5,10,15,20,25,50,100"
-    study_tokens = (
-        _split_tokens(getattr(args, "studies", ""))
-        or _split_tokens(os.environ.get("KNN_STUDIES", ""))
-        or _split_tokens(args.issues or "")
-        or _split_tokens(os.environ.get("KNN_ISSUES", ""))
-    )
-    if not _split_tokens(getattr(args, "studies", "")) and _split_tokens(args.issues or ""):
-        LOGGER.warning("`--issues` is deprecated for the pipeline; interpreting as study keys.")
-    word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
-    word2vec_workers = _default_word2vec_workers()
+    context = _build_pipeline_context(args, root)
+    _warn_if_issue_tokens_used(args)
 
-    studies = _resolve_studies(study_tokens)
+    studies = _resolve_studies(context.study_tokens)
     if not studies:
         raise RuntimeError("No studies available for evaluation.")
 
-    LOGGER.info("Dataset: %s", dataset)
-    LOGGER.info(
-        "Studies: %s",
-        ", ".join(f"{spec.key} ({spec.issue})" for spec in studies),
-    )
-    LOGGER.info("Output directory: %s", out_dir)
+    _log_run_configuration(studies, context)
 
-    base_cli = ["--dataset", dataset, "--cache-dir", cache_dir, "--fit-index", "--overwrite"]
-    if k_sweep:
-        base_cli.extend(["--knn-k-sweep", k_sweep])
-
+    base_cli = _build_base_cli(context)
     configs = _build_sweep_configs(
-        word2vec_epochs=word2vec_epochs,
-        word2vec_workers=word2vec_workers,
+        word2vec_epochs=context.word2vec_epochs,
+        word2vec_workers=context.word2vec_workers,
     )
 
     if args.dry_run:
-        LOGGER.info("[DRY RUN] Planned %d sweep configurations.", len(configs))
+        _log_dry_run(configs)
         return
 
     sweep_outcomes = _run_sweeps(
@@ -934,8 +1121,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         configs=configs,
         base_cli=base_cli,
         extra_cli=extra_cli,
-        sweep_dir=sweep_dir,
-        word2vec_model_base=word2vec_model_dir,
+        sweep_dir=context.sweep_dir,
+        word2vec_model_base=context.word2vec_model_dir,
     )
 
     selections = _select_best_configs(outcomes=sweep_outcomes, studies=studies)
@@ -945,8 +1132,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         studies=studies,
         base_cli=base_cli,
         extra_cli=extra_cli,
-        out_dir=out_dir,
-        word2vec_model_dir=word2vec_model_dir,
+        out_dir=context.out_dir,
+        word2vec_model_dir=context.word2vec_model_dir,
     )
 
     opinion_metrics = _run_opinion_evaluations(
@@ -954,18 +1141,18 @@ def main(argv: Sequence[str] | None = None) -> None:
         studies=studies,
         base_cli=base_cli,
         extra_cli=extra_cli,
-        out_dir=out_dir,
-        word2vec_model_dir=word2vec_model_dir,
+        out_dir=context.out_dir,
+        word2vec_model_dir=context.word2vec_model_dir,
     )
 
-    _generate_reports(
-        repo_root=root,
+    report_bundle = ReportBundle(
         selections=selections,
         studies=studies,
         metrics_by_feature=slate_metrics,
         opinion_metrics=opinion_metrics,
-        k_sweep=k_sweep,
+        k_sweep=context.k_sweep,
     )
+    _generate_reports(root, report_bundle)
 
 
 if __name__ == "__main__":  # pragma: no cover

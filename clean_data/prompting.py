@@ -57,13 +57,13 @@ def load_slate_items(ex: dict) -> List[dict]:
     """Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys."""
     arr = _as_list_json(ex.get("slate_items_json"))
     out: List[dict] = []
-    for it in arr:
-        if not isinstance(it, dict):
+    for raw_item in arr:
+        if not isinstance(raw_item, dict):
             continue
-        t = (it.get("title") or "").strip()
-        v = (it.get("id") or "").strip()
-        if t or v:
-            out.append({"title": t, "id": v})
+        title_text = (raw_item.get("title") or "").strip()
+        video_id = (raw_item.get("id") or "").strip()
+        if title_text or video_id:
+            out.append({"title": title_text, "id": video_id})
     return out
 
 def _secs(value: Any) -> str:
@@ -167,8 +167,8 @@ def _synthesize_viewer_sentence(ex: dict) -> str:
         value = formatter()
         if value:
             bits.append(value)
-    s = ", ".join(bits)
-    return s if s else "(no profile provided)"
+    profile_sentence = ", ".join(bits)
+    return profile_sentence if profile_sentence else "(no profile provided)"
 
 def _viewer_attribute_lines(ex: dict) -> List[str]:
     """Return per-viewer attribute strings for the prompt."""
@@ -302,13 +302,17 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
     :return: List of history lines formatted for the discriminator prompt.
     """
 
-    tj = ex.get("trajectory_json")
+    trajectory_json = ex.get("trajectory_json")
     try:
-        obj = json.loads(tj) if isinstance(tj, str) and tj.strip() else {}
+        trajectory_obj = (
+            json.loads(trajectory_json)
+            if isinstance(trajectory_json, str) and trajectory_json.strip()
+            else {}
+        )
     except (TypeError, json.JSONDecodeError):
-        obj = {}
-    order = obj.get("order") if isinstance(obj, dict) else None
-    if not isinstance(order, list):
+        trajectory_obj = {}
+    order_entries = trajectory_obj.get("order") if isinstance(trajectory_obj, dict) else None
+    if not isinstance(order_entries, list):
         return []
 
     def _key(row: dict) -> tuple[int, float]:
@@ -326,17 +330,17 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
             except (TypeError, ValueError):
                 return (1, -1.0)
 
-    seq = [row for row in order if isinstance(row, dict)]
-    seq.sort(key=_key)
+    ordered_rows = [row for row in order_entries if isinstance(row, dict)]
+    ordered_rows.sort(key=_key)
 
-    cur_id = (ex.get("current_video_id") or "").strip()
+    current_video_id = (ex.get("current_video_id") or "").strip()
     lines = []
-    for r in seq:
-        vid = (r.get("video_id") or r.get("id") or "")
-        tit = (r.get("title") or r.get("video_title") or "")
-        if not include_current and cur_id and vid == cur_id:
+    for history_row in ordered_rows:
+        history_video_id = (history_row.get("video_id") or history_row.get("id") or "")
+        history_title = (history_row.get("title") or history_row.get("video_title") or "")
+        if not include_current and current_video_id and history_video_id == current_video_id:
             break
-        lines.append(f"- {tit or vid or '(untitled)'}")
+        lines.append(f"- {history_title or history_video_id or '(untitled)'}")
     return lines
 
 def _render_prior_slates(ex: dict) -> list[str]:
@@ -346,18 +350,22 @@ def _render_prior_slates(ex: dict) -> list[str]:
     :return: List of strings describing earlier slates.
     """
 
-    tj = ex.get("trajectory_json")
+    trajectory_json = ex.get("trajectory_json")
     try:
-        obj = json.loads(tj) if isinstance(tj, str) and tj.strip() else {}
+        trajectory_obj = (
+            json.loads(trajectory_json)
+            if isinstance(trajectory_json, str) and trajectory_json.strip()
+            else {}
+        )
     except (TypeError, json.JSONDecodeError):
-        obj = {}
-    disp = obj.get("displayOrders") if isinstance(obj, dict) else None
-    if not isinstance(disp, dict):
+        trajectory_obj = {}
+    display_orders = trajectory_obj.get("displayOrders") if isinstance(trajectory_obj, dict) else None
+    if not isinstance(display_orders, dict):
         return []
     out = []
     matching_keys = [
         key
-        for key in disp.keys()
+        for key in display_orders.keys()
         if re.match(r"^\s*(\d+)\s*[-_ ]*recs\s*$", str(key), re.I)
     ]
     keys = sorted(
@@ -365,16 +373,16 @@ def _render_prior_slates(ex: dict) -> list[str]:
         key=lambda key: int(re.search(r"(\d+)", str(key)).group(1)),
     )
     for key in keys:
-        val = disp.get(key) or []
+        raw_value = display_orders.get(key) or []
         names = []
-        if isinstance(val, list):
-            for el in val:
-                if isinstance(el, dict):
-                    names.append(el.get("title") or el.get("id") or "(untitled)")
+        if isinstance(raw_value, list):
+            for element in raw_value:
+                if isinstance(element, dict):
+                    names.append(element.get("title") or element.get("id") or "(untitled)")
                 else:
-                    names.append(str(el))
-        elif isinstance(val, dict):
-            names = [str(x) for x in val.keys()]
+                    names.append(str(element))
+        elif isinstance(raw_value, dict):
+            names = [str(x) for x in raw_value.keys()]
         out.append(f"{key}: " + "; ".join(names[:10]))
     return out
 
@@ -415,12 +423,12 @@ def _derive_next_from_history(ex: dict, current_id: str) -> str:
                     return nxt.strip()
         except ValueError:
             pass
-    det = _as_list_json(ex.get("watched_detailed_json"))
-    if current_id and isinstance(det, list) and det:
-        for j, r in enumerate(det):
-            if isinstance(r, dict) and (r.get("id") or "").strip() == current_id:
-                if j + 1 < len(det):
-                    nxt = (det[j + 1].get("id") or "").strip()
+    detailed_history = _as_list_json(ex.get("watched_detailed_json"))
+    if current_id and isinstance(detailed_history, list) and detailed_history:
+        for entry_index, detail_row in enumerate(detailed_history):
+            if isinstance(detail_row, dict) and (detail_row.get("id") or "").strip() == current_id:
+                if entry_index + 1 < len(detailed_history):
+                    nxt = (detailed_history[entry_index + 1].get("id") or "").strip()
                     if nxt:
                         return nxt
                 break
@@ -433,17 +441,21 @@ def get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
     :param sol_key: Optional alternate column name containing the gold id.
     :return: Canonical next-video id or an empty string when unavailable.
     """
-    cur = (ex.get("current_video_id") or "").strip()
+    current_video_id = (ex.get("current_video_id") or "").strip()
     if sol_key and sol_key not in {"current_video_id", "current_id"}:
-        v = ex.get(sol_key)
-        if isinstance(v, str) and v.strip() and v.strip() != cur:
-            return v.strip()
+        candidate_value = ex.get(sol_key)
+        if (
+            isinstance(candidate_value, str)
+            and candidate_value.strip()
+            and candidate_value.strip() != current_video_id
+        ):
+            return candidate_value.strip()
     candidate_fields = ("next_video_id", "clicked_id", "label", "answer")
     for field in candidate_fields:
         value = ex.get(field)
-        if isinstance(value, str) and value.strip() and value.strip() != cur:
+        if isinstance(value, str) and value.strip() and value.strip() != current_video_id:
             return value.strip()
-    return _derive_next_from_history(ex, cur)
+    return _derive_next_from_history(ex, current_video_id)
 
 def gold_index_from_items(gold: str, items: List[dict]) -> int:
     """Locate the 1-based index of ``gold`` inside the slate items list.
@@ -456,14 +468,14 @@ def gold_index_from_items(gold: str, items: List[dict]) -> int:
     gold = (gold or "").strip()
     if not gold or not items:
         return -1
-    for i, it in enumerate(items, 1):
-        if gold == (it.get("id") or ""):
-            return i
-    gc = _canon(gold)
-    if gc:
-        for i, it in enumerate(items, 1):
-            if gc == _canon(it.get("title", "")):
-                return i
+    for item_index, slate_item in enumerate(items, 1):
+        if gold == (slate_item.get("id") or ""):
+            return item_index
+    canonical_gold = _canon(gold)
+    if canonical_gold:
+        for item_index, slate_item in enumerate(items, 1):
+            if canonical_gold == _canon(slate_item.get("title", "")):
+                return item_index
     return -1
 
 

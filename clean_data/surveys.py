@@ -54,21 +54,21 @@ DEMOGRAPHIC_COLUMNS = list(
 )
 
 
-def build_survey_index(df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
+def build_survey_index(survey_frame: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
     """Create a mapping from ``urlid`` to associated survey rows.
 
-    :param df: Raw survey dataframe loaded from the capsule.
+    :param survey_frame: Raw survey dataframe loaded from the capsule.
     :returns: Mapping of normalized ``urlid`` to a list of matching rows.
     """
 
     index: Dict[str, List[Dict[str, Any]]] = {}
-    if df.empty:
+    if survey_frame.empty:
         return index
-    columns = list(df.columns)
+    columns = list(survey_frame.columns)
     if "urlid" not in columns:
         log.warning("Survey frame missing urlid column; columns=%s", columns)
         return index
-    for _, row in df.iterrows():
+    for _, row in survey_frame.iterrows():
         urlid = _normalize_urlid(row.get("urlid"))
         if not urlid:
             continue
@@ -205,17 +205,17 @@ def load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[s
         lower = normalized.str.lower()
         return ~(normalized.eq("") | lower.isin(_MISSING_STRINGS))
 
-    def _dedupe_earliest(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
+    def _dedupe_earliest(data_frame: pd.DataFrame, id_column: str) -> pd.DataFrame:
         """Keep the earliest row per identifier column.
 
-        :param df: Dataframe potentially containing duplicate identifiers.
+        :param data_frame: Dataframe potentially containing duplicate identifiers.
         :param id_column: Column name used to deduplicate rows.
         :returns: Dataframe with only the earliest occurrence of each identifier.
         """
 
-        if df.empty or id_column not in df.columns:
-            return df
-        working = df.copy()
+        if data_frame.empty or id_column not in data_frame.columns:
+            return data_frame
+        working = data_frame.copy()
         sort_columns: List[str] = []
         if "start_time2" in working.columns:
             working["_sort_start_time2"] = pd.to_datetime(

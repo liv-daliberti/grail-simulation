@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections.abc import Mapping
 from typing import Any, Dict, List, Optional, Sequence
@@ -459,6 +460,92 @@ GUN_HIGHLIGHT_SPECS: Sequence[tuple[Sequence[str], str]] = (
     (("gun_enthusiasm",), "{value}"),
 )
 
+_PERCENTAGE_WORD_FIELDS: set[str] = {
+    "pol_interest",
+    "mw_support_w1",
+    "mw_support_w2",
+    "minwage15_w1",
+    "minwage15_w2",
+}
+
+_UNDER_TWENTY: dict[int, str] = {
+    0: "zero",
+    1: "one",
+    2: "two",
+    3: "three",
+    4: "four",
+    5: "five",
+    6: "six",
+    7: "seven",
+    8: "eight",
+    9: "nine",
+    10: "ten",
+    11: "eleven",
+    12: "twelve",
+    13: "thirteen",
+    14: "fourteen",
+    15: "fifteen",
+    16: "sixteen",
+    17: "seventeen",
+    18: "eighteen",
+    19: "nineteen",
+}
+
+_TENS: dict[int, str] = {
+    20: "twenty",
+    30: "thirty",
+    40: "forty",
+    50: "fifty",
+    60: "sixty",
+    70: "seventy",
+    80: "eighty",
+    90: "ninety",
+}
+
+
+def _int_to_words(number: int) -> Optional[str]:
+    if number < 0 or number > 999:
+        return None
+    if number < 20:
+        return _UNDER_TWENTY[number]
+    if number < 100:
+        tens, remainder = divmod(number, 10)
+        base = _TENS.get(tens * 10)
+        if not base:
+            return None
+        if remainder:
+            return f"{base}-{_UNDER_TWENTY[remainder]}"
+        return base
+    hundreds, remainder = divmod(number, 100)
+    if hundreds not in _UNDER_TWENTY:
+        return None
+    words = f"{_UNDER_TWENTY[hundreds]} hundred"
+    if remainder:
+        tail = _int_to_words(remainder)
+        if not tail:
+            return None
+        words = f"{words} {tail}"
+    return words
+
+
+def _percentage_to_words(value: str) -> Optional[str]:
+    text = value.strip()
+    if not text.endswith("%"):
+        return None
+    numeric_part = text[:-1].replace(",", "").strip()
+    try:
+        amount = float(numeric_part)
+    except ValueError:
+        return None
+    rounded = int(round(amount))
+    word = _int_to_words(rounded)
+    if not word:
+        return None
+    prefix = ""
+    if not math.isclose(amount, rounded, abs_tol=0.05):
+        prefix = "about "
+    return f"{prefix}{word} percent"
+
 
 def _highlight_value(field: str, raw_value: Any) -> str:
     """Return a human-readable survey highlight value for ``field``."""
@@ -470,7 +557,13 @@ def _highlight_value(field: str, raw_value: Any) -> str:
         if verdict == "no":
             return "does not identify as enthusiastic about guns"
     value = format_field_value(field, raw_value)
-    return value or ""
+    if not value:
+        return ""
+    if field in _PERCENTAGE_WORD_FIELDS:
+        descriptive = _percentage_to_words(value)
+        if descriptive:
+            return descriptive
+    return value
 
 
 def _survey_highlights(ex: Dict[str, Any]) -> str:

@@ -12,10 +12,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
-import datasets
-from datasets import DatasetDict
+try:
+    import datasets
+    from datasets import DatasetDict
+except ImportError:  # pragma: no cover - optional dependency for linting
+    datasets = None  # type: ignore
+    DatasetDict = Any  # type: ignore
 
 from clean_data.io import resolve_capsule_data_root as _resolve_capsule_data_root
 from clean_data.sessions import build_codeocean_rows, split_dataframe
@@ -38,18 +42,18 @@ def load_codeocean_dataset(dataset_name: str, validation_ratio: float = 0.1) -> 
         raise ValueError(f"CodeOcean capsule data not found under {dataset_name}")
 
     log.info("Building dataset from CodeOcean capsule at %s", data_root)
-    df = build_codeocean_rows(data_root)
-    if df.empty:
+    codeocean_frame = build_codeocean_rows(data_root)
+    if codeocean_frame.empty:
         raise ValueError("No usable rows found in CodeOcean sessions")
 
-    split_frames = split_dataframe(df, validation_ratio=validation_ratio)
-    ds = {
+    split_frames = split_dataframe(codeocean_frame, validation_ratio=validation_ratio)
+    dataset_splits = {
         name: datasets.Dataset.from_pandas(frame, preserve_index=False)
         for name, frame in split_frames.items()
         if not frame.empty
     }
     log.info("CodeOcean rows: %s", {name: len(frame) for name, frame in split_frames.items()})
-    return DatasetDict(ds)
+    return DatasetDict(dataset_splits)
 
 
 def resolve_capsule_data_root(path: Path) -> Optional[Path]:

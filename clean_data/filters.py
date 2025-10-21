@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
-from datasets import DatasetDict
+try:
+    from datasets import DatasetDict
+except ImportError:  # pragma: no cover - optional dependency for linting
+    DatasetDict = Any  # type: ignore
 
 from clean_data.prompting import (
     get_gold_next_id,

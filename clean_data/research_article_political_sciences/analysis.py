@@ -5,11 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from datasets import DatasetDict
+
+try:
+    from datasets import DatasetDict
+except ImportError:  # pragma: no cover - optional dependency for linting
+    DatasetDict = Any  # type: ignore
 
 from clean_data.helpers import _MISSING_STRINGS
 
@@ -58,32 +62,32 @@ def prepare_study_frame(frame: pd.DataFrame, spec: StudySpec) -> pd.DataFrame:
 
 
 def histogram2d_counts(
-    df: pd.DataFrame,
+    data_frame: pd.DataFrame,
     before_col: str,
     after_col: str,
     bins: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Return a 2D histogram of before vs. after opinion indices."""
 
-    if df.empty:
+    if data_frame.empty:
         bin_edges = np.linspace(0.0, 1.0, bins + 1)
         return np.zeros((bins, bins), dtype=int), bin_edges
 
-    values_before = df[before_col].to_numpy(dtype=float)
-    values_after = df[after_col].to_numpy(dtype=float)
+    values_before = data_frame[before_col].to_numpy(dtype=float)
+    values_after = data_frame[after_col].to_numpy(dtype=float)
     bin_edges = np.linspace(0.0, 1.0, bins + 1)
     hist, _, _ = np.histogram2d(values_before, values_after, bins=[bin_edges, bin_edges])
     return hist.astype(int), bin_edges
 
 
 def summarise_shift(
-    df: pd.DataFrame,
+    data_frame: pd.DataFrame,
     before_col: str,
     after_col: str,
 ) -> Dict[str, float]:
     """Compute summary statistics describing the opinion shift."""
 
-    if df.empty:
+    if data_frame.empty:
         return {
             "n": 0,
             "mean_before": float("nan"),
@@ -96,8 +100,8 @@ def summarise_shift(
             "share_small_change": float("nan"),
         }
 
-    before = df[before_col].to_numpy(dtype=float)
-    after = df[after_col].to_numpy(dtype=float)
+    before = data_frame[before_col].to_numpy(dtype=float)
+    after = data_frame[after_col].to_numpy(dtype=float)
     change = after - before
     abs_change = np.abs(change)
     epsilon = 0.05  # mirrors paper's interpretation of small shifts
@@ -167,13 +171,13 @@ def _nonempty_mask(series: pd.Series) -> pd.Series:
     return ~(normalized.eq("") | lowered.isin(_MISSING_STRINGS))
 
 
-def _dedupe_earliest(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
+def _dedupe_earliest(data_frame: pd.DataFrame, id_column: str) -> pd.DataFrame:
     """Keep the earliest observation per identifier, mirroring survey filters."""
 
-    if df.empty or id_column not in df.columns:
-        return df
+    if data_frame.empty or id_column not in data_frame.columns:
+        return data_frame
 
-    working = df.copy()
+    working = data_frame.copy()
     sort_cols: List[str] = []
 
     if "start_time2" in working.columns:
@@ -272,42 +276,50 @@ def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
     if not dataset_path.exists():
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
-    df = pd.read_csv(dataset_path)
-    if df.empty:
+    survey_frame = pd.read_csv(dataset_path)
+    if survey_frame.empty:
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
-    df["_worker_id"] = _normalize_series(df.get("worker_id", pd.Series(dtype=str)))
-    mask = _nonempty_mask(df["_worker_id"])
+    survey_frame["_worker_id"] = _normalize_series(survey_frame.get("worker_id", pd.Series(dtype=str)))
+    mask = _nonempty_mask(survey_frame["_worker_id"])
     mask &= (
-        df.get("q87", pd.Series(dtype=str))
+        survey_frame.get("q87", pd.Series(dtype=str))
         .fillna("")
         .astype(str)
         .str.strip()
         .eq("Quick and easy")
     )
-    mask &= df.get("q89", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("wikiHow")
-    mask &= _numeric(df.get("survey_time", pd.Series(dtype=float))) >= 120
-    mw_index = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
+    mask &= (
+        survey_frame.get("q89", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("wikiHow")
+    )
+    mask &= _numeric(survey_frame.get("survey_time", pd.Series(dtype=float))) >= 120
+    mw_index = _numeric(survey_frame.get(spec.before_column, pd.Series(dtype=float)))
     mask &= mw_index.between(0.025, 0.975, inclusive="both")
-    df = df.loc[mask].copy()
+    survey_frame = survey_frame.loc[mask].copy()
 
-    df = df[_nonempty_mask(df.get("treatment_arm", pd.Series(dtype=str)))]
-    df = _dedupe_earliest(df, "_worker_id")
+    survey_frame = survey_frame[
+        _nonempty_mask(survey_frame.get("treatment_arm", pd.Series(dtype=str)))
+    ]
+    survey_frame = _dedupe_earliest(survey_frame, "_worker_id")
 
-    df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
-    df[spec.after_column] = _numeric(df.get(spec.after_column, pd.Series(dtype=float)))
-    df = df.dropna(subset=[spec.before_column, spec.after_column])
+    survey_frame[spec.before_column] = _numeric(
+        survey_frame.get(spec.before_column, pd.Series(dtype=float))
+    )
+    survey_frame[spec.after_column] = _numeric(
+        survey_frame.get(spec.after_column, pd.Series(dtype=float))
+    )
+    survey_frame = survey_frame.dropna(subset=[spec.before_column, spec.after_column])
 
     assignment = (
-        df.get("treatment_arm", pd.Series(dtype=str))
+        survey_frame.get("treatment_arm", pd.Series(dtype=str))
         .fillna("")
         .astype(str)
         .str.strip()
         .str.lower()
     )
-    df["assignment"] = np.where(assignment == "control", "control", "treatment")
+    survey_frame["assignment"] = np.where(assignment == "control", "control", "treatment")
 
-    return df.rename(
+    return survey_frame.rename(
         columns={
             "_worker_id": "participant_id",
             spec.before_column: "before",
@@ -323,28 +335,32 @@ def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
     if not dataset_path.exists():
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
-    df = pd.read_csv(dataset_path)
-    if df.empty:
+    survey_frame = pd.read_csv(dataset_path)
+    if survey_frame.empty:
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
     case_col: Optional[str] = None
-    if "caseid" in df.columns:
+    if "caseid" in survey_frame.columns:
         case_col = "caseid"
-    elif "CaseID" in df.columns:
+    elif "CaseID" in survey_frame.columns:
         case_col = "CaseID"
     if case_col is None:
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
-    df["_caseid"] = _normalize_series(df[case_col])
-    df = df[_nonempty_mask(df["_caseid"])]
-    df = _dedupe_earliest(df, "_caseid")
+    survey_frame["_caseid"] = _normalize_series(survey_frame[case_col])
+    survey_frame = survey_frame[_nonempty_mask(survey_frame["_caseid"])]
+    survey_frame = _dedupe_earliest(survey_frame, "_caseid")
 
-    df[spec.before_column] = _numeric(df.get(spec.before_column, pd.Series(dtype=float)))
-    df[spec.after_column] = _numeric(df.get(spec.after_column, pd.Series(dtype=float)))
-    df = df.dropna(subset=[spec.before_column, spec.after_column])
+    survey_frame[spec.before_column] = _numeric(
+        survey_frame.get(spec.before_column, pd.Series(dtype=float))
+    )
+    survey_frame[spec.after_column] = _numeric(
+        survey_frame.get(spec.after_column, pd.Series(dtype=float))
+    )
+    survey_frame = survey_frame.dropna(subset=[spec.before_column, spec.after_column])
 
     treatment_arm = (
-        df.get("treatment_arm", pd.Series(dtype=str))
+        survey_frame.get("treatment_arm", pd.Series(dtype=str))
         .fillna("")
         .astype(str)
         .str.strip()
@@ -353,17 +369,19 @@ def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
     has_explicit_control = treatment_arm.eq("control").any()
 
     if has_explicit_control:
-        df["assignment"] = np.where(treatment_arm == "control", "control", "treatment")
+        survey_frame["assignment"] = np.where(
+            treatment_arm == "control", "control", "treatment"
+        )
     else:
-        dose = _numeric(df.get("treatment_dose", pd.Series(dtype=float)))
-        df["assignment"] = np.where(
+        dose = _numeric(survey_frame.get("treatment_dose", pd.Series(dtype=float)))
+        survey_frame["assignment"] = np.where(
             dose <= 0,
             "control",
             np.where(dose > 0, "treatment", None),
         )
-        df = df.dropna(subset=["assignment"])
+        survey_frame = survey_frame.dropna(subset=["assignment"])
 
-    return df.rename(
+    return survey_frame.rename(
         columns={
             "_caseid": "participant_id",
             spec.before_column: "before",
@@ -423,7 +441,7 @@ def summarise_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
 
 
 def compute_treatment_regression(  # pylint: disable=too-many-locals
-    df: pd.DataFrame,
+    combined_frame: pd.DataFrame,
 ) -> Dict[str, float]:
     """Estimate a study-adjusted treatment effect on opinion change.
 
@@ -432,7 +450,7 @@ def compute_treatment_regression(  # pylint: disable=too-many-locals
     coefficient, standard error, 95% CI, and two-sided p-value.
     """
 
-    if df.empty:
+    if combined_frame.empty:
         return {
             "coefficient": float("nan"),
             "stderr": float("nan"),
@@ -441,7 +459,7 @@ def compute_treatment_regression(  # pylint: disable=too-many-locals
             "p_value": float("nan"),
         }
 
-    working = df.copy()
+    working = combined_frame.copy()
     working["change"] = working["after"] - working["before"]
     working = working.replace([np.inf, -np.inf], np.nan).dropna(subset=["change"])
     if working.empty:

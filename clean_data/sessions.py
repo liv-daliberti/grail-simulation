@@ -207,8 +207,8 @@ def _load_sessions_from_capsule(data_root: Path) -> List[dict]:
     """
 
     sessions_path = data_root / "platform session data" / "sessions.json"
-    with sessions_path.open("r", encoding="utf-8") as fp:
-        sessions = json.load(fp)
+    with sessions_path.open("r", encoding="utf-8") as session_file:
+        sessions = json.load(session_file)
 
     shorts_sessions = load_shorts_sessions(data_root)
     if shorts_sessions:
@@ -377,7 +377,7 @@ def _build_watched_details(
 ) -> List[Dict[str, Any]]:
     """Return per-video metadata entries for the watched sequence."""
 
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
+    # pylint: disable=too-many-arguments,too-many-locals
 
     details: List[Dict[str, Any]] = []
     for idx, raw_vid in enumerate(raw_vids):
@@ -1040,23 +1040,25 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
 
             rows.append(row)
 
-    df = pd.DataFrame(rows)
+    interaction_frame = pd.DataFrame(rows)
     log.info(
         "Interaction stats: %s",
         {k: int(v) for k, v in interaction_stats.items()},
     )
-    return df
+    return interaction_frame
 
-def split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[str, pd.DataFrame]:
+def split_dataframe(
+    interaction_frame: pd.DataFrame, validation_ratio: float = 0.1
+) -> Dict[str, pd.DataFrame]:
     """Split dataframe into train/validation partitions grouped by participant.
 
-    :param df: Interaction dataframe to split.
+    :param interaction_frame: Interaction dataframe to split.
     :param validation_ratio: Fraction of participant groups assigned to validation.
     :returns: Mapping containing ``train`` and optional ``validation`` dataframes.
     """
 
-    if df.empty:
-        return {"train": df}
+    if interaction_frame.empty:
+        return {"train": interaction_frame}
 
     def _pick_group(row_idx: int) -> str:
         """Return a partition key for the participant/session of ``row_idx``.
@@ -1065,15 +1067,15 @@ def split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[str
         :returns: Group key ensuring participants remain in a single split.
         """
 
-        urlid = str(df.iloc[row_idx].get("urlid") or "").strip()
-        session = str(df.iloc[row_idx].get("session_id") or "").strip()
+        urlid = str(interaction_frame.iloc[row_idx].get("urlid") or "").strip()
+        session = str(interaction_frame.iloc[row_idx].get("session_id") or "").strip()
         if urlid and urlid.lower() != "nan":
             return f"urlid::{urlid}"
         if session and session.lower() != "nan":
             return f"session::{session}"
         return f"row::{row_idx}"
 
-    group_keys = [_pick_group(i) for i in range(len(df))]
+    group_keys = [_pick_group(i) for i in range(len(interaction_frame))]
     unique_groups = list(dict.fromkeys(group_keys))
     rng = random.Random(2024)
     rng.shuffle(unique_groups)
@@ -1087,10 +1089,10 @@ def split_dataframe(df: pd.DataFrame, validation_ratio: float = 0.1) -> Dict[str
     is_val = pd.Series(group_keys).isin(val_groups)
 
     splits: Dict[str, pd.DataFrame] = {
-        "train": df.loc[~is_val].reset_index(drop=True),
+        "train": interaction_frame.loc[~is_val].reset_index(drop=True),
     }
     if val_groups:
-        splits["validation"] = df.loc[is_val].reset_index(drop=True)
+        splits["validation"] = interaction_frame.loc[is_val].reset_index(drop=True)
     return splits
 
 

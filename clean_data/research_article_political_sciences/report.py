@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pandas as pd
-from datasets import DatasetDict
+
+try:
+    from datasets import DatasetDict
+except ImportError:  # pragma: no cover - optional dependency for linting
+    DatasetDict = Any  # type: ignore
 
 from clean_data.clean_data import dedupe_by_participant_issue
 

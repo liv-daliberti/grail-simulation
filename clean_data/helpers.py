@@ -119,8 +119,8 @@ def _as_list_json(value: Any, default: str = "[]") -> list:
         return value
     if isinstance(value, str):
         try:
-            v = json.loads(value or default)
-            return v if isinstance(v, list) else []
+            parsed_value = json.loads(value or default)
+            return parsed_value if isinstance(parsed_value, list) else []
         except (TypeError, json.JSONDecodeError):
             return []
     # pyarrow List?
@@ -151,8 +151,8 @@ def _strip_session_video_id(vid: str) -> str:
     base = vid[:11]
     if YTID_RE.fullmatch(base):
         return base
-    m = YTID_RE.search(vid)
-    return m.group(1) if m else vid
+    match = YTID_RE.search(vid)
+    return match.group(1) if match else vid
 
 
 def _normalize_urlid(value: Any) -> str:
@@ -189,18 +189,18 @@ def _coerce_session_value(value: Any) -> Any:
     if isinstance(value, (int, float)):
         return value
     if isinstance(value, str):
-        s = value.strip()
-        if not s:
+        value_str = value.strip()
+        if not value_str:
             return None
         try:
-            if "." in s:
-                num = float(s)
+            if "." in value_str:
+                num = float(value_str)
                 if num.is_integer():
                     return int(num)
                 return num
-            return int(s)
+            return int(value_str)
         except ValueError:
-            return s
+            return value_str
     return value
 
 

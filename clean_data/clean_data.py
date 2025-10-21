@@ -14,10 +14,17 @@ import logging
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
-import datasets
-from datasets import DatasetDict, Features, Sequence as HFSequence, Value
+try:
+    import datasets
+    from datasets import DatasetDict, Features, Sequence as HFSequence, Value
+except ImportError:  # pragma: no cover - optional dependency for linting
+    datasets = None  # type: ignore
+    DatasetDict = Any  # type: ignore
+    Features = Any  # type: ignore
+    HFSequence = Any  # type: ignore
+    Value = Any  # type: ignore
 
 from clean_data.filters import compute_issue_counts, filter_prompt_ready
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
@@ -91,10 +98,10 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
             if capsule_ds is not None:
                 return capsule_ds
             log.info("Loading dataset from disk: %s", path)
-            ds = datasets.load_from_disk(str(path))
-            if isinstance(ds, DatasetDict):
-                return ds
-            return DatasetDict({"train": ds})
+            loaded_dataset = datasets.load_from_disk(str(path))
+            if isinstance(loaded_dataset, DatasetDict):
+                return loaded_dataset
+            return DatasetDict({"train": loaded_dataset})
         if path.is_file():
             ext = path.suffix.lower()
             if ext in {".json", ".jsonl"}:

@@ -230,6 +230,11 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         help="Comma-separated list of participant study keys (study1,study2,study3). Defaults to all studies.",
     )
     parser.add_argument(
+        "--reuse-sweeps",
+        action="store_true",
+        help="Reuse existing sweep metrics when present instead of rerunning the full grid.",
+    )
+    parser.add_argument(
         "--sweep-dir",
         default=None,
         help="Directory for hyper-parameter sweeps (default: <out-dir>/sweeps).",
@@ -557,6 +562,7 @@ def _run_sweeps(
     extra_cli: Sequence[str],
     sweep_dir: Path,
     word2vec_model_base: Path,
+    reuse_existing: bool,
 ) -> List[SweepOutcome]:
     """Execute hyper-parameter sweeps and collect per-run metrics."""
 
@@ -572,6 +578,28 @@ def _run_sweeps(
                 model_dir = _ensure_dir(
                     word2vec_model_base / "sweeps" / study.study_slug / config.label
                 )
+            metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
+            if reuse_existing and metrics_path.exists():
+                LOGGER.info(
+                    "[SWEEP][SKIP] feature=%s study=%s label=%s (metrics cached)",
+                    config.feature_space,
+                    study.key,
+                    config.label,
+                )
+                metrics, metrics_path = _load_metrics(run_root, issue_slug)
+                outcomes.append(
+                    SweepOutcome(
+                        study=study,
+                        feature_space=config.feature_space,
+                        config=config,
+                        accuracy=float(metrics.get("accuracy_overall", 0.0)),
+                        best_k=int(metrics.get("best_k", 0)),
+                        eligible=int(metrics.get("n_eligible", 0)),
+                        metrics_path=metrics_path,
+                        metrics=metrics,
+                    )
+                )
+                continue
             cli_args: List[str] = []
             cli_args.extend(base_cli)
             cli_args.extend(config.cli_args(word2vec_model_dir=model_dir))

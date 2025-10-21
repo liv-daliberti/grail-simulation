@@ -153,7 +153,10 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
     stratified_paths = analyze_preregistered_effects(output_path)
     combined_path = stratified_paths.get("combined") if stratified_paths else None
     if combined_path and Path(combined_path).exists():
-        stratified_df = pd.read_csv(combined_path)
+        try:
+            stratified_df = pd.read_csv(combined_path)
+        except pd.errors.EmptyDataError:
+            stratified_df = pd.DataFrame()
         if not stratified_df.empty:
             stratified_rows = _policy_summary_rows(stratified_df)
     else:

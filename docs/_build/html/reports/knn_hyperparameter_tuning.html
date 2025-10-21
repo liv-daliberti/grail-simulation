@@ -271,7 +271,7 @@
 <li><p>Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count = 1, epochs = 10<br />
 (training uses up to 40 worker threads – see <code class="docutils literal notranslate"><span class="pre">training/training-knn.sh</span></code>)</p></li>
 </ul>
-<p>All artefacts (metrics JSON, per-<code class="docutils literal notranslate"><span class="pre">k</span></code> predictions, error-based elbow plots) live under
+<p>All artifacts (metrics JSON, per-<code class="docutils literal notranslate"><span class="pre">k</span></code> predictions, error-based elbow plots) live under
 <code class="docutils literal notranslate"><span class="pre">models/knn/sweeps/{tfidf,word2vec}/</span></code>.</p>
 <section id="best-configurations-validation-split-per-study">
 <h3>Best configurations (validation split, per study)<a class="headerlink" href="#best-configurations-validation-split-per-study" title="Link to this heading">¶</a></h3>
@@ -309,7 +309,7 @@
 <li><p>Word2Vec models write their tuned configs beneath <code class="docutils literal notranslate"><span class="pre">models/knn/word2vec/sweeps/study{1,2,3}/...</span></code> so it is easy to diff trained embeddings between studies.</p></li>
 <li><p>TF-IDF sweeps remain lightweight—<code class="docutils literal notranslate"><span class="pre">viewer_profile,state_text</span></code> is still the only augmentation evaluated by default, but feel free to expand via <code class="docutils literal notranslate"><span class="pre">WORD2VEC_SWEEP_*</span></code> / <code class="docutils literal notranslate"><span class="pre">KNN_TEXT_FIELDS</span></code>.</p></li>
 </ul>
-<p>The elbow plots are now labelled with the data split used (“validation split”), clarifying that the
+<p>The elbow plots are now labeled with the data split used (“validation split”), clarifying that the
 curves reflect held-out evaluation error rather than the training data.</p>
 </section>
 </section>
@@ -342,7 +342,7 @@ curves reflect held-out evaluation error rather than the training data.</p>
 <td><p>Study 3 (YouGov wage)</p></td>
 <td class="text-right"><p>0.181</p></td>
 <td class="text-right"><p>50</p></td>
-<td><p>Requires wide neighbourhoods; still below baseline MAE</p></td>
+<td><p>Requires wide neighborhoods; still below baseline MAE</p></td>
 </tr>
 <tr class="row-odd"><td><p>Word2Vec</p></td>
 <td><p>Study 1 (gun control)</p></td>
@@ -367,9 +367,9 @@ curves reflect held-out evaluation error rather than the training data.</p>
 </div>
 <p>Key takeaways:</p>
 <ul class="simple">
-<li><p>Opinion regression needs larger neighbourhoods than slate prediction, especially on the YouGov study.</p></li>
+<li><p>Opinion regression needs larger neighborhoods than slate prediction, especially on the YouGov study.</p></li>
 <li><p>Word2Vec embeddings consistently reach higher R² than TF-IDF, but both feature spaces are still outperformed by the trivial “no change” baseline on MAE.</p></li>
-<li><p>No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbours.</p></li>
+<li><p>No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbors.</p></li>
 </ul>
 </section>
 </section>

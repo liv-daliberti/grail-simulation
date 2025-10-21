@@ -272,13 +272,26 @@
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">Features</span><span class="p">,</span> <span class="n">Sequence</span> <span class="k">as</span> <span class="n">HFSequence</span><span class="p">,</span> <span class="n">Value</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">Features</span><span class="p">,</span> <span class="n">Sequence</span> <span class="k">as</span> <span class="n">HFSequence</span><span class="p">,</span> <span class="n">Value</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets.builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetGenerationCastError</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+    <span class="n">Dataset</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">Features</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">HFSequence</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">Value</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
+    <span class="n">DatasetGenerationCastError</span> <span class="o">=</span> <span class="ne">Exception</span>  <span class="c1"># type: ignore</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
+    <span class="n">pd</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">fsspec.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">url_to_fs</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
+    <span class="n">url_to_fs</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_issue_counts</span><span class="p">,</span> <span class="n">filter_prompt_ready</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompt.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">REQUIRED_PROMPT_COLUMNS</span>
@@ -375,9 +388,110 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported file type: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">loaded</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading dataset from hub: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
-    <span class="n">loaded</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">loaded</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">DatasetGenerationCastError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Falling back to column-union loader for dataset=</span><span class="si">%s</span><span class="s2"> due to schema mismatch (</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">err</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_load_dataset_with_column_union</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">loaded</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_with_column_union</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a flat CSV dataset while unioning columns across data files.</span>
+
+<span class="sd">    This is a fallback path used when the standard :func:`load_dataset` call</span>
+<span class="sd">    fails due to heterogeneous column sets across CSV shards. The implementation</span>
+<span class="sd">    fetches every declared data file, reads it via :mod:`pandas`, aligns missing</span>
+<span class="sd">    columns, and rehydrates the result into a :class:`~datasets.DatasetDict`.</span>
+
+<span class="sd">    :param dataset_name: Hugging Face dataset identifier (optionally ``name``).</span>
+<span class="sd">    :returns: ``DatasetDict`` with the unioned schema.</span>
+<span class="sd">    :raises RuntimeError: If :mod:`pandas` is unavailable or no data files were</span>
+<span class="sd">        discovered for the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - environment guard</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;pandas is required to load &#39;</span><span class="si">%s</span><span class="s2">&#39; due to column mismatches. Install pandas&quot;</span>
+            <span class="s2">&quot; to enable the union fallback.&quot;</span> <span class="o">%</span> <span class="n">dataset_name</span>
+        <span class="p">)</span>
+
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_dataset_builder</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="n">data_files</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;data_files&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose data_files metadata&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Normalise split -&gt; list[str]</span>
+    <span class="n">split_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">data_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">files</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">_fs</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">unioned_splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">file_list</span> <span class="ow">in</span> <span class="n">split_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">file_ref</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">:</span>
+            <span class="n">handle</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">open_fs</span> <span class="o">=</span> <span class="n">fs</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="n">open_path</span> <span class="o">=</span> <span class="n">file_ref</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">file_ref</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                            <span class="s2">&quot;Encountered remote data file &#39;</span><span class="si">%s</span><span class="s2">&#39; but fsspec is unavailable. &quot;</span>
+                            <span class="s2">&quot;Install fsspec to enable remote downloads.&quot;</span> <span class="o">%</span> <span class="n">file_ref</span>
+                        <span class="p">)</span>
+                    <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span> <span class="o">=</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
+                    <span class="n">open_fs</span> <span class="o">=</span> <span class="n">remote_fs</span>
+                    <span class="n">open_path</span> <span class="o">=</span> <span class="n">remote_path</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">handle</span> <span class="o">=</span> <span class="n">open_fs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">open_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_ref</span>
+                    <span class="p">):</span>
+                        <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span> <span class="o">=</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
+                        <span class="n">handle</span> <span class="o">=</span> <span class="n">remote_fs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                <span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">handle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s2">&quot;Unnamed: 0&quot;</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnamed: 0&quot;</span><span class="p">])</span>
+            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">all_columns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
+        <span class="n">aligned_frames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+            <span class="n">missing_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">all_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">missing_cols</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">missing_cols</span><span class="p">:</span>
+                    <span class="n">frame</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
+            <span class="n">aligned_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">all_columns</span><span class="p">])</span>
+
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">aligned_frames</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">unioned_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">unioned_splits</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data could be loaded for dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">unioned_splits</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="map_rows_to_examples">

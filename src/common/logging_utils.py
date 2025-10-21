@@ -11,9 +11,9 @@ def get_logger(name: str, *, level: int = logging.INFO) -> logging.Logger:
     Return a memoised logger configured with a simple stream handler.
 
     The helper mirrors the historical behaviour from the individual
-    baselines: create a :class:`logging.Logger`, attach a stream
-    handler when none are registered yet, and set the level to ``INFO``
-    (or a caller-provided override).
+    baselines: create a ``logging.Logger``, attach a stream handler
+    when none are registered yet, and set the level to ``INFO`` (or a
+    caller-provided override).
     """
 
     logger = logging.getLogger(name)

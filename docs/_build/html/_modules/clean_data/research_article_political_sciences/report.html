@@ -409,7 +409,10 @@
     <span class="n">stratified_paths</span> <span class="o">=</span> <span class="n">analyze_preregistered_effects</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
     <span class="n">combined_path</span> <span class="o">=</span> <span class="n">stratified_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;combined&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">stratified_paths</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">combined_path</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">combined_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">stratified_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">combined_path</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stratified_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">combined_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">EmptyDataError</span><span class="p">:</span>
+            <span class="n">stratified_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">stratified_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="n">stratified_rows</span> <span class="o">=</span> <span class="n">_policy_summary_rows</span><span class="p">(</span><span class="n">stratified_df</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>

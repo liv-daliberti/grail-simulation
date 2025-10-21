@@ -61,7 +61,7 @@ def generate_prompt_samples(
     :param dataset_path: Location of the cleaned dataset (Hugging Face format).
     :param issues: Iterable of issue labels to sample.
     :param max_per_issue: Number of prompts to collect per issue.
-    :param max_history: History length passed to :func:`build_user_prompt`.
+    :param max_history: History length passed to :func:`prompt_builder.prompt.build_user_prompt`.
     :returns: List of :class:`PromptSample` instances.
     """
 

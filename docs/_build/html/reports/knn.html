@@ -260,7 +260,7 @@
         <article role="main" id="furo-main-content">
           <section id="knn-report-catalog">
 <h1>KNN Report Catalog<a class="headerlink" href="#knn-report-catalog" title="Link to this heading">¶</a></h1>
-<p>This directory centralises the artefacts and write-ups for the KNN baselines we maintain:</p>
+<p>This directory centralizes the artifacts and write-ups for the KNN baselines we maintain:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">next_video/</span></code> – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in <code class="docutils literal notranslate"><span class="pre">tfidf/</span></code> and <code class="docutils literal notranslate"><span class="pre">word2vec/</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">opinion/</span></code> – post-study opinion regression analysis, including metric tables and heatmaps grouped by feature space.</p></li>
@@ -322,7 +322,7 @@ OPTIONS
 </tbody>
 </table>
 </div>
-<p><strong>Word2Vec neighbours (vector size = 256)</strong></p>
+<p><strong>Word2Vec neighbors (vector size = 256)</strong></p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
 <thead>
@@ -404,7 +404,7 @@ OPTIONS
 </div>
 <ul class="simple">
 <li><p>Accuracy values come from <code class="docutils literal notranslate"><span class="pre">knn_eval_*_validation_metrics.json</span></code> under <code class="docutils literal notranslate"><span class="pre">models/knn/(tfidf|word2vec)/(issue)/</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">models/knn/tfidf/gun_control/knn_eval_gun_control_validation_metrics.json</span></code>).</p></li>
-<li><p>The sweep over <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">∈</span> <span class="pre">{1,2,3,4,5,10,15,20,25,50,100}</span></code> ensures we surface the most competitive neighbourhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signalling that richer features or additional filtering are required to close the gap.</p></li>
+<li><p>The sweep over <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">∈</span> <span class="pre">{1,2,3,4,5,10,15,20,25,50,100}</span></code> ensures we surface the most competitive neighborhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signaling that richer features or additional filtering are required to close the gap.</p></li>
 <li><p>For gun-control slates, both TF-IDF and Word2Vec comfortably beat the 0.540 most-frequent baseline, and TF-IDF with <code class="docutils literal notranslate"><span class="pre">k=2</span></code> delivers the strongest validation accuracy while preserving high coverage.</p></li>
 </ul>
 <div class="toctree-wrapper compound">

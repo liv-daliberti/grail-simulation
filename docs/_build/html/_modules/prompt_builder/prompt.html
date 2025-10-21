@@ -1020,6 +1020,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a summary line covering likes, comments, and shares.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">first_present</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first non-missing value from ``source`` matching ``keys``.&quot;&quot;&quot;</span>
+
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
                 <span class="k">continue</span>

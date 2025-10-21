@@ -12,13 +12,16 @@ from numpy.random import default_rng
 
 from common import canon_text, canon_video_id, get_logger
 from common.title_index import TitleResolver
-from prompt_builder import (
-    build_user_prompt,
-    clean_text,
-    synthesize_viewer_sentence,
-    constants as prompt_constants,
-    value_maps as prompt_value_maps,
-)
+try:
+    from prompt_builder import (
+        build_user_prompt,
+        clean_text,
+        synthesize_viewer_sentence,
+        constants as prompt_constants,
+        value_maps as prompt_value_maps,
+    )
+except ImportError as import_error:  # pragma: no cover - handled during import
+    raise ImportError("prompt_builder package is required for prompt_docs") from import_error
 
 TitleLookup = Callable[[Optional[str]], Optional[str]]
 

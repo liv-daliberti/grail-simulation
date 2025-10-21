@@ -357,7 +357,7 @@ def _phrases_from_items(items: Sequence[str]) -> List[str]:
         elif value_lower in {"yes", "no"}:
             phrases.append(f"{prefix} {value_lower}")
         else:
-            phrases.append(f"{prefix} {value_clean}")
+            phrases.append(f"{prefix} is {value_clean}")
     return phrases
 
 
@@ -841,12 +841,19 @@ def _gun_ownership_entry(ex: Dict[str, Any], selected: Dict[str, Any]) -> Option
     ownership = _first_raw(ex, selected, "gun_own", "gunowner", "owns_gun")
     if ownership is None:
         return None
-    ownership_text = format_yes_no(ownership, yes="owns a gun", no="does not own a gun")
-    if ownership_text:
-        return f"Gun ownership: {ownership_text}"
+    ownership_flag = format_yes_no(ownership, yes="yes", no="no")
+    if ownership_flag == "yes":
+        return "owning a gun"
+    if ownership_flag == "no":
+        return "not owning a gun"
+    ownership_text = format_field_value("gun_own", ownership) or clean_text(ownership)
+    if ownership_text.lower().startswith(("yes", "y")):
+        return "owning a gun"
+    if ownership_text.lower().startswith(("no", "n")):
+        return "not owning a gun"
     custom = clean_text(ownership)
     if custom:
-        return f"Gun ownership: {custom}"
+        return custom
     return None
 
 

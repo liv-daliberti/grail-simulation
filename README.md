@@ -194,7 +194,7 @@ Baselines:
 
 - GPT‑4o slate predictor: `python -m gpt4o.cli`
 - k-NN slate baseline: `bash training/training-knn.sh`
-- XGBoost slate baseline: `bash training/training-xgb.sh`
+- XGBoost slate + opinion pipeline: `bash training/training-xgb.sh`
 
 ## Citation
 

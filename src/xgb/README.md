@@ -51,6 +51,22 @@ CLI arguments cover common experimentation knobs:
 
 See `python -m xgb.cli --help` for the full list.
 
+## Pipeline workflow
+
+`python -m xgb.pipeline` mirrors the automated flow available for the kNN
+baseline:
+
+1. Hyper-parameter sweep across learning rate, depth, estimators, and regularisers.
+2. Selection of the best configuration per issue and re-running the final slate
+   evaluation (optionally exporting checkpoints).
+3. Opinion-index regression with `xgb.opinion` that reuses the selected slate
+   hyper-parameters.
+4. Generation of Markdown summaries under `reports/xgb/`.
+
+The pipeline underpins `training/training-xgb.sh`. Toggle the sweep grid or
+stages with environment variables (e.g. `XGB_LEARNING_RATE_GRID`,
+`OPINION_MAX_PARTICIPANTS`) before invoking the script.
+
 ## Implementation notes
 
 - `features.prepare_prompt_documents` builds TF-IDF-friendly text while ensuring

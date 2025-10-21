@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
 
 from .cli import build_parser as build_xgb_parser
-from .data import DEFAULT_DATASET_SOURCE, issues_in_dataset, load_dataset_source
+from .data import issues_in_dataset, load_dataset_source
 from .evaluate import run_eval
 from .model import XGBoostBoosterParams
-from .opinion import OpinionTrainConfig, run_opinion_eval
+from .opinion import DEFAULT_SPECS, OpinionTrainConfig, run_opinion_eval
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
@@ -338,7 +338,6 @@ def _run_sweeps(
     extra_cli: Sequence[str],
     sweep_dir: Path,
     tree_method: str,
-    overwrite: bool,
 ) -> List[SweepOutcome]:
     outcomes: List[SweepOutcome] = []
     for config in configs:
@@ -438,6 +437,8 @@ def _run_final_evaluations(
 def _run_opinion_stage(
     *,
     selections: Mapping[str, IssueSelection],
+    dataset: str,
+    cache_dir: str,
     args: argparse.Namespace,
     base_out_dir: Path,
     extra_fields: Sequence[str],
@@ -448,22 +449,39 @@ def _run_opinion_stage(
         return {}
 
     opinion_out_dir = base_out_dir / "opinion"
-    opinion_config = OpinionTrainConfig(
-        max_participants=args.opinion_max_participants,
-        seed=args.seed,
-        max_features=args.max_features if args.max_features > 0 else None,
-        booster=next(iter(selections.values())).config.booster_params(args.tree_method),
-    )
-    return run_opinion_eval(
-        dataset=args.dataset or DEFAULT_DATASET_SOURCE,
-        cache_dir=args.cache_dir,
-        out_dir=opinion_out_dir,
-        feature_space="tfidf",
-        extra_fields=extra_fields,
-        train_config=opinion_config,
-        studies=studies,
-        overwrite=args.overwrite,
-    )
+    requested = set(studies) if studies else {spec.key for spec in DEFAULT_SPECS}
+    grouped: Dict[str, List[str]] = {}
+    for spec in DEFAULT_SPECS:
+        if spec.key in requested:
+            grouped.setdefault(spec.issue, []).append(spec.key)
+
+    results: Dict[str, Dict[str, object]] = {}
+    for issue_name, study_keys in grouped.items():
+        selection = selections.get(issue_name)
+        if selection is None:
+            LOGGER.warning(
+                "Skipping opinion study for issue=%s (no selection available).",
+                issue_name,
+            )
+            continue
+        opinion_config = OpinionTrainConfig(
+            max_participants=args.opinion_max_participants,
+            seed=args.seed,
+            max_features=args.max_features if args.max_features > 0 else None,
+            booster=selection.config.booster_params(args.tree_method),
+        )
+        payload = run_opinion_eval(
+            dataset=dataset,
+            cache_dir=cache_dir,
+            out_dir=opinion_out_dir,
+            feature_space="tfidf",
+            extra_fields=extra_fields,
+            train_config=opinion_config,
+            studies=study_keys,
+            overwrite=args.overwrite,
+        )
+        results.update(payload)
+    return results
 
 
 def _format_float(value: float) -> str:
@@ -473,7 +491,6 @@ def _format_float(value: float) -> str:
 def _write_reports(
     *,
     reports_dir: Path,
-    sweep_dir: Path,
     outcomes: Sequence[SweepOutcome],
     selections: Mapping[str, IssueSelection],
     final_metrics: Mapping[str, Mapping[str, object]],
@@ -662,7 +679,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_cli=extra_cli,
         sweep_dir=sweep_dir,
         tree_method=args.tree_method,
-        overwrite=args.overwrite,
     )
     selections = _select_best_configs(outcomes)
     if not selections:
@@ -681,6 +697,8 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     opinion_metrics = _run_opinion_stage(
         selections=selections,
+        dataset=dataset,
+        cache_dir=cache_dir,
         args=args,
         base_out_dir=out_dir,
         extra_fields=extra_fields,
@@ -689,7 +707,6 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     _write_reports(
         reports_dir=reports_dir,
-        sweep_dir=sweep_dir,
         outcomes=outcomes,
         selections=selections,
         final_metrics=final_metrics,

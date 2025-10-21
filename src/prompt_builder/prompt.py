@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from .formatters import clean_text
 from .parsers import as_list_json, format_count, secs
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
+from .video_stats import lookup_video_stats
 
 
 def _last_index(xs: Any, val: Any) -> Optional[int]:
@@ -278,16 +279,17 @@ def _option_lines(position: int, item: Dict[str, Any], show_ids: bool) -> List[s
         or item.get("channel_name")
     )
     duration_text = _format_duration(item)
+    stats = lookup_video_stats(option_id) if option_id else {}
     parts: List[str] = [title or "(untitled)"]
     if channel:
         parts.append(f"channel: {channel}")
     if duration_text:
         parts.append(f"duration: {duration_text}")
-    parts.extend(_option_stats(item))
+    parts.extend(_option_stats(item, stats))
     if option_id and (show_ids or not title):
         parts.append(f"id: {option_id}")
     lines = [f"{position}. {' — '.join(parts)}"]
-    engagement_summary = _option_engagement_summary(item)
+    engagement_summary = _option_engagement_summary(item, stats)
     if engagement_summary:
         lines.append(f"   {engagement_summary}")
     return lines
@@ -315,10 +317,11 @@ def _format_duration(item: Dict[str, Any]) -> str:
     return f"{int(round(duration_val))}s"
 
 
-def _option_stats(item: Dict[str, Any]) -> Iterable[str]:
+def _option_stats(item: Dict[str, Any], stats: Dict[str, Any]) -> Iterable[str]:
     """Yield formatted statistics (views, dislikes, etc.) for the option.
 
     :param item: Dictionary containing count fields.
+    :param stats: Supplemental statistics sourced from metadata caches.
     :returns: Iterator over formatted ``label: value`` strings.
     """
     stat_labels = [
@@ -327,12 +330,15 @@ def _option_stats(item: Dict[str, Any]) -> Iterable[str]:
         ("favorite_count", "favorites"),
     ]
     for key, label in stat_labels:
-        formatted = format_count(item.get(key))
+        value = item.get(key)
+        if value is None:
+            value = stats.get(key)
+        formatted = format_count(value)
         if formatted is not None:
             yield f"{label}: {formatted}"
 
 
-def _option_engagement_summary(item: Dict[str, Any]) -> str:
+def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> str:
     """Return a summary line covering likes, comments, and shares."""
 
     def first_present(keys: Sequence[str]) -> Any:
@@ -347,13 +353,16 @@ def _option_engagement_summary(item: Dict[str, Any]) -> str:
         return None
 
     metrics = [
-        ("likes", ("like_count", "likes", "likeCount")),
-        ("comments", ("comment_count", "comments", "commentCount")),
-        ("shares", ("share_count", "shares", "shareCount")),
+        ("likes", ("like_count", "likes", "likeCount"), "like_count"),
+        ("comments", ("comment_count", "comments", "commentCount"), "comment_count"),
+        ("shares", ("share_count", "shares", "shareCount"), "share_count"),
     ]
     parts: List[str] = []
-    for label, keys in metrics:
-        formatted = format_count(first_present(keys))
+    for label, keys, stat_key in metrics:
+        value = first_present(keys)
+        if value is None and stats:
+            value = stats.get(stat_key)
+        formatted = format_count(value)
         parts.append(f"{label}: {formatted if formatted is not None else 'n/a'}")
     return " — ".join(parts)
 

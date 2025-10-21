@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Sequence
@@ -175,7 +176,13 @@ def _build_cli() -> argparse.ArgumentParser:
         "--count",
         type=int,
         default=1,
-        help="Number of prompts to include per issue.",
+        help="Minimum number of prompts to include per issue.",
+    )
+    parser.add_argument(
+        "--total",
+        type=int,
+        default=10,
+        help="Total number of prompts to include across all issues.",
     )
     parser.add_argument(
         "--max-history",
@@ -199,12 +206,19 @@ def main(argv: Sequence[str] | None = None) -> None:
     issues = _parse_issue_list(args.issues)
     if not issues:
         raise ValueError("At least one issue must be specified via --issues.")
+    total_requested = max(args.total, len(issues))
+    per_issue = max(
+        args.count,
+        math.ceil(total_requested / len(issues)) if issues else total_requested,
+    )
     samples = generate_prompt_samples(
         dataset_path=args.dataset,
         issues=issues,
-        max_per_issue=max(args.count, 1),
+        max_per_issue=max(per_issue, 1),
         max_history=max(args.max_history, 1),
     )
+    if len(samples) > total_requested:
+        samples = samples[:total_requested]
     destination = write_samples_markdown(samples, args.output)
     print(f"[prompt_builder] Wrote {len(samples)} samples to {destination}")
 

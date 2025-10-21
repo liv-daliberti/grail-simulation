@@ -557,6 +557,19 @@ def build_slate_items(  # pylint: disable=too-many-locals,too-many-branches
             item["channel_title"] = meta["channel_title"]
         if meta.get("channel_id"):
             item["channel_id"] = meta["channel_id"]
+        for stat_key in (
+            "view_count",
+            "like_count",
+            "dislike_count",
+            "favorite_count",
+            "comment_count",
+        ):
+            stat_value = meta.get(stat_key)
+            if stat_value not in (None, ""):
+                item[stat_key] = stat_value
+        duration_value = meta.get("duration")
+        if duration_value not in (None, ""):
+            item["duration"] = duration_value
         items.append(item)
     return items, source
 

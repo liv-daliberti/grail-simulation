@@ -1,4 +1,4 @@
-name: CI
+name: Docs
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  lint-and-test:
+  build-docs:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,12 +25,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r development/requirements-dev.txt
-
-      - name: Run pylint
-        run: scripts/run-lint.sh
-
-      - name: Run pytest
-        run: scripts/run-tests.sh
 
       - name: Build Sphinx documentation
         env:

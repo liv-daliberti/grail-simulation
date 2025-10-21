@@ -23,10 +23,18 @@ else
   if [ -n "${REPORTS_ISSUE_DATASETS:-}" ]; then
     log "Local dataset missing. Will attempt to assemble it from issue datasets: ${REPORTS_ISSUE_DATASETS}"
     python - <<'PY'
+import json
 import os
 from pathlib import Path
 
-from datasets import DatasetDict, concatenate_datasets, load_dataset
+try:
+    import pandas as pd
+except ImportError as exc:  # pragma: no cover - environment guard
+    raise SystemExit(
+        "pandas is required to assemble REPORTS_ISSUE_DATASETS; install it via pip."
+    ) from exc
+
+from datasets import DatasetDict, Dataset, load_dataset
 
 issue_env = os.environ.get("REPORTS_ISSUE_DATASETS", "")
 dataset_path = Path(os.environ["REPORTS_DATASET"])
@@ -39,35 +47,60 @@ for raw in issue_env.split(","):
         continue
     if "=" not in raw:
         raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'. Expected issue=dataset_id format.")
-    issue, dataset_id = [token.strip() for token in raw.split("=", 1)]
-    if not issue or not dataset_id:
+    issue, dataset_spec = [token.strip() for token in raw.split("=", 1)]
+    if not issue or not dataset_spec:
         raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'.")
-    pairs.append((issue, dataset_id))
+    if "#" in dataset_spec:
+        dataset_id, config_name = dataset_spec.split("#", 1)
+        dataset_id = dataset_id.strip()
+        config_name = config_name.strip()
+    else:
+        dataset_id, config_name = dataset_spec, None
+    if not dataset_id:
+        raise SystemExit(f"Invalid dataset id in '{raw}'.")
+    pairs.append((issue, dataset_id, config_name))
 
 if not pairs:
     raise SystemExit("REPORTS_ISSUE_DATASETS provided but no valid entries were found.")
 
-combined: dict[str, list] = {}
-for issue, dataset_id in pairs:
-    ds = load_dataset(dataset_id)
+frames_by_split: dict[str, list[pd.DataFrame]] = {}
+for issue, dataset_id, config_name in pairs:
+    try:
+        load_kwargs = {}
+        if config_name:
+            load_kwargs["name"] = config_name
+        ds = load_dataset(dataset_id, **load_kwargs)
+    except Exception as exc:  # pragma: no cover - user feedback
+        raise SystemExit(
+            f"Failed to load dataset '{dataset_id}'"
+            f"{' (config='+config_name+')' if config_name else ''}: {exc}"
+        ) from exc
     for split_name, split_ds in ds.items():
-        if "issue" not in split_ds.column_names:
-            split_ds = split_ds.add_column("issue", [issue] * len(split_ds))
-        combined.setdefault(split_name, []).append(split_ds)
+        df = split_ds.to_pandas()
+        if "issue" not in df.columns:
+            df["issue"] = issue
+        else:
+            df["issue"] = df["issue"].fillna(issue)
+        frames_by_split.setdefault(split_name, []).append(df)
 
-merged = DatasetDict(
-    {
-        split_name: concatenate_datasets(splits)
-        for split_name, splits in combined.items()
-    }
-)
+if not frames_by_split:
+    raise SystemExit("No splits were loaded from the provided datasets.")
+
+merged_splits: dict[str, Dataset] = {}
+for split_name, frames in frames_by_split.items():
+    combined_df = pd.concat(frames, ignore_index=True, sort=False)
+    merged_splits[split_name] = Dataset.from_pandas(combined_df, preserve_index=False)
+
+merged = DatasetDict(merged_splits)
 merged.save_to_disk(str(dataset_path))
 metadata = {
-    "sources": pairs,
+    "sources": [
+        {"issue": issue, "dataset": dataset_id, "config": config_name}
+        for issue, dataset_id, config_name in pairs
+    ],
     "note": "Assembled by scripts/run-build-reports.sh from issue-level datasets."
 }
 with open(dataset_path / "_assembly_metadata.json", "w", encoding="utf-8") as handle:
-    import json
     json.dump(metadata, handle, indent=2)
 PY
     log "Dataset assembled at ${DATASET}"

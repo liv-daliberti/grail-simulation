@@ -56,7 +56,7 @@ See `python -m xgb.cli --help` for the full list.
 `python -m xgb.pipeline` mirrors the automated flow available for the kNN
 baseline:
 
-1. Hyper-parameter sweep across learning rate, depth, estimators, and regularisers.
+1. Hyper-parameter sweep across learning rate, depth, estimators, and regularizers.
 2. Selection of the best configuration per issue and re-running the final slate
    evaluation (optionally exporting checkpoints).
 3. Opinion-index regression with `xgb.opinion` that reuses the selected slate

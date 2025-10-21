@@ -8,7 +8,7 @@ This document describes how the Python implementation in `clean_data/` mirrors t
 | ------ | -------------- |
 | `clean_data.sessions` | Parses CodeOcean session logs, enforces allow-lists, and emits the full interaction history dataframe (no participant/issue dedupe). |
 | `clean_data.prompting` | Converts each interaction row into a GRPO-style prompt (`row_to_example`) and manages all prompt formatting helpers. |
-| `clean_data.clean_data` | Public façade: loads datasets, filters unusable rows, builds cleaned splits, validates schema, saves/pushes outputs, and runs prompt stats. |
+| `clean_data.clean_data` | Public facade: loads datasets, filters unusable rows, builds cleaned splits, validates schema, saves/pushes outputs, and runs prompt stats. |
 | `clean_data.codeocean` | Thin compatibility shim that reconstructs datasets directly from the capsule directory. |
 | `clean_data.prompt` | Prompt analytics (plots + Markdown report) exposed via `python -m clean_data.prompt.cli`. |
 | `clean_data.filters` | Simple predicates for prompt readiness and issue-count summaries used during dataset assembly. |

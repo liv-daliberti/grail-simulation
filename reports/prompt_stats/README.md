@@ -38,6 +38,8 @@ Figures directory: `figures`
 
 ![Slate size distribution](figures/slate_size_counts.png)
 
+![Demographic coverage](figures/demographic_missing_counts.png)
+
 ## Demographic completeness
 
 | Split | Rows | Missing all demographics | Share |

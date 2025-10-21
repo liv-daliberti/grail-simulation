@@ -12,7 +12,7 @@ The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:
 - Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count = 1, epochs = 10  
   (training uses up to 40 worker threads – see `training/training-knn.sh`)
 
-All artefacts (metrics JSON, per-`k` predictions, error-based elbow plots) live under
+All artifacts (metrics JSON, per-`k` predictions, error-based elbow plots) live under
 `models/knn/sweeps/{tfidf,word2vec}/`.
 
 ### Best configurations (validation split, per study)
@@ -27,7 +27,7 @@ Observations (updated after each run):
 - Word2Vec models write their tuned configs beneath `models/knn/word2vec/sweeps/study{1,2,3}/...` so it is easy to diff trained embeddings between studies.
 - TF-IDF sweeps remain lightweight—`viewer_profile,state_text` is still the only augmentation evaluated by default, but feel free to expand via `WORD2VEC_SWEEP_*` / `KNN_TEXT_FIELDS`.
 
-The elbow plots are now labelled with the data split used (“validation split”), clarifying that the
+The elbow plots are now labeled with the data split used (“validation split”), clarifying that the
 curves reflect held-out evaluation error rather than the training data.
 
 ## Post-Study Opinion Regression
@@ -36,13 +36,13 @@ curves reflect held-out evaluation error rather than the training data.
 | --- | --- | ---: | ---: | --- |
 | TF-IDF | Study 1 (gun control) | 0.184 | 10 | R² plateaus between k = 10 and 25 |
 | TF-IDF | Study 2 (MTurk wage) | 0.374 | 25 | Gradual gains up to k ≈ 25 |
-| TF-IDF | Study 3 (YouGov wage) | 0.181 | 50 | Requires wide neighbourhoods; still below baseline MAE |
+| TF-IDF | Study 3 (YouGov wage) | 0.181 | 50 | Requires wide neighborhoods; still below baseline MAE |
 | Word2Vec | Study 1 (gun control) | 0.214 | 5 | Peaks around k = 5–10 |
 | Word2Vec | Study 2 (MTurk wage) | 0.440 | 10 | Clear improvement up to k = 10 |
 | Word2Vec | Study 3 (YouGov wage) | 0.251 | 50 | Benefits from large k (30–50) |
 
 Key takeaways:
 
-- Opinion regression needs larger neighbourhoods than slate prediction, especially on the YouGov study.
+- Opinion regression needs larger neighborhoods than slate prediction, especially on the YouGov study.
 - Word2Vec embeddings consistently reach higher R² than TF-IDF, but both feature spaces are still outperformed by the trivial “no change” baseline on MAE.
-- No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbours.
+- No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbors.

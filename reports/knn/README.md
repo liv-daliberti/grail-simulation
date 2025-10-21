@@ -1,6 +1,6 @@
 # KNN Report Catalog
 
-This directory centralises the artefacts and write-ups for the KNN baselines we maintain:
+This directory centralizes the artifacts and write-ups for the KNN baselines we maintain:
 
 - `next_video/` – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in `tfidf/` and `word2vec/`.
 - `opinion/` – post-study opinion regression analysis, including metric tables and heatmaps grouped by feature space.
@@ -40,7 +40,7 @@ OPTIONS
 | britain | 0.137 |
 | america | 0.137 |
 
-**Word2Vec neighbours (vector size = 256)**
+**Word2Vec neighbors (vector size = 256)**
 | Token | Similarity |
 | --- | ---: |
 | control | 0.550 |
@@ -74,5 +74,5 @@ The command above prepares prompt documents, fits the requested feature space (T
 | Minimum wage | Word2Vec | 4 | 0.292 | 0.439 |
 
 - Accuracy values come from `knn_eval_*_validation_metrics.json` under `models/knn/(tfidf|word2vec)/(issue)/` (for example, `models/knn/tfidf/gun_control/knn_eval_gun_control_validation_metrics.json`).
-- The sweep over `k ∈ {1,2,3,4,5,10,15,20,25,50,100}` ensures we surface the most competitive neighbourhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signalling that richer features or additional filtering are required to close the gap.
+- The sweep over `k ∈ {1,2,3,4,5,10,15,20,25,50,100}` ensures we surface the most competitive neighborhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signaling that richer features or additional filtering are required to close the gap.
 - For gun-control slates, both TF-IDF and Word2Vec comfortably beat the 0.540 most-frequent baseline, and TF-IDF with `k=2` delivers the strongest validation accuracy while preserving high coverage.

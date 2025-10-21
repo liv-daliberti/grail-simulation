@@ -1,7 +1,7 @@
 # KNN Next-Video Baseline
 
-This report summarises the slate-ranking KNN models that predict the next video a viewer will click.  
-All results are now organised by the three study cohorts that appear in the cleaned GRAIL dataset:
+This report summarizes the slate-ranking KNN models that predict the next video a viewer will click.  
+All results are now organized by the three study cohorts that appear in the cleaned GRAIL dataset:
 
 - **Study 1 – Gun Control (MTurk)**
 - **Study 2 – Minimum Wage (MTurk)**

@@ -60,7 +60,7 @@ PYTHONPATH=src python -m xgb.pipeline \
   --reg-alpha-grid 0.0,0.5
 ```
 
-The pipeline mirrors the KNN document builder, fits a TF-IDF vectoriser over the training corpus, encodes candidate video ids with a label encoder, and trains an `XGBClassifier` for each issue/configuration in the grid. Validation metrics and the Markdown summaries under `reports/xgb/` are rewritten once the sweep completes.
+The pipeline mirrors the KNN document builder, fits a TF-IDF vectorizer over the training corpus, encodes candidate video ids with a label encoder, and trains an `XGBClassifier` for each issue/configuration in the grid. Validation metrics and the Markdown summaries under `reports/xgb/` are rewritten once the sweep completes.
 
 **Validation snapshot**
 | Issue | Accuracy | Coverage | Selected config |
@@ -70,4 +70,4 @@ The pipeline mirrors the KNN document builder, fits a TF-IDF vectoriser over the
 
 - Metrics originate from the highest-accuracy `metrics.json` files under `models/xgb/sweeps/<issue>/<config>/` (for example, `models/xgb/sweeps/gun_control/lr0p05_depth4_estim200_sub0p7_col0p7_l21_l10p5/gun_control/metrics.json`).
 - The gun-control model substantially outperforms the 0.540 most-frequent baseline drawn from the validation split while also covering 96% of slates with known candidates.
-- Minimum-wage slates remain challenging: after enumerating the specified depth, learning-rate, and regularisation grids the best configuration tops out at 0.375 accuracy, still below the 0.439 majority baseline captured in the KNN diagnostics. This indicates that, within the current feature construction and hyper-parameter bounds, the model has effectively saturated and further gains will require either richer text fields or alternative objectives.
+- Minimum-wage slates remain challenging: after enumerating the specified depth, learning-rate, and regularization grids the best configuration tops out at 0.375 accuracy, still below the 0.439 majority baseline captured in the KNN diagnostics. This indicates that, within the current feature construction and hyper-parameter bounds, the model has effectively saturated and further gains will require either richer text fields or alternative objectives.

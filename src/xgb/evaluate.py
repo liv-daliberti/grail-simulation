@@ -541,7 +541,12 @@ def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:
         ]
     }
     selected["extra_fields"] = list(model.extra_fields)
-    selected["n_features"] = int(getattr(model.vectorizer, "max_features", 0) or 0)
+    if hasattr(model.vectorizer, "metadata"):
+        vectorizer_meta = model.vectorizer.metadata()  # type: ignore[assignment]
+        selected["vectorizer"] = vectorizer_meta
+        selected["n_features"] = int(vectorizer_meta.get("dimension", 0))
+    else:
+        selected["n_features"] = int(getattr(model.vectorizer, "max_features", 0) or 0)
     selected["n_classes"] = int(len(model.label_encoder.classes_))
     return selected
 

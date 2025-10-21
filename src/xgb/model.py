@@ -17,18 +17,24 @@ import numpy as np
 
 from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
 from .utils import canon_video_id
+from .vectorizers import (
+    BaseTextVectorizer,
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+    create_vectorizer,
+    load_vectorizer,
+)
 
 try:  # pragma: no cover - optional dependency
-    from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.preprocessing import LabelEncoder
 except ImportError:  # pragma: no cover - optional dependency
-    TfidfVectorizer = None  # type: ignore[assignment]
     LabelEncoder = None  # type: ignore[assignment]
 
 
-def _ensure_sklearn_available(action: str) -> None:
+def _ensure_label_encoder_available(action: str) -> None:
     """Ensure optional scikit-learn dependency is present before continuing."""
-    if TfidfVectorizer is None or LabelEncoder is None:  # pragma: no cover - optional dependency
+    if LabelEncoder is None:  # pragma: no cover - optional dependency
         raise ImportError(f"Install scikit-learn to {action}.")
 
 try:  # pragma: no cover - optional dependency
@@ -41,8 +47,8 @@ class XGBoostSlateModel:
     """
     Container bundling the vectoriser, label encoder, and trained model.
 
-    :ivar vectorizer: TF-IDF vectoriser fitted on training documents.
-    :vartype vectorizer: sklearn.feature_extraction.text.TfidfVectorizer
+    :ivar vectorizer: Text vectoriser fitted on training documents.
+    :vartype vectorizer: BaseTextVectorizer
     :ivar label_encoder: Encoder mapping video identifiers to numeric labels.
     :vartype label_encoder: sklearn.preprocessing.LabelEncoder
     :ivar booster: Trained XGBoost booster instance.
@@ -51,7 +57,7 @@ class XGBoostSlateModel:
     :vartype extra_fields: Tuple[str, ...]
     """
 
-    vectorizer: TfidfVectorizer
+    vectorizer: BaseTextVectorizer
     label_encoder: LabelEncoder
     booster: Any
     extra_fields: Tuple[str, ...]
@@ -107,6 +113,8 @@ class XGBoostTrainConfig:
     :vartype seed: int
     :ivar max_features: Maximum number of TF-IDF features (``None`` for unlimited).
     :vartype max_features: int | None
+    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``, or ``sentence_transformer``).
+    :vartype vectorizer_kind: str
     :ivar booster: Hyper-parameter bundle applied when initialising the booster.
     :vartype booster: XGBoostBoosterParams
     """
@@ -114,6 +122,12 @@ class XGBoostTrainConfig:
     max_train: int = 200_000
     seed: int = 42
     max_features: Optional[int] = 200_000
+    vectorizer_kind: str = "tfidf"
+    tfidf: TfidfConfig = field(default_factory=TfidfConfig)
+    word2vec: Word2VecVectorizerConfig = field(default_factory=Word2VecVectorizerConfig)
+    sentence_transformer: SentenceTransformerVectorizerConfig = field(
+        default_factory=SentenceTransformerVectorizerConfig
+    )
     booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
 
 
@@ -141,9 +155,12 @@ def fit_xgboost_model(
 
     if XGBClassifier is None:  # pragma: no cover - optional dependency
         raise ImportError("Install xgboost to train the XGBoost baseline.")
-    _ensure_sklearn_available("train the XGBoost baseline")
+    _ensure_label_encoder_available("train the XGBoost baseline")
 
     train_config = config or XGBoostTrainConfig()
+    train_config.vectorizer_kind = (train_config.vectorizer_kind or "tfidf").lower()
+    capped = train_config.max_features if train_config.max_features and train_config.max_features > 0 else None
+    train_config.tfidf.max_features = capped
     vectorizer, encoder, booster = _build_model_components(
         train_ds=train_ds,
         train_config=train_config,
@@ -170,15 +187,23 @@ def save_xgboost_model(model: XGBoostSlateModel, out_dir: Path | str) -> None:
 
     if joblib is None:
         raise ImportError("Install joblib to save the XGBoost baseline artifacts.")
-    _ensure_sklearn_available("serialize XGBoost vectorizer and label encoder")
+    _ensure_label_encoder_available("serialize XGBoost label encoders")
 
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model.vectorizer, directory / "vectorizer.joblib")
+    vectorizer_dir = directory / "vectorizer"
+    model.vectorizer.save(vectorizer_dir)
     joblib.dump(model.label_encoder, directory / "label_encoder.joblib")
     joblib.dump(model.booster, directory / "xgboost_model.joblib")
     with open(directory / "config.json", "w", encoding="utf-8") as handle:
-        json.dump({"extra_fields": list(model.extra_fields)}, handle, indent=2)
+        json.dump(
+            {
+                "extra_fields": list(model.extra_fields),
+                "vectorizer": model.vectorizer.metadata(),
+            },
+            handle,
+            indent=2,
+        )
 
 
 def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
@@ -193,10 +218,14 @@ def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
 
     if joblib is None:
         raise ImportError("Install joblib to load the XGBoost baseline artifacts.")
-    _ensure_sklearn_available("load the XGBoost baseline artifacts")
+    _ensure_label_encoder_available("load the XGBoost baseline artifacts")
 
     directory = Path(in_dir)
-    vectorizer: TfidfVectorizer = joblib.load(directory / "vectorizer.joblib")
+    vectorizer_dir = directory / "vectorizer"
+    if vectorizer_dir.exists():
+        vectorizer = load_vectorizer(vectorizer_dir)
+    else:  # Backwards compatibility with pre-vectorizer refactor bundles.
+        vectorizer = joblib.load(directory / "vectorizer.joblib")
     encoder: LabelEncoder = joblib.load(directory / "label_encoder.joblib")
     booster = joblib.load(directory / "xgboost_model.joblib")
     config_path = directory / "config.json"
@@ -253,27 +282,9 @@ def predict_among_slate(
     return best_index, probability_map
 
 
-def _fit_vectorizer(
-    *, documents: Sequence[str], max_features: Optional[int]
-) -> Tuple[TfidfVectorizer, Any]:
-    """Fit a TF-IDF vectoriser on ``documents`` and return the vectoriser plus matrix."""
-    _ensure_sklearn_available("vectorise prompt documents for XGBoost")
-    tfidf_max_features = max_features if max_features and max_features > 0 else None
-    vectorizer = TfidfVectorizer(
-        lowercase=True,
-        strip_accents="unicode",
-        ngram_range=(1, 2),
-        min_df=1,
-        stop_words=None,
-        token_pattern=r"(?u)\b[\w\-]{2,}\b",
-        max_features=tfidf_max_features,
-    )
-    return vectorizer, vectorizer.fit_transform(documents)
-
-
 def _encode_labels(labels_id: Sequence[str]) -> Tuple[LabelEncoder, Any]:
     """Return an encoder and numeric labels derived from ``labels_id``."""
-    _ensure_sklearn_available("encode prompt labels for XGBoost")
+    _ensure_label_encoder_available("encode prompt labels for XGBoost")
     encoder = LabelEncoder()
     encoded = encoder.fit_transform(labels_id)
     if len(encoder.classes_) < 2:
@@ -318,7 +329,7 @@ def _build_model_components(
     train_ds,
     train_config: XGBoostTrainConfig,
     extra_fields: Sequence[str] | None,
-) -> Tuple[TfidfVectorizer, LabelEncoder, Any]:
+) -> Tuple[BaseTextVectorizer, LabelEncoder, Any]:
     """Return fitted vectoriser, label encoder, and trained booster."""
 
     docs, labels_id, _ = prepare_prompt_documents(
@@ -330,10 +341,15 @@ def _build_model_components(
     if not docs:
         raise RuntimeError("No training documents were produced for XGBoost fitting.")
 
-    vectorizer, matrix = _fit_vectorizer(
-        documents=docs,
-        max_features=train_config.max_features,
+    vectorizer = create_vectorizer(
+        train_config.vectorizer_kind,
+        tfidf=train_config.tfidf,
+        word2vec=train_config.word2vec,
+        sentence_transformer=train_config.sentence_transformer,
     )
+    matrix = vectorizer.fit_transform(docs)
+    if hasattr(matrix, "astype"):
+        matrix = matrix.astype(np.float32, copy=False)  # type: ignore[assignment]
     encoder, encoded_labels = _encode_labels(labels_id)
     booster = _train_booster(
         train_config=train_config,

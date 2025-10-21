@@ -15,10 +15,11 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 try:  # pragma: no cover - optional dependency
-    from datasets import DownloadConfig, load_dataset  # type: ignore
+    from datasets import DownloadConfig, load_dataset, load_from_disk  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     DownloadConfig = None  # type: ignore
     load_dataset = None  # type: ignore
+    load_from_disk = None  # type: ignore
 
 from common.eval_utils import safe_div
 

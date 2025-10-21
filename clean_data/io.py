@@ -70,14 +70,16 @@ def read_survey_with_fallback(*candidates: Path) -> pd.DataFrame:
     for candidate in candidates:
         if not candidate.exists():
             continue
-        df = read_csv_if_exists(candidate)
-        columns = [str(c).strip().lower() for c in getattr(df, "columns", [])]
+        candidate_frame = read_csv_if_exists(candidate)
+        columns = [str(c).strip().lower() for c in getattr(candidate_frame, "columns", [])]
         if "urlid" in columns:
-            return df
-        if df.empty and fallback_df is None:
-            fallback_df = df
+            return candidate_frame
+        if candidate_frame.empty and fallback_df is None:
+            fallback_df = candidate_frame
         else:
-            log.warning("Survey frame missing urlid column; columns=%s", list(df.columns))
+            log.warning(
+                "Survey frame missing urlid column; columns=%s", list(candidate_frame.columns)
+            )
     if fallback_df is not None:
         return fallback_df
     if candidates:
@@ -123,8 +125,8 @@ def read_rds_dataframe(path: Path) -> pd.DataFrame:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        df = pd.read_csv(tmp_path, dtype=str)
-        return df
+        data_frame = pd.read_csv(tmp_path, dtype=str)
+        return data_frame
     except subprocess.CalledProcessError as exc:
         log.warning("Rscript failed while loading %s: %s", path, exc)
         return pd.DataFrame()
@@ -175,15 +177,15 @@ def load_shorts_sessions(data_root: Path) -> List[Dict[str, Any]]:
     """
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     rds_path = data_root / "shorts" / "ytrecs_sessions_may2024.rds"
-    df = read_rds_dataframe(rds_path)
-    if df.empty:
+    shorts_frame = read_rds_dataframe(rds_path)
+    if shorts_frame.empty:
         return []
 
-    df = df.where(pd.notna(df), None)
+    shorts_frame = shorts_frame.where(pd.notna(shorts_frame), None)
     sessions: List[Dict[str, Any]] = []
-    for _, row in df.iterrows():
+    for _, row in shorts_frame.iterrows():
         session: Dict[str, Any] = {}
-        for col in df.columns:
+        for col in shorts_frame.columns:
             value = row[col]
             if value is None:
                 session[col] = None
@@ -415,8 +417,8 @@ def augment_metadata_from_supplemental(
         return
     for csv_path in sup_dir.glob("*.csv"):
         try:
-            with csv_path.open("r", encoding="utf-8-sig") as fp:
-                reader = csv.DictReader(fp)
+            with csv_path.open("r", encoding="utf-8-sig") as csv_file:
+                reader = csv.DictReader(csv_file)
                 if not reader.fieldnames:
                     continue
                 for row in reader:
@@ -455,23 +457,23 @@ def load_video_metadata(base_dir: Path) -> Dict[str, str]:
         return meta
     for csv_path in meta_dir.glob("*.csv"):
         try:
-            df = pd.read_csv(csv_path)
+            metadata_frame = pd.read_csv(csv_path)
         except (OSError, pd.errors.ParserError, UnicodeDecodeError, ValueError) as exc:
             log.warning("Failed to read metadata %s: %s", csv_path, exc)
             continue
         id_col = None
         for cand in ("originID", "originId", "video_id", "videoId", "id"):
-            if cand in df.columns:
+            if cand in metadata_frame.columns:
                 id_col = cand
                 break
         if not id_col:
             continue
         title_col = None
         for cand in ("title", "video_title", "name"):
-            if cand in df.columns:
+            if cand in metadata_frame.columns:
                 title_col = cand
                 break
-        for _, row in df.iterrows():
+        for _, row in metadata_frame.iterrows():
             vid = row.get(id_col)
             if pd.isna(vid):
                 continue
@@ -513,8 +515,8 @@ def load_recommendation_tree_metadata(
             continue
         for csv_path in folder.glob("*.csv"):
             try:
-                with csv_path.open("r", encoding="utf-8-sig") as fp:
-                    reader = csv.DictReader(fp)
+                with csv_path.open("r", encoding="utf-8-sig") as csv_stream:
+                    reader = csv.DictReader(csv_stream)
                     for row in reader:
                         origin_raw = row.get("originId") or row.get("originID") or ""
                         base_vid = _strip_session_video_id(origin_raw)

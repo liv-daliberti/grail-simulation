@@ -21,6 +21,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Limit evaluation examples (0 means evaluate every row).",
     )
     parser.add_argument(
+        "--dataset",
+        default="",
+        help="Dataset path or Hugging Face dataset id (defaults to config.DATASET_NAME).",
+    )
+    parser.add_argument(
+        "--issues",
+        default="",
+        help="Comma-separated list of issue labels to evaluate (defaults to all issues).",
+    )
+    parser.add_argument(
+        "--studies",
+        default="",
+        help="Comma-separated participant study identifiers to filter (defaults to all studies).",
+    )
+    parser.add_argument(
         "--out_dir",
         default=str(Path("models") / "gpt4o"),
         help="Directory for predictions and metrics.",

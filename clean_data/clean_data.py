@@ -11,6 +11,7 @@ need to build or persist cleaned prompt datasets.
 from __future__ import annotations
 
 import logging
+import csv
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -211,18 +212,91 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             return open_fs, open_path
 
         def _read_csv_frame(active_fs, active_path):
-            last_err: Optional[Exception] = None
+            last_decode_err: Optional[UnicodeDecodeError] = None
+            last_parser_err: Optional[Exception] = None
+            last_generic_err: Optional[Exception] = None
+
             for encoding in ("utf-8", "utf-8-sig", "latin-1"):
                 try:
-                    with active_fs.open(active_path, "rb") as handle:  # type: ignore[attr-defined]
-                        frame = pd.read_csv(handle, encoding=encoding, low_memory=False)
+                    with active_fs.open(active_path, "rb") as sample_handle:  # type: ignore[attr-defined]
+                        sample_bytes = sample_handle.read(16384)
+                    sample_text = sample_bytes.decode(encoding)
                 except UnicodeDecodeError as err:
-                    last_err = err
+                    last_decode_err = err
                     continue
-                return frame
-            if last_err is not None:
-                raise last_err
-            raise RuntimeError(f"Unable to read CSV file '{active_path}' using fallback encodings")
+                except Exception as err:  # noqa: BLE001
+                    last_generic_err = err
+                    continue
+
+                sniffed_delimiter: Optional[str] = None
+                try:
+                    sniffed = csv.Sniffer().sniff(
+                        sample_text,
+                        delimiters=[",", "\t", ";", "|", "\x1f"],
+                    )
+                    sniffed_delimiter = sniffed.delimiter
+                except csv.Error:
+                    sniffed_delimiter = None
+
+                candidate_delimiters = []
+                if sniffed_delimiter:
+                    candidate_delimiters.append(sniffed_delimiter)
+                candidate_delimiters.extend([",", "\t", ";", "|", "\x1f"])
+
+                seen_attempts: set[tuple] = set()
+                attempt_specs = []
+                for delim in candidate_delimiters:
+                    key = ("c", delim, None)
+                    if key not in seen_attempts:
+                        attempt_specs.append({"engine": "c", "sep": delim})
+                        seen_attempts.add(key)
+                    key = ("python", delim, None)
+                    if key not in seen_attempts:
+                        attempt_specs.append({"engine": "python", "sep": delim})
+                        seen_attempts.add(key)
+                for spec in (
+                    {"engine": "python", "sep": None, "on_bad_lines": None},
+                    {"engine": "python", "sep": None, "on_bad_lines": "skip"},
+                ):
+                    key = (
+                        spec["engine"],
+                        spec["sep"],
+                        spec.get("on_bad_lines"),
+                    )
+                    if key not in seen_attempts:
+                        attempt_specs.append(spec)
+                        seen_attempts.add(key)
+
+                for attempt in attempt_specs:
+                    kwargs: Dict[str, Any] = {
+                        "encoding": encoding,
+                        "low_memory": False,
+                        "engine": attempt["engine"],
+                    }
+                    if attempt["sep"] is not None:
+                        kwargs["sep"] = attempt["sep"]
+                    if attempt.get("on_bad_lines") and attempt["engine"] == "python":
+                        kwargs["on_bad_lines"] = attempt["on_bad_lines"]
+                    try:
+                        with active_fs.open(active_path, "rb") as handle:  # type: ignore[attr-defined]
+                            frame = pd.read_csv(handle, **kwargs)
+                    except UnicodeDecodeError as err:
+                        last_decode_err = err
+                        break
+                    except pd.errors.ParserError as err:  # type: ignore[attr-defined]
+                        last_parser_err = err
+                        continue
+                    except Exception as err:  # noqa: BLE001
+                        last_generic_err = err
+                        continue
+                    return frame
+            if last_decode_err is not None:
+                raise last_decode_err
+            if last_parser_err is not None:
+                raise last_parser_err
+            if last_generic_err is not None:
+                raise last_generic_err
+            raise RuntimeError(f"Unable to read CSV file '{active_path}' using available fallbacks")
 
         def _maybe_canonical_name(column: str, frame_columns: set[str]) -> str:
             if "_pre" not in column:

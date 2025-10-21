@@ -175,10 +175,15 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             split_files[split_name] = list(files)
 
     fs = builder._fs  # type: ignore[attr-defined]
+    expected_columns: set[str] = set()
+    features: Optional[Features] = getattr(builder.info, "features", None)
+    if isinstance(features, Features):
+        expected_columns = set(features.keys())
     unioned_splits: Dict[str, Dataset] = {}
 
     for split_name, file_list in split_files.items():
         frames = []
+        canonical_columns = expected_columns.copy()
 
         def _resolve_file_ref(file_ref_obj):
             open_fs = fs  # type: ignore[attr-defined]
@@ -210,7 +215,7 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             for encoding in ("utf-8", "utf-8-sig", "latin-1"):
                 try:
                     with active_fs.open(active_path, "rb") as handle:  # type: ignore[attr-defined]
-                        frame = pd.read_csv(handle, encoding=encoding)
+                        frame = pd.read_csv(handle, encoding=encoding, low_memory=False)
                 except UnicodeDecodeError as err:
                     last_err = err
                     continue
@@ -219,18 +224,39 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
                 raise last_err
             raise RuntimeError(f"Unable to read CSV file '{active_path}' using fallback encodings")
 
+        def _maybe_canonical_name(column: str, frame_columns: set[str]) -> str:
+            if "_pre" not in column:
+                return column
+            candidates = []
+            if column.endswith("_pre"):
+                candidates.append(column[:-4])
+            if "_pre_" in column:
+                candidates.append(column.replace("_pre_", "_", 1))
+            if "_pre" in column:
+                candidates.append(column.replace("_pre", "", 1))
+            for candidate in candidates:
+                candidate = candidate.strip("_")
+                if not candidate or candidate == column:
+                    continue
+                if candidate in expected_columns or candidate in canonical_columns:
+                    if candidate not in frame_columns:
+                        return candidate
+            return column
+
         for file_ref in file_list:
             open_fs, open_path = _resolve_file_ref(file_ref)
             frame = _read_csv_frame(open_fs, open_path)
             if "Unnamed: 0" in frame.columns:
                 frame = frame.drop(columns=["Unnamed: 0"])
-            rename_map = {
-                col: col[:-4]
-                for col in frame.columns
-                if col.endswith("_pre") and col[:-4] and col[:-4] not in frame.columns
-            }
+            frame_columns = set(frame.columns)
+            rename_map = {}
+            for col in frame.columns:
+                new_name = _maybe_canonical_name(col, frame_columns)
+                if new_name != col:
+                    rename_map[col] = new_name
             if rename_map:
                 frame = frame.rename(columns=rename_map)
+            canonical_columns.update(frame.columns)
             frames.append(frame)
 
         if not frames:

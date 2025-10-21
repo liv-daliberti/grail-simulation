@@ -19,13 +19,12 @@ import argparse
 import json
 import logging
 import os
-from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from knn.cli import build_parser
-from knn.data import DEFAULT_DATASET_SOURCE, issues_in_dataset, load_dataset_source
+from knn.data import DEFAULT_DATASET_SOURCE
 from knn.evaluate import run_eval
 
 LOGGER = logging.getLogger(__name__)
@@ -185,6 +184,11 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--issues",
         default="",
         help="Comma-separated list of issues to evaluate. Defaults to all issues in the dataset.",
+    )
+    parser.add_argument(
+        "--studies",
+        default="",
+        help="Comma-separated list of participant study keys (study1,study2,study3). Defaults to all studies.",
     )
     parser.add_argument(
         "--sweep-dir",
@@ -760,7 +764,6 @@ def _build_opinion_report(
     *,
     output_path: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
-    selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> None:
     if not metrics:
@@ -869,7 +872,6 @@ def _generate_reports(
     _build_opinion_report(
         output_path=reports_root / "opinion" / "README.md",
         metrics=opinion_metrics,
-        selections=selections,
         studies=studies,
     )
 

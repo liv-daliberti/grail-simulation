@@ -1,0 +1,2545 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#"><link rel="search" title="Search" href="search.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 --><title>Index - GRAIL Simulation documentation</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #1f4b8e;
+  --color-brand-content: #1f4b8e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">GRAIL Simulation  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">GRAIL Simulation  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="api/common.html">Common Utilities API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/visualization.html">Visualization Utilities</a></li>
+</ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="reports/prompt_stats.html">Prompt feature report</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a> | <a href="#X"><strong>X</strong></a></div>
+</section>
+<section id="_" class="genindex-section">
+  <h2>_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/common.html#common.title_index.TitleResolver.__init__">__init__() (common.title_index.TitleResolver method)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.TitleResolver.__init__">(common.TitleResolver method)</a>
+</li>
+          <li><a href="api/gpt4o.html#gpt4o.titles.TitleResolver.__init__">(gpt4o.titles.TitleResolver method)</a>
+</li>
+          <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.__init__">(knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.grail.OnlineDiscriminator.__init__">(open_r1.grail.OnlineDiscriminator method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback.__init__">(open_r1.utils.callbacks.PushToHubRevisionCallback method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback.__init__">(open_r1.utils.callbacks.ReplayBufferCallback method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.__init__">(open_r1.utils.callbacks.SuccessCachingCallback method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.code_providers.E2BProvider.__init__">(open_r1.utils.code_providers.E2BProvider method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.code_providers.MorphProvider.__init__">(open_r1.utils.code_providers.MorphProvider method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__">(open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__">(open_r1.utils.hierarchical_rollout.HierarchicalRollout method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.__init__">(open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.replay_dataset.ReplayMixDataset.__init__">(open_r1.utils.replay_dataset.ReplayMixDataset method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.__init__">(open_r1.utils.routed_morph.RoutedMorphSandbox method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.__init__">(open_r1.utils.routed_sandbox.RoutedSandbox method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.accuracy">accuracy (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.accuracy_reward">accuracy_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.add">add() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.add_group">add_group() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.after_column">after_column (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.opinion.OpinionSpec.after_column">(knn.opinion.OpinionSpec attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts">aggregate_counts() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState">AllowlistState (class in clean_data.sessions)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.anon_id">anon_id (clean_data.sessions.ParticipantIdentifiers attribute)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.anon_id">(clean_data.sessions.SessionInfo attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/prompt_builder.html#prompt_builder.as_list_json">as_list_json() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.parsers.as_list_json">(in module prompt_builder.parsers)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.features.assemble_document">assemble_document() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.assemble_document">(in module xgb.features)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.assemble_study_specs">assemble_study_specs() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.assign_if_missing">assign_if_missing() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.augment_metadata_from_supplemental">augment_metadata_from_supplemental() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.avg_probability">avg_probability (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.before_column">before_column (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.opinion.OpinionSpec.before_column">(knn.opinion.OpinionSpec attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.benchmarks">benchmarks (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.benchmarks">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.bin_nopts">bin_nopts() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.binary_code_reward">binary_code_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostSlateModel.booster">booster (xgb.model.XGBoostSlateModel attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.booster">(xgb.model.XGBoostTrainConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.bucket_from_pos">bucket_from_pos() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.build_clean_dataset">build_clean_dataset() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.codeocean.build_codeocean_rows">build_codeocean_rows() (in module clean_data.codeocean)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.build_codeocean_rows">(in module clean_data.sessions)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.generate.build_distilabel_pipeline">build_distilabel_pipeline() (in module open_r1.generate)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.build_graph">build_graph() (in module visualization.recommendation_tree_viz)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.markdown.build_markdown">build_markdown() (in module clean_data.research_article_political_sciences.markdown)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.build_markdown_report">build_markdown_report() (in module clean_data.prompt.markdown)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.cli.build_parser">build_parser() (in module gpt4o.cli)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.cli.build_parser">(in module knn.cli)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.cli.build_parser">(in module xgb.cli)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.build_profile_block">build_profile_block() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.build_session_graph">build_session_graph() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.build_slate_items">build_slate_items() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.surveys.build_survey_index">build_survey_index() (in module clean_data.surveys)</a>
+</li>
+        <li><a href="api/knn.html#knn.index.build_tfidf_index">build_tfidf_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.build_user_prompt">build_user_prompt() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.prompt.build_user_prompt">(in module prompt_builder.prompt)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.index.build_word2vec_index">build_word2vec_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions">BuildOptions (class in clean_data.clean_data)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.callbacks">callbacks (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.callbacks">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.canon">canon() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/common.html#common.canon_text">canon_text() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.text.canon_text">(in module common.text)</a>
+</li>
+        </ul></li>
+        <li><a href="api/common.html#common.canon_video_id">canon_video_id() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.text.canon_video_id">(in module common.text)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.utils.canon_video_id">(in module xgb.utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.canonical_slate_items">canonical_slate_items() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.case_id">case_id (clean_data.sessions.ParticipantIdentifiers attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.categorical_summary">categorical_summary() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.chat_template">chat_template (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.chat_template">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.hub.check_hub_revision_exists">check_hub_revision_exists() (in module open_r1.utils.hub)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge.child">child (visualization.recommendation_tree_viz.TreeEdge attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.chosen_index">chosen_index (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.classify_wage_candidate">classify_wage_candidate() (clean_data.sessions.AllowlistState method)</a>
+</li>
+        <li>
+    clean_data
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.clean_data
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.clean_data">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.cli
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.codeocean
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.codeocean">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.filters
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.filters">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.helpers
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.helpers">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.io
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.io">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.cli
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.constants
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.constants">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.markdown
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.markdown">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.plotting
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.plotting">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.question_mapping
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.question_mapping">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.summary
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.summary">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt.utils
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt_constants
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt_constants">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompt_stats
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompt_stats">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.prompting
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.prompting">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    clean_data.research_article_political_sciences
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.research_article_political_sciences.analysis
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.analysis">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.research_article_political_sciences.cli
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.research_article_political_sciences.markdown
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.markdown">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.research_article_political_sciences.plotting
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.plotting">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.research_article_political_sciences.report
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.report">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.sessions
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.sessions">module</a>
+</li>
+        </ul></li>
+        <li>
+    clean_data.surveys
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data.surveys">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/prompt_builder.html#prompt_builder.clean_text">clean_text() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.formatters.clean_text">(in module prompt_builder.formatters)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.clean_viewer_profile">clean_viewer_profile() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.code_eval_scoring_mode">code_eval_scoring_mode (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.code_eval_test_batch_size">code_eval_test_batch_size (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.code_language">code_language (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.code_provider">code_provider (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.code_reward">code_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.code_providers.CodeExecutionProvider">CodeExecutionProvider (class in open_r1.utils.code_providers)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.coerce_session_value">coerce_session_value() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.colsample_bytree">colsample_bytree (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.columns">columns (open_r1.configs.DatasetConfig attribute)</a>
+</li>
+        <li>
+    common
+
+        <ul>
+          <li><a href="api/common.html#module-common">module</a>
+</li>
+        </ul></li>
+        <li>
+    common.logging_utils
+
+        <ul>
+          <li><a href="api/common.html#module-common.logging_utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    common.text
+
+        <ul>
+          <li><a href="api/common.html#module-common.text">module</a>
+</li>
+        </ul></li>
+        <li>
+    common.title_index
+
+        <ul>
+          <li><a href="api/common.html#module-common.title_index">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.compute_auc_from_curve">compute_auc_from_curve() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.compute_depths">compute_depths() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.filters.compute_issue_counts">compute_issue_counts() (in module clean_data.filters)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.compute_treatment_regression">compute_treatment_regression() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.config">config (open_r1.configs.DatasetConfig attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.convert_numeric">convert_numeric() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.core_prompt_mask">core_prompt_mask() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.correct">correct (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.cosine_max_len">cosine_max_len (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.cosine_max_value_correct">cosine_max_value_correct (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.cosine_max_value_wrong">cosine_max_value_wrong (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.cosine_min_value_correct">cosine_min_value_correct (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.cosine_min_value_wrong">cosine_min_value_wrong (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.count_prior_history">count_prior_history() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries.counts">counts (clean_data.prompt.markdown.ReportSummaries attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries.coverage">coverage (clean_data.prompt.markdown.ReportSummaries attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.coverage">(xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.dataframe_from_splits">dataframe_from_splits() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.ScriptArguments.dataset_mixture">dataset_mixture (open_r1.configs.ScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.ScriptArguments.dataset_name">dataset_name (open_r1.configs.ScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.dataset_prompt_column">dataset_prompt_column (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.dataset_solution_column">dataset_solution_column (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.EvaluationConfig.dataset_source">dataset_source (xgb.evaluate.EvaluationConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.dataset_source">(xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig">DatasetConfig (class in open_r1.configs)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetMixtureConfig">DatasetMixtureConfig (class in open_r1.configs)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetMixtureConfig.datasets">datasets (open_r1.configs.DatasetMixtureConfig attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.debug_state">debug_state() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.dedupe_by_participant_issue">dedupe_by_participant_issue() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.dedupe_participants">dedupe_participants() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.delay">delay (clean_data.sessions.SessionTiming attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportFigures.demographic">demographic (clean_data.prompt.markdown.ReportFigures attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.demographic_missing">demographic_missing (clean_data.prompt.markdown.ReportCounts attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.demographic_missing_summary">demographic_missing_summary() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.derive_next_from_history">derive_next_from_history() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.describe_age_fragment">describe_age_fragment() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.describe_gender_fragment">describe_gender_fragment() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.client.ds_call">ds_call() (in module gpt4o.client)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.e2b_router_url">e2b_router_url (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.code_providers.E2BProvider">E2BProvider (class in open_r1.utils.code_providers)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeData.edges">edges (visualization.recommendation_tree_viz.TreeData attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.encode">encode() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.end">end (clean_data.sessions.SessionTiming attribute)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.config.ensure_azure_env">ensure_azure_env() (in module gpt4o.config)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.ensure_dir">ensure_dir() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/common.html#common.ensure_directory">ensure_directory() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.logging_utils.ensure_directory">(in module common.logging_utils)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.utils.ensure_directory">(in module xgb.utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.ensure_shared_schema">ensure_shared_schema() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.epochs">epochs (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.EvaluationConfig.eval_max">eval_max (xgb.evaluate.EvaluationConfig attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.evaluate.evaluate_issue">evaluate_issue() (in module knn.evaluate)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.evaluate.evaluate_issue">(in module xgb.evaluate)</a>
+</li>
+        </ul></li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.evaluated">evaluated (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.EvaluationConfig">EvaluationConfig (class in xgb.evaluate)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.code_providers.CodeExecutionProvider.execute_scripts">execute_scripts() (open_r1.utils.code_providers.CodeExecutionProvider method)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.code_providers.E2BProvider.execute_scripts">(open_r1.utils.code_providers.E2BProvider method)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.utils.code_providers.MorphProvider.execute_scripts">(open_r1.utils.code_providers.MorphProvider method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.export_issue_datasets">export_issue_datasets() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.EvaluationConfig.extra_fields">extra_fields (xgb.evaluate.EvaluationConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.extra_fields">(xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.model.XGBoostSlateModel.extra_fields">(xgb.model.XGBoostSlateModel attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.extra_kwargs">extra_kwargs (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.extract_code">extract_code() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.extract_income">extract_income() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.extract_marital_status">extract_marital_status() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.extract_now_watching">extract_now_watching() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.extract_now_watching">(in module xgb.features)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.extract_party">extract_party() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.extract_race">extract_race() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.extract_slate_items">extract_slate_items() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.extract_slate_items">(in module xgb.features)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries.feature">feature (clean_data.prompt.markdown.ReportSummaries attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.feature_label">feature_label() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext.figures">figures (clean_data.prompt.markdown.ReportContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext.figures_dir">figures_dir (clean_data.prompt.markdown.ReportContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.fill_metadata_field">fill_metadata_field() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.filter_core_prompt_rows">filter_core_prompt_rows() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/knn.html#knn.data.filter_dataset_for_issue">filter_dataset_for_issue() (in module knn.data)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.data.filter_dataset_for_issue">(in module xgb.data)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.data.filter_dataset_for_participant_studies">filter_dataset_for_participant_studies() (in module knn.data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.filters.filter_prompt_ready">filter_prompt_ready() (in module clean_data.filters)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.first_present">first_present() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.fit_xgboost_model">fit_xgboost_model() (in module xgb.model)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.parsers.format_age">format_age() (in module prompt_builder.parsers)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.parsers.format_count">format_count() (in module prompt_builder.parsers)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.format_ideology">format_ideology() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.format_node_label">format_node_label() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.format_reward">format_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.parsers.format_yes_no">format_yes_no() (in module prompt_builder.parsers)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.formating">formating() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.from_mapping">from_mapping() (clean_data.sessions.AllowlistState class method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.generate_prompt_feature_report">generate_prompt_feature_report() (in module clean_data.prompt)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.prompt.cli.generate_prompt_feature_report">(in module clean_data.prompt.cli)</a>
+</li>
+          <li><a href="api/clean_data.html#clean_data.prompt_stats.generate_prompt_feature_report">(in module clean_data.prompt_stats)</a>
+</li>
+        </ul></li>
+        <li><a href="api/prompt_builder.html#prompt_builder.generate_prompt_samples">generate_prompt_samples() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.generate_prompt_samples">(in module prompt_builder.samples)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.generate_prompt_stats">generate_prompt_stats() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.generate_research_article_report">generate_research_article_report() (in module clean_data.research_article_political_sciences)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.report.generate_research_article_report">(in module clean_data.research_article_political_sciences.report)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.get_callbacks">get_callbacks() (in module open_r1.utils.callbacks)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.client.get_client">get_client() (in module gpt4o.client)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.get_code_format_reward">get_code_format_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.get_cosine_scaled_reward">get_cosine_scaled_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.get_dataset">get_dataset() (in module open_r1.utils)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.data.get_dataset">(in module open_r1.utils.data)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompting.get_gold_next_id">get_gold_next_id() (in module clean_data.prompting)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.get_gold_next_id">(in module clean_data.sessions)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.hub.get_gpu_count_for_vllm">get_gpu_count_for_vllm() (in module open_r1.utils.hub)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.get_group">get_group() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_kbit_device_map">get_kbit_device_map() (in module open_r1.utils.model_utils)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.evaluation.get_lighteval_tasks">get_lighteval_tasks() (in module open_r1.utils.evaluation)</a>
+</li>
+        <li><a href="api/common.html#common.get_logger">get_logger() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.logging_utils.get_logger">(in module common.logging_utils)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.utils.get_logger">(in module xgb.utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.get_model">get_model() (in module open_r1.utils)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_model">(in module open_r1.utils.model_utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.hub.get_param_count_from_repo_id">get_param_count_from_repo_id() (in module open_r1.utils.hub)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.get_peft_config">get_peft_config() (in module open_r1.grail)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.grpo.get_peft_config">(in module open_r1.grpo)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.code_providers.get_provider">get_provider() (in module open_r1.utils.code_providers)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_quantization_config">get_quantization_config() (in module open_r1.utils.model_utils)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.get_repetition_penalty_reward">get_repetition_penalty_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.get_reward_funcs">get_reward_funcs() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.get_soft_overlong_punishment">get_soft_overlong_punishment() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.get_tokenizer">get_tokenizer() (in module open_r1.utils)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_tokenizer">(in module open_r1.utils.model_utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/prompt_builder.html#prompt_builder.video_stats.get_video_stats">get_video_stats() (in module prompt_builder.video_stats)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.gold_id">gold_id (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.gold_index">gold_index (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompting.gold_index_from_items">gold_index_from_items() (in module clean_data.prompting)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.gold_index_from_items">(in module clean_data.sessions)</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.cli
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.client
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.client">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.config
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.config">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.conversation
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.conversation">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.evaluate
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.evaluate">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.titles
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.titles">module</a>
+</li>
+        </ul></li>
+        <li>
+    gpt4o.utils
+
+        <ul>
+          <li><a href="api/gpt4o.html#module-gpt4o.utils">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig">GRPOConfig (class in open_r1.configs)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments">GRPOScriptArguments (class in open_r1.configs)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.gun_workers">gun_workers (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.has_issue">has_issue() (clean_data.prompt.utils.SeriesPair method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.heatmap_filename">heatmap_filename (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer">HierarchicalGRPOTrainer (class in open_r1.utils.hierarchical_rollout)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.HierarchicalRollout">HierarchicalRollout (class in open_r1.utils.hierarchical_rollout)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.histogram2d_counts">histogram2d_counts() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.hub_model_revision">hub_model_revision (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.hub_model_revision">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.human_join">human_join() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.humanise_profile">humanise_profile() (in module gpt4o.conversation)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.id">id (open_r1.configs.DatasetConfig attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.surveys.infer_issue_from_topic">infer_issue_from_topic() (in module clean_data.surveys)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.surveys.infer_participant_study">infer_participant_study() (in module clean_data.surveys)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.wandb_logging.init_wandb_training">init_wandb_training() (in module open_r1.utils.wandb_logging)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.ioi_code_reward">ioi_code_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.ioi_provider">ioi_provider (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.is_conversational">is_conversational() (in module open_r1.utils.hierarchical_rollout)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.is_e2b_available">is_e2b_available() (in module open_r1.utils)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.import_utils.is_e2b_available">(in module open_r1.utils.import_utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.is_morph_available">is_morph_available() (in module open_r1.utils)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.import_utils.is_morph_available">(in module open_r1.utils.import_utils)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.utils.is_nan_like">is_nan_like() (in module gpt4o.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.is_nanlike">is_nanlike() (in module clean_data.prompt.utils)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.is_nanlike">(in module prompt_builder)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.parsers.is_nanlike">(in module prompt_builder.parsers)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.is_trained">is_trained() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.is_valid">is_valid (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.issue">issue (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.opinion.OpinionSpec.issue">(knn.opinion.OpinionSpec attribute)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.PromptSample.issue">(prompt_builder.PromptSample attribute)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample.issue">(prompt_builder.samples.PromptSample attribute)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.issue">(xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.issue_names">issue_names() (clean_data.prompt.utils.SeriesPair method)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics">IssueMetrics (class in xgb.evaluate)</a>
+</li>
+        <li><a href="api/knn.html#knn.data.issues_in_dataset">issues_in_dataset() (in module knn.data)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.data.issues_in_dataset">(in module xgb.data)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.items">items (open_r1.grail.RewardContext attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="K" class="genindex-section">
+  <h2>K</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.key">key (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.opinion.OpinionSpec.key">(knn.opinion.OpinionSpec attribute)</a>
+</li>
+        </ul></li>
+        <li>
+    knn.cli
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    knn.data
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.data">module</a>
+</li>
+        </ul></li>
+        <li>
+    knn.evaluate
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.evaluate">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    knn.features
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.features">module</a>
+</li>
+        </ul></li>
+        <li>
+    knn.index
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.index">module</a>
+</li>
+        </ul></li>
+        <li>
+    knn.opinion
+
+        <ul>
+          <li><a href="api/knn.html#module-knn.opinion">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.index.knn_predict_among_slate_multi">knn_predict_among_slate_multi() (in module knn.index)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.known_candidate_hits">known_candidate_hits (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.known_candidate_total">known_candidate_total (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec.label">label (clean_data.research_article_political_sciences.analysis.StudySpec attribute)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.opinion.OpinionSpec.label">(knn.opinion.OpinionSpec attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostSlateModel.label_encoder">label_encoder (xgb.model.XGBoostSlateModel attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.last_error">last_error() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.learning_rate">learning_rate (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.len_reward">len_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.load">load() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.load_assignment_frame">load_assignment_frame() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.codeocean.load_codeocean_dataset">load_codeocean_dataset() (in module clean_data.codeocean)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.load_dataset_any">load_dataset_any() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/knn.html#knn.data.load_dataset_source">load_dataset_source() (in module knn.data)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.data.load_dataset_source">(in module xgb.data)</a>
+</li>
+        </ul></li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.load_metadata">load_metadata() (in module visualization.recommendation_tree_viz)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.surveys.load_participant_allowlists">load_participant_allowlists() (in module clean_data.surveys)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.load_raw">load_raw() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.load_recommendation_tree_metadata">load_recommendation_tree_metadata() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.load_shorts_sessions">load_shorts_sessions() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompting.load_slate_items">load_slate_items() (in module clean_data.prompting)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.load_slate_items">(in module clean_data.sessions)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.index.load_tfidf_index">load_tfidf_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.load_trajectories">load_trajectories() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.load_tree_csv">load_tree_csv() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.load_video_metadata">load_video_metadata() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/knn.html#knn.index.load_word2vec_index">load_word2vec_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.load_xgboost_model">load_xgboost_model() (in module xgb.model)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.lookup_session_value">lookup_session_value() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.video_stats.lookup_video_stats">lookup_video_stats() (in module prompt_builder.video_stats)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.cli.main">main() (in module clean_data.cli)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.prompt.main">(in module clean_data.prompt)</a>
+</li>
+          <li><a href="api/clean_data.html#clean_data.prompt.cli.main">(in module clean_data.prompt.cli)</a>
+</li>
+          <li><a href="api/clean_data.html#clean_data.prompt_stats.main">(in module clean_data.prompt_stats)</a>
+</li>
+          <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.cli.main">(in module clean_data.research_article_political_sciences.cli)</a>
+</li>
+          <li><a href="api/gpt4o.html#gpt4o.cli.main">(in module gpt4o.cli)</a>
+</li>
+          <li><a href="api/knn.html#knn.cli.main">(in module knn.cli)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.grail.main">(in module open_r1.grail)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.grpo.main">(in module open_r1.grpo)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.main">(in module prompt_builder.samples)</a>
+</li>
+          <li><a href="api/visualization.html#visualization.recommendation_tree_viz.main">(in module visualization.recommendation_tree_viz)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.cli.main">(in module xgb.cli)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.make_conversation_record">make_conversation_record() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.make_gail_reward_fn">make_gail_reward_fn() (in module open_r1.grail)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.map_rows_to_examples">map_rows_to_examples() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.max_completion_len">max_completion_len (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.max_depth">max_depth (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.max_features">max_features (xgb.model.XGBoostTrainConfig attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.max_history">max_history (clean_data.clean_data.BuildOptions attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.max_train">max_train (xgb.model.XGBoostTrainConfig attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.maybe_apply_chat_template">maybe_apply_chat_template() (in module open_r1.utils.hierarchical_rollout)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.maybe_literal_eval">maybe_literal_eval() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.min_count">min_count (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.model_dir">model_dir (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="api/clean_data.html#module-clean_data">clean_data</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.clean_data">clean_data.clean_data</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.cli">clean_data.cli</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.codeocean">clean_data.codeocean</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.filters">clean_data.filters</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.helpers">clean_data.helpers</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.io">clean_data.io</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt">clean_data.prompt</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.cli">clean_data.prompt.cli</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.constants">clean_data.prompt.constants</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.markdown">clean_data.prompt.markdown</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.plotting">clean_data.prompt.plotting</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.question_mapping">clean_data.prompt.question_mapping</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.summary">clean_data.prompt.summary</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt.utils">clean_data.prompt.utils</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt_constants">clean_data.prompt_constants</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompt_stats">clean_data.prompt_stats</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.prompting">clean_data.prompting</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences">clean_data.research_article_political_sciences</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.analysis">clean_data.research_article_political_sciences.analysis</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.cli">clean_data.research_article_political_sciences.cli</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.markdown">clean_data.research_article_political_sciences.markdown</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.plotting">clean_data.research_article_political_sciences.plotting</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.research_article_political_sciences.report">clean_data.research_article_political_sciences.report</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.sessions">clean_data.sessions</a>
+</li>
+          <li><a href="api/clean_data.html#module-clean_data.surveys">clean_data.surveys</a>
+</li>
+          <li><a href="api/common.html#module-common">common</a>
+</li>
+          <li><a href="api/common.html#module-common.logging_utils">common.logging_utils</a>
+</li>
+          <li><a href="api/common.html#module-common.text">common.text</a>
+</li>
+          <li><a href="api/common.html#module-common.title_index">common.title_index</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o">gpt4o</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.cli">gpt4o.cli</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.client">gpt4o.client</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.config">gpt4o.config</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.conversation">gpt4o.conversation</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.evaluate">gpt4o.evaluate</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.titles">gpt4o.titles</a>
+</li>
+          <li><a href="api/gpt4o.html#module-gpt4o.utils">gpt4o.utils</a>
+</li>
+          <li><a href="api/knn.html#module-knn.cli">knn.cli</a>
+</li>
+          <li><a href="api/knn.html#module-knn.data">knn.data</a>
+</li>
+          <li><a href="api/knn.html#module-knn.evaluate">knn.evaluate</a>
+</li>
+          <li><a href="api/knn.html#module-knn.features">knn.features</a>
+</li>
+          <li><a href="api/knn.html#module-knn.index">knn.index</a>
+</li>
+          <li><a href="api/knn.html#module-knn.opinion">knn.opinion</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1">open_r1</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.configs">open_r1.configs</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.generate">open_r1.generate</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.grail">open_r1.grail</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.grpo">open_r1.grpo</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.rewards">open_r1.rewards</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils">open_r1.utils</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.callbacks">open_r1.utils.callbacks</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.code_providers">open_r1.utils.code_providers</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.data">open_r1.utils.data</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.evaluation">open_r1.utils.evaluation</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.hierarchical_rollout">open_r1.utils.hierarchical_rollout</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.hub">open_r1.utils.hub</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.import_utils">open_r1.utils.import_utils</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.model_utils">open_r1.utils.model_utils</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.replay_buffer">open_r1.utils.replay_buffer</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.replay_dataset">open_r1.utils.replay_dataset</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.routed_morph">open_r1.utils.routed_morph</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.routed_sandbox">open_r1.utils.routed_sandbox</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.vllm_patch">open_r1.utils.vllm_patch</a>
+</li>
+          <li><a href="api/open_r1.html#module-open_r1.utils.wandb_logging">open_r1.utils.wandb_logging</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder">prompt_builder</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.constants">prompt_builder.constants</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.formatters">prompt_builder.formatters</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.parsers">prompt_builder.parsers</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.profiles">prompt_builder.profiles</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.prompt">prompt_builder.prompt</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.samples">prompt_builder.samples</a>
+</li>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.video_stats">prompt_builder.video_stats</a>
+</li>
+          <li><a href="api/visualization.html#module-visualization">visualization</a>
+</li>
+          <li><a href="api/visualization.html#module-visualization.recommendation_tree_viz">visualization.recommendation_tree_viz</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.cli">xgb.cli</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.data">xgb.data</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.evaluate">xgb.evaluate</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.features">xgb.features</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.model">xgb.model</a>
+</li>
+          <li><a href="api/xgb.html#module-xgb.utils">xgb.utils</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.morph_router_url">morph_router_url (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.code_providers.MorphProvider">MorphProvider (class in open_r1.utils.code_providers)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.n_estimators">n_estimators (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.n_options">n_options (clean_data.prompt.markdown.ReportCounts attribute)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportFigures.n_options">(clean_data.prompt.markdown.ReportFigures attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.n_options_summary">n_options_summary() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeData.nodes">nodes (visualization.recommendation_tree_viz.TreeData attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.non_missing">non_missing() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.normalize_display_orders">normalize_display_orders() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.normalize_language_text">normalize_language_text() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.normalize_session_mapping">normalize_session_mapping() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.num_completions_to_print">num_completions_to_print (open_r1.configs.GRPOConfig attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.numeric_summary">numeric_summary() (in module clean_data.prompt.utils)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.on_log">on_log() (open_r1.utils.callbacks.SuccessCachingCallback method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback.on_save">on_save() (open_r1.utils.callbacks.PushToHubRevisionCallback method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end">on_train_batch_end() (open_r1.utils.callbacks.ReplayBufferCallback method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.OnlineDiscriminator">OnlineDiscriminator (class in open_r1.grail)</a>
+</li>
+        <li>
+    open_r1
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.configs
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.configs">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.generate
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.generate">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.grail
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.grail">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.grpo
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.grpo">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.rewards
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.rewards">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.callbacks
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.callbacks">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.code_providers
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.code_providers">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.data
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.data">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.evaluation
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.evaluation">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    open_r1.utils.hierarchical_rollout
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.hierarchical_rollout">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.hub
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.hub">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.import_utils
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.import_utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.model_utils
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.model_utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.replay_buffer
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.replay_buffer">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.replay_dataset
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.replay_dataset">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.routed_morph
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.routed_morph">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.routed_sandbox
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.routed_sandbox">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.vllm_patch
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.vllm_patch">module</a>
+</li>
+        </ul></li>
+        <li>
+    open_r1.utils.wandb_logging
+
+        <ul>
+          <li><a href="api/open_r1.html#module-open_r1.utils.wandb_logging">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.opinion.OpinionSpec">OpinionSpec (class in knn.opinion)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext.output_dir">output_dir (clean_data.prompt.markdown.ReportContext attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.overwrite_hub_revision">overwrite_hub_revision (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.overwrite_hub_revision">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.pad">pad() (in module open_r1.utils.hierarchical_rollout)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.parallel_code_exec_per_proc">parallel_code_exec_per_proc (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge.parent">parent (visualization.recommendation_tree_viz.TreeEdge attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.cli.parse_args">parse_args() (in module clean_data.cli)</a>
+
+        <ul>
+          <li><a href="api/visualization.html#visualization.recommendation_tree_viz.parse_args">(in module visualization.recommendation_tree_viz)</a>
+</li>
+        </ul></li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.parse_issue_counts">parse_issue_counts() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.parse_issue_repo_specs">parse_issue_repo_specs() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/knn.html#knn.evaluate.parse_k_values">parse_k_values() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.participant">participant (clean_data.prompt.markdown.ReportCounts attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.participant_counts_summary">participant_counts_summary() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.PromptSample.participant_id">participant_id (prompt_builder.PromptSample attribute)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample.participant_id">(prompt_builder.samples.PromptSample attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.participant_ids">participant_ids() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.participant_key">participant_key() (in module clean_data.sessions)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.participant_stats">participant_stats() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.PromptSample.participant_study">participant_study (prompt_builder.PromptSample attribute)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample.participant_study">(prompt_builder.samples.PromptSample attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers">ParticipantIdentifiers (class in clean_data.sessions)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.conversation.pick_case_insensitive">pick_case_insensitive() (in module gpt4o.conversation)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_assignment_panels">plot_assignment_panels() (in module clean_data.research_article_political_sciences.plotting)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_categorical_hist">plot_categorical_hist() (in module clean_data.prompt.plotting)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_categorical_hist_by_issue">plot_categorical_hist_by_issue() (in module clean_data.prompt.plotting)</a>
+</li>
+        <li><a href="api/knn.html#knn.evaluate.plot_elbow">plot_elbow() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_heatmap">plot_heatmap() (in module clean_data.research_article_political_sciences.plotting)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_mean_change">plot_mean_change() (in module clean_data.research_article_political_sciences.plotting)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_numeric_hist">plot_numeric_hist() (in module clean_data.prompt.plotting)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_numeric_hist_by_issue">plot_numeric_hist_by_issue() (in module clean_data.prompt.plotting)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.policy_text">policy_text (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.predict_among_slate">predict_among_slate() (in module xgb.model)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.features.prepare_prompt_documents">prepare_prompt_documents() (in module xgb.features)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.prepare_study_frame">prepare_study_frame() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.prepare_training_documents">prepare_training_documents() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.prepare_training_documents">(in module xgb.features)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.prior_history">prior_history (clean_data.prompt.markdown.ReportCounts attribute)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportFigures.prior_history">(clean_data.prompt.markdown.ReportFigures attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.prior_history_summary">prior_history_summary() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.OnlineDiscriminator.prob_positive">prob_positive() (open_r1.grail.OnlineDiscriminator method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries.profile">profile (clean_data.prompt.markdown.ReportSummaries attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.profile_summary">profile_summary() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.profiles.ProfileRender">ProfileRender (class in prompt_builder.profiles)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.PromptSample.prompt">prompt (prompt_builder.PromptSample attribute)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample.prompt">(prompt_builder.samples.PromptSample attribute)</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.constants
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.constants">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.formatters
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.formatters">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.parsers
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.parsers">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.profiles
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.profiles">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.prompt
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.prompt">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.samples
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.samples">module</a>
+</li>
+        </ul></li>
+        <li>
+    prompt_builder.video_stats
+
+        <ul>
+          <li><a href="api/prompt_builder.html#module-prompt_builder.video_stats">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.features.prompt_from_builder">prompt_from_builder() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.prompt_from_builder">(in module xgb.features)</a>
+</li>
+        </ul></li>
+        <li><a href="api/prompt_builder.html#prompt_builder.PromptSample">PromptSample (class in prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample">(class in prompt_builder.samples)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.rewards.pure_accuracy_reward">pure_accuracy_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.push_to_hub_revision">push_to_hub_revision (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.push_to_hub_revision">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.hub.push_to_hub_revision">push_to_hub_revision() (in module open_r1.utils.hub)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback">PushToHubRevisionCallback (class in open_r1.utils.callbacks)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge.rank">rank (visualization.recommendation_tree_viz.TreeEdge attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.read_csv_if_exists">read_csv_if_exists() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.read_rds_dataframe">read_rds_dataframe() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.io.read_survey_with_fallback">read_survey_with_fallback() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.rewards.reasoning_steps_reward">reasoning_steps_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.reg_alpha">reg_alpha (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.reg_lambda">reg_lambda (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.evaluation.register_lighteval_task">register_lighteval_task() (in module open_r1.utils.evaluation)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.render_graph">render_graph() (in module visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.render_profile">render_profile() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.profiles.render_profile">(in module prompt_builder.profiles)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.repetition_max_penalty">repetition_max_penalty (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.repetition_n_grams">repetition_n_grams (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_dataset.replay_collate">replay_collate() (in module open_r1.utils.replay_dataset)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer">ReplayBuffer (class in open_r1.utils.replay_buffer)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback">ReplayBufferCallback (class in open_r1.utils.callbacks)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_dataset.ReplayMixDataset">ReplayMixDataset (class in open_r1.utils.replay_dataset)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext">ReportContext (class in clean_data.prompt.markdown)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts">ReportCounts (class in clean_data.prompt.markdown)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportFigures">ReportFigures (class in clean_data.prompt.markdown)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries">ReportSummaries (class in clean_data.prompt.markdown)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.request_timeout">request_timeout (open_r1.utils.routed_morph.RoutedMorphSandbox attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.requires_enforcement">requires_enforcement() (clean_data.sessions.AllowlistState method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/common.html#common.title_index.TitleResolver.resolve">resolve() (common.title_index.TitleResolver method)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.TitleResolver.resolve">(common.TitleResolver method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.codeocean.resolve_capsule_data_root">resolve_capsule_data_root() (in module clean_data.codeocean)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.io.resolve_capsule_data_root">(in module clean_data.io)</a>
+</li>
+        </ul></li>
+        <li><a href="api/common.html#common.resolve_paths_from_env">resolve_paths_from_env() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.text.resolve_paths_from_env">(in module common.text)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.resolve_reports_dir">resolve_reports_dir() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.reward_funcs">reward_funcs (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext">RewardContext (class in open_r1.grail)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeData.root">root (visualization.recommendation_tree_viz.TreeData attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox">RoutedMorphSandbox (class in open_r1.utils.routed_morph)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox">RoutedSandbox (class in open_r1.utils.routed_sandbox)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.router_url">router_url (open_r1.utils.routed_morph.RoutedMorphSandbox attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.router_url">(open_r1.utils.routed_sandbox.RoutedSandbox attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompting.row_to_example">row_to_example() (in module clean_data.prompting)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.evaluation.run_benchmark_jobs">run_benchmark_jobs() (in module open_r1.utils.evaluation)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.run_code">run_code() (open_r1.utils.routed_morph.RoutedMorphSandbox method)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.run_code">(open_r1.utils.routed_sandbox.RoutedSandbox method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.evaluate.run_eval">run_eval() (in module gpt4o.evaluate)</a>
+
+        <ul>
+          <li><a href="api/knn.html#knn.evaluate.run_eval">(in module knn.evaluate)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.evaluate.run_eval">(in module xgb.evaluate)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.evaluation.run_lighteval_job">run_lighteval_job() (in module open_r1.utils.evaluation)</a>
+</li>
+        <li><a href="api/knn.html#knn.opinion.run_opinion_eval">run_opinion_eval() (in module knn.opinion)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/common.html#common.safe_div">safe_div() (in module common)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.evaluate.safe_div">(in module xgb.evaluate)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.vllm_patch.safe_generate">safe_generate() (in module open_r1.utils.vllm_patch)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.vllm_patch.safe_request">safe_request() (in module open_r1.utils.vllm_patch)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.SafeDict">SafeDict (class in visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.sample">sample() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.sample_uid">sample_uid() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.save">save() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.save_dataset">save_dataset() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/knn.html#knn.index.save_tfidf_index">save_tfidf_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/knn.html#knn.index.save_word2vec_index">save_word2vec_index() (in module knn.index)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.save_xgboost_model">save_xgboost_model() (in module xgb.model)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.ScriptArguments">ScriptArguments (class in open_r1.configs)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.secs">secs() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.parsers.secs">(in module prompt_builder.parsers)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.seed">seed (knn.features.Word2VecConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.DatasetMixtureConfig.seed">(open_r1.configs.DatasetMixtureConfig attribute)</a>
+</li>
+          <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.seed">(xgb.model.XGBoostTrainConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/knn.html#knn.evaluate.select_best_k">select_best_k() (in module knn.evaluate)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.surveys.select_survey_row">select_survey_row() (in module clean_data.surveys)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.profiles.ProfileRender.sentences">sentences (prompt_builder.profiles.ProfileRender attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.series_from_columns">series_from_columns() (in module clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair">SeriesPair (class in clean_data.prompt.utils)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.session_id">session_id (clean_data.sessions.ParticipantIdentifiers attribute)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.session_id">(clean_data.sessions.SessionInfo attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo">SessionInfo (class in clean_data.sessions)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming">SessionTiming (class in clean_data.sessions)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.set_trainer">set_trainer() (open_r1.utils.callbacks.SuccessCachingCallback method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.SFTConfig">SFTConfig (class in open_r1.configs)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries.skipped_features">skipped_features (clean_data.prompt.markdown.ReportSummaries attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.soft_punish_cache">soft_punish_cache (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.sol_key">sol_key (clean_data.clean_data.BuildOptions attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.span_kl_beta0">span_kl_beta0 (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.span_kl_horizon">span_kl_horizon (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.span_kl_target">span_kl_target (open_r1.configs.GRPOScriptArguments attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.split">split (open_r1.configs.DatasetConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.PromptSample.split">(prompt_builder.PromptSample attribute)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.PromptSample.split">(prompt_builder.samples.PromptSample attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.split_by_issue">split_by_issue() (clean_data.prompt.utils.SeriesPair method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.codeocean.split_dataframe">split_dataframe() (in module clean_data.codeocean)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.split_dataframe">(in module clean_data.sessions)</a>
+</li>
+        </ul></li>
+        <li><a href="api/common.html#common.split_env_list">split_env_list() (in module common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.text.split_env_list">(in module common.text)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.start">start (clean_data.sessions.SessionTiming attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.state">state (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec">StudySpec (class in clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.subsample">subsample (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback">SuccessCachingCallback (class in open_r1.utils.callbacks)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext.summaries">summaries (clean_data.prompt.markdown.ReportContext attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarise_assignments">summarise_assignments() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarise_shift">summarise_shift() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.summarize_feature">summarize_feature() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.summarize_features">summarize_features() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.synthesize_viewer_sentence">synthesize_viewer_sentence() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.profiles.synthesize_viewer_sentence">(in module prompt_builder.profiles)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.prompt.synthesize_viewer_sentence">(in module prompt_builder.prompt)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.system_prompt">system_prompt (clean_data.clean_data.BuildOptions attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.system_prompt">(open_r1.configs.GRPOConfig attribute)</a>
+</li>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.system_prompt">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.rewards.tag_count_reward">tag_count_reward() (in module open_r1.rewards)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetMixtureConfig.test_split_size">test_split_size (open_r1.configs.DatasetMixtureConfig attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.timeout">timeout (open_r1.utils.routed_morph.RoutedMorphSandbox attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.timestamp">timestamp (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.title_for">title_for() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.title_for">(in module xgb.features)</a>
+</li>
+        </ul></li>
+        <li><a href="api/common.html#common.TitleResolver">TitleResolver (class in common)</a>
+
+        <ul>
+          <li><a href="api/common.html#common.title_index.TitleResolver">(class in common.title_index)</a>
+</li>
+          <li><a href="api/gpt4o.html#gpt4o.titles.TitleResolver">(class in gpt4o.titles)</a>
+</li>
+        </ul></li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.to_numeric">to_numeric() (in module clean_data.research_article_political_sciences.analysis)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.topic">topic (clean_data.sessions.SessionInfo attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.total">total (clean_data.sessions.SessionTiming attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.train">train() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.grail.OnlineDiscriminator.train_batch">train_batch() (open_r1.grail.OnlineDiscriminator method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.train_df">train_df (clean_data.prompt.utils.SeriesPair attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.train_series">train_series (clean_data.prompt.utils.SeriesPair attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.train_split">train_split (clean_data.clean_data.BuildOptions attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.trajectory_json">trajectory_json (clean_data.sessions.SessionInfo attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.transform">transform() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams.tree_method">tree_method (xgb.model.XGBoostBoosterParams attribute)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeData">TreeData (class in visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge">TreeEdge (class in visualization.recommendation_tree_viz)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.truncate_text">truncate_text() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/gpt4o.html#gpt4o.utils.truthy">truthy() (in module gpt4o.utils)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.truthy">(in module prompt_builder)</a>
+</li>
+          <li><a href="api/prompt_builder.html#prompt_builder.parsers.truthy">(in module prompt_builder.parsers)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.unique_content">unique_content (clean_data.prompt.markdown.ReportCounts attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.summary.unique_content_counts">unique_content_counts() (in module clean_data.prompt.summary)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.hierarchical_rollout.unwrap_model_for_generation">unwrap_model_for_generation() (in module open_r1.utils.hierarchical_rollout)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.update_priority">update_priority() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.update_priority_by_uid">update_priority_by_uid() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.urlid">urlid (clean_data.sessions.ParticipantIdentifiers attribute)</a>
+
+        <ul>
+          <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.urlid">(clean_data.sessions.SessionInfo attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.val_df">val_df (clean_data.prompt.utils.SeriesPair attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.val_series">val_series (clean_data.prompt.utils.SeriesPair attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.validate_required_columns">validate_required_columns() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.validation_ratio">validation_ratio (clean_data.clean_data.BuildOptions attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.clean_data.BuildOptions.validation_split">validation_split (clean_data.clean_data.BuildOptions attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.vector_size">vector_size (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostSlateModel.vectorizer">vectorizer (xgb.model.XGBoostSlateModel attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/open_r1.html#open_r1.grail.RewardContext.viewer">viewer (open_r1.grail.RewardContext attribute)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.profiles.ProfileRender.viewer_placeholder">viewer_placeholder (prompt_builder.profiles.ProfileRender attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.viewer_profile_sentence">viewer_profile_sentence() (in module knn.features)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.features.viewer_profile_sentence">(in module xgb.features)</a>
+</li>
+        </ul></li>
+        <li>
+    visualization
+
+        <ul>
+          <li><a href="api/visualization.html#module-visualization">module</a>
+</li>
+        </ul></li>
+        <li>
+    visualization.recommendation_tree_viz
+
+        <ul>
+          <li><a href="api/visualization.html#module-visualization.recommendation_tree_viz">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.wage_study2_urlids">wage_study2_urlids (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.wage_study2_workers">wage_study2_workers (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.wage_study3_caseids">wage_study3_caseids (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.wage_study4_urlids">wage_study4_urlids (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState.wage_study4_workers">wage_study4_workers (clean_data.sessions.AllowlistState attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.wandb_entity">wandb_entity (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.wandb_entity">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.wandb_log_unique_prompts">wandb_log_unique_prompts (open_r1.configs.GRPOConfig attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.wandb_project">wandb_project (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.wandb_project">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.configs.GRPOConfig.wandb_run_group">wandb_run_group (open_r1.configs.GRPOConfig attribute)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.configs.SFTConfig.wandb_run_group">(open_r1.configs.SFTConfig attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.watch">watch (clean_data.sessions.SessionTiming attribute)</a>
+</li>
+        <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.weight">weight (open_r1.configs.DatasetConfig attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.window">window (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.formatters.with_indefinite_article">with_indefinite_article() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig">Word2VecConfig (class in knn.features)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder">Word2VecFeatureBuilder (class in knn.features)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.worker_id">worker_id (clean_data.sessions.ParticipantIdentifiers attribute)</a>
+</li>
+        <li><a href="api/knn.html#knn.features.Word2VecConfig.workers">workers (knn.features.Word2VecConfig attribute)</a>
+</li>
+        <li><a href="api/prompt_builder.html#prompt_builder.write_samples_markdown">write_samples_markdown() (in module prompt_builder)</a>
+
+        <ul>
+          <li><a href="api/prompt_builder.html#prompt_builder.samples.write_samples_markdown">(in module prompt_builder.samples)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="X" class="genindex-section">
+  <h2>X</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    xgb.cli
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.cli">module</a>
+</li>
+        </ul></li>
+        <li>
+    xgb.data
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.data">module</a>
+</li>
+        </ul></li>
+        <li>
+    xgb.evaluate
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.evaluate">module</a>
+</li>
+        </ul></li>
+        <li>
+    xgb.features
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.features">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    xgb.model
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.model">module</a>
+</li>
+        </ul></li>
+        <li>
+    xgb.utils
+
+        <ul>
+          <li><a href="api/xgb.html#module-xgb.utils">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.xgboost_params">xgboost_params (xgb.evaluate.IssueMetrics attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostBoosterParams">XGBoostBoosterParams (class in xgb.model)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostSlateModel">XGBoostSlateModel (class in xgb.model)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig">XGBoostTrainConfig (class in xgb.model)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, GRAIL Simulation Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

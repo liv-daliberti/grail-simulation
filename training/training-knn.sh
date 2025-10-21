@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the KNN slate baseline for gun rights and minimum wage issues.
+# Run the KNN baselines for study1, study2, and study3 (next-video + opinion).
 # Usage: bash training/training-knn.sh [--eval_max N ...]
 
 set -euo pipefail

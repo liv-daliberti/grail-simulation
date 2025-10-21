@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import math
 from pathlib import Path
 from statistics import NormalDist
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,12 +37,6 @@ class OutcomeFamily:
 
 
 @dataclass(frozen=True)
-class Subgroup:
-    key: str
-    label: str
-
-
-@dataclass(frozen=True)
 class StudyConfig:
     key: str
     label: str
@@ -52,14 +46,6 @@ class StudyConfig:
     conservative_attitude: str
     seed_mapping: Mapping[str, str]
     outcome_families: Tuple[OutcomeFamily, ...]
-
-
-SUBGROUPS: Tuple[Subgroup, ...] = (
-    Subgroup("liberal_ideologues", "Ideologues (liberal)"),
-    Subgroup("conservative_ideologues", "Ideologues (conservative)"),
-    Subgroup("moderate_liberal_seed", "Moderates (liberal seed)"),
-    Subgroup("moderate_conservative_seed", "Moderates (conservative seed)"),
-)
 
 
 def _study_configs() -> Tuple[StudyConfig, ...]:
@@ -260,9 +246,14 @@ def _prepare_study_frame(config: StudyConfig) -> pd.DataFrame:
     thirds = pd.to_numeric(frame.get("thirds"), errors="coerce").round().astype("Int64")
     frame["attitude"] = thirds.map(config.attitude_mapping).astype("object")
 
+    seed_series = frame.get("treatment_seed", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    frame["seed_code"] = seed_series.replace({"nan": ""})
+
     seed = frame.get("treatment_seed").astype("object")
     frame["seed_orientation"] = seed.map(config.seed_mapping)
 
+    arm_series = frame.get("treatment_arm", pd.Series(dtype=str)).fillna("").astype(str).str.strip().str.lower()
+    frame["recsys_code"] = arm_series.str.extract(r"_(\d+)$", expand=False).fillna("")
     frame["recsys_indicator"] = frame["treatment_arm"].str.contains("31", na=False).astype(float)
 
     frame["ideology_bucket"] = np.where(
@@ -315,13 +306,10 @@ def _fit_robust_ols(design: np.ndarray, outcome: np.ndarray) -> Tuple[np.ndarray
 
     xtx = design.T @ design
     xtx_inv = np.linalg.pinv(xtx)
-    leverage = np.sum((design @ xtx_inv) * design, axis=1)
-    leverage = np.clip(1.0 - leverage, 1e-8, None)
-    scaled = (residuals / leverage) ** 2
+    scaled = residuals ** 2
     middle = (design * scaled[:, None]).T @ design
     cov = xtx_inv @ middle @ xtx_inv
-    stderr = np.sqrt(np.diag(cov))
-    return beta, stderr
+    return beta, cov
 
 
 def _compute_mde(stderr: float, alpha: float = 0.05, power: float = 0.8) -> float:
@@ -332,10 +320,108 @@ def _compute_mde(stderr: float, alpha: float = 0.05, power: float = 0.8) -> floa
     return float((z_alpha + z_power) * stderr)
 
 
+def _treatment_term_name(attitude: str, recsys: str, seed: Optional[str] = None) -> str:
+    parts = [f"attitude.{attitude}"]
+    if seed is not None:
+        parts.append(f"seed.{seed}")
+    parts.append(f"recsys.{recsys}")
+    return ":".join(parts)
+
+
+def _build_treatment_matrix(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame:
+    frame = frame.copy()
+    frame["_attitude"] = frame["attitude"].fillna("").astype(str)
+    frame["_seed"] = frame.get("seed_code", pd.Series("", index=frame.index)).fillna("").astype(str)
+    frame["_recsys"] = frame.get("recsys_code", pd.Series("", index=frame.index)).fillna("").astype(str)
+
+    terms: List[Tuple[str, Dict[str, Optional[str]]]] = [
+        (_treatment_term_name(config.conservative_attitude, "22"), {"attitude": config.conservative_attitude, "seed": None, "recsys": "22"}),
+        (_treatment_term_name(config.conservative_attitude, "31"), {"attitude": config.conservative_attitude, "seed": None, "recsys": "31"}),
+        (_treatment_term_name("neutral", "22", "anti"), {"attitude": "neutral", "seed": "anti", "recsys": "22"}),
+        (_treatment_term_name("neutral", "22", "pro"), {"attitude": "neutral", "seed": "pro", "recsys": "22"}),
+        (_treatment_term_name("neutral", "31", "anti"), {"attitude": "neutral", "seed": "anti", "recsys": "31"}),
+        (_treatment_term_name("neutral", "31", "pro"), {"attitude": "neutral", "seed": "pro", "recsys": "31"}),
+        (_treatment_term_name(config.liberal_attitude, "22"), {"attitude": config.liberal_attitude, "seed": None, "recsys": "22"}),
+        (_treatment_term_name(config.liberal_attitude, "31"), {"attitude": config.liberal_attitude, "seed": None, "recsys": "31"}),
+    ]
+
+    data = {}
+    for name, filters in terms:
+        mask = pd.Series(True, index=frame.index)
+        attitude = filters.get("attitude")
+        seed = filters.get("seed")
+        recsys = filters.get("recsys")
+        if attitude is not None:
+            mask &= frame["_attitude"] == attitude
+        if seed is not None:
+            mask &= frame["_seed"] == seed
+        if recsys is not None:
+            mask &= frame["_recsys"] == recsys
+        data[name] = mask.astype(float)
+    return pd.DataFrame(data, index=frame.index)
+
+
+def _contrast_specs(config: StudyConfig) -> List[Dict[str, object]]:
+    liberal_term_31 = _treatment_term_name(config.liberal_attitude, "31")
+    liberal_term_22 = _treatment_term_name(config.liberal_attitude, "22")
+    conservative_term_31 = _treatment_term_name(config.conservative_attitude, "31")
+    conservative_term_22 = _treatment_term_name(config.conservative_attitude, "22")
+    neutral_pro_31 = _treatment_term_name("neutral", "31", "pro")
+    neutral_pro_22 = _treatment_term_name("neutral", "22", "pro")
+    neutral_anti_31 = _treatment_term_name("neutral", "31", "anti")
+    neutral_anti_22 = _treatment_term_name("neutral", "22", "anti")
+
+    return [
+        {
+            "key": "ideologues_liberal",
+            "label": "Ideologues (liberal)",
+            "treat": liberal_term_31,
+            "control": liberal_term_22,
+            "display": True,
+        },
+        {
+            "key": "ideologues_conservative",
+            "label": "Ideologues (conservative)",
+            "treat": conservative_term_31,
+            "control": conservative_term_22,
+            "display": True,
+        },
+        {
+            "key": "moderates_liberal_seed",
+            "label": "Moderates (liberal seed)",
+            "treat": neutral_pro_31,
+            "control": neutral_pro_22,
+            "display": True,
+        },
+        {
+            "key": "moderates_conservative_seed",
+            "label": "Moderates (conservative seed)",
+            "treat": neutral_anti_31,
+            "control": neutral_anti_22,
+            "display": True,
+        },
+        {
+            "key": "moderates_seed_diff_31",
+            "label": "Moderates seed contrast (recsys 31)",
+            "treat": neutral_anti_31,
+            "control": neutral_pro_31,
+            "display": False,
+        },
+        {
+            "key": "moderates_seed_diff_22",
+            "label": "Moderates seed contrast (recsys 22)",
+            "treat": neutral_anti_22,
+            "control": neutral_pro_22,
+            "display": False,
+        },
+    ]
+
+
 def _run_single_regression(
     frame: pd.DataFrame,
     controls: pd.DataFrame,
-    mask: pd.Series,
+    design_terms: pd.DataFrame,
+    contrast: Mapping[str, object],
     outcome: str,
 ) -> Dict[str, float]:
     if outcome not in frame.columns:
@@ -346,8 +432,10 @@ def _run_single_regression(
             "n": 0,
         }
 
-    subset = frame.loc[mask].copy()
-    if subset.empty:
+    predictors = design_terms.join(controls, how="left")
+    working = pd.concat([predictors, frame[[outcome]]], axis=1)
+    working = working.dropna()
+    if working.empty:
         return {
             "estimate": float("nan"),
             "stderr": float("nan"),
@@ -355,45 +443,47 @@ def _run_single_regression(
             "n": 0,
         }
 
-    control_subset = controls.loc[subset.index] if not controls.empty else pd.DataFrame(index=subset.index)
-
-    columns = ["recsys_indicator", outcome]
-    design_df = subset[columns].join(control_subset, how="left")
-    design_df = design_df.dropna()
-    if design_df.empty or design_df["recsys_indicator"].nunique() < 2:
+    predictor_cols = [col for col in working.columns if col != outcome]
+    non_constant_cols = [col for col in predictor_cols if working[col].std(ddof=0) > 0]
+    if not non_constant_cols:
         return {
             "estimate": float("nan"),
             "stderr": float("nan"),
             "p_value": float("nan"),
-            "n": int(design_df.shape[0]),
+            "n": int(working.shape[0]),
         }
 
-    y = design_df[outcome].to_numpy(dtype=float)
-    predictors = [np.ones_like(y), design_df["recsys_indicator"].to_numpy(dtype=float)]
-    for column in design_df.columns:
-        if column in {"recsys_indicator", outcome}:
-            continue
-        predictors.append(design_df[column].to_numpy(dtype=float))
+    y = working[outcome].to_numpy(dtype=float)
+    design_matrix = working[non_constant_cols].to_numpy(dtype=float)
+    beta, cov = _fit_robust_ols(design_matrix, y)
+    index_map = {name: idx for idx, name in enumerate(non_constant_cols)}
 
-    design_matrix = np.column_stack(predictors)
-    beta, stderr = _fit_robust_ols(design_matrix, y)
-    coefficient = beta[1]
-    standard_error = stderr[1]
-    if math.isnan(coefficient) or math.isnan(standard_error) or standard_error <= 0:
+    treat_name = str(contrast["treat"])
+    control_name = str(contrast["control"])
+    if treat_name not in index_map or control_name not in index_map:
         return {
-            "estimate": float(coefficient),
-            "stderr": float(standard_error),
+            "estimate": float("nan"),
+            "stderr": float("nan"),
             "p_value": float("nan"),
-            "n": int(design_df.shape[0]),
+            "n": int(working.shape[0]),
         }
 
-    t_stat = coefficient / standard_error
-    p_value = 2.0 * (1.0 - _NORMAL.cdf(abs(t_stat)))
+    idx_t = index_map[treat_name]
+    idx_c = index_map[control_name]
+    estimate = beta[idx_t] - beta[idx_c]
+    var = cov[idx_t, idx_t] + cov[idx_c, idx_c] - 2.0 * cov[idx_t, idx_c]
+    var = float(max(var, 0.0))
+    stderr = math.sqrt(var)
+    if stderr > 0.0:
+        t_stat = estimate / stderr
+        p_value = 2.0 * (1.0 - _NORMAL.cdf(abs(t_stat)))
+    else:
+        p_value = float("nan")
     return {
-        "estimate": float(coefficient),
-        "stderr": float(standard_error),
+        "estimate": float(estimate),
+        "stderr": float(stderr),
         "p_value": float(p_value),
-        "n": int(design_df.shape[0]),
+        "n": int(working.shape[0]),
     }
 
 
@@ -475,22 +565,14 @@ def _hierarchical_adjust(
 
 def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame:
     records: List[Dict[str, object]] = []
-
-    subgroup_masks: Dict[str, pd.Series] = {
-        "liberal_ideologues": frame["ideology_bucket"] == "liberal",
-        "conservative_ideologues": frame["ideology_bucket"] == "conservative",
-        "moderate_liberal_seed": (frame["ideology_bucket"] == "moderate") & (frame["seed_orientation"] == "liberal"),
-        "moderate_conservative_seed": (frame["ideology_bucket"] == "moderate") & (frame["seed_orientation"] == "conservative"),
-    }
+    treatment_terms = _build_treatment_matrix(frame, config)
+    contrasts = _contrast_specs(config)
 
     for family in config.outcome_families:
         controls = _transform_controls(frame, family.controls)
-        for subgroup in SUBGROUPS:
-            mask = subgroup_masks.get(subgroup.key)
-            if mask is None:
-                continue
+        for contrast in contrasts:
             for outcome in family.outcomes:
-                regression = _run_single_regression(frame, controls, mask, outcome)
+                regression = _run_single_regression(frame, controls, treatment_terms, contrast, outcome)
                 stderr = regression["stderr"]
                 estimate = regression["estimate"]
                 ci_margin = 1.96 * stderr if not math.isnan(stderr) else float("nan")
@@ -500,8 +582,9 @@ def run_study_analysis(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame
                         "study_label": config.label,
                         "family_key": family.key,
                         "family_label": family.label,
-                        "contrast_key": subgroup.key,
-                        "contrast_label": subgroup.label,
+                        "contrast_key": contrast["key"],
+                        "contrast_label": contrast["label"],
+                        "contrast_display": bool(contrast["display"]),
                         "outcome": outcome,
                         "estimate": estimate,
                         "stderr": stderr,
@@ -556,8 +639,6 @@ def analyze_preregistered_effects(output_dir: Path | str) -> Dict[str, Path]:
 __all__ = [
     "OutcomeFamily",
     "StudyConfig",
-    "Subgroup",
     "analyze_preregistered_effects",
     "run_study_analysis",
 ]
-

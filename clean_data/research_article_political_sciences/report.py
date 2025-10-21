@@ -41,6 +41,7 @@ def _policy_summary_rows(stratified: pd.DataFrame) -> List[Dict[str, object]]:
             (stratified["study_key"] == study_key)
             & (stratified["family_key"] == "policy")
             & (stratified["outcome"] == outcome)
+            & (stratified.get("contrast_display", True))
         ].sort_values(["contrast_label"])
         for _, record in subset.iterrows():
             rows.append(

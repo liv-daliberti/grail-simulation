@@ -133,6 +133,7 @@ python src/visualization/recommendation_tree_viz.py \
 ```
 
 Batch mode (`--batch-output-dir`, `--batch-issues`) produces per-issue session samples ready for documentation or inspection.
+See `reports/visualized_recommendation_trees/README.md` for curated exports and interpretation notes.
 
 ### 5. Automated Checks
 

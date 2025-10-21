@@ -11,17 +11,14 @@ CNN
 NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.6666666666666666.
 
 CURRENT VIDEO:
-Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
+How to Create a Gun-Free America in 5 Easy Steps — channel: ReasonTV
 
 RECENTLY WATCHED (NEWEST LAST):
-(no recently watched videos available)
+1. [?/?] Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
 
 OPTIONS:
-1. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain
-2. Why America Will NEVER Have Real Gun Control — channel: The Young Turks
-3. Gun Control and The Violence in Chicago — channel: Colion Noir
-4. Gun Banners Say the Darndest Things — channel: Rob Doar
-5. How to Create a Gun-Free America in 5 Easy Steps
+1. Democrats Need to Listen to Gun Owners — channel: The Atlantic
+2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain
 ```
 
 ### Sample 2 (Issue: Minimum Wage, Split: train, Study: study3)
@@ -31,14 +28,14 @@ PROFILE:
 36-year-old, 1, watches YouTube a few times a month. This viewer is a 36-year-old and a 1. They identify as 1. They live in 40. They have 2 and are not college educated. Their household income is not above $50k. They report being 4. Children in household: 2. They identify as 11. They report attending services 3. Politics include political interest 1, voted in 2016 7, voted in 2020 1, trump approval 0, and biden approval 75. Minimum wage views include minimum wage stance (wave 1, inferred) 0.44, minimum wage stance (wave 2, inferred) 0.4, minimum wage support index (wave 1) 0.06888888888888889, minimum wage support index (wave 2) 0.09166666666666667, $15 minimum wage support (wave 1) no, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency a few times a month, news frequency 1, and news trust 0.6666666666666666.
 
 CURRENT VIDEO:
-Seattle's $15 Minimum Wage Experiment is Working — channel: Alicé Anil
+Price Floors: The Minimum Wage — channel: Marginal Revolution University
 
 RECENTLY WATCHED (NEWEST LAST):
-(no recently watched videos available)
+1. [?/?] Seattle's $15 Minimum Wage Experiment is Working — channel: Alicé Anil
 
 OPTIONS:
-1. If a Business Won't pay a Living Wage - it Shouldn't Exist — channel: Thom Hartmann Program
-2. Price Floors: The Minimum Wage — channel: Marginal Revolution University
-3. If Walmart Paid Its Employees a Living Wage, How Much Would Prices Go Up? — channel: Slate
-4. Restaurants eliminating employees after minimum wage increase in 18 states — channel: Fox Business
+1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News
+2. Republicans Block Minimum Wage Increase — channel: Senator Bernie Sanders
+3. Caller: Increasing Minimum Wage will Bring Inflation — channel: Thom Hartmann Program
+4. Milton Friedman on Minimum Wage — channel: amagilly
 ```

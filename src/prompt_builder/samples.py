@@ -48,25 +48,6 @@ def _iter_splits(ds: DatasetDict) -> Iterable[tuple[str, any]]:
         yield split_name, split
 
 
-def _first_examples(
-    ds: DatasetDict,
-    *,
-    issue: str,
-    limit: int,
-) -> List[dict]:
-    """Return up to ``limit`` examples for ``issue`` across available splits."""
-
-    collected: List[dict] = []
-    for split_name, split in _iter_splits(ds):
-        for row in split:
-            if str(row.get("issue") or "").strip() != issue:
-                continue
-            collected.append((split_name, row))
-            if len(collected) >= limit:
-                return collected
-    return collected
-
-
 def generate_prompt_samples(
     *,
     dataset_path: str,
@@ -90,18 +71,34 @@ def generate_prompt_samples(
 
     samples: List[PromptSample] = []
     for issue in issues:
-        examples = _first_examples(ds, issue=issue, limit=max_per_issue)
-        for split_name, row in examples:
-            prompt = build_user_prompt(row, max_hist=max_history)
-            samples.append(
-                PromptSample(
+        selected: List[PromptSample] = []
+        fallbacks: List[PromptSample] = []
+        for split_name, split in _iter_splits(ds):
+            for row in split:
+                if str(row.get("issue") or "").strip() != issue:
+                    continue
+                prompt = build_user_prompt(row, max_hist=max_history).strip()
+                sample = PromptSample(
                     issue=issue,
                     participant_study=row.get("participant_study"),
                     participant_id=row.get("participant_id"),
                     split=split_name,
-                    prompt=prompt.strip(),
+                    prompt=prompt,
                 )
-            )
+                # Prefer samples where the prompt showcases a non-empty watch history.
+                if "(no recently watched videos available)" in prompt:
+                    if len(fallbacks) < max_per_issue:
+                        fallbacks.append(sample)
+                else:
+                    selected.append(sample)
+                if len(selected) >= max_per_issue:
+                    break
+            if len(selected) >= max_per_issue:
+                break
+        if len(selected) < max_per_issue:
+            needed = max_per_issue - len(selected)
+            selected.extend(fallbacks[:needed])
+        samples.extend(selected)
     return samples
 
 

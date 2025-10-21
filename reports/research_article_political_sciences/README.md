@@ -83,7 +83,7 @@ Effects replicate the Liu et al. estimand: slanted (3/1) minus balanced (2/2) ar
 | Study 3 – Minimum Wage (YouGov) | Moderates (liberal seed) | Minimum wage index | +0.004 [-0.023, +0.030] | 0.038 | n/a | 2715 |
 q-values reflect the paper's hierarchical FDR correction applied within each outcome family.
 
-Hierarchical [FDR-adjusted](stratified_effects_all.csv) q-values for the Study 3 opinion outcomes match the CodeOcean capsule within 6×10⁻⁴ (e.g., conservative ideologues: 0.0066 vs. 0.0069; moderate-conservative seed: 0.0087 vs. 0.0092). All remaining policy cells stay indistinguishable from zero, mirroring the null findings in the published appendix tables.
+Hierarchical FDR-adjusted q-values for the Study 3 opinion outcomes match the CodeOcean capsule within 6×10⁻⁴ (e.g., conservative ideologues: 0.0066 vs. 0.0069; moderate-conservative seed: 0.0087 vs. 0.0092). All remaining policy cells stay indistinguishable from zero, mirroring the null findings in the published appendix tables.
 
 ### Platform interaction outcomes
 

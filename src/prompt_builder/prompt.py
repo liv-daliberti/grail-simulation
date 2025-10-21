@@ -6,7 +6,7 @@ import os
 from typing import Any, Dict, List, Optional, Sequence
 
 from .formatters import clean_text, human_join
-from .parsers import as_list_json, format_count
+from .parsers import as_list_json, format_count, is_nanlike
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
 from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
@@ -373,8 +373,10 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
 
     def first_present(keys: Sequence[str]) -> Any:
         for key in keys:
+            if key not in item:
+                continue
             value = item.get(key)
-            if value is None:
+            if is_nanlike(value):
                 continue
             text = str(value).strip()
             if not text:

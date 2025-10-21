@@ -15,23 +15,17 @@ The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:
 All artefacts (metrics JSON, per-`k` predictions, error-based elbow plots) live under
 `models/knn/sweeps/{tfidf,word2vec}/`.
 
-### Best configurations (validation split)
+### Best configurations (validation split, per study)
 
-| Feature space | Metric | Text fields | Vec size | Window | Min count | Issue | Accuracy | Best k |
+| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |
 | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
-| TF-IDF | cosine | none | — | — | — | Gun control | **0.920** | 2 |
-| TF-IDF | cosine | none | — | — | — | Minimum wage | **0.285** | 2 |
-| Word2Vec | cosine | none | 128 | 10 | 1 | Gun control | **0.880** | 2 |
-| Word2Vec | L2 | viewer_profile,state_text | 128 | 5 | 1 | Minimum wage | **0.305** | 3 |
+| _Populated after pipeline run_ |  |  |  |  |  |  |  |  |
 
-Observations:
+Observations (updated after each run):
 
-- `k = 2` remains optimal for every gun-control configuration. Minimum-wage improves slightly
-  with `k = 3` when using Word2Vec + L2.
-- Cosine distance dominates for gun control; L2 is competitive for minimum wage once embeddings
-  are used.
-- Adding viewer profile/state text helps Word2Vec on minimum wage but hurts performance on gun control.
-- TF-IDF still outperforms Word2Vec on gun control, while Word2Vec closes (and slightly beats) the gap on minimum wage.
+- Each study is swept independently; the same feature space can therefore pick different `k`, distance metrics, or text augments for Study 1 vs Study 2/3.
+- Word2Vec models write their tuned configs beneath `models/knn/word2vec/sweeps/study{1,2,3}/...` so it is easy to diff trained embeddings between studies.
+- TF-IDF sweeps remain lightweight—`viewer_profile,state_text` is still the only augmentation evaluated by default, but feel free to expand via `WORD2VEC_SWEEP_*` / `KNN_TEXT_FIELDS`.
 
 The elbow plots are now labelled with the data split used (“validation split”), clarifying that the
 curves reflect held-out evaluation error rather than the training data.

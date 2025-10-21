@@ -1,31 +1,36 @@
 # KNN Next-Video Baseline
 
-This report summarises the existing slate-ranking KNN model that predicts the next video a viewer will click from the study slate.
+This report summarises the slate-ranking KNN models that predict the next video a viewer will click.  
+All results are now organised by the three study cohorts that appear in the cleaned GRAIL dataset:
+
+- **Study 1 – Gun Control (MTurk)**
+- **Study 2 – Minimum Wage (MTurk)**
+- **Study 3 – Minimum Wage (YouGov)**
+
+Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected `k`, and baseline comparisons for both TF-IDF and Word2Vec feature spaces.
 
 - Dataset: `data/cleaned_grail`
-- Split: validation (548 gun-control slates, 1 871 minimum-wage slates)
+- Split: validation
 - Metric: accuracy on eligible slates (gold index present)
 
 ## TF-IDF Feature Space
 
-| Issue | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
+| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
 | --- | ---: | ---: | ---: |
-| Gun control | 0.894 | 2 | 0.540 |
-| Minimum wage | 0.306 | 3 | 0.439 |
+| _Pipeline run will populate these rows_ |  |  |  |
 
-- Plots: `tfidf/elbow_gun_control.png`, `tfidf/elbow_minimum_wage.png`
+- Plots: `tfidf/elbow_study1.png`, `tfidf/elbow_study2.png`, `tfidf/elbow_study3.png`
 
 ## Word2Vec Feature Space
 
-| Issue | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
+| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
 | --- | ---: | ---: | ---: |
-| Gun control | 0.870 | 2 | 0.540 |
-| Minimum wage | 0.288 | 3 | 0.439 |
+| _Pipeline run will populate these rows_ |  |  |  |
 
-- Plots: `word2vec/elbow_gun_control.png`, `word2vec/elbow_minimum_wage.png`
+- Plots: `word2vec/elbow_study1.png`, `word2vec/elbow_study2.png`, `word2vec/elbow_study3.png`
 
 ## Observations
 
-- Gun-control slates remain a strong fit for KNN with accuracy > 0.87 across feature spaces and a best k of 2.
-- Minimum-wage slates are challenging: both feature spaces underperform a naïve most-frequent baseline, suggesting feature sparsity or noisier prompts for that issue.
-- Accuracy declines steadily as k grows beyond the low single digits, reinforcing the need for tight neighbourhoods in slate prediction.
+- Slate metrics are scoped per study, allowing the TF-IDF and Word2Vec models to tune `k` and hyperparameters for each cohort independently.
+- Study-specific directories live under `models/knn/<feature-space>/study{1,2,3}` with per-`k` predictions and metrics JSON.
+- Regenerate this README via `python -m knn.pipeline` (or `bash training/training-knn.sh`) after any new training run.

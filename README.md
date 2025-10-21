@@ -118,7 +118,7 @@ python -m clean_data.prompt.cli \
   --output-dir reports/prompt_stats
 ```
 
-The package generates histograms, participant summaries, and a Markdown README in the target directory.
+The package generates histograms, participant summaries, and a Markdown README in the target directory; browse the curated write-up at [reports/prompt_stats/README.md](reports/prompt_stats/README.md).
 
 ### 4. Visualize Recommendation Trees
 
@@ -133,7 +133,7 @@ python src/visualization/recommendation_tree_viz.py \
 ```
 
 Batch mode (`--batch-output-dir`, `--batch-issues`) produces per-issue session samples ready for documentation or inspection.
-See `reports/visualized_recommendation_trees/README.md` for curated exports and interpretation notes.
+See [reports/visualized_recommendation_trees/README.md](reports/visualized_recommendation_trees/README.md) for curated exports and interpretation notes.
 
 ### 5. Automated Checks
 
@@ -148,7 +148,7 @@ pip install -r requirements-dev.txt
 make -C docs html
 ```
 
-The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_build/html`.
+The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_build/html`; browse the latest build on [Read the Docs](https://grail-simulation.readthedocs.io/en/latest/index.html).
 
 ## End-to-End Pipeline
 

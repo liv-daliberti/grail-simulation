@@ -2,7 +2,7 @@
 
 The samples below are generated via `prompt_builder.build_user_prompt` using the cleaned GRAIL dataset.
 
-### Sample 1 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 1 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 PROFILE:
@@ -23,7 +23,7 @@ OPTIONS:
    likes: 18,834 — comments: n/a — shares: n/a
 ```
 
-### Sample 2 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 2 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 PROFILE:
@@ -56,7 +56,7 @@ OPTIONS:
    likes: 41,087 — comments: n/a — shares: n/a
 ```
 
-### Sample 3 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 3 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 PROFILE:
@@ -84,7 +84,7 @@ OPTIONS:
    likes: 18,834 — comments: n/a — shares: n/a
 ```
 
-### Sample 4 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 4 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 PROFILE:
@@ -119,7 +119,7 @@ OPTIONS:
    likes: 507 — comments: n/a — shares: n/a
 ```
 
-### Sample 5 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 5 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 PROFILE:
@@ -146,7 +146,7 @@ OPTIONS:
    likes: 13,539 — comments: n/a — shares: n/a
 ```
 
-### Sample 6 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 6 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 PROFILE:
@@ -169,7 +169,7 @@ OPTIONS:
    likes: 4,493 — comments: 40 — shares: n/a
 ```
 
-### Sample 7 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 7 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 PROFILE:
@@ -193,7 +193,7 @@ OPTIONS:
    likes: 7,105 — comments: 40 — shares: n/a
 ```
 
-### Sample 8 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 8 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 PROFILE:
@@ -218,7 +218,7 @@ OPTIONS:
    likes: 17,842 — comments: 40 — shares: n/a
 ```
 
-### Sample 9 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 9 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 PROFILE:
@@ -241,7 +241,7 @@ OPTIONS:
    likes: 4,493 — comments: 40 — shares: n/a
 ```
 
-### Sample 10 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 10 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 PROFILE:

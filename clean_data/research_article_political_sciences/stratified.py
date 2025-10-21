@@ -615,7 +615,15 @@ def analyze_preregistered_effects(output_dir: Path | str) -> Dict[str, Path]:
     all_results: List[pd.DataFrame] = []
     study_paths: Dict[str, Path] = {}
 
-    for config in _study_configs():
+    try:
+        configs = _study_configs()
+    except FileNotFoundError:
+        empty = pd.DataFrame()
+        combined_path = output_path / "stratified_effects_all.csv"
+        empty.to_csv(combined_path, index=False)
+        return {"combined": combined_path}
+
+    for config in configs:
         frame = _prepare_study_frame(config)
         if frame.empty:
             continue

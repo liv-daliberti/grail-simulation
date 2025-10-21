@@ -54,40 +54,60 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
 
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
     profile = render_profile(ex)
-    sections: List[str] = []
 
-    profile_paragraph = _profile_paragraph(profile)
-    if profile_paragraph:
-        sections.append(f"PROFILE:\n{profile_paragraph}")
+    lines: List[str] = []
 
-    current_sentence = _current_video_sentence(ex, show_ids)
-    if current_sentence:
-        sections.append(f"CURRENT VIDEO:\n{current_sentence}")
+    def _append_section(title: str, body: Sequence[str], fallback: Optional[str] = None) -> None:
+        body_lines = [line.strip() for line in body if line and line.strip()]
+        lines.append(title)
+        if body_lines:
+            lines.extend(body_lines)
+        elif fallback is not None:
+            lines.append(fallback)
+        lines.append("")
 
-    history_block = _history_block(ex, show_ids, max_hist)
-    if history_block:
-        sections.append(history_block)
+    _append_section(
+        "PROFILE:",
+        _profile_lines(profile),
+        "(profile information unavailable)",
+    )
+    _append_section(
+        "CURRENT VIDEO:",
+        _current_video_lines(ex, show_ids),
+        "(current video unavailable)",
+    )
+    _append_section(
+        "RECENTLY WATCHED (NEWEST LAST):",
+        _history_lines(ex, show_ids, max_hist),
+        "(no recently watched videos available)",
+    )
 
-    survey_sentence = _survey_highlights(ex)
-    if survey_sentence:
-        sections.append(survey_sentence)
+    survey_lines = _survey_lines(ex)
+    if survey_lines:
+        _append_section("SURVEY HIGHLIGHTS:", survey_lines)
 
-    options_block = _options_block(ex, show_ids)
-    if options_block:
-        sections.append(options_block)
+    _append_section(
+        "OPTIONS:",
+        _options_lines(ex, show_ids),
+        "(no recommendation options available)",
+    )
 
-    return "\n\n".join(sections).strip()
-
-
-def _profile_paragraph(profile: ProfileRender) -> str:
-    """Return a paragraph describing the viewer profile."""
-
-    text = _render_profile_text(profile)
-    return text.strip()
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n".join(lines).strip()
 
 
-def _current_video_sentence(ex: Dict[str, Any], show_ids: bool) -> str:
-    """Return a sentence describing the currently playing video."""
+def _profile_lines(profile: ProfileRender) -> List[str]:
+    """Return lines describing the viewer profile."""
+
+    text = _render_profile_text(profile).strip()
+    if text.lower() == "profile information is unavailable.":
+        return []
+    return [text] if text else []
+
+
+def _current_video_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
+    """Return lines describing the currently playing video."""
 
     title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
@@ -95,7 +115,7 @@ def _current_video_sentence(ex: Dict[str, Any], show_ids: bool) -> str:
         ex.get("current_video_channel") or ex.get("current_video_channel_title")
     )
     if not (title or channel or current_id):
-        return ""
+        return []
     sentence = "They are currently watching "
     if title:
         sentence += title
@@ -106,15 +126,15 @@ def _current_video_sentence(ex: Dict[str, Any], show_ids: bool) -> str:
     if current_id and (show_ids or not title):
         sentence += f" (id {current_id})"
     sentence += "."
-    return sentence
+    return [sentence]
 
 
-def _history_sentence(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
-    """Return a sentence summarising prior session history."""
+def _history_lines(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
+    """Return lines summarising prior session history."""
 
     prior_entries = _prior_entries(ex)
     if not prior_entries:
-        return ""
+        return []
     limit = max_hist if max_hist and max_hist > 0 else len(prior_entries)
     recent = prior_entries[-limit:]
     descriptors: List[str] = []
@@ -125,43 +145,43 @@ def _history_sentence(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
         if descriptor:
             descriptors.append(descriptor)
     if not descriptors:
-        return ""
+        return []
     if len(descriptors) > 3:
         displayed = descriptors[-3:]
     else:
         displayed = descriptors
-    summary = human_join(displayed)
     remaining = len(descriptors) - len(displayed)
-    sentence = f"Earlier in the session they watched {summary}."
+    numbered = [f"{idx}. {value}" for idx, value in enumerate(displayed, 1)]
     if remaining > 0:
         plural = "videos" if remaining > 1 else "video"
-        sentence += f" (+{remaining} more {plural})"
-    return sentence
+        numbered.append(f"(+{remaining} more {plural})")
+    return numbered
 
 
-def _history_block(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
-    """Return the watch-history section with heading and per-video lines."""
+def _survey_lines(ex: Dict[str, Any]) -> List[str]:
+    """Return formatted survey highlight lines."""
 
-    prior_entries = _prior_entries(ex)
-    if not prior_entries:
-        return "RECENTLY WATCHED (NEWEST LAST):\n(no recently watched videos available)"
-    limit = max_hist if max_hist and max_hist > 0 else len(prior_entries)
-    recent = prior_entries[-limit:]
-    descriptors: List[str] = []
-    for record in recent:
-        if not isinstance(record, dict):
-            continue
-        descriptor = _watched_descriptor(record, show_ids)
-        if descriptor:
-            descriptors.append(descriptor)
-    if not descriptors:
-        return "RECENTLY WATCHED (NEWEST LAST):\n(no recently watched videos available)"
-    lines = list(descriptors)
-    remaining_total = max(0, len(prior_entries) - len(recent))
-    if remaining_total > 0:
-        plural = "videos" if remaining_total > 1 else "video"
-        lines.append(f"(+{remaining_total} more {plural})")
-    return "RECENTLY WATCHED (NEWEST LAST):\n" + "\n".join(lines)
+    sentence = _survey_highlights(ex).strip()
+    if not sentence:
+        return []
+    prefix = "Survey highlights:"
+    if sentence.lower().startswith(prefix.lower()):
+        sentence = sentence[len(prefix) :].strip()
+    return [sentence] if sentence else []
+
+
+def _options_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
+    """Return lines describing the recommendation slate options."""
+
+    items = as_list_json(ex.get("slate_items_json"))
+    if not items:
+        return []
+    sentences = [
+        _option_sentence(index, item, show_ids)
+        for index, item in enumerate(items, 1)
+        if isinstance(item, dict)
+    ]
+    return [sentence for sentence in sentences if sentence]
 
 
 SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (

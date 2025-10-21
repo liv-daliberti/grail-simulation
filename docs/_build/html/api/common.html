@@ -210,6 +210,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -259,31 +265,27 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <p id="module-common">Shared utilities reused across multiple baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.TitleResolver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_csv_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_CSVS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_dirs_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_DIRS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_glob_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_GLOB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.TitleResolver" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.TitleResolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolve YouTube ids to titles by scanning configured CSV sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>env_csv_var</strong> (<em>str</em>)</p></li>
-<li><p><strong>env_dirs_var</strong> (<em>str</em>)</p></li>
-<li><p><strong>env_glob_var</strong> (<em>str</em>)</p></li>
+<li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="common.TitleResolver.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_csv_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_CSVS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_dirs_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_DIRS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_glob_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_GLOB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.TitleResolver.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.TitleResolver.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Create a new <a class="reference internal" href="#common.TitleResolver" title="common.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">TitleResolver</span></code></a> instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list of fallback directories searched for CSVs.</p></li>
-<li><p><strong>env_csv_var</strong> (<em>str</em>) – Environment variable listing explicit CSV files.</p></li>
-<li><p><strong>env_dirs_var</strong> (<em>str</em>) – Environment variable listing directories to traverse.</p></li>
-<li><p><strong>env_glob_var</strong> (<em>str</em>) – Environment variable listing glob patterns for CSVs.</p></li>
+<li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>) – Environment-variable configuration used while discovering CSVs.</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>) – Logger name used for diagnostic output.</p></li>
 </ul>
 </dd>
@@ -514,31 +516,27 @@ handler when none are registered yet, and set the level to <code class="docutils
 <p id="module-common.title_index">Shared helpers for resolving slate video ids to human-readable titles.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.title_index.TitleResolver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.title_index.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_csv_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_CSVS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_dirs_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_DIRS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_glob_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_GLOB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolver" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.title_index.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolve YouTube ids to titles by scanning configured CSV sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>env_csv_var</strong> (<em>str</em>)</p></li>
-<li><p><strong>env_dirs_var</strong> (<em>str</em>)</p></li>
-<li><p><strong>env_glob_var</strong> (<em>str</em>)</p></li>
+<li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="common.title_index.TitleResolver.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_csv_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_CSVS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_dirs_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_DIRS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_glob_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_GLOB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolver.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolver.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Create a new <a class="reference internal" href="#common.title_index.TitleResolver" title="common.title_index.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">TitleResolver</span></code></a> instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list of fallback directories searched for CSVs.</p></li>
-<li><p><strong>env_csv_var</strong> (<em>str</em>) – Environment variable listing explicit CSV files.</p></li>
-<li><p><strong>env_dirs_var</strong> (<em>str</em>) – Environment variable listing directories to traverse.</p></li>
-<li><p><strong>env_glob_var</strong> (<em>str</em>) – Environment variable listing glob patterns for CSVs.</p></li>
+<li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>) – Environment-variable configuration used while discovering CSVs.</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>) – Logger name used for diagnostic output.</p></li>
 </ul>
 </dd>
@@ -561,6 +559,37 @@ handler when none are registered yet, and set the level to <code class="docutils
 </dd>
 </dl>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="common.title_index.TitleResolverEnvConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.title_index.</span></span><span class="sig-name descname"><span class="pre">TitleResolverEnvConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_CSVS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirs_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_DIRS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">glob_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GRAIL_TITLE_GLOB'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolverEnvConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolverEnvConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Environment variable names used when sourcing title CSVs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_var</strong> (<em>str</em>)</p></li>
+<li><p><strong>dirs_var</strong> (<em>str</em>)</p></li>
+<li><p><strong>glob_var</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.title_index.TitleResolverEnvConfig.csv_var">
+<span class="sig-name descname"><span class="pre">csv_var</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GRAIL_TITLE_CSVS'</span></em><a class="headerlink" href="#common.title_index.TitleResolverEnvConfig.csv_var" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.title_index.TitleResolverEnvConfig.dirs_var">
+<span class="sig-name descname"><span class="pre">dirs_var</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GRAIL_TITLE_DIRS'</span></em><a class="headerlink" href="#common.title_index.TitleResolverEnvConfig.dirs_var" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.title_index.TitleResolverEnvConfig.glob_var">
+<span class="sig-name descname"><span class="pre">glob_var</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GRAIL_TITLE_GLOB'</span></em><a class="headerlink" href="#common.title_index.TitleResolverEnvConfig.glob_var" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -643,6 +672,12 @@ handler when none are registered yet, and set the level to <code class="docutils
 <li><a class="reference internal" href="#common.title_index.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a><ul>
 <li><a class="reference internal" href="#common.title_index.TitleResolver.__init__"><code class="docutils literal notranslate"><span class="pre">TitleResolver.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#common.title_index.TitleResolver.resolve"><code class="docutils literal notranslate"><span class="pre">TitleResolver.resolve()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig</span></code></a><ul>
+<li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.csv_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.csv_var</span></code></a></li>
+<li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.dirs_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.dirs_var</span></code></a></li>
+<li><a class="reference internal" href="#common.title_index.TitleResolverEnvConfig.glob_var"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig.glob_var</span></code></a></li>
 </ul>
 </li>
 </ul>

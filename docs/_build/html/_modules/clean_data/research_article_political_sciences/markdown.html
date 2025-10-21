@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -257,6 +263,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_nan</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when a value should be treated as missing/NaN.</span>
+
+<span class="sd">    The helper mirrors the original R scripts by coercing to float,</span>
+<span class="sd">    treating conversion failures as ``NaN`` so downstream formatting can</span>
+<span class="sd">    emit ``\&quot;n/a\&quot;`` markers in the Markdown tables.</span>
+
+<span class="sd">    :param value: Candidate numeric value from the summaries.</span>
+<span class="sd">    :returns: ``True`` when the input is not a finite number.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
@@ -264,18 +280,41 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a scalar with fixed precision, returning ``\&quot;n/a\&quot;`` for NaNs.</span>
+
+<span class="sd">    :param value: Numeric value to display.</span>
+<span class="sd">    :param precision: Number of decimal places to include.</span>
+<span class="sd">    :returns: Formatted scalar string or ``\&quot;n/a\&quot;`` when missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="n">_is_nan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;n/a&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_percent</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a proportion as a percentage string with fallback for NaNs.</span>
+
+<span class="sd">    :param value: Proportion in ``[0, 1]`` to convert.</span>
+<span class="sd">    :param precision: Number of decimal places to display.</span>
+<span class="sd">    :returns: Percentage string or ``\&quot;n/a\&quot;`` when the input is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="n">_is_nan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;n/a&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">%&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_interval</span><span class="p">(</span><span class="n">center</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a signed estimate with its confidence interval bounds.</span>
+
+<span class="sd">    :param center: Point estimate.</span>
+<span class="sd">    :param lower: Lower confidence bound.</span>
+<span class="sd">    :param upper: Upper confidence bound.</span>
+<span class="sd">    :param precision: Decimal places applied to each value.</span>
+<span class="sd">    :returns: Formatted string ``\&quot;+x.xxx [+l.lll, +u.uuu]\&quot;`` or ``\&quot;n/a\&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">_is_nan</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)):</span>
         <span class="k">return</span> <span class="s2">&quot;n/a&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">lower</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">upper</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">]&quot;</span>
@@ -283,7 +322,7 @@
 
 <div class="viewcode-block" id="build_markdown">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.markdown.build_markdown">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_markdown</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_markdown</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">study_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
     <span class="n">heatmap_paths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
@@ -321,11 +360,13 @@
     <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;# RESEARCH ARTICLE POLITICAL SCIENCES&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;## Short-term exposure to filter-bubble recommendation systems has limited polarization effects&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;## Short-term exposure to filter-bubble recommendation systems has limited &quot;</span>
+        <span class="s2">&quot;polarization effects&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="s2">&quot;This section replicates headline opinion-shift findings from &quot;</span>
-        <span class="s2">&quot;_Short-term exposure to filter-bubble recommendation systems has limited polarization effects: &quot;</span>
-        <span class="s2">&quot;Naturalistic experiments on YouTube_ (Liu et al., PNAS 2025) using the cleaned data in this repository.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_Short-term exposure to filter-bubble recommendation systems has limited &quot;</span>
+        <span class="s2">&quot;polarization effects: Naturalistic experiments on YouTube_ (Liu et al., &quot;</span>
+        <span class="s2">&quot;PNAS 2025) using the cleaned data in this repository.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="s2">&quot;### Opinion shift summary&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -350,8 +391,9 @@
     <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="s2">&quot;&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;The minimal mean shifts and high share of small opinion changes (|Δ| ≤ 0.05 on a 0–1 scale) &quot;</span>
-            <span class="s2">&quot;mirror the paper&#39;s conclusion that short-term algorithmic perturbations produced limited &quot;</span>
+            <span class="s2">&quot;The minimal mean shifts and high share of small opinion changes &quot;</span>
+            <span class="s2">&quot;(|Δ| ≤ 0.05 on a 0–1 scale) mirror the paper&#39;s conclusion that &quot;</span>
+            <span class="s2">&quot;short-term algorithmic perturbations produced limited &quot;</span>
             <span class="s2">&quot;polarization in Studies 1–3.&quot;</span><span class="p">,</span>
             <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="s2">&quot;### Pre/post opinion heatmaps&quot;</span><span class="p">,</span>
@@ -387,7 +429,8 @@
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="s2">&quot;Replication notes: opinion indices are scaled to [0, 1] and &quot;</span>
         <span class="s2">&quot;computed from the same survey composites used in the published study. &quot;</span>
-        <span class="s2">&quot;Participants lacking a post-wave response are excluded from the relevant heatmap and summary.&quot;</span>
+        <span class="s2">&quot;Participants lacking a post-wave response are excluded from the relevant &quot;</span>
+        <span class="s2">&quot;heatmap and summary.&quot;</span>
     <span class="p">)</span>
 
     <span class="n">assignment_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">assignment_rows</span><span class="p">)</span>
@@ -442,7 +485,8 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">}</span><span class="s2"> |&quot;</span>
             <span class="p">)</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="s2">&quot;q-values reflect the paper&#39;s hierarchical FDR correction applied within each outcome family.&quot;</span>
+            <span class="s2">&quot;q-values reflect the paper&#39;s hierarchical FDR correction applied &quot;</span>
+            <span class="s2">&quot;within each outcome family.&quot;</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">lines</span></div>

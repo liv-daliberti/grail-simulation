@@ -15,6 +15,9 @@ except ImportError:  # pragma: no cover - optional dependency
 
 import numpy as np
 
+from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
+from .utils import canon_video_id
+
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.preprocessing import LabelEncoder
@@ -27,9 +30,6 @@ def _ensure_sklearn_available(action: str) -> None:
     """Ensure optional scikit-learn dependency is present before continuing."""
     if TfidfVectorizer is None or LabelEncoder is None:  # pragma: no cover - optional dependency
         raise ImportError(f"Install scikit-learn to {action}.")
-
-from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
-from .utils import canon_video_id
 
 try:  # pragma: no cover - optional dependency
     from xgboost import XGBClassifier  # type: ignore

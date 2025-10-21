@@ -1,3 +1,5 @@
+"""Structured scoring helpers for IOI problems executed through Piston."""
+
 import asyncio
 from dataclasses import asdict, dataclass, field
 from typing import Optional

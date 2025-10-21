@@ -1,3 +1,5 @@
+"""Lightweight source-to-source transforms for contest submissions."""
+
 import re
 
 

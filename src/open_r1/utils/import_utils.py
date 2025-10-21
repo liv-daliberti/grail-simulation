@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Availability checks for optional third-party integrations."""
+
 from transformers.utils.import_utils import _is_package_available
 
 

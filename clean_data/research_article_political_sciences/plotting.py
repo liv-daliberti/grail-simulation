@@ -12,6 +12,11 @@ plt.switch_backend("Agg")
 
 
 def _ensure_output_dir(path: Path) -> None:
+    """Create parent directories for ``path`` if they do not already exist.
+
+    :param path: Target output file path used by the plotting helpers.
+    """
+
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -31,7 +36,14 @@ def plot_mean_change(  # pylint: disable=too-many-locals
     fig, axes_obj = plt.subplots(figsize=(8, 4.5))
 
     if not summaries:
-        axes_obj.text(0.5, 0.5, "No summary statistics available", ha="center", va="center", fontsize=11)
+        axes_obj.text(
+            0.5,
+            0.5,
+            "No summary statistics available",
+            ha="center",
+            va="center",
+            fontsize=11,
+        )
         axes_obj.axis("off")
         fig.tight_layout()
         fig.savefig(output_path, dpi=300)
@@ -221,7 +233,14 @@ def plot_assignment_panels(  # pylint: disable=too-many-locals,too-many-statemen
     p_value = regression.get("p_value", float("nan"))
 
     if np.isnan(coef):
-        regression_axes.text(0.5, 0.5, "Regression unavailable", ha="center", va="center", fontsize=11)
+        regression_axes.text(
+            0.5,
+            0.5,
+            "Regression unavailable",
+            ha="center",
+            va="center",
+            fontsize=11,
+        )
         regression_axes.axis("off")
     else:
         lower_err = coef - ci_low if not np.isnan(ci_low) else 0.0

@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -269,6 +275,21 @@
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Limit evaluation examples (0 means evaluate every row).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--dataset&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dataset path or Hugging Face dataset id (defaults to config.DATASET_NAME).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--issues&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of issue labels to evaluate (defaults to all issues).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--studies&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated participant study identifiers to filter (defaults to all studies).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--out_dir&quot;</span><span class="p">,</span>

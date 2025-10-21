@@ -2,7 +2,7 @@
 
 The samples below are generated via `prompt_builder.build_user_prompt` using the cleaned GRAIL dataset.
 
-### Sample 1 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 1 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 VIEWER 31-year-old, Black or African-American (non-Hispanic) woman; democrat liberal; $70,000-$79,999; college-educated; watches YouTube weekly.
@@ -21,7 +21,7 @@ OPTIONS
 2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — Engagement: views 2,433,982, likes 18,834
 ```
 
-### Sample 2 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 2 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
@@ -43,7 +43,7 @@ OPTIONS
 5. Trevor Reacts to the Orlando Shooting: The Daily Show — Engagement: views 1,775,648, likes 41,087
 ```
 
-### Sample 3 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 3 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
@@ -63,7 +63,7 @@ OPTIONS
 2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — Engagement: views 2,433,982, likes 18,834
 ```
 
-### Sample 4 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 4 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
@@ -87,7 +87,7 @@ OPTIONS
 5. Florida School Shooting Survivor Says Arming Teachers is 'Absurd' | Good Morning Britain — Engagement: views 56,762, likes 507
 ```
 
-### Sample 5 (Issue: Gun Control, Split: train, Study: study1)
+## Sample 5 (Issue: Gun Control, Split: train, Study: study1)
 
 ```text
 VIEWER 45-year-old, Caucasian/White (non-Hispanic) man; independent moderate; $150,000 or more; college-educated; watches YouTube a few times a month.
@@ -109,7 +109,7 @@ OPTIONS
 5. Gun Grabbers Say The Darndest Things! — Engagement: views 352,944, likes 13,539
 ```
 
-### Sample 6 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 6 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
@@ -130,7 +130,7 @@ OPTIONS
 4. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
 ```
 
-### Sample 7 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 7 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
@@ -152,7 +152,7 @@ OPTIONS
 4. The Cruelty of the $15 Minimum Wage (ReasonTV, 577s long) — Engagement: views 341,672, likes 7,105, comments 40
 ```
 
-### Sample 8 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 8 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
@@ -175,7 +175,7 @@ OPTIONS
 4. What's the Right Minimum Wage? (PragerU, 314s long) — Engagement: views 1,013,193, likes 20,713, comments 40
 ```
 
-### Sample 9 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 9 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 VIEWER 60-year-old, White (non-Hispanic); college-educated; watches YouTube several times a week; lives in Illinois.
@@ -196,7 +196,7 @@ OPTIONS
 4. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
 ```
 
-### Sample 10 (Issue: Minimum Wage, Split: train, Study: study3)
+## Sample 10 (Issue: Minimum Wage, Split: train, Study: study3)
 
 ```text
 VIEWER 60-year-old, White (non-Hispanic); college-educated; watches YouTube several times a week; lives in Illinois.

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="RESEARCH ARTICLE POLITICAL SCIENCES" href="research_article_political_sciences.html"><link rel="prev" title="Prompt feature report" href="prompt_stats.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Report Catalog" href="knn.html"><link rel="prev" title="Prompt feature report" href="prompt_stats.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>Prompt Builder Sample Prompts - GRAIL Simulation documentation</title>
@@ -210,6 +210,12 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Reports</a><input aria-label="Toggle navigation of Reports" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -257,264 +263,217 @@
 <p>The samples below are generated via <code class="docutils literal notranslate"><span class="pre">prompt_builder.build_user_prompt</span></code> using the cleaned GRAIL dataset.</p>
 <section id="sample-1-issue-gun-control-split-train-study-study1">
 <h2>Sample 1 (Issue: Gun Control, Split: train, Study: study1)<a class="headerlink" href="#sample-1-issue-gun-control-split-train-study-study1" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-31-year-old, woman, Black or African-American (non-Hispanic), democrat liberal, $70,000-$79,999, college-educated, watches YouTube weekly. This viewer is a 31-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are college educated. Their household income is reported as $70,000-$79,999. The survey was completed in English. Politics include party identification Democrat, party lean Not very strong Democrat, ideology Liberal, political interest 3, trump approval 30, and biden approval 80. Gun policy views include gun ownership does not own a gun, right-to-own importance no, supports assault weapons ban 0.25, supports handgun ban yes, believes concealed carry is safe no, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm no, and gun importance yes. Media habits include YouTube frequency weekly, favorite channels CBS,
-CNN
-NYT, popular channels followed Fox News,CNN,MSNBC, and news trust 0.6666666666666666.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 31-year-old, Black or African-American (non-Hispanic) woman; democrat liberal; $70,000-$79,999; college-educated; watches YouTube weekly.
+Initial Viewpoint: Opposes stricter gun laws
 
-CURRENT VIDEO:
-How to Create a Gun-Free America in 5 Easy Steps — channel: ReasonTV
+CURRENTLY WATCHING How to Create a Gun-Free America in 5 Easy Steps (from ReasonTV)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [259s/259s] Do We Need Stricter Gun Control? - The People Speak — channel: VICE News
+RECENTLY WATCHED (NEWEST LAST)
+1. Do We Need Stricter Gun Control? - The People Speak (watched 259s of 259s (100% complete), from VICE News)
 
-OPTIONS:
-1. Democrats Need to Listen to Gun Owners — channel: The Atlantic — views: 29,001 — dislikes: 171 — favorites: 0
-   likes: 379 — comments: n/a — shares: n/a
-2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — views: 2,433,982 — dislikes: 9,186 — favorites: 0
-   likes: 18,834 — comments: n/a — shares: n/a
+SURVEY HIGHLIGHTS
+party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube weekly, gun policy importance is not at all important, gun regulation support score is 25%, and does not identify as enthusiastic about guns.
+
+OPTIONS
+1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
+2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — Engagement: views 2,433,982, likes 18,834
 </pre></div>
 </div>
 </section>
 <section id="sample-2-issue-gun-control-split-train-study-study1">
 <h2>Sample 2 (Issue: Gun Control, Split: train, Study: study1)<a class="headerlink" href="#sample-2-issue-gun-control-split-train-study-study1" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-62-year-old, woman, Black or African-American (non-Hispanic), independent moderate, Prefer not to say. This viewer is a 62-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are not college educated. Their household income is reported as Prefer not to say. The survey was completed in English. Politics include party identification Independent, ideology Moderate, political interest 4, trump approval 0, and biden approval 95. Gun policy views include gun ownership owns a gun, right-to-own importance no, supports assault weapons ban no, supports handgun ban 0.75, believes concealed carry is safe 0.5, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm yes, and gun importance 4. Media habits include YouTube frequency 6, favorite channels Milou H. Polycarpe - Psychic, Medium
-Matthew Lesko
-The White House
-The Deal Guy
-Valuetainment
-Rev. Ike Legacy
-Sybil Wilkes
-Forever Inspired
-Yeung Man Cooking, popular channels followed CNN,The Young Turks,MSNBC, and news trust 0.3333333333333333.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
+Initial Viewpoint: Opposes stricter gun laws
 
-CURRENT VIDEO:
-GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S — channel: Sydney Watson
+CURRENTLY WATCHING GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S (from Sydney Watson)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [230s/231s] Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT — channel: The New York Times
+RECENTLY WATCHED (NEWEST LAST)
+1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
 
-OPTIONS:
-1. The Truth About Guns And Gun Control | Debunker | NBC News — channel: NBC News — views: 146,091 — dislikes: 229 — favorites: 0
-   likes: 8,010 — comments: n/a — shares: n/a
-2. Gun control and the statistics behind America&#39;s love affair with guns | The Economist — channel: The Economist
-   likes: n/a — comments: n/a — shares: n/a
-3. Do We Need Stricter Gun Control? - The People Speak — channel: VICE News — views: 217,528 — dislikes: 5,550 — favorites: 0
-   likes: 2,130 — comments: n/a — shares: n/a
-4. Gun Banners Say the Darndest Things — channel: Rob Doar — views: 9,639 — dislikes: 5 — favorites: 0
-   likes: 39 — comments: n/a — shares: n/a
-5. Trevor Reacts to the Orlando Shooting: The Daily Show — views: 1,775,648 — dislikes: 1,963 — favorites: 0
-   likes: 41,087 — comments: n/a — shares: n/a
+SURVEY HIGHLIGHTS
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
+
+OPTIONS
+1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
+2. Gun control and the statistics behind America&#39;s love affair with guns | The Economist (The Economist, 137s long) — Engagement: views 20,012, likes 340, comments 40
+3. Do We Need Stricter Gun Control? - The People Speak (VICE News, 260s long) — Engagement: views 217,528, likes 2,130, comments 40
+4. Gun Banners Say the Darndest Things (Rob Doar, 259s long) — Engagement: views 9,639, likes 39, comments 40
+5. Trevor Reacts to the Orlando Shooting: The Daily Show — Engagement: views 1,775,648, likes 41,087
 </pre></div>
 </div>
 </section>
 <section id="sample-3-issue-gun-control-split-train-study-study1">
 <h2>Sample 3 (Issue: Gun Control, Split: train, Study: study1)<a class="headerlink" href="#sample-3-issue-gun-control-split-train-study-study1" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-62-year-old, woman, Black or African-American (non-Hispanic), independent moderate, Prefer not to say. This viewer is a 62-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are not college educated. Their household income is reported as Prefer not to say. The survey was completed in English. Politics include party identification Independent, ideology Moderate, political interest 4, trump approval 0, and biden approval 95. Gun policy views include gun ownership owns a gun, right-to-own importance no, supports assault weapons ban no, supports handgun ban 0.75, believes concealed carry is safe 0.5, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm yes, and gun importance 4. Media habits include YouTube frequency 6, favorite channels Milou H. Polycarpe - Psychic, Medium
-Matthew Lesko
-The White House
-The Deal Guy
-Valuetainment
-Rev. Ike Legacy
-Sybil Wilkes
-Forever Inspired
-Yeung Man Cooking, popular channels followed CNN,The Young Turks,MSNBC, and news trust 0.3333333333333333.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
+Initial Viewpoint: Opposes stricter gun laws
 
-CURRENT VIDEO:
-Trevor Reacts to the Orlando Shooting: The Daily Show — channel: The Daily Show with Trevor Noah
+CURRENTLY WATCHING Trevor Reacts to the Orlando Shooting: The Daily Show (from The Daily Show with Trevor Noah)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [230s/231s] Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT — channel: The New York Times
-2. [35s/544s] GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S — channel: Sydney Watson
+RECENTLY WATCHED (NEWEST LAST)
+1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
+2. GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S (watched 35s of 544s (6% complete), from Sydney Watson)
 
-OPTIONS:
-1. Democrats Need to Listen to Gun Owners — channel: The Atlantic — views: 29,001 — dislikes: 171 — favorites: 0
-   likes: 379 — comments: n/a — shares: n/a
-2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — views: 2,433,982 — dislikes: 9,186 — favorites: 0
-   likes: 18,834 — comments: n/a — shares: n/a
+SURVEY HIGHLIGHTS
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
+
+OPTIONS
+1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
+2. Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — Engagement: views 2,433,982, likes 18,834
 </pre></div>
 </div>
 </section>
 <section id="sample-4-issue-gun-control-split-train-study-study1">
 <h2>Sample 4 (Issue: Gun Control, Split: train, Study: study1)<a class="headerlink" href="#sample-4-issue-gun-control-split-train-study-study1" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-62-year-old, woman, Black or African-American (non-Hispanic), independent moderate, Prefer not to say. This viewer is a 62-year-old and a woman. They identify as Black or African-American (non-Hispanic). They are not college educated. Their household income is reported as Prefer not to say. The survey was completed in English. Politics include party identification Independent, ideology Moderate, political interest 4, trump approval 0, and biden approval 95. Gun policy views include gun ownership owns a gun, right-to-own importance no, supports assault weapons ban no, supports handgun ban 0.75, believes concealed carry is safe 0.5, supports stricter gun laws no, gun index 0.25, gun index (alt) 0.3125, gun enthusiasm yes, and gun importance 4. Media habits include YouTube frequency 6, favorite channels Milou H. Polycarpe - Psychic, Medium
-Matthew Lesko
-The White House
-The Deal Guy
-Valuetainment
-Rev. Ike Legacy
-Sybil Wilkes
-Forever Inspired
-Yeung Man Cooking, popular channels followed CNN,The Young Turks,MSNBC, and news trust 0.3333333333333333.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 62-year-old, Black or African-American (non-Hispanic) woman; independent moderate; Prefer not to say; watches YouTube multiple times per day.
+Initial Viewpoint: Opposes stricter gun laws
 
-CURRENT VIDEO:
-Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain — channel: Good Morning Britain
+CURRENTLY WATCHING Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain (from Good Morning Britain)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [230s/231s] Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT — channel: The New York Times
-2. [35s/544s] GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S — channel: Sydney Watson
-3. [44s/526s] Trevor Reacts to the Orlando Shooting: The Daily Show — channel: The Daily Show with Trevor Noah
+RECENTLY WATCHED (NEWEST LAST)
+1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
+2. GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S (watched 35s of 544s (6% complete), from Sydney Watson)
+3. Trevor Reacts to the Orlando Shooting: The Daily Show (watched 44s of 526s (8% complete), from The Daily Show with Trevor Noah)
 
-OPTIONS:
-1. The Truth About Guns And Gun Control | Debunker | NBC News — channel: NBC News — views: 146,091 — dislikes: 229 — favorites: 0
-   likes: 8,010 — comments: n/a — shares: n/a
-2. Trevor Reacts to the Orlando Shooting: The Daily Show — channel: The Daily Show with Trevor Noah — views: 1,775,648 — dislikes: 1,963 — favorites: 0
-   likes: 41,087 — comments: n/a — shares: n/a
-3. Gun Banners Say the Darndest Things — channel: Rob Doar — views: 9,639 — dislikes: 5 — favorites: 0
-   likes: 39 — comments: n/a — shares: n/a
-4. My AR-15 Story: Why I Needed My AR-15 — channel: Aaargo Jay — views: 1,746,279 — dislikes: 3,186
-   likes: 52,788 — comments: n/a — shares: n/a
-5. Florida School Shooting Survivor Says Arming Teachers is &#39;Absurd&#39; | Good Morning Britain — views: 56,762 — dislikes: 226 — favorites: 0
-   likes: 507 — comments: n/a — shares: n/a
+SURVEY HIGHLIGHTS
+party identification is Independent, ideology is Moderate, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is very important, gun regulation support score is 25%, and identifies as enthusiastic about guns.
+
+OPTIONS
+1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
+2. Trevor Reacts to the Orlando Shooting: The Daily Show (The Daily Show with Trevor Noah, 526s long) — Engagement: views 1,775,648, likes 41,087, comments 40
+3. Gun Banners Say the Darndest Things (Rob Doar, 259s long) — Engagement: views 9,639, likes 39, comments 40
+4. My AR-15 Story: Why I Needed My AR-15 (Aaargo Jay) — Engagement: views 1,746,279, likes 52,788, comments 40
+5. Florida School Shooting Survivor Says Arming Teachers is &#39;Absurd&#39; | Good Morning Britain — Engagement: views 56,762, likes 507
 </pre></div>
 </div>
 </section>
 <section id="sample-5-issue-gun-control-split-train-study-study1">
 <h2>Sample 5 (Issue: Gun Control, Split: train, Study: study1)<a class="headerlink" href="#sample-5-issue-gun-control-split-train-study-study1" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-45-year-old, man, Caucasian/White (non-Hispanic), independent moderate, $150,000 or more, college-educated, watches YouTube a few times a month. This viewer is a 45-year-old and a man. They identify as Caucasian/White (non-Hispanic). They are college educated. Their household income is reported as $150,000 or more. The survey was completed in English. Politics include party identification Independent, ideology Moderate, political interest 3, trump approval 20, and biden approval 10. Gun policy views include gun ownership owns a gun, right-to-own importance no, supports assault weapons ban yes, supports handgun ban yes, believes concealed carry is safe 0.25, supports stricter gun laws 0.25, gun index 0.5, gun index (alt) 0.5625, gun enthusiasm yes, and gun importance 3. Media habits include YouTube frequency a few times a month, favorite channels Guitar World
-Shaun
-Vevo, popular channels followed 0, and news trust 0.6666666666666666.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 45-year-old, Caucasian/White (non-Hispanic) man; independent moderate; $150,000 or more; college-educated; watches YouTube a few times a month.
+Initial Viewpoint: Supports a handgun ban
 
-CURRENT VIDEO:
-GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S — channel: Sydney Watson
+CURRENTLY WATCHING GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S (from Sydney Watson)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [230s/231s] Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT — channel: The New York Times
+RECENTLY WATCHED (NEWEST LAST)
+1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 230s of 231s (100% complete), from The New York Times)
 
-OPTIONS:
-1. The Truth About Guns And Gun Control | Debunker | NBC News — channel: NBC News — views: 146,091 — dislikes: 229 — favorites: 0
-   likes: 8,010 — comments: n/a — shares: n/a
-2. Gun control and the statistics behind America&#39;s love affair with guns | The Economist — channel: The Economist
-   likes: n/a — comments: n/a — shares: n/a
-3. Do We Need Stricter Gun Control? - The People Speak — channel: VICE News — views: 217,528 — dislikes: 5,550 — favorites: 0
-   likes: 2,130 — comments: n/a — shares: n/a
-4. Gun Banners Say the Darndest Things — channel: Rob Doar — views: 9,639 — dislikes: 5 — favorites: 0
-   likes: 39 — comments: n/a — shares: n/a
-5. Gun Grabbers Say The Darndest Things! — views: 352,944 — dislikes: 357 — favorites: 0
-   likes: 13,539 — comments: n/a — shares: n/a
+SURVEY HIGHLIGHTS
+party identification is Independent, ideology is Moderate, political interest is not very interested in politics, watches YouTube a few times a month, gun policy importance is somewhat important, gun regulation support score is 50%, and identifies as enthusiastic about guns.
+
+OPTIONS
+1. The Truth About Guns And Gun Control | Debunker | NBC News (NBC News, 141s long) — Engagement: views 146,091, likes 8,010, comments 40
+2. Gun control and the statistics behind America&#39;s love affair with guns | The Economist (The Economist, 137s long) — Engagement: views 20,012, likes 340, comments 40
+3. Do We Need Stricter Gun Control? - The People Speak (VICE News, 260s long) — Engagement: views 217,528, likes 2,130, comments 40
+4. Gun Banners Say the Darndest Things (Rob Doar, 259s long) — Engagement: views 9,639, likes 39, comments 40
+5. Gun Grabbers Say The Darndest Things! — Engagement: views 352,944, likes 13,539
 </pre></div>
 </div>
 </section>
 <section id="sample-6-issue-minimum-wage-split-train-study-study3">
 <h2>Sample 6 (Issue: Minimum Wage, Split: train, Study: study3)<a class="headerlink" href="#sample-6-issue-minimum-wage-split-train-study-study3" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-36-year-old, 1, watches YouTube a few times a month. This viewer is a 36-year-old and a 1. They identify as 1. They live in 40. They have 2 and are not college educated. Their household income is not above $50k. They report being 4. Children in household: 2. They identify as 11. They report attending services 3. Politics include political interest 1, voted in 2016 7, voted in 2020 1, trump approval 0, and biden approval 75. Minimum wage views include minimum wage stance (wave 1, inferred) 0.44, minimum wage stance (wave 2, inferred) 0.4, minimum wage support index (wave 1) 0.06888888888888889, minimum wage support index (wave 2) 0.09166666666666667, $15 minimum wage support (wave 1) no, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency a few times a month, news frequency 1, and news trust 0.6666666666666666.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
+Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENT VIDEO:
-Price Floors: The Minimum Wage — channel: Marginal Revolution University
+CURRENTLY WATCHING Price Floors: The Minimum Wage (from Marginal Revolution University)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [222s/222s] Seattle&#39;s $15 Minimum Wage Experiment is Working — channel: Alicé Anil
+RECENTLY WATCHED (NEWEST LAST)
+1. Seattle&#39;s $15 Minimum Wage Experiment is Working (watched 222s of 222s (100% complete), from Alicé Anil)
 
-OPTIONS:
-1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News — views: 56,870 — dislikes: 544 — favorites: 0
-   likes: 4,183 — comments: 40 — shares: n/a
-2. Republicans Block Minimum Wage Increase — channel: Senator Bernie Sanders — views: 9,914 — dislikes: 8 — favorites: 0
-   likes: 226 — comments: 40 — shares: n/a
-3. Caller: Increasing Minimum Wage will Bring Inflation — channel: Thom Hartmann Program — views: 11,225 — dislikes: 8 — favorites: 0
-   likes: 357 — comments: 40 — shares: n/a
-4. Milton Friedman on Minimum Wage — channel: amagilly — views: 484,030 — dislikes: 382 — favorites: 0
-   likes: 4,493 — comments: 40 — shares: n/a
+SURVEY HIGHLIGHTS
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
+2. Republicans Block Minimum Wage Increase (Senator Bernie Sanders, 430s long) — Engagement: views 9,914, likes 226, comments 40
+3. Caller: Increasing Minimum Wage will Bring Inflation (Thom Hartmann Program, 554s long) — Engagement: views 11,225, likes 357, comments 40
+4. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
 </pre></div>
 </div>
 </section>
 <section id="sample-7-issue-minimum-wage-split-train-study-study3">
 <h2>Sample 7 (Issue: Minimum Wage, Split: train, Study: study3)<a class="headerlink" href="#sample-7-issue-minimum-wage-split-train-study-study3" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-36-year-old, 1, watches YouTube a few times a month. This viewer is a 36-year-old and a 1. They identify as 1. They live in 40. They have 2 and are not college educated. Their household income is not above $50k. They report being 4. Children in household: 2. They identify as 11. They report attending services 3. Politics include political interest 1, voted in 2016 7, voted in 2020 1, trump approval 0, and biden approval 75. Minimum wage views include minimum wage stance (wave 1, inferred) 0.44, minimum wage stance (wave 2, inferred) 0.4, minimum wage support index (wave 1) 0.06888888888888889, minimum wage support index (wave 2) 0.09166666666666667, $15 minimum wage support (wave 1) no, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency a few times a month, news frequency 1, and news trust 0.6666666666666666.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
+Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENT VIDEO:
-The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News
+CURRENTLY WATCHING The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (from NowThis News)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [222s/222s] Seattle&#39;s $15 Minimum Wage Experiment is Working — channel: Alicé Anil
-2. [585s/586s] Price Floors: The Minimum Wage — channel: Marginal Revolution University
+RECENTLY WATCHED (NEWEST LAST)
+1. Seattle&#39;s $15 Minimum Wage Experiment is Working (watched 222s of 222s (100% complete), from Alicé Anil)
+2. Price Floors: The Minimum Wage (watched 585s of 586s (100% complete), from Marginal Revolution University)
 
-OPTIONS:
-1. Should We Raise the Minimum Wage? — channel: vlogbrothers — views: 1,305,252 — dislikes: 1,580 — favorites: 0
-   likes: 28,589 — comments: 40 — shares: n/a
-2. Who Does a $15 Minimum Wage Help? — channel: PragerU — views: 6,088,611 — dislikes: 4,854 — favorites: 0
-   likes: 49,500 — comments: 40 — shares: n/a
-3. Malcolm Kenyatta Confronts Minimum Wage Opposers — channel: NowThis News — views: 1,049,814 — dislikes: 1,522 — favorites: 0
-   likes: 30,409 — comments: 40 — shares: n/a
-4. The Cruelty of the $15 Minimum Wage — channel: ReasonTV — views: 341,672 — dislikes: 593 — favorites: 0
-   likes: 7,105 — comments: 40 — shares: n/a
+SURVEY HIGHLIGHTS
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. Should We Raise the Minimum Wage? (vlogbrothers, 227s long) — Engagement: views 1,305,252, likes 28,589, comments 40
+2. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
+3. Malcolm Kenyatta Confronts Minimum Wage Opposers (NowThis News, 384s long) — Engagement: views 1,049,814, likes 30,409, comments 40
+4. The Cruelty of the $15 Minimum Wage (ReasonTV, 577s long) — Engagement: views 341,672, likes 7,105, comments 40
 </pre></div>
 </div>
 </section>
 <section id="sample-8-issue-minimum-wage-split-train-study-study3">
 <h2>Sample 8 (Issue: Minimum Wage, Split: train, Study: study3)<a class="headerlink" href="#sample-8-issue-minimum-wage-split-train-study-study3" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-36-year-old, 1, watches YouTube a few times a month. This viewer is a 36-year-old and a 1. They identify as 1. They live in 40. They have 2 and are not college educated. Their household income is not above $50k. They report being 4. Children in household: 2. They identify as 11. They report attending services 3. Politics include political interest 1, voted in 2016 7, voted in 2020 1, trump approval 0, and biden approval 75. Minimum wage views include minimum wage stance (wave 1, inferred) 0.44, minimum wage stance (wave 2, inferred) 0.4, minimum wage support index (wave 1) 0.06888888888888889, minimum wage support index (wave 2) 0.09166666666666667, $15 minimum wage support (wave 1) no, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency a few times a month, news frequency 1, and news trust 0.6666666666666666.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 36-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Oklahoma.
+Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENT VIDEO:
-Who Does a $15 Minimum Wage Help? — channel: PragerU
+CURRENTLY WATCHING Who Does a $15 Minimum Wage Help? (from PragerU)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [222s/222s] Seattle&#39;s $15 Minimum Wage Experiment is Working — channel: Alicé Anil
-2. [585s/586s] Price Floors: The Minimum Wage — channel: Marginal Revolution University
-3. [158s/159s] The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News
+RECENTLY WATCHED (NEWEST LAST)
+1. Seattle&#39;s $15 Minimum Wage Experiment is Working (watched 222s of 222s (100% complete), from Alicé Anil)
+2. Price Floors: The Minimum Wage (watched 585s of 586s (100% complete), from Marginal Revolution University)
+3. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (watched 158s of 159s (99% complete), from NowThis News)
 
-OPTIONS:
-1. Amazon hikes minimum wage to $15 for all employees — channel: Fox Business — views: 15,460 — dislikes: 28 — favorites: 0
-   likes: 200 — comments: 40 — shares: n/a
-2. If a Business Won&#39;t pay a Living Wage - it Shouldn&#39;t Exist — channel: Thom Hartmann Program — views: 10,082 — dislikes: 146 — favorites: 0
-   likes: 175 — comments: 40 — shares: n/a
-3. A $15 Minimum Wage Will Hurt Workers — channel: PragerU — views: 480,145 — dislikes: 375 — favorites: 0
-   likes: 9,339 — comments: 40 — shares: n/a
-4. What&#39;s the Right Minimum Wage? — channel: PragerU — views: 1,013,193 — dislikes: 4,174 — favorites: 0
-   likes: 17,842 — comments: 40 — shares: n/a
+SURVEY HIGHLIGHTS
+political interest is very interested in politics, religious affiliation is Nothing in particular, watches YouTube a few times a month, pays attention to news most of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. Amazon hikes minimum wage to $15 for all employees (Fox Business, 294s long) — Engagement: views 15,460, likes 200, comments 40
+2. If a Business Won&#39;t pay a Living Wage - it Shouldn&#39;t Exist (Thom Hartmann Program, 559s long) — Engagement: views 10,082, likes 175, comments 40
+3. A $15 Minimum Wage Will Hurt Workers (PragerU, 237s long) — Engagement: views 480,145, likes 9,339, comments 40
+4. What&#39;s the Right Minimum Wage? (PragerU, 314s long) — Engagement: views 1,013,193, likes 20,713, comments 40
 </pre></div>
 </div>
 </section>
 <section id="sample-9-issue-minimum-wage-split-train-study-study3">
 <h2>Sample 9 (Issue: Minimum Wage, Split: train, Study: study3)<a class="headerlink" href="#sample-9-issue-minimum-wage-split-train-study-study3" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-60-year-old, 1, college-educated, watches YouTube several times a week. This viewer is a 60-year-old and a 1. They identify as 1. They live in 17. They have 5 and are college educated. Their household income is above $50k. They report being 1. Children in household: 2. They identify as 9. They report attending services 4. Politics include political interest 0.6666666666666666, voted in 2016 4, voted in 2020 5, trump approval 0, and biden approval 0. Minimum wage views include minimum wage stance (wave 1, inferred) no, minimum wage stance (wave 2, inferred) no, minimum wage support index (wave 1) 0.09375, minimum wage support index (wave 2) no, $15 minimum wage support (wave 1) 0.25, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency several times a week, news frequency 2, and news trust 0.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 60-year-old, White (non-Hispanic); college-educated; watches YouTube several times a week; lives in Illinois.
+Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENT VIDEO:
-What the US gets wrong about minimum wage — channel: Vox
+CURRENTLY WATCHING What the US gets wrong about minimum wage (from Vox)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [221s/222s] Seattle&#39;s $15 Minimum Wage Experiment is Working — channel: Alicé Anil
+RECENTLY WATCHED (NEWEST LAST)
+1. Seattle&#39;s $15 Minimum Wage Experiment is Working (watched 221s of 222s (100% complete), from Alicé Anil)
 
-OPTIONS:
-1. What Amazon&#39;s New Minimum Wage Means For Inflation And The Future | Velshi &amp; Ruhle | MSNBC — channel: MSNBC — views: 79,653 — dislikes: 150 — favorites: 0
-   likes: 1,040 — comments: 40 — shares: n/a
-2. Caller: Minimum Wage Should be set by Supply &amp; Demand — channel: Thom Hartmann Program — views: 5,149 — dislikes: 1 — favorites: 0
-   likes: 142 — comments: 40 — shares: n/a
-3. WIN? Amazon Raises Minimum Wage to $15 — channel: David Pakman Show — views: 7,266 — dislikes: 23 — favorites: 0
-   likes: 397 — comments: 40 — shares: n/a
-4. Milton Friedman on Minimum Wage — channel: amagilly — views: 484,030 — dislikes: 382 — favorites: 0
-   likes: 4,493 — comments: 40 — shares: n/a
+SURVEY HIGHLIGHTS
+political interest is about sixty-seven percent, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. What Amazon&#39;s New Minimum Wage Means For Inflation And The Future | Velshi &amp; Ruhle | MSNBC (MSNBC, 367s long) — Engagement: views 79,653, likes 1,040, comments 40
+2. Caller: Minimum Wage Should be set by Supply &amp; Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
+3. WIN? Amazon Raises Minimum Wage to $15 (David Pakman Show, 501s long) — Engagement: views 7,266, likes 397, comments 40
+4. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
 </pre></div>
 </div>
 </section>
 <section id="sample-10-issue-minimum-wage-split-train-study-study3">
 <h2>Sample 10 (Issue: Minimum Wage, Split: train, Study: study3)<a class="headerlink" href="#sample-10-issue-minimum-wage-split-train-study-study3" title="Link to this heading">¶</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PROFILE:
-60-year-old, 1, college-educated, watches YouTube several times a week. This viewer is a 60-year-old and a 1. They identify as 1. They live in 17. They have 5 and are college educated. Their household income is above $50k. They report being 1. Children in household: 2. They identify as 9. They report attending services 4. Politics include political interest 0.6666666666666666, voted in 2016 4, voted in 2020 5, trump approval 0, and biden approval 0. Minimum wage views include minimum wage stance (wave 1, inferred) no, minimum wage stance (wave 2, inferred) no, minimum wage support index (wave 1) 0.09375, minimum wage support index (wave 2) no, $15 minimum wage support (wave 1) 0.25, $15 minimum wage support (wave 2) no, supports wage increase (wave 1) no, and supports wage increase (wave 2) no. Media habits include YouTube frequency several times a week, news frequency 2, and news trust 0.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 60-year-old, White (non-Hispanic); college-educated; watches YouTube several times a week; lives in Illinois.
+Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENT VIDEO:
-What Amazon&#39;s New Minimum Wage Means For Inflation And The Future | Velshi &amp; Ruhle | MSNBC — channel: MSNBC
+CURRENTLY WATCHING What Amazon&#39;s New Minimum Wage Means For Inflation And The Future | Velshi &amp; Ruhle | MSNBC (from MSNBC)
 
-RECENTLY WATCHED (NEWEST LAST):
-1. [221s/222s] Seattle&#39;s $15 Minimum Wage Experiment is Working — channel: Alicé Anil
-2. [306s/306s] What the US gets wrong about minimum wage — channel: Vox
+RECENTLY WATCHED (NEWEST LAST)
+1. Seattle&#39;s $15 Minimum Wage Experiment is Working (watched 221s of 222s (100% complete), from Alicé Anil)
+2. What the US gets wrong about minimum wage (watched 306s of 306s (100% complete), from Vox)
 
-OPTIONS:
-1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis — channel: NowThis News — views: 56,870 — dislikes: 544 — favorites: 0
-   likes: 4,183 — comments: 40 — shares: n/a
-2. Why did Amazon agree to raise its minimum wage? — channel: Fox Business — views: 9,874 — dislikes: 20 — favorites: 0
-   likes: 87 — comments: 40 — shares: n/a
-3. Caller: Minimum Wage Should be set by Supply &amp; Demand — channel: Thom Hartmann Program — views: 5,149 — dislikes: 1 — favorites: 0
-   likes: 142 — comments: 40 — shares: n/a
-4. Joe Rogan - The Minimum Wage Destroys Jobs — channel: JRE Clips — views: 221,682 — dislikes: 1,616 — favorites: 0
-   likes: 2,225 — comments: 40 — shares: n/a
+SURVEY HIGHLIGHTS
+political interest is about sixty-seven percent, religious affiliation is Atheist, watches YouTube several times a week, follows the news some of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
+2. Why did Amazon agree to raise its minimum wage? (Fox Business, 283s long) — Engagement: views 9,874, likes 87, comments 40
+3. Caller: Minimum Wage Should be set by Supply &amp; Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
+4. Joe Rogan - The Minimum Wage Destroys Jobs (JRE Clips, 557s long) — Engagement: views 221,682, likes 2,225, comments 40
 </pre></div>
 </div>
 </section>
@@ -525,12 +484,12 @@ OPTIONS:
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="research_article_political_sciences.html">
+          <a class="next-page" href="knn.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">RESEARCH ARTICLE POLITICAL SCIENCES</div>
+                <div class="title">KNN Report Catalog</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

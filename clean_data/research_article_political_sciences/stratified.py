@@ -16,10 +16,18 @@ _NORMAL = NormalDist()
 
 
 def _repository_root() -> Path:
+    """Return the repository root to resolve paths to bundled artifacts."""
+
     return Path(__file__).resolve().parents[2]
 
 
 def _capsule_results_dir() -> Path:
+    """Return the directory containing preregistered capsule results.
+
+    :raises FileNotFoundError: If the expected capsule results directory is missing.
+    :returns: Path pointing to the intermediate data exported from CodeOcean.
+    """
+
     base = _repository_root() / "capsule-5416997" / "results" / "intermediate data"
     if not base.exists():
         raise FileNotFoundError(
@@ -53,6 +61,11 @@ class StudyConfig:  # pylint: disable=too-many-instance-attributes
 
 
 def _study_configs() -> Tuple[StudyConfig, ...]:
+    """Return the preregistered configuration for each study.
+
+    :returns: Tuple of :class:`StudyConfig` entries loaded from the capsule payloads.
+    """
+
     base = _capsule_results_dir()
 
     gun_platform_controls = (
@@ -259,6 +272,17 @@ def _study_configs() -> Tuple[StudyConfig, ...]:
 
 
 def _transform_controls(frame: pd.DataFrame, columns: Sequence[str]) -> pd.DataFrame:
+    """Create centered numeric control columns for regression design matrices.
+
+    Categorical controls are expanded into one-hot dummies with mean-centering,
+    while numeric controls are coerced to floats and centered. Missing columns
+    are represented with ``NaN`` placeholders to preserve alignment.
+
+    :param frame: Source dataframe containing raw control columns.
+    :param columns: Control column names defined by the preregistration.
+    :returns: Dataframe of processed control covariates aligned to ``frame``.
+    """
+
     transformed: List[pd.DataFrame] = []
     for name in columns:
         if name not in frame.columns:
@@ -288,6 +312,13 @@ def _transform_controls(frame: pd.DataFrame, columns: Sequence[str]) -> pd.DataF
 
 
 def _prepare_study_frame(config: StudyConfig) -> pd.DataFrame:
+    """Load and preprocess the capsule CSV for a given study configuration.
+
+    :param config: Study metadata describing file locations and attitude mapping.
+    :raises FileNotFoundError: If the preregistered CSV cannot be located.
+    :returns: Cleaned dataframe with derived attitude/recommendation columns.
+    """
+
     if not config.data_path.exists():
         raise FileNotFoundError(f"Missing dataset for {config.label}: {config.data_path}")
 
@@ -338,6 +369,12 @@ def _prepare_study_frame(config: StudyConfig) -> pd.DataFrame:
 
 
 def _simes(p_values: Iterable[float]) -> float:
+    """Return the Simes combined p-value for a collection of hypotheses.
+
+    :param p_values: Raw p-values that may include ``None`` or ``NaN`` entries.
+    :returns: Adjusted p-value capturing the minimum Simes rejection threshold.
+    """
+
     cleaned = [value for value in p_values if value is not None and not math.isnan(value)]
     if not cleaned:
         return float("nan")
@@ -348,6 +385,12 @@ def _simes(p_values: Iterable[float]) -> float:
 
 
 def _benjamini_hochberg(p_values: Mapping[str, float]) -> Dict[str, float]:
+    """Apply the Benjamini–Hochberg FDR procedure to a mapping of p-values.
+
+    :param p_values: Mapping from hypothesis key to raw p-value.
+    :returns: Mapping of keys to adjusted p-values (``NaN`` when undefined).
+    """
+
     keys = [key for key, value in p_values.items() if value is not None and not math.isnan(value)]
     if not keys:
         return {key: float("nan") for key in p_values}
@@ -370,6 +413,13 @@ def _benjamini_hochberg(p_values: Mapping[str, float]) -> Dict[str, float]:
 
 
 def _fit_robust_ols(design: np.ndarray, outcome: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Solve OLS coefficients and a HC1-style covariance matrix.
+
+    :param design: Design matrix with predictors (rows = observations).
+    :param outcome: Target vector aligned with the design matrix rows.
+    :returns: Tuple ``(beta, covariance)`` with regression weights and robust covariance.
+    """
+
     beta, _, _, _ = np.linalg.lstsq(design, outcome, rcond=None)
     residuals = outcome - design @ beta
 
@@ -382,6 +432,14 @@ def _fit_robust_ols(design: np.ndarray, outcome: np.ndarray) -> Tuple[np.ndarray
 
 
 def _compute_mde(stderr: float, alpha: float = 0.05, power: float = 0.8) -> float:
+    """Return the minimum detectable effect under a two-sided z-test.
+
+    :param stderr: Standard error of the estimated contrast.
+    :param alpha: Significance level controlling the Type I error rate.
+    :param power: Desired statistical power (1 - Type II error rate).
+    :returns: Effect size threshold or ``NaN`` when the error is undefined.
+    """
+
     if math.isnan(stderr) or stderr <= 0.0:
         return float("nan")
     z_alpha = _NORMAL.inv_cdf(1.0 - alpha / 2.0)
@@ -390,6 +448,14 @@ def _compute_mde(stderr: float, alpha: float = 0.05, power: float = 0.8) -> floa
 
 
 def _treatment_term_name(attitude: str, recsys: str, seed: Optional[str] = None) -> str:
+    """Return the canonical design term name for a treatment cell.
+
+    :param attitude: Participant attitude bucket (liberal/conservative/neutral).
+    :param recsys: Recommendation system code (``\"22\"`` or ``\"31\"``).
+    :param seed: Optional seed orientation (``\"pro\"``/``\"anti\"``) for moderates.
+    :returns: Colon-joined identifier used in the regression design matrix.
+    """
+
     parts = [f"attitude.{attitude}"]
     if seed is not None:
         parts.append(f"seed.{seed}")
@@ -398,6 +464,13 @@ def _treatment_term_name(attitude: str, recsys: str, seed: Optional[str] = None)
 
 
 def _build_treatment_matrix(frame: pd.DataFrame, config: StudyConfig) -> pd.DataFrame:
+    """Construct indicator columns for each preregistered treatment arm.
+
+    :param frame: Study dataframe with derived attitude/seed/recsys columns.
+    :param config: Study configuration specifying liberal/conservative mappings.
+    :returns: Dataframe of binary indicator columns indexed to ``frame``.
+    """
+
     frame = frame.copy()
     frame["_attitude"] = frame["attitude"].fillna("").astype(str)
     frame["_seed"] = (
@@ -463,6 +536,12 @@ def _build_treatment_matrix(frame: pd.DataFrame, config: StudyConfig) -> pd.Data
 
 
 def _contrast_specs(config: StudyConfig) -> List[Dict[str, object]]:
+    """Return the preregistered treatment contrasts for a study configuration.
+
+    :param config: Study configuration providing attitude/recsys labels.
+    :returns: List of contrast dictionaries with keys, labels, and term names.
+    """
+
     liberal_term_31 = _treatment_term_name(config.liberal_attitude, "31")
     liberal_term_22 = _treatment_term_name(config.liberal_attitude, "22")
     conservative_term_31 = _treatment_term_name(config.conservative_attitude, "31")
@@ -594,6 +673,13 @@ def _hierarchical_adjust(  # pylint: disable=too-many-branches,too-many-locals,t
     records: Sequence[Mapping[str, object]],
     alpha: float = 0.05,
 ) -> Tuple[Dict[str, float], Dict[Tuple[str, str], float], Dict[Tuple[str, str, str], float]]:
+    """Apply the preregistered three-level hierarchical FDR adjustment.
+
+    :param records: Sequence of regression outputs containing raw p-values.
+    :param alpha: Significance threshold controlling each discovery layer.
+    :returns: Tuple of dictionaries with adjusted p-values for layers 1–3.
+    """
+
     layer3: Dict[str, Dict[str, Dict[str, float]]] = {}
     for entry in records:
         family = str(entry["family_key"])

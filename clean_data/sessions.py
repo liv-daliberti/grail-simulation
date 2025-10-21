@@ -373,6 +373,7 @@ def _build_watched_details(
     tree_meta: Dict[str, Any],
     fallback_titles: Dict[str, Any],
     tree_issue_map: Dict[str, str],
+    *,
     timings: SessionTiming,
 ) -> List[Dict[str, Any]]:
     """Return per-video metadata entries for the watched sequence."""
@@ -857,7 +858,7 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
             tree_meta,
             fallback_titles,
             tree_issue_map,
-            timings,
+            timings=timings,
         )
         info = _session_info(sess, watched_details)
 

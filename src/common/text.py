@@ -56,4 +56,11 @@ def resolve_paths_from_env(variable_names: Iterable[str]) -> list[str]:
     return paths
 
 
-__all__ = ["CANON_RE", "YTID_RE", "canon_text", "canon_video_id", "resolve_paths_from_env", "split_env_list"]
+__all__ = [
+    "CANON_RE",
+    "YTID_RE",
+    "canon_text",
+    "canon_video_id",
+    "resolve_paths_from_env",
+    "split_env_list",
+]

@@ -13,6 +13,8 @@ The module reuses the existing :mod:`knn.cli` entry points to avoid code drift
 between the scripted workflow and the public command-line interface.
 """
 
+# pylint: disable=line-too-long,too-many-lines
+
 from __future__ import annotations
 
 import argparse
@@ -126,10 +128,14 @@ class StudySpec:
 
     @property
     def study_slug(self) -> str:
+        """Return a filesystem-safe slug for the study key."""
+
         return self.key.replace(" ", "_")
 
     @property
     def issue_slug(self) -> str:
+        """Return a filesystem-safe slug for the associated issue."""
+
         return self.issue.replace(" ", "_")
 
 
@@ -142,14 +148,20 @@ class StudySelection:
 
     @property
     def config(self) -> SweepConfig:
+        """Return the sweep configuration selected for the study."""
+
         return self.outcome.config
 
     @property
     def accuracy(self) -> float:
+        """Return the held-out accuracy achieved by the selection."""
+
         return self.outcome.accuracy
 
     @property
     def best_k(self) -> int:
+        """Return the optimal ``k`` discovered during sweeps."""
+
         return self.outcome.best_k
 
 
@@ -247,14 +259,20 @@ def _repo_root() -> Path:
 
 
 def _default_dataset(root: Path) -> str:
+    """Return the default dataset path rooted at ``root``."""
+
     return str(root / "data" / "cleaned_grail")
 
 
 def _default_cache_dir(root: Path) -> str:
+    """Return the default Hugging Face cache directory under ``root``."""
+
     return str(root / ".cache" / "huggingface" / "knn")
 
 
 def _default_out_dir(root: Path) -> str:
+    """Return the default KNN output directory rooted at ``root``."""
+
     return str(root / "models" / "knn")
 
 
@@ -296,6 +314,8 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
 
 
 def _default_word2vec_workers() -> int:
+    """Return the worker count for Word2Vec training based on environment hints."""
+
     env_value = os.environ.get("WORD2VEC_WORKERS")
     if env_value:
         return max(1, int(env_value))
@@ -305,14 +325,20 @@ def _default_word2vec_workers() -> int:
 
 
 def _snake_to_title(value: str) -> str:
+    """Convert a snake_case string into Title Case."""
+
     return value.replace("_", " ").title()
 
 
 def _format_float(value: float) -> str:
+    """Format a floating-point metric with three decimal places."""
+
     return f"{value:.3f}"
 
 
 def _ensure_dir(path: Path) -> Path:
+    """Ensure ``path`` exists and return it."""
+
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -584,6 +610,8 @@ def _select_best_configs(
     """Select the best configuration per feature space and study."""
 
     def _is_better(candidate: SweepOutcome, incumbent: SweepOutcome) -> bool:
+        """Return ``True`` when ``candidate`` should replace ``incumbent``."""
+
         if candidate.accuracy > incumbent.accuracy + 1e-9:
             return True
         if candidate.accuracy + 1e-9 < incumbent.accuracy:
@@ -702,6 +730,8 @@ def _run_opinion_evaluations(
 
 
 def _hyperparameter_report_intro(k_sweep: str) -> List[str]:
+    """Return the Markdown header introducing the hyperparameter report."""
+
     return [
         "# KNN Hyperparameter Tuning Notes",
         "",
@@ -724,6 +754,8 @@ def _hyperparameter_table_section(
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Render the hyperparameter summary table for each feature space."""
+
     lines: List[str] = []
     for feature_space in ("tfidf", "word2vec"):
         per_study = selections.get(feature_space, {})
@@ -737,6 +769,8 @@ def _hyperparameter_feature_rows(
     per_study: Mapping[str, StudySelection],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Return table rows covering ``feature_space`` selections."""
+
     rows: List[str] = []
     for study in studies:
         selection = per_study.get(study.key)
@@ -751,6 +785,8 @@ def _format_hyperparameter_row(
     study: StudySpec,
     selection: StudySelection,
 ) -> str:
+    """Format a Markdown table row summarising a sweep selection."""
+
     config = selection.config
     text_label = ",".join(config.text_fields) if config.text_fields else "none"
     size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
@@ -764,10 +800,14 @@ def _format_hyperparameter_row(
 
 
 def _describe_text_fields(fields: Sequence[str]) -> str:
+    """Return human-friendly text describing optional auxiliary fields."""
+
     return "no extra fields" if not fields else f"extra fields `{','.join(fields)}`"
 
 
 def _format_word2vec_descriptor(config: SweepConfig, text_info: str) -> str:
+    """Return a descriptive string for a Word2Vec configuration."""
+
     return (
         f"{config.metric} distance, {text_info}, "
         f"size={config.word2vec_size}, "
@@ -780,6 +820,8 @@ def _hyperparameter_observations_section(
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Build a bullet list summarising key sweep observations."""
+
     lines: List[str] = ["### Observations", ""]
     for feature_space in ("tfidf", "word2vec"):
         per_study = selections.get(feature_space, {})
@@ -795,6 +837,8 @@ def _hyperparameter_feature_observation(
     per_study: Mapping[str, StudySelection],
     studies: Sequence[StudySpec],
 ) -> str | None:
+    """Summarise configurations for ``feature_space`` across studies."""
+
     bullet_bits: List[str] = []
     for study in studies:
         selection = per_study.get(study.key)
@@ -815,6 +859,8 @@ def _hyperparameter_feature_observation(
 
 
 def _hyperparameter_opinion_section() -> List[str]:
+    """Return the blurb linking to opinion-regression sweeps."""
+
     return [
         "",
         "## Post-Study Opinion Regression",
@@ -837,6 +883,8 @@ def _next_video_dataset_info(
 
 
 def _next_video_intro(dataset_name: str, split: str) -> List[str]:
+    """Return the introductory Markdown section for the next-video report."""
+
     return [
         "# KNN Next-Video Baseline",
         "",

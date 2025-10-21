@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -260,6 +266,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments for the replication report entry point.</span>
+
+<span class="sd">    :returns: Namespace containing dataset path, output directory, and bin count.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;Generate heatmaps and summaries replicating the PNAS filter-bubble &quot;</span>

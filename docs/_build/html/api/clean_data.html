@@ -210,6 +210,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -620,12 +626,12 @@ this module rather than re-parsing the capsule tree.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.codeocean.split_dataframe">
-<span class="sig-prename descclassname"><span class="pre">clean_data.codeocean.</span></span><span class="sig-name descname"><span class="pre">split_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/sessions.html#split_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.codeocean.split_dataframe" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.codeocean.</span></span><span class="sig-name descname"><span class="pre">split_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interaction_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/sessions.html#split_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.codeocean.split_dataframe" title="Link to this definition">¶</a></dt>
 <dd><p>Split dataframe into train/validation partitions grouped by participant.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Interaction dataframe to split.</p></li>
+<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>) – Interaction dataframe to split.</p></li>
 <li><p><strong>validation_ratio</strong> (<em>float</em>) – Fraction of participant groups assigned to validation.</p></li>
 </ul>
 </dd>
@@ -1456,12 +1462,12 @@ both the CLI and the high-level build functions.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.sessions.split_dataframe">
-<span class="sig-prename descclassname"><span class="pre">clean_data.sessions.</span></span><span class="sig-name descname"><span class="pre">split_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/sessions.html#split_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.sessions.split_dataframe" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.sessions.</span></span><span class="sig-name descname"><span class="pre">split_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interaction_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/sessions.html#split_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.sessions.split_dataframe" title="Link to this definition">¶</a></dt>
 <dd><p>Split dataframe into train/validation partitions grouped by participant.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Interaction dataframe to split.</p></li>
+<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>) – Interaction dataframe to split.</p></li>
 <li><p><strong>validation_ratio</strong> (<em>float</em>) – Fraction of participant groups assigned to validation.</p></li>
 </ul>
 </dd>
@@ -1482,11 +1488,11 @@ The resulting mappings are consumed by <a class="reference internal" href="#modu
 filtering session logs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.surveys.build_survey_index">
-<span class="sig-prename descclassname"><span class="pre">clean_data.surveys.</span></span><span class="sig-name descname"><span class="pre">build_survey_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/surveys.html#build_survey_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.surveys.build_survey_index" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.surveys.</span></span><span class="sig-name descname"><span class="pre">build_survey_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">survey_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/surveys.html#build_survey_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.surveys.build_survey_index" title="Link to this definition">¶</a></dt>
 <dd><p>Create a mapping from <code class="docutils literal notranslate"><span class="pre">urlid</span></code> to associated survey rows.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Raw survey dataframe loaded from the capsule.</p>
+<dd class="field-odd"><p><strong>survey_frame</strong> (<em>pandas.DataFrame</em>) – Raw survey dataframe loaded from the capsule.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Mapping of normalized <code class="docutils literal notranslate"><span class="pre">urlid</span></code> to a list of matching rows.</p>
@@ -2181,11 +2187,11 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.core_prompt_mask">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">core_prompt_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#core_prompt_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.core_prompt_mask" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">core_prompt_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#core_prompt_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.core_prompt_mask" title="Link to this definition">¶</a></dt>
 <dd><p>Return a boolean mask selecting rows from core studies and issues.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>pandas.Series</p>
@@ -2209,11 +2215,11 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.dedupe_participants">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">dedupe_participants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#dedupe_participants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.dedupe_participants" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">dedupe_participants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#dedupe_participants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.dedupe_participants" title="Link to this definition">¶</a></dt>
 <dd><p>Deduplicate rows so each participant/issue pair appears once.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>pandas.DataFrame</p>
@@ -2251,11 +2257,11 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.filter_core_prompt_rows">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">filter_core_prompt_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#filter_core_prompt_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.filter_core_prompt_rows" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">filter_core_prompt_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#filter_core_prompt_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.filter_core_prompt_rows" title="Link to this definition">¶</a></dt>
 <dd><p>Filter a dataframe down to the core studies/issues used in reporting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>pandas.DataFrame</p>
@@ -2338,11 +2344,11 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.participant_ids">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">participant_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#participant_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.participant_ids" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">participant_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#participant_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.participant_ids" title="Link to this definition">¶</a></dt>
 <dd><p>Return a best-effort participant identifier for each row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>pandas.Series</p>
@@ -2352,11 +2358,11 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.participant_stats">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">participant_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#participant_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.participant_stats" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">participant_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#participant_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.participant_stats" title="Link to this definition">¶</a></dt>
 <dd><p>Compute participant counts overall, by issue, and by study.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
@@ -2366,12 +2372,12 @@ the prompt reporting pipeline.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.prompt.utils.series_from_columns">
-<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">series_from_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#series_from_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.series_from_columns" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.prompt.utils.</span></span><span class="sig-name descname"><span class="pre">series_from_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/prompt/utils.html#series_from_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.prompt.utils.series_from_columns" title="Link to this definition">¶</a></dt>
 <dd><p>Collapse multiple candidate columns into a single best-effort series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p></li>
 <li><p><strong>columns</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 </ul>
 </dd>
@@ -2470,14 +2476,14 @@ experiments on YouTube</em> (PNAS, 2025).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.compute_treatment_regression">
-<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">compute_treatment_regression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#compute_treatment_regression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.compute_treatment_regression" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">compute_treatment_regression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">combined_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#compute_treatment_regression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.compute_treatment_regression" title="Link to this definition">¶</a></dt>
 <dd><p>Estimate a study-adjusted treatment effect on opinion change.</p>
 <p>The model regresses <code class="docutils literal notranslate"><span class="pre">after</span> <span class="pre">-</span> <span class="pre">before</span></code> on a treatment indicator with
 study fixed-effects (Study 1 as the reference category).  Returns the
 coefficient, standard error, 95% CI, and two-sided p-value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p>
+<dd class="field-odd"><p><strong>combined_frame</strong> (<em>pandas.DataFrame</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, float]</p>
@@ -2501,12 +2507,12 @@ coefficient, standard error, 95% CI, and two-sided p-value.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.histogram2d_counts">
-<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">histogram2d_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#histogram2d_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.histogram2d_counts" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">histogram2d_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#histogram2d_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.histogram2d_counts" title="Link to this definition">¶</a></dt>
 <dd><p>Return a 2D histogram of before vs. after opinion indices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p></li>
 <li><p><strong>before_col</strong> (<em>str</em>)</p></li>
 <li><p><strong>after_col</strong> (<em>str</em>)</p></li>
 <li><p><strong>bins</strong> (<em>int</em>)</p></li>
@@ -2565,12 +2571,12 @@ coefficient, standard error, 95% CI, and two-sided p-value.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.research_article_political_sciences.analysis.summarise_shift">
-<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">summarise_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#summarise_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.summarise_shift" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.research_article_political_sciences.analysis.</span></span><span class="sig-name descname"><span class="pre">summarise_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/research_article_political_sciences/analysis.html#summarise_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.research_article_political_sciences.analysis.summarise_shift" title="Link to this definition">¶</a></dt>
 <dd><p>Compute summary statistics describing the opinion shift.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>data_frame</strong> (<em>pandas.DataFrame</em>)</p></li>
 <li><p><strong>before_col</strong> (<em>str</em>)</p></li>
 <li><p><strong>after_col</strong> (<em>str</em>)</p></li>
 </ul>

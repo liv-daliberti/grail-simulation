@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -326,6 +332,49 @@
     <span class="p">((</span><span class="s2">&quot;civic_participation&quot;</span><span class="p">,</span> <span class="s2">&quot;volunteering&quot;</span><span class="p">,</span> <span class="s2">&quot;civic_activity&quot;</span><span class="p">),</span> <span class="s2">&quot;Civic engagement&quot;</span><span class="p">),</span>
 <span class="p">)</span>
 
+<span class="n">GUN_BOOLEAN_PHRASES</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;right_to_own_importance&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;considers the right to own a gun important&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;considers the right to own a gun unimportant&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;assault_ban&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;supports an assault weapons ban&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;opposes an assault weapons ban&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;handgun_ban&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;supports a handgun ban&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;opposes a handgun ban&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;concealed_safe&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;believes concealed carry is safe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;believes concealed carry is unsafe&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;stricter_laws&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;supports stricter gun laws&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;opposes stricter gun laws&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;gun_enthusiasm&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;identifies as enthusiastic about guns&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;does not identify as enthusiastic about guns&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;gun_importance&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;considers gun policy important&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;does not consider gun policy important&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">GUN_METRIC_LABELS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;gun_index&quot;</span><span class="p">:</span> <span class="s2">&quot;a gun index score around </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gun_index_2&quot;</span><span class="p">:</span> <span class="s2">&quot;an alternate gun index score around </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assault_ban&quot;</span><span class="p">:</span> <span class="s2">&quot;support for an assault weapons ban is about </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">GUN_GENERIC_LABELS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;gun_priority&quot;</span><span class="p">:</span> <span class="s2">&quot;gun policy priority is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gun_policy&quot;</span><span class="p">:</span> <span class="s2">&quot;gun policy stance is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gun_identity&quot;</span><span class="p">:</span> <span class="s2">&quot;gun identity is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
 
 <div class="viewcode-block" id="ProfileRender">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.ProfileRender">[docs]</a>
@@ -408,13 +457,14 @@
         <span class="n">viewer</span> <span class="o">=</span> <span class="n">synthesize_viewer_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="n">sentences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">viewer_placeholder</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">viewer_sentence</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">if</span> <span class="n">viewer</span><span class="p">:</span>
         <span class="n">normalized</span> <span class="o">=</span> <span class="n">viewer</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">normalized</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;(no profile provided)&quot;</span><span class="p">,</span> <span class="s2">&quot;no profile provided&quot;</span><span class="p">}:</span>
             <span class="n">viewer_placeholder</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">sentence</span> <span class="o">=</span> <span class="n">_ensure_sentence</span><span class="p">(</span><span class="n">viewer</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sentence</span><span class="p">:</span>
-            <span class="n">sentences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+        <span class="n">viewer_sentence</span> <span class="o">=</span> <span class="n">_ensure_sentence</span><span class="p">(</span><span class="n">viewer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">viewer_placeholder</span><span class="p">:</span>
+            <span class="n">sentences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">viewer_sentence</span><span class="p">)</span>
 
     <span class="n">demographics</span> <span class="o">=</span> <span class="n">_demographic_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected_row</span><span class="p">)</span>
     <span class="n">politics</span> <span class="o">=</span> <span class="n">_politics_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected_row</span><span class="p">)</span>
@@ -435,6 +485,8 @@
     <span class="k">if</span> <span class="n">viewer_placeholder</span> <span class="ow">and</span> <span class="n">sentences</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="s2">&quot;(no profile provided)&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sentences</span><span class="p">):</span>
             <span class="n">sentences</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">viewer_placeholder</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sentences</span> <span class="ow">and</span> <span class="n">viewer_sentence</span><span class="p">:</span>
+        <span class="n">sentences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">viewer_sentence</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ProfileRender</span><span class="p">(</span><span class="n">sentences</span><span class="o">=</span><span class="n">sentences</span><span class="p">,</span> <span class="n">viewer_placeholder</span><span class="o">=</span><span class="n">viewer_placeholder</span><span class="p">)</span></div>
 
@@ -569,7 +621,7 @@
         <span class="k">elif</span> <span class="n">value_lower</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">}:</span>
             <span class="n">phrases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value_lower</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">phrases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value_clean</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">phrases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">value_clean</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">phrases</span>
 
 
@@ -1053,12 +1105,19 @@
     <span class="n">ownership</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;gun_own&quot;</span><span class="p">,</span> <span class="s2">&quot;gunowner&quot;</span><span class="p">,</span> <span class="s2">&quot;owns_gun&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">ownership</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">ownership_text</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">ownership</span><span class="p">,</span> <span class="n">yes</span><span class="o">=</span><span class="s2">&quot;owns a gun&quot;</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="s2">&quot;does not own a gun&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ownership_text</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Gun ownership: </span><span class="si">{</span><span class="n">ownership_text</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">ownership_flag</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">ownership</span><span class="p">,</span> <span class="n">yes</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ownership_flag</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;owning a gun&quot;</span>
+    <span class="k">if</span> <span class="n">ownership_flag</span> <span class="o">==</span> <span class="s2">&quot;no&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;not owning a gun&quot;</span>
+    <span class="n">ownership_text</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="s2">&quot;gun_own&quot;</span><span class="p">,</span> <span class="n">ownership</span><span class="p">)</span> <span class="ow">or</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">ownership</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ownership_text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="s2">&quot;owning a gun&quot;</span>
+    <span class="k">if</span> <span class="n">ownership_text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="s2">&quot;not owning a gun&quot;</span>
     <span class="n">custom</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">ownership</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">custom</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Gun ownership: </span><span class="si">{</span><span class="n">custom</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">custom</span>
     <span class="k">return</span> <span class="kc">None</span>
 
 
@@ -1078,12 +1137,11 @@
         <span class="n">value</span> <span class="o">=</span> <span class="n">_first_raw</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">known_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
-            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lower_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">known_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lower_key</span><span class="p">)</span>
+        <span class="n">phrase</span> <span class="o">=</span> <span class="n">_render_gun_phrase</span><span class="p">(</span><span class="n">lower_key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">phrase</span><span class="p">:</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">phrase</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="n">known_keys</span>
 
 
@@ -1102,13 +1160,61 @@
         <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="k">continue</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+        <span class="n">phrase</span> <span class="o">=</span> <span class="n">_render_gun_phrase</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">lower</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">phrase</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
-            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">phrase</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entries</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_gun_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a natural-language phrase for a gun-policy field.&quot;&quot;&quot;</span>
+
+    <span class="n">yes_no</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">yes</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">yes_no</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">}:</span>
+        <span class="n">phrase</span> <span class="o">=</span> <span class="n">_render_gun_boolean_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">yes_no</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">phrase</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">phrase</span>
+    <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">formatted</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">formatted</span> <span class="o">=</span> <span class="n">formatted</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">metric_phrase</span> <span class="o">=</span> <span class="n">_render_gun_metric_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">formatted</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metric_phrase</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">metric_phrase</span>
+    <span class="n">generic_phrase</span> <span class="o">=</span> <span class="n">_render_gun_generic_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">formatted</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">generic_phrase</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">generic_phrase</span>
+    <span class="k">if</span> <span class="n">yes_no</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">yes_no</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">formatted</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_gun_boolean_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">affirmative</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">phrases</span> <span class="o">=</span> <span class="n">GUN_BOOLEAN_PHRASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">phrases</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">yes_phrase</span><span class="p">,</span> <span class="n">no_phrase</span> <span class="o">=</span> <span class="n">phrases</span>
+    <span class="k">return</span> <span class="n">yes_phrase</span> <span class="k">if</span> <span class="n">affirmative</span> <span class="k">else</span> <span class="n">no_phrase</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_gun_metric_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">formatted</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="n">GUN_METRIC_LABELS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">template</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">formatted</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_gun_generic_phrase</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">formatted</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="n">GUN_GENERIC_LABELS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">template</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">formatted</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gun_&quot;</span><span class="p">):</span>
+        <span class="n">cleaned_label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cleaned_label</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gun &quot;</span><span class="p">):</span>
+            <span class="n">cleaned_label</span> <span class="o">=</span> <span class="n">cleaned_label</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cleaned_label</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">formatted</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_wage_sentences</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Sequence
 
 try:  # pragma: no cover - optional dependency
     from datasets import DatasetDict, load_dataset, load_from_disk  # type: ignore
@@ -72,23 +72,46 @@ def filter_dataset_for_issue(ds: DatasetDict, issue: str) -> DatasetDict:
     return DatasetDict(filtered)
 
 
+def _normalise_study_tokens(studies: Iterable[str]) -> set[str]:
+    """Return a normalised set of study tokens."""
+
+    return {str(value).strip().lower() for value in studies if str(value).strip()}
+
+
+def filter_split_for_participant_studies(split_ds, studies: Sequence[str]):
+    """Filter a HF dataset split to the requested ``participant_study`` tokens."""
+
+    normalized = _normalise_study_tokens(studies)
+    if not normalized:
+        return split_ds
+    if "participant_study" not in split_ds.column_names:
+        return split_ds
+
+    def _match_study(row: Dict[str, Any]) -> bool:
+        """Return ``True`` when the row's ``participant_study`` matches the filter."""
+
+        value = row.get("participant_study")
+        return str(value).strip().lower() in normalized
+
+    return split_ds.filter(_match_study)
+
+
 def filter_dataset_for_participant_studies(ds: DatasetDict, studies: Iterable[str]) -> DatasetDict:
     """Return a dataset filtered to rows whose ``participant_study`` matches ``studies``."""
 
-    normalized = {str(value).strip().lower() for value in studies if str(value).strip()}
+    normalized = _normalise_study_tokens(studies)
     if not normalized:
         return ds
-
-    def _match_study(row: Dict[str, Any]) -> bool:
-        value = row.get("participant_study")
-        return str(value).strip().lower() in normalized
 
     filtered: Dict[str, Any] = {}
     for split_name, split_ds in ds.items():
         if "participant_study" not in split_ds.column_names:
             filtered[split_name] = split_ds
         else:
-            filtered[split_name] = split_ds.filter(_match_study)
+            filtered[split_name] = split_ds.filter(
+                lambda row, norm=normalized: str(row.get("participant_study", "")).strip().lower()
+                in norm
+            )
     return DatasetDict(filtered)
 
 
@@ -101,6 +124,7 @@ __all__ = [
     "TRAIN_SPLIT",
     "filter_dataset_for_issue",
     "filter_dataset_for_participant_studies",
+    "filter_split_for_participant_studies",
     "issues_in_dataset",
     "load_dataset_source",
 ]

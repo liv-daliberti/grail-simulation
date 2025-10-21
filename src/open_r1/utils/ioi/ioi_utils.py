@@ -1,3 +1,5 @@
+"""Utility functions for assembling IOI judge inputs and metadata."""
+
 from collections import defaultdict
 from functools import lru_cache
 

@@ -189,6 +189,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated extra columns to append to the viewer prompt text.",
     )
     parser.add_argument(
+        "--bootstrap-replicates",
+        "--bootstrap_replicates",
+        type=int,
+        default=500,
+        dest="bootstrap_replicates",
+        help="Number of bootstrap replicates used to compute uncertainty intervals (0 disables bootstrap).",
+    )
+    parser.add_argument(
+        "--bootstrap-seed",
+        "--bootstrap_seed",
+        type=int,
+        default=2024,
+        dest="bootstrap_seed",
+        help="Random seed for bootstrap resampling.",
+    )
+    parser.add_argument(
         "--dataset",
         default="data/cleaned_grail",
         help="Local dataset path (load_from_disk) or Hugging Face dataset id.",
@@ -201,6 +217,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated list of issues to evaluate (defaults to all).",
     )
     parser.add_argument(
+        "--train-issues",
+        "--train_issues",
+        default="",
+        dest="train_issues",
+        help="Optional comma-separated list of issues used to TRAIN the KNN index. Defaults to --issues when unset.",
+    )
+    parser.add_argument(
+        "--eval-issues",
+        "--eval_issues",
+        default="",
+        dest="eval_issues",
+        help="Optional comma-separated list of issues used for EVALUATION. Defaults to --issues when unset.",
+    )
+    parser.add_argument(
         "--participant-studies",
         "--participant_studies",
         default="",
@@ -208,6 +238,26 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Comma-separated list of participant study keys (e.g. study1,study2). "
             "When supplied, next-video evaluation filters to those studies."
+        ),
+    )
+    parser.add_argument(
+        "--train-participant-studies",
+        "--train_participant_studies",
+        default="",
+        dest="train_participant_studies",
+        help=(
+            "Optional comma-separated list of participant study keys to use when FITTING the index. "
+            "Defaults to --participant-studies when unset."
+        ),
+    )
+    parser.add_argument(
+        "--eval-participant-studies",
+        "--eval_participant_studies",
+        default="",
+        dest="eval_participant_studies",
+        help=(
+            "Optional comma-separated list of participant study keys to use for EVALUATION. "
+            "Defaults to --participant-studies when unset."
         ),
     )
     parser.add_argument(

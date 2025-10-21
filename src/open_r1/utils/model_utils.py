@@ -1,3 +1,5 @@
+"""Model and tokenizer factory helpers for Open-R1 training scripts."""
+
 from typing import Union
 
 import torch
@@ -9,7 +11,12 @@ from ..configs import GRPOConfig, SFTConfig
 
 
 def get_tokenizer(model_args: ModelConfig, training_args: Union[SFTConfig, GRPOConfig]) -> PreTrainedTokenizer:
-    """Get the tokenizer for the model."""
+    """Instantiate the tokenizer requested by the training configuration.
+
+    :param model_args: Configuration describing the base pretrained checkpoint.
+    :param training_args: Training hyper-parameters including optional chat template.
+    :returns: Loaded and optionally chat-template enriched tokenizer instance.
+    """
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         revision=model_args.model_revision,
@@ -23,7 +30,12 @@ def get_tokenizer(model_args: ModelConfig, training_args: Union[SFTConfig, GRPOC
 
 
 def get_model(model_args: ModelConfig, training_args: Union[SFTConfig, GRPOConfig]) -> AutoModelForCausalLM:
-    """Get the model"""
+    """Instantiate the causal language model used for supervised or GRPO training.
+
+    :param model_args: Model configuration taken from the CLI or config file.
+    :param training_args: Training hyper-parameters that decide caching/quantisation.
+    :returns: Initialised ``AutoModelForCausalLM`` ready for fine-tuning.
+    """
     torch_dtype = (
         model_args.torch_dtype if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
     )

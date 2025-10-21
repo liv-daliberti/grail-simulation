@@ -280,7 +280,9 @@ def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
     if survey_frame.empty:
         return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
-    survey_frame["_worker_id"] = _normalize_series(survey_frame.get("worker_id", pd.Series(dtype=str)))
+    survey_frame["_worker_id"] = _normalize_series(
+        survey_frame.get("worker_id", pd.Series(dtype=str))
+    )
     mask = _nonempty_mask(survey_frame["_worker_id"])
     mask &= (
         survey_frame.get("q87", pd.Series(dtype=str))
@@ -290,7 +292,11 @@ def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
         .eq("Quick and easy")
     )
     mask &= (
-        survey_frame.get("q89", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("wikiHow")
+        survey_frame.get("q89", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .eq("wikiHow")
     )
     mask &= _numeric(survey_frame.get("survey_time", pd.Series(dtype=float))) >= 120
     mw_index = _numeric(survey_frame.get(spec.before_column, pd.Series(dtype=float)))
@@ -484,12 +490,12 @@ def compute_treatment_regression(  # pylint: disable=too-many-locals
         rows.append(row_values)
 
     design_matrix = np.asarray(rows, dtype=float)
-    y = working["change"].to_numpy(dtype=float)
+    change_values = working["change"].to_numpy(dtype=float)
 
-    beta, residuals, rank, _ = np.linalg.lstsq(design_matrix, y, rcond=None)
+    beta, residuals, rank, _ = np.linalg.lstsq(design_matrix, change_values, rcond=None)
     fitted = design_matrix @ beta
-    rss = np.sum((y - fitted) ** 2) if residuals.size == 0 else residuals[0]
-    dof = max(len(y) - rank, 1)
+    rss = np.sum((change_values - fitted) ** 2) if residuals.size == 0 else residuals[0]
+    dof = max(len(change_values) - rank, 1)
     sigma2 = rss / dof
     xtx_inv = np.linalg.inv(design_matrix.T @ design_matrix)
     cov_beta = sigma2 * xtx_inv

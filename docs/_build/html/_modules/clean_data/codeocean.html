@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -260,10 +266,14 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_capsule_data_root</span> <span class="k">as</span> <span class="n">_resolve_capsule_data_root</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.sessions</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_codeocean_rows</span><span class="p">,</span> <span class="n">split_dataframe</span>
@@ -288,18 +298,18 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CodeOcean capsule data not found under </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Building dataset from CodeOcean capsule at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">build_codeocean_rows</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="n">codeocean_frame</span> <span class="o">=</span> <span class="n">build_codeocean_rows</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">codeocean_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No usable rows found in CodeOcean sessions&quot;</span><span class="p">)</span>
 
-    <span class="n">split_frames</span> <span class="o">=</span> <span class="n">split_dataframe</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">validation_ratio</span><span class="o">=</span><span class="n">validation_ratio</span><span class="p">)</span>
-    <span class="n">ds</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">split_frames</span> <span class="o">=</span> <span class="n">split_dataframe</span><span class="p">(</span><span class="n">codeocean_frame</span><span class="p">,</span> <span class="n">validation_ratio</span><span class="o">=</span><span class="n">validation_ratio</span><span class="p">)</span>
+    <span class="n">dataset_splits</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">split_frames</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span>
     <span class="p">}</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CodeOcean rows: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">split_frames</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
-    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">dataset_splits</span><span class="p">)</span></div>
 
 
 

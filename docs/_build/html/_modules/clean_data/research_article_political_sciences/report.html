@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -251,10 +257,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
+    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.clean_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">dedupe_by_participant_issue</span>
 
@@ -274,6 +284,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_policy_summary_rows</span><span class="p">(</span><span class="n">stratified</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract preregistered policy contrasts for display in the Markdown table.</span>
+
+<span class="sd">    :param stratified: Combined stratified-effects dataframe produced by the replication analysis.</span>
+<span class="sd">    :returns: List of dictionaries with study labels, estimates, and metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="n">stratified</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -310,7 +326,7 @@
 
 <div class="viewcode-block" id="generate_research_article_report">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.generate_research_article_report">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">generate_research_article_report</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_research_article_report</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -357,14 +373,26 @@
         <span class="n">assignment_frame</span> <span class="o">=</span> <span class="n">load_assignment_frame</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="n">summaries</span> <span class="o">=</span> <span class="n">summarise_assignments</span><span class="p">(</span><span class="n">assignment_frame</span><span class="p">)</span>
         <span class="n">assignment_panels</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">summaries</span><span class="p">))</span>
-        <span class="n">control_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">treatment_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">control_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">treatment_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">control_entry</span> <span class="ow">or</span> <span class="n">treatment_entry</span><span class="p">:</span>
             <span class="n">table_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                    <span class="s2">&quot;control_mean_change&quot;</span><span class="p">:</span> <span class="n">control_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">control_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;treatment_mean_change&quot;</span><span class="p">:</span> <span class="n">treatment_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">treatment_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;control_mean_change&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">control_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">control_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;treatment_mean_change&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">treatment_entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">treatment_entry</span>
+                        <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+                    <span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">assignment_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>

@@ -185,17 +185,17 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
         for col in PROMPT_FEATURE_GROUPS.get(key, [])
     ]
 
-    def _demo_missing_series(df: pd.DataFrame) -> pd.Series:
+    def _demo_missing_series(data_frame: pd.DataFrame) -> pd.Series:
         """Return a boolean mask indicating rows missing all demographic fields.
 
-        :param df: Dataframe to evaluate.
-        :returns: Boolean series aligned with ``df``.
+        :param data_frame: Dataframe to evaluate.
+        :returns: Boolean series aligned with ``data_frame``.
         """
 
-        existing = [col for col in demo_columns if col in df.columns]
+        existing = [col for col in demo_columns if col in data_frame.columns]
         if not existing:
-            return pd.Series([False] * len(df), index=df.index)
-        return df[existing].apply(
+            return pd.Series([False] * len(data_frame), index=data_frame.index)
+        return data_frame[existing].apply(
             lambda row: all(is_nanlike(row.get(col)) for col in existing),
             axis=1,
         )
@@ -203,15 +203,15 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     train_missing = _demo_missing_series(train_df)
     val_missing = _demo_missing_series(val_df)
 
-    def _summary(df: pd.DataFrame, mask: pd.Series) -> Dict[str, float]:
+    def _summary(data_frame: pd.DataFrame, mask: pd.Series) -> Dict[str, float]:
         """Compute missing counts and share for a split.
 
-        :param df: Dataframe representing the split.
+        :param data_frame: Dataframe representing the split.
         :param mask: Boolean series with ``True`` indicating missing rows.
         :returns: Dictionary describing missing totals and share.
         """
 
-        total = int(len(df))
+        total = int(len(data_frame))
         missing = int(mask.sum())
         share = float(missing) / float(total) if total else 0.0
         return {"missing": missing, "total": total, "share": share}
@@ -233,25 +233,25 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     }
 
     fig_path = figures_dir / "demographic_missing_counts.png"
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, axes_obj = plt.subplots(figsize=(6, 4))
     splits = ["train", "validation", "overall"]
     palette = ["#2ca02c", "#d62728", "#1f77b4"]
     values = [summaries[split]["share"] * 100 for split in splits]
-    bars = ax.bar(splits, values, color=palette[: len(splits)], alpha=0.85)
-    ax.set_title("Rows missing all demographic fields")
-    ax.set_ylabel("Percent of rows missing")
+    bars = axes_obj.bar(splits, values, color=palette[: len(splits)], alpha=0.85)
+    axes_obj.set_title("Rows missing all demographic fields")
+    axes_obj.set_ylabel("Percent of rows missing")
     upper_bound = max(values) if values else 0.0
     if upper_bound == 0.0:
-        ax.set_ylim(0, 5)
+        axes_obj.set_ylim(0, 5)
         offset = 0.5
     else:
         offset = max(upper_bound * 0.03, 0.5)
-        ax.set_ylim(0, upper_bound + offset * 4)
+        axes_obj.set_ylim(0, upper_bound + offset * 4)
     for idx, bar_patch in enumerate(bars):
         split = splits[idx]
         data = summaries[split]
         label = f"{values[idx]:.1f}% ({int(data['missing'])}/{int(data['total'])})"
-        ax.text(
+        axes_obj.text(
             bar_patch.get_x() + bar_patch.get_width() / 2,
             bar_patch.get_height() + offset,
             label,
@@ -270,29 +270,29 @@ def unique_content_counts(
 ) -> Dict[str, Dict[str, int]]:
     """Return counts of unique content per split."""
 
-    def _count_unique(df: pd.DataFrame, column: str) -> int:
+    def _count_unique(data_frame: pd.DataFrame, column: str) -> int:
         """Return the number of unique non-empty values for ``column``.
 
-        :param df: Dataframe containing the column.
+        :param data_frame: Dataframe containing the column.
         :param column: Column name to inspect.
         :returns: Count of distinct non-empty values.
         """
 
-        series = df.get(column, pd.Series(dtype=object))
+        series = data_frame.get(column, pd.Series(dtype=object))
         if series is None or series.empty:
             return 0
         cleaned = series.dropna().astype(str).str.strip().replace("", np.nan).dropna()
         return int(cleaned.nunique())
 
-    def _canonical_slates(df: pd.DataFrame) -> pd.Series:
+    def _canonical_slates(data_frame: pd.DataFrame) -> pd.Series:
         """Return a series of canonicalised slate tuples for each row.
 
-        :param df: Dataframe potentially containing slate columns.
+        :param data_frame: Dataframe potentially containing slate columns.
         :returns: Series of canonical slates; empty series when unavailable.
         """
 
         for column_name in ("slate_items_json", "slate_items_with_meta", "slate_items"):
-            column = df.get(column_name)
+            column = data_frame.get(column_name)
             if column is None:
                 continue
             non_null = column[column.notna()]
@@ -315,22 +315,22 @@ def unique_content_counts(
             candidates.update(entry)
         return len(candidates)
 
-    def _counts_for_split(df: pd.DataFrame) -> Dict[str, int]:
+    def _counts_for_split(split_frame: pd.DataFrame) -> Dict[str, int]:
         """Compute unique content counts for a single split dataframe.
 
-        :param df: Dataframe representing a dataset split.
+        :param split_frame: Dataframe representing a dataset split.
         :returns: Dictionary of unique content counts for various identifiers.
         """
 
-        slates = _canonical_slates(df)
+        slates = _canonical_slates(split_frame)
         slate_count = int(slates.nunique()) if not slates.empty else 0
         return {
-            "current_video_ids": _count_unique(df, "current_video_id"),
-            "gold_video_ids": _count_unique(df, "gold_id"),
+            "current_video_ids": _count_unique(split_frame, "current_video_id"),
+            "gold_video_ids": _count_unique(split_frame, "gold_id"),
             "candidate_video_ids": _candidate_video_count(slates) if not slates.empty else 0,
             "slate_combinations": slate_count,
-            "prompt_texts": _count_unique(df, "prompt"),
-            "state_texts": _count_unique(df, "state_text"),
+            "prompt_texts": _count_unique(split_frame, "prompt"),
+            "state_texts": _count_unique(split_frame, "state_text"),
         }
 
     combined_df = pd.concat([train_df, val_df], ignore_index=True)

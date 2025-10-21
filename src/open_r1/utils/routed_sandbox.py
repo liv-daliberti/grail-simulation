@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Compatibility layer that routes batch jobs to an E2B sandbox router."""
+
 from typing import List, Optional
 
 import requests

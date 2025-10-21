@@ -9,6 +9,16 @@ import math
 
 
 def _is_nan(value: object) -> bool:
+    """Return ``True`` when a value should be treated as missing/NaN.
+
+    The helper mirrors the original R scripts by coercing to float,
+    treating conversion failures as ``NaN`` so downstream formatting can
+    emit ``\"n/a\"`` markers in the Markdown tables.
+
+    :param value: Candidate numeric value from the summaries.
+    :returns: ``True`` when the input is not a finite number.
+    """
+
     try:
         return math.isnan(float(value))
     except (TypeError, ValueError):
@@ -16,18 +26,41 @@ def _is_nan(value: object) -> bool:
 
 
 def _format_float(value: float, precision: int = 3) -> str:
+    """Format a scalar with fixed precision, returning ``\"n/a\"`` for NaNs.
+
+    :param value: Numeric value to display.
+    :param precision: Number of decimal places to include.
+    :returns: Formatted scalar string or ``\"n/a\"`` when missing.
+    """
+
     if _is_nan(value):
         return "n/a"
     return f"{value:.{precision}f}"
 
 
 def _format_percent(value: float, precision: int = 1) -> str:
+    """Format a proportion as a percentage string with fallback for NaNs.
+
+    :param value: Proportion in ``[0, 1]`` to convert.
+    :param precision: Number of decimal places to display.
+    :returns: Percentage string or ``\"n/a\"`` when the input is invalid.
+    """
+
     if _is_nan(value):
         return "n/a"
     return f"{value * 100:.{precision}f}%"
 
 
 def _format_interval(center: float, lower: float, upper: float, precision: int = 3) -> str:
+    """Render a signed estimate with its confidence interval bounds.
+
+    :param center: Point estimate.
+    :param lower: Lower confidence bound.
+    :param upper: Upper confidence bound.
+    :param precision: Decimal places applied to each value.
+    :returns: Formatted string ``\"+x.xxx [+l.lll, +u.uuu]\"`` or ``\"n/a\"``.
+    """
+
     if any(_is_nan(item) for item in (center, lower, upper)):
         return "n/a"
     return f"{center:+.{precision}f} [{lower:+.{precision}f}, {upper:+.{precision}f}]"

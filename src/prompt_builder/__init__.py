@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import importlib
 
-constants = importlib.import_module(".constants", __name__)
-value_maps = importlib.import_module(".value_maps", __name__)
 from .formatters import clean_text
 from .parsers import as_list_json, is_nanlike, secs, truthy
 from .profiles import render_profile, synthesize_viewer_sentence
 from .prompt import build_user_prompt
 from .samples import PromptSample, generate_prompt_samples, write_samples_markdown
+
+constants = importlib.import_module(".constants", __name__)
+value_maps = importlib.import_module(".value_maps", __name__)
 
 __all__ = [
     "as_list_json",

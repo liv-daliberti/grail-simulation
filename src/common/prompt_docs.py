@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
@@ -49,19 +49,21 @@ EXTRA_FIELD_LABELS: Dict[str, str] = {
 EXTRA_FIELD_LABELS.update(MIN_WAGE_FIELD_LABELS)
 EXTRA_FIELD_LABELS.update(GUN_FIELD_LABELS)
 
-_DEFAULT_TITLE_RESOLVER: Optional[TitleResolver] = None
+_default_title_resolver_cache: Optional[TitleResolver] = None
 
 
 def default_title_resolver() -> TitleResolver:
     """Return a lazily constructed title resolver for the cleaned GRAIL dataset."""
 
-    global _DEFAULT_TITLE_RESOLVER  # pylint: disable=global-statement
-    if _DEFAULT_TITLE_RESOLVER is None:
-        _DEFAULT_TITLE_RESOLVER = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
-    return _DEFAULT_TITLE_RESOLVER
+    global _default_title_resolver_cache  # pylint: disable=global-statement
+    if _default_title_resolver_cache is None:
+        _default_title_resolver_cache = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
+    return _default_title_resolver_cache
 
 
 def _looks_like_legacy_prompt(prompt_text: str) -> bool:
+    """Return ``True`` when ``prompt_text`` matches the legacy prompt layout."""
+
     legacy_tokens = (
         "PROFILE:",
         "ATTRIBUTES:",
@@ -74,6 +76,8 @@ def _looks_like_legacy_prompt(prompt_text: str) -> bool:
 
 
 def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
+    """Return the first non-empty value from ``mapping`` matching ``alternates``."""
+
     if not isinstance(mapping, dict):
         return None
     lower = {key.lower(): key for key in mapping.keys()}
@@ -88,6 +92,8 @@ def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
 
 
 def _is_nanlike(value: object) -> bool:
+    """Return ``True`` when ``value`` should be treated as a missing token."""
+
     if value is None:
         return True
     string = str(value).strip().lower()
@@ -98,6 +104,8 @@ def _extract_now_watching(
     example: dict,
     title_lookup: TitleLookup | None,
 ) -> Optional[Tuple[str, str]]:
+    """Return ``(title, video_id)`` describing the currently watched video."""
+
     video_id = _pick_ci(example, "video_id", "videoId")
     if video_id and not _is_nanlike(video_id):
         title = _pick_ci(
@@ -151,16 +159,21 @@ def _extract_slate_items(
     example: dict,
     title_lookup: TitleLookup | None,
 ) -> List[Tuple[str, str]]:
+    """Return a list of ``(title, video_id)`` tuples extracted from ``example``."""
+
     def _clean_title(value: object) -> str:
+        """Return a trimmed title string when ``value`` is text-like."""
         return value.strip() if isinstance(value, str) else ""
 
     def _clean_id(value: object) -> str:
+        """Return a canonical 11-character YouTube id or an empty string."""
         if not value:
             return ""
         candidate = canon_video_id(str(value))
         return candidate if len(candidate) == 11 else ""
 
     def _append_item(title: object, video_id: object) -> None:
+        """Append a cleaned ``(title, id)`` tuple to ``items`` when present."""
         cleaned_title = _clean_title(title)
         cleaned_id = _clean_id(video_id)
         if not cleaned_id and isinstance(title, str):
@@ -174,6 +187,7 @@ def _extract_slate_items(
             items.append((cleaned_title or "(untitled)", cleaned_id))
 
     def _from_structured(array: object) -> List[Tuple[str, str]]:
+        """Convert a structured slate array into ``(title, id)`` pairs."""
         structured: List[Tuple[str, str]] = []
         if not isinstance(array, list):
             return structured
@@ -272,15 +286,17 @@ def _extract_slate_items(
     return deduped
 
 
-def _format_extra_field(example: dict, field: str) -> str:
-    value = example.get(field)
-    formatted = format_field_value(field, value)
+def _format_extra_field(example: dict, field_name: str) -> str:
+    """Return a labelled, human-readable representation of an extra field."""
+
+    value = example.get(field_name)
+    formatted = format_field_value(field_name, value)
     if not formatted:
         return ""
-    label = EXTRA_FIELD_LABELS.get(field)
+    label = EXTRA_FIELD_LABELS.get(field_name)
     if not label:
-        label = field.replace("_", " ").strip().capitalize()
-    if field == "child18":
+        label = field_name.replace("_", " ").strip().capitalize()
+    if field_name == "child18":
         lowered = formatted.lower()
         if lowered.startswith("no"):
             formatted = "no"
@@ -301,21 +317,27 @@ class PromptDocumentBuilder:
     logger: logging.Logger = field(default_factory=lambda: get_logger("prompt-docs"))
 
     def _log(self, level: str, message: str, *args: object) -> None:
+        """Emit a log message while respecting the configured prefix."""
+
         log_fn = getattr(self.logger, level)
         prefix = f"{self.log_prefix} " if self.log_prefix else ""
         log_fn(prefix + message, *args)
 
     def title_for(self, video_id: str) -> Optional[str]:
+        """Return the title associated with ``video_id`` when available."""
+
         if not video_id:
             return None
         if self.title_lookup is None:
             return None
         try:
             return self.title_lookup(video_id)
-        except Exception:  # pragma: no cover - defensive
+        except (LookupError, RuntimeError, ValueError):  # pragma: no cover - defensive
             return None
 
     def viewer_profile_sentence(self, example: dict) -> str:
+        """Return a cleaned viewer profile sentence, synthesising when needed."""
+
         sentence = clean_text(example.get("viewer_profile_sentence"))
         if not sentence:
             sentence = clean_text(example.get("viewer_profile"))
@@ -327,6 +349,8 @@ class PromptDocumentBuilder:
         return sentence or ""
 
     def prompt_from_builder(self, example: dict) -> str:
+        """Return an existing prompt or fall back to :func:`build_user_prompt`."""
+
         existing = example.get(self.prompt_column) or example.get("prompt")
         if isinstance(existing, str):
             stripped = existing.strip()
@@ -338,9 +362,13 @@ class PromptDocumentBuilder:
             return ""
 
     def extract_now_watching(self, example: dict) -> Optional[Tuple[str, str]]:
+        """Return the now-watching tuple (title, id) when present."""
+
         return _extract_now_watching(example, self.title_lookup)
 
     def extract_slate_items(self, example: dict) -> List[Tuple[str, str]]:
+        """Return the slate items as a list of ``(title, id)`` pairs."""
+
         return _extract_slate_items(example, self.title_lookup)
 
     def assemble_document(
@@ -348,9 +376,14 @@ class PromptDocumentBuilder:
         example: dict,
         extra_fields: Sequence[str] | None = None,
     ) -> str:
+        """Assemble a whitespace-joined prompt document for slate modelling."""
+
+        # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks,too-many-statements
         extra_fields = extra_fields or []
 
         def _good(text: str) -> bool:
+            """Return ``True`` when ``text`` is a meaningful, non-placeholder string."""
+
             return bool(text and text.lower() not in {"", "nan", "none", "(none)"})
 
         parts: List[str] = []
@@ -381,8 +414,8 @@ class PromptDocumentBuilder:
             if _good(surface):
                 parts.append(surface)
 
-        for field in extra_fields:
-            formatted = _format_extra_field(example, field)
+        for field_name in extra_fields:
+            formatted = _format_extra_field(example, field_name)
             if _good(formatted):
                 parts.append(formatted)
 
@@ -393,6 +426,8 @@ class PromptDocumentBuilder:
         example: dict,
         extra_fields: Sequence[str] | None,
     ) -> Optional[tuple[str, str, str]]:
+        """Return the document and label tuple extracted from ``example``."""
+
         document = self.assemble_document(example, extra_fields).strip()
         if not document:
             return None
@@ -408,6 +443,9 @@ class PromptDocumentBuilder:
         seed: int,
         extra_fields: Sequence[str] | None = None,
     ) -> Tuple[List[str], List[str], List[str]]:
+        """Return filtered training documents and labels sampled from ``train_ds``."""
+
+        # pylint: disable=too-many-locals
         n_rows = len(train_ds)  # type: ignore[arg-type]
         if n_rows == 0:
             raise RuntimeError("Train split is empty.")

@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -253,20 +259,24 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
-
-<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="n">plt</span><span class="o">.</span><span class="n">switch_backend</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_output_dir</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create parent directories for ``path`` if they do not already exist.</span>
+
+<span class="sd">    :param path: Target output file path used by the plotting helpers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="plot_mean_change">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_mean_change">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">plot_mean_change</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_mean_change</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="n">summaries</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
     <span class="n">labels</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
@@ -279,11 +289,18 @@
     <span class="n">summaries</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">summaries</span><span class="p">)</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes_obj</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">summaries</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;No summary statistics available&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+        <span class="n">axes_obj</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="mf">0.5</span><span class="p">,</span>
+            <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">&quot;No summary statistics available&quot;</span><span class="p">,</span>
+            <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+            <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">axes_obj</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
@@ -299,24 +316,24 @@
     <span class="k">for</span> <span class="n">summary</span> <span class="ow">in</span> <span class="n">summaries</span><span class="p">:</span>
         <span class="n">mean_change</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mean_change&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
         <span class="n">std_change</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std_change&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
+        <span class="n">sample_size</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
 
         <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_change</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">std_change</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">std_change</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sample_size</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sample_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">stderr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">stderr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std_change</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+            <span class="n">stderr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std_change</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sample_size</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="n">n</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-            <span class="n">annotations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sample_size</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sample_size</span><span class="p">):</span>
+            <span class="n">annotations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">sample_size</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">annotations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;n/a&quot;</span><span class="p">)</span>
 
     <span class="n">positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">summaries</span><span class="p">))</span>
     <span class="n">yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">stderr</span><span class="p">,</span> <span class="n">stderr</span><span class="p">])</span>
 
-    <span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">bars</span> <span class="o">=</span> <span class="n">axes_obj</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
         <span class="n">positions</span><span class="p">,</span>
         <span class="n">means</span><span class="p">,</span>
         <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">,</span>
@@ -324,18 +341,18 @@
         <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#4c72b0&quot;</span><span class="p">,</span>
         <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
 
     <span class="n">tick_labels</span> <span class="o">=</span> <span class="n">labels</span> <span class="k">if</span> <span class="n">labels</span> <span class="k">else</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">summaries</span><span class="p">))]</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">tick_labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Mean Δ (post - pre)&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Mean opinion change by study&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">tick_labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Mean Δ (post - pre)&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Mean opinion change by study&quot;</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">note</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">annotations</span><span class="p">):</span>
-        <span class="n">height</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-            <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="k">for</span> <span class="n">bar_patch</span><span class="p">,</span> <span class="n">note</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">annotations</span><span class="p">):</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">bar_patch</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
+        <span class="n">axes_obj</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">bar_patch</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar_patch</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
             <span class="n">height</span><span class="p">,</span>
             <span class="n">note</span><span class="p">,</span>
             <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
@@ -361,9 +378,9 @@
 
     <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
     <span class="n">_ensure_output_dir</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes_obj</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
-    <span class="n">mesh</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">axes_obj</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
         <span class="n">hist</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
         <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span>
         <span class="n">extent</span><span class="o">=</span><span class="p">[</span>
@@ -375,22 +392,22 @@
         <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
         <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;magma&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Pre-study opinion index&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Post-study opinion index&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Participants&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Pre-study opinion index&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Post-study opinion index&quot;</span><span class="p">)</span>
+    <span class="n">axes_obj</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes_obj</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Participants&quot;</span><span class="p">)</span>
 
     <span class="c1"># Overlay bin counts to make low-volume cells interpretable.</span>
     <span class="k">if</span> <span class="n">hist</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
         <span class="n">x_centers</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
         <span class="n">y_centers</span> <span class="o">=</span> <span class="n">x_centers</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x_centers</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">y_centers</span><span class="p">):</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">hist</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">row_idx</span><span class="p">,</span> <span class="n">x_center</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x_centers</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">col_idx</span><span class="p">,</span> <span class="n">y_center</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">y_centers</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">hist</span><span class="p">[</span><span class="n">row_idx</span><span class="p">,</span> <span class="n">col_idx</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-                        <span class="n">x</span><span class="p">,</span>
-                        <span class="n">y</span><span class="p">,</span>
+                    <span class="n">axes_obj</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                        <span class="n">x_center</span><span class="p">,</span>
+                        <span class="n">y_center</span><span class="p">,</span>
                         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span>
                         <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
@@ -406,7 +423,7 @@
 
 <div class="viewcode-block" id="plot_assignment_panels">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_assignment_panels">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">plot_assignment_panels</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_assignment_panels</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals,too-many-statements</span>
     <span class="n">study_panels</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
     <span class="n">regression</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
@@ -417,8 +434,8 @@
     <span class="n">_ensure_output_dir</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
 
     <span class="n">panels</span> <span class="o">=</span> <span class="p">[(</span><span class="n">label</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">items</span><span class="p">))</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">study_panels</span><span class="p">]</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-    <span class="n">axes_flat</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes_grid</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">axes_flat</span> <span class="o">=</span> <span class="n">axes_grid</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
     <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;control&quot;</span><span class="p">:</span> <span class="s2">&quot;#7f7f7f&quot;</span><span class="p">,</span>
@@ -426,28 +443,34 @@
     <span class="p">}</span>
 
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">panels</span><span class="p">):</span>
-        <span class="n">ax</span> <span class="o">=</span> <span class="n">axes_flat</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">panel_axes</span> <span class="o">=</span> <span class="n">axes_flat</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;No data available&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+            <span class="n">panel_axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;No data available&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+            <span class="n">panel_axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+            <span class="n">panel_axes</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
             <span class="k">continue</span>
 
-        <span class="n">sorted_entries</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]))</span>
+        <span class="n">sorted_entries</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">entries</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span>
+                <span class="mi">0</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
         <span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;mean_change&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sorted_entries</span><span class="p">]</span>
-        <span class="n">ci</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci95&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sorted_entries</span><span class="p">]</span>
+        <span class="n">confidence_intervals</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci95&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sorted_entries</span><span class="p">]</span>
         <span class="n">n_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sorted_entries</span><span class="p">]</span>
         <span class="n">assign_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sorted_entries</span><span class="p">]</span>
         <span class="n">colors_used</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;#55a868&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">assign_names</span><span class="p">]</span>
 
         <span class="n">positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_entries</span><span class="p">))</span>
         <span class="n">yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_entries</span><span class="p">)))</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ci</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">confidence_intervals</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                 <span class="n">yerr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="n">yerr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
-        <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
             <span class="n">positions</span><span class="p">,</span>
             <span class="n">means</span><span class="p">,</span>
             <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">,</span>
@@ -455,28 +478,37 @@
             <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
             <span class="n">capsize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
-        <span class="n">tick_labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> (n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">assign_names</span><span class="p">,</span> <span class="n">n_values</span><span class="p">)]</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">tick_labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Mean Δ (post - pre)&quot;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+        <span class="n">tick_labels</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> (n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">assign_names</span><span class="p">,</span> <span class="n">n_values</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">tick_labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Mean Δ (post - pre)&quot;</span><span class="p">)</span>
+        <span class="n">panel_axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
     <span class="c1"># Regression panel sits in the final subplot.</span>
-    <span class="n">reg_ax</span> <span class="o">=</span> <span class="n">axes_flat</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">regression_axes</span> <span class="o">=</span> <span class="n">axes_flat</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
     <span class="n">coef</span> <span class="o">=</span> <span class="n">regression</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;coefficient&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
     <span class="n">ci_low</span> <span class="o">=</span> <span class="n">regression</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci_low&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
     <span class="n">ci_high</span> <span class="o">=</span> <span class="n">regression</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci_high&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
     <span class="n">p_value</span> <span class="o">=</span> <span class="n">regression</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;p_value&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">coef</span><span class="p">):</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;Regression unavailable&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="mf">0.5</span><span class="p">,</span>
+            <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">&quot;Regression unavailable&quot;</span><span class="p">,</span>
+            <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+            <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">lower_err</span> <span class="o">=</span> <span class="n">coef</span> <span class="o">-</span> <span class="n">ci_low</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ci_low</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
         <span class="n">upper_err</span> <span class="o">=</span> <span class="n">ci_high</span> <span class="o">-</span> <span class="n">coef</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ci_high</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
         <span class="n">yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="nb">max</span><span class="p">(</span><span class="n">lower_err</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)],</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">upper_err</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]])</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
             <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">[</span><span class="n">coef</span><span class="p">],</span>
             <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">,</span>
@@ -485,24 +517,24 @@
             <span class="n">ecolor</span><span class="o">=</span><span class="s2">&quot;#2ca02c&quot;</span><span class="p">,</span>
             <span class="n">capsize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s2">&quot;Treatment effect&quot;</span><span class="p">])</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;β (Δ opinion)&quot;</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Regression: Treatment vs. Control&quot;</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#222222&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s2">&quot;Treatment effect&quot;</span><span class="p">])</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;β (Δ opinion)&quot;</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Regression: Treatment vs. Control&quot;</span><span class="p">)</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
 
         <span class="n">text_lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;β = </span><span class="si">{</span><span class="n">coef</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ci_low</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ci_high</span><span class="p">):</span>
             <span class="n">text_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;95% CI: [</span><span class="si">{</span><span class="n">ci_low</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ci_high</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">p_value</span><span class="p">):</span>
             <span class="n">text_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;p = </span><span class="si">{</span><span class="n">p_value</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">reg_ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+        <span class="n">regression_axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
             <span class="mf">0.02</span><span class="p">,</span>
             <span class="mf">0.95</span><span class="p">,</span>
             <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text_lines</span><span class="p">),</span>
-            <span class="n">transform</span><span class="o">=</span><span class="n">reg_ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">regression_axes</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
             <span class="n">va</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span>
             <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
             <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>

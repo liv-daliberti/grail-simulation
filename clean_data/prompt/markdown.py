@@ -258,6 +258,12 @@ def _participant_section(context: ReportContext) -> List[str]:
     )
     if study_keys:
         def _study_header(name: str) -> str:
+            """Return a human-readable table header for the study identifier.
+
+            :param name: Raw study label (e.g. ``study2`` or ``gun_control``).
+            :returns: Nicely formatted heading used in the Markdown table.
+            """
+
             if name.lower().startswith("study"):
                 suffix = name[len("study") :]
                 return f"Study {suffix}" if suffix else "Study"

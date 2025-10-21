@@ -429,6 +429,8 @@ def run_eval(args: Any) -> None:
         parsed_map: Dict[str, int],
         formatted_map: Dict[str, int],
     ) -> Dict[str, Dict[str, float | int]]:
+        """Aggregate per-group counts and rates into a summary dictionary."""
+
         summary: Dict[str, Dict[str, float | int]] = {}
         for key in sorted(seen_map.keys()):
             seen = seen_map[key]

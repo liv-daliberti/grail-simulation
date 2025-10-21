@@ -12,6 +12,11 @@ from .report import generate_research_article_report
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse CLI arguments for the replication report entry point.
+
+    :returns: Namespace containing dataset path, output directory, and bin count.
+    """
+
     parser = argparse.ArgumentParser(
         description=(
             "Generate heatmaps and summaries replicating the PNAS filter-bubble "

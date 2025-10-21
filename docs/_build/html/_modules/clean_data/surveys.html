@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -304,21 +310,21 @@
 
 <div class="viewcode-block" id="build_survey_index">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.surveys.build_survey_index">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_survey_index</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_survey_index</span><span class="p">(</span><span class="n">survey_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a mapping from ``urlid`` to associated survey rows.</span>
 
-<span class="sd">    :param df: Raw survey dataframe loaded from the capsule.</span>
+<span class="sd">    :param survey_frame: Raw survey dataframe loaded from the capsule.</span>
 <span class="sd">    :returns: Mapping of normalized ``urlid`` to a list of matching rows.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">survey_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">index</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">survey_frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;urlid&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Survey frame missing urlid column; columns=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">index</span>
-    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">survey_frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
         <span class="n">urlid</span> <span class="o">=</span> <span class="n">_normalize_urlid</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">urlid</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -467,17 +473,17 @@
         <span class="n">lower</span> <span class="o">=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">return</span> <span class="o">~</span><span class="p">(</span><span class="n">normalized</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">|</span> <span class="n">lower</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_MISSING_STRINGS</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_dedupe_earliest</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">id_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dedupe_earliest</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">id_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Keep the earliest row per identifier column.</span>
 
-<span class="sd">        :param df: Dataframe potentially containing duplicate identifiers.</span>
+<span class="sd">        :param data_frame: Dataframe potentially containing duplicate identifiers.</span>
 <span class="sd">        :param id_column: Column name used to deduplicate rows.</span>
 <span class="sd">        :returns: Dataframe with only the earliest occurrence of each identifier.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span> <span class="ow">or</span> <span class="n">id_column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">df</span>
-        <span class="n">working</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span> <span class="ow">or</span> <span class="n">id_column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data_frame</span>
+        <span class="n">working</span> <span class="o">=</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">sort_columns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="s2">&quot;start_time2&quot;</span> <span class="ow">in</span> <span class="n">working</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="n">working</span><span class="p">[</span><span class="s2">&quot;_sort_start_time2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>

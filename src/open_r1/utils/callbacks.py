@@ -1,4 +1,12 @@
 # open_r1/utils/callbacks.py
+"""Trainer callbacks that integrate Open-R1 runs with auxiliary services.
+
+The callbacks defined here extend Hugging Face ``Trainer`` runs with behaviour
+used by the Open-R1 experiments: automatically pushing checkpoints to the Hub,
+collecting high-performing prompts in a replay buffer, and mirroring batches
+into that buffer in real time.  The functions are written to be picked up by
+Sphinx autodoc so they show up in the generated API reference.
+"""
 from __future__ import annotations
 
 import logging

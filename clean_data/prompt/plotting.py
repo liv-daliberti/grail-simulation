@@ -166,14 +166,16 @@ def plot_categorical_hist(  # pylint: disable=too-many-locals
     fig_width = max(6, len(categories) * 0.8)
     fig, axes = plt.subplots(1, 2, figsize=(fig_width, 4), sharey=False)
     display_labels = [_prettify_category(cat) for cat in categories]
-    for ax, counts, split in zip(axes, [train_counts, val_counts], ["train", "validation"]):
+    for axes_obj, counts, split in zip(axes, [train_counts, val_counts], ["train", "validation"]):
         heights = [counts.get(cat, 0) for cat in categories]
         positions = np.arange(len(categories))
-        ax.bar(positions, heights, color="#1f77b4" if split == "train" else "#ff7f0e", alpha=0.85)
-        ax.set_title(split.capitalize())
-        ax.set_ylabel("Count")
-        ax.set_xticks(positions)
-        ax.set_xticklabels(display_labels, rotation=35, ha="right")
+        axes_obj.bar(
+            positions, heights, color="#1f77b4" if split == "train" else "#ff7f0e", alpha=0.85
+        )
+        axes_obj.set_title(split.capitalize())
+        axes_obj.set_ylabel("Count")
+        axes_obj.set_xticks(positions)
+        axes_obj.set_xticklabels(display_labels, rotation=35, ha="right")
 
     fig.suptitle(title, fontsize=12, y=0.98)
     fig.tight_layout()

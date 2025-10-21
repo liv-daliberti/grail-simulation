@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -69,6 +68,19 @@ class OpinionTrainConfig:
     seed: int = 42
     max_features: Optional[int] = None
     booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
+
+
+@dataclass(frozen=True)
+class OpinionEvalRequest:
+    """Inputs required to execute the opinion regression workflow."""
+
+    dataset: str | None
+    cache_dir: str | None
+    out_dir: Path
+    feature_space: str
+    extra_fields: Sequence[str]
+    train_config: OpinionTrainConfig
+    overwrite: bool = True
 
 
 DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
@@ -257,135 +269,150 @@ def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
     return resolved
 
 
+def _evaluate_spec(
+    *,
+    dataset,
+    spec: OpinionSpec,
+    base_dir: Path,
+    dataset_source: str,
+    request: OpinionEvalRequest,
+) -> Optional[Dict[str, Any]]:
+    """Evaluate a single study specification and persist outputs."""
+
+    train_examples = collect_examples(
+        dataset[TRAIN_SPLIT],
+        spec=spec,
+        extra_fields=request.extra_fields,
+        max_participants=request.train_config.max_participants,
+        seed=request.train_config.seed,
+    )
+    eval_examples = collect_examples(
+        dataset[EVAL_SPLIT],
+        spec=spec,
+        extra_fields=request.extra_fields,
+        max_participants=request.train_config.max_participants,
+        seed=request.train_config.seed,
+    )
+    if not train_examples or not eval_examples:
+        LOGGER.warning(
+            "[OPINION] Skipping study=%s (train=%d eval=%d).",
+            spec.key,
+            len(train_examples),
+            len(eval_examples),
+        )
+        return None
+
+    vectorizer = _fit_vectorizer(
+        [example.document for example in train_examples],
+        max_features=request.train_config.max_features,
+    )
+    train_features = vectorizer.transform([ex.document for ex in train_examples])
+    eval_features = vectorizer.transform([ex.document for ex in eval_examples])
+
+    train_targets = np.array([ex.after for ex in train_examples], dtype=float)
+    regressor = _train_regressor(
+        features=train_features,
+        targets=train_targets,
+        config=request.train_config,
+    )
+
+    eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
+    predictions = regressor.predict(eval_features)
+    metrics = _model_metrics(predictions=predictions, after=eval_targets)
+    baseline = _baseline_metrics(
+        before=np.array([ex.before for ex in eval_examples], dtype=float),
+        after=eval_targets,
+    )
+
+    study_dir = base_dir / spec.key
+    if study_dir.exists() and not request.overwrite:
+        raise FileExistsError(
+            f"{study_dir} already exists. Use overwrite=True to replace outputs."
+        )
+    study_dir.mkdir(parents=True, exist_ok=True)
+
+    payload: Dict[str, Any] = {
+        "model": "xgb_opinion",
+        "feature_space": request.feature_space,
+        "dataset": dataset_source,
+        "study": spec.key,
+        "issue": spec.issue,
+        "label": spec.label,
+        "split": "validation",
+        "n_participants": len(eval_examples),
+        "train_participants": len(train_examples),
+        "metrics": metrics,
+        "baseline": baseline,
+        "config": {
+            "max_participants": request.train_config.max_participants,
+            "max_features": request.train_config.max_features,
+            "learning_rate": request.train_config.booster.learning_rate,
+            "max_depth": request.train_config.booster.max_depth,
+            "n_estimators": request.train_config.booster.n_estimators,
+            "subsample": request.train_config.booster.subsample,
+            "colsample_bytree": request.train_config.booster.colsample_bytree,
+            "reg_lambda": request.train_config.booster.reg_lambda,
+            "reg_alpha": request.train_config.booster.reg_alpha,
+            "tree_method": request.train_config.booster.tree_method,
+        },
+    }
+
+    metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
+    with open(metrics_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+    predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
+    with open(predictions_path, "w", encoding="utf-8") as handle:
+        for example, prediction in zip(eval_examples, predictions, strict=False):
+            handle.write(
+                json.dumps(
+                    {
+                        "participant_id": example.participant_id,
+                        "study": spec.key,
+                        "issue": spec.issue,
+                        "before": example.before,
+                        "after": example.after,
+                        "prediction": float(prediction),
+                        "error": float(abs(prediction - example.after)),
+                    }
+                )
+                + "\n"
+            )
+
+    return payload
+
+
 def run_opinion_eval(
     *,
-    dataset: str | None,
-    cache_dir: str | None,
-    out_dir: Path,
-    feature_space: str,
-    extra_fields: Sequence[str],
-    train_config: OpinionTrainConfig,
+    request: OpinionEvalRequest,
     studies: Sequence[str] | None = None,
-    overwrite: bool = True,
 ) -> Dict[str, Dict[str, Any]]:
     """
-    Execute the opinion regression workflow and persist artefacts to ``out_dir``.
+    Execute the opinion regression workflow and persist artefacts under ``request.out_dir``.
 
     :returns: Mapping of study key to metric summary.
     """
 
     _vectorizer_available()
 
-    dataset_source = dataset or DEFAULT_DATASET_SOURCE
-    ds = load_dataset_source(dataset_source, cache_dir or "")
+    dataset_source = request.dataset or DEFAULT_DATASET_SOURCE
+    ds = load_dataset_source(dataset_source, request.cache_dir or "")
     selected_specs = _resolve_studies(studies or ())
     results: Dict[str, Dict[str, Any]] = {}
 
-    base_dir = out_dir / feature_space
+    base_dir = request.out_dir / request.feature_space
     base_dir.mkdir(parents=True, exist_ok=True)
 
     for spec in selected_specs:
-        train_examples = collect_examples(
-            ds[TRAIN_SPLIT],
+        payload = _evaluate_spec(
+            dataset=ds,
             spec=spec,
-            extra_fields=extra_fields,
-            max_participants=train_config.max_participants,
-            seed=train_config.seed,
+            base_dir=base_dir,
+            dataset_source=dataset_source,
+            request=request,
         )
-        eval_examples = collect_examples(
-            ds[EVAL_SPLIT],
-            spec=spec,
-            extra_fields=extra_fields,
-            max_participants=train_config.max_participants,
-            seed=train_config.seed,
-        )
-        if not train_examples or not eval_examples:
-            LOGGER.warning(
-                "[OPINION] Skipping study=%s (train=%d eval=%d).",
-                spec.key,
-                len(train_examples),
-                len(eval_examples),
-            )
-            continue
-
-        vectorizer = _fit_vectorizer(
-            [example.document for example in train_examples],
-            max_features=train_config.max_features,
-        )
-        train_features = vectorizer.transform([ex.document for ex in train_examples])
-        eval_features = vectorizer.transform([ex.document for ex in eval_examples])
-
-        train_targets = np.array([ex.after for ex in train_examples], dtype=float)
-        regressor = _train_regressor(
-            features=train_features,
-            targets=train_targets,
-            config=train_config,
-        )
-
-        eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
-        predictions = regressor.predict(eval_features)
-        metrics = _model_metrics(predictions=predictions, after=eval_targets)
-        baseline = _baseline_metrics(
-            before=np.array([ex.before for ex in eval_examples], dtype=float),
-            after=eval_targets,
-        )
-
-        study_dir = base_dir / spec.key
-        if study_dir.exists() and not overwrite:
-            raise FileExistsError(
-                f"{study_dir} already exists. Use overwrite=True to replace outputs."
-            )
-        study_dir.mkdir(parents=True, exist_ok=True)
-
-        payload: Dict[str, Any] = {
-            "model": "xgb_opinion",
-            "feature_space": feature_space,
-            "dataset": dataset_source,
-            "study": spec.key,
-            "issue": spec.issue,
-            "label": spec.label,
-            "split": "validation",
-            "n_participants": len(eval_examples),
-            "train_participants": len(train_examples),
-            "metrics": metrics,
-            "baseline": baseline,
-            "config": {
-                "max_participants": train_config.max_participants,
-                "max_features": train_config.max_features,
-                "learning_rate": train_config.booster.learning_rate,
-                "max_depth": train_config.booster.max_depth,
-                "n_estimators": train_config.booster.n_estimators,
-                "subsample": train_config.booster.subsample,
-                "colsample_bytree": train_config.booster.colsample_bytree,
-                "reg_lambda": train_config.booster.reg_lambda,
-                "reg_alpha": train_config.booster.reg_alpha,
-                "tree_method": train_config.booster.tree_method,
-            },
-        }
-
-        metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
-        with open(metrics_path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2)
-
-        predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
-        with open(predictions_path, "w", encoding="utf-8") as handle:
-            for example, prediction in zip(eval_examples, predictions, strict=False):
-                handle.write(
-                    json.dumps(
-                        {
-                            "participant_id": example.participant_id,
-                            "study": spec.key,
-                            "issue": spec.issue,
-                            "before": example.before,
-                            "after": example.after,
-                            "prediction": float(prediction),
-                            "error": float(abs(prediction - example.after)),
-                        }
-                    )
-                    + "\n"
-                )
-
-        results[spec.key] = payload
+        if payload:
+            results[spec.key] = payload
     return results
 
 
@@ -393,6 +420,7 @@ __all__ = [
     "OpinionSpec",
     "OpinionExample",
     "OpinionTrainConfig",
+    "OpinionEvalRequest",
     "DEFAULT_SPECS",
     "collect_examples",
     "run_opinion_eval",

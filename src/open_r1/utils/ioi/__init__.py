@@ -1,3 +1,5 @@
+"""Entry points that expose IOI and Codeforces evaluation utilities."""
+
 from .cf_scoring import score_submission
 from .code_patcher import patch_code
 from .ioi_scoring import SubtaskResult, TestResult, score_subtask, score_subtasks

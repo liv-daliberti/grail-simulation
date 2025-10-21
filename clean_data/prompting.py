@@ -359,7 +359,11 @@ def _render_prior_slates(ex: dict) -> list[str]:
         )
     except (TypeError, json.JSONDecodeError):
         trajectory_obj = {}
-    display_orders = trajectory_obj.get("displayOrders") if isinstance(trajectory_obj, dict) else None
+    display_orders = (
+        trajectory_obj.get("displayOrders")
+        if isinstance(trajectory_obj, dict)
+        else None
+    )
     if not isinstance(display_orders, dict):
         return []
     out = []

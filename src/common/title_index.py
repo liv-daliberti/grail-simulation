@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import os
+from dataclasses import dataclass
 from glob import glob
 from typing import Dict, Iterable, Optional, Sequence, Tuple
 
@@ -26,6 +27,15 @@ _CANDIDATE_IDS = [
 _CANDIDATE_TITLES = ["originTitle", "title", "video_title", "name"]
 
 
+@dataclass(frozen=True)
+class TitleResolverEnvConfig:
+    """Environment variable names used when sourcing title CSVs."""
+
+    csv_var: str = _DEFAULT_ENV_CSVS
+    dirs_var: str = _DEFAULT_ENV_DIRS
+    glob_var: str = _DEFAULT_ENV_GLOB
+
+
 def _guess_cols(header: Iterable[str]) -> Tuple[Optional[str], Optional[str]]:
     """Guess the id/title column names within a CSV file."""
 
@@ -45,24 +55,21 @@ class TitleResolver:
         self,
         *,
         default_dirs: Sequence[str] | None = None,
-        env_csv_var: str = _DEFAULT_ENV_CSVS,
-        env_dirs_var: str = _DEFAULT_ENV_DIRS,
-        env_glob_var: str = _DEFAULT_ENV_GLOB,
+        env: TitleResolverEnvConfig | None = None,
         logger_name: str = "title-index",
     ) -> None:
         """Create a new :class:`TitleResolver` instance.
 
         :param default_dirs: Optional list of fallback directories searched for CSVs.
-        :param env_csv_var: Environment variable listing explicit CSV files.
-        :param env_dirs_var: Environment variable listing directories to traverse.
-        :param env_glob_var: Environment variable listing glob patterns for CSVs.
+        :param env: Environment-variable configuration used while discovering CSVs.
         :param logger_name: Logger name used for diagnostic output.
         """
 
+        config = env or TitleResolverEnvConfig()
         self._default_dirs = list(default_dirs or [])
-        self._env_csv_var = env_csv_var
-        self._env_dirs_var = env_dirs_var
-        self._env_glob_var = env_glob_var
+        self._env_csv_var = config.csv_var
+        self._env_dirs_var = config.dirs_var
+        self._env_glob_var = config.glob_var
         self._index: Dict[str, str] | None = None
         self._logger = get_logger(logger_name)
 
@@ -145,4 +152,4 @@ class TitleResolver:
         return self.resolve(video_id)
 
 
-__all__ = ["TitleResolver"]
+__all__ = ["TitleResolver", "TitleResolverEnvConfig"]

@@ -208,6 +208,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -743,6 +749,8 @@
           <li><a href="api/xgb.html#xgb.evaluate.IssueMetrics.coverage">(xgb.evaluate.IssueMetrics attribute)</a>
 </li>
         </ul></li>
+        <li><a href="api/common.html#common.title_index.TitleResolverEnvConfig.csv_var">csv_var (common.title_index.TitleResolverEnvConfig attribute)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -773,10 +781,10 @@
 </li>
         <li><a href="api/open_r1.html#open_r1.configs.DatasetMixtureConfig.datasets">datasets (open_r1.configs.DatasetMixtureConfig attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.debug_state">debug_state() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/clean_data.html#clean_data.clean_data.dedupe_by_participant_issue">dedupe_by_participant_issue() (in module clean_data.clean_data)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.utils.dedupe_participants">dedupe_participants() (in module clean_data.prompt.utils)</a>
@@ -794,6 +802,8 @@
         <li><a href="api/prompt_builder.html#prompt_builder.formatters.describe_age_fragment">describe_age_fragment() (in module prompt_builder.formatters)</a>
 </li>
         <li><a href="api/prompt_builder.html#prompt_builder.formatters.describe_gender_fragment">describe_gender_fragment() (in module prompt_builder.formatters)</a>
+</li>
+        <li><a href="api/common.html#common.title_index.TitleResolverEnvConfig.dirs_var">dirs_var (common.title_index.TitleResolverEnvConfig attribute)</a>
 </li>
         <li><a href="api/gpt4o.html#gpt4o.client.ds_call">ds_call() (in module gpt4o.client)</a>
 </li>
@@ -919,6 +929,8 @@
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/knn.html#knn.data.filter_split_for_participant_studies">filter_split_for_participant_studies() (in module knn.data)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.prompt.utils.first_present">first_present() (in module clean_data.prompt.utils)</a>
 </li>
         <li><a href="api/xgb.html#xgb.model.fit_xgboost_model">fit_xgboost_model() (in module xgb.model)</a>
@@ -1021,10 +1033,10 @@
         </ul></li>
         <li><a href="api/open_r1.html#open_r1.utils.code_providers.get_provider">get_provider() (in module open_r1.utils.code_providers)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_quantization_config">get_quantization_config() (in module open_r1.utils.model_utils)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.rewards.get_repetition_penalty_reward">get_repetition_penalty_reward() (in module open_r1.rewards)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.rewards.get_reward_funcs">get_reward_funcs() (in module open_r1.rewards)</a>
@@ -1038,6 +1050,8 @@
 </li>
         </ul></li>
         <li><a href="api/prompt_builder.html#prompt_builder.video_stats.get_video_stats">get_video_stats() (in module prompt_builder.video_stats)</a>
+</li>
+        <li><a href="api/common.html#common.title_index.TitleResolverEnvConfig.glob_var">glob_var (common.title_index.TitleResolverEnvConfig attribute)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.grail.RewardContext.gold_id">gold_id (open_r1.grail.RewardContext attribute)</a>
 </li>
@@ -2267,16 +2281,18 @@
           <li><a href="api/gpt4o.html#gpt4o.titles.TitleResolver">(class in gpt4o.titles)</a>
 </li>
         </ul></li>
+        <li><a href="api/common.html#common.title_index.TitleResolverEnvConfig">TitleResolverEnvConfig (class in common.title_index)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.to_numeric">to_numeric() (in module clean_data.research_article_political_sciences.analysis)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.sessions.SessionInfo.topic">topic (clean_data.sessions.SessionInfo attribute)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.total">total (clean_data.sessions.SessionTiming attribute)</a>
 </li>
-        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.train">train() (knn.features.Word2VecFeatureBuilder method)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/knn.html#knn.features.Word2VecFeatureBuilder.train">train() (knn.features.Word2VecFeatureBuilder method)</a>
+</li>
         <li><a href="api/open_r1.html#open_r1.grail.OnlineDiscriminator.train_batch">train_batch() (open_r1.grail.OnlineDiscriminator method)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.utils.SeriesPair.train_df">train_df (clean_data.prompt.utils.SeriesPair attribute)</a>

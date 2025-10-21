@@ -1,3 +1,5 @@
+"""Miscellaneous helpers shared by the IOI scoring utilities."""
+
 from itertools import islice
 
 

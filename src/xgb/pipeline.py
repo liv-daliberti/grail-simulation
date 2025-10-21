@@ -9,13 +9,13 @@ import os
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from .cli import build_parser as build_xgb_parser
 from .data import issues_in_dataset, load_dataset_source
 from .evaluate import run_eval
 from .model import XGBoostBoosterParams
-from .opinion import DEFAULT_SPECS, OpinionTrainConfig, run_opinion_eval
+from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
@@ -111,7 +111,46 @@ class IssueSelection:
         return self.outcome.config
 
 
+@dataclass(frozen=True)
+class SweepRunContext:
+    """CLI arguments shared across sweep invocations."""
+
+    base_cli: Sequence[str]
+    extra_cli: Sequence[str]
+    sweep_dir: Path
+    tree_method: str
+
+
+@dataclass(frozen=True)
+class FinalEvalContext:
+    """Runtime configuration for final slate evaluations."""
+
+    base_cli: Sequence[str]
+    extra_cli: Sequence[str]
+    out_dir: Path
+    tree_method: str
+    save_model_dir: Path | None
+
+
+@dataclass(frozen=True)
+class OpinionStageConfig:
+    """Inputs required to launch the opinion regression stage."""
+
+    dataset: str
+    cache_dir: str
+    base_out_dir: Path
+    extra_fields: Sequence[str]
+    studies: Sequence[str]
+    max_participants: int
+    seed: int
+    max_features: int | None
+    tree_method: str
+    overwrite: bool
+
+
 def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
+    """Return parsed arguments and passthrough CLI flags."""
+
     parser = argparse.ArgumentParser(
         description="Full XGBoost baseline pipeline (sweeps, selection, reports)."
     )
@@ -247,28 +286,40 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
 
 
 def _repo_root() -> Path:
+    """Return the repository root (two levels above this module)."""
+
     return Path(__file__).resolve().parents[2]
 
 
 def _default_out_dir(root: Path) -> Path:
+    """Return the default directory storing XGBoost artefacts."""
+
     return root / "models" / "xgb"
 
 
 def _default_cache_dir(root: Path) -> Path:
+    """Return the default HuggingFace cache directory."""
+
     return root / ".cache" / "huggingface" / "xgb"
 
 
 def _default_reports_dir(root: Path) -> Path:
+    """Return the directory receiving generated Markdown reports."""
+
     return root / "reports" / "xgb"
 
 
 def _split_tokens(raw: str) -> List[str]:
+    """Split comma-delimited CLI input into trimmed tokens."""
+
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
 def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
+    """Return the hyper-parameter sweep configurations resolved from CLI grids."""
+
     lr_values = [float(x) for x in _split_tokens(args.learning_rate_grid)]
     depth_values = [int(x) for x in _split_tokens(args.max_depth_grid)]
     estimator_values = [int(x) for x in _split_tokens(args.n_estimators_grid)]
@@ -307,6 +358,8 @@ def _resolve_issue_specs(
     cache_dir: str,
     requested: Sequence[str],
 ) -> List[IssueSpec]:
+    """Return metadata describing the issues slated for evaluation."""
+
     ds = load_dataset_source(dataset, cache_dir)
     available = issues_in_dataset(ds)
     selected = available if not requested else [issue for issue in available if issue in requested]
@@ -318,12 +371,16 @@ def _resolve_issue_specs(
 
 
 def _run_xgb_cli(args: Sequence[str]) -> None:
+    """Execute the :mod:`xgb.cli` entry point with ``args``."""
+
     parser = build_xgb_parser()
     namespace = parser.parse_args(list(args))
     run_eval(namespace)
 
 
 def _load_metrics(path: Path) -> Mapping[str, object]:
+    """Return the metrics dictionary stored at ``path``."""
+
     if not path.exists():
         raise FileNotFoundError(f"Missing metrics file: {path}")
     with open(path, "r", encoding="utf-8") as handle:
@@ -334,22 +391,21 @@ def _run_sweeps(
     *,
     issues: Sequence[IssueSpec],
     configs: Sequence[SweepConfig],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    sweep_dir: Path,
-    tree_method: str,
+    context: SweepRunContext,
 ) -> List[SweepOutcome]:
+    """Execute hyper-parameter sweeps and collect outcome metadata."""
+
     outcomes: List[SweepOutcome] = []
     for config in configs:
         for issue in issues:
-            run_root = sweep_dir / issue.slug / config.label()
+            run_root = context.sweep_dir / issue.slug / config.label()
             run_root.mkdir(parents=True, exist_ok=True)
             cli_args: List[str] = []
-            cli_args.extend(base_cli)
-            cli_args.extend(config.cli_args(tree_method))
+            cli_args.extend(context.base_cli)
+            cli_args.extend(config.cli_args(context.tree_method))
             cli_args.extend(["--issues", issue.name])
             cli_args.extend(["--out_dir", str(run_root)])
-            cli_args.extend(extra_cli)
+            cli_args.extend(context.extra_cli)
             LOGGER.info(
                 "[SWEEP] issue=%s config=%s",
                 issue.name,
@@ -404,56 +460,57 @@ def _select_best_configs(outcomes: Sequence[SweepOutcome]) -> Dict[str, IssueSel
 def _run_final_evaluations(
     *,
     selections: Mapping[str, IssueSelection],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    out_dir: Path,
-    tree_method: str,
-    save_model_dir: Path | None,
-    overwrite: bool,
+    context: FinalEvalContext,
 ) -> Dict[str, Mapping[str, object]]:
+    """Run the final next-video evaluations for each selected configuration."""
+
     metrics_by_issue: Dict[str, Mapping[str, object]] = {}
-    out_dir.mkdir(parents=True, exist_ok=True)
+    context.out_dir.mkdir(parents=True, exist_ok=True)
 
     for issue_name, selection in selections.items():
         cli_args: List[str] = []
-        cli_args.extend(base_cli)
-        cli_args.extend(selection.config.cli_args(tree_method))
+        cli_args.extend(context.base_cli)
+        cli_args.extend(selection.config.cli_args(context.tree_method))
         cli_args.extend(["--issues", issue_name])
-        cli_args.extend(["--out_dir", str(out_dir)])
-        if save_model_dir is not None:
-            cli_args.extend(["--save_model", str(save_model_dir)])
-        cli_args.extend(extra_cli)
+        cli_args.extend(["--out_dir", str(context.out_dir)])
+        if context.save_model_dir is not None:
+            cli_args.extend(["--save_model", str(context.save_model_dir)])
+        cli_args.extend(context.extra_cli)
         LOGGER.info(
             "[FINAL] issue=%s config=%s",
             issue_name,
             selection.config.label(),
         )
         _run_xgb_cli(cli_args)
-        metrics_path = out_dir / selection.issue.slug / "metrics.json"
+        metrics_path = context.out_dir / selection.issue.slug / "metrics.json"
         metrics_by_issue[issue_name] = _load_metrics(metrics_path)
     return metrics_by_issue
 
 
-def _run_opinion_stage(
-    *,
-    selections: Mapping[str, IssueSelection],
-    dataset: str,
-    cache_dir: str,
-    args: argparse.Namespace,
-    base_out_dir: Path,
-    extra_fields: Sequence[str],
-    studies: Sequence[str],
-) -> Dict[str, Dict[str, object]]:
-    if not selections:
-        LOGGER.warning("Skipping opinion stage; no selections available.")
-        return {}
+def _group_requested_studies(studies: Sequence[str]) -> Dict[str, List[str]]:
+    """Return opinion study keys grouped by issue."""
 
-    opinion_out_dir = base_out_dir / "opinion"
     requested = set(studies) if studies else {spec.key for spec in DEFAULT_SPECS}
     grouped: Dict[str, List[str]] = {}
     for spec in DEFAULT_SPECS:
         if spec.key in requested:
             grouped.setdefault(spec.issue, []).append(spec.key)
+    return grouped
+
+
+def _run_opinion_stage(
+    *,
+    selections: Mapping[str, IssueSelection],
+    config: OpinionStageConfig,
+) -> Dict[str, Dict[str, object]]:
+    """Execute the optional opinion regression stage for selected issues."""
+
+    if not selections:
+        LOGGER.warning("Skipping opinion stage; no selections available.")
+        return {}
+
+    opinion_out_dir = config.base_out_dir / "opinion"
+    grouped = _group_requested_studies(config.studies)
 
     results: Dict[str, Dict[str, object]] = {}
     for issue_name, study_keys in grouped.items():
@@ -465,20 +522,22 @@ def _run_opinion_stage(
             )
             continue
         opinion_config = OpinionTrainConfig(
-            max_participants=args.opinion_max_participants,
-            seed=args.seed,
-            max_features=args.max_features if args.max_features > 0 else None,
-            booster=selection.config.booster_params(args.tree_method),
+            max_participants=config.max_participants,
+            seed=config.seed,
+            max_features=config.max_features,
+            booster=selection.config.booster_params(config.tree_method),
         )
         payload = run_opinion_eval(
-            dataset=dataset,
-            cache_dir=cache_dir,
-            out_dir=opinion_out_dir,
-            feature_space="tfidf",
-            extra_fields=extra_fields,
-            train_config=opinion_config,
+            request=OpinionEvalRequest(
+                dataset=config.dataset,
+                cache_dir=config.cache_dir,
+                out_dir=opinion_out_dir,
+                feature_space="tfidf",
+                extra_fields=config.extra_fields,
+                train_config=opinion_config,
+                overwrite=config.overwrite,
+            ),
             studies=study_keys,
-            overwrite=args.overwrite,
         )
         results.update(payload)
     return results
@@ -496,6 +555,8 @@ def _write_reports(
     final_metrics: Mapping[str, Mapping[str, object]],
     opinion_metrics: Mapping[str, Mapping[str, object]],
 ) -> None:
+    """Write the full report bundle capturing sweep and evaluation artefacts."""
+
     reports_dir.mkdir(parents=True, exist_ok=True)
 
     _write_catalog_report(reports_dir)
@@ -505,6 +566,8 @@ def _write_reports(
 
 
 def _write_catalog_report(reports_dir: Path) -> None:
+    """Create the catalog README summarising generated artefacts."""
+
     reports_dir.mkdir(parents=True, exist_ok=True)
     path = reports_dir / "README.md"
     lines: List[str] = []
@@ -514,7 +577,9 @@ def _write_catalog_report(reports_dir: Path) -> None:
     lines.append("")
     lines.append("- `next_video/` – slate-ranking accuracy for the selected configuration.")
     lines.append("- `opinion/` – post-study opinion regression results.")
-    lines.append("- `hyperparameter_tuning/` – notes from the sweep that selected the configuration.")
+    lines.append(
+        "- `hyperparameter_tuning/` – notes from the sweep that selected the configuration."
+    )
     lines.append("")
     lines.append("Model checkpoints and raw metrics live under `models/xgb/`.")
     lines.append("")
@@ -526,13 +591,16 @@ def _write_hyperparameter_report(
     outcomes: Sequence[SweepOutcome],
     selections: Mapping[str, IssueSelection],
 ) -> None:
+    """Create the hyper-parameter sweep summary document."""
+
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "README.md"
     lines: List[str] = []
     lines.append("# Hyper-parameter Tuning")
     lines.append("")
     lines.append(
-        "This summary lists the XGBoost configurations explored for each issue. The selected configuration is highlighted in bold."
+        "This summary lists the XGBoost configurations explored for each issue. "
+        "The selected configuration is highlighted in bold."
     )
     lines.append("")
     per_issue: Dict[str, List[SweepOutcome]] = {}
@@ -565,6 +633,8 @@ def _write_next_video_report(
     directory: Path,
     metrics: Mapping[str, Mapping[str, object]],
 ) -> None:
+    """Create the next-video evaluation summary document."""
+
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "README.md"
     lines: List[str] = []
@@ -589,6 +659,8 @@ def _write_opinion_report(
     directory: Path,
     metrics: Mapping[str, Mapping[str, object]],
 ) -> None:
+    """Create the opinion regression summary document."""
+
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "README.md"
     lines: List[str] = []
@@ -619,6 +691,8 @@ def _write_opinion_report(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """Entry point orchestrating the full XGBoost workflow."""
+
     args, extra_cli = _parse_args(argv)
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper(), logging.INFO),
@@ -672,38 +746,44 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     sweep_dir.mkdir(parents=True, exist_ok=True)
-    outcomes = _run_sweeps(
-        issues=issues,
-        configs=configs,
+    sweep_context = SweepRunContext(
         base_cli=base_cli,
         extra_cli=extra_cli,
         sweep_dir=sweep_dir,
         tree_method=args.tree_method,
+    )
+    outcomes = _run_sweeps(
+        issues=issues,
+        configs=configs,
+        context=sweep_context,
     )
     selections = _select_best_configs(outcomes)
     if not selections:
         raise RuntimeError("Failed to select a configuration for any issue.")
     LOGGER.info("Selected configurations: %s", ", ".join(selections.keys()))
 
-    final_metrics = _run_final_evaluations(
-        selections=selections,
+    final_eval_context = FinalEvalContext(
         base_cli=base_cli,
         extra_cli=extra_cli,
         out_dir=out_dir / "next_video",
         tree_method=args.tree_method,
         save_model_dir=Path(args.save_model_dir) if args.save_model_dir else None,
-        overwrite=args.overwrite,
     )
+    final_metrics = _run_final_evaluations(selections=selections, context=final_eval_context)
 
-    opinion_metrics = _run_opinion_stage(
-        selections=selections,
+    opinion_stage_config = OpinionStageConfig(
         dataset=dataset,
         cache_dir=cache_dir,
-        args=args,
         base_out_dir=out_dir,
         extra_fields=extra_fields,
         studies=studies,
+        max_participants=args.opinion_max_participants,
+        seed=args.seed,
+        max_features=args.max_features if args.max_features > 0 else None,
+        tree_method=args.tree_method,
+        overwrite=args.overwrite,
     )
+    opinion_metrics = _run_opinion_stage(selections=selections, config=opinion_stage_config)
 
     _write_reports(
         reports_dir=reports_dir,

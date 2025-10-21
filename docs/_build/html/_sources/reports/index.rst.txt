@@ -8,5 +8,6 @@ Analyst-facing narrative reports derived from the simulation datasets.
 
    prompt_stats
    prompt_builder
+   knn
    research_article_political_sciences
    visualized_recommendation_trees

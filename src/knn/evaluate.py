@@ -8,11 +8,14 @@ import json
 import logging
 import os
 import re
+import subprocess
 import time
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
+from numpy.random import default_rng
 
 from common.eval_utils import safe_div
 
@@ -28,8 +31,7 @@ from .data import (
     EVAL_SPLIT,
     SOLUTION_COLUMN,
     TRAIN_SPLIT,
-    filter_dataset_for_issue,
-    filter_dataset_for_participant_studies,
+    filter_split_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
@@ -47,6 +49,207 @@ from .index import (
 
 
 BUCKET_LABELS = ["unknown", "1", "2", "3", "4", "5+"]
+
+
+def _split_tokens(raw: Optional[str]) -> List[str]:
+    """Return a list of comma-separated tokens with whitespace trimmed."""
+
+    if not raw:
+        return []
+    return [token.strip() for token in raw.split(",") if token.strip()]
+
+
+@lru_cache(maxsize=1)
+def _collect_repo_state() -> Dict[str, Any]:
+    """Return git provenance for the current repository."""
+
+    repo_root = Path(__file__).resolve().parents[2]
+
+    def _run_git(args: Sequence[str]) -> Optional[str]:
+        try:
+            result = subprocess.run(
+                ["git", *args],
+                cwd=repo_root,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except (OSError, ValueError):
+            return None
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip() or None
+
+    commit = _run_git(["rev-parse", "HEAD"])
+    branch = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
+    status = _run_git(["status", "--short"])
+    dirty = bool(status)
+    return {
+        "git_commit": commit or "unknown",
+        "git_branch": branch or "unknown",
+        "git_dirty": dirty,
+        "git_status": status or "",
+    }
+
+
+def _filter_split_for_issues(split_ds, issues: Sequence[str]):
+    """Return ``split_ds`` filtered to the requested issue tokens."""
+
+    normalized = {token.strip().lower() for token in issues if token.strip()}
+    if not normalized:
+        return split_ds
+    if "issue" not in split_ds.column_names:
+        return split_ds
+
+    def _match_issue(row: Mapping[str, Any]) -> bool:
+        value = row.get("issue")
+        return str(value).strip().lower() in normalized
+
+    return split_ds.filter(_match_issue)
+
+
+def _dataset_split_provenance(split_ds) -> Dict[str, Any]:
+    """Return provenance metadata for a single HF dataset split."""
+
+    provenance: Dict[str, Any] = {
+        "num_rows": int(len(split_ds)),
+        "fingerprint": getattr(split_ds, "_fingerprint", None),
+    }
+    info = getattr(split_ds, "info", None)
+    revision = getattr(info, "dataset_revision", None) if info is not None else None
+    if revision:
+        provenance["dataset_revision"] = revision
+    return provenance
+
+
+def _collect_dataset_provenance(ds: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return provenance metadata for all splits contained in ``ds``."""
+
+    splits: Dict[str, Any] = {}
+    revision: Optional[str] = None
+    for split_name, split_ds in ds.items():
+        split_info = _dataset_split_provenance(split_ds)
+        splits[split_name] = split_info
+        if revision is None and split_info.get("dataset_revision"):
+            revision = split_info["dataset_revision"]
+    return {
+        "dataset_revision": revision,
+        "splits": splits,
+    }
+
+
+def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
+    """Return a stable grouping key used for bootstrap resampling."""
+
+    urlid = str(example.get("urlid") or "").strip()
+    if urlid and urlid.lower() != "nan":
+        return f"urlid::{urlid}"
+    participant = str(example.get("participant_id") or "").strip()
+    if participant and participant.lower() != "nan":
+        return f"participant::{participant}"
+    session = str(example.get("session_id") or "").strip()
+    if session and session.lower() != "nan":
+        return f"session::{session}"
+    return f"row::{fallback_index}"
+
+
+def _accuracy_for_rows(rows: Sequence[Mapping[str, Any]], k_val: int) -> float:
+    """Return accuracy for ``rows`` using predictions at ``k_val``."""
+
+    if not rows:
+        return 0.0
+    correct = 0
+    total = 0
+    for row in rows:
+        if not row.get("eligible"):
+            continue
+        total += 1
+        pred = row["predictions_by_k"].get(k_val)
+        if pred is not None and int(pred) == int(row["gold_index"]):
+            correct += 1
+    return safe_div(correct, total)
+
+
+def _baseline_accuracy_for_rows(rows: Sequence[Mapping[str, Any]], baseline_index: Optional[int]) -> float:
+    """Return accuracy for the most frequent baseline over ``rows``."""
+
+    if baseline_index is None:
+        return 0.0
+    if not rows:
+        return 0.0
+    correct = 0
+    total = 0
+    for row in rows:
+        if not row.get("eligible"):
+            continue
+        total += 1
+        if int(row.get("gold_index", -1)) == int(baseline_index):
+            correct += 1
+    return safe_div(correct, total)
+
+
+def _bootstrap_uncertainty(
+    *,
+    rows: Sequence[Mapping[str, Any]],
+    best_k: int,
+    baseline_index: Optional[int],
+    replicates: int,
+    seed: int,
+) -> Optional[Dict[str, Any]]:
+    """Return bootstrap-based uncertainty estimates for accuracy metrics."""
+
+    if replicates <= 0:
+        return None
+    eligible_rows = [row for row in rows if row.get("eligible")]
+    if not eligible_rows:
+        return None
+    grouped: Dict[str, List[Mapping[str, Any]]] = {}
+    for idx, row in enumerate(eligible_rows):
+        group_key = row.get("group_key") or _group_key_for_example(row, idx)
+        grouped.setdefault(group_key, []).append(row)
+    if len(grouped) < 2:
+        return None
+
+    keys = list(grouped.keys())
+    rng = default_rng(seed)
+    model_samples: List[float] = []
+    baseline_samples: List[float] = []
+    for _ in range(replicates):
+        sampled_rows: List[Mapping[str, Any]] = []
+        sampled_indices = rng.integers(0, len(keys), size=len(keys))
+        for key_idx in sampled_indices:
+            sampled_rows.extend(grouped[keys[key_idx]])
+        model_samples.append(_accuracy_for_rows(sampled_rows, best_k))
+        if baseline_index is not None:
+            baseline_samples.append(_baseline_accuracy_for_rows(sampled_rows, baseline_index))
+
+    model_ci = {
+        "low": float(np.percentile(model_samples, 2.5)),
+        "high": float(np.percentile(model_samples, 97.5)),
+    }
+    model_mean = float(np.mean(model_samples))
+    result: Dict[str, Any] = {
+        "method": "participant_bootstrap",
+        "n_groups": len(grouped),
+        "n_rows": len(eligible_rows),
+        "n_bootstrap": replicates,
+        "seed": seed,
+        "model": {
+            "mean": model_mean,
+            "ci95": model_ci,
+        },
+    }
+    if baseline_samples:
+        baseline_ci = {
+            "low": float(np.percentile(baseline_samples, 2.5)),
+            "high": float(np.percentile(baseline_samples, 97.5)),
+        }
+        result["baseline"] = {
+            "mean": float(np.mean(baseline_samples)),
+            "ci95": baseline_ci,
+        }
+    return result
 
 
 def parse_k_values(k_default: int, sweep: str) -> List[int]:
@@ -336,54 +539,117 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
     base_ds = load_dataset_source(dataset_source, args.cache_dir)
     available_issues = issues_in_dataset(base_ds)
 
-    raw_participant_studies = getattr(args, "participant_studies", "") or ""
-    participant_filters = [
-        token.strip().lower()
-        for token in raw_participant_studies.split(",")
-        if token.strip()
-    ]
+    issue_lookup = {issue.lower(): issue for issue in available_issues}
 
-    if args.issues:
-        requested = [
-            token.strip()
-            for token in args.issues.split(",")
-            if token.strip()
-        ]
-        issues = requested if requested else available_issues
-    else:
-        issues = available_issues
+    def _resolve_issue_list(tokens: List[str], fallback: Sequence[str]) -> List[str]:
+        if not tokens:
+            return list(fallback)
+        if any(token.lower() == "all" for token in tokens):
+            return list(available_issues)
+        resolved: List[str] = []
+        for token in tokens:
+            lookup = issue_lookup.get(token.lower())
+            if lookup:
+                resolved.append(lookup)
+            else:
+                logging.warning("[KNN] Unknown issue token '%s'; skipping.", token)
+        return resolved or list(fallback)
+
+    joint_issue_tokens = _split_tokens(getattr(args, "issues", ""))
+    eval_issue_tokens = _split_tokens(getattr(args, "eval_issues", "")) or joint_issue_tokens
+    train_issue_tokens = _split_tokens(getattr(args, "train_issues", ""))
+
+    issues = _resolve_issue_list(eval_issue_tokens, available_issues)
+
+    joint_study_tokens = _split_tokens(getattr(args, "participant_studies", ""))
+    train_study_tokens = _split_tokens(getattr(args, "train_participant_studies", "")) or joint_study_tokens
+    eval_study_tokens = _split_tokens(getattr(args, "eval_participant_studies", "")) or joint_study_tokens
 
     k_values = parse_k_values(args.knn_k, args.knn_k_sweep)
     logging.info("[KNN] Evaluating k values: %s", k_values)
 
+    base_provenance = _collect_dataset_provenance(base_ds)
+    repo_state = _collect_repo_state()
+
+    train_split = base_ds.get(TRAIN_SPLIT)
+    eval_split = base_ds.get(EVAL_SPLIT)
+    if train_split is None or eval_split is None:
+        raise RuntimeError(f"Dataset '{dataset_source}' must expose '{TRAIN_SPLIT}' and '{EVAL_SPLIT}' splits.")
+
     for issue in issues:
         base_issue_slug = issue.replace(" ", "_")
-        ds = filter_dataset_for_issue(base_ds, issue)
-        if participant_filters:
-            ds = filter_dataset_for_participant_studies(ds, participant_filters)
-            train_ds = ds[TRAIN_SPLIT]
-            eval_ds = ds[EVAL_SPLIT]
-            if len(train_ds) == 0 or len(eval_ds) == 0:
-                logging.warning(
-                    "[KNN] Skipping issue=%s (no rows after participant_study filter: %s)",
-                    base_issue_slug,
-                    ", ".join(participant_filters),
-                )
-                continue
-            suffix_parts: List[str] = []
-            seen_suffix: set[str] = set()
-            for token in participant_filters:
-                slug = token.replace(" ", "_")
-                if slug and slug not in seen_suffix:
-                    suffix_parts.append(slug)
-                    seen_suffix.add(slug)
-            issue_slug = (
-                f"{base_issue_slug}_{'_'.join(suffix_parts)}" if suffix_parts else base_issue_slug
+        issue_slug = base_issue_slug
+
+        current_train_issues = (
+            _resolve_issue_list(train_issue_tokens, available_issues)
+            if train_issue_tokens
+            else ([issue] if issue != "all" else [])
+        )
+
+        filtered_train = train_split
+        if current_train_issues:
+            filtered_train = _filter_split_for_issues(filtered_train, current_train_issues)
+        filtered_eval = eval_split
+        if issue != "all":
+            filtered_eval = _filter_split_for_issues(filtered_eval, [issue])
+
+        filtered_train = filter_split_for_participant_studies(filtered_train, train_study_tokens)
+        filtered_eval = filter_split_for_participant_studies(filtered_eval, eval_study_tokens)
+
+        if len(filtered_eval) == 0:
+            logging.warning(
+                "[KNN] Skipping issue=%s (no evaluation rows after filters: eval_studies=%s eval_issue=%s)",
+                base_issue_slug,
+                ",".join(eval_study_tokens) or "all",
+                issue,
             )
-        else:
-            train_ds = ds[TRAIN_SPLIT]
-            eval_ds = ds[EVAL_SPLIT]
-            issue_slug = base_issue_slug
+            continue
+        if args.fit_index and len(filtered_train) == 0:
+            logging.warning(
+                "[KNN] Skipping issue=%s (no training rows after filters and --fit-index enabled)",
+                base_issue_slug,
+            )
+            continue
+
+        suffix_parts: List[str] = []
+        seen_suffix: set[str] = set()
+        for token in eval_study_tokens:
+            slug = token.replace(" ", "_")
+            if slug and slug.lower() != "all" and slug not in seen_suffix:
+                suffix_parts.append(slug)
+                seen_suffix.add(slug)
+        if suffix_parts:
+            issue_slug = f"{base_issue_slug}_{'_'.join(suffix_parts)}"
+
+        active_provenance = _collect_dataset_provenance(
+            {
+                TRAIN_SPLIT: filtered_train,
+                EVAL_SPLIT: filtered_eval,
+            }
+        )
+        logging.info(
+            "[KNN] issue=%s train_rows=%d eval_rows=%d train_studies=%s eval_studies=%s train_issues=%s",
+            issue_slug,
+            len(filtered_train),
+            len(filtered_eval),
+            ",".join(train_study_tokens) or "all",
+            ",".join(eval_study_tokens) or "all",
+            ",".join(current_train_issues) or ("(inherit:" + issue + ")"),
+        )
+        provenance = {
+            "dataset": {
+                "source": dataset_source,
+                "base": base_provenance,
+                "active": active_provenance,
+                "filters": {
+                    "train_issues": current_train_issues,
+                    "eval_issue": issue,
+                    "train_participant_studies": list(train_study_tokens),
+                    "eval_participant_studies": list(eval_study_tokens),
+                },
+            },
+            "code": repo_state,
+        }
 
         extra_fields = [
             token.strip()
@@ -391,7 +657,7 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
             if token.strip()
         ]
         knn_index = _build_or_load_index(
-            train_ds=train_ds,
+            train_ds=filtered_train,
             issue_slug=issue_slug,
             extra_fields=extra_fields,
             args=args,
@@ -401,13 +667,14 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
         evaluate_issue(
             issue_slug=issue_slug,
             dataset_source=dataset_source,
-            train_ds=train_ds,
-            eval_ds=eval_ds,
+            train_ds=filtered_train if len(filtered_train) else None,
+            eval_ds=filtered_eval,
             k_values=k_values,
             knn_index=knn_index,
             extra_fields=extra_fields,
             feature_space=feature_space,
             args=args,
+            provenance=provenance,
         )
 
 
@@ -430,6 +697,8 @@ def _write_issue_outputs(
     per_k_stats: Dict[int, Dict[str, int]],
     extra_fields: Sequence[str],
     curve_metrics: Dict[str, Any],
+    provenance: Mapping[str, Any],
+    uncertainty: Optional[Mapping[str, Any]],
 ) -> None:
     """Persist evaluation artifacts and per-``k`` directories for an issue.
 
@@ -514,7 +783,7 @@ def _write_issue_outputs(
     with open(curve_json, "w", encoding="utf-8") as handle:
         json.dump(curve_metrics, handle, ensure_ascii=False, indent=2)
 
-    metrics = {
+    metrics: Dict[str, Any] = {
         "model": "knn",
         "feature_space": feature_space,
         "dataset": dataset_source,
@@ -574,6 +843,17 @@ def _write_issue_outputs(
         "curve_metrics_path": str(curve_json),
         "notes": "Accuracy computed over eligible rows (gold_index>0).",
     }
+    if uncertainty:
+        model_uncertainty = uncertainty.get("model")
+        baseline_uncertainty = uncertainty.get("baseline")
+        if model_uncertainty:
+            metrics["accuracy_ci_95"] = model_uncertainty.get("ci95")
+            metrics["accuracy_uncertainty"] = model_uncertainty
+        if baseline_uncertainty:
+            metrics["baseline_ci_95"] = baseline_uncertainty.get("ci95")
+            metrics["baseline_uncertainty"] = baseline_uncertainty
+        metrics["uncertainty"] = uncertainty
+    metrics["provenance"] = provenance
 
     with open(metrics_json, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, ensure_ascii=False, indent=2)
@@ -599,7 +879,7 @@ def _write_issue_outputs(
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
         k_stats = per_k_stats[k_int]
-        k_metrics = {
+        k_metrics: Dict[str, Any] = {
             "model": "knn",
             "feature_space": feature_space,
             "dataset": dataset_source,
@@ -612,6 +892,9 @@ def _write_issue_outputs(
             "accuracy": float(accuracy_by_k.get(k_int, 0.0)),
             "elbow_plot": str(elbow_path),
         }
+        if uncertainty:
+            k_metrics["uncertainty"] = uncertainty
+        k_metrics["provenance"] = provenance
         with open(k_dir / f"metrics_{issue_slug}_{EVAL_SPLIT}.json", "w", encoding="utf-8") as handle:
             json.dump(k_metrics, handle, ensure_ascii=False, indent=2)
 
@@ -637,6 +920,7 @@ def _accumulate_row(
     k_values: Sequence[int],
     knn_index: Dict[str, Any],
     query_config: SlateQueryConfig,
+    row_index: int,
 ) -> Dict[str, Any]:
     """Process a single evaluation example and update aggregate statistics.
 
@@ -700,6 +984,8 @@ def _accumulate_row(
             if pred is not None and int(pred) == gold_index:
                 k_stats["correct"] += 1
 
+    group_key = _group_key_for_example(example, row_index)
+
     return {
         "predictions_by_k": predictions,
         "gold_index": int(gold_index),
@@ -709,6 +995,7 @@ def _accumulate_row(
         "position_index": int(position),
         "position_bucket": pos_bucket,
         "issue_value": example.get("issue"),
+        "group_key": group_key,
     }
 
 
@@ -789,6 +1076,7 @@ def _evaluate_dataset_split(
             k_values=k_values,
             knn_index=knn_index,
             query_config=query_config,
+            row_index=int(idx),
         )
         if capture_rows:
             rows.append(row)
@@ -892,6 +1180,7 @@ def evaluate_issue(
     extra_fields: Sequence[str],
     feature_space: str,
     args,
+    provenance: Mapping[str, Any],
 ) -> None:  # pylint: disable=too-many-locals
     """Evaluate a single issue split and write metrics/predictions.
 
@@ -972,6 +1261,20 @@ def evaluate_issue(
     if train_curve:
         curve_metrics["train"] = train_curve
 
+    baseline_index: Optional[int] = None
+    if gold_hist:
+        baseline_index = max(gold_hist.items(), key=lambda kv: kv[1])[0]
+
+    replicates = int(getattr(args, "bootstrap_replicates", 500) or 0)
+    bootstrap_seed = int(getattr(args, "bootstrap_seed", 2024) or 2024)
+    uncertainty = _bootstrap_uncertainty(
+        rows=rows,
+        best_k=best_k,
+        baseline_index=baseline_index,
+        replicates=replicates,
+        seed=bootstrap_seed,
+    )
+
     _write_issue_outputs(
         args=args,
         issue_slug=issue_slug,
@@ -987,6 +1290,8 @@ def evaluate_issue(
         per_k_stats=per_k_stats,
         extra_fields=extra_fields,
         curve_metrics=curve_metrics,
+        provenance=provenance,
+        uncertainty=uncertainty,
     )
 
 def bin_nopts(n: int) -> str:

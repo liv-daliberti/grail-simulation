@@ -210,6 +210,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -306,54 +312,45 @@
 <p id="module-xgb.features">Feature extraction helpers for the XGBoost baseline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.assemble_document">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#assemble_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.assemble_document" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#assemble_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.assemble_document" title="Link to this definition">¶</a></dt>
 <dd><p>Return concatenated text used to featurise <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>example</strong> (<em>dict</em>) – Dataset row containing prompt and slate context.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Iterable of additional field names to append.</p></li>
+<li><p><strong>example</strong> (<em>dict</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Single text string describing the viewer + slate.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.extract_now_watching">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_now_watching" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_now_watching" title="Link to this definition">¶</a></dt>
 <dd><p>Return the currently watched title/id, if known.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing now-watching metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> tuple when available, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[str, str] | None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[str, str] | None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.extract_slate_items">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#extract_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_slate_items" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#extract_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_slate_items" title="Link to this definition">¶</a></dt>
 <dd><p>Return the slate as <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> pairs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing slate metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Ordered list of candidate tuples for the slate.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -361,67 +358,56 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.prepare_prompt_documents">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prepare_prompt_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#prepare_prompt_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prepare_prompt_documents" title="Link to this definition">¶</a></dt>
-<dd><p>Convenience wrapper around <a class="reference internal" href="knn.html#knn.features.prepare_training_documents" title="knn.features.prepare_training_documents"><code class="xref py py-func docutils literal notranslate"><span class="pre">knn.features.prepare_training_documents()</span></code></a>.</p>
+<dd><p>Convenience wrapper around <a class="reference internal" href="#xgb.features.prepare_training_documents" title="xgb.features.prepare_training_documents"><code class="xref py py-func docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_ds</strong> (<em>datasets.Dataset</em><em> or </em><em>sequence-like</em>) – Dataset providing prompt rows.</p></li>
-<li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows sampled (0 keeps all rows).</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – Random seed applied during subsampling.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Optional column names appended to the generated documents.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple of documents, canonical video ids, and friendly titles.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple[list[str], list[str], list[str]]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[list[str], list[str], list[str]]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.prepare_training_documents">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#prepare_training_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#prepare_training_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
 <dd><p>Return TF-IDF training documents and associated labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_ds</strong> – Training dataset split.</p></li>
-<li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows to sample.</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional iterable of additional text fields.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(documents,</span> <span class="pre">label_ids,</span> <span class="pre">label_titles)</span></code>.</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>RuntimeError</strong> – If no valid documents are produced.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[list[str], list[str], list[str]]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.prompt_from_builder">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#prompt_from_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#prompt_from_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
 <dd><p>Return the prompt text for <code class="docutils literal notranslate"><span class="pre">example</span></code> using the shared builder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row used to construct the prompt.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Prompt string derived from shared builder logic.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.title_for">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.title_for" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.title_for" title="Link to this definition">¶</a></dt>
 <dd><p>Return a human-readable title for a YouTube id if available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -435,17 +421,14 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.viewer_profile_sentence">
-<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#viewer_profile_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#viewer_profile_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
 <dd><p>Return the viewer profile sentence for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing viewer metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cleaned viewer profile sentence (may be empty).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>

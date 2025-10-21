@@ -30,6 +30,12 @@ from .stratified import analyze_preregistered_effects
 
 
 def _policy_summary_rows(stratified: pd.DataFrame) -> List[Dict[str, object]]:
+    """Extract preregistered policy contrasts for display in the Markdown table.
+
+    :param stratified: Combined stratified-effects dataframe produced by the replication analysis.
+    :returns: List of dictionaries with study labels, estimates, and metadata.
+    """
+
     if stratified.empty:
         return []
 

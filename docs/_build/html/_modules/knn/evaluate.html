@@ -209,6 +209,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -256,11 +262,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_div</span>
 
@@ -278,6 +287,7 @@
     <span class="n">TRAIN_SPLIT</span><span class="p">,</span>
     <span class="n">filter_dataset_for_issue</span><span class="p">,</span>
     <span class="n">filter_dataset_for_participant_studies</span><span class="p">,</span>
+    <span class="n">filter_split_for_participant_studies</span><span class="p">,</span>
     <span class="n">issues_in_dataset</span><span class="p">,</span>
     <span class="n">load_dataset_source</span><span class="p">,</span>
 <span class="p">)</span>
@@ -295,6 +305,207 @@
 
 
 <span class="n">BUCKET_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a list of comma-separated tokens with whitespace trimmed.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_repo_state</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return git provenance for the current repository.&quot;&quot;&quot;</span>
+
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_git</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;git&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">],</span>
+                <span class="n">cwd</span><span class="o">=</span><span class="n">repo_root</span><span class="p">,</span>
+                <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+                <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="n">commit</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s2">&quot;rev-parse&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">])</span>
+    <span class="n">branch</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s2">&quot;rev-parse&quot;</span><span class="p">,</span> <span class="s2">&quot;--abbrev-ref&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">])</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">_run_git</span><span class="p">([</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;--short&quot;</span><span class="p">])</span>
+    <span class="n">dirty</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;git_commit&quot;</span><span class="p">:</span> <span class="n">commit</span> <span class="ow">or</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;git_branch&quot;</span><span class="p">:</span> <span class="n">branch</span> <span class="ow">or</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;git_dirty&quot;</span><span class="p">:</span> <span class="n">dirty</span><span class="p">,</span>
+        <span class="s2">&quot;git_status&quot;</span><span class="p">:</span> <span class="n">status</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_split_for_issues</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``split_ds`` filtered to the requested issue tokens.&quot;&quot;&quot;</span>
+
+    <span class="n">normalized</span> <span class="o">=</span> <span class="p">{</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">issues</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">split_ds</span>
+    <span class="k">if</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">split_ds</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_match_issue</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">normalized</span>
+
+    <span class="k">return</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_match_issue</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dataset_split_provenance</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return provenance metadata for a single HF dataset split.&quot;&quot;&quot;</span>
+
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;num_rows&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)),</span>
+        <span class="s2">&quot;fingerprint&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="s2">&quot;_fingerprint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">revision</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="s2">&quot;dataset_revision&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">revision</span><span class="p">:</span>
+        <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;dataset_revision&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">revision</span>
+    <span class="k">return</span> <span class="n">provenance</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_dataset_provenance</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return provenance metadata for all splits contained in ``ds``.&quot;&quot;&quot;</span>
+
+    <span class="n">splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">revision</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">split_info</span> <span class="o">=</span> <span class="n">_dataset_split_provenance</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)</span>
+        <span class="n">splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_info</span>
+        <span class="k">if</span> <span class="n">revision</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">split_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataset_revision&quot;</span><span class="p">):</span>
+            <span class="n">revision</span> <span class="o">=</span> <span class="n">split_info</span><span class="p">[</span><span class="s2">&quot;dataset_revision&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;dataset_revision&quot;</span><span class="p">:</span> <span class="n">revision</span><span class="p">,</span>
+        <span class="s2">&quot;splits&quot;</span><span class="p">:</span> <span class="n">splits</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a stable grouping key used for bootstrap resampling.&quot;&quot;&quot;</span>
+
+    <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">urlid</span> <span class="ow">and</span> <span class="n">urlid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;urlid::</span><span class="si">{</span><span class="n">urlid</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">participant</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">participant</span> <span class="ow">and</span> <span class="n">participant</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;participant::</span><span class="si">{</span><span class="n">participant</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">session</span> <span class="ow">and</span> <span class="n">session</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;session::</span><span class="si">{</span><span class="n">session</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;row::</span><span class="si">{</span><span class="n">fallback_index</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_accuracy_for_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">k_val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return accuracy for ``rows`` using predictions at ``k_val``.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k_val</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;gold_index&quot;</span><span class="p">]):</span>
+            <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">baseline_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return accuracy for the most frequent baseline over ``rows``.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">baseline_index</span><span class="p">):</span>
+            <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bootstrap_uncertainty</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">baseline_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">replicates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return bootstrap-based uncertainty estimates for accuracy metrics.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">replicates</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">eligible_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">eligible_rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">grouped</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">):</span>
+        <span class="n">group_key</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group_key&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_group_key_for_example</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="n">grouped</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">group_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">grouped</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">model_samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">baseline_samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">replicates</span><span class="p">):</span>
+        <span class="n">sampled_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sampled_indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key_idx</span> <span class="ow">in</span> <span class="n">sampled_indices</span><span class="p">:</span>
+            <span class="n">sampled_rows</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">grouped</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="n">key_idx</span><span class="p">]])</span>
+        <span class="n">model_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">best_k</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">baseline_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">baseline_index</span><span class="p">))</span>
+
+    <span class="n">model_ci</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">model_samples</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)),</span>
+        <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">model_samples</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)),</span>
+    <span class="p">}</span>
+    <span class="n">model_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">model_samples</span><span class="p">))</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;participant_bootstrap&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;n_groups&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
+        <span class="s2">&quot;n_rows&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">),</span>
+        <span class="s2">&quot;n_bootstrap&quot;</span><span class="p">:</span> <span class="n">replicates</span><span class="p">,</span>
+        <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="n">seed</span><span class="p">,</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">model_mean</span><span class="p">,</span>
+            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">model_ci</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">baseline_samples</span><span class="p">:</span>
+        <span class="n">baseline_ci</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)),</span>
+            <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)),</span>
+        <span class="p">}</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;baseline&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">)),</span>
+            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">baseline_ci</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
 <div class="viewcode-block" id="parse_k_values">
@@ -696,6 +907,8 @@
     <span class="n">per_k_stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">uncertainty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist evaluation artifacts and per-``k`` directories for an issue.</span>
 
@@ -780,7 +993,7 @@
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">curve_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">curve_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-    <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn&quot;</span><span class="p">,</span>
         <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">feature_space</span><span class="p">,</span>
         <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_source</span><span class="p">,</span>
@@ -840,6 +1053,17 @@
         <span class="s2">&quot;curve_metrics_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">curve_json</span><span class="p">),</span>
         <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Accuracy computed over eligible rows (gold_index&gt;0).&quot;</span><span class="p">,</span>
     <span class="p">}</span>
+    <span class="k">if</span> <span class="n">uncertainty</span><span class="p">:</span>
+        <span class="n">model_uncertainty</span> <span class="o">=</span> <span class="n">uncertainty</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
+        <span class="n">baseline_uncertainty</span> <span class="o">=</span> <span class="n">uncertainty</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_uncertainty</span><span class="p">:</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;accuracy_ci_95&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_uncertainty</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci95&quot;</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;accuracy_uncertainty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_uncertainty</span>
+        <span class="k">if</span> <span class="n">baseline_uncertainty</span><span class="p">:</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;baseline_ci_95&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baseline_uncertainty</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ci95&quot;</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;baseline_uncertainty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baseline_uncertainty</span>
+        <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;uncertainty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncertainty</span>
+    <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -865,7 +1089,7 @@
                 <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">k_stats</span> <span class="o">=</span> <span class="n">per_k_stats</span><span class="p">[</span><span class="n">k_int</span><span class="p">]</span>
-        <span class="n">k_metrics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">k_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn&quot;</span><span class="p">,</span>
             <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">feature_space</span><span class="p">,</span>
             <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_source</span><span class="p">,</span>
@@ -878,6 +1102,9 @@
             <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k_int</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
             <span class="s2">&quot;elbow_plot&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">elbow_path</span><span class="p">),</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="n">uncertainty</span><span class="p">:</span>
+            <span class="n">k_metrics</span><span class="p">[</span><span class="s2">&quot;uncertainty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncertainty</span>
+        <span class="n">k_metrics</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">k_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;metrics_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">k_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
@@ -903,6 +1130,7 @@
     <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">query_config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
+    <span class="n">row_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Process a single evaluation example and update aggregate statistics.</span>
 
@@ -966,6 +1194,8 @@
             <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">:</span>
                 <span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;correct&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
+    <span class="n">group_key</span> <span class="o">=</span> <span class="n">_group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">row_index</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;predictions_by_k&quot;</span><span class="p">:</span> <span class="n">predictions</span><span class="p">,</span>
         <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">gold_index</span><span class="p">),</span>
@@ -975,6 +1205,7 @@
         <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">position</span><span class="p">),</span>
         <span class="s2">&quot;position_bucket&quot;</span><span class="p">:</span> <span class="n">pos_bucket</span><span class="p">,</span>
         <span class="s2">&quot;issue_value&quot;</span><span class="p">:</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;group_key&quot;</span><span class="p">:</span> <span class="n">group_key</span><span class="p">,</span>
     <span class="p">}</span>
 
 
@@ -1055,6 +1286,7 @@
             <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
             <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
             <span class="n">query_config</span><span class="o">=</span><span class="n">query_config</span><span class="p">,</span>
+            <span class="n">row_index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">capture_rows</span><span class="p">:</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -1160,6 +1392,7 @@
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">args</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.</span>
 
@@ -1240,6 +1473,20 @@
     <span class="k">if</span> <span class="n">train_curve</span><span class="p">:</span>
         <span class="n">curve_metrics</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve</span>
 
+    <span class="n">baseline_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">gold_hist</span><span class="p">:</span>
+        <span class="n">baseline_index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">replicates</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;bootstrap_replicates&quot;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">bootstrap_seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;bootstrap_seed&quot;</span><span class="p">,</span> <span class="mi">2024</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">2024</span><span class="p">)</span>
+    <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">_bootstrap_uncertainty</span><span class="p">(</span>
+        <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
+        <span class="n">best_k</span><span class="o">=</span><span class="n">best_k</span><span class="p">,</span>
+        <span class="n">baseline_index</span><span class="o">=</span><span class="n">baseline_index</span><span class="p">,</span>
+        <span class="n">replicates</span><span class="o">=</span><span class="n">replicates</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">bootstrap_seed</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">_write_issue_outputs</span><span class="p">(</span>
         <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
         <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
@@ -1255,6 +1502,8 @@
         <span class="n">per_k_stats</span><span class="o">=</span><span class="n">per_k_stats</span><span class="p">,</span>
         <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
         <span class="n">curve_metrics</span><span class="o">=</span><span class="n">curve_metrics</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">,</span>
+        <span class="n">uncertainty</span><span class="o">=</span><span class="n">uncertainty</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

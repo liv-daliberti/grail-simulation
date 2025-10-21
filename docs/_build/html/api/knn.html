@@ -210,6 +210,12 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
 </ul>
@@ -317,6 +323,17 @@ examples feed into the training curve diagnostics.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>datasets.DatasetDict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="knn.data.filter_split_for_participant_studies">
+<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_split_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_split_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_split_for_participant_studies" title="Link to this definition">¶</a></dt>
+<dd><p>Filter a HF dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -522,15 +539,12 @@ examples feed into the training curve diagnostics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>example</strong> (<em>dict</em>) – Dataset row containing prompt and slate context.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Iterable of additional field names to append.</p></li>
+<li><p><strong>example</strong> (<em>dict</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Single text string describing the viewer + slate.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -541,13 +555,10 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return the currently watched title/id, if known.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing now-watching metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> tuple when available, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[str, str] | None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[str, str] | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -558,13 +569,10 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return the slate as <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> pairs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing slate metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Ordered list of candidate tuples for the slate.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -576,17 +584,10 @@ examples feed into the training curve diagnostics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_ds</strong> – Training dataset split.</p></li>
-<li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows to sample.</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional iterable of additional text fields.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(documents,</span> <span class="pre">label_ids,</span> <span class="pre">label_titles)</span></code>.</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>RuntimeError</strong> – If no valid documents are produced.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -597,13 +598,10 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return the prompt text for <code class="docutils literal notranslate"><span class="pre">example</span></code> using the shared builder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row used to construct the prompt.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Prompt string derived from shared builder logic.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -628,13 +626,10 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return the viewer profile sentence for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing viewer metadata.</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cleaned viewer profile sentence (may be empty).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -841,7 +836,7 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.evaluate_issue">
-<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
 <dd><p>Evaluate a single issue split and write metrics/predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -855,6 +850,7 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Extra text fields appended to queries.</p></li>
 <li><p><strong>feature_space</strong> (<em>str</em>) – Active feature space (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code> or <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>).</p></li>
 <li><p><strong>args</strong> – CLI namespace controlling evaluation options.</p></li>
+<li><p><strong>provenance</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1093,6 +1089,7 @@ are read from <code class="xref py py-data docutils literal notranslate"><span c
 <li><a class="reference internal" href="#elbow-curve-metrics">Elbow &amp; Curve Metrics</a><ul>
 <li><a class="reference internal" href="#knn.data.filter_dataset_for_issue"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_issue()</span></code></a></li>
 <li><a class="reference internal" href="#knn.data.filter_dataset_for_participant_studies"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_participant_studies()</span></code></a></li>
+<li><a class="reference internal" href="#knn.data.filter_split_for_participant_studies"><code class="docutils literal notranslate"><span class="pre">filter_split_for_participant_studies()</span></code></a></li>
 <li><a class="reference internal" href="#knn.data.issues_in_dataset"><code class="docutils literal notranslate"><span class="pre">issues_in_dataset()</span></code></a></li>
 <li><a class="reference internal" href="#knn.data.load_dataset_source"><code class="docutils literal notranslate"><span class="pre">load_dataset_source()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.Word2VecConfig"><code class="docutils literal notranslate"><span class="pre">Word2VecConfig</span></code></a><ul>

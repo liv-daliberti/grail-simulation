@@ -1,3 +1,5 @@
+"""Helpers for evaluating Codeforces-style problems via remote sandboxes."""
+
 import asyncio
 import os
 from io import BytesIO

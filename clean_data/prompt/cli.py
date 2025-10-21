@@ -16,7 +16,11 @@ from typing import Any, Dict, Optional
 from collections import Counter
 
 import pandas as pd
-from datasets import DatasetDict
+
+try:
+    from datasets import DatasetDict
+except ImportError:  # pragma: no cover - optional dependency for linting
+    DatasetDict = Any  # type: ignore
 
 from .markdown import (
     ReportContext,
@@ -52,16 +56,16 @@ def _validate_dataset(dataset: DatasetDict, train_split: str, validation_split: 
         raise ValueError(f"Split '{validation_split}' not found in dataset")
 
 
-def _choose_profile_column(df: pd.DataFrame) -> Optional[str]:
-    """Return the preferred profile column present in ``df``.
+def _choose_profile_column(data_frame: pd.DataFrame) -> Optional[str]:
+    """Return the preferred profile column present in ``data_frame``.
 
-    :param df: Dataframe containing prompt rows.
+    :param data_frame: Dataframe containing prompt rows.
     :returns: Column name for viewer profile text or ``None`` if not present.
     """
 
-    if "viewer_profile_sentence" in df.columns:
+    if "viewer_profile_sentence" in data_frame.columns:
         return "viewer_profile_sentence"
-    if "viewer_profile" in df.columns:
+    if "viewer_profile" in data_frame.columns:
         return "viewer_profile"
     return None
 
@@ -114,21 +118,21 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
     train_df = train_raw.loc[train_mask].reset_index(drop=True)
     val_df = val_raw.loc[val_mask].reset_index(drop=True)
 
-    def _coverage_stats(df: pd.DataFrame, mask: pd.Series) -> Dict[str, Any]:
+    def _coverage_stats(data_frame: pd.DataFrame, mask: pd.Series) -> Dict[str, Any]:
         """Compute inclusion/exclusion counts for a split.
 
-        :param df: Raw dataframe containing all rows.
+        :param data_frame: Raw dataframe containing all rows.
         :param mask: Boolean mask selecting prompt-ready examples.
         :returns: Dictionary describing coverage statistics.
         """
 
-        total = int(len(df))
+        total = int(len(data_frame))
         included = int(mask.sum())
         excluded = total - included
         breakdown: Dict[str, int] = {}
-        if excluded and "participant_study" in df.columns:
+        if excluded and "participant_study" in data_frame.columns:
             study_series = (
-                df.loc[~mask, "participant_study"]
+                data_frame.loc[~mask, "participant_study"]
                 .fillna("unknown")
                 .astype(str)
                 .str.lower()

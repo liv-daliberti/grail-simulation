@@ -13,7 +13,27 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 import numpy as np
 import pandas as pd
-from datasets import DatasetDict, load_dataset, load_from_disk
+
+try:
+    from datasets import DatasetDict, load_dataset, load_from_disk
+except ImportError:  # pragma: no cover - optional dependency for linting
+    DatasetDict = Any  # type: ignore
+
+    def load_dataset(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+        """Stub mirroring :func:`datasets.load_dataset` when the dependency is absent.
+
+        :raises ImportError: Always raised to signal that ``datasets`` is required.
+        """
+
+        raise ImportError("datasets library is required to load datasets")
+
+    def load_from_disk(*args: Any, **kwargs: Any) -> Any:  # type: ignore
+        """Stub for :func:`datasets.load_from_disk` when the dependency is absent.
+
+        :raises ImportError: Always raised to indicate the missing optional package.
+        """
+
+        raise ImportError("datasets library is required to load datasets from disk")
 
 from ..helpers import _as_list_json
 from ..prompt_constants import (
@@ -75,31 +95,31 @@ class SeriesPair:
         return data
 
 
-def core_prompt_mask(df: pd.DataFrame) -> pd.Series:
+def core_prompt_mask(data_frame: pd.DataFrame) -> pd.Series:
     """Return a boolean mask selecting rows from core studies and issues."""
 
-    if df.empty:
+    if data_frame.empty:
         return pd.Series([], dtype=bool)
 
-    mask = pd.Series([True] * len(df), index=df.index)
+    mask = pd.Series([True] * len(data_frame), index=data_frame.index)
 
-    if "participant_study" in df.columns:
-        studies = df["participant_study"].fillna("").astype(str).str.lower()
+    if "participant_study" in data_frame.columns:
+        studies = data_frame["participant_study"].fillna("").astype(str).str.lower()
         mask &= studies.isin(CORE_STUDIES_LOWER)
 
-    if "issue" in df.columns:
-        issues = df["issue"].fillna("").astype(str).str.lower()
+    if "issue" in data_frame.columns:
+        issues = data_frame["issue"].fillna("").astype(str).str.lower()
         mask &= issues.isin(CORE_ISSUES_LOWER)
 
     return mask
 
 
-def filter_core_prompt_rows(df: pd.DataFrame) -> pd.DataFrame:
+def filter_core_prompt_rows(data_frame: pd.DataFrame) -> pd.DataFrame:
     """Filter a dataframe down to the core studies/issues used in reporting."""
-    if df.empty:
-        return df.copy()
-    mask = core_prompt_mask(df)
-    return df.loc[mask].copy()
+    if data_frame.empty:
+        return data_frame.copy()
+    mask = core_prompt_mask(data_frame)
+    return data_frame.loc[mask].copy()
 
 
 def canonical_slate_items(value: Any) -> Optional[Tuple[str, ...]]:
@@ -169,12 +189,12 @@ def first_present(row: pd.Series, columns: Sequence[str]) -> Optional[object]:
     return None
 
 
-def series_from_columns(df: pd.DataFrame, columns: Sequence[str]) -> pd.Series:
+def series_from_columns(data_frame: pd.DataFrame, columns: Sequence[str]) -> pd.Series:
     """Collapse multiple candidate columns into a single best-effort series."""
-    existing = [c for c in columns if c in df.columns]
+    existing = [c for c in columns if c in data_frame.columns]
     if not existing:
-        return pd.Series([None] * len(df), index=df.index, dtype="object")
-    subset = df[existing]
+        return pd.Series([None] * len(data_frame), index=data_frame.index, dtype="object")
+    subset = data_frame[existing]
     values = subset.apply(lambda row: first_present(row, existing), axis=1)
     return values
 
@@ -293,28 +313,28 @@ def feature_label(feature_name: str) -> str:
     return feature_name.replace("_", " ").title()
 
 
-def participant_ids(df: pd.DataFrame) -> pd.Series:
+def participant_ids(data_frame: pd.DataFrame) -> pd.Series:
     """Return a best-effort participant identifier for each row."""
-    if df.empty:
+    if data_frame.empty:
         return pd.Series([], dtype=str)
-    participant_id_series = df.get("participant_id")
-    urlid_series = df.get("urlid")
-    session_series = df.get("session_id")
+    participant_id_series = data_frame.get("participant_id")
+    urlid_series = data_frame.get("urlid")
+    session_series = data_frame.get("session_id")
 
     participant_str = (
         participant_id_series.fillna("").astype(str).str.strip()
         if participant_id_series is not None
-        else pd.Series([""] * len(df), index=df.index)
+        else pd.Series([""] * len(data_frame), index=data_frame.index)
     )
     urlid_str = (
         urlid_series.fillna("").astype(str).str.strip()
         if urlid_series is not None
-        else pd.Series([""] * len(df), index=df.index)
+        else pd.Series([""] * len(data_frame), index=data_frame.index)
     )
     session_str = (
         session_series.fillna("").astype(str).str.strip()
         if session_series is not None
-        else pd.Series([""] * len(df), index=df.index)
+        else pd.Series([""] * len(data_frame), index=data_frame.index)
     )
 
     participant = participant_str
@@ -324,25 +344,25 @@ def participant_ids(df: pd.DataFrame) -> pd.Series:
     participant = participant.mask(missing_mask, session_str)
     still_missing = participant.eq("") | participant.str.lower().isin({"nan", "none", "null"})
     if still_missing.any():
-        fallback_index = pd.Series(df.index.astype(str), index=df.index)
+        fallback_index = pd.Series(data_frame.index.astype(str), index=data_frame.index)
         participant = participant.mask(still_missing, fallback_index)
     return participant
 
 
-def dedupe_participants(df: pd.DataFrame) -> pd.DataFrame:
+def dedupe_participants(data_frame: pd.DataFrame) -> pd.DataFrame:
     """Deduplicate rows so each participant/issue pair appears once."""
-    if df.empty:
-        return df
-    ids = participant_ids(df)
-    issue_series = df.get("issue")
+    if data_frame.empty:
+        return data_frame
+    ids = participant_ids(data_frame)
+    issue_series = data_frame.get("issue")
     if issue_series is None:
-        issue_series = pd.Series(["unknown"] * len(df), index=df.index)
+        issue_series = pd.Series(["unknown"] * len(data_frame), index=data_frame.index)
     issue_series = issue_series.fillna("unknown").astype(str).str.strip()
-    study_series = df.get("participant_study")
+    study_series = data_frame.get("participant_study")
     if study_series is None:
-        study_series = pd.Series(["unknown"] * len(df), index=df.index)
+        study_series = pd.Series(["unknown"] * len(data_frame), index=data_frame.index)
     study_series = study_series.fillna("unknown").astype(str).str.strip()
-    dedup = df.copy()
+    dedup = data_frame.copy()
     dedup = dedup.assign(
         _participant_internal_id=ids,
         _participant_issue_key=(
@@ -362,9 +382,9 @@ def dedupe_participants(df: pd.DataFrame) -> pd.DataFrame:
     return dedup
 
 
-def participant_stats(df: pd.DataFrame) -> Dict[str, Any]:
+def participant_stats(data_frame: pd.DataFrame) -> Dict[str, Any]:
     """Compute participant counts overall, by issue, and by study."""
-    if df.empty:
+    if data_frame.empty:
         return {
             "overall": 0,
             "by_issue": {},
@@ -372,14 +392,16 @@ def participant_stats(df: pd.DataFrame) -> Dict[str, Any]:
             "by_issue_study": {},
         }
 
-    participant_ids_series = participant_ids(df)
+    participant_ids_series = participant_ids(data_frame)
     issues = (
-        df.get("issue", pd.Series(["unknown"] * len(df), index=df.index))
+        data_frame.get("issue", pd.Series(["unknown"] * len(data_frame), index=data_frame.index))
         .fillna("unknown")
         .astype(str)
     )
     studies = (
-        df.get("participant_study", pd.Series(["unknown"] * len(df), index=df.index))
+        data_frame.get(
+            "participant_study", pd.Series(["unknown"] * len(data_frame), index=data_frame.index)
+        )
         .fillna("unknown")
         .astype(str)
     )

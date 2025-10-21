@@ -74,6 +74,8 @@ class SweepOutcome:
 
 
 def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
+    """Parse pipeline arguments while preserving additional CLI options."""
+
     parser = argparse.ArgumentParser(
         description="Hyper-parameter sweeps, selection, and reporting for the GPT-4o slate baseline."
     )
@@ -144,28 +146,40 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
 
 
 def _repo_root() -> Path:
+    """Return the repository root used to derive default directories."""
+
     return Path(__file__).resolve().parents[2]
 
 
 def _default_out_dir(root: Path) -> Path:
+    """Return the default pipeline output directory rooted at ``root``."""
+
     return root / "models" / "gpt4o"
 
 
 def _default_cache_dir(root: Path) -> Path:
+    """Return the default Hugging Face cache location under ``root``."""
+
     return root / ".cache" / "huggingface" / "gpt4o"
 
 
 def _default_reports_dir(root: Path) -> Path:
+    """Return the default reports directory rooted at ``root``."""
+
     return root / "reports" / "gpt4o"
 
 
 def _split_tokens(raw: str) -> List[str]:
+    """Split a comma-separated string into trimmed, non-empty tokens."""
+
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
 def _parse_float_grid(raw: str, fallback: float) -> List[float]:
+    """Parse a comma-separated list of floats, falling back to ``fallback``."""
+
     tokens = _split_tokens(raw)
     values: List[float] = []
     for token in tokens:
@@ -177,6 +191,8 @@ def _parse_float_grid(raw: str, fallback: float) -> List[float]:
 
 
 def _parse_int_grid(raw: str, fallback: int) -> List[int]:
+    """Parse a comma-separated list of integers, falling back to ``fallback``."""
+
     tokens = _split_tokens(raw)
     values: List[int] = []
     for token in tokens:
@@ -188,6 +204,8 @@ def _parse_int_grid(raw: str, fallback: int) -> List[int]:
 
 
 def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
+    """Construct the Cartesian product of temperature and max-token sweeps."""
+
     temperatures = _parse_float_grid(args.temperature_grid, 0.0)
     max_tokens_values = _parse_int_grid(args.max_tokens_grid, 32)
     configs: List[SweepConfig] = []
@@ -203,12 +221,16 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
 
 
 def _run_gpt_cli(cli_args: Sequence[str]) -> None:
+    """Invoke the GPT-4o CLI entry point with the provided arguments."""
+
     parser = build_gpt_parser()
     namespace = parser.parse_args(list(cli_args))
     run_eval(namespace)
 
 
 def _load_metrics(path: Path) -> Mapping[str, object]:
+    """Load evaluation metrics from ``path``."""
+
     if not path.exists():
         raise FileNotFoundError(f"Missing metrics file: {path}")
     with open(path, "r", encoding="utf-8") as handle:
@@ -222,6 +244,8 @@ def _run_sweeps(
     extra_cli: Sequence[str],
     sweep_dir: Path,
 ) -> List[SweepOutcome]:
+    """Run GPT-4o sweeps for each configuration and collect outcomes."""
+
     outcomes: List[SweepOutcome] = []
     for config in configs:
         run_dir = sweep_dir / config.label()
@@ -248,6 +272,8 @@ def _run_sweeps(
 
 
 def _select_best(outcomes: Sequence[SweepOutcome]) -> SweepOutcome:
+    """Return the best sweep outcome by accuracy, parsed rate, then format rate."""
+
     if not outcomes:
         raise RuntimeError("No sweep outcomes available for selection.")
     best = outcomes[0]
@@ -272,6 +298,8 @@ def _run_final_evaluation(
     extra_cli: Sequence[str],
     out_dir: Path,
 ) -> Tuple[Path, Mapping[str, object]]:
+    """Run a final evaluation for the selected configuration."""
+
     run_dir = out_dir / config.label()
     cli_args: List[str] = []
     cli_args.extend(base_cli)
@@ -286,10 +314,14 @@ def _run_final_evaluation(
 
 
 def _format_rate(value: float) -> str:
+    """Format a numeric rate with three decimal places."""
+
     return f"{value:.3f}"
 
 
 def _write_catalog_report(reports_dir: Path) -> None:
+    """Create the top-level GPT-4o report catalog README."""
+
     reports_dir.mkdir(parents=True, exist_ok=True)
     path = reports_dir / "README.md"
     lines = [
@@ -307,6 +339,8 @@ def _write_catalog_report(reports_dir: Path) -> None:
 
 
 def _write_sweep_report(directory: Path, outcomes: Sequence[SweepOutcome], selected: SweepOutcome) -> None:
+    """Write the hyper-parameter sweep report summarising all outcomes."""
+
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "README.md"
     lines: List[str] = []
@@ -340,6 +374,8 @@ def _write_next_video_report(
     selected: SweepOutcome,
     metrics: Mapping[str, object],
 ) -> None:
+    """Write the next-video evaluation report for the selected configuration."""
+
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / "README.md"
     lines: List[str] = []
@@ -372,6 +408,7 @@ def _write_next_video_report(
     group_metrics = metrics.get("group_metrics", {})
 
     def _render_group_table(title: str, payload: Mapping[str, Mapping[str, object]]) -> None:
+        """Append a Markdown table capturing group-level metrics."""
         if not payload:
             return
         lines.append(f"## {title}")
@@ -414,6 +451,8 @@ def _write_reports(
     selected: SweepOutcome,
     final_metrics: Mapping[str, object],
 ) -> None:
+    """Regenerate catalog, sweep, and next-video reports."""
+
     _write_catalog_report(reports_dir)
     _write_sweep_report(reports_dir / "hyperparameter_tuning", outcomes, selected)
     _write_next_video_report(reports_dir / "next_video", selected, final_metrics)

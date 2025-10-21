@@ -141,6 +141,23 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
 - CI (see `.github/workflows/ci.yml`) installs `requirements-dev.txt` and runs both scripts on push/PR.
 
+Pytest markers in `pytest.ini` scope the suites that back the workflows above:
+
+- `clean_data` - Dataset ingestion, filtering, and research article statistics.
+- `filters` - Filter reporting helpers.
+- `prompt_builder` - Prompt assembly utilities and package entry points.
+- `prompt_smoke` - End-to-end prompt generation smoke tests.
+- `sessions` - Session and slate construction helpers.
+- `surveys` - Survey processing and allowlist checks.
+- `knn` - k-NN feature extraction, index building, and inference.
+- `xgb` - XGBoost baseline training and CLI helpers.
+- `gpt4o` - GPT-4o conversation utilities.
+- `open_r1` - Open-R1 reinforcement learning helpers.
+- `integration` - Cross-package integration flows.
+- `visualization` - Visualization and reporting helpers.
+
+Run for example `pytest -m knn` to exercise only the k-NN pipeline.
+
 ### 6. Documentation
 
 ```bash

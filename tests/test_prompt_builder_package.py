@@ -123,8 +123,11 @@ def test_option_engagement_summary_lists_metrics(sample_example: dict, monkeypat
         lambda video_id: {"like_count": 42, "comment_count": 7, "share_count": 3},
     )
     prompt_text = build_user_prompt(sample_example, max_hist=1)
-    option_lines = [line for line in prompt_text.splitlines() if line.strip().startswith("likes:")]
-    assert option_lines, "Expected engagement summary line under options"
-    assert all("likes: 42" in line for line in option_lines)
-    assert all("comments: 7" in line for line in option_lines)
-    assert all("shares: 3" in line for line in option_lines)
+    option_lines = [
+        line.strip()
+        for line in prompt_text.splitlines()
+        if line.strip().startswith("Option ")
+    ]
+    assert option_lines, "Expected option lines with engagement summary"
+    expected_fragment = "Engagement: likes 42, comments 7, shares 3."
+    assert all(expected_fragment in line for line in option_lines)

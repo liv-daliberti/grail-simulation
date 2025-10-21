@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import os
+from collections.abc import Mapping
 from typing import Any, Dict, List, Optional, Sequence
 
 from .formatters import clean_text, human_join
-from .parsers import as_list_json, format_count, is_nanlike
+from .parsers import as_list_json, format_count, format_yes_no, is_nanlike
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
 from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
@@ -26,6 +28,48 @@ def _last_index(xs: Any, val: Any) -> Optional[int]:
         if v == val:
             idx = i
     return idx
+
+
+def _selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
+    """Return the ``selected_survey_row`` mapping, if present."""
+
+    raw = ex.get("selected_survey_row")
+    if isinstance(raw, Mapping):
+        return dict(raw)
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    as_py = getattr(raw, "as_py", None)
+    if callable(as_py):
+        try:
+            candidate = as_py()
+        except (TypeError, ValueError):
+            return {}
+        if isinstance(candidate, dict):
+            return candidate
+    return {}
+
+
+def _first_value(
+    ex: Dict[str, Any],
+    selected: Dict[str, Any],
+    *keys: str,
+) -> Optional[Any]:
+    """Return the first non-null value matched across example and selected row."""
+
+    for key in keys:
+        if key in ex:
+            value = ex[key]
+            if value is not None and not is_nanlike(value):
+                return value
+        if key in selected:
+            value = selected.get(key)
+            if value is not None and not is_nanlike(value):
+                return value
+    return None
 
 
 def _render_profile_text(profile: ProfileRender) -> str:

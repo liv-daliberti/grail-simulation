@@ -82,10 +82,10 @@ def plot_mean_change(
     ax.set_ylabel("Mean Δ (post - pre)")
     ax.set_title("Mean opinion change by study")
 
-    for bar, note in zip(bars, annotations):
-        height = bar.get_height()
+    for bar_patch, note in zip(bars, annotations):
+        height = bar_patch.get_height()
         ax.text(
-            bar.get_x() + bar.get_width() / 2,
+            bar_patch.get_x() + bar_patch.get_width() / 2,
             height,
             note,
             ha="center",

@@ -18,13 +18,21 @@ from typing import Any, Callable, Dict, Optional
 
 try:
     import datasets
-    from datasets import DatasetDict, Features, Sequence as HFSequence, Value
+    from datasets import Dataset, DatasetDict, Features, Sequence as HFSequence, Value
+    from datasets.builder import DatasetGenerationCastError
 except ImportError:  # pragma: no cover - optional dependency for linting
     datasets = None  # type: ignore
+    Dataset = Any  # type: ignore
     DatasetDict = Any  # type: ignore
     Features = Any  # type: ignore
     HFSequence = Any  # type: ignore
     Value = Any  # type: ignore
+    DatasetGenerationCastError = Exception  # type: ignore
+
+try:
+    import pandas as pd
+except ImportError:  # pragma: no cover - optional dependency for linting
+    pd = None  # type: ignore
 
 from clean_data.filters import compute_issue_counts, filter_prompt_ready
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
@@ -116,8 +124,82 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
                 raise ValueError(f"Unsupported file type: {path}")
             return DatasetDict(dict(loaded.items()))
     log.info("Loading dataset from hub: %s", dataset_name)
-    loaded = datasets.load_dataset(dataset_name)
+    try:
+        loaded = datasets.load_dataset(dataset_name)
+    except DatasetGenerationCastError as err:
+        log.warning(
+            "Falling back to column-union loader for dataset=%s due to schema mismatch (%s)",
+            dataset_name,
+            err,
+        )
+        return _load_dataset_with_column_union(dataset_name)
     return DatasetDict(dict(loaded.items()))
+
+
+def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
+    """Load a flat CSV dataset while unioning columns across data files.
+
+    This is a fallback path used when the standard :func:`load_dataset` call
+    fails due to heterogeneous column sets across CSV shards. The implementation
+    fetches every declared data file, reads it via :mod:`pandas`, aligns missing
+    columns, and rehydrates the result into a :class:`~datasets.DatasetDict`.
+
+    :param dataset_name: Hugging Face dataset identifier (optionally ``name``).
+    :returns: ``DatasetDict`` with the unioned schema.
+    :raises RuntimeError: If :mod:`pandas` is unavailable or no data files were
+        discovered for the dataset.
+    """
+
+    if pd is None:  # pragma: no cover - environment guard
+        raise RuntimeError(
+            "pandas is required to load '%s' due to column mismatches. Install pandas"
+            " to enable the union fallback." % dataset_name
+        )
+
+    builder = datasets.load_dataset_builder(dataset_name)
+    data_files = getattr(builder.config, "data_files", None)
+    if not data_files:
+        raise RuntimeError(f"Dataset '{dataset_name}' does not expose data_files metadata")
+
+    # Normalise split -> list[str]
+    split_files: Dict[str, list[str]] = {}
+    for split_name, files in data_files.items():
+        if isinstance(files, str):
+            split_files[split_name] = [files]
+        else:
+            split_files[split_name] = list(files)
+
+    fs = builder._fs  # type: ignore[attr-defined]
+    unioned_splits: Dict[str, Dataset] = {}
+
+    for split_name, file_list in split_files.items():
+        frames = []
+        for file_ref in file_list:
+            with fs.open(file_ref, "rb") as handle:  # type: ignore[attr-defined]
+                frame = pd.read_csv(handle)
+            if "Unnamed: 0" in frame.columns:
+                frame = frame.drop(columns=["Unnamed: 0"])
+            frames.append(frame)
+
+        if not frames:
+            continue
+
+        all_columns = sorted({col for frame in frames for col in frame.columns})
+        aligned_frames = []
+        for frame in frames:
+            missing_cols = [col for col in all_columns if col not in frame.columns]
+            if missing_cols:
+                for col in missing_cols:
+                    frame[col] = pd.NA
+            aligned_frames.append(frame[all_columns])
+
+        combined = pd.concat(aligned_frames, ignore_index=True)
+        unioned_splits[split_name] = Dataset.from_pandas(combined, preserve_index=False)
+
+    if not unioned_splits:
+        raise RuntimeError(f"No data could be loaded for dataset '{dataset_name}'")
+
+    return DatasetDict(unioned_splits)
 
 
 def map_rows_to_examples(

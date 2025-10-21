@@ -148,7 +148,10 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- CI (see `.github/workflows/ci.yml`) installs `development/requirements-dev.txt` and runs both scripts on push/PR.
+- `scripts/run-build-reports.sh` – rebuilds the KNN/XGB evaluation reports and uploads artifacts.
+- `scripts/run-clean-data-suite.sh` – end-to-end dataset cleaning plus prompt/political-science replicas.
+- Sphinx docs build (`sphinx-build -b html -n -W --keep-going docs docs/_build/html`) keeps the documentation green.
+- GitHub Actions (see `.github/workflows/`) install `development/requirements-dev.txt`, invoke these scripts, and publish docs/report artifacts on push and PRs. Full script descriptions live in `scripts/README.md`.
 
 Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
 

@@ -24,6 +24,9 @@ from .data import (
 )
 from .features import extract_slate_items
 from .model import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
     XGBoostBoosterParams,
     XGBoostSlateModel,
     XGBoostTrainConfig,
@@ -240,10 +243,30 @@ def _load_or_train_model(
             reg_lambda=args.xgb_reg_lambda,
             reg_alpha=args.xgb_reg_alpha,
         )
+        word2vec_model_dir = args.word2vec_model_dir
+        if word2vec_model_dir:
+            word2vec_model_dir = str(Path(word2vec_model_dir) / issue_slug)
         train_config = XGBoostTrainConfig(
             max_train=args.max_train,
             seed=args.seed,
             max_features=args.max_features if args.max_features else None,
+            vectorizer_kind=getattr(args, "text_vectorizer", "tfidf"),
+            tfidf=TfidfConfig(max_features=args.max_features if args.max_features else None),
+            word2vec=Word2VecVectorizerConfig(
+                vector_size=args.word2vec_size,
+                window=args.word2vec_window,
+                min_count=args.word2vec_min_count,
+                epochs=args.word2vec_epochs,
+                workers=args.word2vec_workers,
+                seed=args.seed,
+                model_dir=word2vec_model_dir,
+            ),
+            sentence_transformer=SentenceTransformerVectorizerConfig(
+                model_name=args.sentence_transformer_model,
+                device=args.sentence_transformer_device,
+                batch_size=args.sentence_transformer_batch_size,
+                normalize=args.sentence_transformer_normalize,
+            ),
             booster=booster_params,
         )
         model = fit_xgboost_model(

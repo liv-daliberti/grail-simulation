@@ -6,7 +6,7 @@ import argparse
 import json
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
@@ -24,6 +24,8 @@ LOGGER = logging.getLogger("xgb.pipeline")
 class SweepConfig:
     """Hyper-parameter configuration evaluated during sweeps."""
 
+    text_vectorizer: str
+    vectorizer_tag: str
     learning_rate: float
     max_depth: int
     n_estimators: int
@@ -31,15 +33,18 @@ class SweepConfig:
     colsample_bytree: float
     reg_lambda: float
     reg_alpha: float
+    vectorizer_cli: Tuple[str, ...] = field(default_factory=tuple)
 
     def label(self) -> str:
         """Filesystem-friendly label."""
 
-        return (
+        tag = self.vectorizer_tag or self.text_vectorizer
+        base = (
             f"lr{self.learning_rate:g}_depth{self.max_depth}_"
             f"estim{self.n_estimators}_sub{self.subsample:g}_"
             f"col{self.colsample_bytree:g}_l2{self.reg_lambda:g}_l1{self.reg_alpha:g}"
         ).replace(".", "p")
+        return f"{tag}_{base}"
 
     def booster_params(self, tree_method: str) -> XGBoostBoosterParams:
         """Convert the sweep config into :class:`XGBoostBoosterParams`."""
@@ -59,6 +64,8 @@ class SweepConfig:
         """Return CLI overrides encoding this configuration."""
 
         return [
+            "--text_vectorizer",
+            self.text_vectorizer,
             "--xgb_learning_rate",
             str(self.learning_rate),
             "--xgb_max_depth",
@@ -75,7 +82,7 @@ class SweepConfig:
             str(self.reg_lambda),
             "--xgb_reg_alpha",
             str(self.reg_alpha),
-        ]
+        ] + list(self.vectorizer_cli)
 
 
 @dataclass(frozen=True)

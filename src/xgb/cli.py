@@ -63,6 +63,76 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated additional columns appended to the prompt document.",
     )
     parser.add_argument(
+        "--text_vectorizer",
+        default="tfidf",
+        choices=["tfidf", "word2vec", "sentence_transformer"],
+        help="Feature extraction strategy for prompt documents.",
+    )
+    parser.add_argument(
+        "--word2vec_size",
+        type=int,
+        default=256,
+        help="Word2Vec vector dimensionality when using the word2vec feature space.",
+    )
+    parser.add_argument(
+        "--word2vec_window",
+        type=int,
+        default=5,
+        help="Window size used during Word2Vec training.",
+    )
+    parser.add_argument(
+        "--word2vec_min_count",
+        type=int,
+        default=2,
+        help="Minimum token frequency retained in the Word2Vec vocabulary.",
+    )
+    parser.add_argument(
+        "--word2vec_epochs",
+        type=int,
+        default=10,
+        help="Number of Word2Vec training epochs.",
+    )
+    parser.add_argument(
+        "--word2vec_workers",
+        type=int,
+        default=1,
+        help="Worker threads allocated to Word2Vec training.",
+    )
+    parser.add_argument(
+        "--word2vec_model_dir",
+        default="",
+        help="Directory to persist trained Word2Vec models (optional).",
+    )
+    parser.add_argument(
+        "--sentence_transformer_model",
+        default="sentence-transformers/all-mpnet-base-v2",
+        help="SentenceTransformer model identifier used when --text_vectorizer=sentence_transformer.",
+    )
+    parser.add_argument(
+        "--sentence_transformer_device",
+        default=None,
+        help="PyTorch device string passed to SentenceTransformer (e.g. cpu, cuda).",
+    )
+    parser.add_argument(
+        "--sentence_transformer_batch_size",
+        type=int,
+        default=32,
+        help="Batch size applied during sentence-transformer encoding.",
+    )
+    parser.add_argument(
+        "--sentence_transformer_normalize",
+        dest="sentence_transformer_normalize",
+        action="store_true",
+        help="L2-normalise sentence-transformer embeddings (default).",
+    )
+    parser.add_argument(
+        "--sentence_transformer_no_normalize",
+        dest="sentence_transformer_normalize",
+        action="store_false",
+        help="Disable L2-normalisation for sentence-transformer embeddings.",
+    )
+    parser.set_defaults(sentence_transformer_normalize=True)
+    parser.add_argument(
         "--xgb_learning_rate",
         type=float,
         default=0.1,

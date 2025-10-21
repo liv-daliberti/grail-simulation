@@ -40,6 +40,21 @@ Replication notes: opinion indices are scaled to [0, 1] and computed from the sa
 
 Pooled regression (control-adjusted) β̂ ≈ 0.018 with p ≈ 1.33e-11.
 
+#### Where we align
+
+- The mean pre-to-post opinion shifts are small (Δ ≈ +0.028, +0.036, +0.022 on a 0–1 index), matching the paper’s central conclusion that short-term exposure produced only modest attitude movement across Studies 1–3.
+- The replication covers the same filter-bubble experiments (Study 1 gun control on MTurk; Study 2 minimum wage on MTurk; Study 3 minimum wage on YouGov) and uses the identical two-wave design described in Liu et al. (2025, Fig. 1).
+- When stratified by ideology and seed, most cells cluster around zero and the detectable positives concentrate among conservative segments in Study 3—the same qualitative pattern highlighted in Liu et al. (2025, main text pp. 6–9).
+
+#### Where we differ (and why)
+
+- **Estimand:** The pooled contrast aggregates all participants (balanced 2/2 vs. slanted 3/1 arms) with baseline adjustment and study fixed effects, yielding β̂ ≈ +0.018 (p ≈ 1.3×10⁻¹¹). Liu et al. instead estimate separate contrasts for ideologues vs. moderates and, for moderates, by liberal versus conservative seed, then apply family-wise multiple-testing corrections. Mixing those heterogeneous cells can produce a non-zero pooled effect even when stratified effects move in opposing ideological directions.
+- **Study-level pattern:** In this aggregation Study 2 shows a noticeable treatment-control gap (−0.007 vs. +0.034). Liu et al.’s stratified Study 2 estimates sit near zero across ideology × seed cells, so their published plots do not flag Study 2 as a standout; the largest attitude shifts in the paper arise in Study 3.
+- **Inference emphasis:** The replication notes a precise pooled p-value, whereas Liu et al. focus on effect magnitudes, consistency across pre-registered cells, and minimum detectable effects (≈0.02–0.04) to argue that any short-term system effects are small even when statistically detectable.
+- **Sample coverage:** The cleaned analytic Ns are slightly smaller for Studies 1–2 (1,517 vs. 1,650; 1,607/1,647 vs. 1,679) because sessions missing slate metadata or lacking post-wave survey responses are excluded here. Those shortfalls can change the mix of ideology × seed cells and subtly affect pooled contrasts.
+
+These differences set up the preregistered stratified contrasts below, which mirror the published estimands and diagnostics so results can be compared cell-by-cell.
+
 ### Preregistered stratified contrasts
 
 Effects replicate the Liu et al. estimand: slanted (3/1) minus balanced (2/2) arm contrasts within each preregistered ideology-by-seed cell, estimated with the post-wave opinion regression that adjusts for the baseline index exactly as in the paper's appendix tables. Minimum detectable effects (MDE, 80% power) copy the design targets reported by Liu et al. for those cells, so the thresholds for a practically detectable shift are identical. q-values apply the same hierarchical false-discovery-rate procedure that the published analysis used within each outcome family, letting us match their multiple-comparisons adjustment one-for-one.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from typing import Any, List, Optional
 
 from .constants import LANGUAGE_FRIENDLY_NAMES
@@ -67,6 +68,7 @@ def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
     else:
         text = normalised.strip()
     text = " ".join(text.split())
+    text = re.sub(r",(?=[A-Za-z])", ", ", text)
     if not text:
         return ""
     if limit:

@@ -55,7 +55,18 @@ def clean_text(value: Any, *, limit: Optional[int] = None) -> str:
             return ""
         if value.is_integer():
             value = int(value)
-    text = str(value).strip()
+    raw_text = str(value)
+    normalised = raw_text.replace("\r\n", "\n").replace("\r", "\n")
+    if "\n" in normalised:
+        parts = [
+            segment.strip().rstrip(",;")
+            for segment in normalised.split("\n")
+            if segment.strip()
+        ]
+        text = ", ".join(part for part in parts if part)
+    else:
+        text = normalised.strip()
+    text = " ".join(text.split())
     if not text:
         return ""
     if limit:

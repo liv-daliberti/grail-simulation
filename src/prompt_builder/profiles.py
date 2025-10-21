@@ -78,6 +78,48 @@ POLITICS_FIELD_SPECS: Sequence[tuple[Sequence[str], str]] = (
     (("civic_participation", "volunteering", "civic_activity"), "Civic engagement"),
 )
 
+GUN_BOOLEAN_PHRASES: Dict[str, tuple[str, str]] = {
+    "right_to_own_importance": (
+        "considers the right to own a gun important",
+        "considers the right to own a gun unimportant",
+    ),
+    "assault_ban": (
+        "supports an assault weapons ban",
+        "opposes an assault weapons ban",
+    ),
+    "handgun_ban": (
+        "supports a handgun ban",
+        "opposes a handgun ban",
+    ),
+    "concealed_safe": (
+        "believes concealed carry is safe",
+        "believes concealed carry is unsafe",
+    ),
+    "stricter_laws": (
+        "supports stricter gun laws",
+        "opposes stricter gun laws",
+    ),
+    "gun_enthusiasm": (
+        "identifies as enthusiastic about guns",
+        "does not identify as enthusiastic about guns",
+    ),
+    "gun_importance": (
+        "considers gun policy important",
+        "does not consider gun policy important",
+    ),
+}
+
+GUN_METRIC_LABELS: Dict[str, str] = {
+    "gun_index": "a gun index score around {value}",
+    "gun_index_2": "an alternate gun index score around {value}",
+}
+
+GUN_GENERIC_LABELS: Dict[str, str] = {
+    "gun_priority": "gun policy priority is {value}",
+    "gun_policy": "gun policy stance is {value}",
+    "gun_identity": "gun identity is {value}",
+}
+
 
 @dataclass
 class ProfileRender:
@@ -824,12 +866,11 @@ def _gun_labeled_entries(
         value = _first_raw(ex, selected, key)
         if value is None:
             continue
-        known_keys.add(key.lower())
-        text = format_yes_no(value)
-        if text is None:
-            text = clean_text(value, limit=200)
-        if text:
-            entries.append(f"{label}: {text}")
+        lower_key = key.lower()
+        known_keys.add(lower_key)
+        phrase = _render_gun_phrase(lower_key, label, value)
+        if phrase:
+            entries.append(phrase)
     return entries, known_keys
 
 
@@ -848,13 +889,61 @@ def _gun_additional_entries(ex: Dict[str, Any], known_keys: set[str]) -> List[st
         value = ex.get(key)
         if is_nanlike(value):
             continue
-        text = clean_text(value, limit=200)
-        if not text:
+        phrase = _render_gun_phrase(lower, lower[4:].replace("_", " ").strip().title(), value)
+        if not phrase:
             continue
-        label = lower[4:].replace("_", " ").strip().capitalize()
-        if label:
-            entries.append(f"{label}: {text}")
+        entries.append(phrase)
     return entries
+
+
+def _render_gun_phrase(key: str, label: str, value: Any) -> Optional[str]:
+    """Return a natural-language phrase for a gun-policy field."""
+
+    yes_no = format_yes_no(value, yes="yes", no="no")
+    if yes_no in {"yes", "no"}:
+        phrase = _render_gun_boolean_phrase(key, yes_no == "yes")
+        if phrase:
+            return phrase
+    formatted = format_field_value(key, value) or clean_text(value, limit=200)
+    if not formatted:
+        return None
+    formatted = formatted.rstrip(".")
+    metric_phrase = _render_gun_metric_phrase(key, formatted)
+    if metric_phrase:
+        return metric_phrase
+    generic_phrase = _render_gun_generic_phrase(key, label, formatted)
+    if generic_phrase:
+        return generic_phrase
+    if yes_no:
+        return f"{label.lower()} is {yes_no}"
+    return f"{label.lower()} is {formatted}"
+
+
+def _render_gun_boolean_phrase(key: str, affirmative: bool) -> Optional[str]:
+    phrases = GUN_BOOLEAN_PHRASES.get(key)
+    if not phrases:
+        return None
+    yes_phrase, no_phrase = phrases
+    return yes_phrase if affirmative else no_phrase
+
+
+def _render_gun_metric_phrase(key: str, formatted: str) -> Optional[str]:
+    template = GUN_METRIC_LABELS.get(key)
+    if not template:
+        return None
+    return template.format(value=formatted)
+
+
+def _render_gun_generic_phrase(key: str, label: str, formatted: str) -> Optional[str]:
+    template = GUN_GENERIC_LABELS.get(key)
+    if template:
+        return template.format(value=formatted)
+    if key.startswith("gun_"):
+        cleaned_label = label.lower()
+        if cleaned_label.startswith("gun "):
+            cleaned_label = cleaned_label[4:]
+        return f"{cleaned_label} is {formatted}"
+    return None
 
 
 def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:

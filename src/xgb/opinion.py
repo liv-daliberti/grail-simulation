@@ -123,6 +123,8 @@ def float_or_none(value: Any) -> Optional[float]:
 
 
 def _vectorizer_available() -> None:
+    """Ensure optional scikit-learn and XGBoost dependencies are installed."""
+
     if TfidfVectorizer is None or mean_absolute_error is None:  # pragma: no cover
         raise ImportError("Install scikit-learn to run the XGBoost opinion pipeline.")
     if XGBRegressor is None:  # pragma: no cover
@@ -226,6 +228,8 @@ def _baseline_metrics(
     before: np.ndarray,
     after: np.ndarray,
 ) -> Dict[str, float]:
+    """Compute MAE/RMSE/R² when predicting ``after`` using ``before`` directly."""
+
     mae = float(mean_absolute_error(after, before))
     rmse = float(math.sqrt(mean_squared_error(after, before)))
     r2 = float(r2_score(after, before))
@@ -241,6 +245,8 @@ def _model_metrics(
     predictions: np.ndarray,
     after: np.ndarray,
 ) -> Dict[str, float]:
+    """Compute MAE/RMSE/R² comparing model ``predictions`` to ``after`` targets."""
+
     mae = float(mean_absolute_error(after, predictions))
     rmse = float(math.sqrt(mean_squared_error(after, predictions)))
     r2 = float(r2_score(after, predictions))
@@ -252,6 +258,8 @@ def _model_metrics(
 
 
 def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
+    """Return opinion study specifications matching ``tokens``."""
+
     if not tokens:
         return list(DEFAULT_SPECS)
     resolved: List[OpinionSpec] = []

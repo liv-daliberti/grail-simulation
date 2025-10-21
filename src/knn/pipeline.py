@@ -23,7 +23,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from knn.cli import build_parser
 from knn.data import DEFAULT_DATASET_SOURCE
@@ -189,6 +189,7 @@ class ReportBundle:
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
     opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     k_sweep: str
+    loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -725,6 +726,86 @@ def _run_opinion_evaluations(
 
 
 # ---------------------------------------------------------------------------
+# Cross-study evaluations
+# ---------------------------------------------------------------------------
+
+
+def _run_cross_study_evaluations(
+    *,
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
+    base_cli: Sequence[str],
+    extra_cli: Sequence[str],
+    out_dir: Path,
+    word2vec_model_dir: Path,
+) -> Dict[str, Dict[str, Mapping[str, object]]]:
+    """Run leave-one-study-out evaluations and return metrics grouped by feature space."""
+
+    cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    for feature_space, per_study in selections.items():
+        feature_metrics: Dict[str, Mapping[str, object]] = {}
+        feature_out_dir = _ensure_dir(out_dir / feature_space / "loso")
+        for study in studies:
+            selection = per_study.get(study.key)
+            if selection is None:
+                continue
+            train_studies = [spec.key for spec in studies if spec.key != study.key]
+            if not train_studies:
+                LOGGER.warning(
+                    "[LOSO] Skipping feature=%s holdout=%s (no alternate studies)",
+                    feature_space,
+                    study.key,
+                )
+                continue
+
+            model_dir = None
+            if feature_space == "word2vec":
+                model_dir = _ensure_dir(word2vec_model_dir / "loso" / study.study_slug)
+
+            holdout_out_dir = _ensure_dir(feature_out_dir / study.study_slug)
+            cli_args: List[str] = []
+            cli_args.extend(base_cli)
+            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
+            cli_args.extend(["--out-dir", str(holdout_out_dir)])
+            cli_args.extend(["--knn-k", str(selection.best_k)])
+            cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            cli_args.extend(["--eval-participant-studies", study.key])
+            cli_args.extend(["--train-issues", "all"])
+            cli_args.extend(["--eval-issues", study.issue])
+            cli_args.extend(extra_cli)
+
+            LOGGER.info(
+                "[LOSO] feature=%s holdout=%s train_studies=%s",
+                feature_space,
+                study.key,
+                ",".join(train_studies),
+            )
+            _run_knn_cli(cli_args)
+
+            issue_slug = _issue_slug_for_study(study)
+            try:
+                metrics, metrics_path = _load_metrics(holdout_out_dir, issue_slug)
+            except FileNotFoundError:
+                LOGGER.warning(
+                    "[LOSO] Missing metrics for feature=%s holdout=%s (expected slug=%s)",
+                    feature_space,
+                    study.key,
+                    issue_slug,
+                )
+                continue
+            feature_metrics[study.key] = metrics
+            LOGGER.info(
+                "[LOSO] feature=%s holdout=%s metrics=%s",
+                feature_space,
+                study.key,
+                metrics_path,
+            )
+        if feature_metrics:
+            cross_metrics[feature_space] = feature_metrics
+    return cross_metrics
+
+
+# ---------------------------------------------------------------------------
 # Report generation
 # ---------------------------------------------------------------------------
 
@@ -874,6 +955,8 @@ def _hyperparameter_opinion_section() -> List[str]:
 def _next_video_dataset_info(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
 ) -> Tuple[str, str]:
+    """Extract a representative dataset name and split from metrics payloads."""
+
     for per_feature in metrics_by_feature.values():
         for study_metrics in per_feature.values():
             dataset = study_metrics.get("dataset", DEFAULT_DATASET_SOURCE)
@@ -913,6 +996,19 @@ def _baseline_accuracy(data: Mapping[str, object]) -> float:
     return 0.0
 
 
+def _format_ci(ci_value: object) -> str:
+    """Format a 95% confidence interval if present."""
+
+    if not isinstance(ci_value, Mapping):
+        return "—"
+    try:
+        low = float(ci_value.get("low"))
+        high = float(ci_value.get("high"))
+    except (TypeError, ValueError):
+        return "—"
+    return f"[{low:.3f}, {high:.3f}]"
+
+
 def _next_video_feature_section(
     feature_space: str,
     metrics: Mapping[str, Mapping[str, object]],
@@ -936,6 +1032,41 @@ def _next_video_feature_section(
         best_k = int(data.get("best_k", 0))
         baseline_acc = _format_float(_baseline_accuracy(data))
         lines.append(f"| {study.label} | {accuracy} | {best_k} | {baseline_acc} |")
+    lines.append("")
+    return lines
+
+
+def _next_video_loso_section(
+    loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    """Render the leave-one-study-out summary table."""
+
+    lines: List[str] = [
+        "## Leave-One-Study-Out Evaluation",
+        "",
+        "| Feature space | Holdout study | Accuracy ↑ | 95% CI | Most-frequent baseline ↑ |",
+        "| --- | --- | ---: | --- | ---: |",
+    ]
+    for feature_space in ("tfidf", "word2vec"):
+        feature_data = loso_metrics.get(feature_space, {})
+        if not feature_data:
+            continue
+        for study in studies:
+            data = feature_data.get(study.key)
+            if not data:
+                continue
+            accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
+            baseline_acc = _format_float(_baseline_accuracy(data))
+            ci_text = _format_ci(data.get("accuracy_ci_95"))
+            lines.append(
+                f"| {feature_space.upper()} | {study.label} | {accuracy} | {ci_text} | {baseline_acc} |"
+            )
+    lines.append("")
+    lines.append(
+        "Holdout runs fit the index on participants from the remaining studies and evaluate on "
+        "the withheld study's validation rows."
+    )
     lines.append("")
     return lines
 
@@ -988,6 +1119,7 @@ def _build_next_video_report(
     output_path: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
+    loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
 ) -> None:
     """Compose the next-video evaluation report at ``output_path``."""
 
@@ -1001,6 +1133,8 @@ def _build_next_video_report(
         metrics = metrics_by_feature.get(feature_space, {})
         lines.extend(_next_video_feature_section(feature_space, metrics, studies))
     lines.extend(_next_video_observations(metrics_by_feature, studies))
+    if loso_metrics:
+        lines.extend(_next_video_loso_section(loso_metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -1065,6 +1199,8 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
 
 
 def _opinion_heatmap_section() -> List[str]:
+    """Return the Markdown section referencing opinion heatmaps."""
+
     return [
         "### Opinion Change Heatmaps",
         "",
@@ -1077,6 +1213,8 @@ def _best_opinion_space(
     tfidf_metrics: Mapping[str, object],
     word2vec_metrics: Mapping[str, object] | None,
 ) -> Tuple[str, float, int]:
+    """Return the feature space with the highest R² and corresponding stats."""
+
     tfidf_r2 = float(tfidf_metrics.get("best_metrics", {}).get("r2_after", 0.0))
     best_space = "TF-IDF"
     best_r2 = tfidf_r2
@@ -1094,6 +1232,8 @@ def _opinion_takeaways(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
+    """Generate takeaway bullets comparing opinion performance."""
+
     lines: List[str] = ["## Takeaways", ""]
     tfidf_metrics = metrics.get("tfidf")
     word2vec_metrics = metrics.get("word2vec")
@@ -1118,6 +1258,8 @@ def _build_opinion_report(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> None:
+    """Compose the opinion regression report at ``output_path``."""
+
     if not metrics:
         raise RuntimeError("No opinion metrics available to build the opinion report.")
 
@@ -1143,6 +1285,7 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
         output_path=reports_root / "next_video.md",
         metrics_by_feature=report_bundle.metrics_by_feature,
         studies=report_bundle.studies,
+        loso_metrics=report_bundle.loso_metrics,
     )
     _build_opinion_report(
         output_path=reports_root / "opinion" / "README.md",
@@ -1211,12 +1354,22 @@ def main(argv: Sequence[str] | None = None) -> None:
         word2vec_model_dir=context.word2vec_model_dir,
     )
 
+    loso_metrics = _run_cross_study_evaluations(
+        selections=selections,
+        studies=studies,
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        out_dir=context.out_dir,
+        word2vec_model_dir=context.word2vec_model_dir,
+    )
+
     report_bundle = ReportBundle(
         selections=selections,
         studies=studies,
         metrics_by_feature=slate_metrics,
         opinion_metrics=opinion_metrics,
         k_sweep=context.k_sweep,
+        loso_metrics=loso_metrics,
     )
     _generate_reports(root, report_bundle)
 

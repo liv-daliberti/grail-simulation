@@ -191,6 +191,8 @@ STATE_FIPS_MAP = {
 
 
 def _normalize_state_code(raw: str) -> Optional[str]:
+    """Normalise a state FIPS code to a two-digit string."""
+
     text = raw.strip()
     if not text:
         return None
@@ -206,6 +208,8 @@ def _normalize_state_code(raw: str) -> Optional[str]:
 
 
 def _format_percentage(value: float, *, precision: int = 0) -> str:
+    """Return a percentage string with bounded input and optional precision."""
+
     percent = max(0.0, min(100.0, value * 100.0))
     fmt = f"{{percent:.{precision}f}}%".format(percent=percent)
     if fmt.endswith(".0%"):
@@ -214,12 +218,16 @@ def _format_percentage(value: float, *, precision: int = 0) -> str:
 
 
 def _format_scale_percentage(raw: float) -> str:
+    """Render a 0-100 scale value as an integer percentage string."""
+
     clamped = max(0.0, min(100.0, raw))
     formatted = f"{clamped:.0f}%"
     return formatted
 
 
 def _format_currency(raw: float) -> str:
+    """Return a currency string with thousands separators."""
+
     if math.isnan(raw):
         return ""
     if raw.is_integer():
@@ -357,6 +365,8 @@ GUN_IMPORTANCE_FIELDS = {"gun_importance", "gun_priority"}
 
 
 def _as_float(value: Any) -> Optional[float]:
+    """Best-effort conversion of ``value`` to ``float``."""
+
     try:
         return float(str(value).strip())
     except (TypeError, ValueError):
@@ -364,6 +374,8 @@ def _as_float(value: Any) -> Optional[float]:
 
 
 def _format_ideology(raw: Any) -> Optional[str]:
+    """Return a qualitative ideology label from numeric or textual inputs."""
+
     numeric = _as_float(raw)
     if numeric is None:
         text = str(raw).strip()
@@ -385,6 +397,8 @@ def _format_ideology(raw: Any) -> Optional[str]:
 
 
 def _format_news_minutes(raw: Any) -> Optional[str]:
+    """Normalise self-reported news minutes/hours into a descriptive string."""
+
     numeric = _as_float(raw)
     if numeric is None:
         text = str(raw).strip()
@@ -411,6 +425,8 @@ CUSTOM_FIELD_RENDERERS: Dict[str, Callable[[Any], Optional[str]]] = {
 
 
 def _format_percentage_field(value: Any, precision: int = 0) -> Optional[str]:
+    """Format a percentage-like field while handling 0-1 and 0-100 scales."""
+
     numeric = _as_float(value)
     if numeric is None:
         return None
@@ -420,6 +436,8 @@ def _format_percentage_field(value: Any, precision: int = 0) -> Optional[str]:
 
 
 def _format_currency_field(value: Any) -> Optional[str]:
+    """Format a currency-like field preserving existing dollar strings."""
+
     numeric = _as_float(value)
     if numeric is None:
         text = str(value).strip()
@@ -430,6 +448,8 @@ def _format_currency_field(value: Any) -> Optional[str]:
 
 
 def _format_state(field: str, value: Any) -> Optional[str]:
+    """Map a state code to its canonical label when possible."""
+
     text = str(value).strip()
     if not text:
         return None

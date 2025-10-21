@@ -928,6 +928,8 @@ def _render_gun_phrase(key: str, label: str, value: Any) -> Optional[str]:
 
 
 def _render_gun_boolean_phrase(key: str, affirmative: bool) -> Optional[str]:
+    """Return the canned yes/no phrase for ``key`` when available."""
+
     phrases = GUN_BOOLEAN_PHRASES.get(key)
     if not phrases:
         return None
@@ -936,6 +938,8 @@ def _render_gun_boolean_phrase(key: str, affirmative: bool) -> Optional[str]:
 
 
 def _render_gun_metric_phrase(key: str, formatted: str) -> Optional[str]:
+    """Return the metric-oriented phrase for ``key`` if a template exists."""
+
     template = GUN_METRIC_LABELS.get(key)
     if not template:
         return None
@@ -943,6 +947,8 @@ def _render_gun_metric_phrase(key: str, formatted: str) -> Optional[str]:
 
 
 def _render_gun_generic_phrase(key: str, label: str, formatted: str) -> Optional[str]:
+    """Fallback renderer for gun-policy fields without specialised templates."""
+
     template = GUN_GENERIC_LABELS.get(key)
     if template:
         return template.format(value=formatted)

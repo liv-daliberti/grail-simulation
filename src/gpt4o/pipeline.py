@@ -464,6 +464,8 @@ def _write_reports(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """Execute sweeps, selection, final evaluation, and report regeneration."""
+
     args, extra_cli = _parse_args(argv)
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper(), logging.INFO),

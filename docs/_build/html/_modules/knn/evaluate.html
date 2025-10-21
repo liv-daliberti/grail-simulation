@@ -285,8 +285,6 @@
     <span class="n">EVAL_SPLIT</span><span class="p">,</span>
     <span class="n">SOLUTION_COLUMN</span><span class="p">,</span>
     <span class="n">TRAIN_SPLIT</span><span class="p">,</span>
-    <span class="n">filter_dataset_for_issue</span><span class="p">,</span>
-    <span class="n">filter_dataset_for_participant_studies</span><span class="p">,</span>
     <span class="n">filter_split_for_participant_studies</span><span class="p">,</span>
     <span class="n">issues_in_dataset</span><span class="p">,</span>
     <span class="n">load_dataset_source</span><span class="p">,</span>
@@ -812,54 +810,117 @@
     <span class="n">base_ds</span> <span class="o">=</span> <span class="n">load_dataset_source</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
     <span class="n">available_issues</span> <span class="o">=</span> <span class="n">issues_in_dataset</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
 
-    <span class="n">raw_participant_studies</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">participant_filters</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw_participant_studies</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="p">]</span>
+    <span class="n">issue_lookup</span> <span class="o">=</span> <span class="p">{</span><span class="n">issue</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">issue</span> <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">available_issues</span><span class="p">}</span>
 
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">:</span>
-        <span class="n">requested</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="p">]</span>
-        <span class="n">issues</span> <span class="o">=</span> <span class="n">requested</span> <span class="k">if</span> <span class="n">requested</span> <span class="k">else</span> <span class="n">available_issues</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">issues</span> <span class="o">=</span> <span class="n">available_issues</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_issue_list</span><span class="p">(</span><span class="n">tokens</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fallback</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">available_issues</span><span class="p">)</span>
+        <span class="n">resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="n">lookup</span> <span class="o">=</span> <span class="n">issue_lookup</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">lookup</span><span class="p">:</span>
+                <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lookup</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[KNN] Unknown issue token &#39;</span><span class="si">%s</span><span class="s2">&#39;; skipping.&quot;</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolved</span> <span class="ow">or</span> <span class="nb">list</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
+
+    <span class="n">joint_issue_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="n">eval_issue_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;eval_issues&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">joint_issue_tokens</span>
+    <span class="n">train_issue_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;train_issues&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+
+    <span class="n">issues</span> <span class="o">=</span> <span class="n">_resolve_issue_list</span><span class="p">(</span><span class="n">eval_issue_tokens</span><span class="p">,</span> <span class="n">available_issues</span><span class="p">)</span>
+
+    <span class="n">joint_study_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="n">train_study_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;train_participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">joint_study_tokens</span>
+    <span class="n">eval_study_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;eval_participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">joint_study_tokens</span>
 
     <span class="n">k_values</span> <span class="o">=</span> <span class="n">parse_k_values</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">knn_k</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">knn_k_sweep</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Evaluating k values: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">k_values</span><span class="p">)</span>
 
+    <span class="n">base_provenance</span> <span class="o">=</span> <span class="n">_collect_dataset_provenance</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
+    <span class="n">repo_state</span> <span class="o">=</span> <span class="n">_collect_repo_state</span><span class="p">()</span>
+
+    <span class="n">train_split</span> <span class="o">=</span> <span class="n">base_ds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TRAIN_SPLIT</span><span class="p">)</span>
+    <span class="n">eval_split</span> <span class="o">=</span> <span class="n">base_ds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">EVAL_SPLIT</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_split</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">eval_split</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset_source</span><span class="si">}</span><span class="s2">&#39; must expose &#39;</span><span class="si">{</span><span class="n">TRAIN_SPLIT</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">&#39; splits.&quot;</span><span class="p">)</span>
+
     <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
         <span class="n">base_issue_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_issue</span><span class="p">(</span><span class="n">base_ds</span><span class="p">,</span> <span class="n">issue</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">participant_filters</span><span class="p">:</span>
-            <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_participant_studies</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">participant_filters</span><span class="p">)</span>
-            <span class="n">train_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span>
-            <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;[KNN] Skipping issue=</span><span class="si">%s</span><span class="s2"> (no rows after participant_study filter: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
-                    <span class="n">base_issue_slug</span><span class="p">,</span>
-                    <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">participant_filters</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="n">suffix_parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">seen_suffix</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">participant_filters</span><span class="p">:</span>
-                <span class="n">slug</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">slug</span> <span class="ow">and</span> <span class="n">slug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_suffix</span><span class="p">:</span>
-                    <span class="n">suffix_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-                    <span class="n">seen_suffix</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-            <span class="n">issue_slug</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">suffix_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">suffix_parts</span> <span class="k">else</span> <span class="n">base_issue_slug</span>
+        <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">base_issue_slug</span>
+
+        <span class="n">current_train_issues</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_resolve_issue_list</span><span class="p">(</span><span class="n">train_issue_tokens</span><span class="p">,</span> <span class="n">available_issues</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">train_issue_tokens</span>
+            <span class="k">else</span> <span class="p">([</span><span class="n">issue</span><span class="p">]</span> <span class="k">if</span> <span class="n">issue</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span> <span class="k">else</span> <span class="p">[])</span>
+        <span class="p">)</span>
+
+        <span class="n">filtered_train</span> <span class="o">=</span> <span class="n">train_split</span>
+        <span class="k">if</span> <span class="n">current_train_issues</span><span class="p">:</span>
+            <span class="n">filtered_train</span> <span class="o">=</span> <span class="n">_filter_split_for_issues</span><span class="p">(</span><span class="n">filtered_train</span><span class="p">,</span> <span class="n">current_train_issues</span><span class="p">)</span>
+        <span class="n">filtered_eval</span> <span class="o">=</span> <span class="n">eval_split</span>
+        <span class="k">if</span> <span class="n">issue</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="n">filtered_eval</span> <span class="o">=</span> <span class="n">_filter_split_for_issues</span><span class="p">(</span><span class="n">filtered_eval</span><span class="p">,</span> <span class="p">[</span><span class="n">issue</span><span class="p">])</span>
+
+        <span class="n">filtered_train</span> <span class="o">=</span> <span class="n">filter_split_for_participant_studies</span><span class="p">(</span><span class="n">filtered_train</span><span class="p">,</span> <span class="n">train_study_tokens</span><span class="p">)</span>
+        <span class="n">filtered_eval</span> <span class="o">=</span> <span class="n">filter_split_for_participant_studies</span><span class="p">(</span><span class="n">filtered_eval</span><span class="p">,</span> <span class="n">eval_study_tokens</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_eval</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;[KNN] Skipping issue=</span><span class="si">%s</span><span class="s2"> (no evaluation rows after filters: eval_studies=</span><span class="si">%s</span><span class="s2"> eval_issue=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="n">base_issue_slug</span><span class="p">,</span>
+                <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">eval_study_tokens</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+                <span class="n">issue</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">train_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span>
-            <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">]</span>
-            <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">base_issue_slug</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_index</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_train</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;[KNN] Skipping issue=</span><span class="si">%s</span><span class="s2"> (no training rows after filters and --fit-index enabled)&quot;</span><span class="p">,</span>
+                <span class="n">base_issue_slug</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">suffix_parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_suffix</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">eval_study_tokens</span><span class="p">:</span>
+            <span class="n">slug</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">slug</span> <span class="ow">and</span> <span class="n">slug</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span> <span class="ow">and</span> <span class="n">slug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_suffix</span><span class="p">:</span>
+                <span class="n">suffix_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
+                <span class="n">seen_suffix</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">suffix_parts</span><span class="p">:</span>
+            <span class="n">issue_slug</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">suffix_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">active_provenance</span> <span class="o">=</span> <span class="n">_collect_dataset_provenance</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">TRAIN_SPLIT</span><span class="p">:</span> <span class="n">filtered_train</span><span class="p">,</span>
+                <span class="n">EVAL_SPLIT</span><span class="p">:</span> <span class="n">filtered_eval</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;[KNN] issue=</span><span class="si">%s</span><span class="s2"> train_rows=</span><span class="si">%d</span><span class="s2"> eval_rows=</span><span class="si">%d</span><span class="s2"> train_studies=</span><span class="si">%s</span><span class="s2"> eval_studies=</span><span class="si">%s</span><span class="s2"> train_issues=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">issue_slug</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">filtered_train</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">filtered_eval</span><span class="p">),</span>
+            <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">train_study_tokens</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">eval_study_tokens</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_train_issues</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;(inherit:&quot;</span> <span class="o">+</span> <span class="n">issue</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">provenance</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">dataset_source</span><span class="p">,</span>
+                <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="n">base_provenance</span><span class="p">,</span>
+                <span class="s2">&quot;active&quot;</span><span class="p">:</span> <span class="n">active_provenance</span><span class="p">,</span>
+                <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;train_issues&quot;</span><span class="p">:</span> <span class="n">current_train_issues</span><span class="p">,</span>
+                    <span class="s2">&quot;eval_issue&quot;</span><span class="p">:</span> <span class="n">issue</span><span class="p">,</span>
+                    <span class="s2">&quot;train_participant_studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">train_study_tokens</span><span class="p">),</span>
+                    <span class="s2">&quot;eval_participant_studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">eval_study_tokens</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">repo_state</span><span class="p">,</span>
+        <span class="p">}</span>
 
         <span class="n">extra_fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -867,7 +928,7 @@
             <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">]</span>
         <span class="n">knn_index</span> <span class="o">=</span> <span class="n">_build_or_load_index</span><span class="p">(</span>
-            <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">train_ds</span><span class="o">=</span><span class="n">filtered_train</span><span class="p">,</span>
             <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
@@ -877,13 +938,14 @@
         <span class="n">evaluate_issue</span><span class="p">(</span>
             <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
             <span class="n">dataset_source</span><span class="o">=</span><span class="n">dataset_source</span><span class="p">,</span>
-            <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
-            <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
+            <span class="n">train_ds</span><span class="o">=</span><span class="n">filtered_train</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_train</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">eval_ds</span><span class="o">=</span><span class="n">filtered_eval</span><span class="p">,</span>
             <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
             <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
             <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

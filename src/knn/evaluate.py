@@ -66,6 +66,8 @@ def _collect_repo_state() -> Dict[str, Any]:
     repo_root = Path(__file__).resolve().parents[2]
 
     def _run_git(args: Sequence[str]) -> Optional[str]:
+        """Run ``git`` with ``args`` and return stdout when successful."""
+
         try:
             result = subprocess.run(
                 ["git", *args],
@@ -103,6 +105,8 @@ def _filter_split_for_issues(split_ds, issues: Sequence[str]):
         return split_ds
 
     def _match_issue(row: Mapping[str, Any]) -> bool:
+        """Return ``True`` when the row's issue matches the normalized filter set."""
+
         value = row.get("issue")
         return str(value).strip().lower() in normalized
 
@@ -542,6 +546,8 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
     issue_lookup = {issue.lower(): issue for issue in available_issues}
 
     def _resolve_issue_list(tokens: List[str], fallback: Sequence[str]) -> List[str]:
+        """Normalise user-provided issue tokens against available issues."""
+
         if not tokens:
             return list(fallback)
         if any(token.lower() == "all" for token in tokens):

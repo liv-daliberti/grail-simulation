@@ -30,6 +30,11 @@ cleanup_tmp() { rm -f "$ACCEL_CONFIG_TMP"; }
 trap cleanup_tmp EXIT
 cp "$ACCEL_CONFIG" "$ACCEL_CONFIG_TMP"
 
+GIT_COMMIT=$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
+GIT_STATUS=$(git -C "$ROOT_DIR" status --short --branch 2>/dev/null || echo "")
+export GIT_COMMIT
+export GIT_STATUS
+
 # ────────────────────────────────────────────────────────────────
 # Environment bootstrap (modules / Conda)
 # ────────────────────────────────────────────────────────────────
@@ -221,10 +226,71 @@ done
 # Launch training on the remaining GPUs
 export CUDA_VISIBLE_DEVICES="$TRAINING_GPUS"
 TRAIN_EXIT=0
-accelerate launch --main_process_port $MAIN_PORT --config_file "$ACCEL_CONFIG_TMP" \
-  "$MAIN_SCRIPT" --config "$CONFIG" --use_vllm \
-  --run_name "${RUN_NAME}-${TIMESTAMP}" --ignore_data_skip --seed 42 \
-  >"$TRAINING_LOG" 2>&1 || TRAIN_EXIT=\$?
+{
+  echo "[provenance] git_commit=$GIT_COMMIT"
+  if [ -n "$GIT_STATUS" ]; then
+    printf '[provenance] git_status\n%s\n' "$GIT_STATUS"
+  fi
+  python - <<'PY'
+import json
+import os
+from pathlib import Path
+
+info = {
+    "config_path": os.environ.get("CONFIG"),
+    "dataset_name": None,
+    "dataset_revision": None,
+    "splits": {},
+}
+
+try:
+    import yaml  # type: ignore
+except Exception as exc:  # pragma: no cover - logging only
+    info["config_error"] = f"pyyaml_import_failed: {exc}"
+    yaml = None
+
+config_path = info["config_path"]
+if config_path and yaml is not None and Path(config_path).exists():
+    try:
+        with open(config_path, "r", encoding="utf-8") as handle:
+            cfg = yaml.safe_load(handle) or {}
+        info["dataset_name"] = cfg.get("dataset_name")
+    except Exception as exc:  # pragma: no cover - logging only
+        info["config_error"] = f"load_failed: {exc}"
+
+dataset_name = info.get("dataset_name")
+try:
+    from datasets import load_dataset, load_from_disk  # type: ignore
+except Exception as exc:  # pragma: no cover - logging only
+    info["dataset_error"] = f"datasets_import_failed: {exc}"
+else:
+    if dataset_name:
+        ds_path = Path(dataset_name).expanduser()
+        try:
+            ds = load_from_disk(str(ds_path)) if ds_path.exists() else load_dataset(dataset_name)
+        except Exception as exc:  # pragma: no cover - logging only
+            info["dataset_error"] = f"load_failed: {exc}"
+        else:
+            for split_name, split_ds in ds.items():
+                split_info = {
+                    "num_rows": len(split_ds),
+                    "fingerprint": getattr(split_ds, "_fingerprint", None),
+                }
+                details = getattr(split_ds, "info", None)
+                if details:
+                    revision = getattr(details, "dataset_revision", None)
+                    if revision:
+                        split_info["dataset_revision"] = revision
+                        info["dataset_revision"] = info.get("dataset_revision") or revision
+                info["splits"][split_name] = split_info
+
+print("[provenance] dataset=" + json.dumps(info, default=str))
+PY
+  accelerate launch --main_process_port $MAIN_PORT --config_file "$ACCEL_CONFIG_TMP" \
+    "$MAIN_SCRIPT" --config "$CONFIG" --use_vllm \
+    --run_name "${RUN_NAME}-${TIMESTAMP}" --ignore_data_skip --seed 42
+} 2>&1 | tee "$TRAINING_LOG"
+TRAIN_EXIT=\${PIPESTATUS[0]}
 
 kill "\$VLLM_PID" >/dev/null 2>&1 || true
 wait "\$VLLM_PID" 2>/dev/null || true

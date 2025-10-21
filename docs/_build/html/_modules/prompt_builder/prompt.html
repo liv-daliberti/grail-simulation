@@ -479,6 +479,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_looks_like_gender_fragment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the fragment appears to describe gender.&quot;&quot;&quot;</span>
+
     <span class="n">lowered</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">gender_keywords</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;man&quot;</span><span class="p">,</span>
@@ -493,6 +495,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_looks_like_race_fragment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the fragment appears to describe race/ethnicity.&quot;&quot;&quot;</span>
+
     <span class="n">lowered</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">race_keywords</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;white&quot;</span><span class="p">,</span>
@@ -761,6 +765,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_int_to_words</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert ``number`` (0-999) into its hyphenated English representation.&quot;&quot;&quot;</span>
+
     <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="mi">999</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
@@ -786,6 +792,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_percentage_to_words</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a percentage string into an approximate verbal description.&quot;&quot;&quot;</span>
+
     <span class="n">text</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>

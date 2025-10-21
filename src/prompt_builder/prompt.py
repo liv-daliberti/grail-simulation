@@ -222,6 +222,8 @@ def _normalize_viewer_fragments(raw: str) -> List[str]:
 
 
 def _looks_like_gender_fragment(text: str) -> bool:
+    """Return ``True`` when the fragment appears to describe gender."""
+
     lowered = text.lower()
     gender_keywords = [
         "man",
@@ -236,6 +238,8 @@ def _looks_like_gender_fragment(text: str) -> bool:
 
 
 def _looks_like_race_fragment(text: str) -> bool:
+    """Return ``True`` when the fragment appears to describe race/ethnicity."""
+
     lowered = text.lower()
     race_keywords = [
         "white",
@@ -504,6 +508,8 @@ _TENS: dict[int, str] = {
 
 
 def _int_to_words(number: int) -> Optional[str]:
+    """Convert ``number`` (0-999) into its hyphenated English representation."""
+
     if number < 0 or number > 999:
         return None
     if number < 20:
@@ -529,6 +535,8 @@ def _int_to_words(number: int) -> Optional[str]:
 
 
 def _percentage_to_words(value: str) -> Optional[str]:
+    """Convert a percentage string into an approximate verbal description."""
+
     text = value.strip()
     if not text.endswith("%"):
         return None
@@ -755,6 +763,8 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
     """Return a summary line covering likes, comments, and shares."""
 
     def first_present(source: Dict[str, Any], keys: Sequence[str]) -> Any:
+        """Return the first non-missing value from ``source`` matching ``keys``."""
+
         for key in keys:
             if key not in source:
                 continue

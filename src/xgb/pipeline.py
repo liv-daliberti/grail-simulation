@@ -42,6 +42,8 @@ class SweepConfig:
         ).replace(".", "p")
 
     def booster_params(self, tree_method: str) -> XGBoostBoosterParams:
+        """Convert the sweep config into :class:`XGBoostBoosterParams`."""
+
         return XGBoostBoosterParams(
             learning_rate=self.learning_rate,
             max_depth=self.max_depth,
@@ -54,6 +56,8 @@ class SweepConfig:
         )
 
     def cli_args(self, tree_method: str) -> List[str]:
+        """Return CLI overrides encoding this configuration."""
+
         return [
             "--xgb_learning_rate",
             str(self.learning_rate),
@@ -83,6 +87,8 @@ class IssueSpec:
 
     @property
     def slug(self) -> str:
+        """Return a filesystem-safe slug for this issue."""
+
         return self.name.replace(" ", "_")
 
 
@@ -108,6 +114,8 @@ class IssueSelection:
 
     @property
     def config(self) -> SweepConfig:
+        """Return the selected sweep configuration for this issue."""
+
         return self.outcome.config
 
 
@@ -429,6 +437,8 @@ def _run_sweeps(
 
 
 def _select_best_configs(outcomes: Sequence[SweepOutcome]) -> Dict[str, IssueSelection]:
+    """Pick the best configuration per issue using accuracy, coverage, and support."""
+
     selections: Dict[str, IssueSelection] = {}
 
     for outcome in outcomes:
@@ -544,6 +554,8 @@ def _run_opinion_stage(
 
 
 def _format_float(value: float) -> str:
+    """Format a floating-point metric with three decimal places."""
+
     return f"{value:.3f}"
 
 

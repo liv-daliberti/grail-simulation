@@ -54,31 +54,29 @@ def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
 
     show_ids = os.getenv("GRAIL_SHOW_IDS", "0") == "1"
     profile = render_profile(ex)
-    paragraphs: List[str] = []
+    sections: List[str] = []
 
     profile_paragraph = _profile_paragraph(profile)
     if profile_paragraph:
-        paragraphs.append(profile_paragraph)
+        sections.append(f"PROFILE:\n{profile_paragraph}")
 
-    context_sentences: List[str] = []
     current_sentence = _current_video_sentence(ex, show_ids)
     if current_sentence:
-        context_sentences.append(current_sentence)
-    history_sentence = _history_sentence(ex, show_ids, max_hist)
-    if history_sentence:
-        context_sentences.append(history_sentence)
-    if context_sentences:
-        paragraphs.append(" ".join(context_sentences))
+        sections.append(f"CURRENT VIDEO:\n{current_sentence}")
+
+    history_block = _history_block(ex, show_ids, max_hist)
+    if history_block:
+        sections.append(history_block)
 
     survey_sentence = _survey_highlights(ex)
     if survey_sentence:
-        paragraphs.append(survey_sentence)
+        sections.append(survey_sentence)
 
     options_block = _options_block(ex, show_ids)
     if options_block:
-        paragraphs.append(options_block)
+        sections.append(options_block)
 
-    return "\n\n".join(paragraphs).strip()
+    return "\n\n".join(sections).strip()
 
 
 def _profile_paragraph(profile: ProfileRender) -> str:
@@ -139,6 +137,26 @@ def _history_sentence(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
         plural = "videos" if remaining > 1 else "video"
         sentence += f" (+{remaining} more {plural})"
     return sentence
+
+
+def _history_block(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> str:
+    """Return the watch-history section with heading and per-video lines."""
+
+    prior_entries = _prior_entries(ex)
+    if not prior_entries:
+        return "RECENTLY WATCHED (NEWEST LAST):\n(no recently watched videos available)"
+    limit = max_hist if max_hist and max_hist > 0 else len(prior_entries)
+    recent = prior_entries[-limit:]
+    descriptors: List[str] = []
+    for record in recent:
+        if not isinstance(record, dict):
+            continue
+        descriptor = _watched_descriptor(record, show_ids)
+        if descriptor:
+            descriptors.append(descriptor)
+    if not descriptors:
+        return "RECENTLY WATCHED (NEWEST LAST):\n(no recently watched videos available)"
+    return "RECENTLY WATCHED (NEWEST LAST):\n" + "\n".join(descriptors)
 
 
 SURVEY_HIGHLIGHT_SPECS: Sequence[tuple[str, str]] = (

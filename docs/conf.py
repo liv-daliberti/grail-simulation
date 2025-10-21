@@ -222,6 +222,7 @@ _nitpick_targets = {
         "datasets.DatasetDict",
         "distilabel.pipeline.Pipeline",
         "graphviz.Digraph",
+        "logging.Logger",
         "knn.index.SlateQueryConfig",
         "numpy.ndarray",
         "openai.AzureOpenAI",

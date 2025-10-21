@@ -12,9 +12,13 @@ from numpy.random import default_rng
 
 from common import canon_text, canon_video_id, get_logger
 from common.title_index import TitleResolver
-from prompt_builder import build_user_prompt, clean_text, synthesize_viewer_sentence
-from prompt_builder.constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS
-from prompt_builder.value_maps import format_field_value
+from prompt_builder import (
+    build_user_prompt,
+    clean_text,
+    synthesize_viewer_sentence,
+    constants as prompt_constants,
+    value_maps as prompt_value_maps,
+)
 
 TitleLookup = Callable[[Optional[str]], Optional[str]]
 
@@ -46,8 +50,8 @@ EXTRA_FIELD_LABELS: Dict[str, str] = {
     "q31": "Household income",
     "income": "Household income",
 }
-EXTRA_FIELD_LABELS.update(MIN_WAGE_FIELD_LABELS)
-EXTRA_FIELD_LABELS.update(GUN_FIELD_LABELS)
+EXTRA_FIELD_LABELS.update(prompt_constants.MIN_WAGE_FIELD_LABELS)
+EXTRA_FIELD_LABELS.update(prompt_constants.GUN_FIELD_LABELS)
 
 _default_title_resolver_cache: Optional[TitleResolver] = None
 
@@ -290,7 +294,7 @@ def _format_extra_field(example: dict, field_name: str) -> str:
     """Return a labelled, human-readable representation of an extra field."""
 
     value = example.get(field_name)
-    formatted = format_field_value(field_name, value)
+    formatted = prompt_value_maps.format_field_value(field_name, value)
     if not formatted:
         return ""
     label = EXTRA_FIELD_LABELS.get(field_name)

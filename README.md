@@ -63,6 +63,8 @@ cd ../data
 curl -fL --retry 5 --retry-all-errors -o capsule-5416997-data.zip 'https://codeocean-temp.s3.amazonaws.com/.../data.zip'
 ```
 
+If you want the exact snapshot used in this repository without re-running the capsule export, pull it directly from Hugging Face: <https://huggingface.co/datasets/od2961/grail-codeocean-raw>.
+
 The Python builder consumes the intermediate CSV/RDS exports from these folders, reproducing the same attention checks and control-arm drops as the R scripts; the optional `dedupe_by_participant_issue` helper matches the original deduplication when you need that projection.
 
 See [reports/research_article_political_sciences/README.md](reports/research_article_political_sciences/README.md) for the replication report that shows the pipeline mirrors the PNAS capsule while tracing the per-participant delta movement we model for individual-level prediction.

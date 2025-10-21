@@ -1,0 +1,43 @@
+name: Build Reports
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-reports:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: development/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r development/requirements-dev.txt
+
+      - name: Build reports
+        env:
+          REPORTS_DATASET: ${{ secrets.REPORTS_DATASET }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: scripts/run-build-reports.sh
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: grail-reports
+          path: |
+            reports
+            models/knn
+            models/xgb
+          if-no-files-found: warn

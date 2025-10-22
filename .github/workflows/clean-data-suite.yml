@@ -15,6 +15,7 @@ jobs:
       GRAIL_SOURCE_DATASET: ${{ secrets.GRAIL_SOURCE_DATASET }}
       GRAIL_ISSUE_REPOS: ${{ secrets.GRAIL_ISSUE_REPOS }}
       GRAIL_PUSH_TO_HUB: ${{ secrets.GRAIL_PUSH_TO_HUB }}
+      GRAIL_SOL_KEY: ${{ secrets.GRAIL_SOL_KEY }}
 
     steps:
       - name: Check out repository
@@ -31,6 +32,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r development/requirements-dev.txt
+
+      - name: Inspect source dataset schema
+        run: python scripts/check_clean_data_source.py
 
       - name: Run clean data suite
         run: scripts/run-clean-data-suite.sh

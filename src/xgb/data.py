@@ -10,6 +10,8 @@ from knn.data import (  # Re-export shared dataset utilities
     SOLUTION_COLUMN,
     TRAIN_SPLIT,
     filter_dataset_for_issue,
+    filter_dataset_for_participant_studies,
+    filter_split_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
@@ -22,6 +24,8 @@ __all__ = [
     "SOLUTION_COLUMN",
     "TRAIN_SPLIT",
     "filter_dataset_for_issue",
+    "filter_dataset_for_participant_studies",
+    "filter_split_for_participant_studies",
     "issues_in_dataset",
     "load_dataset_source",
 ]

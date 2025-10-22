@@ -38,7 +38,7 @@ python -m xgb.cli \
 python -m xgb.cli \
   --load_model models/xgb/checkpoints \
   --out_dir models/xgb/eval \
-  --issues minimum_wage,gun_control
+  --participant-studies study1,study2,study3
 ```
 
 CLI arguments cover common experimentation knobs:
@@ -57,14 +57,15 @@ See `python -m xgb.cli --help` for the full list.
 baseline:
 
 1. Hyper-parameter sweep across learning rate, depth, estimators, and regularizers.
-2. Selection of the best configuration per issue and re-running the final slate
-   evaluation (optionally exporting checkpoints).
+2. Selection of the best configuration per participant study (study1/2/3) and
+   re-running the final slate evaluation (optionally exporting checkpoints).
 3. Opinion-index regression with `xgb.opinion` that reuses the selected slate
    hyper-parameters.
 4. Generation of Markdown summaries under `reports/xgb/`.
 
-The pipeline underpins `training/training-xgb.sh`. Toggle the sweep grid or
-stages with environment variables (e.g. `XGB_LEARNING_RATE_GRID`,
+The pipeline underpins `training/training-xgb.sh`, which auto-submits the SLURM
+array + finalize jobs when run outside SLURM. Toggle the sweep grid or stages
+with environment variables (e.g. `XGB_LEARNING_RATE_GRID`,
 `OPINION_MAX_PARTICIPANTS`) before invoking the script.
 
 ## Implementation notes

@@ -36,10 +36,41 @@ fi
 
 mkdir -p "${OUTPUT_DIR}" "${PROMPT_STATS_DIR}" "${RESEARCH_REPORT_DIR}"
 
+CLEAN_NUM_CPUS=1
+if command -v nproc >/dev/null 2>&1; then
+  CLEAN_NUM_CPUS=$(nproc)
+elif command -v getconf >/dev/null 2>&1; then
+  CLEAN_NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
+fi
+if [ "${CLEAN_NUM_CPUS}" -lt 1 ]; then
+  CLEAN_NUM_CPUS=1
+fi
+
+CLEAN_JOBS_HEADROOM="${GRAIL_JOBS_HEADROOM:-1}"
+if ! [[ "${CLEAN_JOBS_HEADROOM}" =~ ^[0-9]+$ ]]; then
+  log "Warning: invalid GRAIL_JOBS_HEADROOM value '${CLEAN_JOBS_HEADROOM}'; defaulting to 1."
+  CLEAN_JOBS_HEADROOM=1
+fi
+CLEAN_DEFAULT_JOBS=$((CLEAN_NUM_CPUS - CLEAN_JOBS_HEADROOM))
+if [ "${CLEAN_DEFAULT_JOBS}" -lt 1 ]; then
+  CLEAN_DEFAULT_JOBS=1
+fi
+
+if [ -n "${GRAIL_JOBS:-}" ]; then
+  CLEAN_JOBS="${GRAIL_JOBS}"
+  if ! [[ "${CLEAN_JOBS}" =~ ^[0-9]+$ ]] || [ "${CLEAN_JOBS}" -lt 1 ]; then
+    log "Warning: invalid GRAIL_JOBS value '${CLEAN_JOBS}'; defaulting to ${CLEAN_DEFAULT_JOBS}."
+    CLEAN_JOBS=${CLEAN_DEFAULT_JOBS}
+  fi
+else
+  CLEAN_JOBS=${CLEAN_DEFAULT_JOBS}
+fi
+
 CLEAN_ARGS=(
   --dataset-name "${SOURCE_DATASET}"
   --output-dir "${OUTPUT_DIR}"
   --prompt-stats-dir "${PROMPT_STATS_DIR}"
+  --jobs "${CLEAN_JOBS}"
 )
 
 if [ -n "${GRAIL_TRAIN_SPLIT:-}" ]; then

@@ -85,7 +85,7 @@ High-level progression (training + evaluation):
         +----------------------+
 ```
 
-Both `bash training/training-knn.sh` and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
+Both the SLURM wrapper (`training/training-knn.sh`, which auto-submits sweeps/finalize jobs) and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
 
 ## Feature helpers
 

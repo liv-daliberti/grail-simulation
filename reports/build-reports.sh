@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${REPO_ROOT}"
+
+PYTHON_BIN=${PYTHON_BIN:-python}
+
+log() {
+  printf '[%(%Y-%m-%dT%H:%M:%S%z)T] %s\n' -1 "$*" >&2
+}
+
+export PYTHONPATH="${PYTHONPATH:-}:${REPO_ROOT}/src:${REPO_ROOT}"
+
+DATASET="${REPORTS_DATASET:-${REPO_ROOT}/data/cleaned_grail}"
+log "Using dataset target: ${DATASET}"
+export REPORTS_DATASET="${DATASET}"
+ALLOW_INCOMPLETE_RAW="${REPORTS_ALLOW_INCOMPLETE:-1}"
+ALLOW_INCOMPLETE_NORMALIZED="$(printf '%s' "${ALLOW_INCOMPLETE_RAW}" | tr '[:upper:]' '[:lower:]')"
+case "${ALLOW_INCOMPLETE_NORMALIZED}" in
+  1|true|yes)
+    ALLOW_INCOMPLETE="1"
+    ;;
+  0|false|no)
+    ALLOW_INCOMPLETE="0"
+    ;;
+  *)
+    ALLOW_INCOMPLETE="1"
+    log "REPORTS_ALLOW_INCOMPLETE='${ALLOW_INCOMPLETE_RAW}' not recognised; defaulting to allow-incomplete mode."
+    ;;
+esac
+KNN_ALLOW_FLAG="--allow-incomplete"
+XGB_ALLOW_FLAG="--allow-incomplete"
+if [ "${ALLOW_INCOMPLETE}" != "1" ]; then
+  KNN_ALLOW_FLAG="--no-allow-incomplete"
+  XGB_ALLOW_FLAG="--no-allow-incomplete"
+fi
+if [ -z "${KNN_ALLOW_INCOMPLETE-}" ]; then
+  export KNN_ALLOW_INCOMPLETE="${ALLOW_INCOMPLETE}"
+fi
+if [ -z "${XGB_ALLOW_INCOMPLETE-}" ]; then
+  export XGB_ALLOW_INCOMPLETE="${ALLOW_INCOMPLETE}"
+fi
+
+if [ -d "${DATASET}" ]; then
+  log "Found local dataset directory."
+elif [[ "${DATASET}" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(:[A-Za-z0-9_.-]+)?$ ]]; then
+  log "Dataset will be loaded from the Hugging Face Hub id '${DATASET}'."
+else
+  if [ -n "${REPORTS_ISSUE_DATASETS:-}" ]; then
+    log "Local dataset missing. Will attempt to assemble it from issue datasets: ${REPORTS_ISSUE_DATASETS}"
+    "${PYTHON_BIN}" - <<'PY'
+import json
+import os
+from pathlib import Path
+
+try:
+    import pandas as pd
+except ImportError as exc:  # pragma: no cover - environment guard
+    raise SystemExit(
+        "pandas is required to assemble REPORTS_ISSUE_DATASETS; install it via pip."
+    ) from exc
+
+from datasets import DatasetDict, Dataset, load_dataset
+
+issue_env = os.environ.get("REPORTS_ISSUE_DATASETS", "")
+dataset_path = Path(os.environ["REPORTS_DATASET"])
+dataset_path.parent.mkdir(parents=True, exist_ok=True)
+
+pairs = []
+for raw in issue_env.split(","):
+    raw = raw.strip()
+    if not raw:
+        continue
+    if "=" not in raw:
+        raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'. Expected issue=dataset_id format.")
+    issue, dataset_spec = [token.strip() for token in raw.split("=", 1)]
+    if not issue or not dataset_spec:
+        raise SystemExit(f"Invalid REPORTS_ISSUE_DATASETS entry '{raw}'.")
+    if "#" in dataset_spec:
+        dataset_id, config_name = dataset_spec.split("#", 1)
+        dataset_id = dataset_id.strip()
+        config_name = config_name.strip()
+    else:
+        dataset_id, config_name = dataset_spec, None
+    if not dataset_id:
+        raise SystemExit(f"Invalid dataset id in '{raw}'.")
+    pairs.append((issue, dataset_id, config_name))
+
+if not pairs:
+    raise SystemExit("REPORTS_ISSUE_DATASETS provided but no valid entries were found.")
+
+frames_by_split: dict[str, list[pd.DataFrame]] = {}
+for issue, dataset_id, config_name in pairs:
+    try:
+        load_kwargs = {}
+        if config_name:
+            load_kwargs["name"] = config_name
+        ds = load_dataset(dataset_id, **load_kwargs)
+    except Exception as exc:  # pragma: no cover - user feedback
+        raise SystemExit(
+            f"Failed to load dataset '{dataset_id}'"
+            f"{' (config='+config_name+')' if config_name else ''}: {exc}"
+        ) from exc
+    for split_name, split_ds in ds.items():
+        df = split_ds.to_pandas()
+        if "issue" not in df.columns:
+            df["issue"] = issue
+        else:
+            df["issue"] = df["issue"].fillna(issue)
+        frames_by_split.setdefault(split_name, []).append(df)
+
+if not frames_by_split:
+    raise SystemExit("No splits were loaded from the provided datasets.")
+
+merged_splits: dict[str, Dataset] = {}
+for split_name, frames in frames_by_split.items():
+    combined_df = pd.concat(frames, ignore_index=True, sort=False)
+    merged_splits[split_name] = Dataset.from_pandas(combined_df, preserve_index=False)
+
+merged = DatasetDict(merged_splits)
+merged.save_to_disk(str(dataset_path))
+metadata = {
+    "sources": [
+        {"issue": issue, "dataset": dataset_id, "config": config_name}
+        for issue, dataset_id, config_name in pairs
+    ],
+    "note": "Assembled by reports/build-reports.sh from issue-level datasets."
+}
+with open(dataset_path / "_assembly_metadata.json", "w", encoding="utf-8") as handle:
+    json.dump(metadata, handle, indent=2)
+PY
+    log "Dataset assembled at ${DATASET}"
+  else
+    log "Dataset directory '${DATASET}' not found."
+    log "Set REPORTS_DATASET to an existing local path or a Hugging Face dataset id (e.g. user/repo),"
+    log "or provide REPORTS_ISSUE_DATASETS (e.g. 'gun_control=user/gun,minimum_wage=user/wage') so it can be assembled automatically."
+    exit 1
+  fi
+fi
+
+KNN_OUT_DIR="${KNN_REPORTS_OUT_DIR:-${REPO_ROOT}/models/knn}"
+KNN_CACHE_DIR="${KNN_REPORTS_CACHE_DIR:-${REPO_ROOT}/.cache/huggingface/knn}"
+KNN_W2V_DIR="${KNN_REPORTS_WORD2VEC_DIR:-${KNN_OUT_DIR}/word2vec_models}"
+
+mkdir -p "${KNN_OUT_DIR}" "${KNN_CACHE_DIR}" "${KNN_W2V_DIR}"
+
+log "Regenerating KNN reports from existing artefacts..."
+if ! find "${KNN_OUT_DIR}" -name "knn_eval_*_validation_metrics.json" -print -quit | grep -q .; then
+  if [ "${ALLOW_INCOMPLETE}" = "1" ]; then
+    log "No KNN evaluation metrics found under ${KNN_OUT_DIR}. Generating placeholder reports because REPORTS_ALLOW_INCOMPLETE=1."
+  else
+    log "No KNN evaluation metrics found under ${KNN_OUT_DIR}."
+    log "Run 'training/training-knn.sh [pipeline args]' to regenerate sweeps/finalize outputs before rebuilding reports."
+    exit 1
+  fi
+fi
+"${PYTHON_BIN}" -m knn.pipeline \
+  --dataset "${DATASET}" \
+  --out-dir "${KNN_OUT_DIR}" \
+  --cache-dir "${KNN_CACHE_DIR}" \
+  --word2vec-model-dir "${KNN_W2V_DIR}" \
+  --stage reports \
+  "${KNN_ALLOW_FLAG}"
+
+XGB_OUT_DIR="${XGB_REPORTS_OUT_DIR:-${REPO_ROOT}/models/xgb}"
+XGB_CACHE_DIR="${XGB_REPORTS_CACHE_DIR:-${REPO_ROOT}/.cache/huggingface/xgb}"
+XGB_REPORTS_DIR="${XGB_REPORTS_DIR:-${REPO_ROOT}/reports/xgb}"
+
+mkdir -p "${XGB_OUT_DIR}" "${XGB_CACHE_DIR}" "${XGB_REPORTS_DIR}"
+
+log "Regenerating XGBoost reports from existing artefacts..."
+if ! find "${XGB_OUT_DIR}" -name "metrics.json" -path "*/next_video/*" -print -quit | grep -q .; then
+  if [ "${ALLOW_INCOMPLETE}" = "1" ]; then
+    log "No XGBoost evaluation metrics found under ${XGB_OUT_DIR}. Generating placeholder reports because REPORTS_ALLOW_INCOMPLETE=1."
+  else
+    log "No XGBoost evaluation metrics found under ${XGB_OUT_DIR}."
+    log "Run 'training/training-xgb.sh [pipeline args]' to regenerate sweeps/finalize outputs before rebuilding reports."
+    exit 1
+  fi
+fi
+"${PYTHON_BIN}" -m xgb.pipeline \
+  --dataset "${DATASET}" \
+  --out-dir "${XGB_OUT_DIR}" \
+  --cache-dir "${XGB_CACHE_DIR}" \
+  --reports-dir "${XGB_REPORTS_DIR}" \
+  --stage reports \
+  "${XGB_ALLOW_FLAG}"
+
+log "Report refresh completed."

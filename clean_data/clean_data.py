@@ -99,6 +99,8 @@ class BuildOptions:
     system_prompt: Optional[str] = None
     sol_key: Optional[str] = None
     max_history: int = 12
+    num_proc: Optional[int] = None
+    num_proc: Optional[int] = None
 
 
 def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
@@ -413,6 +415,7 @@ def map_rows_to_examples(
     system_prompt: Optional[str],
     sol_key: Optional[str],
     max_history: int,
+    num_proc: Optional[int] = None,
 ) -> DatasetDict:
     """Convert interaction rows into cleaned prompt examples.
 
@@ -420,8 +423,12 @@ def map_rows_to_examples(
     :param system_prompt: Optional system prompt override applied to every row.
     :param sol_key: Alternate column containing the gold next-video identifier.
     :param max_history: Maximum number of prior interactions to embed in ``state_text``.
+    :param num_proc: Optional number of worker processes passed to ``datasets.Dataset.map``.
     :returns: Dataset mapping where each split has been converted to prompt-ready rows.
     """
+
+    if num_proc is not None and num_proc < 1:
+        raise ValueError("num_proc must be >= 1 when provided.")
 
     mapped = DatasetDict()
     for split_name, split_ds in dataset.items():
@@ -434,6 +441,7 @@ def map_rows_to_examples(
             ),
             remove_columns=split_ds.column_names,
             load_from_cache_file=False,
+            num_proc=num_proc,
         )
         mapped[split_name] = mapped_split
     return mapped
@@ -510,7 +518,7 @@ def build_clean_dataset(
 
     raw = load_raw(dataset_name, validation_ratio=opts.validation_ratio)
 
-    filtered = filter_prompt_ready(raw, sol_key=opts.sol_key)
+    filtered = filter_prompt_ready(raw, sol_key=opts.sol_key, num_proc=opts.num_proc)
     issue_counts = compute_issue_counts(filtered)
     if issue_counts:
         log.info("Issue distribution per split: %s", issue_counts)
@@ -520,6 +528,7 @@ def build_clean_dataset(
         system_prompt=opts.system_prompt,
         sol_key=opts.sol_key,
         max_history=opts.max_history,
+        num_proc=opts.num_proc,
     )
 
     desired: Dict[str, datasets.Dataset] = {}

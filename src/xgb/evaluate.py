@@ -19,6 +19,7 @@ from .data import (
     SOLUTION_COLUMN,
     TRAIN_SPLIT,
     filter_dataset_for_issue,
+    filter_dataset_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
@@ -40,12 +41,21 @@ from .utils import canon_video_id, ensure_directory, get_logger
 logger = get_logger("xgb.eval")
 
 
+def _split_tokens(raw: Optional[str]) -> List[str]:
+    """Return a cleaned list of comma-separated tokens."""
+
+    if not raw:
+        return []
+    return [token.strip() for token in raw.split(",") if token.strip()]
+
+
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class IssueMetrics:
     """Container describing evaluation metrics for a single issue."""
 
     issue: str
+    participant_studies: Sequence[str]
     dataset_source: str
     evaluated: int
     correct: int
@@ -70,11 +80,14 @@ class EvaluationConfig:
     :vartype extra_fields: Sequence[str]
     :ivar eval_max: Optional cap on the number of evaluation rows (0 evaluates all).
     :vartype eval_max: int
+    :ivar participant_studies: Tokenised participant study filters applied to the splits.
+    :vartype participant_studies: Sequence[str]
     """
 
     dataset_source: str
     extra_fields: Sequence[str]
     eval_max: int
+    participant_studies: Sequence[str]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -159,6 +172,8 @@ def run_eval(args) -> None:
     else:
         issues = available_issues
 
+    study_tokens = _split_tokens(getattr(args, "participant_studies", ""))
+
     extra_fields = [
         token.strip()
         for token in (args.extra_text_fields or "").split(",")
@@ -166,7 +181,14 @@ def run_eval(args) -> None:
     ]
 
     for issue in issues:
-        _evaluate_issue(args, issue, base_ds, dataset_source, extra_fields)
+        _evaluate_issue(
+            args,
+            issue,
+            base_ds,
+            dataset_source,
+            extra_fields,
+            study_tokens,
+        )
 
 
 def _evaluate_issue(
@@ -175,6 +197,7 @@ def _evaluate_issue(
     base_ds,
     dataset_source: str,
     extra_fields: List[str],
+    study_tokens: Sequence[str],
 ) -> None:
     """Evaluate a single issue for the XGBoost baseline and persist outputs.
 
@@ -183,13 +206,44 @@ def _evaluate_issue(
     :param base_ds: Loaded dataset dictionary containing train/eval splits.
     :param dataset_source: String describing the data source (path or hub id).
     :param extra_fields: Additional text fields appended to the feature document.
+    :param study_tokens: Participant study filters applied to train/eval splits.
     """
 
     issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
-    logger.info("[XGBoost] Evaluating issue=%s", issue_slug)
+    tokens = [token for token in study_tokens if token]
+    suffix_parts: List[str] = []
+    seen_suffix: set[str] = set()
+    for token in tokens:
+        slug = token.replace(" ", "_")
+        if slug and slug.lower() != "all" and slug not in seen_suffix:
+            suffix_parts.append(slug)
+            seen_suffix.add(slug)
+    if suffix_parts:
+        issue_slug = f"{issue_slug}_{'_'.join(suffix_parts)}"
+
+    logger.info(
+        "[XGBoost] Evaluating issue=%s participant_studies=%s",
+        issue_slug,
+        ",".join(tokens) or "all",
+    )
+
     ds = filter_dataset_for_issue(base_ds, issue)
+    if tokens:
+        ds = filter_dataset_for_participant_studies(ds, tokens)
     train_ds = ds[TRAIN_SPLIT]
     eval_ds = ds[EVAL_SPLIT]
+
+    train_rows = len(train_ds)
+    eval_rows = len(eval_ds)
+
+    if train_rows == 0 or eval_rows == 0:
+        logger.warning(
+            "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant study filter.",
+            issue_slug,
+            train_rows,
+            eval_rows,
+        )
+        return
 
     model = _load_or_train_model(args, issue_slug, train_ds, extra_fields)
 
@@ -197,6 +251,7 @@ def _evaluate_issue(
         dataset_source=dataset_source,
         extra_fields=tuple(extra_fields),
         eval_max=args.eval_max,
+        participant_studies=tuple(tokens),
     )
     metrics, predictions = evaluate_issue(
         model=model,
@@ -418,6 +473,7 @@ def _summarise_records(
     summary = _summarise_outcomes(records)
     return IssueMetrics(
         issue=issue_slug,
+        participant_studies=tuple(config.participant_studies),
         dataset_source=config.dataset_source,
         evaluated=summary.evaluated,
         correct=summary.correct,

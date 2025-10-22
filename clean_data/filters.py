@@ -27,11 +27,16 @@ from clean_data.prompting import (
 log = logging.getLogger("clean_grail")
 
 
-def filter_prompt_ready(dataset: DatasetDict, sol_key: Optional[str] = None) -> DatasetDict:
+def filter_prompt_ready(
+    dataset: DatasetDict,
+    sol_key: Optional[str] = None,
+    num_proc: Optional[int] = None,
+) -> DatasetDict:
     """Drop rows that cannot produce a valid prompt/example.
 
     :param dataset: Input dataset keyed by split.
     :param sol_key: Alternate gold-id column used to validate the target choice.
+    :param num_proc: Optional number of worker processes used by ``datasets.filter``.
     :returns: Dataset dictionary with non-compliant rows removed.
     """
 
@@ -46,9 +51,12 @@ def filter_prompt_ready(dataset: DatasetDict, sol_key: Optional[str] = None) -> 
             return False
         return gold_index_from_items(gold, items) >= 1
 
+    if num_proc is not None and num_proc < 1:
+        raise ValueError("num_proc must be >= 1 when provided.")
+
     filtered = DatasetDict()
     for split_name, split_ds in dataset.items():
-        filtered[split_name] = split_ds.filter(_ok)
+        filtered[split_name] = split_ds.filter(_ok, num_proc=num_proc)
     log.info("Counts after prompt filter: %s", {k: len(v) for k, v in filtered.items()})
     return filtered
 

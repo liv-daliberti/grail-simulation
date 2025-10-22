@@ -164,8 +164,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--xgb_tree_method",
-        default="hist",
-        help="Tree construction algorithm used by XGBoost.",
+        default="gpu_hist",
+        help="Tree construction algorithm used by XGBoost (default: gpu_hist).",
     )
     parser.add_argument(
         "--xgb_reg_lambda",
@@ -188,6 +188,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--issues",
         default="",
         help="Comma-separated list of issues to evaluate (defaults to all).",
+    )
+    parser.add_argument(
+        "--participant-studies",
+        "--participant_studies",
+        default="",
+        dest="participant_studies",
+        help="Comma-separated participant study keys to evaluate (defaults to all).",
     )
     parser.add_argument(
         "--cache_dir",

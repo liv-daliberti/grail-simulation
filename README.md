@@ -148,10 +148,11 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- `scripts/run-build-reports.sh` – rebuilds the KNN/XGB evaluation reports and uploads artifacts.
+- `reports/build-reports.sh` – regenerates the published KNN/XGB reports from existing artefacts (legacy `scripts/run-build-reports.sh` now forwards here). The pre-commit hook runs this entrypoint so report markdown stays current without retraining.
 - `scripts/run-clean-data-suite.sh` – end-to-end dataset cleaning plus prompt/political-science replicas.
+- `scripts/update-reports.sh` – aggregates the clean-data suite, KNN/XGB rebuilds, prompt samples, and GPT-4o pipeline so every report is current.
 - Sphinx docs build (`sphinx-build -b html -n -W --keep-going docs docs/_build/html`) keeps the documentation green.
-- GitHub Actions (see `.github/workflows/`) install `development/requirements-dev.txt`, invoke these scripts, and publish docs/report artifacts on push and PRs. Full script descriptions live in `scripts/README.md`.
+- GitHub Actions (see `.github/workflows/`) install `development/requirements-dev.txt`, invoke these scripts, and publish docs/report artifacts on push and PRs. The `Build Reports` workflow calls `reports/build-reports.sh`, which regenerates Markdown from checked-in sweep artefacts and bails out if metrics are missing so training never reruns in CI. Full script descriptions live in `scripts/README.md`.
 
 Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
 
@@ -205,8 +206,8 @@ sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
 Baselines:
 
 - GPT‑4o slate predictor: `python -m gpt4o.cli`
-- k-NN slate baseline: `bash training/training-knn.sh`
-- XGBoost slate + opinion pipeline: `bash training/training-xgb.sh`
+- k-NN slate baseline: `training/training-knn.sh [pipeline args]` (auto plan → array submission → finalize)
+- XGBoost slate + opinion pipeline: `training/training-xgb.sh [pipeline args]` (auto plan → array submission → finalize)
 
 ## Citation
 

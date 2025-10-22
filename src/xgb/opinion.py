@@ -147,7 +147,7 @@ def collect_examples(
         spec.issue,
         len(dataset),
     )
-    per_participant: Dict[str, OpinionExample] = {}
+    per_participant: Dict[str, Tuple[OpinionExample, int]] = {}
 
     for raw in dataset:
         if raw.get("issue") != spec.issue or raw.get("participant_study") != spec.key:
@@ -160,7 +160,11 @@ def collect_examples(
         if not document:
             continue
         participant_id = str(raw.get("participant_id") or "")
-        per_participant[participant_id] = OpinionExample(
+        try:
+            step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            step_index = -1
+        example = OpinionExample(
             participant_id=participant_id,
             participant_study=spec.key,
             issue=spec.issue,
@@ -168,8 +172,11 @@ def collect_examples(
             before=before,
             after=after,
         )
+        existing = per_participant.get(participant_id)
+        if existing is None or step_index >= existing[1]:
+            per_participant[participant_id] = (example, step_index)
 
-    collapsed = list(per_participant.values())
+    collapsed = [example for example, _ in per_participant.values()]
     LOGGER.info("[OPINION] Retained %d unique participants.", len(collapsed))
 
     if max_participants and len(collapsed) > max_participants:

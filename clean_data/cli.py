@@ -91,6 +91,12 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
             "into this directory."
         ),
     )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=None,
+        help="Parallel worker processes used for filtering and example mapping.",
+    )
     return parser.parse_args(argv)
 
 
@@ -106,6 +112,15 @@ def main(argv: Optional[list[str]] = None) -> None:
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
+    jobs = None
+    if args.jobs is not None:
+        if args.jobs < 1:
+            logging.getLogger("clean_grail").warning(
+                "Ignoring invalid --jobs value %d; expected >= 1.", args.jobs
+            )
+        else:
+            jobs = args.jobs
+
     build_options = BuildOptions(
         validation_ratio=args.validation_ratio,
         train_split=args.train_split,
@@ -113,6 +128,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         system_prompt=args.system_prompt,
         sol_key=args.sol_key,
         max_history=args.max_history,
+        num_proc=jobs,
     )
     full_dataset = build_clean_dataset(args.dataset_name, options=build_options)
 

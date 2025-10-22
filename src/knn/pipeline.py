@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
@@ -132,6 +133,7 @@ class SweepConfig:
 class SweepOutcome:
     """Captures metrics for a configuration/issue pair."""
 
+    order_index: int
     study: "StudySpec"
     feature_space: str
     config: SweepConfig
@@ -140,6 +142,22 @@ class SweepOutcome:
     eligible: int
     metrics_path: Path
     metrics: Mapping[str, object]
+
+
+@dataclass(frozen=True)
+class SweepTask:
+    """Container describing a single sweep execution request."""
+
+    index: int
+    study: "StudySpec"
+    config: SweepConfig
+    base_cli: Tuple[str, ...]
+    extra_cli: Tuple[str, ...]
+    run_root: Path
+    word2vec_model_dir: Path | None
+    issue: str
+    issue_slug: str
+    metrics_path: Path
 
 
 @dataclass(frozen=True)
@@ -207,7 +225,9 @@ class PipelineContext:
     sentence_batch_size: int
     sentence_normalize: bool
     feature_spaces: Tuple[str, ...]
+    jobs: int
     reuse_sweeps: bool = False
+    allow_incomplete: bool = False
 
 
 @dataclass(frozen=True)
@@ -215,6 +235,7 @@ class ReportBundle:
     """Inputs required to render the Markdown summaries."""
 
     selections: Mapping[str, Mapping[str, StudySelection]]
+    sweep_outcomes: Sequence[SweepOutcome]
     studies: Sequence[StudySpec]
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
     opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
@@ -222,6 +243,7 @@ class ReportBundle:
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None
     feature_spaces: Tuple[str, ...] = ("tfidf", "word2vec", "sentence_transformer")
     sentence_model: Optional[str] = None
+    allow_incomplete: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -297,8 +319,21 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     )
     parser.add_argument(
         "--reuse-sweeps",
-        action="store_true",
-        help="Reuse existing sweep metrics when present instead of rerunning the full grid.",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Reuse existing sweep metrics when present instead of rerunning the full grid (use --no-reuse-sweeps to force a full rerun).",
+    )
+    parser.add_argument(
+        "--allow-incomplete",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Allow finalize/report stages to proceed with partial sweep data (use --no-allow-incomplete to require complete sweeps).",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Maximum number of concurrent sweep workers (default: 1).",
     )
     parser.add_argument(
         "--sweep-dir",
@@ -314,6 +349,24 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--dry-run",
         action="store_true",
         help="Plan and log the workflow without launching sweeps or evaluations.",
+    )
+    parser.add_argument(
+        "--stage",
+        choices=["full", "plan", "sweeps", "finalize", "reports"],
+        default="full",
+        help="Select which portion of the pipeline to execute (default: run all stages).",
+    )
+    parser.add_argument(
+        "--sweep-task-id",
+        type=int,
+        default=None,
+        help="0-based sweep task index to execute when --stage=sweeps.",
+    )
+    parser.add_argument(
+        "--sweep-task-count",
+        type=int,
+        default=None,
+        help="Expected total number of sweep tasks (for validation in --stage=sweeps).",
     )
     parsed, extra = parser.parse_known_args(argv)
     return parsed, extra
@@ -363,7 +416,11 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
         or os.environ.get("WORD2VEC_MODEL_DIR")
         or (out_dir / "word2vec_models")
     )
-    k_sweep = args.k_sweep or os.environ.get("KNN_K_SWEEP") or "1,2,3,4,5,10,15,20,25,50,100"
+    k_sweep = (
+        args.k_sweep
+        or os.environ.get("KNN_K_SWEEP")
+        or "1,2,3,4,5,10,15,20,25,50,75,100,125,150"
+    )
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
         or _split_tokens(os.environ.get("KNN_STUDIES", ""))
@@ -403,7 +460,22 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
     )
     if not resolved_feature_spaces:
         resolved_feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
-    reuse_sweeps = bool(getattr(args, "reuse_sweeps", False))
+    reuse_sweeps = getattr(args, "reuse_sweeps", True)
+    reuse_env = os.environ.get("KNN_REUSE_SWEEPS")
+    if reuse_env is not None:
+        reuse_sweeps = reuse_env.lower() not in {"0", "false", "no"}
+    jobs_value = getattr(args, "jobs", 1) or 1
+    env_jobs = os.environ.get("KNN_JOBS")
+    if env_jobs:
+        try:
+            jobs_value = int(env_jobs)
+        except ValueError:
+            LOGGER.warning("Ignoring invalid KNN_JOBS value '%s'.", env_jobs)
+    jobs = max(1, jobs_value)
+    allow_incomplete = getattr(args, "allow_incomplete", True)
+    allow_env = os.environ.get("KNN_ALLOW_INCOMPLETE")
+    if allow_env is not None:
+        allow_incomplete = allow_env.lower() not in {"0", "false", "no"}
     return PipelineContext(
         dataset=dataset,
         out_dir=out_dir,
@@ -419,7 +491,9 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
         sentence_batch_size=sentence_batch_size,
         sentence_normalize=sentence_normalize,
         feature_spaces=resolved_feature_spaces,
+        jobs=jobs,
         reuse_sweeps=reuse_sweeps,
+        allow_incomplete=allow_incomplete,
     )
 
 
@@ -548,6 +622,7 @@ def _log_run_configuration(studies: Sequence[StudySpec], context: PipelineContex
         ", ".join(f"{spec.key} ({spec.issue})" for spec in studies),
     )
     LOGGER.info("Output directory: %s", context.out_dir)
+    LOGGER.info("Parallel jobs: %d", context.jobs)
 
 
 def _log_dry_run(configs: Sequence[SweepConfig]) -> None:
@@ -686,6 +761,204 @@ def _load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mappin
     return result
 
 
+def _load_final_metrics_from_disk(
+    *,
+    out_dir: Path,
+    feature_spaces: Sequence[str],
+    studies: Sequence[StudySpec],
+) -> Dict[str, Dict[str, Mapping[str, object]]]:
+    """Load slate metrics written by prior runs instead of recomputing them."""
+
+    metrics_by_feature: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    for feature_space in feature_spaces:
+        feature_dir = out_dir / feature_space
+        if not feature_dir.exists():
+            continue
+        per_study: Dict[str, Mapping[str, object]] = {}
+        for study in studies:
+            study_dir = feature_dir / study.study_slug
+            try:
+                metrics, _ = _load_metrics(study_dir, _issue_slug_for_study(study))
+            except FileNotFoundError:
+                continue
+            per_study[study.key] = metrics
+        if per_study:
+            metrics_by_feature[feature_space] = per_study
+    return metrics_by_feature
+
+
+def _load_loso_metrics_from_disk(
+    *,
+    out_dir: Path,
+    feature_spaces: Sequence[str],
+    studies: Sequence[StudySpec],
+) -> Dict[str, Dict[str, Mapping[str, object]]]:
+    """Load leave-one-study-out metrics produced by previous pipeline runs."""
+
+    cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    for feature_space in feature_spaces:
+        loso_dir = out_dir / feature_space / "loso"
+        if not loso_dir.exists():
+            continue
+        per_study: Dict[str, Mapping[str, object]] = {}
+        for study in studies:
+            holdout_dir = loso_dir / study.study_slug
+            try:
+                metrics, _ = _load_metrics(holdout_dir, _issue_slug_for_study(study))
+            except FileNotFoundError:
+                continue
+            per_study[study.key] = metrics
+        if per_study:
+            cross_metrics[feature_space] = per_study
+    return cross_metrics
+
+
+def _sweep_outcome_from_metrics(
+    task: SweepTask,
+    metrics: Mapping[str, object],
+    metrics_path: Path,
+) -> SweepOutcome:
+    """Translate cached metrics into a :class:`SweepOutcome`."""
+
+    return SweepOutcome(
+        order_index=task.index,
+        study=task.study,
+        feature_space=task.config.feature_space,
+        config=task.config,
+        accuracy=float(metrics.get("accuracy_overall", 0.0)),
+        best_k=int(metrics.get("best_k", 0)),
+        eligible=int(metrics.get("n_eligible", 0)),
+        metrics_path=metrics_path,
+        metrics=metrics,
+    )
+
+
+def _prepare_sweep_tasks(
+    *,
+    studies: Sequence[StudySpec],
+    configs: Sequence[SweepConfig],
+    base_cli: Sequence[str],
+    extra_cli: Sequence[str],
+    sweep_dir: Path,
+    word2vec_model_base: Path,
+    reuse_existing: bool,
+) -> Tuple[List[SweepTask], List[SweepOutcome]]:
+    """Return tasks requiring execution and cached outcomes when available."""
+
+    pending_tasks: List[SweepTask] = []
+    cached_outcomes: List[SweepOutcome] = []
+    base_cli_tuple = tuple(base_cli)
+    extra_cli_tuple = tuple(extra_cli)
+
+    task_index = 0
+    for config in configs:
+        for study in studies:
+            issue_slug = _issue_slug_for_study(study)
+            run_root = sweep_dir / config.feature_space / study.study_slug / config.label
+            metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
+            word2vec_model_dir = None
+            if config.feature_space == "word2vec":
+                word2vec_model_dir = word2vec_model_base / "sweeps" / study.study_slug / config.label
+            task = SweepTask(
+                index=task_index,
+                study=study,
+                config=config,
+                base_cli=base_cli_tuple,
+                extra_cli=extra_cli_tuple,
+                run_root=run_root,
+                word2vec_model_dir=word2vec_model_dir,
+                issue=study.issue,
+                issue_slug=issue_slug,
+                metrics_path=metrics_path,
+            )
+            task_index += 1
+            if reuse_existing and metrics_path.exists():
+                LOGGER.info(
+                    "[SWEEP][SKIP] feature=%s study=%s label=%s (metrics cached)",
+                    config.feature_space,
+                    study.key,
+                    config.label,
+                )
+                metrics, cached_path = _load_metrics(run_root, issue_slug)
+                cached_outcomes.append(_sweep_outcome_from_metrics(task, metrics, cached_path))
+                continue
+            pending_tasks.append(task)
+    return pending_tasks, cached_outcomes
+
+
+def _merge_sweep_outcomes(
+    cached: Sequence[SweepOutcome],
+    executed: Sequence[SweepOutcome],
+) -> List[SweepOutcome]:
+    """Combine cached and freshly executed sweep outcomes preserving order."""
+
+    by_index: Dict[int, SweepOutcome] = {}
+    for outcome in cached:
+        by_index[outcome.order_index] = outcome
+    for outcome in executed:
+        if outcome.order_index in by_index:
+            LOGGER.warning(
+                "Duplicate sweep outcome detected for index=%d (feature=%s study=%s). Overwriting cached result.",
+                outcome.order_index,
+                outcome.feature_space,
+                outcome.study.key,
+            )
+        by_index[outcome.order_index] = outcome
+    return [by_index[index] for index in sorted(by_index)]
+
+
+def _execute_sweep_tasks(
+    tasks: Sequence[SweepTask],
+    *,
+    jobs: int,
+) -> List[SweepOutcome]:
+    """Run the supplied sweep tasks (possibly in parallel)."""
+
+    if not tasks:
+        return []
+
+    jobs = max(1, jobs)
+    if jobs == 1:
+        return [_execute_sweep_task(task) for task in tasks]
+
+    LOGGER.info("Launching %d parallel sweep workers across %d tasks.", jobs, len(tasks))
+    ordered_results: List[Optional[SweepOutcome]] = [None] * len(tasks)
+    with ProcessPoolExecutor(max_workers=jobs) as executor:
+        future_to_index = {
+            executor.submit(_execute_sweep_task, task): index for index, task in enumerate(tasks)
+        }
+        for future in as_completed(future_to_index):
+            index = future_to_index[future]
+            ordered_results[index] = future.result()
+
+    results: List[SweepOutcome] = []
+    for maybe_outcome in ordered_results:
+        if maybe_outcome is None:
+            raise RuntimeError("Sweep task completed without returning metrics.")
+        results.append(maybe_outcome)
+    return results
+
+
+def _emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:
+    """Print a human-readable sweep plan to stdout."""
+
+    print(f"TOTAL_TASKS={len(tasks)}")
+    if not tasks:
+        return
+    print("INDEX\tSTUDY\tISSUE\tFEATURE_SPACE\tLABEL")
+    for display_index, task in enumerate(tasks):
+        print(
+            f"{display_index}\t{task.study.key}\t{task.issue}\t"
+            f"{task.config.feature_space}\t{task.config.label}"
+        )
+
+
+def _format_sweep_task_descriptor(task: SweepTask) -> str:
+    """Return a short string describing a sweep task (feature/study/label)."""
+
+    return f"{task.config.feature_space}:{task.study.key}:{task.config.label}"
+
+
 def _run_sweeps(
     *,
     studies: Sequence[StudySpec],
@@ -695,78 +968,67 @@ def _run_sweeps(
     sweep_dir: Path,
     word2vec_model_base: Path,
     reuse_existing: bool,
+    jobs: int,
 ) -> List[SweepOutcome]:
     """Execute hyper-parameter sweeps and collect per-run metrics."""
 
-    outcomes: List[SweepOutcome] = []
-    for config in configs:
-        for study in studies:
-            issue_slug = _issue_slug_for_study(study)
-            run_root = _ensure_dir(
-                sweep_dir / config.feature_space / study.study_slug / config.label
-            )
-            model_dir = None
-            if config.feature_space == "word2vec":
-                model_dir = _ensure_dir(
-                    word2vec_model_base / "sweeps" / study.study_slug / config.label
-                )
-            metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
-            if reuse_existing and metrics_path.exists():
-                LOGGER.info(
-                    "[SWEEP][SKIP] feature=%s study=%s label=%s (metrics cached)",
-                    config.feature_space,
-                    study.key,
-                    config.label,
-                )
-                metrics, metrics_path = _load_metrics(run_root, issue_slug)
-                outcomes.append(
-                    SweepOutcome(
-                        study=study,
-                        feature_space=config.feature_space,
-                        config=config,
-                        accuracy=float(metrics.get("accuracy_overall", 0.0)),
-                        best_k=int(metrics.get("best_k", 0)),
-                        eligible=int(metrics.get("n_eligible", 0)),
-                        metrics_path=metrics_path,
-                        metrics=metrics,
-                    )
-                )
-                continue
-            cli_args: List[str] = []
-            cli_args.extend(base_cli)
-            cli_args.extend(config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--issues", study.issue])
-            cli_args.extend(["--participant-studies", study.key])
-            cli_args.extend(["--out-dir", str(run_root)])
-            cli_args.extend(extra_cli)
-            LOGGER.info(
-                "[SWEEP] feature=%s study=%s issue=%s label=%s",
-                config.feature_space,
-                study.key,
-                study.issue,
-                config.label,
-            )
-            _run_knn_cli(cli_args)
-            metrics, metrics_path = _load_metrics(run_root, issue_slug)
-            outcomes.append(
-                SweepOutcome(
-                    study=study,
-                    feature_space=config.feature_space,
-                    config=config,
-                    accuracy=float(metrics.get("accuracy_overall", 0.0)),
-                    best_k=int(metrics.get("best_k", 0)),
-                    eligible=int(metrics.get("n_eligible", 0)),
-                    metrics_path=metrics_path,
-                    metrics=metrics,
-                )
-            )
-    return outcomes
+    pending_tasks, cached_outcomes = _prepare_sweep_tasks(
+        studies=studies,
+        configs=configs,
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        sweep_dir=sweep_dir,
+        word2vec_model_base=word2vec_model_base,
+        reuse_existing=reuse_existing,
+    )
+    executed_outcomes = _execute_sweep_tasks(pending_tasks, jobs=jobs)
+    return _merge_sweep_outcomes(cached_outcomes, executed_outcomes)
+
+
+def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
+    """Execute a single sweep task and return the captured metrics."""
+
+    run_root = _ensure_dir(task.run_root)
+    model_dir = None
+    if task.config.feature_space == "word2vec":
+        if task.word2vec_model_dir is None:
+            raise RuntimeError("Word2Vec sweep task missing model directory.")
+        model_dir = _ensure_dir(task.word2vec_model_dir)
+
+    cli_args: List[str] = list(task.base_cli)
+    cli_args.extend(task.config.cli_args(word2vec_model_dir=model_dir))
+    cli_args.extend(["--issues", task.issue])
+    cli_args.extend(["--participant-studies", task.study.key])
+    cli_args.extend(["--out-dir", str(run_root)])
+    cli_args.extend(task.extra_cli)
+
+    LOGGER.info(
+        "[SWEEP] feature=%s study=%s issue=%s label=%s",
+        task.config.feature_space,
+        task.study.key,
+        task.study.issue,
+        task.config.label,
+    )
+    _run_knn_cli(cli_args)
+    metrics, metrics_path = _load_metrics(run_root, task.issue_slug)
+    return SweepOutcome(
+        order_index=task.index,
+        study=task.study,
+        feature_space=task.config.feature_space,
+        config=task.config,
+        accuracy=float(metrics.get("accuracy_overall", 0.0)),
+        best_k=int(metrics.get("best_k", 0)),
+        eligible=int(metrics.get("n_eligible", 0)),
+        metrics_path=metrics_path,
+        metrics=metrics,
+    )
 
 
 def _select_best_configs(
     *,
     outcomes: Sequence[SweepOutcome],
     studies: Sequence[StudySpec],
+    allow_incomplete: bool = False,
 ) -> Dict[str, Dict[str, StudySelection]]:
     """Select the best configuration per feature space and study."""
 
@@ -795,9 +1057,16 @@ def _select_best_configs(
     for feature_space, per_feature in selections.items():
         missing = [key for key in expected_keys if key not in per_feature]
         if missing:
-            raise RuntimeError(
-                f"Missing sweep selections for feature={feature_space}: {', '.join(missing)}"
-            )
+            if allow_incomplete:
+                LOGGER.warning(
+                    "Missing sweep selections for feature=%s: %s. Continuing because allow-incomplete mode is enabled.",
+                    feature_space,
+                    ", ".join(missing),
+                )
+            else:
+                raise RuntimeError(
+                    f"Missing sweep selections for feature={feature_space}: {', '.join(missing)}"
+                )
     if not selections:
         raise RuntimeError("Failed to select a best configuration for any feature space.")
     return selections
@@ -1023,6 +1292,76 @@ def _hyperparameter_table_section(
         per_study = selections.get(feature_space, {})
         lines.extend(_hyperparameter_feature_rows(feature_space, per_study, studies))
     lines.append("")
+    return lines
+
+
+def _hyperparameter_leaderboard_section(
+    *,
+    sweep_outcomes: Sequence[SweepOutcome],
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
+    top_n: int,
+) -> List[str]:
+    """Return detailed leaderboards for the top-performing sweep configurations."""
+
+    if not sweep_outcomes:
+        return []
+
+    lines: List[str] = ["### Configuration Leaderboards", ""]
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in selections
+    ]
+    seen_spaces: set[str] = set(ordered_spaces)
+    for outcome in sweep_outcomes:
+        if outcome.feature_space not in seen_spaces:
+            ordered_spaces.append(outcome.feature_space)
+            seen_spaces.add(outcome.feature_space)
+
+    per_feature: Dict[str, Dict[str, List[SweepOutcome]]] = {}
+    for outcome in sweep_outcomes:
+        per_feature.setdefault(outcome.feature_space, {}).setdefault(outcome.study.key, []).append(outcome)
+
+    for feature_space in ordered_spaces:
+        feature_outcomes = per_feature.get(feature_space)
+        if not feature_outcomes:
+            continue
+        lines.append(_feature_space_heading(feature_space))
+        lines.append("")
+        for study in studies:
+            study_outcomes = feature_outcomes.get(study.key, [])
+            if not study_outcomes:
+                continue
+            ranked = sorted(
+                study_outcomes,
+                key=lambda item: (item.accuracy, item.eligible, -item.best_k),
+                reverse=True,
+            )
+            top_results = ranked[: max(1, top_n)]
+            selected = selections.get(feature_space, {}).get(study.key)
+            selected_label = selected.config.label if selected else None
+            best_accuracy = top_results[0].accuracy if top_results else 0.0
+            lines.append(f"#### {study.label}")
+            lines.append("")
+            lines.append("| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |")
+            lines.append("| ---: | --- | ---: | ---: | ---: | ---: |")
+            for idx, outcome in enumerate(top_results, start=1):
+                config_label = outcome.config.label
+                label_display = f"**{config_label}**" if config_label == selected_label else config_label
+                delta = max(0.0, best_accuracy - outcome.accuracy)
+                lines.append(
+                    "| {rank} | {label} | {acc} | {delta} | {k} | {eligible} |".format(
+                        rank=idx,
+                        label=label_display,
+                        acc=_format_float(outcome.accuracy),
+                        delta=_format_float(delta),
+                        k=outcome.best_k,
+                        eligible=outcome.eligible,
+                    )
+                )
+            lines.append("")
+        lines.append("")
     return lines
 
 
@@ -1316,6 +1655,7 @@ def _build_hyperparameter_report(
     *,
     output_path: Path,
     selections: Mapping[str, Mapping[str, StudySelection]],
+    sweep_outcomes: Sequence[SweepOutcome],
     studies: Sequence[StudySpec],
     k_sweep: str,
     feature_spaces: Sequence[str],
@@ -1326,6 +1666,14 @@ def _build_hyperparameter_report(
     lines: List[str] = []
     lines.extend(_hyperparameter_report_intro(k_sweep, feature_spaces, sentence_model))
     lines.extend(_hyperparameter_table_section(selections, studies))
+    lines.extend(
+        _hyperparameter_leaderboard_section(
+            sweep_outcomes=sweep_outcomes,
+            selections=selections,
+            studies=studies,
+            top_n=3,
+        )
+    )
     lines.extend(_hyperparameter_observations_section(selections, studies))
     lines.extend(_hyperparameter_opinion_section())
     output_path.write_text("\n".join(lines), encoding="utf-8")
@@ -1338,11 +1686,24 @@ def _build_next_video_report(
     studies: Sequence[StudySpec],
     feature_spaces: Sequence[str],
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
+    allow_incomplete: bool = False,
 ) -> None:
     """Compose the next-video evaluation report at ``output_path``."""
 
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     if not metrics_by_feature:
-        raise RuntimeError("No slate metrics available to build the next-video report.")
+        if not allow_incomplete:
+            raise RuntimeError("No slate metrics available to build the next-video report.")
+        placeholder = [
+            "# KNN Next-Video Baseline",
+            "",
+            "Final slate metrics are not available yet. Rerun the pipeline with `--stage=finalize` once sweeps finish.",
+            "",
+            "This placeholder was generated with `--allow-incomplete` enabled.",
+            "",
+        ]
+        output_path.write_text("\n".join(placeholder), encoding="utf-8")
+        return
 
     dataset_name, split = _next_video_dataset_info(metrics_by_feature)
     lines: List[str] = []
@@ -1491,12 +1852,24 @@ def _build_opinion_report(
     output_path: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
+    allow_incomplete: bool = False,
 ) -> None:
     """Compose the opinion regression report at ``output_path``."""
 
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     if not metrics:
-        raise RuntimeError("No opinion metrics available to build the opinion report.")
-
+        if not allow_incomplete:
+            raise RuntimeError("No opinion metrics available to build the opinion report.")
+        placeholder = [
+            "# KNN Opinion Shift Study",
+            "",
+            "Opinion regression metrics are not available yet. Execute the finalize stage to refresh these results.",
+            "",
+            "This placeholder was generated with `--allow-incomplete` enabled.",
+            "",
+        ]
+        output_path.write_text("\n".join(placeholder), encoding="utf-8")
+        return
     lines: List[str] = []
     lines.extend(_opinion_report_intro())
     lines.extend(_opinion_feature_sections(metrics, studies))
@@ -1510,9 +1883,11 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
 
     reports_root = repo_root / "reports" / "knn"
     feature_spaces = report_bundle.feature_spaces
+    allow_incomplete = report_bundle.allow_incomplete
     _build_hyperparameter_report(
         output_path=reports_root / "hyperparameter_tuning.md",
         selections=report_bundle.selections,
+        sweep_outcomes=report_bundle.sweep_outcomes,
         studies=report_bundle.studies,
         k_sweep=report_bundle.k_sweep,
         feature_spaces=feature_spaces,
@@ -1524,11 +1899,13 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
         studies=report_bundle.studies,
         feature_spaces=feature_spaces,
         loso_metrics=report_bundle.loso_metrics,
+        allow_incomplete=allow_incomplete,
     )
     _build_opinion_report(
         output_path=reports_root / "opinion" / "README.md",
         metrics=report_bundle.opinion_metrics,
         studies=report_bundle.studies,
+        allow_incomplete=allow_incomplete,
     )
 
 
@@ -1555,12 +1932,10 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     base_cli = _build_base_cli(context)
     configs = _build_sweep_configs(context)
+    stage = getattr(args, "stage", "full")
 
-    if args.dry_run:
-        _log_dry_run(configs)
-        return
-
-    sweep_outcomes = _run_sweeps(
+    # Enumerate the full sweep plan once so it can be reused across stages.
+    planned_tasks, cached_planned = _prepare_sweep_tasks(
         studies=studies,
         configs=configs,
         base_cli=base_cli,
@@ -1570,7 +1945,156 @@ def main(argv: Sequence[str] | None = None) -> None:
         reuse_existing=context.reuse_sweeps,
     )
 
-    selections = _select_best_configs(outcomes=sweep_outcomes, studies=studies)
+    if stage == "plan":
+        _log_dry_run(configs)
+        LOGGER.info(
+            "Planned %d sweep configurations (%d cached).",
+            len(planned_tasks),
+            len(cached_planned),
+        )
+        _emit_sweep_plan(planned_tasks)
+        return
+
+    if args.dry_run:
+        _log_dry_run(configs)
+        LOGGER.info(
+            "Dry-run mode. Pending sweep tasks: %d (cached: %d).",
+            len(planned_tasks),
+            len(cached_planned),
+        )
+        return
+
+    if stage == "sweeps":
+        total_tasks = len(planned_tasks)
+        if total_tasks == 0:
+            LOGGER.info("No sweep tasks pending; existing metrics cover the grid.")
+            return
+        task_id = args.sweep_task_id
+        if task_id is None:
+            env_value = os.environ.get("SLURM_ARRAY_TASK_ID")
+            if env_value is None:
+                raise RuntimeError(
+                    "Sweep stage requires --sweep-task-id or the SLURM_ARRAY_TASK_ID environment variable."
+                )
+            try:
+                task_id = int(env_value)
+            except ValueError as exc:
+                raise RuntimeError(
+                    f"Invalid SLURM_ARRAY_TASK_ID '{env_value}'; expected an integer."
+                ) from exc
+        if args.sweep_task_count is not None and args.sweep_task_count != total_tasks:
+            LOGGER.warning(
+                "Sweep task count mismatch: expected=%d provided=%d.",
+                total_tasks,
+                args.sweep_task_count,
+            )
+        if task_id < 0 or task_id >= total_tasks:
+            raise RuntimeError(
+                f"Sweep task index {task_id} outside valid range 0..{total_tasks - 1}."
+            )
+        task = planned_tasks[task_id]
+        if context.reuse_sweeps and task.metrics_path.exists():
+            LOGGER.info(
+                "Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
+                task.index,
+                task.study.key,
+                task.config.feature_space,
+                task.config.label,
+                task.metrics_path,
+            )
+            return
+        outcome = _execute_sweep_task(task)
+        LOGGER.info(
+            "Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
+            outcome.order_index,
+            task.study.key,
+            task.config.feature_space,
+            task.config.label,
+            outcome.metrics_path,
+        )
+        return
+
+    reuse_for_stage = context.reuse_sweeps
+    if stage in {"finalize", "reports"}:
+        reuse_for_stage = True
+
+    pending_tasks, cached_outcomes = _prepare_sweep_tasks(
+        studies=studies,
+        configs=configs,
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        sweep_dir=context.sweep_dir,
+        word2vec_model_base=context.word2vec_model_dir,
+        reuse_existing=reuse_for_stage,
+    )
+
+    if stage in {"finalize", "reports"} and pending_tasks:
+        missing = ", ".join(_format_sweep_task_descriptor(task) for task in pending_tasks[:5])
+        more = "" if len(pending_tasks) <= 5 else f", … ({len(pending_tasks)} total)"
+        base_message = (
+            "Sweep metrics missing for the following tasks: "
+            f"{missing}{more}."
+        )
+        if context.allow_incomplete:
+            LOGGER.warning(
+                "%s Continuing with available metrics because allow-incomplete mode is enabled.",
+                base_message,
+            )
+        else:
+            raise RuntimeError(f"{base_message} Run --stage=sweeps to populate them.")
+
+    executed_outcomes: List[SweepOutcome] = []
+    if stage == "full":
+        executed_outcomes = _execute_sweep_tasks(pending_tasks, jobs=context.jobs)
+
+    sweep_outcomes = _merge_sweep_outcomes(cached_outcomes, executed_outcomes)
+    selections = _select_best_configs(
+        outcomes=sweep_outcomes,
+        studies=studies,
+        allow_incomplete=context.allow_incomplete,
+    )
+
+    if stage == "reports":
+        slate_metrics = _load_final_metrics_from_disk(
+            out_dir=context.out_dir,
+            feature_spaces=context.feature_spaces,
+            studies=studies,
+        )
+        if not slate_metrics:
+            message = (
+                f"No slate metrics found under {context.out_dir}. "
+                "Run --stage=finalize before generating reports."
+            )
+            if context.allow_incomplete:
+                LOGGER.warning("%s Continuing because allow-incomplete mode is enabled.", message)
+            else:
+                raise RuntimeError(message)
+        opinion_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+        for feature_space in context.feature_spaces:
+            metrics = _load_opinion_metrics(context.out_dir, feature_space)
+            if metrics:
+                opinion_metrics[feature_space] = metrics
+        loso_metrics = _load_loso_metrics_from_disk(
+            out_dir=context.out_dir,
+            feature_spaces=context.feature_spaces,
+            studies=studies,
+        )
+        report_bundle = ReportBundle(
+            selections=selections,
+            sweep_outcomes=sweep_outcomes,
+            studies=studies,
+            metrics_by_feature=slate_metrics,
+            opinion_metrics=opinion_metrics,
+            k_sweep=context.k_sweep,
+            loso_metrics=loso_metrics,
+            feature_spaces=context.feature_spaces,
+            sentence_model=(
+                context.sentence_model if "sentence_transformer" in context.feature_spaces else None
+            ),
+            allow_incomplete=context.allow_incomplete,
+        )
+        _generate_reports(root, report_bundle)
+        return
 
     slate_metrics = _run_final_evaluations(
         selections=selections,
@@ -1599,8 +2123,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         word2vec_model_dir=context.word2vec_model_dir,
     )
 
+    if stage == "finalize":
+        return
+
     report_bundle = ReportBundle(
         selections=selections,
+        sweep_outcomes=sweep_outcomes,
         studies=studies,
         metrics_by_feature=slate_metrics,
         opinion_metrics=opinion_metrics,
@@ -1608,6 +2136,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         loso_metrics=loso_metrics,
         feature_spaces=context.feature_spaces,
         sentence_model=context.sentence_model if "sentence_transformer" in context.feature_spaces else None,
+        allow_incomplete=context.allow_incomplete,
     )
     _generate_reports(root, report_bundle)
 

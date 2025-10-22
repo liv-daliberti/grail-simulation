@@ -41,4 +41,4 @@ Each pipeline run refreshes the tables below with validation accuracy, the elbow
 
 - Slate metrics are scoped per study, allowing each feature space to tune `k` and hyperparameters per cohort.
 - Study-specific directories live under `models/knn/<feature-space>/study{1,2,3}` with per-`k` predictions and metrics JSON.
-- Regenerate this README via `python -m knn.pipeline` (or `bash training/training-knn.sh`) after any new training run.
+- Regenerate this README via `reports/build-reports.sh` (or `python -m knn.pipeline --stage reports`) after any new training run.

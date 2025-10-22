@@ -31,7 +31,9 @@ jobs:
           REPORTS_ISSUE_DATASETS: ${{ secrets.REPORTS_ISSUE_DATASETS }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HUGGINGFACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: scripts/run-build-reports.sh
+        # The reports/build-reports.sh script only regenerates markdown from existing sweep artefacts.
+        # It intentionally fails if metrics are missing so GitHub Actions never reruns training.
+        run: reports/build-reports.sh
 
       - name: Upload report artifacts
         uses: actions/upload-artifact@v4

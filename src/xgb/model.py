@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -39,8 +40,30 @@ def _ensure_label_encoder_available(action: str) -> None:
 
 try:  # pragma: no cover - optional dependency
     from xgboost import XGBClassifier  # type: ignore
+    from xgboost.core import XGBoostError  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     XGBClassifier = None  # type: ignore
+    XGBoostError = None  # type: ignore
+
+LOGGER = logging.getLogger("xgb.model")
+_GPU_TRAINING_ENABLED = True
+
+
+def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
+    """Return True when a GPU-specific failure should trigger a CPU retry."""
+
+    if not tree_method or not str(tree_method).lower().startswith("gpu"):
+        return False
+    message = str(exc)
+    lowered = message.lower()
+    gpu_indicators = (
+        "cudaerrorinitializationerror",
+        "cudaerrornodevice",
+        "cuda driver version",
+        "cuda driver initialization failed",
+        "gpu is not enabled",
+    )
+    return any(token in lowered for token in gpu_indicators)
 
 @dataclass
 class XGBoostSlateModel:
@@ -305,6 +328,13 @@ def _train_booster(
     booster_kwargs = dict(params.extra_kwargs or {})
     unique_labels = int(np.unique(labels).size)
     booster_kwargs.setdefault("num_class", unique_labels)
+
+    requested_method = params.tree_method or "hist"
+    use_gpu = requested_method.lower().startswith("gpu") and _GPU_TRAINING_ENABLED
+    effective_method = requested_method if use_gpu else (
+        "hist" if requested_method.lower().startswith("gpu") else requested_method
+    )
+
     booster = XGBClassifier(
         objective="multi:softprob",
         eval_metric="mlogloss",
@@ -313,15 +343,63 @@ def _train_booster(
         learning_rate=params.learning_rate,
         subsample=params.subsample,
         colsample_bytree=params.colsample_bytree,
-        tree_method=params.tree_method,
+        tree_method=effective_method,
         reg_lambda=params.reg_lambda,
         reg_alpha=params.reg_alpha,
         random_state=train_config.seed,
         nthread=-1,
         **booster_kwargs,
     )
-    booster.fit(matrix, labels)
-    return booster
+    try:
+        booster.fit(matrix, labels)
+        return booster
+    except Exception as exc:  # pragma: no cover - runtime guard
+        if use_gpu and _should_retry_on_cpu(requested_method, exc):
+            LOGGER.warning(
+                "XGBoost GPU training failed with '%s'. Retrying current task on CPU.",
+                exc,
+            )
+            _disable_gpu_boosters()
+            cpu_kwargs = _scrub_gpu_kwargs(booster_kwargs)
+            cpu_booster = XGBClassifier(
+                objective="multi:softprob",
+                eval_metric="mlogloss",
+                n_estimators=params.n_estimators,
+                max_depth=params.max_depth,
+                learning_rate=params.learning_rate,
+                subsample=params.subsample,
+                colsample_bytree=params.colsample_bytree,
+                tree_method="hist",
+                reg_lambda=params.reg_lambda,
+                reg_alpha=params.reg_alpha,
+                random_state=train_config.seed,
+                nthread=-1,
+                **cpu_kwargs,
+            )
+            cpu_booster.fit(matrix, labels)
+            return cpu_booster
+        raise
+
+
+def _disable_gpu_boosters() -> None:
+    """Disable GPU boosters for subsequent runs after a failure."""
+
+    global _GPU_TRAINING_ENABLED  # pylint: disable=global-statement
+    if _GPU_TRAINING_ENABLED:
+        LOGGER.warning("Disabling XGBoost GPU boosters for the remainder of this process.")
+    _GPU_TRAINING_ENABLED = False
+
+
+def _scrub_gpu_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy of kwargs without GPU-specific overrides."""
+
+    cleaned = dict(kwargs)
+    cleaned.pop("gpu_id", None)
+    if cleaned.get("predictor", "").startswith("gpu"):
+        cleaned.pop("predictor", None)
+    if cleaned.get("tree_method", "").startswith("gpu"):
+        cleaned.pop("tree_method", None)
+    return cleaned
 
 
 def _build_model_components(

@@ -8,7 +8,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 
 | Config | Accuracy ↑ | Coverage ↑ | Evaluated |
 | --- | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10** | 0.971 | 0.974 | 548 |
+| **tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10** | 0.973 | 0.976 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.971 | 0.974 | 548 |
@@ -17,6 +18,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p1 | 0.971 | 0.974 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10p1 | 0.971 | 0.974 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.969 | 0.973 | 548 |
@@ -59,6 +61,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.969 | 0.973 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.969 | 0.973 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.967 | 0.971 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.967 | 0.971 | 548 |
@@ -98,6 +102,12 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.967 | 0.971 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.967 | 0.971 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10 | 0.967 | 0.971 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.965 | 0.969 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.965 | 0.969 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.965 | 0.969 | 548 |
@@ -120,6 +130,11 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.965 | 0.969 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p1 | 0.965 | 0.969 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.965 | 0.969 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.965 | 0.969 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.965 | 0.969 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.965 | 0.969 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.964 | 0.967 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.964 | 0.967 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.964 | 0.967 | 548 |
@@ -138,6 +153,11 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.964 | 0.967 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l11 | 0.964 | 0.967 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p1 | 0.964 | 0.967 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.964 | 0.967 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.964 | 0.967 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.964 | 0.967 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.964 | 0.967 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10p1 | 0.964 | 0.967 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.962 | 0.965 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.962 | 0.965 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.962 | 0.965 | 548 |
@@ -154,6 +174,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l11 | 0.962 | 0.965 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.962 | 0.965 | 548 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p5 | 0.962 | 0.965 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.962 | 0.965 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.960 | 0.963 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.960 | 0.963 | 548 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.960 | 0.963 | 548 |
@@ -272,6 +293,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.361 | 0.361 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.361 | 0.361 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.361 | 0.361 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.361 | 0.361 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.359 | 0.359 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.359 | 0.359 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.359 | 0.359 | 671 |
@@ -299,6 +321,9 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.356 | 0.356 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.356 | 0.356 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.356 | 0.356 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.356 | 0.356 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.356 | 0.356 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.356 | 0.356 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.355 | 0.355 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.355 | 0.355 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.355 | 0.355 | 671 |
@@ -316,6 +341,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.353 | 0.353 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.353 | 0.353 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.353 | 0.353 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.353 | 0.353 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.353 | 0.353 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.352 | 0.352 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.352 | 0.352 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.352 | 0.352 | 671 |
@@ -324,6 +351,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.352 | 0.352 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.352 | 0.352 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.352 | 0.352 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.352 | 0.352 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.352 | 0.352 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.350 | 0.350 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.350 | 0.350 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.350 | 0.350 | 671 |
@@ -331,19 +360,30 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.350 | 0.350 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p1 | 0.350 | 0.350 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10 | 0.350 | 0.350 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l10p5 | 0.350 | 0.350 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.350 | 0.350 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.350 | 0.350 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.350 | 0.350 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.350 | 0.350 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.349 | 0.349 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 671 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.349 | 0.349 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.349 | 0.349 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.347 | 0.347 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.347 | 0.347 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.347 | 0.347 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.347 | 0.347 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.347 | 0.347 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.346 | 0.346 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.346 | 0.346 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.346 | 0.346 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.344 | 0.344 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.344 | 0.344 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.343 | 0.343 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.343 | 0.343 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.341 | 0.341 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.341 | 0.341 | 671 |
 
@@ -416,9 +456,11 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.431 | 0.431 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.431 | 0.431 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.431 | 0.431 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.431 | 0.431 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.430 | 0.430 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.430 | 0.430 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.430 | 0.430 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.430 | 0.430 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.429 | 0.429 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.429 | 0.429 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.429 | 0.429 | 1200 |
@@ -435,6 +477,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.428 | 0.428 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.428 | 0.428 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.428 | 0.428 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.428 | 0.428 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.427 | 0.427 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.427 | 0.427 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.427 | 0.427 | 1200 |
@@ -448,6 +491,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.427 | 0.427 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.427 | 0.427 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.427 | 0.427 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.427 | 0.427 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.426 | 0.426 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.426 | 0.426 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.426 | 0.426 | 1200 |
@@ -475,6 +519,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.424 | 0.424 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.424 | 0.424 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10 | 0.424 | 0.424 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.424 | 0.424 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.424 | 0.424 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.423 | 0.423 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.423 | 0.423 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.423 | 0.423 | 1200 |
@@ -490,6 +536,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.422 | 0.422 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.422 | 0.422 | 1200 |
@@ -497,17 +544,23 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.421 | 0.421 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.421 | 0.421 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.421 | 0.421 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.420 | 0.420 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.420 | 0.420 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.418 | 0.418 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.418 | 0.418 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.418 | 0.418 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.418 | 0.418 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.418 | 0.418 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.417 | 0.417 | 1200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.416 | 0.416 | 1200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l10p5 | 0.415 | 0.415 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.413 | 0.413 | 1200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.411 | 0.411 | 1200 |
 
 ### Selection Summary
 
-- **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.971 (coverage 0.974) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.7, colsample=0.8, λ=0.5, α=0. Δ accuracy vs. runner-up 0.000, Δ coverage 0.000.
+- **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.973 (coverage 0.976) using vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.8, λ=0.5, α=0. Δ accuracy vs. runner-up 0.002, Δ coverage 0.002.
 - **Study 2 – Minimum Wage (MTurk) (issue Minimum Wage)**: accuracy 0.382 (coverage 0.382) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.7, colsample=1, λ=0.5, α=0.1. Δ accuracy vs. runner-up 0.000, Δ coverage 0.000.
 - **Study 3 – Minimum Wage (YouGov) (issue Minimum Wage)**: accuracy 0.443 (coverage 0.443) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=0.6, λ=0.5, α=0.1. Δ accuracy vs. runner-up 0.001, Δ coverage 0.001.
 
@@ -518,8 +571,8 @@ This summary lists the XGBoost configurations explored for each participant stud
 | Vectorizer | tfidf ×3 |
 | Learning rate | 0.03 ×3 |
 | Max depth | 3 ×3 |
-| Estimators | 150 ×3 |
-| Subsample | 0.7 ×2, 0.9 ×1 |
+| Estimators | 150 ×2, 350 ×1 |
+| Subsample | 0.8 ×1, 0.7 ×1, 0.9 ×1 |
 | Column subsample | 0.8 ×1, 1 ×1, 0.6 ×1 |
 | L2 regularisation | 0.5 ×3 |
 | L1 regularisation | 0.1 ×2, 0 ×1 |

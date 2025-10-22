@@ -48,7 +48,6 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 # ---------------------------------------------------------------------------
 
 : "${KNN_USE_GPU:=1}"
-: "${KNN_GPU_PARTITION:=gpu}"
 : "${KNN_GPU_GRES:=gpu:1}"
 : "${KNN_GPU_CPUS:=16}"
 : "${KNN_GPU_MEM:=128G}"
@@ -60,6 +59,9 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 : "${KNN_FINAL_CPUS:=}"
 : "${KNN_FINAL_MEM:=}"
 : "${KNN_FINAL_TIME:=}"
+: "${KNN_SLURM_ACCOUNT:=mltheory}"
+: "${KNN_SLURM_PARTITION:=mltheory}"
+: "${KNN_GPU_PARTITION:=${KNN_SLURM_PARTITION}}"
 
 export PYTHONPATH="${PYTHONPATH:-}:${ROOT_DIR}/src"
 cd "${ROOT_DIR}"
@@ -85,7 +87,7 @@ Environment overrides:
   KNN_MAX_ARRAY_SIZE    Maximum tasks per SLURM array submission (default: 1000)
   KNN_GPU_FEATURES       Feature spaces that require GPU scheduling (default: * for all)
   KNN_USE_GPU            Enable GPU scheduling when set to 1 (auto-enabled if GPU options are provided)
-  KNN_GPU_PARTITION      Partition name for GPU sweep chunks
+  KNN_GPU_PARTITION      Partition name for GPU sweep chunks (default: KNN_SLURM_PARTITION)
   KNN_GPU_GRES           GPU resource specification for sweep chunks (e.g. gpu:1)
   KNN_GPU_CPUS           CPU count per GPU sweep task (default: 4)
   KNN_GPU_MEM            Memory request per GPU sweep task
@@ -100,6 +102,8 @@ Environment overrides:
   KNN_FINAL_MEM          Memory request for the finalize stage
   KNN_FINAL_TIME         Wallclock limit for the finalize stage
   KNN_FINAL_SBATCH_FLAGS Additional sbatch flags appended to the finalize submission
+  KNN_SLURM_ACCOUNT      SLURM account used for all submissions (default: mltheory)
+  KNN_SLURM_PARTITION    SLURM partition used for CPU/finalize submissions (default: mltheory)
 EOF
 }
 
@@ -228,6 +232,8 @@ submit_jobs() {
   local finalize_cpus="${KNN_FINAL_CPUS:-4}"
   local max_array_size_raw="${KNN_MAX_ARRAY_SIZE:-1000}"
   local plan_log="${LOG_DIR}/${sweep_job_name}_plan.txt"
+  local slurm_account="${KNN_SLURM_ACCOUNT:-}"
+  local slurm_partition="${KNN_SLURM_PARTITION:-}"
 
   printf '%s\n' "${plan_output}" > "${plan_log}"
   echo "[knn] Sweep plan saved to ${plan_log}."
@@ -358,6 +364,12 @@ submit_jobs() {
       --output="${LOG_DIR}/${sweep_job_name}_%A_%a.out"
       --error="${LOG_DIR}/${sweep_job_name}_%A_%a.err"
     )
+    if [[ -n "${slurm_account}" ]]; then
+      sbatch_cmd+=(--account "${slurm_account}")
+    fi
+    if [[ -n "${slurm_partition}" ]]; then
+      sbatch_cmd+=(--partition "${slurm_partition}")
+    fi
     sbatch_cmd+=("${SCRIPT_PATH}" sweeps "${pipeline_args[@]}")
     local sbatch_output
     if sbatch_output=$("${sbatch_cmd[@]}" 2>&1); then
@@ -390,7 +402,7 @@ submit_jobs() {
   local gpu_chunk_index=0
   if (( gpu_enabled )) && (( ${#gpu_ranges[@]} > 0 )) && (( ! reuse_only )); then
     local gpu_job_name="${sweep_job_name}-gpu"
-    local gpu_partition="${KNN_GPU_PARTITION:-gpu}"
+    local gpu_partition="${KNN_GPU_PARTITION:-${slurm_partition}}"
     local gpu_gres="${KNN_GPU_GRES:-gpu:1}"
     local gpu_nodes="${KNN_GPU_NODES:-1}"
     local gpu_cpus="${KNN_GPU_CPUS:-16}"
@@ -447,6 +459,9 @@ submit_jobs() {
       fi
       if (( ${#extra_gpu_flags[@]} )); then
         sbatch_cmd+=("${extra_gpu_flags[@]}")
+      fi
+      if [[ -n "${slurm_account}" ]]; then
+        sbatch_cmd+=(--account "${slurm_account}")
       fi
       sbatch_cmd+=("${SCRIPT_PATH}" sweeps "${pipeline_args[@]}")
       local sbatch_output
@@ -510,6 +525,9 @@ submit_jobs() {
       finalize_mem="${KNN_GPU_MEM}"
     fi
   fi
+  if [[ -z "${finalize_partition}" && -n "${slurm_partition}" ]]; then
+    finalize_partition="${slurm_partition}"
+  fi
   local -a extra_finalize_flags=()
   if [[ -n "${KNN_FINAL_SBATCH_FLAGS:-}" ]]; then
     read -r -a extra_finalize_flags <<<"${KNN_FINAL_SBATCH_FLAGS}"
@@ -538,6 +556,9 @@ submit_jobs() {
   fi
   if [[ -n "${finalize_mem}" ]]; then
     finalize_cmd+=(--mem "${finalize_mem}")
+  fi
+  if [[ -n "${slurm_account}" ]]; then
+    finalize_cmd+=(--account "${slurm_account}")
   fi
   if (( ${#extra_finalize_flags[@]} )); then
     finalize_cmd+=("${extra_finalize_flags[@]}")

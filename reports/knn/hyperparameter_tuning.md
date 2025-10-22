@@ -15,7 +15,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
 | TFIDF | Study 1 – Gun Control (MTurk) | cosine | none | tfidf | — | — | — | 0.889 | 2 |
 | TFIDF | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.338 | 3 |
-| TFIDF | Study 3 – Minimum Wage (YouGov) | cosine | none | tfidf | — | — | — | 0.284 | 2 |
+| TFIDF | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.292 | 2 |
 | WORD2VEC | Study 1 – Gun Control (MTurk) | cosine | none | word2vec | 128 | 5 | 1 | 0.861 | 2 |
 | WORD2VEC | Study 2 – Minimum Wage (MTurk) | cosine | none | word2vec | 256 | 5 | 1 | 0.334 | 10 |
 | WORD2VEC | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | word2vec | 256 | 5 | 1 | 0.288 | 10 |
@@ -47,7 +47,9 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-none** | 0.284 | 0.000 | 2 | 1200 |
+| 1 | **metric-cosine_text-viewerprofile_statetext** | 0.292 | 0.000 | 2 | 1200 |
+| 2 | metric-l2_text-viewerprofile_statetext | 0.288 | 0.004 | 2 | 1200 |
+| 3 | metric-cosine_text-none | 0.284 | 0.008 | 2 | 1200 |
 
 
 ## Word2Vec Feature Space
@@ -106,7 +108,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.284 (k=2) using cosine distance with no extra fields.
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (k=2) using cosine distance with extra fields `viewer_profile,state_text`.
 - WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (k=2) using cosine distance, no extra fields, size=128, window=5, min_count=1; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (k=10) using cosine distance, no extra fields, size=256, window=5, min_count=1; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (k=10) using cosine distance, extra fields `viewer_profile,state_text`, size=256, window=5, min_count=1.
 - SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (k=3) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2.
 

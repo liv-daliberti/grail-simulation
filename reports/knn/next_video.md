@@ -11,7 +11,8 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 | Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
 | --- | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.889 | 2 | 0.540 |
+| Study 2 – Minimum Wage (MTurk) | 0.338 | 3 | 0.368 |
 
 ## Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk) accuracy 0.889 (baseline 0.540).
+- TFIDF: Study 1 – Gun Control (MTurk) accuracy 0.889 (baseline 0.540); Study 2 – Minimum Wage (MTurk) accuracy 0.338 (baseline 0.368).

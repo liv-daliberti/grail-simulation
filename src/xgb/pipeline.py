@@ -587,11 +587,37 @@ def _resolve_study_specs(
     cache_dir: str,
     requested_issues: Sequence[str],
     requested_studies: Sequence[str],
+    allow_incomplete: bool,
 ) -> List[StudySpec]:
     """Return metadata describing the participant studies slated for evaluation."""
 
-    ds = load_dataset_source(dataset, cache_dir)
-    available_issues = set(issues_in_dataset(ds))
+    ds = None
+    available_issues: set[str]
+    try:
+        ds = load_dataset_source(dataset, cache_dir)
+    except ImportError as exc:
+        if allow_incomplete:
+            LOGGER.warning(
+                "Unable to load dataset '%s' (%s). Falling back to default study specs because allow-incomplete mode is enabled.",
+                dataset,
+                exc,
+            )
+        else:
+            raise
+    except FileNotFoundError as exc:
+        if allow_incomplete:
+            LOGGER.warning(
+                "Dataset path '%s' missing (%s). Proceeding with default study specs because allow-incomplete mode is enabled.",
+                dataset,
+                exc,
+            )
+        else:
+            raise
+
+    if ds is not None:
+        available_issues = set(issues_in_dataset(ds))
+    else:
+        available_issues = {spec.issue for spec in DEFAULT_SPECS}
 
     specs: List[StudySpec] = [
         StudySpec(key=spec.key, issue=spec.issue, label=spec.label)
@@ -1383,6 +1409,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         cache_dir=cache_dir,
         requested_issues=issue_tokens,
         requested_studies=study_tokens,
+        allow_incomplete=allow_incomplete,
     )
     extra_fields = _split_tokens(args.extra_text_fields)
 

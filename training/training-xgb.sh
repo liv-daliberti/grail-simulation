@@ -205,6 +205,7 @@ submit_jobs() {
   local plan_output
   plan_output=$(run_plan "${pipeline_args[@]}")
   local total_tasks
+  local reuse_only=0
   total_tasks=$(awk -F= '/^TOTAL_TASKS=/{print $2}' <<<"${plan_output}")
   if [[ -z "${total_tasks}" ]]; then
     echo "[xgb] Failed to parse TOTAL_TASKS from plan output." >&2
@@ -212,8 +213,8 @@ submit_jobs() {
   fi
   total_tasks=$((10#${total_tasks}))
   if (( total_tasks <= 0 )); then
-    echo "[xgb] Plan reported ${total_tasks} tasks; nothing to submit." >&2
-    return
+    echo "[xgb] Plan reported ${total_tasks} tasks; reusing cached sweep metrics."
+    reuse_only=1
   fi
 
   local sweep_job_name="${XGB_SWEEP_JOB_NAME:-xgb-sweeps}"
@@ -320,7 +321,10 @@ submit_jobs() {
 
   local -a sweep_job_ids=()
   local cpu_chunk_index=0
-  local -a cpu_pending=("${cpu_ranges[@]}")
+  local -a cpu_pending=()
+  if (( ! reuse_only )); then
+    cpu_pending=("${cpu_ranges[@]}")
+  fi
   while (( ${#cpu_pending[@]} > 0 )); do
     local range="${cpu_pending[0]}"
     cpu_pending=("${cpu_pending[@]:1}")
@@ -380,7 +384,7 @@ submit_jobs() {
   done
 
   local gpu_chunk_index=0
-  if (( gpu_enabled )) && (( ${#gpu_ranges[@]} > 0 )); then
+  if (( gpu_enabled )) && (( ${#gpu_ranges[@]} > 0 )) && (( ! reuse_only )); then
     local gpu_job_name="${sweep_job_name}-gpu"
     local gpu_partition="${XGB_GPU_PARTITION:-gpu}"
     local gpu_gres="${XGB_GPU_GRES:-gpu:1}"
@@ -475,13 +479,16 @@ submit_jobs() {
     return
   fi
 
-  if (( ${#sweep_job_ids[@]} == 0 )); then
+  local dependency_spec=""
+  if (( ${#sweep_job_ids[@]} > 0 )); then
+    dependency_spec="afterok:${sweep_job_ids[*]}"
+    dependency_spec=${dependency_spec// /:}
+  elif (( reuse_only )); then
+    echo "[xgb] No new sweeps required; scheduling finalize stage to reuse cached metrics."
+  else
     echo "[xgb] No sweep jobs were submitted; finalize stage skipped." >&2
     return
   fi
-
-  local dependency_spec="afterok:${sweep_job_ids[*]}"
-  dependency_spec=${dependency_spec// /:}
 
   local finalize_export="ALL,TRAINING_REPO_ROOT=${ROOT_DIR},TRAINING_SWEEP_TOTAL=${total_tasks}"
   local finalize_partition=""
@@ -506,7 +513,6 @@ submit_jobs() {
   local finalize_cmd=(
     sbatch
     --parsable
-    --dependency="${dependency_spec}"
     --job-name="${final_job_name}"
     --time="${finalize_time}"
     --cpus-per-task="${finalize_cpus}"
@@ -514,6 +520,9 @@ submit_jobs() {
     --error="${LOG_DIR}/${final_job_name}_%A.err"
     --export="${finalize_export}"
   )
+  if [[ -n "${dependency_spec}" ]]; then
+    finalize_cmd+=(--dependency "${dependency_spec}")
+  fi
   if [[ -n "${finalize_partition}" ]]; then
     finalize_cmd+=(--partition "${finalize_partition}")
   fi
@@ -532,7 +541,11 @@ submit_jobs() {
   finalize_cmd+=("${SCRIPT_PATH}" finalize "${pipeline_args[@]}")
   local finalize_job_id
   finalize_job_id=$("${finalize_cmd[@]}")
-  echo "[xgb] Finalize job ${finalize_job_id} scheduled with dependency after jobs: ${sweep_job_ids[*]}."
+  if [[ -n "${dependency_spec}" ]]; then
+    echo "[xgb] Finalize job ${finalize_job_id} scheduled with dependency after jobs: ${sweep_job_ids[*]}."
+  else
+    echo "[xgb] Finalize job ${finalize_job_id} scheduled (no dependencies; reusing cached sweeps)."
+  fi
 }
 
 run_finalize_local() {

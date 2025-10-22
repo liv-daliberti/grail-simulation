@@ -246,6 +246,36 @@ class ReportBundle:
     allow_incomplete: bool = False
 
 
+@dataclass(frozen=True)
+class MetricSummary:
+    """Normalized slice of common slate metrics."""
+
+    accuracy: Optional[float] = None
+    accuracy_ci: Optional[Tuple[float, float]] = None
+    baseline: Optional[float] = None
+    baseline_ci: Optional[Tuple[float, float]] = None
+    random_baseline: Optional[float] = None
+    best_k: Optional[int] = None
+    n_total: Optional[int] = None
+    n_eligible: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class OpinionSummary:
+    """Normalized view of opinion-regression metrics."""
+
+    mae: Optional[float] = None
+    rmse: Optional[float] = None
+    r2: Optional[float] = None
+    mae_change: Optional[float] = None
+    baseline_mae: Optional[float] = None
+    mae_delta: Optional[float] = None
+    best_k: Optional[int] = None
+    participants: Optional[int] = None
+    dataset: Optional[str] = None
+    split: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Argument parsing helpers
 # ---------------------------------------------------------------------------
@@ -518,6 +548,136 @@ def _format_float(value: float) -> str:
     """Format a floating-point metric with three decimal places."""
 
     return f"{value:.3f}"
+
+
+def _format_optional_float(value: Optional[float]) -> str:
+    """Format optional floating-point metrics."""
+
+    return _format_float(value) if value is not None else "—"
+
+
+def _format_delta(delta: Optional[float]) -> str:
+    """Format a signed improvement metric."""
+
+    return f"{delta:+.3f}" if delta is not None else "—"
+
+
+def _format_count(value: Optional[int]) -> str:
+    """Format integer counts with thousands separators."""
+
+    if value is None:
+        return "—"
+    return f"{value:,}"
+
+
+def _format_k(value: Optional[int]) -> str:
+    """Format the selected k hyperparameter."""
+
+    if value is None or value <= 0:
+        return "—"
+    return str(value)
+
+
+def _format_uncertainty_details(uncertainty: Mapping[str, object]) -> str:
+    """Format auxiliary uncertainty metadata for reporting."""
+
+    if not isinstance(uncertainty, Mapping):
+        return ""
+    detail_bits: List[str] = []
+    for key in ("n_bootstrap", "n_groups", "n_rows", "seed"):
+        value = uncertainty.get(key)
+        if value is None:
+            continue
+        detail_bits.append(f"{key}={value}")
+    return f" ({', '.join(detail_bits)})" if detail_bits else ""
+
+
+def _safe_float(value: object) -> Optional[float]:
+    """Best-effort conversion to float."""
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: object) -> Optional[int]:
+    """Best-effort conversion to int."""
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_ci(ci_value: object) -> Optional[Tuple[float, float]]:
+    """Return a numeric confidence-interval tuple when available."""
+
+    if isinstance(ci_value, Mapping):
+        low = _safe_float(ci_value.get("low"))
+        high = _safe_float(ci_value.get("high"))
+        if low is not None and high is not None:
+            return (low, high)
+        return None
+    if isinstance(ci_value, (tuple, list)) and len(ci_value) == 2:
+        low = _safe_float(ci_value[0])
+        high = _safe_float(ci_value[1])
+        if low is not None and high is not None:
+            return (low, high)
+    return None
+
+
+def _extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
+    """Collect reusable slate metrics fields."""
+
+    accuracy = _safe_float(data.get("accuracy_overall"))
+    best_k = _safe_int(data.get("best_k"))
+    n_total = _safe_int(data.get("n_total"))
+    n_eligible = _safe_int(data.get("n_eligible"))
+    accuracy_ci = _parse_ci(data.get("accuracy_ci_95") or data.get("accuracy_uncertainty", {}).get("ci95"))
+
+    baseline_ci = _parse_ci(data.get("baseline_ci_95") or data.get("baseline_uncertainty", {}).get("ci95"))
+    baseline_data = data.get("baseline_most_frequent_gold_index", {})
+    baseline = None
+    if isinstance(baseline_data, Mapping):
+        baseline = _safe_float(baseline_data.get("accuracy"))
+
+    random_baseline = _safe_float(data.get("random_baseline_expected_accuracy"))
+
+    return MetricSummary(
+        accuracy=accuracy,
+        accuracy_ci=accuracy_ci,
+        baseline=baseline,
+        baseline_ci=baseline_ci,
+        random_baseline=random_baseline,
+        best_k=best_k,
+        n_total=n_total,
+        n_eligible=n_eligible,
+    )
+
+
+def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
+    """Collect opinion regression metrics into a normalized structure."""
+
+    best_metrics = data.get("best_metrics", {})
+    baseline = data.get("baseline", {})
+    mae_after = _safe_float(best_metrics.get("mae_after"))
+    baseline_mae = _safe_float(baseline.get("mae_using_before"))
+    mae_delta = (
+        baseline_mae - mae_after if mae_after is not None and baseline_mae is not None else None
+    )
+    return OpinionSummary(
+        mae=mae_after,
+        rmse=_safe_float(best_metrics.get("rmse_after")),
+        r2=_safe_float(best_metrics.get("r2_after")),
+        mae_change=_safe_float(best_metrics.get("mae_change")),
+        baseline_mae=baseline_mae,
+        mae_delta=mae_delta,
+        best_k=_safe_int(data.get("best_k")),
+        participants=_safe_int(data.get("n_participants")),
+        dataset=str(data.get("dataset")) if data.get("dataset") else None,
+        split=str(data.get("split")) if data.get("split") else None,
+    )
 
 
 def _ensure_dir(path: Path) -> Path:
@@ -1266,8 +1426,8 @@ def _hyperparameter_report_intro(
     lines.extend(
         [
             "",
-            "| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy | Best k |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |",
+            "| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     return lines
@@ -1399,9 +1559,19 @@ def _format_hyperparameter_row(
         model = "word2vec"
     else:
         model = "tfidf"
+    metrics_map = selection.outcome.metrics or {}
+    summary = _extract_metric_summary(metrics_map) if metrics_map else MetricSummary()
+    delta = (
+        summary.accuracy - summary.baseline
+        if summary.accuracy is not None and summary.baseline is not None
+        else None
+    )
+    eligible = summary.n_eligible if summary.n_eligible is not None else selection.outcome.eligible
     return (
         f"| {feature_space.upper()} | {study.label} | {config.metric} | {text_label} | {model} | "
-        f"{size} | {window} | {min_count} | {_format_float(selection.accuracy)} | {selection.best_k} |"
+        f"{size} | {window} | {min_count} | {_format_optional_float(summary.accuracy)} | "
+        f"{_format_optional_float(summary.baseline)} | {_format_delta(delta)} | "
+        f"{_format_k(summary.best_k or selection.best_k)} | {_format_count(eligible)} |"
     )
 
 
@@ -1459,6 +1629,15 @@ def _hyperparameter_feature_observation(
         if not selection:
             continue
         config = selection.config
+        metrics_map = selection.outcome.metrics or {}
+        summary = _extract_metric_summary(metrics_map) if metrics_map else MetricSummary()
+        accuracy_value = summary.accuracy if summary.accuracy is not None else selection.accuracy
+        baseline_value = summary.baseline
+        delta_value = (
+            summary.accuracy - summary.baseline
+            if summary.accuracy is not None and summary.baseline is not None
+            else None
+        )
         text_info = _describe_text_fields(config.text_fields)
         if feature_space == "word2vec":
             config_bits = _format_word2vec_descriptor(config, text_info)
@@ -1468,8 +1647,9 @@ def _hyperparameter_feature_observation(
         else:
             config_bits = f"{config.metric} distance with {text_info}"
         detail = (
-            f"{study.label}: accuracy {_format_float(selection.accuracy)} "
-            f"(k={selection.best_k}) using {config_bits}"
+            f"{study.label}: accuracy {_format_optional_float(accuracy_value)} "
+            f"(baseline {_format_optional_float(baseline_value)}, Δ {_format_delta(delta_value)}, "
+            f"k={_format_k(summary.best_k or selection.best_k)}) using {config_bits}"
         )
         bullet_bits.append(detail)
     return "; ".join(bullet_bits) if bullet_bits else None
@@ -1501,7 +1681,24 @@ def _next_video_dataset_info(
     raise RuntimeError("No slate metrics available to build the next-video report.")
 
 
-def _next_video_intro(dataset_name: str, split: str) -> List[str]:
+def _next_video_uncertainty_info(
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+) -> Optional[Mapping[str, object]]:
+    """Return the first uncertainty payload available for reporting."""
+
+    for per_feature in metrics_by_feature.values():
+        for study_metrics in per_feature.values():
+            uncertainty = study_metrics.get("uncertainty")
+            if isinstance(uncertainty, Mapping):
+                return uncertainty
+    return None
+
+
+def _next_video_intro(
+    dataset_name: str,
+    split: str,
+    uncertainty: Optional[Mapping[str, object]] = None,
+) -> List[str]:
     """Return the introductory Markdown section for the next-video report."""
 
     return [
@@ -1512,6 +1709,15 @@ def _next_video_intro(dataset_name: str, split: str) -> List[str]:
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
         "- Metric: accuracy on eligible slates (gold index present)",
+        *(
+            [
+                "- Uncertainty: "
+                + str(uncertainty.get("method", "unknown"))
+                + _format_uncertainty_details(uncertainty)
+            ]
+            if uncertainty
+            else []
+        ),
         "",
     ]
 
@@ -1528,27 +1734,21 @@ def _feature_space_heading(feature_space: str) -> str:
     return f"## {feature_space.replace('_', ' ').title()} Feature Space"
 
 
-def _baseline_accuracy(data: Mapping[str, object]) -> float:
-    """Return the baseline most-frequent gold-index accuracy from ``data``."""
-
-    baseline = data.get("baseline_most_frequent_gold_index", {})
-    getter = getattr(baseline, "get", None)
-    if callable(getter):
-        return float(baseline.get("accuracy", 0.0))
-    return 0.0
-
-
 def _format_ci(ci_value: object) -> str:
     """Format a 95% confidence interval if present."""
 
-    if not isinstance(ci_value, Mapping):
+    if isinstance(ci_value, Mapping):
+        low = _safe_float(ci_value.get("low"))
+        high = _safe_float(ci_value.get("high"))
+        if low is not None and high is not None:
+            return f"[{low:.3f}, {high:.3f}]"
         return "—"
-    try:
-        low = float(ci_value.get("low"))
-        high = float(ci_value.get("high"))
-    except (TypeError, ValueError):
-        return "—"
-    return f"[{low:.3f}, {high:.3f}]"
+    if isinstance(ci_value, (tuple, list)) and len(ci_value) == 2:
+        low = _safe_float(ci_value[0])
+        high = _safe_float(ci_value[1])
+        if low is not None and high is not None:
+            return f"[{low:.3f}, {high:.3f}]"
+    return "—"
 
 
 def _next_video_feature_section(
@@ -1563,17 +1763,27 @@ def _next_video_feature_section(
     lines: List[str] = [
         _feature_space_heading(feature_space),
         "",
-        "| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |",
-        "| --- | ---: | ---: | ---: |",
+        "| Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |",
+        "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for study in studies:
         data = metrics.get(study.key)
         if not data:
             continue
-        accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
-        best_k = int(data.get("best_k", 0))
-        baseline_acc = _format_float(_baseline_accuracy(data))
-        lines.append(f"| {study.label} | {accuracy} | {best_k} | {baseline_acc} |")
+        summary = _extract_metric_summary(data)
+        delta = (
+            summary.accuracy - summary.baseline
+            if summary.accuracy is not None and summary.baseline is not None
+            else None
+        )
+        lines.append(
+            f"| {study.label} | {_format_optional_float(summary.accuracy)} | "
+            f"{_format_ci(summary.accuracy_ci)} | {_format_delta(delta)} | "
+            f"{_format_optional_float(summary.baseline)} | "
+            f"{_format_optional_float(summary.random_baseline)} | "
+            f"{_format_k(summary.best_k)} | {_format_count(summary.n_eligible)} | "
+            f"{_format_count(summary.n_total)} |"
+        )
     lines.append("")
     return lines
 
@@ -1587,8 +1797,8 @@ def _next_video_loso_section(
     lines: List[str] = [
         "## Leave-One-Study-Out Evaluation",
         "",
-        "| Feature space | Holdout study | Accuracy ↑ | 95% CI | Most-frequent baseline ↑ |",
-        "| --- | --- | ---: | --- | ---: |",
+        "| Feature space | Holdout study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ |",
+        "| --- | --- | ---: | --- | ---: | ---: |",
     ]
     ordered_spaces = [space for space in ("tfidf", "word2vec", "sentence_transformer") if space in loso_metrics]
     for space in loso_metrics:
@@ -1602,11 +1812,16 @@ def _next_video_loso_section(
             data = feature_data.get(study.key)
             if not data:
                 continue
-            accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
-            baseline_acc = _format_float(_baseline_accuracy(data))
-            ci_text = _format_ci(data.get("accuracy_ci_95"))
+            summary = _extract_metric_summary(data)
+            delta = (
+                summary.accuracy - summary.baseline
+                if summary.accuracy is not None and summary.baseline is not None
+                else None
+            )
+            ci_text = _format_ci(summary.accuracy_ci)
             lines.append(
-                f"| {feature_space.upper()} | {study.label} | {accuracy} | {ci_text} | {baseline_acc} |"
+                f"| {feature_space.upper()} | {study.label} | {_format_optional_float(summary.accuracy)} | "
+                f"{ci_text} | {_format_delta(delta)} | {_format_optional_float(summary.baseline)} |"
             )
     lines.append("")
     lines.append(
@@ -1637,14 +1852,40 @@ def _next_video_observations(
         if not metrics:
             continue
         bullet_bits: List[str] = []
+        deltas: List[float] = []
+        randoms: List[float] = []
         for study in studies:
             data = metrics.get(study.key)
             if not data:
                 continue
-            accuracy = _format_float(float(data.get("accuracy_overall", 0.0)))
-            baseline_acc = _format_float(_baseline_accuracy(data))
-            detail = f"{study.label} accuracy {accuracy} (baseline {baseline_acc})"
+            summary = _extract_metric_summary(data)
+            if summary.accuracy is None:
+                continue
+            delta_val = (
+                summary.accuracy - summary.baseline
+                if summary.baseline is not None
+                else None
+            )
+            if delta_val is not None:
+                deltas.append(delta_val)
+            if summary.random_baseline is not None:
+                randoms.append(summary.random_baseline)
+            detail = (
+                f"{study.label}: {_format_optional_float(summary.accuracy)} "
+                f"(baseline {_format_optional_float(summary.baseline)}, "
+                f"Δ {_format_delta(delta_val)}, k={_format_k(summary.best_k)}, "
+                f"eligible {_format_count(summary.n_eligible)})"
+            )
             bullet_bits.append(detail)
+        extras: List[str] = []
+        if deltas:
+            mean_delta = sum(deltas) / len(deltas)
+            extras.append(f"mean Δ {_format_delta(mean_delta)}")
+        if randoms:
+            mean_random = sum(randoms) / len(randoms)
+            extras.append(f"mean random {_format_optional_float(mean_random)}")
+        if extras:
+            bullet_bits.append("averages: " + ", ".join(extras))
         if bullet_bits:
             lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
     lines.append("")
@@ -1706,8 +1947,9 @@ def _build_next_video_report(
         return
 
     dataset_name, split = _next_video_dataset_info(metrics_by_feature)
+    uncertainty = _next_video_uncertainty_info(metrics_by_feature)
     lines: List[str] = []
-    lines.extend(_next_video_intro(dataset_name, split))
+    lines.extend(_next_video_intro(dataset_name, split, uncertainty))
     ordered_spaces = [
         space
         for space in ("tfidf", "word2vec", "sentence_transformer")
@@ -1725,18 +1967,34 @@ def _build_next_video_report(
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _opinion_report_intro() -> List[str]:
+def _opinion_report_intro(dataset_name: str, split: str) -> List[str]:
     """Return the introductory Markdown section for the opinion report."""
 
     return [
         "# KNN Opinion Shift Study",
         "",
         "This study evaluates a second KNN baseline that predicts each participant's post-study opinion index.",
-        "- Dataset: `data/cleaned_grail`",
-        "- Splits: train for neighbour lookup, validation for evaluation",
-        "- Metrics: MAE / RMSE / R² on the predicted post index, plus a no-change (pre-index) baseline",
+        "",
+        f"- Dataset: `{dataset_name}`",
+        f"- Split: {split}",
+        "- Metrics: MAE / RMSE / R² on the predicted post index, compared against a no-change baseline.",
         "",
     ]
+
+
+def _opinion_dataset_info(
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+) -> Tuple[str, str]:
+    """Extract dataset metadata from the opinion metrics bundle."""
+
+    for per_feature in metrics.values():
+        for study_metrics in per_feature.values():
+            summary = _extract_opinion_summary(study_metrics)
+            return (
+                str(summary.dataset or DEFAULT_DATASET_SOURCE),
+                str(summary.split or "validation"),
+            )
+    return (DEFAULT_DATASET_SOURCE, "validation")
 
 
 def _opinion_feature_sections(
@@ -1762,8 +2020,8 @@ def _opinion_feature_sections(
             [
                 _feature_space_heading(feature_space),
                 "",
-                "| Study | Participants | Best k | MAE ↓ | RMSE ↓ | R² ↑ | No-change MAE ↓ |",
-                "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+                "| Study | Participants | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |",
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
         for study in studies:
@@ -1778,18 +2036,15 @@ def _opinion_feature_sections(
 def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
     """Return a Markdown table row for opinion metrics."""
 
-    best_metrics = data.get("best_metrics", {})
-    baseline = data.get("baseline", {})
-    label = data.get("label", study.label)
-    participants = int(data.get("n_participants", 0))
-    best_k = int(data.get("best_k", 0))
-    mae_after = _format_float(float(best_metrics.get("mae_after", 0.0)))
-    rmse_after = _format_float(float(best_metrics.get("rmse_after", 0.0)))
-    r2_after = _format_float(float(best_metrics.get("r2_after", 0.0)))
-    mae_baseline = _format_float(float(baseline.get("mae_using_before", 0.0)))
+    summary = _extract_opinion_summary(data)
+    label = str(data.get("label", study.label))
+    participants_text = _format_count(summary.participants)
     return (
-        f"| {label} | {participants} | {best_k} | {mae_after} | "
-        f"{rmse_after} | {r2_after} | {mae_baseline} |"
+        f"| {label} | {participants_text} | {_format_k(summary.best_k)} | "
+        f"{_format_optional_float(summary.mae)} | {_format_delta(summary.mae_delta)} | "
+        f"{_format_optional_float(summary.rmse)} | {_format_optional_float(summary.r2)} | "
+        f"{_format_optional_float(summary.mae_change)} | "
+        f"{_format_optional_float(summary.baseline_mae)} |"
     )
 
 
@@ -1804,25 +2059,6 @@ def _opinion_heatmap_section() -> List[str]:
     ]
 
 
-def _best_opinion_space(
-    tfidf_metrics: Mapping[str, object],
-    word2vec_metrics: Mapping[str, object] | None,
-) -> Tuple[str, float, int]:
-    """Return the feature space with the highest R² and corresponding stats."""
-
-    tfidf_r2 = float(tfidf_metrics.get("best_metrics", {}).get("r2_after", 0.0))
-    best_space = "TF-IDF"
-    best_r2 = tfidf_r2
-    best_k = int(tfidf_metrics.get("best_k", 0))
-    if word2vec_metrics:
-        word2vec_r2 = float(word2vec_metrics.get("best_metrics", {}).get("r2_after", 0.0))
-        if word2vec_r2 > best_r2:
-            best_space = "Word2Vec"
-            best_r2 = word2vec_r2
-            best_k = int(word2vec_metrics.get("best_k", 0))
-    return best_space, best_r2, best_k
-
-
 def _opinion_takeaways(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
@@ -1830,19 +2066,45 @@ def _opinion_takeaways(
     """Generate takeaway bullets comparing opinion performance."""
 
     lines: List[str] = ["## Takeaways", ""]
-    tfidf_metrics = metrics.get("tfidf")
-    word2vec_metrics = metrics.get("word2vec")
-    if tfidf_metrics and word2vec_metrics:
-        for study in studies:
-            tfidf_data = tfidf_metrics.get(study.key)
-            if not tfidf_data:
+    for study in studies:
+        per_study: Dict[str, Tuple[OpinionSummary, Mapping[str, object]]] = {}
+        for feature_space, per_feature in metrics.items():
+            data = per_feature.get(study.key)
+            if not data:
                 continue
-            word2vec_data = word2vec_metrics.get(study.key)
-            best_space, best_r2, best_k = _best_opinion_space(tfidf_data, word2vec_data)
-            label = tfidf_data.get("label", study.label)
-            lines.append(
-                f"- {label}: {best_space} achieves the highest R² ({best_r2:.3f}) at k={best_k}."
+            per_study[feature_space] = (_extract_opinion_summary(data), data)
+        if not per_study:
+            continue
+
+        label = next((data.get("label") for _summary, data in per_study.values() if data.get("label")), study.label)
+        best_r2_value: Optional[float] = None
+        best_r2_space: Optional[str] = None
+        best_r2_k: Optional[int] = None
+        best_delta_value: Optional[float] = None
+        best_delta_space: Optional[str] = None
+        for feature_space, (summary, _data) in per_study.items():
+            if summary.r2 is not None:
+                if best_r2_value is None or summary.r2 > best_r2_value:
+                    best_r2_value = summary.r2
+                    best_r2_space = feature_space
+                    best_r2_k = summary.best_k
+            if summary.mae_delta is not None:
+                if best_delta_value is None or summary.mae_delta > best_delta_value:
+                    best_delta_value = summary.mae_delta
+                    best_delta_space = feature_space
+
+        bullet_bits: List[str] = []
+        if best_r2_value is not None and best_r2_space is not None:
+            bullet_bits.append(
+                f"best R² {_format_optional_float(best_r2_value)} with {best_r2_space.upper()} "
+                f"(k={_format_k(best_r2_k)})"
             )
+        if best_delta_value is not None and best_delta_space is not None:
+            bullet_bits.append(
+                f"largest MAE reduction {_format_delta(best_delta_value)} via {best_delta_space.upper()}"
+            )
+        if bullet_bits:
+            lines.append(f"- {label}: " + "; ".join(bullet_bits) + ".")
     lines.append("")
     return lines
 
@@ -1870,8 +2132,9 @@ def _build_opinion_report(
         ]
         output_path.write_text("\n".join(placeholder), encoding="utf-8")
         return
+    dataset_name, split = _opinion_dataset_info(metrics)
     lines: List[str] = []
-    lines.extend(_opinion_report_intro())
+    lines.extend(_opinion_report_intro(dataset_name, split))
     lines.extend(_opinion_feature_sections(metrics, studies))
     lines.extend(_opinion_heatmap_section())
     lines.extend(_opinion_takeaways(metrics, studies))

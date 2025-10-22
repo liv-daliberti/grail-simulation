@@ -11,17 +11,17 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 - Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}
 - Sentence-transformer model: `sentence-transformers/all-mpnet-base-v2`
 
-| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy | Best k |
-| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
-| TFIDF | Study 1 – Gun Control (MTurk) | cosine | none | tfidf | — | — | — | 0.889 | 2 |
-| TFIDF | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.338 | 3 |
-| TFIDF | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.292 | 2 |
-| WORD2VEC | Study 1 – Gun Control (MTurk) | cosine | none | word2vec | 128 | 5 | 1 | 0.861 | 2 |
-| WORD2VEC | Study 2 – Minimum Wage (MTurk) | cosine | none | word2vec | 256 | 5 | 1 | 0.334 | 10 |
-| WORD2VEC | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | word2vec | 256 | 5 | 1 | 0.288 | 10 |
-| SENTENCE_TRANSFORMER | Study 1 – Gun Control (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.801 | 2 |
-| SENTENCE_TRANSFORMER | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.308 | 3 |
-| SENTENCE_TRANSFORMER | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.322 | 2 |
+| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
+| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| TFIDF | Study 1 – Gun Control (MTurk) | cosine | none | tfidf | — | — | — | 0.889 | 0.540 | +0.349 | 2 | 548 |
+| TFIDF | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.338 | 0.368 | -0.030 | 3 | 671 |
+| TFIDF | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.292 | 0.479 | -0.187 | 2 | 1,200 |
+| WORD2VEC | Study 1 – Gun Control (MTurk) | cosine | none | word2vec | 128 | 5 | 1 | 0.861 | 0.540 | +0.321 | 2 | 548 |
+| WORD2VEC | Study 2 – Minimum Wage (MTurk) | cosine | none | word2vec | 256 | 5 | 1 | 0.334 | 0.368 | -0.034 | 10 | 671 |
+| WORD2VEC | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | word2vec | 256 | 5 | 1 | 0.288 | 0.479 | -0.191 | 10 | 1,200 |
+| SENTENCE_TRANSFORMER | Study 1 – Gun Control (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.801 | 0.540 | +0.261 | 2 | 548 |
+| SENTENCE_TRANSFORMER | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.308 | 0.368 | -0.060 | 3 | 671 |
+| SENTENCE_TRANSFORMER | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.322 | 0.479 | -0.158 | 2 | 1,200 |
 
 ### Configuration Leaderboards
 
@@ -108,9 +108,9 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (k=2) using cosine distance with extra fields `viewer_profile,state_text`.
-- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (k=2) using cosine distance, no extra fields, size=128, window=5, min_count=1; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (k=10) using cosine distance, no extra fields, size=256, window=5, min_count=1; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (k=10) using cosine distance, extra fields `viewer_profile,state_text`, size=256, window=5, min_count=1.
-- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (k=3) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2.
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (baseline 0.540, Δ +0.349, k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (baseline 0.368, Δ -0.030, k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.187, k=2) using cosine distance with extra fields `viewer_profile,state_text`.
+- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (baseline 0.540, Δ +0.321, k=2) using cosine distance, no extra fields, size=128, window=5, min_count=1; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (baseline 0.368, Δ -0.034, k=10) using cosine distance, no extra fields, size=256, window=5, min_count=1; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (baseline 0.479, Δ -0.191, k=10) using cosine distance, extra fields `viewer_profile,state_text`, size=256, window=5, min_count=1.
+- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (baseline 0.540, Δ +0.261, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (baseline 0.368, Δ -0.060, k=3) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2.
 
 
 ## Post-Study Opinion Regression

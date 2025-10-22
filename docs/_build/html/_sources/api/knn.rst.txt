@@ -4,10 +4,13 @@ KNN Baseline API
 Feature Spaces
 --------------
 
-The ``knn`` command-line entry point now exposes a ``--feature-space`` switch to
-toggle between sparse TF-IDF queries (default) and dense Word2Vec embeddings.
-Word2Vec support depends on ``gensim`` being available; install it via
-``pip install gensim`` or include the project’s ``dev`` extra.
+The ``knn`` command-line entry point exposes a ``--feature-space`` switch to
+toggle between sparse TF-IDF queries (default), dense Word2Vec embeddings, and
+Sentence-Transformer embeddings. Word2Vec support depends on ``gensim`` being
+available; Sentence-Transformer support depends on the
+``sentence-transformers`` package (and a compatible PyTorch backend). Install
+the extras with ``pip install gensim sentence-transformers`` or include the
+project’s ``dev`` extra.
 
 Example invocations:
 
@@ -17,6 +20,10 @@ Example invocations:
 
    python -m knn.cli --fit-index --feature-space word2vec \
        --word2vec-size 256 --out-dir models/knn/run-w2v
+
+   python -m knn.cli --fit-index --feature-space sentence_transformer \
+       --sentence-transformer-model sentence-transformers/all-MiniLM-L6-v2 \
+       --out-dir models/knn/run-st
 
 Diagnostics (elbow plots, accuracy-by-k curves, and per-k predictions) are
 saved under the configured `--out-dir`; use `--train-curve-max` to control how

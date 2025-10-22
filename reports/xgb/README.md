@@ -58,9 +58,25 @@ PYTHONPATH=src python -m xgb.pipeline \
   --colsample-grid 0.7 \
   --reg-lambda-grid 1.0 \
   --reg-alpha-grid 0.0,0.5
+
+# Dense feature examples
+PYTHONPATH=src python -m xgb.pipeline \
+  --dataset data/cleaned_grail \
+  --issues gun_control \
+  --out-dir models/xgb_word2vec \
+  --text-vectorizer word2vec \
+  --word2vec-size 256 \
+  --word2vec-window 5
+
+PYTHONPATH=src python -m xgb.pipeline \
+  --dataset data/cleaned_grail \
+  --issues minimum_wage \
+  --out-dir models/xgb_sentence_transformer \
+  --text-vectorizer sentence_transformer \
+  --sentence-transformer-model sentence-transformers/all-MiniLM-L12-v2
 ```
 
-The pipeline mirrors the KNN document builder, fits a TF-IDF vectorizer over the training corpus, encodes candidate video ids with a label encoder, and trains an `XGBClassifier` for each issue/configuration in the grid. Validation metrics and the Markdown summaries under `reports/xgb/` are rewritten once the sweep completes.
+The pipeline mirrors the KNN document builder, fits the requested text vectorizer (TF-IDF, Word2Vec, or Sentence-Transformer) over the training corpus, encodes candidate video ids with a label encoder, and trains an `XGBClassifier` for each issue/configuration in the grid. Validation metrics and the Markdown summaries under `reports/xgb/` are rewritten once the sweep completes.
 
 **Validation snapshot**
 | Issue | Accuracy | Coverage | Selected config |

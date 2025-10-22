@@ -488,18 +488,27 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
             reg_lambda_values,
             reg_alpha_values,
         ):
+            (
+                learning_rate,
+                max_depth,
+                n_estimators,
+                subsample,
+                colsample_bytree,
+                reg_lambda,
+                reg_alpha,
+            ) = values
             configs.append(
                 SweepConfig(
-                    text_vectorizer=vectorizer,
-                    vectorizer_tag=tag,
-                    learning_rate=values[0],
-                    max_depth=values[1],
-                    n_estimators=values[2],
-                    subsample=values[3],
-                    colsample_bytree=values[4],
-                    reg_lambda=values[5],
-                    reg_alpha=values[6],
-                    vectorizer_cli=vectorizer_cli,
+                    vectorizer,
+                    tag,
+                    learning_rate,
+                    max_depth,
+                    n_estimators,
+                    subsample,
+                    colsample_bytree,
+                    reg_lambda,
+                    reg_alpha,
+                    vectorizer_cli,
                 )
             )
     return configs

@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Opinion Shift Study" href="knn_opinion.html"><link rel="prev" title="KNN Report Catalog" href="knn.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Next-Video Baseline - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -267,7 +267,7 @@ All results are now organized by the three study cohorts that appear in the clea
 <li><p><strong>Study 2 – Minimum Wage (MTurk)</strong></p></li>
 <li><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></li>
 </ul>
-<p>Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected <code class="docutils literal notranslate"><span class="pre">k</span></code>, and baseline comparisons for both TF-IDF and Word2Vec feature spaces.</p>
+<p>Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected <code class="docutils literal notranslate"><span class="pre">k</span></code>, and baseline comparisons for TF-IDF, Word2Vec, and Sentence-Transformer feature spaces.</p>
 <ul class="simple">
 <li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">data/cleaned_grail</span></code></p></li>
 <li><p>Split: validation</p></li>
@@ -321,10 +321,34 @@ All results are now organized by the three study cohorts that appear in the clea
 <li><p>Plots: <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study1.png</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study2.png</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study3.png</span></code></p></li>
 </ul>
 </section>
+<section id="sentence-transformer-feature-space">
+<h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>Most-frequent baseline ↑</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul class="simple">
+<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study1.png</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study2.png</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study3.png</span></code></p></li>
+</ul>
+</section>
 <section id="observations">
 <h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>Slate metrics are scoped per study, allowing the TF-IDF and Word2Vec models to tune <code class="docutils literal notranslate"><span class="pre">k</span></code> and hyperparameters for each cohort independently.</p></li>
+<li><p>Slate metrics are scoped per study, allowing each feature space to tune <code class="docutils literal notranslate"><span class="pre">k</span></code> and hyperparameters per cohort.</p></li>
 <li><p>Study-specific directories live under <code class="docutils literal notranslate"><span class="pre">models/knn/&lt;feature-space&gt;/study{1,2,3}</span></code> with per-<code class="docutils literal notranslate"><span class="pre">k</span></code> predictions and metrics JSON.</p></li>
 <li><p>Regenerate this README via <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.pipeline</span></code> (or <code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">training/training-knn.sh</span></code>) after any new training run.</p></li>
 </ul>
@@ -389,6 +413,7 @@ All results are now organized by the three study cohorts that appear in the clea
 <li><a class="reference internal" href="#">KNN Next-Video Baseline</a><ul>
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
+<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a></li>
 <li><a class="reference internal" href="#observations">Observations</a></li>
 </ul>
 </li>
@@ -402,7 +427,7 @@ All results are now organized by the three study cohorts that appear in the clea
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

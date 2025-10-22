@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="RESEARCH ARTICLE POLITICAL SCIENCES" href="research_article_political_sciences.html"><link rel="prev" title="KNN Opinion Shift Study" href="knn_opinion.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Hyperparameter Tuning Notes - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -263,16 +263,19 @@
 <p>This document consolidates the <code class="docutils literal notranslate"><span class="pre">k</span></code> sweeps run for both KNN baselines (next-video classification and post-study opinion regression).</p>
 <section id="next-video-prediction">
 <h2>Next-Video Prediction<a class="headerlink" href="#next-video-prediction" title="Link to this heading">¶</a></h2>
-<p>The latest sweeps cover both TF-IDF and Word2Vec feature spaces with:</p>
+<p>The latest sweeps cover TF-IDF, Word2Vec, and Sentence-Transformer feature spaces with:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">∈</span> <span class="pre">{1,2,3,4,5,10,15,20,25,50,75,100}</span></code></p></li>
 <li><p>Distance metrics: cosine and L2</p></li>
 <li><p>Text-field augmentations: none, <code class="docutils literal notranslate"><span class="pre">viewer_profile,state_text</span></code></p></li>
 <li><p>Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count = 1, epochs = 10<br />
 (training uses up to 40 worker threads – see <code class="docutils literal notranslate"><span class="pre">training/training-knn.sh</span></code>)</p></li>
+<li><p>Sentence-Transformer variants: model checkpoints pulled from the <code class="docutils literal notranslate"><span class="pre">--sentence-transformer-model</span></code>
+CLI flag (default: <code class="docutils literal notranslate"><span class="pre">sentence-transformers/all-mpnet-base-v2</span></code>) with configurable batch size and
+optional embedding normalisation.</p></li>
 </ul>
 <p>All artifacts (metrics JSON, per-<code class="docutils literal notranslate"><span class="pre">k</span></code> predictions, error-based elbow plots) live under
-<code class="docutils literal notranslate"><span class="pre">models/knn/sweeps/{tfidf,word2vec}/</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">models/knn/sweeps/{tfidf,word2vec,sentence_transformer}/</span></code>.</p>
 <section id="best-configurations-validation-split-per-study">
 <h3>Best configurations (validation split, per study)<a class="headerlink" href="#best-configurations-validation-split-per-study" title="Link to this heading">¶</a></h3>
 <div class="table-wrapper colwidths-auto docutils container">
@@ -307,7 +310,8 @@
 <ul class="simple">
 <li><p>Each study is swept independently; the same feature space can therefore pick different <code class="docutils literal notranslate"><span class="pre">k</span></code>, distance metrics, or text augments for Study 1 vs Study 2/3.</p></li>
 <li><p>Word2Vec models write their tuned configs beneath <code class="docutils literal notranslate"><span class="pre">models/knn/word2vec/sweeps/study{1,2,3}/...</span></code> so it is easy to diff trained embeddings between studies.</p></li>
-<li><p>TF-IDF sweeps remain lightweight—<code class="docutils literal notranslate"><span class="pre">viewer_profile,state_text</span></code> is still the only augmentation evaluated by default, but feel free to expand via <code class="docutils literal notranslate"><span class="pre">WORD2VEC_SWEEP_*</span></code> / <code class="docutils literal notranslate"><span class="pre">KNN_TEXT_FIELDS</span></code>.</p></li>
+<li><p>Sentence-Transformer runs mirror this layout in <code class="docutils literal notranslate"><span class="pre">models/knn/sentence_transformer/sweeps/study{1,2,3}/...</span></code>, capturing the model id and normalisation choice alongside the metrics.</p></li>
+<li><p>TF-IDF sweeps remain lightweight—<code class="docutils literal notranslate"><span class="pre">viewer_profile,state_text</span></code> is still the only augmentation evaluated by default, but feel free to expand via <code class="docutils literal notranslate"><span class="pre">WORD2VEC_SWEEP_*</span></code> / <code class="docutils literal notranslate"><span class="pre">KNN_TEXT_FIELDS</span></code> (and the analogous <code class="docutils literal notranslate"><span class="pre">SENTENCE_TRANSFORMER_*</span></code> environment variables).</p></li>
 </ul>
 <p>The elbow plots are now labeled with the data split used (“validation split”), clarifying that the
 curves reflect held-out evaluation error rather than the training data.</p>
@@ -362,13 +366,19 @@ curves reflect held-out evaluation error rather than the training data.</p>
 <td class="text-right"><p>50</p></td>
 <td><p>Benefits from large k (30–50)</p></td>
 </tr>
+<tr class="row-even"><td><p>Sentence-Transformer</p></td>
+<td><p><em>Populated after pipeline run</em></p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td><p>Results emitted once the sentence-transformer sweep is executed</p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <p>Key takeaways:</p>
 <ul class="simple">
 <li><p>Opinion regression needs larger neighborhoods than slate prediction, especially on the YouGov study.</p></li>
-<li><p>Word2Vec embeddings consistently reach higher R² than TF-IDF, but both feature spaces are still outperformed by the trivial “no change” baseline on MAE.</p></li>
+<li><p>Word2Vec and Sentence-Transformer embeddings consistently reach higher R² than TF-IDF, but all feature spaces are still outperformed by the trivial “no change” baseline on MAE.</p></li>
 <li><p>No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbors.</p></li>
 </ul>
 </section>
@@ -447,7 +457,7 @@ curves reflect held-out evaluation error rather than the training data.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

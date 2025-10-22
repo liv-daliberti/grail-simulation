@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Hyperparameter Tuning Notes" href="knn_hyperparameter_tuning.html"><link rel="prev" title="KNN Next-Video Baseline" href="knn_next_video.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Opinion Shift Study - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -362,6 +362,36 @@
 <li><p>Heatmaps benchmark predicted vs actual change: <code class="docutils literal notranslate"><span class="pre">word2vec/change_heatmap_*.png</span></code></p></li>
 <li><p>Opinion-change heatmaps: <code class="docutils literal notranslate"><span class="pre">word2vec/change_heatmap_*.png</span></code></p></li>
 </ul>
+</section>
+<section id="sentence-transformer-feature-space">
+<h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Participants</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>RMSE ↓</p></th>
+<th class="head text-right"><p>R² ↑</p></th>
+<th class="head text-right"><p>No-change MAE ↓</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul class="simple">
+<li><p>Sentence-transformer experiment assets were not exported with this repository snapshot; metrics remain in the accompanying tables below.</p></li>
+</ul>
 <section id="opinion-change-heatmaps">
 <h3>Opinion Change Heatmaps<a class="headerlink" href="#opinion-change-heatmaps" title="Link to this heading">¶</a></h3>
 <p>Below are the 2D histograms comparing the observed shift in opinion index (post - pre) with the KNN-predicted shift for each study. Axes are centered on zero so the diagonal highlights perfect agreement.</p>
@@ -382,8 +412,8 @@
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>The post-study shifts are small; predicting “no change” (pre index) yields MAE between 0.04 and 0.10. Both TF-IDF and Word2Vec KNN models perform worse than this simple baseline on MAE, indicating limited signal in the prompt text for forecasting the final survey response.</p></li>
-<li><p>Word2Vec embeddings offer lower MAE and higher R² than TF-IDF on the minimum-wage studies, suggesting smoother neighbor weighting in that feature space.</p></li>
+<li><p>The post-study shifts are small; predicting “no change” (pre index) yields MAE between 0.04 and 0.10. All feature spaces currently trail this simple baseline on MAE, indicating limited signal in the prompt text for forecasting the final survey response.</p></li>
+<li><p>Word2Vec and Sentence-Transformer embeddings offer lower MAE and higher R² than TF-IDF on the minimum-wage studies, suggesting smoother neighbor weighting in those dense spaces.</p></li>
 <li><p>Performance improves modestly with larger <code class="docutils literal notranslate"><span class="pre">k</span></code>—best settings range from 5 to 50—highlighting the need for wider neighborhoods when regressing opinion indices.</p></li>
 </ul>
 <p>Artifacts are saved under <code class="docutils literal notranslate"><span class="pre">models/knn/opinion/&lt;feature_space&gt;/&lt;study&gt;/</span></code> with per-participant predictions (<code class="docutils literal notranslate"><span class="pre">..._validation.jsonl</span></code>) and detailed metrics (<code class="docutils literal notranslate"><span class="pre">..._metrics.json</span></code>).</p>
@@ -447,7 +477,8 @@
             <ul>
 <li><a class="reference internal" href="#">KNN Opinion Shift Study</a><ul>
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
-<li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a><ul>
+<li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
+<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a><ul>
 <li><a class="reference internal" href="#opinion-change-heatmaps">Opinion Change Heatmaps</a><ul>
 <li><a class="reference internal" href="#tf-idf">TF-IDF</a></li>
 <li><a class="reference internal" href="#word2vec">Word2Vec</a></li>
@@ -468,7 +499,7 @@
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

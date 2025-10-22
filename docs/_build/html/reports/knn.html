@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Next-Video Baseline" href="knn_next_video.html"><link rel="prev" title="Prompt Builder Sample Prompts" href="prompt_builder.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Report Catalog - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -262,7 +262,7 @@
 <h1>KNN Report Catalog<a class="headerlink" href="#knn-report-catalog" title="Link to this heading">¶</a></h1>
 <p>This directory centralizes the artifacts and write-ups for the KNN baselines we maintain:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">next_video/</span></code> – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in <code class="docutils literal notranslate"><span class="pre">tfidf/</span></code> and <code class="docutils literal notranslate"><span class="pre">word2vec/</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">next_video/</span></code> – slate-ranking accuracy results for the next-video baseline, with feature-specific assets in <code class="docutils literal notranslate"><span class="pre">tfidf/</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/</span></code>, and <code class="docutils literal notranslate"><span class="pre">sentence_transformer/</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">opinion/</span></code> – post-study opinion regression analysis, including metric tables and heatmaps grouped by feature space.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hyperparameter_tuning/</span></code> – consolidated notes from the k-sweeps that produced the current configurations.</p></li>
 </ul>
@@ -362,7 +362,7 @@ OPTIONS
 <span class="w">  </span>--train-curve-max<span class="w"> </span><span class="m">2000</span>
 </pre></div>
 </div>
-<p>The command above prepares prompt documents, fits the requested feature space (TF-IDF by default, switchable to Word2Vec via <code class="docutils literal notranslate"><span class="pre">--feature-space</span> <span class="pre">word2vec</span></code>), trains the FAISS-backed index, and writes per-<code class="docutils literal notranslate"><span class="pre">k</span></code> metrics. Evaluation runs through the validation split and refreshes Markdown assets under <code class="docutils literal notranslate"><span class="pre">reports/knn/</span></code>.</p>
+<p>The command above prepares prompt documents, fits the requested feature space (TF-IDF by default, switchable to Word2Vec via <code class="docutils literal notranslate"><span class="pre">--feature-space</span> <span class="pre">word2vec</span></code> or Sentence-Transformer via <code class="docutils literal notranslate"><span class="pre">--feature-space</span> <span class="pre">sentence_transformer</span></code>), trains the FAISS-backed index, and writes per-<code class="docutils literal notranslate"><span class="pre">k</span></code> metrics. Evaluation runs through the validation split and refreshes Markdown assets under <code class="docutils literal notranslate"><span class="pre">reports/knn/</span></code>.</p>
 <p><strong>Validation snapshot</strong></p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
@@ -405,7 +405,7 @@ OPTIONS
 <ul class="simple">
 <li><p>Accuracy values come from <code class="docutils literal notranslate"><span class="pre">knn_eval_*_validation_metrics.json</span></code> under <code class="docutils literal notranslate"><span class="pre">models/knn/(tfidf|word2vec)/(issue)/</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">models/knn/tfidf/gun_control/knn_eval_gun_control_validation_metrics.json</span></code>).</p></li>
 <li><p>The sweep over <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">∈</span> <span class="pre">{1,2,3,4,5,10,15,20,25,50,100}</span></code> ensures we surface the most competitive neighborhood size for each issue/feature pairing. For minimum-wage cohorts the slate imbalance keeps majority-choice accuracy (0.439) above any KNN configuration, signaling that richer features or additional filtering are required to close the gap.</p></li>
-<li><p>For gun-control slates, both TF-IDF and Word2Vec comfortably beat the 0.540 most-frequent baseline, and TF-IDF with <code class="docutils literal notranslate"><span class="pre">k=2</span></code> delivers the strongest validation accuracy while preserving high coverage.</p></li>
+<li><p>For gun-control slates, the dense embeddings (Word2Vec or Sentence-Transformer) comfortably beat the 0.540 most-frequent baseline, while TF-IDF with <code class="docutils literal notranslate"><span class="pre">k=2</span></code> still delivers the strongest validation accuracy with high coverage.</p></li>
 </ul>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">KNN Baselines</span></p>
@@ -487,7 +487,7 @@ OPTIONS
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

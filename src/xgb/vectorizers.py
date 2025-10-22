@@ -414,7 +414,7 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         Parameters
         ----------
         config:
-            Encoder settings forwarded to :class:`SentenceTransformerEncoder`.
+            Encoder settings forwarded to :class:`common.embeddings.SentenceTransformerEncoder`.
         """
 
         self.config = config

@@ -7,7 +7,7 @@ All results are now organized by the three study cohorts that appear in the clea
 - **Study 2 – Minimum Wage (MTurk)**
 - **Study 3 – Minimum Wage (YouGov)**
 
-Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected `k`, and baseline comparisons for both TF-IDF and Word2Vec feature spaces.
+Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected `k`, and baseline comparisons for TF-IDF, Word2Vec, and Sentence-Transformer feature spaces.
 
 - Dataset: `data/cleaned_grail`
 - Split: validation
@@ -29,8 +29,16 @@ Each pipeline run refreshes the tables below with validation accuracy, the elbow
 
 - Plots: `word2vec/elbow_study1.png`, `word2vec/elbow_study2.png`, `word2vec/elbow_study3.png`
 
+## Sentence-Transformer Feature Space
+
+| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
+| --- | ---: | ---: | ---: |
+| _Pipeline run will populate these rows_ |  |  |  |
+
+- Plots: `sentence_transformer/elbow_study1.png`, `sentence_transformer/elbow_study2.png`, `sentence_transformer/elbow_study3.png`
+
 ## Observations
 
-- Slate metrics are scoped per study, allowing the TF-IDF and Word2Vec models to tune `k` and hyperparameters for each cohort independently.
+- Slate metrics are scoped per study, allowing each feature space to tune `k` and hyperparameters per cohort.
 - Study-specific directories live under `models/knn/<feature-space>/study{1,2,3}` with per-`k` predictions and metrics JSON.
 - Regenerate this README via `python -m knn.pipeline` (or `bash training/training-knn.sh`) after any new training run.

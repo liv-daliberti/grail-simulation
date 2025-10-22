@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="GPT-4o Tools API" href="gpt4o.html"><link rel="prev" title="Prompt Builder API" href="prompt_builder.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Baseline API - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -262,15 +262,22 @@
 <h1>KNN Baseline API<a class="headerlink" href="#knn-baseline-api" title="Link to this heading">¶</a></h1>
 <section id="feature-spaces">
 <h2>Feature Spaces<a class="headerlink" href="#feature-spaces" title="Link to this heading">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">knn</span></code> command-line entry point now exposes a <code class="docutils literal notranslate"><span class="pre">--feature-space</span></code> switch to
-toggle between sparse TF-IDF queries (default) and dense Word2Vec embeddings.
-Word2Vec support depends on <code class="docutils literal notranslate"><span class="pre">gensim</span></code> being available; install it via
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">gensim</span></code> or include the project’s <code class="docutils literal notranslate"><span class="pre">dev</span></code> extra.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">knn</span></code> command-line entry point exposes a <code class="docutils literal notranslate"><span class="pre">--feature-space</span></code> switch to
+toggle between sparse TF-IDF queries (default), dense Word2Vec embeddings, and
+Sentence-Transformer embeddings. Word2Vec support depends on <code class="docutils literal notranslate"><span class="pre">gensim</span></code> being
+available; Sentence-Transformer support depends on the
+<code class="docutils literal notranslate"><span class="pre">sentence-transformers</span></code> package (and a compatible PyTorch backend). Install
+the extras with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">gensim</span> <span class="pre">sentence-transformers</span></code> or include the
+project’s <code class="docutils literal notranslate"><span class="pre">dev</span></code> extra.</p>
 <p>Example invocations:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>knn.cli<span class="w"> </span>--fit-index<span class="w"> </span>--feature-space<span class="w"> </span>tfidf<span class="w"> </span>--out-dir<span class="w"> </span>models/knn/run-tfidf
 
 python<span class="w"> </span>-m<span class="w"> </span>knn.cli<span class="w"> </span>--fit-index<span class="w"> </span>--feature-space<span class="w"> </span>word2vec<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--word2vec-size<span class="w"> </span><span class="m">256</span><span class="w"> </span>--out-dir<span class="w"> </span>models/knn/run-w2v
+
+python<span class="w"> </span>-m<span class="w"> </span>knn.cli<span class="w"> </span>--fit-index<span class="w"> </span>--feature-space<span class="w"> </span>sentence_transformer<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sentence-transformer-model<span class="w"> </span>sentence-transformers/all-MiniLM-L6-v2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--out-dir<span class="w"> </span>models/knn/run-st
 </pre></div>
 </div>
 <p>Diagnostics (elbow plots, accuracy-by-k curves, and per-k predictions) are
@@ -372,7 +379,7 @@ examples feed into the training curve diagnostics.</p>
 <p id="module-knn.features">Feature extraction helpers for the refactored KNN baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.features.Word2VecConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('models/knn_word2vec')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('models/knn_word2vec')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration options for Word2Vec embeddings.</p>
 <dl class="field-list simple">
@@ -427,7 +434,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.features.Word2VecFeatureBuilder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecFeatureBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecFeatureBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecFeatureBuilder" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecFeatureBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecFeatureBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecFeatureBuilder" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Create Word2Vec embeddings from viewer prompts.</p>
 <dl class="field-list simple">
@@ -636,8 +643,31 @@ examples feed into the training curve diagnostics.</p>
 
 <p id="module-knn.index">TF-IDF index construction and slate-level prediction helpers.</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="knn.index.build_sentence_transformer_index">
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_sentence_transformer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_sentence_transformer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_sentence_transformer_index" title="Link to this definition">¶</a></dt>
+<dd><p>Create a sentence-transformer index from the training split.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_ds</strong> – Training dataset split.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows to sample.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed used for subsampling.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Extra textual columns concatenated into each document.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="common.html#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a><em> | </em><em>None</em>) – Optional <a class="reference internal" href="common.html#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SentenceTransformerConfig</span></code></a> override.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing the encoder, dense matrix, and label metadata.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ImportError</strong> – If <code class="docutils literal notranslate"><span class="pre">sentence_transformers</span></code> is unavailable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="knn.index.build_tfidf_index">
-<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_tfidf_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_tfidf_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_tfidf_index" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_tfidf_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_tfidf_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_tfidf_index" title="Link to this definition">¶</a></dt>
 <dd><p>Create a TF-IDF index from the training split.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -658,7 +688,7 @@ label metadata.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.index.build_word2vec_index">
-<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_word2vec_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_word2vec_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_word2vec_index" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_word2vec_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_word2vec_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_word2vec_index" title="Link to this definition">¶</a></dt>
 <dd><p>Create a Word2Vec index from the training split.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -681,7 +711,7 @@ label metadata.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.index.knn_predict_among_slate_multi">
-<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">knn_predict_among_slate_multi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#knn_predict_among_slate_multi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.knn_predict_among_slate_multi" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">knn_predict_among_slate_multi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#knn_predict_among_slate_multi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.knn_predict_among_slate_multi" title="Link to this definition">¶</a></dt>
 <dd><p>Score each slate option using candidate-aware TF-IDF kNN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -698,6 +728,20 @@ indicates that a prediction could not be produced for that <code class="docutils
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Dict</em>[int, int | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="knn.index.load_sentence_transformer_index">
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">load_sentence_transformer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#load_sentence_transformer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.load_sentence_transformer_index" title="Link to this definition">¶</a></dt>
+<dd><p>Load a sentence-transformer index saved via <a class="reference internal" href="#knn.index.save_sentence_transformer_index" title="knn.index.save_sentence_transformer_index"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_sentence_transformer_index()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>in_dir</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -732,6 +776,23 @@ indicates that a prediction could not be produced for that <code class="docutils
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="knn.index.save_sentence_transformer_index">
+<span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">save_sentence_transformer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#save_sentence_transformer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.save_sentence_transformer_index" title="Link to this definition">¶</a></dt>
+<dd><p>Persist the sentence-transformer index to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code> for later reuse.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -836,7 +897,7 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.evaluate_issue">
-<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
 <dd><p>Evaluate a single issue split and write metrics/predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -878,7 +939,7 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.plot_elbow">
-<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">plot_elbow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#plot_elbow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.plot_elbow" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">plot_elbow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#plot_elbow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.plot_elbow" title="Link to this definition">¶</a></dt>
 <dd><p>Create an error-rate vs <code class="docutils literal notranslate"><span class="pre">k</span></code> plot for diagnostic purposes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -944,7 +1005,7 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <p id="module-knn.opinion">Post-study opinion index evaluation for the KNN baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.opinion.OpinionSpec">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration describing one study’s opinion index columns.</p>
 <dl class="field-list simple">
@@ -1119,11 +1180,14 @@ are read from <code class="xref py py-data docutils literal notranslate"><span c
 <li><a class="reference internal" href="#knn.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.title_for"><code class="docutils literal notranslate"><span class="pre">title_for()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.viewer_profile_sentence"><code class="docutils literal notranslate"><span class="pre">viewer_profile_sentence()</span></code></a></li>
+<li><a class="reference internal" href="#knn.index.build_sentence_transformer_index"><code class="docutils literal notranslate"><span class="pre">build_sentence_transformer_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.build_tfidf_index"><code class="docutils literal notranslate"><span class="pre">build_tfidf_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.build_word2vec_index"><code class="docutils literal notranslate"><span class="pre">build_word2vec_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.knn_predict_among_slate_multi"><code class="docutils literal notranslate"><span class="pre">knn_predict_among_slate_multi()</span></code></a></li>
+<li><a class="reference internal" href="#knn.index.load_sentence_transformer_index"><code class="docutils literal notranslate"><span class="pre">load_sentence_transformer_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.load_tfidf_index"><code class="docutils literal notranslate"><span class="pre">load_tfidf_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.load_word2vec_index"><code class="docutils literal notranslate"><span class="pre">load_word2vec_index()</span></code></a></li>
+<li><a class="reference internal" href="#knn.index.save_sentence_transformer_index"><code class="docutils literal notranslate"><span class="pre">save_sentence_transformer_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.save_tfidf_index"><code class="docutils literal notranslate"><span class="pre">save_tfidf_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.save_word2vec_index"><code class="docutils literal notranslate"><span class="pre">save_word2vec_index()</span></code></a></li>
 <li><a class="reference internal" href="#knn.evaluate.bin_nopts"><code class="docutils literal notranslate"><span class="pre">bin_nopts()</span></code></a></li>
@@ -1161,7 +1225,7 @@ are read from <code class="xref py py-data docutils literal notranslate"><span c
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

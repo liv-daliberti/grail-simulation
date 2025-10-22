@@ -31,6 +31,14 @@ This study evaluates a second KNN baseline that predicts each participant's post
 - Heatmaps benchmark predicted vs actual change: `word2vec/change_heatmap_*.png`
 - Opinion-change heatmaps: `word2vec/change_heatmap_*.png`
 
+## Sentence-Transformer Feature Space
+
+| Study | Participants | Best k | MAE ↓ | RMSE ↓ | R² ↑ | No-change MAE ↓ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| _Pipeline run will populate these rows_ |  |  |  |  |  |  |
+
+- Sentence-transformer experiment assets were not exported with this repository snapshot; metrics remain in the accompanying tables below.
+
 ### Opinion Change Heatmaps
 
 Below are the 2D histograms comparing the observed shift in opinion index (post - pre) with the KNN-predicted shift for each study. Axes are centered on zero so the diagonal highlights perfect agreement.
@@ -49,8 +57,8 @@ Below are the 2D histograms comparing the observed shift in opinion index (post 
 
 ## Takeaways
 
-- The post-study shifts are small; predicting “no change” (pre index) yields MAE between 0.04 and 0.10. Both TF-IDF and Word2Vec KNN models perform worse than this simple baseline on MAE, indicating limited signal in the prompt text for forecasting the final survey response.
-- Word2Vec embeddings offer lower MAE and higher R² than TF-IDF on the minimum-wage studies, suggesting smoother neighbor weighting in that feature space.
+- The post-study shifts are small; predicting “no change” (pre index) yields MAE between 0.04 and 0.10. All feature spaces currently trail this simple baseline on MAE, indicating limited signal in the prompt text for forecasting the final survey response.
+- Word2Vec and Sentence-Transformer embeddings offer lower MAE and higher R² than TF-IDF on the minimum-wage studies, suggesting smoother neighbor weighting in those dense spaces.
 - Performance improves modestly with larger `k`—best settings range from 5 to 50—highlighting the need for wider neighborhoods when regressing opinion indices.
 
 Artifacts are saved under `models/knn/opinion/<feature_space>/<study>/` with per-participant predictions (`..._validation.jsonl`) and detailed metrics (`..._metrics.json`).

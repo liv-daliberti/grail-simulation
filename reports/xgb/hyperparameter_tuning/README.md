@@ -6,728 +6,742 @@ This summary lists the XGBoost configurations explored for each participant stud
 
 *Issue:* Gun Control
 
-| Config | Accuracy ↑ | Coverage ↑ | Evaluated |
-| --- | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10** | 0.973 | 0.976 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.973 | 0.976 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10 | 0.973 | 0.976 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10 | 0.973 | 0.976 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p1 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10p1 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l20p5_l10 | 0.971 | 0.974 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l11 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p5 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10p1 | 0.969 | 0.973 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l11 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l20p5_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l10 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l11 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p5 | 0.965 | 0.969 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10p1 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10p5 | 0.964 | 0.967 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p5 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10p5 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21_l11 | 0.962 | 0.965 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p5 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.960 | 0.963 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.958 | 0.962 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.956 | 0.960 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.956 | 0.960 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.956 | 0.960 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.956 | 0.960 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.956 | 0.960 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.954 | 0.958 | 548 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.953 | 0.956 | 548 |
+| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
+| --- | ---: | ---: | --- | ---: | ---: | ---: |
+| **tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10** | 0.973 | 0.976 | 533/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.973 | 0.976 | 533/546 | 0.996 | 0.926 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10 | 0.973 | 0.976 | 533/546 | 0.996 | 0.933 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10 | 0.973 | 0.976 | 533/546 | 0.996 | 0.934 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.871 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.893 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.971 | 0.974 | 532/546 | 0.996 | 0.889 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.895 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.971 | 0.974 | 532/546 | 0.996 | 0.890 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.865 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.971 | 0.974 | 532/546 | 0.996 | 0.861 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.918 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p1 | 0.971 | 0.974 | 532/546 | 0.996 | 0.917 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10p1 | 0.971 | 0.974 | 532/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.927 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.929 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.920 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.849 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.873 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.868 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.880 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.878 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.884 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.879 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.866 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.885 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.860 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.873 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.855 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.863 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.859 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.842 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.872 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.969 | 0.973 | 531/546 | 0.996 | 0.848 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.880 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.875 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.845 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.899 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.893 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.875 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.883 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.901 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.895 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.886 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.882 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.865 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.872 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.868 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.852 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l11 | 0.969 | 0.973 | 531/546 | 0.996 | 0.833 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.902 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.898 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.879 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.889 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.884 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.867 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.915 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.908 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.919 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.926 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.927 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.920 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.926 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.925 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.929 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.931 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p5 | 0.969 | 0.973 | 531/546 | 0.996 | 0.926 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.931 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10 | 0.969 | 0.973 | 531/546 | 0.996 | 0.930 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10p1 | 0.969 | 0.973 | 531/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.868 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.865 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.851 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.854 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.850 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.875 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.862 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.839 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.883 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.865 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.861 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.842 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.850 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.846 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.852 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.847 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.890 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.874 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.870 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.852 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.855 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.840 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.869 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.846 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.878 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.832 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.858 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.852 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.879 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.865 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.877 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.855 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.844 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.857 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.874 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.870 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.855 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.895 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.915 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.923 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.923 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.921 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.918 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.917 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.921 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.919 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.884 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.926 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.925 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.927 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.916 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.929 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.919 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.929 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10p5 | 0.967 | 0.971 | 530/546 | 0.996 | 0.927 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.932 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.900 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.934 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.932 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l11 | 0.967 | 0.971 | 530/546 | 0.996 | 0.902 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l20p5_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l10 | 0.967 | 0.971 | 530/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21_l10p1 | 0.967 | 0.971 | 530/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.863 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.846 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.855 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.965 | 0.969 | 529/546 | 0.996 | 0.847 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.842 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.858 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.829 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.859 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.861 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.843 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.835 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.824 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.861 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.965 | 0.969 | 529/546 | 0.996 | 0.869 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.850 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.835 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.913 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.905 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l10 | 0.965 | 0.969 | 529/546 | 0.996 | 0.911 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.965 | 0.969 | 529/546 | 0.996 | 0.903 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.910 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.891 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.883 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.908 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.965 | 0.969 | 529/546 | 0.996 | 0.919 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.888 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.965 | 0.969 | 529/546 | 0.996 | 0.922 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.911 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.893 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.924 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.896 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.925 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.898 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.904 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l11 | 0.965 | 0.969 | 529/546 | 0.996 | 0.902 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.928 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21p5_l10p5 | 0.965 | 0.969 | 529/546 | 0.996 | 0.911 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.841 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.844 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.845 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.828 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.964 | 0.967 | 528/546 | 0.996 | 0.835 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.831 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.847 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.831 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.964 | 0.967 | 528/546 | 0.996 | 0.838 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.857 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.830 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.867 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.822 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.830 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.886 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.897 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.862 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.900 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.913 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.880 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.902 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.875 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.885 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.907 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.891 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.964 | 0.967 | 528/546 | 0.996 | 0.925 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10p1 | 0.964 | 0.967 | 528/546 | 0.996 | 0.925 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.887 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.915 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.886 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.897 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.923 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.899 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.964 | 0.967 | 528/546 | 0.996 | 0.906 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10p5 | 0.964 | 0.967 | 528/546 | 0.996 | 0.906 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.962 | 0.965 | 527/546 | 0.996 | 0.825 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.962 | 0.965 | 527/546 | 0.996 | 0.828 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.962 | 0.965 | 527/546 | 0.996 | 0.833 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.829 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.962 | 0.965 | 527/546 | 0.996 | 0.826 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.832 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.807 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.834 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.821 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.809 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.843 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.819 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.841 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.866 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.868 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p5 | 0.962 | 0.965 | 527/546 | 0.996 | 0.881 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.873 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.882 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10p5 | 0.962 | 0.965 | 527/546 | 0.996 | 0.914 | 548 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.892 | 548 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21_l11 | 0.962 | 0.965 | 527/546 | 0.996 | 0.882 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.814 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.960 | 0.963 | 526/546 | 0.996 | 0.833 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.816 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.803 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.960 | 0.963 | 526/546 | 0.996 | 0.812 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.819 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.806 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.820 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.830 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.859 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p5 | 0.960 | 0.963 | 526/546 | 0.996 | 0.877 | 548 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.960 | 0.963 | 526/546 | 0.996 | 0.852 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.958 | 0.962 | 525/546 | 0.996 | 0.815 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.956 | 0.960 | 524/546 | 0.996 | 0.802 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.956 | 0.960 | 524/546 | 0.996 | 0.810 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.956 | 0.960 | 524/546 | 0.996 | 0.791 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.956 | 0.960 | 524/546 | 0.996 | 0.817 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.956 | 0.960 | 524/546 | 0.996 | 0.805 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.954 | 0.958 | 523/546 | 0.996 | 0.788 | 548 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.953 | 0.956 | 522/546 | 0.996 | 0.790 | 548 |
 
 ## Study 2 – Minimum Wage (MTurk)
 
 *Issue:* Minimum Wage
 
-| Config | Accuracy ↑ | Coverage ↑ | Evaluated |
-| --- | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1** | 0.382 | 0.382 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.382 | 0.382 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.380 | 0.380 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l11 | 0.380 | 0.380 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.377 | 0.377 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.377 | 0.377 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.377 | 0.377 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.376 | 0.376 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.374 | 0.374 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.374 | 0.374 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.374 | 0.374 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.374 | 0.374 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.374 | 0.374 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.373 | 0.373 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.373 | 0.373 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.373 | 0.373 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.371 | 0.371 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.371 | 0.371 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l11 | 0.371 | 0.371 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.370 | 0.370 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.368 | 0.368 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l11 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p5 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p1 | 0.367 | 0.367 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.365 | 0.365 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l11 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p5 | 0.364 | 0.364 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p5 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.362 | 0.362 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.361 | 0.361 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p1 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l11 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p5 | 0.359 | 0.359 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p1 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10p5 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l10 | 0.358 | 0.358 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p5 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l10p5 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p5 | 0.356 | 0.356 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p5 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l11 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l10 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p5 | 0.355 | 0.355 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l11 | 0.353 | 0.353 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p1 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10p5 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l11 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l11 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10p1 | 0.352 | 0.352 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l10p5 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p1 | 0.350 | 0.350 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p1 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p1 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l11 | 0.349 | 0.349 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p5 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l11 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21_l10p1 | 0.347 | 0.347 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.346 | 0.346 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.346 | 0.346 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.346 | 0.346 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10 | 0.346 | 0.346 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p1 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l10p1 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10p5 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l11 | 0.344 | 0.344 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.343 | 0.343 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.343 | 0.343 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.341 | 0.341 | 671 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.341 | 0.341 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l10p5 | 0.341 | 0.341 | 671 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10 | 0.341 | 0.341 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l11 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l11 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.340 | 0.340 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.338 | 0.338 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.337 | 0.337 | 671 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.337 | 0.337 | 671 |
+| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
+| --- | ---: | ---: | --- | ---: | ---: | ---: |
+| **tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1** | 0.382 | 0.382 | 256/671 | 1.000 | 0.435 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.382 | 0.382 | 256/671 | 1.000 | 0.429 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.380 | 0.380 | 255/671 | 1.000 | 0.415 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l11 | 0.380 | 0.380 | 255/671 | 1.000 | 0.411 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.377 | 0.377 | 253/671 | 1.000 | 0.433 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.377 | 0.377 | 253/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.377 | 0.377 | 253/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.376 | 0.376 | 252/671 | 1.000 | 0.432 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.376 | 0.376 | 252/671 | 1.000 | 0.409 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.376 | 0.376 | 252/671 | 1.000 | 0.432 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.376 | 0.376 | 252/671 | 1.000 | 0.426 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.376 | 0.376 | 252/671 | 1.000 | 0.418 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.376 | 0.376 | 252/671 | 1.000 | 0.418 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.374 | 0.374 | 251/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.374 | 0.374 | 251/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.374 | 0.374 | 251/671 | 1.000 | 0.408 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.374 | 0.374 | 251/671 | 1.000 | 0.416 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.374 | 0.374 | 251/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.373 | 0.373 | 250/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.373 | 0.373 | 250/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.373 | 0.373 | 250/671 | 1.000 | 0.416 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.371 | 0.371 | 249/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.371 | 0.371 | 249/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l11 | 0.371 | 0.371 | 249/671 | 1.000 | 0.412 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.370 | 0.370 | 248/671 | 1.000 | 0.431 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.370 | 0.370 | 248/671 | 1.000 | 0.411 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.370 | 0.370 | 248/671 | 1.000 | 0.415 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.370 | 0.370 | 248/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.370 | 0.370 | 248/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.370 | 0.370 | 248/671 | 1.000 | 0.410 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.368 | 0.368 | 247/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.368 | 0.368 | 247/671 | 1.000 | 0.434 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.368 | 0.368 | 247/671 | 1.000 | 0.418 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.368 | 0.368 | 247/671 | 1.000 | 0.430 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.368 | 0.368 | 247/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.368 | 0.368 | 247/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.368 | 0.368 | 247/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.367 | 0.367 | 246/671 | 1.000 | 0.410 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.367 | 0.367 | 246/671 | 1.000 | 0.437 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.367 | 0.367 | 246/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.367 | 0.367 | 246/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.367 | 0.367 | 246/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l11 | 0.367 | 0.367 | 246/671 | 1.000 | 0.478 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.367 | 0.367 | 246/671 | 1.000 | 0.466 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p5 | 0.367 | 0.367 | 246/671 | 1.000 | 0.497 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p1 | 0.367 | 0.367 | 246/671 | 1.000 | 0.525 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.365 | 0.365 | 245/671 | 1.000 | 0.408 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.365 | 0.365 | 245/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.365 | 0.365 | 245/671 | 1.000 | 0.404 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.365 | 0.365 | 245/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.365 | 0.365 | 245/671 | 1.000 | 0.435 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.365 | 0.365 | 245/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.365 | 0.365 | 245/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.416 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.364 | 0.364 | 244/671 | 1.000 | 0.416 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.413 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.429 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.364 | 0.364 | 244/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.364 | 0.364 | 244/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.364 | 0.364 | 244/671 | 1.000 | 0.500 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l11 | 0.364 | 0.364 | 244/671 | 1.000 | 0.472 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.477 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.364 | 0.364 | 244/671 | 1.000 | 0.502 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p5 | 0.364 | 0.364 | 244/671 | 1.000 | 0.529 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.362 | 0.362 | 243/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.362 | 0.362 | 243/671 | 1.000 | 0.415 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.362 | 0.362 | 243/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.362 | 0.362 | 243/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.362 | 0.362 | 243/671 | 1.000 | 0.434 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.362 | 0.362 | 243/671 | 1.000 | 0.411 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.362 | 0.362 | 243/671 | 1.000 | 0.407 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.362 | 0.362 | 243/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.362 | 0.362 | 243/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.362 | 0.362 | 243/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10p5 | 0.362 | 0.362 | 243/671 | 1.000 | 0.479 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.362 | 0.362 | 243/671 | 1.000 | 0.531 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.361 | 0.361 | 242/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.361 | 0.361 | 242/671 | 1.000 | 0.401 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.361 | 0.361 | 242/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.361 | 0.361 | 242/671 | 1.000 | 0.402 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.361 | 0.361 | 242/671 | 1.000 | 0.404 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.361 | 0.361 | 242/671 | 1.000 | 0.433 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.361 | 0.361 | 242/671 | 1.000 | 0.434 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.361 | 0.361 | 242/671 | 1.000 | 0.407 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.361 | 0.361 | 242/671 | 1.000 | 0.430 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.361 | 0.361 | 242/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10p1 | 0.361 | 0.361 | 242/671 | 1.000 | 0.485 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10p1 | 0.361 | 0.361 | 242/671 | 1.000 | 0.500 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.361 | 0.361 | 242/671 | 1.000 | 0.515 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.417 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.359 | 0.359 | 241/671 | 1.000 | 0.411 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.359 | 0.359 | 241/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.359 | 0.359 | 241/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.426 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p1 | 0.359 | 0.359 | 241/671 | 1.000 | 0.490 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.359 | 0.359 | 241/671 | 1.000 | 0.480 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.359 | 0.359 | 241/671 | 1.000 | 0.486 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l11 | 0.359 | 0.359 | 241/671 | 1.000 | 0.485 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.359 | 0.359 | 241/671 | 1.000 | 0.507 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p5 | 0.359 | 0.359 | 241/671 | 1.000 | 0.526 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.358 | 0.358 | 240/671 | 1.000 | 0.410 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.358 | 0.358 | 240/671 | 1.000 | 0.414 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.358 | 0.358 | 240/671 | 1.000 | 0.413 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.358 | 0.358 | 240/671 | 1.000 | 0.431 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.358 | 0.358 | 240/671 | 1.000 | 0.412 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.358 | 0.358 | 240/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.358 | 0.358 | 240/671 | 1.000 | 0.432 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.358 | 0.358 | 240/671 | 1.000 | 0.409 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l20p5_l10p1 | 0.358 | 0.358 | 240/671 | 1.000 | 0.503 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10 | 0.358 | 0.358 | 240/671 | 1.000 | 0.537 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.358 | 0.358 | 240/671 | 1.000 | 0.524 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.358 | 0.358 | 240/671 | 1.000 | 0.527 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10p5 | 0.358 | 0.358 | 240/671 | 1.000 | 0.520 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l10 | 0.358 | 0.358 | 240/671 | 1.000 | 0.566 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.356 | 0.356 | 239/671 | 1.000 | 0.416 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.356 | 0.356 | 239/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.356 | 0.356 | 239/671 | 1.000 | 0.418 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.356 | 0.356 | 239/671 | 1.000 | 0.437 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.356 | 0.356 | 239/671 | 1.000 | 0.431 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10 | 0.356 | 0.356 | 239/671 | 1.000 | 0.501 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.356 | 0.356 | 239/671 | 1.000 | 0.533 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.356 | 0.356 | 239/671 | 1.000 | 0.537 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.356 | 0.356 | 239/671 | 1.000 | 0.527 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.356 | 0.356 | 239/671 | 1.000 | 0.529 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p5 | 0.356 | 0.356 | 239/671 | 1.000 | 0.520 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l10p5 | 0.356 | 0.356 | 239/671 | 1.000 | 0.533 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10 | 0.356 | 0.356 | 239/671 | 1.000 | 0.530 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p5 | 0.356 | 0.356 | 239/671 | 1.000 | 0.525 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.355 | 0.355 | 238/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.355 | 0.355 | 238/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.355 | 0.355 | 238/671 | 1.000 | 0.433 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1 | 0.355 | 0.355 | 238/671 | 1.000 | 0.432 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.355 | 0.355 | 238/671 | 1.000 | 0.426 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.355 | 0.355 | 238/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.355 | 0.355 | 238/671 | 1.000 | 0.434 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.355 | 0.355 | 238/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.355 | 0.355 | 238/671 | 1.000 | 0.424 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.355 | 0.355 | 238/671 | 1.000 | 0.482 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10p5 | 0.355 | 0.355 | 238/671 | 1.000 | 0.489 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l11 | 0.355 | 0.355 | 238/671 | 1.000 | 0.519 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.355 | 0.355 | 238/671 | 1.000 | 0.530 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l10 | 0.355 | 0.355 | 238/671 | 1.000 | 0.531 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p5 | 0.355 | 0.355 | 238/671 | 1.000 | 0.518 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.353 | 0.353 | 237/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.353 | 0.353 | 237/671 | 1.000 | 0.410 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.353 | 0.353 | 237/671 | 1.000 | 0.421 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.353 | 0.353 | 237/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.353 | 0.353 | 237/671 | 1.000 | 0.431 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.353 | 0.353 | 237/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.353 | 0.353 | 237/671 | 1.000 | 0.507 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.353 | 0.353 | 237/671 | 1.000 | 0.546 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10 | 0.353 | 0.353 | 237/671 | 1.000 | 0.526 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l11 | 0.353 | 0.353 | 237/671 | 1.000 | 0.512 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.352 | 0.352 | 236/671 | 1.000 | 0.436 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.414 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.352 | 0.352 | 236/671 | 1.000 | 0.434 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.352 | 0.352 | 236/671 | 1.000 | 0.425 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.352 | 0.352 | 236/671 | 1.000 | 0.423 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.352 | 0.352 | 236/671 | 1.000 | 0.493 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.514 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.352 | 0.352 | 236/671 | 1.000 | 0.504 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.352 | 0.352 | 236/671 | 1.000 | 0.519 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.528 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p1 | 0.352 | 0.352 | 236/671 | 1.000 | 0.529 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10 | 0.352 | 0.352 | 236/671 | 1.000 | 0.538 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.521 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l11 | 0.352 | 0.352 | 236/671 | 1.000 | 0.517 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l11 | 0.352 | 0.352 | 236/671 | 1.000 | 0.516 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l10p1 | 0.352 | 0.352 | 236/671 | 1.000 | 0.558 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l10p5 | 0.352 | 0.352 | 236/671 | 1.000 | 0.551 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.350 | 0.350 | 235/671 | 1.000 | 0.437 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.438 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.429 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.350 | 0.350 | 235/671 | 1.000 | 0.429 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.350 | 0.350 | 235/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.426 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col1_l21_l10 | 0.350 | 0.350 | 235/671 | 1.000 | 0.498 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l10p5 | 0.350 | 0.350 | 235/671 | 1.000 | 0.516 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.350 | 0.350 | 235/671 | 1.000 | 0.502 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.542 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.350 | 0.350 | 235/671 | 1.000 | 0.511 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.531 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.350 | 0.350 | 235/671 | 1.000 | 0.539 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p1 | 0.350 | 0.350 | 235/671 | 1.000 | 0.541 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l10 | 0.350 | 0.350 | 235/671 | 1.000 | 0.564 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.349 | 0.349 | 234/671 | 1.000 | 0.418 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 234/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.349 | 0.349 | 234/671 | 1.000 | 0.490 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.349 | 0.349 | 234/671 | 1.000 | 0.545 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.349 | 0.349 | 234/671 | 1.000 | 0.536 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10 | 0.349 | 0.349 | 234/671 | 1.000 | 0.541 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p1 | 0.349 | 0.349 | 234/671 | 1.000 | 0.541 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.349 | 0.349 | 234/671 | 1.000 | 0.533 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p1 | 0.349 | 0.349 | 234/671 | 1.000 | 0.534 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.349 | 0.349 | 234/671 | 1.000 | 0.511 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l11 | 0.349 | 0.349 | 234/671 | 1.000 | 0.536 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.347 | 0.347 | 233/671 | 1.000 | 0.413 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.347 | 0.347 | 233/671 | 1.000 | 0.427 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 233/671 | 1.000 | 0.436 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.347 | 0.347 | 233/671 | 1.000 | 0.422 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.347 | 0.347 | 233/671 | 1.000 | 0.519 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.347 | 0.347 | 233/671 | 1.000 | 0.532 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.347 | 0.347 | 233/671 | 1.000 | 0.521 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 233/671 | 1.000 | 0.542 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p5 | 0.347 | 0.347 | 233/671 | 1.000 | 0.532 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l11 | 0.347 | 0.347 | 233/671 | 1.000 | 0.511 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21_l10p1 | 0.347 | 0.347 | 233/671 | 1.000 | 0.555 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21_l11 | 0.347 | 0.347 | 233/671 | 1.000 | 0.529 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.346 | 0.346 | 232/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.346 | 0.346 | 232/671 | 1.000 | 0.419 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.346 | 0.346 | 232/671 | 1.000 | 0.428 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10 | 0.346 | 0.346 | 232/671 | 1.000 | 0.541 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.344 | 0.344 | 231/671 | 1.000 | 0.407 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.344 | 0.344 | 231/671 | 1.000 | 0.435 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10p1 | 0.344 | 0.344 | 231/671 | 1.000 | 0.536 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10 | 0.344 | 0.344 | 231/671 | 1.000 | 0.541 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l10p1 | 0.344 | 0.344 | 231/671 | 1.000 | 0.527 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10p5 | 0.344 | 0.344 | 231/671 | 1.000 | 0.540 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21_l11 | 0.344 | 0.344 | 231/671 | 1.000 | 0.530 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21p5_l10 | 0.344 | 0.344 | 231/671 | 1.000 | 0.559 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.343 | 0.343 | 230/671 | 1.000 | 0.420 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.343 | 0.343 | 230/671 | 1.000 | 0.525 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.341 | 0.341 | 229/671 | 1.000 | 0.440 | 671 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.341 | 0.341 | 229/671 | 1.000 | 0.433 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l10p5 | 0.341 | 0.341 | 229/671 | 1.000 | 0.527 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10 | 0.341 | 0.341 | 229/671 | 1.000 | 0.552 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l11 | 0.340 | 0.340 | 228/671 | 1.000 | 0.507 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.340 | 0.340 | 228/671 | 1.000 | 0.535 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.340 | 0.340 | 228/671 | 1.000 | 0.535 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10 | 0.340 | 0.340 | 228/671 | 1.000 | 0.543 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l11 | 0.340 | 0.340 | 228/671 | 1.000 | 0.519 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.340 | 0.340 | 228/671 | 1.000 | 0.531 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l11 | 0.340 | 0.340 | 228/671 | 1.000 | 0.534 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.338 | 0.338 | 227/671 | 1.000 | 0.543 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.337 | 0.337 | 226/671 | 1.000 | 0.515 | 671 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.337 | 0.337 | 226/671 | 1.000 | 0.521 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21p5_l10 | 0.337 | 0.337 | 226/671 | 1.000 | 0.552 | 671 |
 
 ## Study 3 – Minimum Wage (YouGov)
 
 *Issue:* Minimum Wage
 
-| Config | Accuracy ↑ | Coverage ↑ | Evaluated |
-| --- | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1** | 0.443 | 0.443 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.442 | 0.442 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.441 | 0.441 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.441 | 0.441 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.440 | 0.440 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.440 | 0.440 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.439 | 0.439 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.439 | 0.439 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.439 | 0.439 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.439 | 0.439 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.438 | 0.438 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.438 | 0.438 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.438 | 0.438 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.438 | 0.438 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.437 | 0.437 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.437 | 0.437 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.436 | 0.436 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.436 | 0.436 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.436 | 0.436 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.436 | 0.436 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.435 | 0.435 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.435 | 0.435 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.435 | 0.435 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.435 | 0.435 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.435 | 0.435 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.434 | 0.434 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.434 | 0.434 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.434 | 0.434 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.434 | 0.434 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.433 | 0.433 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10p5 | 0.432 | 0.432 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.431 | 0.431 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.430 | 0.430 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.430 | 0.430 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.430 | 0.430 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.430 | 0.430 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.429 | 0.429 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.429 | 0.429 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.429 | 0.429 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.429 | 0.429 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.429 | 0.429 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p1 | 0.428 | 0.428 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l10p5 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.427 | 0.427 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.426 | 0.426 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.425 | 0.425 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10p1 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.424 | 0.424 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p5 | 0.423 | 0.423 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.422 | 0.422 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p5 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10 | 0.421 | 0.421 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.420 | 0.420 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.420 | 0.420 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.420 | 0.420 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.420 | 0.420 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10p5 | 0.420 | 0.420 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.419 | 0.419 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.419 | 0.419 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p1 | 0.419 | 0.419 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l11 | 0.419 | 0.419 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10p5 | 0.419 | 0.419 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.418 | 0.418 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p5 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l11 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p1 | 0.417 | 0.417 | 1200 |
-| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.416 | 0.416 | 1200 |
-| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l10p5 | 0.415 | 0.415 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10 | 0.415 | 0.415 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l10p5 | 0.414 | 0.414 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.413 | 0.413 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.413 | 0.413 | 1200 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.411 | 0.411 | 1200 |
+| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
+| --- | ---: | ---: | --- | ---: | ---: | ---: |
+| **tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1** | 0.443 | 0.443 | 531/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.442 | 0.442 | 530/1,200 | 1.000 | 0.445 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.441 | 0.441 | 529/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.441 | 0.441 | 529/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.440 | 0.440 | 528/1,200 | 1.000 | 0.429 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l11 | 0.440 | 0.440 | 528/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10 | 0.439 | 0.439 | 527/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.439 | 0.439 | 527/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l11 | 0.439 | 0.439 | 527/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.439 | 0.439 | 527/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10 | 0.438 | 0.438 | 526/1,200 | 1.000 | 0.441 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p5 | 0.438 | 0.438 | 526/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p5 | 0.438 | 0.438 | 525/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10 | 0.438 | 0.438 | 525/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p5 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.445 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10p5 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.444 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.436 | 0.436 | 523/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l11 | 0.436 | 0.436 | 523/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10 | 0.436 | 0.436 | 523/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10 | 0.436 | 0.436 | 523/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10 | 0.435 | 0.435 | 522/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p1 | 0.435 | 0.435 | 522/1,200 | 1.000 | 0.441 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p1 | 0.435 | 0.435 | 522/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p1 | 0.435 | 0.435 | 522/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10 | 0.435 | 0.435 | 522/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p5 | 0.434 | 0.434 | 521/1,200 | 1.000 | 0.430 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p5 | 0.434 | 0.434 | 521/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10 | 0.434 | 0.434 | 521/1,200 | 1.000 | 0.445 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p1 | 0.434 | 0.434 | 521/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p1 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p1 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.446 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p5 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p1 | 0.433 | 0.433 | 520/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l10p1 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10p5 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l10p5 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21p5_l11 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.427 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l11 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10p5 | 0.432 | 0.432 | 519/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l10p1 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p1 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l10p1 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p5 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p5 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p5 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.441 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l11 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l11 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10p5 | 0.432 | 0.432 | 518/1,200 | 1.000 | 0.511 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l11 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l11 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.425 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.447 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p1 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.447 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l10p5 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.430 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21p5_l11 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.426 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l11 | 0.431 | 0.431 | 517/1,200 | 1.000 | 0.509 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l11 | 0.430 | 0.430 | 516/1,200 | 1.000 | 0.421 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l11 | 0.430 | 0.430 | 516/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p5 | 0.430 | 0.430 | 516/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p5 | 0.430 | 0.430 | 516/1,200 | 1.000 | 0.513 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.431 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l11 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l20p5_l10p5 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10p5 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.511 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21p5_l10p1 | 0.429 | 0.429 | 515/1,200 | 1.000 | 0.513 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21p5_l11 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.425 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10p5 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l20p5_l10 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.444 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p5 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l21_l11 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.430 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p5 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10p1 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10p1 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10p5 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l11 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.476 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.507 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p1 | 0.428 | 0.428 | 514/1,200 | 1.000 | 0.519 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p1 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p5 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p5 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l11 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l11 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.441 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p1 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10p5 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.486 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21p5_l10 | 0.427 | 0.427 | 513/1,200 | 1.000 | 0.488 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p1 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10p5 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l10p5 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.513 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10p1 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.517 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p1 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.524 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.517 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p1 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.516 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l11 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.427 | 0.427 | 512/1,200 | 1.000 | 0.509 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p5 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l10 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p1 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p1 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21p5_l10 | 0.426 | 0.426 | 511/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p1 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.431 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10p5 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.428 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p1 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.429 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10p1 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.424 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.426 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l20p5_l10p5 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p5 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.490 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.512 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21_l10 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.517 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l10 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.516 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l20p5_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.511 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.425 | 0.425 | 510/1,200 | 1.000 | 0.516 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10p5 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21p5_l10 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.431 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l11 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21_l10p5 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.433 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.431 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l11 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.430 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l20p5_l10p1 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.493 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21p5_l10 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.487 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.527 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p1 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.523 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10p1 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.519 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21_l10p1 | 0.424 | 0.424 | 509/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l20p5_l11 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p8_l21_l10 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l20p5_l10p5 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.520 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.526 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l10p5 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.510 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p5 | 0.423 | 0.423 | 508/1,200 | 1.000 | 0.510 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l11 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.441 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p1 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.438 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21p5_l10p5 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.430 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10p1 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.436 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l10p5 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.437 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l10p5 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l10 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.439 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l10 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l10 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.495 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l21p5_l11 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.505 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.518 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l11 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21p5_l11 | 0.422 | 0.422 | 507/1,200 | 1.000 | 0.510 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l20p5_l10p1 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p8_l21p5_l10 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.432 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21p5_l10p5 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.429 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.434 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.490 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.440 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.519 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l10p1 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21p5_l10p5 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.513 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l10 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.512 | 1,200 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10p5 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.530 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10 | 0.420 | 0.420 | 504/1,200 | 1.000 | 0.443 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10 | 0.420 | 0.420 | 504/1,200 | 1.000 | 0.523 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l11 | 0.420 | 0.420 | 504/1,200 | 1.000 | 0.513 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10p1 | 0.420 | 0.420 | 504/1,200 | 1.000 | 0.518 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10p5 | 0.420 | 0.420 | 504/1,200 | 1.000 | 0.517 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21p5_l10 | 0.419 | 0.419 | 503/1,200 | 1.000 | 0.520 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l21_l10p1 | 0.419 | 0.419 | 503/1,200 | 1.000 | 0.522 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21_l10p1 | 0.419 | 0.419 | 503/1,200 | 1.000 | 0.517 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l21p5_l11 | 0.419 | 0.419 | 503/1,200 | 1.000 | 0.506 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10p5 | 0.419 | 0.419 | 503/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l21_l10p1 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l10p5 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.435 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l20p5_l11 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.487 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p1 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.526 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l10p5 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.522 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10 | 0.418 | 0.418 | 502/1,200 | 1.000 | 0.520 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l10p5 | 0.417 | 0.417 | 501/1,200 | 1.000 | 0.519 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l20p5_l10p1 | 0.417 | 0.417 | 501/1,200 | 1.000 | 0.527 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l10 | 0.417 | 0.417 | 501/1,200 | 1.000 | 0.521 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21_l11 | 0.417 | 0.417 | 501/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l21_l11 | 0.417 | 0.417 | 500/1,200 | 1.000 | 0.431 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l10 | 0.417 | 0.417 | 500/1,200 | 1.000 | 0.519 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col1_l21_l10p1 | 0.417 | 0.417 | 500/1,200 | 1.000 | 0.516 | 1,200 |
+| tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1 | 0.416 | 0.416 | 499/1,200 | 1.000 | 0.442 | 1,200 |
+| tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l21p5_l10 | 0.416 | 0.416 | 499/1,200 | 1.000 | 0.535 | 1,200 |
+| tfidf_lr0p03_depth3_estim250_sub0p7_col0p8_l21_l10p5 | 0.415 | 0.415 | 498/1,200 | 1.000 | 0.489 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10 | 0.415 | 0.415 | 498/1,200 | 1.000 | 0.522 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l10p5 | 0.414 | 0.414 | 497/1,200 | 1.000 | 0.524 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p7_col1_l20p5_l11 | 0.413 | 0.413 | 496/1,200 | 1.000 | 0.516 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.413 | 0.413 | 496/1,200 | 1.000 | 0.524 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.411 | 0.411 | 493/1,200 | 1.000 | 0.523 | 1,200 |
 
 ### Selection Summary
 
-- **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.973 (coverage 0.976) using vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.6, λ=0.5, α=0. Δ accuracy vs. runner-up 0.000, Δ coverage 0.000.
-- **Study 2 – Minimum Wage (MTurk) (issue Minimum Wage)**: accuracy 0.382 (coverage 0.382) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.7, colsample=1, λ=0.5, α=0.1. Δ accuracy vs. runner-up 0.000, Δ coverage 0.000.
-- **Study 3 – Minimum Wage (YouGov) (issue Minimum Wage)**: accuracy 0.443 (coverage 0.443) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=0.6, λ=0.5, α=0.1. Δ accuracy vs. runner-up 0.001, Δ coverage 0.001.
+- **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.973 (coverage 0.976) using vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.6, λ=0.5, α=0. Δ accuracy vs. runner-up +0.000; Δ coverage +0.000.
+- **Study 2 – Minimum Wage (MTurk) (issue Minimum Wage)**: accuracy 0.382 (coverage 0.382) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.7, colsample=1, λ=0.5, α=0.1. Δ accuracy vs. runner-up +0.000; Δ coverage +0.000.
+- **Study 3 – Minimum Wage (YouGov) (issue Minimum Wage)**: accuracy 0.443 (coverage 0.443) using vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=0.6, λ=0.5, α=0.1. Δ accuracy vs. runner-up +0.001; Δ coverage +0.001.
 
 ### Parameter Frequency Across Selected Configurations
 

@@ -200,6 +200,39 @@ class OpinionStageConfig:
     overwrite: bool
 
 
+@dataclass(frozen=True)
+class NextVideoMetricSummary:
+    """Normalised view of slate metrics emitted by the XGBoost evaluations."""
+
+    accuracy: Optional[float] = None
+    coverage: Optional[float] = None
+    evaluated: Optional[int] = None
+    correct: Optional[int] = None
+    known_hits: Optional[int] = None
+    known_total: Optional[int] = None
+    known_availability: Optional[float] = None
+    avg_probability: Optional[float] = None
+    dataset: Optional[str] = None
+    issue: Optional[str] = None
+    issue_label: Optional[str] = None
+    study_label: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class OpinionSummary:
+    """Normalised view of opinion-regression metrics."""
+
+    mae_after: Optional[float] = None
+    rmse_after: Optional[float] = None
+    r2_after: Optional[float] = None
+    baseline_mae: Optional[float] = None
+    mae_delta: Optional[float] = None
+    participants: Optional[int] = None
+    dataset: Optional[str] = None
+    split: Optional[str] = None
+    label: Optional[str] = None
+
+
 def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
     """Return parsed arguments and passthrough CLI flags."""
 
@@ -1037,6 +1070,194 @@ def _format_float(value: float) -> str:
     return f"{value:.3f}"
 
 
+def _format_optional_float(value: Optional[float]) -> str:
+    """Format optional floating-point metrics."""
+
+    return _format_float(value) if value is not None else "—"
+
+
+def _format_delta(value: Optional[float]) -> str:
+    """Return a signed delta with three decimal places."""
+
+    return f"{value:+.3f}" if value is not None else "—"
+
+
+def _format_count(value: Optional[int]) -> str:
+    """Render optional integer counts with thousands separators."""
+
+    return f"{value:,}" if value is not None else "—"
+
+
+def _format_ratio(numerator: Optional[int], denominator: Optional[int]) -> str:
+    """Format ratios as 'hit/total' when both sides are known."""
+
+    if numerator is None or denominator is None:
+        return "—"
+    return f"{numerator:,}/{denominator:,}"
+
+
+def _safe_float(value: object) -> Optional[float]:
+    """Best-effort conversion to float."""
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: object) -> Optional[int]:
+    """Best-effort conversion to int."""
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSummary:
+    """Collect reusable fields from a next-video metrics payload."""
+
+    accuracy = _safe_float(data.get("accuracy"))
+    coverage = _safe_float(data.get("coverage"))
+    evaluated = _safe_int(data.get("evaluated"))
+    correct = _safe_int(data.get("correct"))
+    known_hits = _safe_int(data.get("known_candidate_hits"))
+    known_total = _safe_int(data.get("known_candidate_total"))
+    known_availability = None
+    if known_total is not None and evaluated:
+        known_availability = known_total / evaluated if evaluated else None
+    avg_probability = _safe_float(data.get("avg_probability"))
+    dataset = data.get("dataset_source") or data.get("dataset")
+    issue = data.get("issue")
+    issue_label = data.get("issue_label")
+    study_label = data.get("study_label") or data.get("study")
+    return NextVideoMetricSummary(
+        accuracy=accuracy,
+        coverage=coverage,
+        evaluated=evaluated,
+        correct=correct,
+        known_hits=known_hits,
+        known_total=known_total,
+        known_availability=known_availability,
+        avg_probability=avg_probability,
+        dataset=str(dataset) if dataset else None,
+        issue=str(issue) if issue else None,
+        issue_label=str(issue_label) if issue_label else None,
+        study_label=str(study_label) if study_label else None,
+    )
+
+
+def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
+    """Collect opinion regression metrics into a normalised structure."""
+
+    metrics_block = data.get("metrics", {})
+    baseline = data.get("baseline", {})
+    mae_after = _safe_float(metrics_block.get("mae_after"))
+    baseline_mae = _safe_float(baseline.get("mae_before") or baseline.get("mae_using_before"))
+    mae_delta = None
+    if mae_after is not None and baseline_mae is not None:
+        mae_delta = baseline_mae - mae_after
+    return OpinionSummary(
+        mae_after=mae_after,
+        rmse_after=_safe_float(metrics_block.get("rmse_after")),
+        r2_after=_safe_float(metrics_block.get("r2_after")),
+        baseline_mae=baseline_mae,
+        mae_delta=mae_delta,
+        participants=_safe_int(data.get("n_participants")),
+        dataset=str(data.get("dataset")) if data.get("dataset") else None,
+        split=str(data.get("split")) if data.get("split") else None,
+        label=str(data.get("label")) if data.get("label") else None,
+    )
+
+
+def _next_video_dataset_info(metrics: Mapping[str, Mapping[str, object]]) -> str:
+    """Return the dataset identifier referenced by the evaluation metrics."""
+
+    for payload in metrics.values():
+        summary = _extract_next_video_summary(payload)
+        if summary.dataset:
+            return summary.dataset
+    return "unknown"
+
+
+def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
+    """Generate bullet-point observations comparing study metrics."""
+
+    if not metrics:
+        return []
+    lines: List[str] = ["## Observations", ""]
+    accuracies: List[float] = []
+    coverages: List[float] = []
+    availabilities: List[float] = []
+    for study_key in sorted(metrics.keys(), key=lambda key: (metrics[key].get("study_label") or key).lower()):
+        summary = _extract_next_video_summary(metrics[study_key])
+        accuracy_text = _format_optional_float(summary.accuracy)
+        coverage_text = _format_optional_float(summary.coverage)
+        availability_text = _format_optional_float(summary.known_availability)
+        avg_prob_text = _format_optional_float(summary.avg_probability)
+        lines.append(
+            f"- {summary.study_label or study_key}: accuracy {accuracy_text}, "
+            f"coverage {coverage_text}, known availability {availability_text}, "
+            f"avg probability {avg_prob_text}."
+        )
+        if summary.accuracy is not None:
+            accuracies.append(summary.accuracy)
+        if summary.coverage is not None:
+            coverages.append(summary.coverage)
+        if summary.known_availability is not None:
+            availabilities.append(summary.known_availability)
+    if accuracies:
+        lines.append(
+            f"- Portfolio mean accuracy { _format_optional_float(sum(accuracies) / len(accuracies)) } "
+            f"across {len(accuracies)} studies."
+        )
+    if coverages:
+        lines.append(
+            f"- Mean coverage { _format_optional_float(sum(coverages) / len(coverages)) }."
+        )
+    if availabilities:
+        lines.append(
+            f"- Known candidate availability averages "
+            f"{ _format_optional_float(sum(availabilities) / len(availabilities)) }."
+        )
+    lines.append("")
+    return lines
+
+
+def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
+    """Generate bullet-point takeaways for the opinion regression stage."""
+
+    if not metrics:
+        return []
+    lines: List[str] = ["## Observations", ""]
+    deltas: List[float] = []
+    r2_scores: List[float] = []
+    for study_key in sorted(metrics.keys(), key=lambda key: (metrics[key].get("label") or key).lower()):
+        summary = _extract_opinion_summary(metrics[study_key])
+        delta_text = _format_delta(summary.mae_delta)
+        mae_text = _format_optional_float(summary.mae_after)
+        r2_text = _format_optional_float(summary.r2_after)
+        lines.append(
+            f"- {summary.label or study_key}: MAE {mae_text} "
+            f"(Δ vs. baseline {delta_text}), R² {r2_text}."
+        )
+        if summary.mae_delta is not None:
+            deltas.append(summary.mae_delta)
+        if summary.r2_after is not None:
+            r2_scores.append(summary.r2_after)
+    if deltas:
+        lines.append(
+            f"- Average MAE reduction { _format_delta(sum(deltas) / len(deltas)) } across "
+            f"{len(deltas)} studies."
+        )
+    if r2_scores:
+        lines.append(
+            f"- Mean R² { _format_optional_float(sum(r2_scores) / len(r2_scores)) }."
+        )
+    lines.append("")
+    return lines
+
+
 def _write_reports(
     *,
     reports_dir: Path,
@@ -1143,8 +1364,8 @@ def _write_hyperparameter_report(
         lines.append("")
         lines.append(f"*Issue:* {issue_label}")
         lines.append("")
-        lines.append("| Config | Accuracy ↑ | Coverage ↑ | Evaluated |")
-        lines.append("| --- | ---: | ---: | ---: |")
+        lines.append("| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |")
+        lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: |")
         ordered = sorted(
             study_outcomes,
             key=lambda item: (item.accuracy, item.coverage, item.evaluated),
@@ -1156,9 +1377,14 @@ def _write_hyperparameter_report(
             formatted = (
                 f"**{label}**" if selection and outcome.config == selection.config else label
             )
+            summary = _extract_next_video_summary(outcome.metrics)
             lines.append(
-                f"| {formatted} | {_format_float(outcome.accuracy)} | "
-                f"{_format_float(outcome.coverage)} | {outcome.evaluated} |"
+                f"| {formatted} | {_format_optional_float(summary.accuracy)} | "
+                f"{_format_optional_float(summary.coverage)} | "
+                f"{_format_ratio(summary.known_hits, summary.known_total)} | "
+                f"{_format_optional_float(summary.known_availability)} | "
+                f"{_format_optional_float(summary.avg_probability)} | "
+                f"{_format_count(summary.evaluated)} |"
             )
         lines.append("")
 
@@ -1199,7 +1425,7 @@ def _xgb_selection_summary_section(
             lines.append(
                 f"- **{descriptor_full}**: accuracy {_format_float(best.accuracy)} "
                 f"(coverage {_format_float(best.coverage)}) using {summary}. "
-                f"Δ accuracy vs. runner-up { _format_float(delta_acc) }, Δ coverage { _format_float(delta_cov) }."
+                f"Δ accuracy vs. runner-up {_format_delta(delta_acc)}; Δ coverage {_format_delta(delta_cov)}."
             )
         else:
             lines.append(
@@ -1305,8 +1531,17 @@ def _write_next_video_report(
     lines: List[str] = []
     lines.append("# XGBoost Next-Video Baseline")
     lines.append("")
-    lines.append("Accuracy on the validation split for the selected slate configuration.")
-    lines.append("")
+    if metrics:
+        dataset_name = _next_video_dataset_info(metrics)
+        lines.append("Slate-ranking accuracy for the selected XGBoost configuration.")
+        lines.append("")
+        lines.append(f"- Dataset: `{dataset_name}`")
+        lines.append("- Split: validation")
+        lines.append("- Metrics: accuracy, coverage of known candidates, and availability of known neighbours.")
+        lines.append("")
+    else:
+        lines.append("Accuracy on the validation split for the selected slate configuration.")
+        lines.append("")
 
     if not metrics:
         lines.append("No finalized evaluation metrics were available when this report was generated.")
@@ -1318,8 +1553,8 @@ def _write_next_video_report(
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return
 
-    lines.append("| Study | Issue | Accuracy ↑ | Coverage ↑ | Evaluated |")
-    lines.append("| --- | --- | ---: | ---: | ---: |")
+    lines.append("| Study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ |")
+    lines.append("| --- | --- | ---: | --- | ---: | --- | ---: | ---: |")
 
     def _study_label(study_key: str) -> str:
         selection = selections.get(study_key)
@@ -1336,18 +1571,23 @@ def _write_next_video_report(
         return ""
 
     for study_key in sorted(metrics.keys(), key=lambda key: _study_label(key).lower()):
-        summary = metrics[study_key]
-        study_label = summary.get("study_label") or _study_label(study_key)
-        issue_label = summary.get("issue_label") or _issue_label(
-            study_key, summary.get("issue", study_key)
+        payload = metrics[study_key]
+        summary = _extract_next_video_summary(payload)
+        study_label = summary.study_label or _study_label(study_key)
+        issue_label = summary.issue_label or _issue_label(
+            study_key, summary.issue or study_key
         )
         lines.append(
             f"| {study_label} | {issue_label or _issue_label(study_key, '')} | "
-            f"{_format_float(float(summary.get('accuracy', 0.0)))} | "
-            f"{_format_float(float(summary.get('coverage', 0.0)))} | "
-            f"{int(summary.get('evaluated', 0))} |"
+            f"{_format_optional_float(summary.accuracy)} | "
+            f"{_format_ratio(summary.correct, summary.evaluated)} | "
+            f"{_format_optional_float(summary.coverage)} | "
+            f"{_format_ratio(summary.known_hits, summary.known_total)} | "
+            f"{_format_optional_float(summary.known_availability)} | "
+            f"{_format_optional_float(summary.avg_probability)} |"
         )
     lines.append("")
+    lines.extend(_next_video_observations(metrics))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1375,20 +1615,32 @@ def _write_opinion_report(
         return
     lines.append("MAE / RMSE / R² scores for predicting the post-study opinion index.")
     lines.append("")
-    lines.append("| Study | Participants | MAE ↓ | RMSE ↓ | R² ↑ | Baseline MAE ↓ |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
-    for study_key, summary in sorted(metrics.items()):
-        label = summary.get("label", study_key)
-        metrics_block = summary.get("metrics", {})
-        baseline = summary.get("baseline", {})
+    dataset_name = "unknown"
+    split_name = "validation"
+    for payload in metrics.values():
+        summary = _extract_opinion_summary(payload)
+        if dataset_name == "unknown" and summary.dataset:
+            dataset_name = summary.dataset
+        if summary.split:
+            split_name = summary.split
+        if dataset_name != "unknown" and summary.split:
+            break
+    lines.append(f"- Dataset: `{dataset_name}`")
+    lines.append(f"- Split: {split_name}")
+    lines.append("- Metrics: MAE, RMSE, and R² compared against a no-change baseline (pre-study opinion).")
+    lines.append("")
+    lines.append("| Study | Participants | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Baseline MAE ↓ |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
+    for study_key, payload in sorted(metrics.items()):
+        summary = _extract_opinion_summary(payload)
         lines.append(
-            f"| {label} | {int(summary.get('n_participants', 0))} | "
-            f"{_format_float(float(metrics_block.get('mae_after', 0.0)))} | "
-            f"{_format_float(float(metrics_block.get('rmse_after', 0.0)))} | "
-            f"{_format_float(float(metrics_block.get('r2_after', 0.0)))} | "
-            f"{_format_float(float(baseline.get('mae_before', 0.0)))} |"
+            f"| {summary.label or study_key} | {_format_count(summary.participants)} | "
+            f"{_format_optional_float(summary.mae_after)} | {_format_delta(summary.mae_delta)} | "
+            f"{_format_optional_float(summary.rmse_after)} | {_format_optional_float(summary.r2_after)} | "
+            f"{_format_optional_float(summary.baseline_mae)} |"
         )
     lines.append("")
+    lines.extend(_opinion_observations(metrics))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

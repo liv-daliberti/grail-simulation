@@ -801,6 +801,29 @@ def _format_sweep_task_descriptor(task: SweepTask) -> str:
     return f"{task.study.key}:{task.study.issue}:{task.config.label()}"
 
 
+def _gpu_tree_method_supported() -> bool:
+    """Return True when the installed XGBoost build supports GPU boosters."""
+
+    try:
+        import xgboost  # type: ignore
+        core = xgboost.core  # type: ignore[attr-defined]
+    except ModuleNotFoundError:
+        return False
+
+    # Prefer the helper exposed in newer releases.
+    maybe_has_cuda = getattr(core, "_has_cuda_support", None)
+    if callable(maybe_has_cuda):
+        try:
+            return bool(maybe_has_cuda())
+        except Exception:  # pragma: no cover - defensive
+            LOGGER.debug("Failed to query XGBoost CUDA support.", exc_info=True)
+            return False
+
+    # Fallback: inspect the shared library for a device-specific symbol.
+    lib = getattr(core, "_LIB", None)
+    return hasattr(lib, "XGBoosterPredictFromDeviceDMatrix")
+
+
 def _load_final_metrics_from_disk(
     *,
     next_video_dir: Path,
@@ -1415,6 +1438,12 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     LOGGER.info("Parallel sweep jobs: %d", jobs)
     tree_method = args.tree_method or "gpu_hist"
+    if tree_method == "gpu_hist" and not _gpu_tree_method_supported():
+        LOGGER.warning(
+            "Requested tree_method=gpu_hist but the installed XGBoost build lacks GPU support. "
+            "Falling back to tree_method=hist."
+        )
+        tree_method = "hist"
     args.tree_method = tree_method
     LOGGER.info("Using XGBoost tree_method=%s.", tree_method)
 

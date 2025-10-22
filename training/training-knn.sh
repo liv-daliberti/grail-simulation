@@ -223,8 +223,8 @@ submit_jobs() {
 
   local sweep_job_name="${KNN_SWEEP_JOB_NAME:-knn-sweeps}"
   local final_job_name="${KNN_FINAL_JOB_NAME:-knn-finalize}"
-  local sweep_time="${KNN_SWEEP_TIME:-00:59:00}"
-  local finalize_time="${KNN_FINAL_TIME:-00:59:00}"
+  local sweep_time="${KNN_SWEEP_TIME:-04:00:00}"
+  local finalize_time="${KNN_FINAL_TIME:-04:00:00}"
   local finalize_cpus="${KNN_FINAL_CPUS:-4}"
   local max_array_size_raw="${KNN_MAX_ARRAY_SIZE:-1000}"
   local plan_log="${LOG_DIR}/${sweep_job_name}_plan.txt"

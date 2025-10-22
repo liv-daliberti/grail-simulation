@@ -381,6 +381,16 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
 
         combined = pd.concat(aligned_frames, ignore_index=True)
 
+        object_columns = combined.select_dtypes(include="object").columns
+        if len(object_columns) > 0:
+            for column_name in object_columns:
+                expected_feature = None
+                if isinstance(features, Features):
+                    expected_feature = features.get(column_name)
+                expected_dtype = getattr(expected_feature, "dtype", None)
+                if expected_feature is None or expected_dtype == "string":
+                    combined[column_name] = combined[column_name].astype("string")
+
         if isinstance(features, Features):
             for column_name, feature in features.items():
                 if not isinstance(feature, Value):

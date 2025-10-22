@@ -351,7 +351,7 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
                     continue
                 if expected_columns and candidate in expected_columns:
                     return candidate
-                if not expected_columns and candidate not in canonical_columns:
+                if not expected_columns:
                     return candidate
             return column
 
@@ -375,15 +375,20 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
             continue
 
         all_columns = sorted({col for frame in frames for col in frame.columns})
-        aligned_frames = []
-        for frame in frames:
-            missing_cols = [col for col in all_columns if col not in frame.columns]
-            if missing_cols:
-                for col in missing_cols:
-                    frame[col] = pd.NA
-            aligned_frames.append(frame[all_columns])
+        aligned_frames = [
+            frame.reindex(columns=all_columns, fill_value=pd.NA) for frame in frames
+        ]
 
         combined = pd.concat(aligned_frames, ignore_index=True)
+
+        if isinstance(features, Features):
+            for column_name, feature in features.items():
+                if not isinstance(feature, Value):
+                    continue
+                if column_name not in combined.columns:
+                    continue
+                if feature.dtype == "string":
+                    combined[column_name] = combined[column_name].astype("string")
         unioned_splits[split_name] = Dataset.from_pandas(combined, preserve_index=False)
 
     if not unioned_splits:

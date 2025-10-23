@@ -33,6 +33,25 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 | Study 1 – Gun Control (MTurk) | 0.801 | [0.765, 0.838] | +0.261 | 0.540 | 0.326 | 2 | 548 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.308 | [0.276, 0.350] | -0.060 | 0.368 | 0.255 | 3 | 671 | 671 |
 
+## Accuracy Curves
+
+### Accuracy Curves – Tfidf
+
+![TFIDF – Study 1 – Gun Control (MTurk)](curves/tfidf/study1.png)
+![TFIDF – Study 2 – Minimum Wage (MTurk)](curves/tfidf/study2.png)
+![TFIDF – Study 3 – Minimum Wage (YouGov)](curves/tfidf/study3.png)
+
+### Accuracy Curves – Word2Vec
+
+![WORD2VEC – Study 1 – Gun Control (MTurk)](curves/word2vec/study1.png)
+![WORD2VEC – Study 2 – Minimum Wage (MTurk)](curves/word2vec/study2.png)
+![WORD2VEC – Study 3 – Minimum Wage (YouGov)](curves/word2vec/study3.png)
+
+### Accuracy Curves – Sentence Transformer
+
+![SENTENCE_TRANSFORMER – Study 1 – Gun Control (MTurk)](curves/sentence_transformer/study1.png)
+![SENTENCE_TRANSFORMER – Study 2 – Minimum Wage (MTurk)](curves/sentence_transformer/study2.png)
+
 ## Observations
 
 - TFIDF: Study 1 – Gun Control (MTurk): 0.889 (baseline 0.540, Δ +0.349, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.338 (baseline 0.368, Δ -0.030, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.292 (baseline 0.479, Δ -0.187, k=2, eligible 1,200); averages: mean Δ +0.044, mean random 0.279.

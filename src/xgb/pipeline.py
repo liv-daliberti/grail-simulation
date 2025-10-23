@@ -13,6 +13,14 @@ from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
+try:  # pragma: no cover - optional dependency
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+    from matplotlib import pyplot as plt  # type: ignore[assignment]
+except ImportError:  # pragma: no cover - optional dependency
+    plt = None  # type: ignore[assignment]
+
 from .cli import build_parser as build_xgb_parser
 from .data import issues_in_dataset, load_dataset_source
 from .evaluate import run_eval
@@ -1279,6 +1287,96 @@ def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> Lis
     return lines
 
 
+def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
+    """Return sorted evaluation steps and accuracies from ``curve_block``."""
+
+    accuracy_map = curve_block.get("accuracy_by_step")
+    if not isinstance(accuracy_map, Mapping):
+        return ([], [])
+    points: List[Tuple[int, float]] = []
+    for raw_step, raw_acc in accuracy_map.items():
+        try:
+            step_val = int(raw_step)
+            acc_val = float(raw_acc)
+        except (TypeError, ValueError):
+            continue
+        points.append((step_val, acc_val))
+    if not points:
+        return ([], [])
+    points.sort(key=lambda item: item[0])
+    xs, ys = zip(*points)
+    return (list(xs), list(ys))
+
+
+def _load_curve_bundle(payload: Mapping[str, object]) -> Optional[Mapping[str, object]]:
+    """Return the stored curve metrics bundle, loading from disk when required."""
+
+    curve_bundle = payload.get("curve_metrics")
+    if isinstance(curve_bundle, Mapping):
+        return curve_bundle
+    curve_path = payload.get("curve_metrics_path")
+    if not curve_path:
+        return None
+    try:
+        with open(curve_path, "r", encoding="utf-8") as handle:
+            loaded = json.load(handle)
+            if isinstance(loaded, Mapping):
+                return loaded
+    except (OSError, json.JSONDecodeError) as exc:  # pragma: no cover - logging aid
+        LOGGER.warning("Unable to read curve metrics from %s: %s", curve_path, exc)
+    return None
+
+
+def _plot_xgb_curve(
+    *,
+    directory: Path,
+    study_label: str,
+    study_key: str,
+    payload: Mapping[str, object],
+) -> Optional[str]:
+    """Persist a training/validation accuracy curve plot for ``study_key``."""
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+    curve_bundle = _load_curve_bundle(payload)
+    if not isinstance(curve_bundle, Mapping):
+        return None
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    eval_x, eval_y = _extract_curve_steps(eval_curve)
+    if not eval_x:
+        return None
+    train_x: List[int] = []
+    train_y: List[float] = []
+    train_curve = curve_bundle.get("train")
+    if isinstance(train_curve, Mapping):
+        train_x, train_y = _extract_curve_steps(train_curve)
+
+    curves_dir = directory / "curves"
+    curves_dir.mkdir(parents=True, exist_ok=True)
+    slug_source = study_label or study_key or "study"
+    slug = slug_source.lower().replace(" ", "_").replace("/", "_")
+    plot_path = curves_dir / f"{slug}.png"
+
+    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    axis.plot(eval_x, eval_y, marker="o", label="validation")
+    if train_x and train_y:
+        axis.plot(train_x, train_y, marker="o", linestyle="--", label="training")
+    axis.set_title(study_label or study_key)
+    axis.set_xlabel("Evaluated examples")
+    axis.set_ylabel("Cumulative accuracy")
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
+    axis.legend()
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return plot_path.relative_to(directory).as_posix()
+    except ValueError:
+        return plot_path.as_posix()
+
+
 def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
     """Generate bullet-point takeaways for the opinion regression stage."""
 
@@ -1748,6 +1846,24 @@ def _write_next_video_report(
             f"{_format_optional_float(summary.avg_probability)} |"
         )
     lines.append("")
+    curve_lines: List[str] = []
+    if plt is not None:
+        for study_key in sorted(metrics.keys(), key=lambda key: _study_label(key).lower()):
+            payload = metrics[study_key]
+            label = _study_label(study_key)
+            rel_path = _plot_xgb_curve(
+                directory=directory,
+                study_label=label,
+                study_key=study_key,
+                payload=payload,
+            )
+            if rel_path:
+                if not curve_lines:
+                    curve_lines.extend(["## Accuracy Curves", ""])
+                curve_lines.append(f"![{label}]({rel_path})")
+                curve_lines.append("")
+    if curve_lines:
+        lines.extend(curve_lines)
     lines.extend(_next_video_observations(metrics))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

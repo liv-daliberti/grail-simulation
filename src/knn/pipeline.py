@@ -1820,6 +1820,76 @@ def _format_ci(ci_value: object) -> str:
     return "—"
 
 
+def _extract_curve_series(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
+    """Return sorted k/accuracy pairs extracted from ``curve_block``."""
+
+    accuracy_map = curve_block.get("accuracy_by_k")
+    if not isinstance(accuracy_map, Mapping):
+        return ([], [])
+    points: List[Tuple[int, float]] = []
+    for raw_k, raw_acc in accuracy_map.items():
+        try:
+            k_val = int(raw_k)
+            acc_val = float(raw_acc)
+        except (TypeError, ValueError):
+            continue
+        points.append((k_val, acc_val))
+    if not points:
+        return ([], [])
+    points.sort(key=lambda item: item[0])
+    xs, ys = zip(*points)
+    return (list(xs), list(ys))
+
+
+def _plot_knn_curve_bundle(
+    *,
+    base_dir: Path,
+    feature_space: str,
+    study: StudySpec,
+    metrics: Mapping[str, object],
+) -> Optional[str]:
+    """Save a train/validation accuracy curve plot for ``study`` when possible."""
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+    curve_bundle = metrics.get("curve_metrics")
+    if not isinstance(curve_bundle, Mapping):
+        return None
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    eval_x, eval_y = _extract_curve_series(eval_curve)
+    if not eval_x:
+        return None
+    train_curve = curve_bundle.get("train")
+    train_x: List[int] = []
+    train_y: List[float] = []
+    if isinstance(train_curve, Mapping):
+        train_x, train_y = _extract_curve_series(train_curve)
+
+    curves_dir = base_dir / "curves" / feature_space
+    curves_dir.mkdir(parents=True, exist_ok=True)
+    plot_path = curves_dir / f"{study.study_slug}.png"
+
+    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    axis.plot(eval_x, eval_y, marker="o", label="validation")
+    if train_x and train_y:
+        axis.plot(train_x, train_y, marker="o", linestyle="--", label="training")
+    axis.set_title(f"{study.label} – {feature_space.upper()}")
+    axis.set_xlabel("k")
+    axis.set_ylabel("Accuracy")
+    axis.set_xticks(eval_x)
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
+    axis.legend()
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return plot_path.relative_to(base_dir).as_posix()
+    except ValueError:
+        return plot_path.as_posix()
+
+
 def _next_video_feature_section(
     feature_space: str,
     metrics: Mapping[str, Mapping[str, object]],
@@ -1855,6 +1925,59 @@ def _next_video_feature_section(
         )
     lines.append("")
     return lines
+
+
+def _next_video_curve_sections(
+    *,
+    output_dir: Path,
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    """Render Markdown sections embedding train/validation accuracy curves."""
+
+    if plt is None:  # pragma: no cover - optional dependency
+        LOGGER.debug("Matplotlib not available; skipping KNN curve plots.")
+        return []
+
+    sections: List[str] = []
+    generated_any = False
+    ordered_spaces = [
+        space for space in ("tfidf", "word2vec", "sentence_transformer") if space in metrics_by_feature
+    ]
+    for feature_space in metrics_by_feature:
+        if feature_space not in ordered_spaces:
+            ordered_spaces.append(feature_space)
+
+    for feature_space in ordered_spaces:
+        feature_metrics = metrics_by_feature.get(feature_space, {})
+        if not feature_metrics:
+            continue
+        image_lines: List[str] = []
+        for study in studies:
+            study_metrics = feature_metrics.get(study.key)
+            if not study_metrics:
+                continue
+            rel_path = _plot_knn_curve_bundle(
+                base_dir=output_dir,
+                feature_space=feature_space,
+                study=study,
+                metrics=study_metrics,
+            )
+            if rel_path:
+                generated_any = True
+                image_lines.append(f"![{feature_space.upper()} – {study.label}]({rel_path})")
+        if image_lines:
+            sections.append(f"### Accuracy Curves – {feature_space.replace('_', ' ').title()}")
+            sections.append("")
+            sections.extend(image_lines)
+            sections.append("")
+
+    if not generated_any:
+        return []
+
+    sections.insert(0, "## Accuracy Curves")
+    sections.insert(1, "")
+    return sections
 
 
 def _next_video_loso_section(
@@ -2034,6 +2157,13 @@ def _build_next_video_report(
     for feature_space in ordered_spaces:
         metrics = metrics_by_feature.get(feature_space, {})
         lines.extend(_next_video_feature_section(feature_space, metrics, studies))
+    curve_sections = _next_video_curve_sections(
+        output_dir=output_dir,
+        metrics_by_feature=metrics_by_feature,
+        studies=studies,
+    )
+    if curve_sections:
+        lines.extend(curve_sections)
     lines.extend(_next_video_observations(metrics_by_feature, studies))
     if loso_metrics:
         lines.extend(_next_video_loso_section(loso_metrics, studies))

@@ -67,6 +67,8 @@ class IssueMetrics:
     timestamp: float
     extra_fields: Sequence[str]
     xgboost_params: Dict[str, Any]
+    curve_metrics: Optional[Dict[str, Any]] = None
+    curve_metrics_path: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -253,13 +255,21 @@ def _evaluate_issue(
         eval_max=args.eval_max,
         participant_studies=tuple(tokens),
     )
-    metrics, predictions = evaluate_issue(
+    metrics, predictions, eval_curve = evaluate_issue(
         model=model,
         eval_ds=eval_ds,
         issue_slug=issue_slug,
         config=eval_config,
     )
-
+    curve_bundle: Dict[str, Any] = {"eval": eval_curve}
+    train_curve = _curve_metrics_for_split(
+        model=model,
+        dataset=train_ds,
+        extra_fields=tuple(extra_fields),
+    )
+    if train_curve.get("n_examples"):
+        curve_bundle["train"] = train_curve
+    metrics.curve_metrics = curve_bundle
     _write_outputs(args, issue_slug, metrics, predictions)
     logger.info(
         "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",
@@ -361,6 +371,11 @@ def _write_outputs(
             f"{out_dir} already exists. Use --overwrite to replace outputs."
         )
     ensure_directory(out_dir)
+    if metrics.curve_metrics:
+        curve_path = out_dir / f"xgb_curves_{issue_slug}.json"
+        with open(curve_path, "w", encoding="utf-8") as handle:
+            json.dump(metrics.curve_metrics, handle, indent=2)
+        metrics.curve_metrics_path = str(curve_path)
     with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
         json.dump(asdict(metrics), handle, indent=2)
     with open(out_dir / "predictions.jsonl", "w", encoding="utf-8") as handle:
@@ -374,7 +389,7 @@ def evaluate_issue(
     eval_ds,
     issue_slug: str,
     config: EvaluationConfig,
-) -> tuple[IssueMetrics, List[Dict[str, Any]]]:
+) -> tuple[IssueMetrics, List[Dict[str, Any]], Dict[str, Any]]:
     """
     Evaluate a trained XGBoost model on the provided evaluation split.
 
@@ -393,7 +408,8 @@ def evaluate_issue(
     records = _collect_prediction_records(model, eval_ds, config)
     metrics = _summarise_records(records, config, issue_slug, model)
     predictions = _records_to_predictions(records, issue_slug)
-    return metrics, predictions
+    curve_payload = _accuracy_curve_from_records(records)
+    return metrics, predictions, curve_payload
 
 
 def _evaluate_single_example(
@@ -505,6 +521,53 @@ def _records_to_predictions(
         }
         for index, outcome in records
     ]
+
+
+def _accuracy_curve_from_records(
+    records: Sequence[tuple[int, PredictionOutcome]],
+    *,
+    target_points: int = 50,
+) -> Dict[str, Any]:
+    """Return cumulative accuracy checkpoints computed from ``records``."""
+
+    total = len(records)
+    if total == 0:
+        return {"accuracy_by_step": {}, "n_examples": 0, "stride": 0}
+    target_points = max(1, target_points)
+    stride = max(1, total // target_points)
+    checkpoints: Dict[str, float] = {}
+    correct = 0
+    for idx, (_index, outcome) in enumerate(records, start=1):
+        if outcome.correct:
+            correct += 1
+        if idx == total or idx % stride == 0:
+            checkpoints[str(idx)] = safe_div(correct, idx)
+    if str(total) not in checkpoints:
+        checkpoints[str(total)] = safe_div(correct, total)
+    return {
+        "accuracy_by_step": checkpoints,
+        "n_examples": total,
+        "stride": stride,
+    }
+
+
+def _curve_metrics_for_split(
+    model: XGBoostSlateModel,
+    dataset,
+    extra_fields: Sequence[str],
+    *,
+    target_points: int = 50,
+) -> Dict[str, Any]:
+    """Compute cumulative accuracy metrics for ``dataset``."""
+
+    config = EvaluationConfig(
+        dataset_source="curve",
+        extra_fields=tuple(extra_fields),
+        eval_max=0,
+        participant_studies=(),
+    )
+    records = _collect_prediction_records(model, dataset, config)
+    return _accuracy_curve_from_records(records, target_points=target_points)
 
 
 def _candidate_probabilities(

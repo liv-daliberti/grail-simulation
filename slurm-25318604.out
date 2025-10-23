@@ -2125,3 +2125,40 @@
 2025-10-22 21:37:40,890 INFO: [prompts] Assembled 5812 documents (kept 5812 non-empty).
 [INFO] xgb.features: [prompts] Example doc: 'VIEWER 39-year-old, Latino or Hispanic man; republican conservative; $50,000-$59,999; college-educated; watches YouTube daily.\nInitial Viewpoint: Supports a $15 minimum wage\n\nCURRENTLY WATCHING Rev. B'
 2025-10-22 21:37:40,890 INFO: [prompts] Example doc: 'VIEWER 39-year-old, Latino or Hispanic man; republican conservative; $50,000-$59,999; college-educated; watches YouTube daily.\nInitial Viewpoint: Supports a $15 minimum wage\n\nCURRENTLY WATCHING Rev. B'
+[INFO] xgb.eval: [XGBoost] Issue=minimum_wage_study2 accuracy=0.382 coverage=0.382 evaluated=671
+2025-10-22 21:44:37,034 INFO: [XGBoost] Issue=minimum_wage_study2 accuracy=0.382 coverage=0.382 evaluated=671
+2025-10-22 21:44:37,060 INFO: [FINAL] issue=minimum_wage study=study3 config=tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1
+[INFO] xgb.eval: [XGBoost] Evaluating issue=minimum_wage_study3 participant_studies=study3
+2025-10-22 21:44:37,681 INFO: [XGBoost] Evaluating issue=minimum_wage_study3 participant_studies=study3
+[INFO] xgb.eval: [XGBoost] Training model for issue=minimum_wage_study3
+2025-10-22 21:44:37,889 INFO: [XGBoost] Training model for issue=minimum_wage_study3
+[INFO] xgb.features: [prompts] Assembled 11255 documents (kept 11255 non-empty).
+2025-10-22 21:45:13,774 INFO: [prompts] Assembled 11255 documents (kept 11255 non-empty).
+[INFO] xgb.features: [prompts] Example doc: 'VIEWER 62-year-old, White (non-Hispanic); college-educated; watches YouTube a few times a month; lives in Wisconsin.\nInitial Viewpoint: Opposes a $15 minimum wage\n\nCURRENTLY WATCHING Fast Food CEO Aft'
+2025-10-22 21:45:13,774 INFO: [prompts] Example doc: 'VIEWER 62-year-old, White (non-Hispanic); college-educated; watches YouTube a few times a month; lives in Wisconsin.\nInitial Viewpoint: Opposes a $15 minimum wage\n\nCURRENTLY WATCHING Fast Food CEO Aft'
+[INFO] xgb.eval: [XGBoost] Issue=minimum_wage_study3 accuracy=0.443 coverage=0.443 evaluated=1200
+2025-10-22 21:55:17,945 INFO: [XGBoost] Issue=minimum_wage_study3 accuracy=0.443 coverage=0.443 evaluated=1200
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study1 issue=gun_control rows=21460
+2025-10-22 21:55:18,308 INFO: [OPINION] Collapsing dataset for study=study1 issue=gun_control rows=21460
+[INFO] xgb.opinion: [OPINION] Retained 1355 unique participants.
+2025-10-22 21:56:12,491 INFO: [OPINION] Retained 1355 unique participants.
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study1 issue=gun_control rows=2419
+2025-10-22 21:56:12,492 INFO: [OPINION] Collapsing dataset for study=study1 issue=gun_control rows=2419
+[INFO] xgb.opinion: [OPINION] Retained 162 unique participants.
+2025-10-22 21:56:18,707 INFO: [OPINION] Retained 162 unique participants.
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study2 issue=minimum_wage rows=21460
+2025-10-22 21:56:20,448 INFO: [OPINION] Collapsing dataset for study=study2 issue=minimum_wage rows=21460
+[INFO] xgb.opinion: [OPINION] Retained 1442 unique participants.
+2025-10-22 21:57:15,267 INFO: [OPINION] Retained 1442 unique participants.
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study2 issue=minimum_wage rows=2419
+2025-10-22 21:57:15,267 INFO: [OPINION] Collapsing dataset for study=study2 issue=minimum_wage rows=2419
+[INFO] xgb.opinion: [OPINION] Retained 165 unique participants.
+2025-10-22 21:57:21,514 INFO: [OPINION] Retained 165 unique participants.
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study3 issue=minimum_wage rows=21460
+2025-10-22 21:57:23,445 INFO: [OPINION] Collapsing dataset for study=study3 issue=minimum_wage rows=21460
+[INFO] xgb.opinion: [OPINION] Retained 2458 unique participants.
+2025-10-22 21:58:20,724 INFO: [OPINION] Retained 2458 unique participants.
+[INFO] xgb.opinion: [OPINION] Collapsing dataset for study=study3 issue=minimum_wage rows=2419
+2025-10-22 21:58:20,724 INFO: [OPINION] Collapsing dataset for study=study3 issue=minimum_wage rows=2419
+[INFO] xgb.opinion: [OPINION] Retained 257 unique participants.
+2025-10-22 21:58:27,167 INFO: [OPINION] Retained 257 unique participants.

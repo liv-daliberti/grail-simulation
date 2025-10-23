@@ -32,6 +32,7 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.801 | [0.765, 0.838] | +0.261 | 0.540 | 0.326 | 2 | 548 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.308 | [0.276, 0.350] | -0.060 | 0.368 | 0.255 | 3 | 671 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.322 | [0.294, 0.346] | -0.158 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
 
 ## Accuracy Curves
 
@@ -51,10 +52,11 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 
 ![SENTENCE_TRANSFORMER – Study 1 – Gun Control (MTurk)](curves/sentence_transformer/study1.png)
 ![SENTENCE_TRANSFORMER – Study 2 – Minimum Wage (MTurk)](curves/sentence_transformer/study2.png)
+![SENTENCE_TRANSFORMER – Study 3 – Minimum Wage (YouGov)](curves/sentence_transformer/study3.png)
 
 ## Observations
 
 - TFIDF: Study 1 – Gun Control (MTurk): 0.889 (baseline 0.540, Δ +0.349, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.338 (baseline 0.368, Δ -0.030, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.292 (baseline 0.479, Δ -0.187, k=2, eligible 1,200); averages: mean Δ +0.044, mean random 0.279.
 - WORD2VEC: Study 1 – Gun Control (MTurk): 0.859 (baseline 0.540, Δ +0.319, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.268 (baseline 0.368, Δ -0.100, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.288 (baseline 0.479, Δ -0.191, k=10, eligible 1,200); averages: mean Δ +0.010, mean random 0.279.
-- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.801 (baseline 0.540, Δ +0.261, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.308 (baseline 0.368, Δ -0.060, k=3, eligible 671); averages: mean Δ +0.101, mean random 0.291.
+- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.801 (baseline 0.540, Δ +0.261, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.308 (baseline 0.368, Δ -0.060, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.322 (baseline 0.479, Δ -0.158, k=2, eligible 1,200); averages: mean Δ +0.015, mean random 0.279.
 - Random values correspond to the expected accuracy from a uniform guess across the slate options.

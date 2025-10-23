@@ -182,6 +182,7 @@ class FinalEvalContext:
     out_dir: Path
     tree_method: str
     save_model_dir: Path | None
+    reuse_existing: bool
 
 
 @dataclass(frozen=True)
@@ -198,6 +199,7 @@ class OpinionStageConfig:
     max_features: int | None
     tree_method: str
     overwrite: bool
+    reuse_existing: bool
 
 
 @dataclass(frozen=True)
@@ -439,6 +441,12 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--overwrite",
         action="store_true",
         help="Allow overwriting existing sweep and evaluation outputs.",
+    )
+    parser.add_argument(
+        "--reuse-final",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Reuse cached finalize-stage artefacts when available (use --no-reuse-final to force recomputation).",
     )
     parser.add_argument(
         "--allow-incomplete",
@@ -991,6 +999,29 @@ def _run_final_evaluations(
     context.out_dir.mkdir(parents=True, exist_ok=True)
 
     for study_key, selection in selections.items():
+        metrics_path = context.out_dir / selection.evaluation_slug / "metrics.json"
+        if context.reuse_existing and metrics_path.exists():
+            try:
+                metrics = dict(_load_metrics(metrics_path))
+            except FileNotFoundError:
+                LOGGER.warning(
+                    "[FINAL][MISS] issue=%s study=%s expected cached metrics at %s but none found.",
+                    selection.study.issue,
+                    selection.study.key,
+                    metrics_path,
+                )
+            else:
+                metrics.setdefault("issue", selection.study.issue)
+                metrics.setdefault("issue_label", selection.study.issue.replace("_", " ").title())
+                metrics.setdefault("study", selection.study.key)
+                metrics.setdefault("study_label", selection.study.label)
+                metrics_by_study[study_key] = metrics
+                LOGGER.info(
+                    "[FINAL][SKIP] issue=%s study=%s (metrics cached).",
+                    selection.study.issue,
+                    selection.study.key,
+                )
+                continue
         cli_args: List[str] = []
         cli_args.extend(context.base_cli)
         cli_args.extend(selection.config.cli_args(context.tree_method))
@@ -1007,7 +1038,6 @@ def _run_final_evaluations(
             selection.config.label(),
         )
         _run_xgb_cli(cli_args)
-        metrics_path = context.out_dir / selection.evaluation_slug / "metrics.json"
         metrics = dict(_load_metrics(metrics_path))
         metrics.setdefault("issue", selection.study.issue)
         metrics.setdefault("issue_label", selection.study.issue.replace("_", " ").title())
@@ -1042,6 +1072,25 @@ def _run_opinion_stage(
                 study_key,
             )
             continue
+        feature_dir = opinion_out_dir / "tfidf"
+        study_dir = feature_dir / study_key
+        metrics_path = study_dir / f"opinion_xgb_{study_key}_validation_metrics.json"
+        if config.reuse_existing and metrics_path.exists():
+            try:
+                payload = dict(_load_metrics(metrics_path))
+            except FileNotFoundError:
+                LOGGER.warning(
+                    "Opinion metrics expected at %s but missing; rerunning evaluation.",
+                    metrics_path,
+                )
+            else:
+                results[study_key] = payload
+                LOGGER.info(
+                    "[OPINION][SKIP] study=%s issue=%s (metrics cached).",
+                    study_key,
+                    selection.study.issue,
+                )
+                continue
         opinion_config = OpinionTrainConfig(
             max_participants=config.max_participants,
             seed=config.seed,
@@ -1742,6 +1791,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     configs = _build_sweep_configs(args)
     stage = getattr(args, "stage", "full")
     reuse_sweeps = not args.overwrite
+    reuse_final = reuse_sweeps
+    if args.reuse_final is not None:
+        reuse_final = args.reuse_final
+    reuse_final_env = os.environ.get("XGB_REUSE_FINAL")
+    if reuse_final_env is not None:
+        reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
 
     sweep_dir.mkdir(parents=True, exist_ok=True)
     sweep_context = SweepRunContext(
@@ -1883,6 +1938,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         out_dir=out_dir / "next_video",
         tree_method=args.tree_method,
         save_model_dir=Path(args.save_model_dir) if args.save_model_dir else None,
+        reuse_existing=reuse_final,
     )
 
     if stage == "reports":
@@ -1925,7 +1981,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         seed=args.seed,
         max_features=args.max_features if args.max_features > 0 else None,
         tree_method=args.tree_method,
-        overwrite=args.overwrite,
+        overwrite=args.overwrite or not reuse_final,
+        reuse_existing=reuse_final,
     )
     opinion_metrics = _run_opinion_stage(selections=selections, config=opinion_stage_config)
 

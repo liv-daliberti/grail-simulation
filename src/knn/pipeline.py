@@ -227,6 +227,7 @@ class PipelineContext:
     feature_spaces: Tuple[str, ...]
     jobs: int
     reuse_sweeps: bool = False
+    reuse_final: bool = True
     allow_incomplete: bool = False
 
 
@@ -352,6 +353,12 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Reuse existing sweep metrics when present instead of rerunning the full grid (use --no-reuse-sweeps to force a full rerun).",
+    )
+    parser.add_argument(
+        "--reuse-final",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Reuse cached finalize-stage artefacts when present instead of rerunning evaluations (use --no-reuse-final to force recomputation).",
     )
     parser.add_argument(
         "--allow-incomplete",
@@ -494,6 +501,10 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
     reuse_env = os.environ.get("KNN_REUSE_SWEEPS")
     if reuse_env is not None:
         reuse_sweeps = reuse_env.lower() not in {"0", "false", "no"}
+    reuse_final = getattr(args, "reuse_final", True)
+    reuse_final_env = os.environ.get("KNN_REUSE_FINAL")
+    if reuse_final_env is not None:
+        reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
     jobs_value = getattr(args, "jobs", 1) or 1
     env_jobs = os.environ.get("KNN_JOBS")
     if env_jobs:
@@ -523,6 +534,7 @@ def _build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCon
         feature_spaces=resolved_feature_spaces,
         jobs=jobs,
         reuse_sweeps=reuse_sweeps,
+        reuse_final=reuse_final,
         allow_incomplete=allow_incomplete,
     )
 
@@ -1240,6 +1252,7 @@ def _run_final_evaluations(
     extra_cli: Sequence[str],
     out_dir: Path,
     word2vec_model_dir: Path,
+    reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """Run final slate evaluations and return metrics grouped by feature space."""
 
@@ -1261,6 +1274,26 @@ def _run_final_evaluations(
             model_dir = None
             if feature_space == "word2vec":
                 model_dir = _ensure_dir(word2vec_model_dir / study.study_slug)
+            issue_slug = _issue_slug_for_study(study)
+            metrics_path = feature_out_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
+            if reuse_existing and metrics_path.exists():
+                try:
+                    metrics, _ = _load_metrics(feature_out_dir, issue_slug)
+                except FileNotFoundError:
+                    LOGGER.warning(
+                        "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s but none found.",
+                        feature_space,
+                        study.key,
+                        metrics_path,
+                    )
+                else:
+                    feature_metrics[study.key] = metrics
+                    LOGGER.info(
+                        "[FINAL][SKIP] feature=%s study=%s (metrics cached).",
+                        feature_space,
+                        study.key,
+                    )
+                    continue
             cli_args: List[str] = []
             cli_args.extend(base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
@@ -1270,7 +1303,6 @@ def _run_final_evaluations(
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(extra_cli)
             _run_knn_cli(cli_args)
-            issue_slug = _issue_slug_for_study(study)
             metrics, _path = _load_metrics(feature_out_dir, issue_slug)
             feature_metrics[study.key] = metrics
         if feature_metrics:
@@ -1286,6 +1318,7 @@ def _run_opinion_evaluations(
     extra_cli: Sequence[str],
     out_dir: Path,
     word2vec_model_dir: Path,
+    reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """Run opinion regression for each feature space and return metrics."""
 
@@ -1293,9 +1326,17 @@ def _run_opinion_evaluations(
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
         feature_out_dir = _ensure_dir(out_dir)
+        cached_metrics = _load_opinion_metrics(feature_out_dir, feature_space) if reuse_existing else {}
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
+                continue
+            if reuse_existing and study.key in cached_metrics:
+                LOGGER.info(
+                    "[OPINION][SKIP] feature=%s study=%s (metrics cached).",
+                    feature_space,
+                    study.key,
+                )
                 continue
             LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
             model_dir = None
@@ -1327,16 +1368,33 @@ def _run_cross_study_evaluations(
     extra_cli: Sequence[str],
     out_dir: Path,
     word2vec_model_dir: Path,
+    reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """Run leave-one-study-out evaluations and return metrics grouped by feature space."""
 
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    cached_cross = (
+        _load_loso_metrics_from_disk(
+            out_dir=out_dir,
+            feature_spaces=tuple(selections.keys()),
+            studies=studies,
+        )
+        if reuse_existing
+        else {}
+    )
     for feature_space, per_study in selections.items():
-        feature_metrics: Dict[str, Mapping[str, object]] = {}
+        feature_metrics: Dict[str, Mapping[str, object]] = dict(cached_cross.get(feature_space, {}))
         feature_out_dir = _ensure_dir(out_dir / feature_space / "loso")
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
+                continue
+            if reuse_existing and study.key in feature_metrics:
+                LOGGER.info(
+                    "[LOSO][SKIP] feature=%s holdout=%s (metrics cached).",
+                    feature_space,
+                    study.key,
+                )
                 continue
             train_studies = [spec.key for spec in studies if spec.key != study.key]
             if not train_studies:
@@ -2379,6 +2437,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_cli=extra_cli,
         out_dir=context.out_dir,
         word2vec_model_dir=context.word2vec_model_dir,
+        reuse_existing=context.reuse_final,
     )
 
     opinion_metrics = _run_opinion_evaluations(
@@ -2388,6 +2447,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_cli=extra_cli,
         out_dir=context.out_dir,
         word2vec_model_dir=context.word2vec_model_dir,
+        reuse_existing=context.reuse_final,
     )
 
     loso_metrics = _run_cross_study_evaluations(
@@ -2397,6 +2457,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_cli=extra_cli,
         out_dir=context.out_dir,
         word2vec_model_dir=context.word2vec_model_dir,
+        reuse_existing=context.reuse_final,
     )
 
     if stage == "finalize":

@@ -53,6 +53,8 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 : "${KNN_GPU_MEM:=128G}"
 : "${KNN_GPU_MAX_ARRAY_SIZE:=1000}"
 : "${KNN_SENTENCE_DEVICE:=cuda}"
+: "${KNN_REUSE_FINAL:=1}"
+export KNN_REUSE_FINAL
 : "${KNN_FINAL_USE_GPU:=1}"
 : "${KNN_FINAL_PARTITION:=}"
 : "${KNN_FINAL_GRES:=}"
@@ -203,13 +205,26 @@ format_range_bounds() {
   fi
 }
 
+ensure_reuse_final_flag() {
+  local -n target=$1
+  for flag in "${target[@]}"; do
+    if [[ "${flag}" == "--reuse-final" || "${flag}" == "--no-reuse-final" ]]; then
+      return
+    fi
+  done
+  target+=("--reuse-final")
+}
+
 run_plan() {
   check_python_env
-  "${PYTHON_BIN}" -m knn.pipeline --stage plan "$@"
+  local -a args=("$@")
+  ensure_reuse_final_flag args
+  "${PYTHON_BIN}" -m knn.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
+  ensure_reuse_final_flag pipeline_args
   local plan_output
   plan_output=$(run_plan "${pipeline_args[@]}")
   local total_tasks
@@ -514,15 +529,30 @@ submit_jobs() {
   local finalize_gres=""
   local finalize_nodes="${KNN_FINAL_NODES:-}"
   local finalize_mem="${KNN_FINAL_MEM:-}"
-  if (( gpu_enabled )) && (( ${#gpu_ranges[@]} > 0 )) && [[ "${KNN_FINAL_USE_GPU:-1}" == "1" ]]; then
+  local default_gpu_partition="${KNN_GPU_PARTITION:-${slurm_partition}}"
+  local default_gpu_gres="${KNN_GPU_GRES:-gpu:1}"
+  local default_gpu_nodes="${KNN_GPU_NODES:-1}"
+  local default_gpu_cpus="${KNN_GPU_CPUS:-16}"
+  local default_gpu_time="${KNN_GPU_TIME:-${finalize_time}}"
+  local should_use_gpu_finalize=0
+  if (( gpu_enabled )) && [[ "${KNN_FINAL_USE_GPU:-1}" == "1" ]]; then
+    should_use_gpu_finalize=1
+  fi
+  if (( should_use_gpu_finalize )); then
     finalize_export+=",SENTENCE_TRANSFORMER_DEVICE=${KNN_SENTENCE_DEVICE:-${SENTENCE_TRANSFORMER_DEVICE:-cuda}}"
-    finalize_partition="${KNN_FINAL_PARTITION:-${gpu_partition}}"
-    finalize_gres="${KNN_FINAL_GRES:-${gpu_gres}}"
-    finalize_cpus="${KNN_FINAL_CPUS:-${KNN_GPU_CPUS:-${finalize_cpus}}}"
-    finalize_time="${KNN_FINAL_TIME:-${KNN_GPU_TIME:-${finalize_time}}}"
-    finalize_nodes="${KNN_FINAL_NODES:-${KNN_GPU_NODES:-1}}"
+    finalize_partition="${KNN_FINAL_PARTITION:-${default_gpu_partition}}"
+    finalize_gres="${KNN_FINAL_GRES:-${default_gpu_gres}}"
+    finalize_cpus="${KNN_FINAL_CPUS:-${default_gpu_cpus}}"
+    finalize_time="${KNN_FINAL_TIME:-${default_gpu_time}}"
+    finalize_nodes="${KNN_FINAL_NODES:-${default_gpu_nodes}}"
     if [[ -z "${finalize_mem}" && -n "${KNN_GPU_MEM:-}" ]]; then
       finalize_mem="${KNN_GPU_MEM}"
+    fi
+  else
+    finalize_time="${KNN_FINAL_TIME:-${finalize_time}}"
+    finalize_cpus="${KNN_FINAL_CPUS:-${finalize_cpus}}"
+    if [[ -z "${finalize_partition}" && -n "${slurm_partition}" ]]; then
+      finalize_partition="${slurm_partition}"
     fi
   fi
   if [[ -z "${finalize_partition}" && -n "${slurm_partition}" ]]; then
@@ -575,6 +605,7 @@ submit_jobs() {
 
 run_finalize() {
   local -a args=("$@")
+  ensure_reuse_final_flag args
   echo "[knn] Running finalize stage locally."
   check_python_env
   "${PYTHON_BIN}" -m knn.pipeline --stage finalize "${args[@]}"

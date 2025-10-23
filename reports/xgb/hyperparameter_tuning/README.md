@@ -1,6 +1,6 @@
 # Hyper-parameter Tuning
 
-This summary lists up to the top 20 configurations on the leaderboard for each participant study. The selected configuration is highlighted in bold.
+This summary lists the top-performing configurations uncovered for each participant study (showing up to 20 rows per study). Selections promoted to the final pipeline are highlighted in bold. See the leaderboard section below for ranked deltas.
 
 ## Study 1 – Gun Control (MTurk)
 
@@ -28,7 +28,7 @@ This summary lists up to the top 20 configurations on the leaderboard for each p
 | tfidf_lr0p03_depth3_estim450_sub0p7_col0p6_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.920 | 548 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col1_l20p5_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.927 | 548 |
 | tfidf_lr0p03_depth3_estim450_sub0p9_col0p6_l21_l10 | 0.971 | 0.974 | 532/546 | 0.996 | 0.928 | 548 |
-*Showing top 20 of 305 configurations.*
+*Showing top 20 of 315 configurations.*
 
 ## Study 2 – Minimum Wage (MTurk)
 
@@ -56,7 +56,7 @@ This summary lists up to the top 20 configurations on the leaderboard for each p
 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21_l11 | 0.374 | 0.374 | 251/671 | 1.000 | 0.417 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l11 | 0.373 | 0.373 | 250/671 | 1.000 | 0.421 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21p5_l10 | 0.373 | 0.373 | 250/671 | 1.000 | 0.422 | 671 |
-*Showing top 20 of 296 configurations.*
+*Showing top 20 of 307 configurations.*
 
 ## Study 3 – Minimum Wage (YouGov)
 
@@ -84,7 +84,42 @@ This summary lists up to the top 20 configurations on the leaderboard for each p
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.444 | 1,200 |
 | tfidf_lr0p03_depth3_estim150_sub1_col0p8_l20p5_l10p1 | 0.437 | 0.437 | 524/1,200 | 1.000 | 0.442 | 1,200 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l10p1 | 0.436 | 0.436 | 523/1,200 | 1.000 | 0.438 | 1,200 |
-*Showing top 20 of 256 configurations.*
+*Showing top 20 of 265 configurations.*
+
+### Configuration Leaderboards
+
+#### Study 1 – Gun Control (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | **tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10** | 0.973 | 0.000 | 0.976 | 0.000 | 548 |
+| 2 | tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10 | 0.973 | 0.000 | 0.976 | 0.000 | 548 |
+| 3 | tfidf_lr0p03_depth3_estim350_sub1_col0p8_l20p5_l10 | 0.973 | 0.000 | 0.976 | 0.000 | 548 |
+| 4 | tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l10 | 0.973 | 0.000 | 0.976 | 0.000 | 548 |
+| 5 | tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21p5_l10 | 0.973 | 0.000 | 0.976 | 0.000 | 548 |
+*Showing top 5 of 315 configurations.*
+
+#### Study 2 – Minimum Wage (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | **tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p1** | 0.382 | 0.000 | 0.382 | 0.000 | 671 |
+| 2 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l10p5 | 0.382 | 0.000 | 0.382 | 0.000 | 671 |
+| 3 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l21_l11 | 0.380 | 0.001 | 0.380 | 0.001 | 671 |
+| 4 | tfidf_lr0p03_depth3_estim150_sub1_col1_l21p5_l11 | 0.380 | 0.001 | 0.380 | 0.001 | 671 |
+| 5 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.377 | 0.004 | 0.377 | 0.004 | 671 |
+*Showing top 5 of 307 configurations.*
+
+#### Study 3 – Minimum Wage (YouGov)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | **tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p1** | 0.443 | 0.000 | 0.443 | 0.000 | 1,200 |
+| 2 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10 | 0.442 | 0.001 | 0.442 | 0.001 | 1,200 |
+| 3 | tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21_l10p5 | 0.441 | 0.002 | 0.441 | 0.002 | 1,200 |
+| 4 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l21_l10 | 0.441 | 0.002 | 0.441 | 0.002 | 1,200 |
+| 5 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p6_l21_l11 | 0.440 | 0.003 | 0.440 | 0.003 | 1,200 |
+*Showing top 5 of 265 configurations.*
 
 ### Selection Summary
 

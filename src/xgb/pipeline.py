@@ -21,6 +21,9 @@ from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
+HYPERPARAM_REPORT_TOP_N = 20
+"""Maximum number of sweep configurations to display per study in the report."""
+
 
 @dataclass(frozen=True)
 class SweepConfig:
@@ -1394,8 +1397,10 @@ def _write_hyperparameter_report(
     lines.append("# Hyper-parameter Tuning")
     lines.append("")
     lines.append(
-        "This summary lists the XGBoost configurations explored for each participant study. "
-        "The selected configuration is highlighted in bold."
+        (
+            f"This summary lists up to the top {HYPERPARAM_REPORT_TOP_N} configurations on the leaderboard "
+            "for each participant study. The selected configuration is highlighted in bold."
+        )
     )
     lines.append("")
     per_study: Dict[str, List[SweepOutcome]] = {}
@@ -1439,7 +1444,19 @@ def _write_hyperparameter_report(
             reverse=True,
         )
         sorted_study_outcomes[study_key] = ordered
-        for outcome in ordered:
+        display_limit = max(1, HYPERPARAM_REPORT_TOP_N)
+        displayed = ordered[:display_limit]
+        selected_outcome = None
+        if selection is not None:
+            for candidate in ordered:
+                if candidate.config == selection.config:
+                    selected_outcome = candidate
+                    break
+        if selected_outcome is not None and selected_outcome not in displayed:
+            displayed.append(selected_outcome)
+            displayed.sort(key=lambda item: (item.accuracy, item.coverage, item.evaluated), reverse=True)
+            displayed = displayed[:display_limit]
+        for outcome in displayed:
             label = outcome.config.label()
             formatted = (
                 f"**{label}**" if selection and outcome.config == selection.config else label
@@ -1452,6 +1469,10 @@ def _write_hyperparameter_report(
                 f"{_format_optional_float(summary.known_availability)} | "
                 f"{_format_optional_float(summary.avg_probability)} | "
                 f"{_format_count(summary.evaluated)} |"
+            )
+        if len(ordered) > display_limit:
+            lines.append(
+                f"*Showing top {display_limit} of {len(ordered)} configurations.*"
             )
         lines.append("")
 

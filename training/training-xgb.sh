@@ -50,12 +50,14 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 : "${XGB_GPU_MEM:=128G}"
 : "${XGB_GPU_MAX_ARRAY_SIZE:=1000}"
 : "${XGB_SENTENCE_DEVICE:=cuda}"
+: "${XGB_REUSE_FINAL:=1}"
 : "${XGB_FINAL_USE_GPU:=1}"
 : "${XGB_FINAL_PARTITION:=}"
 : "${XGB_FINAL_GRES:=}"
 : "${XGB_FINAL_CPUS:=}"
 : "${XGB_FINAL_MEM:=}"
 : "${XGB_FINAL_TIME:=}"
+export XGB_REUSE_FINAL
 
 export PYTHONPATH="${PYTHONPATH:-}:${ROOT_DIR}/src"
 cd "${ROOT_DIR}"
@@ -195,13 +197,26 @@ format_range_bounds() {
   fi
 }
 
+ensure_reuse_final_flag() {
+  local -n target=$1
+  for flag in "${target[@]}"; do
+    if [[ "${flag}" == "--reuse-final" || "${flag}" == "--no-reuse-final" ]]; then
+      return
+    fi
+  done
+  target+=("--reuse-final")
+}
+
 run_plan() {
   check_python_env
-  "${PYTHON_BIN}" -m xgb.pipeline --stage plan "$@"
+  local -a args=("$@")
+  ensure_reuse_final_flag args
+  "${PYTHON_BIN}" -m xgb.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
+  ensure_reuse_final_flag pipeline_args
   local plan_output
   plan_output=$(run_plan "${pipeline_args[@]}")
   local total_tasks
@@ -550,6 +565,7 @@ submit_jobs() {
 
 run_finalize_local() {
   local -a args=("$@")
+  ensure_reuse_final_flag args
   echo "[xgb] Running finalize stage locally."
   check_python_env
   "${PYTHON_BIN}" -m xgb.pipeline --stage finalize "${args[@]}"

@@ -1,5 +1,7 @@
 """Profile rendering helpers for prompt construction."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import json
@@ -8,7 +10,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
-from .constants import GUN_FIELD_LABELS, MIN_WAGE_FIELD_LABELS, YT_FREQ_MAP
+from .constants import (
+    GUN_FIELD_LABELS,
+    MIN_WAGE_FIELD_LABELS,
+    NEWS_TRUST_FIELD_NAMES,
+    YT_FREQ_MAP,
+)
 from .formatters import (
     clean_text,
     describe_age_fragment,
@@ -18,6 +25,7 @@ from .formatters import (
     with_indefinite_article,
 )
 from .parsers import format_yes_no, is_nanlike
+from .shared import first_non_nan_value
 from .value_maps import format_field_value
 
 MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
@@ -30,19 +38,7 @@ MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
     (("news_frequency", "newsint"), "News frequency", False),
     (("platform_use",), "Platform usage", False),
     (("social_media_use",), "Social media use", False),
-    (
-        (
-            "news_trust",
-            "trust_majornews_w1",
-            "trust_localnews_w1",
-            "trust_majornews_w2",
-            "trust_localnews_w2",
-            "trust_majornews_w3",
-            "trust_localnews_w3",
-        ),
-        "News trust",
-        False,
-    ),
+    (NEWS_TRUST_FIELD_NAMES, "News trust", False),
 )
 
 POLITICS_FIELD_SPECS: Sequence[tuple[Sequence[str], str]] = (
@@ -269,26 +265,6 @@ def _ensure_sentence(text: str) -> str:
     return f"{stripped}."
 
 
-def _first_raw(ex: Dict[str, Any], selected: Dict[str, Any], *keys: str) -> Optional[Any]:
-    """Return the first non-null value among ``keys`` from the example metadata.
-
-    :param ex: Primary dataset example.
-    :param selected: Selected survey-row mapping.
-    :param keys: Candidate field names searched in order.
-    :returns: First value that is not NaN-like, or ``None``.
-    """
-    for key in keys:
-        if key in ex:
-            value = ex[key]
-            if value is not None and not is_nanlike(value):
-                return value
-        if key in selected:
-            value = selected.get(key)
-            if value is not None and not is_nanlike(value):
-                return value
-    return None
-
-
 def _first_text(
     ex: Dict[str, Any],
     selected: Dict[str, Any],
@@ -405,10 +381,10 @@ def _identity_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     """
     sentences: List[str] = []
     age_fragment = describe_age_fragment(
-        _first_raw(ex, selected, "age", "age_cat", "age_category")
+        first_non_nan_value(ex, selected, "age", "age_cat", "age_category")
     )
     gender_fragment = describe_gender_fragment(
-        _first_raw(ex, selected, "gender", "q26", "gender4", "gender_3_text")
+        first_non_nan_value(ex, selected, "gender", "q26", "gender4", "gender_3_text")
     )
     race_fragment = _first_text(ex, selected, "race", "race_ethnicity", "ethnicity", "q29")
 
@@ -512,7 +488,7 @@ def _education_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[s
         "education_text",
     )
     college_flag = format_yes_no(
-        _first_raw(ex, selected, "college", "college_grad"),
+        first_non_nan_value(ex, selected, "college", "college_grad"),
         yes="yes",
         no="no",
     )
@@ -564,7 +540,7 @@ def _income_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
         )
         return sentences
     income_flag = format_yes_no(
-        _first_raw(ex, selected, "income_gt50k"),
+        first_non_nan_value(ex, selected, "income_gt50k"),
         yes="above $50k",
         no="not above $50k",
     )
@@ -638,7 +614,7 @@ def _marital_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
 
 def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     """Return sentences describing whether children are present in the household."""
-    children_raw = _first_raw(
+    children_raw = first_non_nan_value(
         ex,
         selected,
         "children_in_house",
@@ -751,7 +727,7 @@ def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Option
 
 def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     """Return a sentence indicating veteran status when known."""
-    veteran_raw = _first_raw(
+    veteran_raw = first_non_nan_value(
         ex,
         selected,
         "veteran",
@@ -773,7 +749,7 @@ def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
 
 def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     """Return sentences describing the language used to complete the survey."""
-    language = _first_raw(
+    language = first_non_nan_value(
         ex,
         selected,
         "user_language",
@@ -839,23 +815,22 @@ def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
 
 def _gun_ownership_entry(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
     """Return a phrase describing gun ownership status."""
-    ownership = _first_raw(ex, selected, "gun_own", "gunowner", "owns_gun")
+    ownership = first_non_nan_value(ex, selected, "gun_own", "gunowner", "owns_gun")
     if ownership is None:
         return None
     ownership_flag = format_yes_no(ownership, yes="yes", no="no")
-    if ownership_flag == "yes":
+    mapping = {"yes": "owning a gun", "no": "not owning a gun"}
+    mapped = mapping.get(ownership_flag or "")
+    if mapped:
+        return mapped
+    ownership_text = format_field_value("gun_own", ownership) or clean_text(ownership) or ""
+    lowered = ownership_text.lower()
+    if lowered.startswith(("yes", "y")):
         return "owning a gun"
-    if ownership_flag == "no":
-        return "not owning a gun"
-    ownership_text = format_field_value("gun_own", ownership) or clean_text(ownership)
-    if ownership_text.lower().startswith(("yes", "y")):
-        return "owning a gun"
-    if ownership_text.lower().startswith(("no", "n")):
+    if lowered.startswith(("no", "n")):
         return "not owning a gun"
     custom = clean_text(ownership)
-    if custom:
-        return custom
-    return None
+    return custom if custom else None
 
 
 def _gun_labeled_entries(
@@ -871,7 +846,7 @@ def _gun_labeled_entries(
     entries: List[str] = []
     known_keys: set[str] = {"gun_own", "gunowner", "owns_gun"}
     for key, label in GUN_FIELD_LABELS.items():
-        value = _first_raw(ex, selected, key)
+        value = first_non_nan_value(ex, selected, key)
         if value is None:
             continue
         lower_key = key.lower()
@@ -969,7 +944,7 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     """
     wage_section: List[str] = []
     for key, label in MIN_WAGE_FIELD_LABELS.items():
-        value = _first_raw(ex, selected, key)
+        value = first_non_nan_value(ex, selected, key)
         if value is None:
             continue
         text = format_yes_no(value)
@@ -1031,7 +1006,7 @@ def _youtube_frequency_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -
     :param selected: Selected survey-row mapping.
     :returns: List of frequency phrases (0 or 1 entry).
     """
-    freq_raw = _first_raw(
+    freq_raw = first_non_nan_value(
         ex,
         selected,
         "freq_youtube",
@@ -1059,7 +1034,7 @@ def _youtube_binge_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> Li
     :param selected: Selected survey-row mapping.
     :returns: List of binge-related phrases (0 or 1 entry).
     """
-    binge_raw = _first_raw(ex, selected, "binge_youtube", "youtube_time")
+    binge_raw = first_non_nan_value(ex, selected, "binge_youtube", "youtube_time")
     if binge_raw is None:
         return []
     binge_text = format_yes_no(binge_raw, yes="yes", no="no")

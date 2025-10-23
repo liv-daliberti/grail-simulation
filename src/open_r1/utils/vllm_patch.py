@@ -16,22 +16,6 @@ from typing import List, Optional
 import requests
 
 
-# ─────────────────── generic GET helper ──────────────────────────────────────
-def safe_request(url: str, max_retries: int = 3, backoff: float = 1.0, timeout: float = 10.0):
-    """Perform a GET request with retry/backoff handling."""
-    for attempt in range(max_retries):
-        try:
-            r = requests.get(url, timeout=timeout)
-            if r.status_code == 200:
-                return r.json()
-            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:120]}")
-        except (requests.ConnectionError, requests.Timeout):
-            if attempt < max_retries - 1:
-                time.sleep(backoff * (2**attempt))
-            else:
-                raise
-
-
 # ─────────────────── helper to parse non-stream JSON ─────────────────────────
 def _parse_nonstream_json(data: dict, tokenizer=None) -> List[List[str]]:
     """Normalise various vLLM response schemas into `List[List[str]]`."""

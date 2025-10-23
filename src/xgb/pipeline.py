@@ -5,16 +5,21 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence
+from typing import Dict, List, Mapping, Sequence
+
+from common.pipeline_stage import prepare_sweep_execution
 
 from .pipeline_context import (
     FinalEvalContext,
     OpinionStageConfig,
+    OpinionStudySelection,
+    OpinionSweepOutcome,
+    OpinionSweepRunContext,
+    OpinionSweepTask,
     StudySelection,
-    StudySpec,
-    SweepConfig,
     SweepOutcome,
     SweepRunContext,
+    SweepTask,
 )
 from .pipeline_cli import (
     _parse_args,
@@ -27,25 +32,18 @@ from .pipeline_cli import (
     _resolve_study_specs,
 )
 from .pipeline_sweeps import (
-    _run_xgb_cli,
-    _load_metrics,
-    _sweep_outcome_from_metrics,
-    _prepare_sweep_tasks,
-    _merge_sweep_outcomes,
-    _opinion_sweep_outcome_from_metrics,
     _prepare_opinion_sweep_tasks,
+    _prepare_sweep_tasks,
     _merge_opinion_sweep_outcomes,
-    _execute_opinion_sweep_task,
+    _merge_sweep_outcomes,
+    _execute_opinion_sweep_tasks,
     _execute_sweep_tasks,
-    _emit_sweep_plan,
     _emit_combined_sweep_plan,
-    _format_sweep_task_descriptor,
     _format_opinion_sweep_task_descriptor,
+    _format_sweep_task_descriptor,
     _gpu_tree_method_supported,
     _load_final_metrics_from_disk,
     _load_opinion_metrics_from_disk,
-    _run_sweeps,
-    _execute_sweep_task,
     _select_best_configs,
     _select_best_opinion_configs,
 )
@@ -54,18 +52,32 @@ from .pipeline_reports import _write_reports
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
-__all__ = ["main", "SweepRunContext", "OpinionStageConfig"]
+__all__ = ["main", "SweepRunContext", "OpinionStageConfig", "OpinionSweepRunContext"]
 
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Entry point orchestrating the full XGBoost workflow."""
+    """
+    Entry point orchestrating the full XGBoost workflow.
+
+    :param argv: Optional override for command-line arguments
+        (defaults to ``sys.argv[1:]``).
+    :type argv: Sequence[str] | None
+    """
+    # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-return-statements,too-many-statements
 
     args, extra_cli = _parse_args(argv)
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper(), logging.INFO),
         format="%(asctime)s %(levelname)s: %(message)s",
     )
+
+    run_next_video = getattr(args, "run_next_video", True)
+    run_opinion = getattr(args, "run_opinion", True)
+    if not run_next_video and not run_opinion:
+        LOGGER.warning("No tasks selected; exiting.")
+        return
 
     root = _repo_root()
     dataset = args.dataset or str(root / "data" / "cleaned_grail")
@@ -101,6 +113,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_incomplete=allow_incomplete,
     )
     extra_fields = _split_tokens(args.extra_text_fields)
+
+    task_log: List[str] = []
+    if run_next_video:
+        task_log.append("next_video")
+    if run_opinion:
+        task_log.append("opinion")
+    LOGGER.info("Selected pipeline tasks: %s.", ", ".join(task_log))
 
     LOGGER.info("Parallel sweep jobs: %d", jobs)
     tree_method = args.tree_method or "gpu_hist"
@@ -146,100 +165,167 @@ def main(argv: Sequence[str] | None = None) -> None:
         reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
 
     sweep_dir.mkdir(parents=True, exist_ok=True)
-    sweep_context = SweepRunContext(
-        base_cli=base_cli,
-        extra_cli=extra_cli,
-        sweep_dir=sweep_dir,
-        tree_method=args.tree_method,
-        jobs=jobs,
-    )
+    sweep_context: SweepRunContext | None = None
+    if run_next_video:
+        sweep_context = SweepRunContext(
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            sweep_dir=sweep_dir,
+            tree_method=args.tree_method,
+            jobs=jobs,
+        )
 
-    planned_tasks, cached_planned = _prepare_sweep_tasks(
-        studies=study_specs,
-        configs=configs,
-        context=sweep_context,
-        reuse_existing=reuse_sweeps,
-    )
+    opinion_sweep_context: OpinionSweepRunContext | None = None
+    if run_opinion:
+        opinion_sweep_context = OpinionSweepRunContext(
+            dataset=dataset,
+            cache_dir=cache_dir,
+            sweep_dir=sweep_dir / "opinion",
+            extra_fields=tuple(extra_fields),
+            max_participants=args.opinion_max_participants,
+            seed=args.seed,
+            max_features=args.max_features if args.max_features > 0 else None,
+            tree_method=args.tree_method,
+            overwrite=args.overwrite,
+        )
+        opinion_sweep_context.sweep_dir.mkdir(parents=True, exist_ok=True)
+
+    planned_slate_tasks: List[SweepTask] = []
+    cached_slate_planned: List[SweepOutcome] = []
+    if run_next_video and sweep_context is not None:
+        planned_slate_tasks, cached_slate_planned = _prepare_sweep_tasks(
+            studies=study_specs,
+            configs=configs,
+            context=sweep_context,
+            reuse_existing=reuse_sweeps,
+        )
+
+    planned_opinion_tasks: List[OpinionSweepTask] = []
+    cached_opinion_planned: List[OpinionSweepOutcome] = []
+    if run_opinion and opinion_sweep_context is not None:
+        planned_opinion_tasks, cached_opinion_planned = _prepare_opinion_sweep_tasks(
+            studies=study_specs,
+            configs=configs,
+            context=opinion_sweep_context,
+            reuse_existing=reuse_sweeps,
+        )
 
     if stage == "plan":
-        LOGGER.info(
-            "Planned %d sweep configurations (%d cached).",
-            len(planned_tasks),
-            len(cached_planned),
+        summary_bits: List[str] = []
+        if run_next_video:
+            summary_bits.append(
+                f"next-video sweeps={len(planned_slate_tasks)} "
+                f"(cached={len(cached_slate_planned)})"
+            )
+        if run_opinion:
+            summary_bits.append(
+                f"opinion sweeps={len(planned_opinion_tasks)} "
+                f"(cached={len(cached_opinion_planned)})"
+            )
+        LOGGER.info("Planned sweep tasks: %s.", "; ".join(summary_bits))
+        _emit_combined_sweep_plan(
+            slate_tasks=planned_slate_tasks,
+            opinion_tasks=planned_opinion_tasks,
         )
-        _emit_sweep_plan(planned_tasks)
         return
 
     if args.dry_run:
+        summary_bits: List[str] = []
+        if run_next_video:
+            summary_bits.append(
+                f"next-video pending={len(planned_slate_tasks)} "
+                f"cached={len(cached_slate_planned)}"
+            )
+        if run_opinion:
+            summary_bits.append(
+                f"opinion pending={len(planned_opinion_tasks)} "
+                f"cached={len(cached_opinion_planned)}"
+            )
         LOGGER.info(
-            "Dry-run mode. Pending sweep tasks: %d (cached: %d).",
-            len(planned_tasks),
-            len(cached_planned),
+            "Dry-run mode. %s.",
+            "; ".join(summary_bits) if summary_bits else "No tasks selected.",
         )
         return
 
     if stage == "sweeps":
-        total_tasks = len(planned_tasks)
-        if total_tasks == 0:
-            LOGGER.info("No sweep tasks pending; existing metrics cover the grid.")
-            return
-        task_id = args.sweep_task_id
+        total_tasks = len(planned_slate_tasks) + len(planned_opinion_tasks)
+        task_id = prepare_sweep_execution(
+            total_tasks=total_tasks,
+            cli_task_id=args.sweep_task_id,
+            cli_task_count=args.sweep_task_count,
+            logger=LOGGER,
+        )
         if task_id is None:
-            env_value = os.environ.get("SLURM_ARRAY_TASK_ID")
-            if env_value is None:
-                raise RuntimeError(
-                    "Sweep stage requires --sweep-task-id or SLURM_ARRAY_TASK_ID to be set."
+            return
+        if task_id < len(planned_slate_tasks):
+            task = planned_slate_tasks[task_id]
+            if reuse_sweeps and task.metrics_path.exists():
+                LOGGER.info(
+                    "Skipping sweep task %d (%s); metrics already exist at %s.",
+                    task.index,
+                    _format_sweep_task_descriptor(task),
+                    task.metrics_path,
                 )
-            try:
-                task_id = int(env_value)
-            except ValueError as exc:
-                raise RuntimeError(
-                    f"Invalid SLURM_ARRAY_TASK_ID '{env_value}'; expected an integer."
-                ) from exc
-        if args.sweep_task_count is not None and args.sweep_task_count != total_tasks:
-            LOGGER.warning(
-                "Sweep task count mismatch: expected=%d provided=%d.",
-                total_tasks,
-                args.sweep_task_count,
-            )
-        if task_id < 0 or task_id >= total_tasks:
-            raise RuntimeError(
-                f"Sweep task index {task_id} outside valid range 0..{total_tasks - 1}."
-            )
-        task = planned_tasks[task_id]
-        if reuse_sweeps and task.metrics_path.exists():
+                return
+            outcome = _execute_sweep_tasks([task], jobs=1)[0]
             LOGGER.info(
-                "Skipping sweep task %d (%s | %s | %s); metrics already exist at %s.",
-                task.index,
+                "Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
+                outcome.order_index,
                 task.study.key,
                 task.study.issue,
                 task.config.label(),
-                task.metrics_path,
+                outcome.metrics_path,
             )
-            return
-        outcome = _execute_sweep_task(task)
-        LOGGER.info(
-            "Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
-            outcome.order_index,
-            task.study.key,
-            task.study.issue,
-            task.config.label(),
-            outcome.metrics_path,
-        )
+        else:
+            opinion_index = task_id - len(planned_slate_tasks)
+            task = planned_opinion_tasks[opinion_index]
+            if reuse_sweeps and task.metrics_path.exists():
+                LOGGER.info(
+                    "Skipping opinion sweep task %d (%s); metrics already exist at %s.",
+                    task.index,
+                    _format_opinion_sweep_task_descriptor(task),
+                    task.metrics_path,
+                )
+                return
+            outcome = _execute_opinion_sweep_tasks([task], jobs=1)[0]
+            LOGGER.info(
+                "Completed opinion sweep task %d (%s | %s). Metrics stored at %s.",
+                outcome.order_index,
+                task.study.key,
+                task.config.label(),
+                outcome.metrics_path,
+            )
         return
 
     reuse_for_stage = reuse_sweeps
     if stage in {"finalize", "reports"}:
         reuse_for_stage = True
-    pending_tasks, cached_outcomes = _prepare_sweep_tasks(
-        studies=study_specs,
-        configs=configs,
-        context=sweep_context,
-        reuse_existing=reuse_for_stage,
-    )
-    if stage in {"finalize", "reports"} and pending_tasks:
-        missing = ", ".join(_format_sweep_task_descriptor(task) for task in pending_tasks[:5])
-        more = "" if len(pending_tasks) <= 5 else f", … ({len(pending_tasks)} total)"
+    pending_slate_tasks: List[SweepTask] = []
+    cached_slate_outcomes: List[SweepOutcome] = []
+    if run_next_video and sweep_context is not None:
+        pending_slate_tasks, cached_slate_outcomes = _prepare_sweep_tasks(
+            studies=study_specs,
+            configs=configs,
+            context=sweep_context,
+            reuse_existing=reuse_for_stage,
+        )
+
+    pending_opinion_tasks: List[OpinionSweepTask] = []
+    cached_opinion_outcomes: List[OpinionSweepOutcome] = []
+    if run_opinion and opinion_sweep_context is not None:
+        pending_opinion_tasks, cached_opinion_outcomes = _prepare_opinion_sweep_tasks(
+            studies=study_specs,
+            configs=configs,
+            context=opinion_sweep_context,
+            reuse_existing=reuse_for_stage,
+        )
+    if run_next_video and stage in {"finalize", "reports"} and pending_slate_tasks:
+        missing = ", ".join(
+            _format_sweep_task_descriptor(task) for task in pending_slate_tasks[:5]
+        )
+        more = ""
+        if len(pending_slate_tasks) > 5:
+            more = f", ... ({len(pending_slate_tasks)} total)"
         message = (
             "Sweep metrics missing for the following tasks: "
             f"{missing}{more}. Run --stage=sweeps to populate them."
@@ -248,64 +334,144 @@ def main(argv: Sequence[str] | None = None) -> None:
             LOGGER.warning("%s Continuing because allow-incomplete mode is enabled.", message)
         else:
             raise RuntimeError(message)
-
-    executed_outcomes: List[SweepOutcome] = []
-    if stage == "full":
-        executed_outcomes = _execute_sweep_tasks(pending_tasks, jobs=jobs)
-
-    outcomes = _merge_sweep_outcomes(cached_outcomes, executed_outcomes)
-    if not outcomes:
-        if allow_incomplete:
-            LOGGER.warning(
-                "No sweep outcomes available; reports will contain placeholders because allow-incomplete mode is enabled."
-            )
-        else:
-            raise RuntimeError("No sweep outcomes available; ensure sweeps have completed.")
-
-    selections = _select_best_configs(outcomes)
-    if not selections:
-        if allow_incomplete:
-            LOGGER.warning(
-                "Failed to select configurations for any study; downstream reports will rely on placeholders."
-            )
-        else:
-            raise RuntimeError("Failed to select a configuration for any study.")
-    else:
-        LOGGER.info(
-            "Selected configurations: %s",
-            ", ".join(
-                f"{selection.study.key} ({selection.study.issue})"
-                for selection in selections.values()
-            ),
+    if run_opinion and stage in {"finalize", "reports"} and pending_opinion_tasks:
+        missing = ", ".join(
+            _format_opinion_sweep_task_descriptor(task)
+            for task in pending_opinion_tasks[:5]
         )
+        more = ""
+        if len(pending_opinion_tasks) > 5:
+            more = f", ... ({len(pending_opinion_tasks)} total)"
+        message = (
+            "Opinion sweep metrics missing for the following tasks: "
+            f"{missing}{more}. Run --stage=sweeps to populate them."
+        )
+        if allow_incomplete:
+            LOGGER.warning("%s Continuing because allow-incomplete mode is enabled.", message)
+        else:
+            raise RuntimeError(message)
 
-    final_eval_context = FinalEvalContext(
-        base_cli=base_cli,
-        extra_cli=extra_cli,
-        out_dir=out_dir / "next_video",
-        tree_method=args.tree_method,
-        save_model_dir=Path(args.save_model_dir) if args.save_model_dir else None,
-        reuse_existing=reuse_final,
-    )
+    executed_slate_outcomes: List[SweepOutcome] = []
+    executed_opinion_outcomes: List[OpinionSweepOutcome] = []
+    if stage == "full":
+        if run_next_video:
+            executed_slate_outcomes = _execute_sweep_tasks(pending_slate_tasks, jobs=jobs)
+        if run_opinion:
+            executed_opinion_outcomes = _execute_opinion_sweep_tasks(
+                pending_opinion_tasks,
+                jobs=jobs,
+            )
+
+    outcomes: List[SweepOutcome] = []
+    if run_next_video:
+        outcomes = _merge_sweep_outcomes(cached_slate_outcomes, executed_slate_outcomes)
+        if not outcomes:
+            if allow_incomplete:
+                warning = (
+                    "No sweep outcomes available; reports will contain placeholders "
+                    "because allow-incomplete mode is enabled."
+                )
+                LOGGER.warning(warning)
+            else:
+                raise RuntimeError("No sweep outcomes available; ensure sweeps have completed.")
+
+    opinion_sweep_outcomes: List[OpinionSweepOutcome] = []
+    if run_opinion:
+        opinion_sweep_outcomes = _merge_opinion_sweep_outcomes(
+            cached_opinion_outcomes,
+            executed_opinion_outcomes,
+        )
+        if not opinion_sweep_outcomes:
+            if allow_incomplete:
+                warning = (
+                    "No opinion sweep outcomes available; opinion reports will contain "
+                    "placeholders because allow-incomplete mode is enabled."
+                )
+                LOGGER.warning(warning)
+            else:
+                raise RuntimeError(
+                    "No opinion sweep outcomes available; ensure opinion "
+                    "sweeps have completed."
+                )
+
+    selections: Dict[str, StudySelection] = {}
+    if run_next_video:
+        selections = _select_best_configs(outcomes)
+        if not selections:
+            if allow_incomplete:
+                warning = (
+                    "Failed to select configurations for any study; downstream "
+                    "reports will rely on placeholders."
+                )
+                LOGGER.warning(warning)
+            else:
+                raise RuntimeError("Failed to select a configuration for any study.")
+        else:
+            LOGGER.info(
+                "Selected configurations: %s",
+                ", ".join(
+                    f"{selection.study.key} ({selection.study.issue})"
+                    for selection in selections.values()
+                ),
+            )
+
+    opinion_selections: Dict[str, OpinionStudySelection] = {}
+    if run_opinion:
+        opinion_selections = _select_best_opinion_configs(opinion_sweep_outcomes)
+        if not opinion_selections:
+            if allow_incomplete:
+                warning = (
+                    "Failed to select opinion configurations for any study; "
+                    "downstream opinion metrics will rely on placeholders."
+                )
+                LOGGER.warning(warning)
+            else:
+                raise RuntimeError("Failed to select an opinion configuration for any study.")
+        else:
+            LOGGER.info(
+                "Selected opinion configurations: %s",
+                ", ".join(
+                    f"{selection.study.key} ({selection.study.issue})"
+                    for selection in opinion_selections.values()
+                ),
+            )
+
+    final_eval_context: FinalEvalContext | None = None
+    if run_next_video:
+        final_eval_context = FinalEvalContext(
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            out_dir=out_dir / "next_video",
+            tree_method=args.tree_method,
+            save_model_dir=Path(args.save_model_dir) if args.save_model_dir else None,
+            reuse_existing=reuse_final,
+        )
 
     if stage == "reports":
-        final_metrics = _load_final_metrics_from_disk(
-            next_video_dir=final_eval_context.out_dir,
-            studies=study_specs,
-        )
-        if not final_metrics:
-            message = (
-                f"No final metrics found under {final_eval_context.out_dir}. "
-                "Run --stage=finalize before generating reports."
+        final_metrics: Dict[str, Mapping[str, object]] = {}
+        if run_next_video and final_eval_context is not None:
+            final_metrics = _load_final_metrics_from_disk(
+                next_video_dir=final_eval_context.out_dir,
+                studies=study_specs,
             )
-            if allow_incomplete:
-                LOGGER.warning("%s Continuing because allow-incomplete mode is enabled.", message)
-            else:
-                raise RuntimeError(message)
-        opinion_metrics = _load_opinion_metrics_from_disk(
-            opinion_dir=out_dir / "opinion",
-            studies=study_specs,
-        )
+            if not final_metrics:
+                message = (
+                    f"No final metrics found under {final_eval_context.out_dir}. "
+                    "Run --stage=finalize before generating reports."
+                )
+                if allow_incomplete:
+                    LOGGER.warning(
+                        "%s Continuing because allow-incomplete mode is enabled.",
+                        message,
+                    )
+                else:
+                    raise RuntimeError(message)
+        opinion_metrics: Dict[str, Dict[str, object]] = {}
+        if run_opinion:
+            opinion_metrics = _load_opinion_metrics_from_disk(
+                opinion_dir=out_dir / "opinion",
+                studies=study_specs,
+            )
         _write_reports(
             reports_dir=reports_dir,
             outcomes=outcomes,
@@ -313,25 +479,34 @@ def main(argv: Sequence[str] | None = None) -> None:
             final_metrics=final_metrics,
             opinion_metrics=opinion_metrics,
             allow_incomplete=allow_incomplete,
+            include_next_video=run_next_video,
+            include_opinion=run_opinion,
         )
         return
 
-    final_metrics = _run_final_evaluations(selections=selections, context=final_eval_context)
+    final_metrics: Dict[str, Mapping[str, object]] = {}
+    if run_next_video and final_eval_context is not None:
+        final_metrics = _run_final_evaluations(selections=selections, context=final_eval_context)
 
-    opinion_stage_config = OpinionStageConfig(
-        dataset=dataset,
-        cache_dir=cache_dir,
-        base_out_dir=out_dir,
-        extra_fields=extra_fields,
-        studies=study_tokens,
-        max_participants=args.opinion_max_participants,
-        seed=args.seed,
-        max_features=args.max_features if args.max_features > 0 else None,
-        tree_method=args.tree_method,
-        overwrite=args.overwrite or not reuse_final,
-        reuse_existing=reuse_final,
-    )
-    opinion_metrics = _run_opinion_stage(selections=selections, config=opinion_stage_config)
+    opinion_metrics: Dict[str, Dict[str, object]] = {}
+    if run_opinion:
+        opinion_stage_config = OpinionStageConfig(
+            dataset=dataset,
+            cache_dir=cache_dir,
+            base_out_dir=out_dir,
+            extra_fields=extra_fields,
+            studies=study_tokens,
+            max_participants=args.opinion_max_participants,
+            seed=args.seed,
+            max_features=args.max_features if args.max_features > 0 else None,
+            tree_method=args.tree_method,
+            overwrite=args.overwrite or not reuse_final,
+            reuse_existing=reuse_final,
+        )
+        opinion_metrics = _run_opinion_stage(
+            selections=opinion_selections,
+            config=opinion_stage_config,
+        )
 
     if stage == "finalize":
         return
@@ -343,6 +518,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         final_metrics=final_metrics,
         opinion_metrics=opinion_metrics,
         allow_incomplete=allow_incomplete,
+        include_next_video=run_next_video,
+        include_opinion=run_opinion,
     )
 
 

@@ -9,9 +9,21 @@ import json
 import logging
 import os
 import re
+from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple
 
-from common.prompt_docs import PromptDocumentBuilder, default_title_resolver
+from common.prompt_docs import (
+    PromptDocumentBuilder,
+    default_title_resolver,
+    load_trajectory_entries,
+)
+from common.prompt_fields import (
+    NOW_PLAYING_ID_KEYS,
+    NOW_PLAYING_TITLE_KEYS,
+    NOW_PLAYING_TITLE_KEYS_WITH_META,
+)
+_PROMPT_CONSTANTS = import_module("prompt_builder.constants")
+YT_FREQ_MAP = _PROMPT_CONSTANTS.YT_FREQ_MAP
 
 from .config import PROMPT_COLUMN, SOLUTION_COLUMN, SYSTEM_PROMPT
 from .utils import canon_text, canon_video_id, is_nan_like, truthy
@@ -278,16 +290,8 @@ def humanise_profile(example: dict) -> str:
         fragments.append("college-educated")
 
     youtube_freq = str(example.get("freq_youtube", "")).strip()
-    if youtube_freq in {"0", "1", "2", "3", "4", "5"}:
-        freq_map = {
-            "0": "rarely",
-            "1": "occasionally",
-            "2": "a few times a month",
-            "3": "weekly",
-            "4": "several times a week",
-            "5": "daily",
-        }
-        viewing_phrase = freq_map.get(youtube_freq, "regularly")
+    if youtube_freq in YT_FREQ_MAP:
+        viewing_phrase = YT_FREQ_MAP.get(youtube_freq, "regularly")
         fragments.append(f"watches YouTube {viewing_phrase}")
 
     sentence_parts = [
@@ -355,47 +359,13 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
     video_id = pick_case_insensitive(example, "video_id", "videoId")
     if video_id and not is_nan_like(video_id):
         title = (
-            pick_case_insensitive(
-                example,
-                "current_video_title",
-                "now_playing_title",
-                "watching_title",
-                "currentVideoTitle",
-                "nowPlayingTitle",
-                "watchingTitle",
-                "now_title",
-                "current_title",
-                "meta_originTitle",
-            )
+            pick_case_insensitive(example, *NOW_PLAYING_TITLE_KEYS_WITH_META)
             or _PROMPT_DOC_BUILDER.title_for(video_id)
             or ""
         )
         return (title or "(untitled)"), video_id
-    title = pick_case_insensitive(
-        example,
-        "current_video_title",
-        "now_playing_title",
-        "watching_title",
-        "currentVideoTitle",
-        "nowPlayingTitle",
-        "watchingTitle",
-        "now_title",
-        "current_title",
-    )
-    video_id = pick_case_insensitive(
-        example,
-        "current_video_id",
-        "now_playing_id",
-        "watching_id",
-        "currentVideoId",
-        "nowPlayingId",
-        "watchingId",
-        "now_id",
-        "current_id",
-        "originId",
-        "video_id",
-        "videoId",
-    )
+    title = pick_case_insensitive(example, *NOW_PLAYING_TITLE_KEYS)
+    video_id = pick_case_insensitive(example, *NOW_PLAYING_ID_KEYS)
     if (title and not is_nan_like(title)) or (video_id and not is_nan_like(video_id)):
         if is_nan_like(title) and video_id:
             title = _PROMPT_DOC_BUILDER.title_for(video_id) or ""
@@ -600,40 +570,33 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
                 items.append((surface, ""))
 
     if not items:
-        trajectory_json = example.get("trajectory_json")
-        if isinstance(trajectory_json, str) and trajectory_json.strip():
-            try:
-                data = json.loads(trajectory_json)
-                order = data.get("order")
-                if isinstance(order, list):
-                    for element in order:
-                        if not isinstance(element, dict):
-                            continue
-                        raw_id = str(
-                            pick_case_insensitive(
-                                element,
-                                "video_id",
-                                "id",
-                                "videoId",
-                            )
-                            or ""
-                        ).strip()
-                        title = str(
-                            pick_case_insensitive(
-                                element,
-                                "title",
-                                "video_title",
-                                "name",
-                                "videoTitle",
-                            )
-                            or ""
-                        ).strip()
-                        if is_nan_like(title) and raw_id:
-                            title = _PROMPT_DOC_BUILDER.title_for(raw_id) or ""
-                        if raw_id or title:
-                            items.append((title or "(untitled)", raw_id))
-            except Exception:
-                pass
+        try:
+            for element in load_trajectory_entries(example.get("trajectory_json")):
+                raw_id = str(
+                    pick_case_insensitive(
+                        element,
+                        "video_id",
+                        "id",
+                        "videoId",
+                    )
+                    or ""
+                ).strip()
+                title = str(
+                    pick_case_insensitive(
+                        element,
+                        "title",
+                        "video_title",
+                        "name",
+                        "videoTitle",
+                    )
+                    or ""
+                ).strip()
+                if is_nan_like(title) and raw_id:
+                    title = _PROMPT_DOC_BUILDER.title_for(raw_id) or ""
+                if raw_id or title:
+                    items.append((title or "(untitled)", raw_id))
+        except Exception:
+            pass
 
     seen: set[str] = set()
     deduped: list[Tuple[str, str]] = []

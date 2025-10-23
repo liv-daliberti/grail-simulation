@@ -266,7 +266,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerCallback</span><span class="p">,</span> <span class="n">TrainerControl</span><span class="p">,</span> <span class="n">TrainerState</span><span class="p">,</span> <span class="n">TrainingArguments</span>
@@ -481,57 +481,6 @@
             <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#  Registry ------------------------------------------------------------------</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-<span class="n">CALLBACKS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;push_to_hub_revision&quot;</span><span class="p">:</span> <span class="n">PushToHubRevisionCallback</span><span class="p">,</span>
-    <span class="s2">&quot;caching_callback&quot;</span>    <span class="p">:</span> <span class="n">SuccessCachingCallback</span><span class="p">,</span>
-    <span class="s2">&quot;replay_buffer_callback&quot;</span><span class="p">:</span> <span class="n">ReplayBufferCallback</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#  Factory -------------------------------------------------------------------</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-<div class="viewcode-block" id="get_callbacks">
-<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.get_callbacks">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_callbacks</span><span class="p">(</span>
-    <span class="n">train_cfg</span><span class="p">,</span>
-    <span class="n">model_cfg</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">replay_buffer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ReplayBuffer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiate the callbacks listed in ``train_cfg.callbacks``.&quot;&quot;&quot;</span>
-    <span class="n">cb_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TrainerCallback</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">train_cfg</span><span class="o">.</span><span class="n">callbacks</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CALLBACKS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown callback &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-
-        <span class="bp">cls</span> <span class="o">=</span> <span class="n">CALLBACKS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;push_to_hub_revision&quot;</span><span class="p">:</span>
-            <span class="n">cb_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">(</span><span class="n">model_cfg</span><span class="p">))</span>
-
-        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;caching_callback&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">replay_buffer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SuccessCachingCallback requires `replay_buffer`.&quot;</span><span class="p">)</span>
-            <span class="c1"># ↓↓↓ pass the lower threshold here</span>
-            <span class="n">cb_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">(</span><span class="n">replay_buffer</span><span class="p">,</span> <span class="n">acc_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span>
-
-        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;replay_buffer_callback&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">replay_buffer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tokenizer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ReplayBufferCallback requires both `replay_buffer` and `tokenizer`.&quot;</span><span class="p">)</span>
-            <span class="n">cb_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">(</span><span class="n">replay_buffer</span><span class="o">=</span><span class="n">replay_buffer</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">))</span>
-
-        <span class="k">else</span><span class="p">:</span>          
-            <span class="n">cb_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">())</span>
-
-    <span class="k">return</span> <span class="n">cb_list</span></div>
 
 </pre></div>
         </article>

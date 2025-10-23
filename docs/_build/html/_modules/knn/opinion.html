@@ -582,6 +582,7 @@
     <span class="n">index</span><span class="p">:</span> <span class="n">OpinionIndex</span><span class="p">,</span>
     <span class="n">eval_examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">],</span>
     <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">exclude_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return predictions and aggregate metrics for ``eval_examples``.&quot;&quot;&quot;</span>
 
@@ -591,8 +592,19 @@
             <span class="s2">&quot;per_k_predictions&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">},</span>
         <span class="p">}</span>
 
-    <span class="n">unique_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
-    <span class="n">max_k</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">unique_k</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">participant_keys</span><span class="p">))</span>
+    <span class="n">requested_k</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">requested_k</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;per_k_predictions&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;per_k_change_predictions&quot;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+    <span class="n">max_available</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">participant_keys</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">exclude_self</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">max_available</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_available</span><span class="p">)</span>
+    <span class="n">unique_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">requested_k</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="n">max_available</span><span class="p">})</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">unique_k</span><span class="p">:</span>
+        <span class="n">unique_k</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">max_available</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">requested_k</span><span class="p">))]</span>
+    <span class="n">max_k</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">unique_k</span><span class="p">)</span>
 
     <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">document</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">]</span>
     <span class="n">matrix_eval</span> <span class="o">=</span> <span class="n">_transform_documents</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">)</span>
@@ -611,11 +623,35 @@
         <span class="n">indices</span> <span class="o">=</span> <span class="n">neighbour_indices</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span>
         <span class="n">similarities</span> <span class="o">=</span> <span class="n">_similarity_from_distances</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">index</span><span class="o">.</span><span class="n">metric</span><span class="p">)</span>
 
+        <span class="n">filtered_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">filtered_weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">candidate_idx</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">similarities</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">exclude_self</span><span class="p">:</span>
+                <span class="n">participant_key</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">participant_keys</span><span class="p">[</span><span class="n">candidate_idx</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">participant_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">example</span><span class="o">.</span><span class="n">participant_id</span>
+                    <span class="ow">and</span> <span class="n">participant_key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">example</span><span class="o">.</span><span class="n">participant_study</span>
+                <span class="p">):</span>
+                    <span class="k">continue</span>
+            <span class="n">filtered_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">candidate_idx</span><span class="p">))</span>
+            <span class="n">filtered_weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">weight</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_indices</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">max_k</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filtered_indices</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">filtered_indices_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">filtered_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">filtered_weights_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">filtered_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
         <span class="n">record_after</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">record_change</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span><span class="p">:</span>
-            <span class="n">top_indices</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
-            <span class="n">top_weights</span> <span class="o">=</span> <span class="n">similarities</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_indices_arr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">top_indices</span> <span class="o">=</span> <span class="n">filtered_indices_arr</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">top_weights</span> <span class="o">=</span> <span class="n">filtered_weights_arr</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
             <span class="n">top_targets_after</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">targets_after</span><span class="p">[</span><span class="n">top_indices</span><span class="p">]</span>
             <span class="n">top_targets_before</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">targets_before</span><span class="p">[</span><span class="n">top_indices</span><span class="p">]</span>
             <span class="n">top_changes</span> <span class="o">=</span> <span class="n">top_targets_after</span> <span class="o">-</span> <span class="n">top_targets_before</span>
@@ -675,6 +711,52 @@
             <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="n">change_mae</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="k">return</span> <span class="n">metrics</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_curve_payload</span><span class="p">(</span>
+    <span class="n">metrics_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">n_examples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert ``metrics_by_k`` into a serialisable curve bundle.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metrics_by_k</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">sorted_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="n">mae_by_k</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">r2_by_k</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">best_entry</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">:</span>
+        <span class="n">raw_mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
+        <span class="n">raw_r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
+        <span class="n">mae_value</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="n">r2_value</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+        <span class="n">mae_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">r2_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">best_entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mae_value</span> <span class="o">&lt;</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">:</span>
+                <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">mae_value</span> <span class="o">-</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="n">r2_value</span> <span class="o">&gt;</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
+
+    <span class="n">best_k</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="n">sorted_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">best_mae_value</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+    <span class="n">best_mae</span> <span class="o">=</span> <span class="n">best_mae_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">best_mae_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">best_r2_value</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+    <span class="n">best_r2</span> <span class="o">=</span> <span class="n">best_r2_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">best_r2_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="s2">&quot;mae_after&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mae_by_k&quot;</span><span class="p">:</span> <span class="n">mae_by_k</span><span class="p">,</span>
+        <span class="s2">&quot;r2_by_k&quot;</span><span class="p">:</span> <span class="n">r2_by_k</span><span class="p">,</span>
+        <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span>
+        <span class="s2">&quot;best_mae&quot;</span><span class="p">:</span> <span class="n">best_mae</span><span class="p">,</span>
+        <span class="s2">&quot;best_r2&quot;</span><span class="p">:</span> <span class="n">best_r2</span><span class="p">,</span>
+        <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_examples</span><span class="p">),</span>
+    <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_baseline_metrics</span><span class="p">(</span><span class="n">eval_examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
@@ -803,6 +885,7 @@
     <span class="n">baseline</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">outputs_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist per-example predictions, metrics, and plots.&quot;&quot;&quot;</span>
 
@@ -877,6 +960,8 @@
             <span class="s2">&quot;change_heatmap&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">heatmap_path</span><span class="p">),</span>
         <span class="p">},</span>
     <span class="p">}</span>
+    <span class="k">if</span> <span class="n">curve_metrics</span><span class="p">:</span>
+        <span class="n">serializable_metrics</span><span class="p">[</span><span class="s2">&quot;curve_metrics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve_metrics</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">serializable_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
@@ -976,6 +1061,25 @@
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[OPINION] No evaluation examples found for study=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
             <span class="k">continue</span>
 
+        <span class="n">train_curve_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">train_examples</span><span class="p">:</span>
+            <span class="n">train_predictions_bundle</span> <span class="o">=</span> <span class="n">predict_post_indices</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
+                <span class="n">eval_examples</span><span class="o">=</span><span class="n">train_examples</span><span class="p">,</span>
+                <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
+                <span class="n">exclude_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">train_metrics_by_k</span> <span class="o">=</span> <span class="n">_summary_metrics</span><span class="p">(</span>
+                <span class="n">predictions</span><span class="o">=</span><span class="n">train_predictions_bundle</span><span class="p">[</span><span class="s2">&quot;per_k_predictions&quot;</span><span class="p">],</span>
+                <span class="n">eval_examples</span><span class="o">=</span><span class="n">train_examples</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_payload</span><span class="p">(</span>
+                <span class="n">train_metrics_by_k</span><span class="p">,</span>
+                <span class="n">n_examples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_examples</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">train_curve</span><span class="p">:</span>
+                <span class="n">train_curve_metrics</span> <span class="o">=</span> <span class="n">train_curve</span>
+
         <span class="n">predictions_bundle</span> <span class="o">=</span> <span class="n">predict_post_indices</span><span class="p">(</span>
             <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
             <span class="n">eval_examples</span><span class="o">=</span><span class="n">eval_examples</span><span class="p">,</span>
@@ -993,6 +1097,19 @@
             <span class="n">best_k</span> <span class="o">=</span> <span class="n">k_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="n">baseline</span> <span class="o">=</span> <span class="n">_baseline_metrics</span><span class="p">(</span><span class="n">eval_examples</span><span class="p">)</span>
+        <span class="n">eval_curve_metrics</span> <span class="o">=</span> <span class="n">_curve_payload</span><span class="p">(</span>
+            <span class="n">metrics_by_k</span><span class="p">,</span>
+            <span class="n">n_examples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">eval_examples</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">curve_bundle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">eval_curve_metrics</span><span class="p">:</span>
+            <span class="n">curve_bundle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="n">eval_curve_metrics</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">train_curve_metrics</span><span class="p">:</span>
+                <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve_metrics</span>
+        <span class="k">elif</span> <span class="n">train_curve_metrics</span><span class="p">:</span>
+            <span class="n">curve_bundle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">train_curve_metrics</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">curve_bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;metric&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mae_after&quot;</span>
         <span class="n">_write_outputs</span><span class="p">(</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
@@ -1002,6 +1119,7 @@
             <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
             <span class="n">best_k</span><span class="o">=</span><span class="n">best_k</span><span class="p">,</span>
             <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
+            <span class="n">curve_metrics</span><span class="o">=</span><span class="n">curve_bundle</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>

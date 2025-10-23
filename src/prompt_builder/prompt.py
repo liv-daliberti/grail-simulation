@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .formatters import clean_text, human_join
 from .parsers import as_list_json, format_count, format_yes_no, is_nanlike
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
+from .shared import first_non_nan_value
 from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
 
@@ -52,25 +53,6 @@ def _selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(candidate, dict):
             return candidate
     return {}
-
-
-def _first_value(
-    ex: Dict[str, Any],
-    selected: Dict[str, Any],
-    *keys: str,
-) -> Optional[Any]:
-    """Return the first non-null value matched across example and selected row."""
-
-    for key in keys:
-        if key in ex:
-            value = ex[key]
-            if value is not None and not is_nanlike(value):
-                return value
-        if key in selected:
-            value = selected.get(key)
-            if value is not None and not is_nanlike(value):
-                return value
-    return None
 
 
 def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
@@ -281,7 +263,7 @@ def _initial_viewpoint_line(
 ) -> str:
     """Return a concise description of the viewer's initial stance on the issue."""
 
-    issue_raw = _first_value(ex, selected, "issue") or ex.get("topic")
+    issue_raw = first_non_nan_value(ex, selected, "issue") or ex.get("topic")
     issue = str(issue_raw or "").strip().lower()
     if issue == "minimum_wage":
         return _minimum_wage_viewpoint(ex, selected)
@@ -298,7 +280,7 @@ def _first_yes_no(
     """Return the first yes/no text resolved across ``keys``."""
 
     for key in keys:
-        value = _first_value(ex, selected, key)
+        value = first_non_nan_value(ex, selected, key)
         if value is None:
             continue
         verdict = format_yes_no(value)
@@ -313,29 +295,43 @@ def _minimum_wage_viewpoint(
 ) -> str:
     """Return a single-sentence summary of minimum wage attitudes."""
 
-    yes_no = _first_yes_no(ex, selected, ("minwage15_w2", "minwage15_w1"))
-    if yes_no == "yes":
-        return "Supports a $15 minimum wage"
-    if yes_no == "no":
-        return "Opposes a $15 minimum wage"
+    def yes_no_phrase(keys: Sequence[str], yes: str, no: str) -> Optional[str]:
+        verdict = _first_yes_no(ex, selected, keys)
+        return {"yes": yes, "no": no}.get(verdict or "")
 
-    yes_no = _first_yes_no(ex, selected, ("mw_support_w2", "mw_support_w1"))
-    if yes_no == "yes":
-        return "Supports raising the minimum wage"
-    if yes_no == "no":
-        return "Opposes raising the minimum wage"
+    def first_formatted(keys: Sequence[str], template: str) -> Optional[str]:
+        for key in keys:
+            value = first_non_nan_value(ex, selected, key)
+            if value is None:
+                continue
+            formatted = format_field_value(key, value)
+            if formatted:
+                return template.format(value=formatted)
+        return None
 
-    for key in ("minwage_text_r_w2", "minwage_text_r_w1", "minwage_text_w2", "minwage_text_w1"):
-        value = _first_value(ex, selected, key)
-        formatted = format_field_value(key, value) if value is not None else ""
-        if formatted:
-            return f"Preferred minimum wage is about {formatted}"
-
-    for key in ("mw_index_w2", "mw_index_w1"):
-        value = _first_value(ex, selected, key)
-        formatted = format_field_value(key, value) if value is not None else ""
-        if formatted:
-            return f"Minimum wage support score is {formatted}"
+    candidates = (
+        yes_no_phrase(
+            ("minwage15_w2", "minwage15_w1"),
+            "Supports a $15 minimum wage",
+            "Opposes a $15 minimum wage",
+        ),
+        yes_no_phrase(
+            ("mw_support_w2", "mw_support_w1"),
+            "Supports raising the minimum wage",
+            "Opposes raising the minimum wage",
+        ),
+        first_formatted(
+            ("minwage_text_r_w2", "minwage_text_r_w1", "minwage_text_w2", "minwage_text_w1"),
+            "Preferred minimum wage is about {value}",
+        ),
+        first_formatted(
+            ("mw_index_w2", "mw_index_w1"),
+            "Minimum wage support score is {value}",
+        ),
+    )
+    for candidate in candidates:
+        if candidate:
+            return candidate
     return ""
 
 
@@ -348,8 +344,14 @@ def _gun_control_viewpoint(
     for key, (yes_phrase, no_phrase) in (
         ("stricter_laws", ("Supports stricter gun laws", "Opposes stricter gun laws")),
         ("handgun_ban", ("Supports a handgun ban", "Opposes a handgun ban")),
-        ("assault_ban", ("Supports an assault weapons ban", "Opposes an assault weapons ban")),
-        ("concealed_safe", ("Believes concealed carry is safe", "Believes concealed carry is unsafe")),
+        (
+            "assault_ban",
+            ("Supports an assault weapons ban", "Opposes an assault weapons ban"),
+        ),
+        (
+            "concealed_safe",
+            ("Believes concealed carry is safe", "Believes concealed carry is unsafe"),
+        ),
     ):
         verdict = _first_yes_no(ex, selected, (key,))
         if verdict == "yes":
@@ -358,7 +360,7 @@ def _gun_control_viewpoint(
             return no_phrase
 
     for key in ("gun_policy", "gun_identity", "gun_priority"):
-        value = _first_value(ex, selected, key)
+        value = first_non_nan_value(ex, selected, key)
         formatted = format_field_value(key, value) if value is not None else ""
         if formatted:
             return formatted[0].upper() + formatted[1:] if formatted else ""
@@ -369,7 +371,7 @@ def _gun_control_viewpoint(
         ("gun_index_2", "Gun regulation support score (alt) is {value}"),
         ("gun_enthusiasm", "Gun enthusiasm is {value}"),
     ):
-        value = _first_value(ex, selected, key)
+        value = first_non_nan_value(ex, selected, key)
         formatted = format_field_value(key, value) if value is not None else ""
         if formatted:
             return template.format(value=formatted)
@@ -514,24 +516,25 @@ def _int_to_words(number: int) -> Optional[str]:
         return None
     if number < 20:
         return _UNDER_TWENTY[number]
+
+    result: Optional[str]
     if number < 100:
         tens, remainder = divmod(number, 10)
         base = _TENS.get(tens * 10)
         if not base:
             return None
-        if remainder:
-            return f"{base}-{_UNDER_TWENTY[remainder]}"
-        return base
-    hundreds, remainder = divmod(number, 100)
-    if hundreds not in _UNDER_TWENTY:
-        return None
-    words = f"{_UNDER_TWENTY[hundreds]} hundred"
-    if remainder:
-        tail = _int_to_words(remainder)
-        if not tail:
+        result = base if remainder == 0 else f"{base}-{_UNDER_TWENTY[remainder]}"
+    else:
+        hundreds, remainder = divmod(number, 100)
+        if hundreds not in _UNDER_TWENTY:
             return None
-        words = f"{words} {tail}"
-    return words
+        result = f"{_UNDER_TWENTY[hundreds]} hundred"
+        if remainder:
+            tail = _int_to_words(remainder)
+            if not tail:
+                return None
+            result = f"{result} {tail}"
+    return result
 
 
 def _percentage_to_words(value: str) -> Optional[str]:

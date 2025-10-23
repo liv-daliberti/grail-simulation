@@ -17,6 +17,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import NearestNeighbors
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+from common.opinion import opinion_example_kwargs
+from common.vectorizers import create_tfidf_vectorizer
 
 from .data import (
     DEFAULT_DATASET_SOURCE,
@@ -165,13 +167,16 @@ def collect_examples(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         session_id = example.get("session_id")
-        candidate = OpinionExample(
+        base_kwargs = opinion_example_kwargs(
             participant_id=participant_id,
             participant_study=spec.key,
             issue=spec.issue,
             document=document,
             before=before,
             after=after,
+        )
+        candidate = OpinionExample(
+            **base_kwargs,
             step_index=step_index,
             session_id=str(session_id) if session_id is not None else None,
         )
@@ -197,15 +202,7 @@ def collect_examples(
 def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]:
     """Fit a TF-IDF vectoriser using the supplied documents."""
 
-    vectorizer = TfidfVectorizer(
-        lowercase=True,
-        strip_accents="unicode",
-        ngram_range=(1, 2),
-        min_df=1,
-        stop_words=None,
-        token_pattern=r"(?u)\b[\w\-]{2,}\b",
-        max_features=None,
-    )
+    vectorizer = create_tfidf_vectorizer(max_features=None)
     matrix = vectorizer.fit_transform(documents).astype(np.float32)
     return vectorizer, matrix
 

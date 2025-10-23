@@ -18,7 +18,7 @@ import numpy as np
 from numpy.random import default_rng
 
 from common.embeddings import SentenceTransformerConfig
-from common.eval_utils import safe_div
+from common.eval_utils import compose_issue_slug, prepare_dataset, safe_div
 
 try:  # pragma: no cover - optional dependency
     import matplotlib
@@ -261,7 +261,22 @@ def _bootstrap_uncertainty(
 
 
 def parse_k_values(k_default: int, sweep: str) -> List[int]:
-    """Return the sorted list of k values derived from CLI configuration."""
+    """
+    Derive the sorted set of ``k`` values requested for evaluation.
+
+    Parameters
+    ----------
+    k_default:
+        The baseline ``k`` value supplied via the CLI (used when the sweep is empty).
+    sweep:
+        Comma-delimited string of additional ``k`` candidates provided by the user.
+
+    Returns
+    -------
+    list[int]
+        Strictly positive ``k`` values in ascending order. Falls back to ``k_default``
+        (or ``25`` when unset) if the sweep does not contain any valid integers.
+    """
 
     values = {int(k_default)} if k_default else set()
     for token in sweep.split(","):
@@ -277,7 +292,22 @@ def parse_k_values(k_default: int, sweep: str) -> List[int]:
 
 
 def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> int:
-    """Return the elbow-selected ``k`` from accuracy measurements."""
+    """
+    Choose an appropriate ``k`` by applying a simple elbow heuristic.
+
+    Parameters
+    ----------
+    k_values:
+        Sorted sequence of evaluated ``k`` values.
+    accuracy_by_k:
+        Observed accuracy for each ``k`` on the validation split.
+
+    Returns
+    -------
+    int
+        The ``k`` value where marginal gains fall below half of the initial slope,
+        or the accuracy-maximising ``k`` when the heuristic cannot be applied.
+    """
 
     if len(k_values) <= 2:
         return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
@@ -298,7 +328,19 @@ def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> i
 
 
 def resolve_reports_dir(out_dir: Path) -> Path:
-    """Return the reports directory associated with ``out_dir``."""
+    """
+    Resolve the canonical reports directory corresponding to ``out_dir``.
+
+    Parameters
+    ----------
+    out_dir:
+        Directory containing pipeline artefacts (typically under ``models/knn``).
+
+    Returns
+    -------
+    pathlib.Path
+        Path pointing at the root ``reports`` directory for the repository.
+    """
 
     resolved = out_dir.resolve()
     parents = list(resolved.parents)
@@ -322,13 +364,21 @@ def plot_elbow(
     *,
     data_split: str = "validation",
 ) -> None:
-    """Create an error-rate vs ``k`` plot for diagnostic purposes.
+    """
+    Generate an error-rate plot to visualise the KNN elbow heuristic.
 
-    :param k_values: Iterable of evaluated ``k`` values.
-    :param accuracy_by_k: Mapping from ``k`` to accuracy on the requested split.
-    :param best_k: Selected ``k`` value for reporting.
-    :param output_path: Destination path for the generated figure.
-    :param data_split: Human-readable label describing the data split used.
+    Parameters
+    ----------
+    k_values:
+        Iterable of evaluated ``k`` values.
+    accuracy_by_k:
+        Mapping from ``k`` to accuracy on the selected split.
+    best_k:
+        The configuration chosen for downstream reporting.
+    output_path:
+        Destination filename for the generated PNG.
+    data_split:
+        Human-readable label describing the evaluation split (defaults to ``validation``).
     """
 
     if plt is None:
@@ -369,12 +419,21 @@ def plot_elbow(
 
 
 def compute_auc_from_curve(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> tuple[float, float]:
-    """Return raw and normalised area under the accuracy vs k curve.
+    """
+    Compute the area under the accuracy-vs-``k`` curve.
 
-    :param k_values: Iterable of ``k`` values considered during evaluation.
-    :param accuracy_by_k: Mapping from ``k`` to observed accuracy.
-    :returns: Tuple of ``(auc_area, auc_normalized)`` where ``auc_area`` is the
-        trapezoidal integral and ``auc_normalized`` divides by the span of ``k``.
+    Parameters
+    ----------
+    k_values:
+        Iterable of evaluated ``k`` values.
+    accuracy_by_k:
+        Mapping from ``k`` to measured accuracy.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(auc_area, auc_normalized)`` where ``auc_area`` is the trapezoidal
+        integral and ``auc_normalized`` scales the area by the extent of ``k``.
     """
 
     if not k_values:
@@ -564,18 +623,22 @@ def _build_or_load_index(
 
 
 def run_eval(args) -> None:  # pylint: disable=too-many-locals
-    """Evaluate the KNN baseline across the requested issues.
-
-    :param args: Parsed CLI namespace returned by :func:`knn.cli.build_parser`.
     """
+    Evaluate the KNN baseline across the issues specified on the CLI.
 
-    os_env = os.environ
-    os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
-    os_env.setdefault("HF_HOME", args.cache_dir)
-
-    dataset_source = args.dataset or DEFAULT_DATASET_SOURCE
-    base_ds = load_dataset_source(dataset_source, args.cache_dir)
-    available_issues = issues_in_dataset(base_ds)
+    Parameters
+    ----------
+    args:
+        Namespace returned by :func:`knn.cli.build_parser`, including dataset,
+        feature-space, and sweep configuration.
+    """
+    dataset_source, base_ds, available_issues = prepare_dataset(
+        dataset=getattr(args, "dataset", None),
+        default_source=DEFAULT_DATASET_SOURCE,
+        cache_dir=args.cache_dir,
+        loader=load_dataset_source,
+        issue_lookup=issues_in_dataset,
+    )
 
     issue_lookup = {issue.lower(): issue for issue in available_issues}
 
@@ -651,15 +714,7 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
             )
             continue
 
-        suffix_parts: List[str] = []
-        seen_suffix: set[str] = set()
-        for token in eval_study_tokens:
-            slug = token.replace(" ", "_")
-            if slug and slug.lower() != "all" and slug not in seen_suffix:
-                suffix_parts.append(slug)
-                seen_suffix.add(slug)
-        if suffix_parts:
-            issue_slug = f"{base_issue_slug}_{'_'.join(suffix_parts)}"
+        issue_slug = compose_issue_slug(issue, eval_study_tokens)
 
         active_provenance = _collect_dataset_provenance(
             {
@@ -1222,17 +1277,31 @@ def evaluate_issue(
     args,
     provenance: Mapping[str, Any],
 ) -> None:  # pylint: disable=too-many-locals
-    """Evaluate a single issue split and write metrics/predictions.
+    """
+    Evaluate a single issue slice and persist metrics, curves, and predictions.
 
-    :param issue_slug: Normalised issue identifier.
-    :param dataset_source: Name or path of the dataset originated from.
-    :param train_ds: Training split dataset for optional curve diagnostics.
-    :param eval_ds: Evaluation split dataset.
-    :param k_values: Sequence of ``k`` values to assess.
-    :param knn_index: Prepared KNN index artifacts.
-    :param extra_fields: Extra text fields appended to queries.
-    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).
-    :param args: CLI namespace controlling evaluation options.
+    Parameters
+    ----------
+    issue_slug:
+        Normalised identifier for the issue under evaluation (used in paths).
+    dataset_source:
+        Name or path of the dataset backing the current run.
+    train_ds:
+        Training split (may be ``None``) used for optional curve diagnostics.
+    eval_ds:
+        Evaluation split containing the rows scored for reporting.
+    k_values:
+        Sequence of ``k`` values to consider when computing accuracy.
+    knn_index:
+        Prepared KNN index artefacts for the active feature space.
+    extra_fields:
+        Additional text fields concatenated into the query document.
+    feature_space:
+        Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).
+    args:
+        Parsed CLI namespace controlling evaluation behaviour.
+    provenance:
+        Mapping of provenance metadata recorded alongside the metrics.
     """
 
     k_values_int = sorted({int(k) for k in k_values if int(k) > 0})
@@ -1335,7 +1404,19 @@ def evaluate_issue(
     )
 
 def bin_nopts(n: int) -> str:
-    """Bucket the number of options into the reporting categories."""
+    """
+    Bucket the number of slate options into reporting-friendly categories.
+
+    Parameters
+    ----------
+    n:
+        Count of available options for the current example.
+
+    Returns
+    -------
+    str
+        One of ``{"1", "2", "3", "4", "5+"}`` describing the option cardinality.
+    """
 
     if n <= 1:
         return "1"
@@ -1349,7 +1430,19 @@ def bin_nopts(n: int) -> str:
 
 
 def bucket_from_pos(pos_idx: int) -> str:
-    """Bucket the original position index (0-based) into reporting bins."""
+    """
+    Bucket a 0-based position index into the standard reporting bins.
+
+    Parameters
+    ----------
+    pos_idx:
+        Zero-based position of the correct item within the retrieved slate.
+
+    Returns
+    -------
+    str
+        One of ``{"unknown", "1", "2", "3", "4", "5+"}`` describing the bucket.
+    """
 
     if pos_idx < 0:
         return "unknown"
@@ -1365,7 +1458,19 @@ def bucket_from_pos(pos_idx: int) -> str:
 
 
 def canon(text: str) -> str:
-    """Canonicalise a text fragment for comparisons."""
+    """
+    Canonicalise a text fragment by lowercasing and removing punctuation.
+
+    Parameters
+    ----------
+    text:
+        Raw text fragment to normalise.
+
+    Returns
+    -------
+    str
+        Canonical form suitable for equality comparisons.
+    """
 
     return re.sub(r"[^a-z0-9]+", "", (text or "").lower().strip())
 

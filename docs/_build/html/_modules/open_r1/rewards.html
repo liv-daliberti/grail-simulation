@@ -625,28 +625,6 @@
 
 
 
-<div class="viewcode-block" id="reasoning_steps_reward">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.reasoning_steps_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">reasoning_steps_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reward function that checks for clear step-by-step reasoning.</span>
-
-<span class="sd">    Regex pattern:</span>
-<span class="sd">        Step \d+:  matches &quot;Step 1:&quot;, &quot;Step 2:&quot;, etc.</span>
-<span class="sd">        ^\d+\.     matches numbered lists like &quot;1.&quot;, &quot;2.&quot;, etc. at line start</span>
-<span class="sd">        \n-        matches bullet points with hyphens</span>
-<span class="sd">        \n\*       matches bullet points with asterisks</span>
-<span class="sd">        First,|Second,|Next,|Finally,  matches transition words</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(Step \d+:|^\d+\.|\n-|\n\*|First,|Second,|Next,|Finally,)&quot;</span>
-    <span class="n">completion_contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
-    <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">content</span><span class="p">))</span> <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">completion_contents</span><span class="p">]</span>
-
-    <span class="c1"># Magic number 3 to encourage 3 steps and more, otherwise partial reward</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">count</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">]</span></div>
-
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_length_correctness</span><span class="p">(</span><span class="n">contents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">solution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-sample correctness for length-based rewards.&quot;&quot;&quot;</span>
     <span class="n">correctness</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>

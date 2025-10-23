@@ -93,6 +93,41 @@ def is_nanlike(value: Any) -> bool:
     return _is_nanlike(value)
 
 
+def _truthy_from_number(value: float) -> Optional[bool]:
+    """Return boolean interpretation for numeric markers 1/0."""
+
+    if value == 1:
+        return True
+    if value == 0:
+        return False
+    return None
+
+
+def _truthy_from_text(value: Any) -> Optional[bool]:
+    """Best-effort boolean interpretation for textual markers."""
+
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    if text in TRUE_STRINGS:
+        return True
+    if text in FALSE_STRINGS:
+        return False
+
+    result: Optional[bool] = None
+    try:
+        number = float(text)
+    except ValueError:
+        number = None
+
+    if number is not None:
+        if math.isclose(number, 1.0, rel_tol=0.0, abs_tol=1e-9):
+            result = True
+        elif math.isclose(number, 0.0, rel_tol=0.0, abs_tol=1e-9):
+            result = False
+    return result
+
+
 def truthy(value: Any) -> Optional[bool]:
     """
     Interpret common boolean representations.
@@ -107,30 +142,11 @@ def truthy(value: Any) -> Optional[bool]:
         return None
     if isinstance(value, bool):
         return value
-    result: Optional[bool] = None
     if isinstance(value, (int, float)) and not isinstance(value, bool):
-        if value == 1:
-            result = True
-        elif value == 0:
-            result = False
-    else:
-        text = str(value).strip().lower()
-        if text:
-            if text in TRUE_STRINGS:
-                result = True
-            elif text in FALSE_STRINGS:
-                result = False
-            else:
-                try:
-                    number = float(text)
-                except ValueError:
-                    number = None
-                if number is not None:
-                    if math.isclose(number, 1.0, rel_tol=0.0, abs_tol=1e-9):
-                        result = True
-                    elif math.isclose(number, 0.0, rel_tol=0.0, abs_tol=1e-9):
-                        result = False
-    return result
+        numeric = _truthy_from_number(float(value))
+        if numeric is not None:
+            return numeric
+    return _truthy_from_text(value)
 
 
 def format_yes_no(value: Any, *, yes: str = "yes", no: str = "no") -> Optional[str]:

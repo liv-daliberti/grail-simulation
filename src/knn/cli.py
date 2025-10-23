@@ -6,6 +6,11 @@ import argparse
 import logging
 from pathlib import Path
 
+from common.cli_args import add_comma_separated_argument
+
+from common.cli_options import add_overwrite_argument
+
+from .cli_utils import add_sentence_transformer_normalize_flags
 from .evaluate import run_eval
 from .features import Word2VecConfig
 
@@ -176,21 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="sentence_transformer_batch_size",
         help="Batch size applied during sentence-transformer encoding.",
     )
-    parser.add_argument(
-        "--sentence-transformer-normalize",
-        "--sentence_transformer_normalize",
-        dest="sentence_transformer_normalize",
-        action="store_true",
-        help="Enable L2-normalisation for sentence-transformer embeddings (default).",
-    )
-    parser.add_argument(
-        "--sentence-transformer-no-normalize",
-        "--sentence_transformer_no_normalize",
-        dest="sentence_transformer_normalize",
-        action="store_false",
-        help="Disable L2-normalisation for sentence-transformer embeddings.",
-    )
-    parser.set_defaults(sentence_transformer_normalize=True)
+    add_sentence_transformer_normalize_flags(parser, legacy_aliases=True)
     parser.add_argument(
         "--train-curve-max",
         "--train_curve_max",
@@ -206,11 +197,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="out_dir",
         help="Directory for predictions, metrics, and saved indices.",
     )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Allow overwriting metrics/prediction files in --out_dir.",
-    )
+    add_overwrite_argument(parser)
     parser.add_argument(
         "--cache-dir",
         "--cache_dir",
@@ -267,12 +254,11 @@ def build_parser() -> argparse.ArgumentParser:
         dest="eval_issues",
         help="Optional comma-separated list of issues used for EVALUATION. Defaults to --issues when unset.",
     )
-    parser.add_argument(
-        "--participant-studies",
-        "--participant_studies",
-        default="",
+    add_comma_separated_argument(
+        parser,
+        flags=("--participant-studies", "--participant_studies"),
         dest="participant_studies",
-        help=(
+        help_text=(
             "Comma-separated list of participant study keys (e.g. study1,study2). "
             "When supplied, next-video evaluation filters to those studies."
         ),

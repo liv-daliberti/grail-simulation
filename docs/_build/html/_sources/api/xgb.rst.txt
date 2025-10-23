@@ -51,3 +51,49 @@ normalisation.
    :members:
    :undoc-members:
    :show-inheritance:
+
+Pipeline Orchestration
+----------------------
+
+The orchestration layer exposes dedicated stages for the slate-ranking and
+opinion-regression tasks. Pass ``--tasks`` to ``python -m xgb.pipeline`` (or the
+training wrapper scripts) to select which portions to run:
+
+* ``next_video`` – plan and execute hyper-parameter sweeps for the slate model,
+  promote the best configurations, and run the final validation pass.
+* ``opinion`` – run the opinion-regression sweeps independently, select the best
+  booster parameters, and train the regression models used in downstream
+  reporting.
+
+When a task is disabled the generated Markdown reports now include a short note
+explaining that the section was intentionally skipped.
+
+.. automodule:: xgb.pipeline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xgb.pipeline_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xgb.pipeline_context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xgb.pipeline_evaluate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xgb.pipeline_reports
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xgb.pipeline_sweeps
+   :members:
+   :undoc-members:
+   :show-inheritance:

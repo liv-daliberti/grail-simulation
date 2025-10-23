@@ -260,12 +260,11 @@
         <article role="main" id="furo-main-content">
           <section id="knn-opinion-shift-study">
 <h1>KNN Opinion Shift Study<a class="headerlink" href="#knn-opinion-shift-study" title="Link to this heading">¶</a></h1>
-<p>This study evaluates a second KNN baseline that predicts each participant’s post-study opinion index and compares it with the observed survey value. The models use the same viewer prompt features as the slate-ranking baseline, but the target is the continuous after-study index for each political science study.</p>
+<p>This study evaluates a second KNN baseline that predicts each participant’s post-study opinion index.</p>
 <ul class="simple">
-<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">data/cleaned_grail</span></code></p></li>
-<li><p>Splits: train for neighbor lookup, validation for evaluation</p></li>
-<li><p>Metrics: MAE / RMSE / R² on the predicted post index, plus comparison to a no-change baseline (predicting the pre index)</p></li>
-<li><p>Predictions now anchor each participant’s pre-study index and add the KNN-estimated opinion shift from similar viewers.</p></li>
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
+<li><p>Split: validation</p></li>
+<li><p>Metrics: MAE / RMSE / R² on the predicted post index, compared against a no-change baseline.</p></li>
 </ul>
 <section id="tf-idf-feature-space">
 <h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
@@ -276,44 +275,47 @@
 <th class="head text-right"><p>Participants</p></th>
 <th class="head text-right"><p>Best k</p></th>
 <th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
 <th class="head text-right"><p>RMSE ↓</p></th>
 <th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>No-change MAE ↓</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td class="text-right"><p>162</p></td>
-<td class="text-right"><p>10</p></td>
-<td class="text-right"><p>0.217</p></td>
-<td class="text-right"><p>0.259</p></td>
-<td class="text-right"><p>0.184</p></td>
+<td class="text-right"><p>150</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.037</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>0.037</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td class="text-right"><p>165</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>0.173</p></td>
-<td class="text-right"><p>0.219</p></td>
-<td class="text-right"><p>0.374</p></td>
+<td class="text-right"><p>20</p></td>
+<td class="text-right"><p>0.092</p></td>
+<td class="text-right"><p>+0.004</p></td>
+<td class="text-right"><p>0.127</p></td>
+<td class="text-right"><p>0.790</p></td>
+<td class="text-right"><p>0.092</p></td>
 <td class="text-right"><p>0.096</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>50</p></td>
-<td class="text-right"><p>0.185</p></td>
-<td class="text-right"><p>0.236</p></td>
-<td class="text-right"><p>0.181</p></td>
+<td class="text-right"><p>150</p></td>
+<td class="text-right"><p>0.087</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.772</p></td>
+<td class="text-right"><p>0.087</p></td>
 <td class="text-right"><p>0.084</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">tfidf/mae_*.png</span></code>, <code class="docutils literal notranslate"><span class="pre">tfidf/r2_*.png</span></code></p></li>
-<li><p>Heatmaps benchmark predicted vs actual change: <code class="docutils literal notranslate"><span class="pre">tfidf/change_heatmap_*.png</span></code></p></li>
-<li><p>Opinion-change heatmaps: <code class="docutils literal notranslate"><span class="pre">tfidf/change_heatmap_*.png</span></code></p></li>
-</ul>
 </section>
 <section id="word2vec-feature-space">
 <h2>Word2Vec Feature Space<a class="headerlink" href="#word2vec-feature-space" title="Link to this heading">¶</a></h2>
@@ -324,44 +326,47 @@
 <th class="head text-right"><p>Participants</p></th>
 <th class="head text-right"><p>Best k</p></th>
 <th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
 <th class="head text-right"><p>RMSE ↓</p></th>
 <th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>No-change MAE ↓</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td class="text-right"><p>162</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>0.202</p></td>
-<td class="text-right"><p>0.254</p></td>
-<td class="text-right"><p>0.214</p></td>
+<td class="text-right"><p>150</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.037</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>0.037</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td class="text-right"><p>165</p></td>
-<td class="text-right"><p>10</p></td>
-<td class="text-right"><p>0.162</p></td>
-<td class="text-right"><p>0.207</p></td>
-<td class="text-right"><p>0.440</p></td>
+<td class="text-right"><p>20</p></td>
+<td class="text-right"><p>0.089</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.122</p></td>
+<td class="text-right"><p>0.805</p></td>
+<td class="text-right"><p>0.089</p></td>
 <td class="text-right"><p>0.096</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>50</p></td>
-<td class="text-right"><p>0.177</p></td>
-<td class="text-right"><p>0.226</p></td>
-<td class="text-right"><p>0.251</p></td>
+<td class="text-right"><p>100</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.126</p></td>
+<td class="text-right"><p>0.768</p></td>
+<td class="text-right"><p>0.088</p></td>
 <td class="text-right"><p>0.084</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">word2vec/mae_*.png</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/r2_*.png</span></code></p></li>
-<li><p>Heatmaps benchmark predicted vs actual change: <code class="docutils literal notranslate"><span class="pre">word2vec/change_heatmap_*.png</span></code></p></li>
-<li><p>Opinion-change heatmaps: <code class="docutils literal notranslate"><span class="pre">word2vec/change_heatmap_*.png</span></code></p></li>
-</ul>
 </section>
 <section id="sentence-transformer-feature-space">
 <h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
@@ -372,51 +377,59 @@
 <th class="head text-right"><p>Participants</p></th>
 <th class="head text-right"><p>Best k</p></th>
 <th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
 <th class="head text-right"><p>RMSE ↓</p></th>
 <th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>No-change MAE ↓</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>100</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.037</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>0.037</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>125</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>+0.008</p></td>
+<td class="text-right"><p>0.124</p></td>
+<td class="text-right"><p>0.801</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>0.096</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>75</p></td>
+<td class="text-right"><p>0.086</p></td>
+<td class="text-right"><p>-0.002</p></td>
+<td class="text-right"><p>0.124</p></td>
+<td class="text-right"><p>0.773</p></td>
+<td class="text-right"><p>0.086</p></td>
+<td class="text-right"><p>0.084</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Sentence-transformer experiment assets were not exported with this repository snapshot; metrics remain in the accompanying tables below.</p></li>
-</ul>
 <section id="opinion-change-heatmaps">
 <h3>Opinion Change Heatmaps<a class="headerlink" href="#opinion-change-heatmaps" title="Link to this heading">¶</a></h3>
-<p>Below are the 2D histograms comparing the observed shift in opinion index (post - pre) with the KNN-predicted shift for each study. Axes are centered on zero so the diagonal highlights perfect agreement.</p>
-<section id="tf-idf">
-<h4>TF-IDF<a class="headerlink" href="#tf-idf" title="Link to this heading">¶</a></h4>
-<p><img alt="Study 1 – Gun Control (MTurk)" src="../_images/change_heatmap_study1.png" />
-<img alt="Study 2 – Minimum Wage (MTurk)" src="../_images/change_heatmap_study2.png" />
-<img alt="Study 3 – Minimum Wage (YouGov)" src="../_images/change_heatmap_study3.png" /></p>
-</section>
-<section id="word2vec">
-<h4>Word2Vec<a class="headerlink" href="#word2vec" title="Link to this heading">¶</a></h4>
-<p><img alt="Study 1 – Gun Control (MTurk)" src="../_images/change_heatmap_study11.png" />
-<img alt="Study 2 – Minimum Wage (MTurk)" src="../_images/change_heatmap_study21.png" />
-<img alt="Study 3 – Minimum Wage (YouGov)" src="../_images/change_heatmap_study31.png" /></p>
-</section>
+<p>Plots are refreshed under <code class="docutils literal notranslate"><span class="pre">reports/knn/opinion/&lt;feature-space&gt;/</span></code> for MAE, R², and change heatmaps.</p>
 </section>
 </section>
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>The post-study shifts are small; predicting “no change” (pre index) yields MAE between 0.04 and 0.10. All feature spaces currently trail this simple baseline on MAE, indicating limited signal in the prompt text for forecasting the final survey response.</p></li>
-<li><p>Word2Vec and Sentence-Transformer embeddings offer lower MAE and higher R² than TF-IDF on the minimum-wage studies, suggesting smoother neighbor weighting in those dense spaces.</p></li>
-<li><p>Performance improves modestly with larger <code class="docutils literal notranslate"><span class="pre">k</span></code>—best settings range from 5 to 50—highlighting the need for wider neighborhoods when regressing opinion indices.</p></li>
+<li><p>Study 1 – Gun Control (MTurk): best R² 0.983 with SENTENCE_TRANSFORMER (k=100); largest MAE reduction +0.007 via SENTENCE_TRANSFORMER.</p></li>
+<li><p>Study 2 – Minimum Wage (MTurk): best R² 0.805 with WORD2VEC (k=20); largest MAE reduction +0.008 via SENTENCE_TRANSFORMER.</p></li>
+<li><p>Study 3 – Minimum Wage (YouGov): best R² 0.773 with SENTENCE_TRANSFORMER (k=75); largest MAE reduction -0.002 via SENTENCE_TRANSFORMER.</p></li>
 </ul>
-<p>Artifacts are saved under <code class="docutils literal notranslate"><span class="pre">models/knn/opinion/&lt;feature_space&gt;/&lt;study&gt;/</span></code> with per-participant predictions (<code class="docutils literal notranslate"><span class="pre">..._validation.jsonl</span></code>) and detailed metrics (<code class="docutils literal notranslate"><span class="pre">..._metrics.json</span></code>).</p>
 </section>
 </section>
 
@@ -479,11 +492,7 @@
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
 <li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a><ul>
-<li><a class="reference internal" href="#opinion-change-heatmaps">Opinion Change Heatmaps</a><ul>
-<li><a class="reference internal" href="#tf-idf">TF-IDF</a></li>
-<li><a class="reference internal" href="#word2vec">Word2Vec</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#opinion-change-heatmaps">Opinion Change Heatmaps</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#takeaways">Takeaways</a></li>

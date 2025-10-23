@@ -9,6 +9,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, Optional
 
+_VALID_STAT_KEYS = {
+    "view_count",
+    "like_count",
+    "dislike_count",
+    "favorite_count",
+    "comment_count",
+    "share_count",
+}
+
 
 VideoStats = Dict[str, Optional[int]]
 
@@ -50,7 +59,7 @@ def get_video_stats() -> Dict[str, VideoStats]:
             stats[vid] = {
                 key: _coerce_int(value)
                 for key, value in fields.items()
-                if key in {"view_count", "like_count", "dislike_count", "favorite_count", "comment_count", "share_count"}
+                if key in _VALID_STAT_KEYS
             }
         if stats:
             return stats

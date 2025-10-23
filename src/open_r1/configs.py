@@ -272,7 +272,8 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
     :type code_language: str
     :param max_completion_len: Maximum number of tokens in a completion.
     :type max_completion_len: int
-    :param soft_punish_cache: Minimum number of tokens in a completion before the hard penalty applies.
+    :param soft_punish_cache: Minimum number of tokens in a completion before the
+        hard penalty applies.
     :type soft_punish_cache: int
     """
 

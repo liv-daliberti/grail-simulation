@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from common.opinion import opinion_example_kwargs
+
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -39,7 +41,20 @@ LOGGER = get_logger("xgb.opinion")
 
 @dataclass(frozen=True)
 class OpinionSpec:
-    """Columns describing a single participant study."""
+    """
+    Columns describing a single participant study.
+
+    :ivar key: Opinion study identifier used in the dataset.
+    :vartype key: str
+    :ivar issue: Issue key associated with the participant study.
+    :vartype issue: str
+    :ivar label: Human-readable label for reporting.
+    :vartype label: str
+    :ivar before_column: Name of the column holding the pre-study index.
+    :vartype before_column: str
+    :ivar after_column: Name of the column holding the post-study index.
+    :vartype after_column: str
+    """
 
     key: str
     issue: str
@@ -50,7 +65,22 @@ class OpinionSpec:
 
 @dataclass
 class OpinionExample:
-    """Collapsed participant-level prompt and opinion indices."""
+    """
+    Collapsed participant-level prompt and opinion indices.
+
+    :ivar participant_id: Unique identifier of the participant.
+    :vartype participant_id: str
+    :ivar participant_study: Study key associated with the participant.
+    :vartype participant_study: str
+    :ivar issue: Issue key for the interaction.
+    :vartype issue: str
+    :ivar document: Prompt document assembled from the participant history.
+    :vartype document: str
+    :ivar before: Baseline opinion index value.
+    :vartype before: float
+    :ivar after: Post-study opinion index value.
+    :vartype after: float
+    """
 
     participant_id: str
     participant_study: str
@@ -62,7 +92,18 @@ class OpinionExample:
 
 @dataclass(frozen=True)
 class OpinionTrainConfig:
-    """Training options shared across the opinion pipeline."""
+    """
+    Training options shared across the opinion pipeline.
+
+    :ivar max_participants: Optional cap on the number of participants (0 keeps all).
+    :vartype max_participants: int
+    :ivar seed: Random seed applied to participant sampling.
+    :vartype seed: int
+    :ivar max_features: Maximum TF-IDF features (``None`` allows full vocabulary).
+    :vartype max_features: Optional[int]
+    :ivar booster: Booster hyper-parameters reused for the regressor.
+    :vartype booster: XGBoostBoosterParams
+    """
 
     max_participants: int = 0
     seed: int = 42
@@ -72,7 +113,24 @@ class OpinionTrainConfig:
 
 @dataclass(frozen=True)
 class OpinionEvalRequest:
-    """Inputs required to execute the opinion regression workflow."""
+    """
+    Inputs required to execute the opinion regression workflow.
+
+    :ivar dataset: Dataset identifier or path passed to :func:`load_dataset_source`.
+    :vartype dataset: Optional[str]
+    :ivar cache_dir: Optional cache directory for dataset loading.
+    :vartype cache_dir: Optional[str]
+    :ivar out_dir: Base directory receiving artefacts written by the stage.
+    :vartype out_dir: Path
+    :ivar feature_space: Identifier describing the feature representation (e.g. ``tfidf``).
+    :vartype feature_space: str
+    :ivar extra_fields: Additional prompt columns appended during document assembly.
+    :vartype extra_fields: Sequence[str]
+    :ivar train_config: Configuration applied during regressor training.
+    :vartype train_config: OpinionTrainConfig
+    :ivar overwrite: Flag controlling whether existing artefacts may be replaced.
+    :vartype overwrite: bool
+    """
 
     dataset: str | None
     cache_dir: str | None
@@ -109,7 +167,14 @@ DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
 
 
 def float_or_none(value: Any) -> Optional[float]:
-    """Return ``value`` converted to ``float`` when possible."""
+    """
+    Convert an arbitrary value to ``float`` when possible.
+
+    :param value: Raw value extracted from the dataset.
+    :type value: Any
+    :returns: Floating-point representation or ``None`` when conversion fails.
+    :rtype: Optional[float]
+    """
 
     if value is None:
         return None
@@ -123,7 +188,11 @@ def float_or_none(value: Any) -> Optional[float]:
 
 
 def _vectorizer_available() -> None:
-    """Ensure optional scikit-learn and XGBoost dependencies are installed."""
+    """
+    Validate that optional dependencies required for opinion regression are installed.
+
+    :raises ImportError: If either scikit-learn or XGBoost is unavailable.
+    """
 
     if TfidfVectorizer is None or mean_absolute_error is None:  # pragma: no cover
         raise ImportError("Install scikit-learn to run the XGBoost opinion pipeline.")
@@ -131,6 +200,7 @@ def _vectorizer_available() -> None:
         raise ImportError("Install xgboost to train the opinion regressor.")
 
 
+# pylint: disable=too-many-locals
 def collect_examples(
     dataset,
     *,
@@ -139,7 +209,22 @@ def collect_examples(
     max_participants: int,
     seed: int,
 ) -> List[OpinionExample]:
-    """Collapse rows down to one entry per participant."""
+    """
+    Collapse dataset rows down to one opinion example per participant.
+
+    :param dataset: Dataset split providing raw interaction rows.
+    :type dataset: datasets.Dataset | Sequence[dict]
+    :param spec: Opinion study specification describing the target columns.
+    :type spec: OpinionSpec
+    :param extra_fields: Additional prompt columns appended to the document.
+    :type extra_fields: Sequence[str]
+    :param max_participants: Optional cap on the number of participants (0 keeps all).
+    :type max_participants: int
+    :param seed: Random seed used when subsampling participants.
+    :type seed: int
+    :returns: Participant-level examples combining prompts and opinion indices.
+    :rtype: List[OpinionExample]
+    """
 
     LOGGER.info(
         "[OPINION] Collapsing dataset for study=%s issue=%s rows=%d",
@@ -164,7 +249,7 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        example = OpinionExample(
+        base_kwargs = opinion_example_kwargs(
             participant_id=participant_id,
             participant_study=spec.key,
             issue=spec.issue,
@@ -172,6 +257,7 @@ def collect_examples(
             before=before,
             after=after,
         )
+        example = OpinionExample(**base_kwargs)
         existing = per_participant.get(participant_id)
         if existing is None or step_index >= existing[1]:
             per_participant[participant_id] = (example, step_index)
@@ -192,7 +278,16 @@ def _fit_vectorizer(
     *,
     max_features: Optional[int],
 ) -> TfidfVectorizer:
-    """Return TF-IDF vectoriser fitted on ``documents``."""
+    """
+    Fit a TF-IDF vectoriser on the provided documents.
+
+    :param documents: Corpus used to estimate TF-IDF statistics.
+    :type documents: Sequence[str]
+    :param max_features: Optional cap on the TF-IDF vocabulary size.
+    :type max_features: Optional[int]
+    :returns: Fitted scikit-learn TF-IDF vectoriser.
+    :rtype: TfidfVectorizer
+    """
 
     vectorizer = TfidfVectorizer(
         lowercase=True,
@@ -210,9 +305,25 @@ def _train_regressor(
     targets: np.ndarray,
     config: OpinionTrainConfig,
     eval_features=None,
-    eval_targets: np.ndarray | None = None,
+   eval_targets: np.ndarray | None = None,
 ) -> Tuple[XGBRegressor, Dict[str, Dict[str, List[float]]]]:
-    """Return a fitted :class:`xgboost.XGBRegressor` and evaluation history."""
+    """
+    Train an :class:`xgboost.XGBRegressor` and capture optional evaluation metrics.
+
+    :param features: Training feature matrix.
+    :type features: Any
+    :param targets: Training target vector.
+    :type targets: numpy.ndarray
+    :param config: Training configuration containing booster hyper-parameters.
+    :type config: OpinionTrainConfig
+    :param eval_features: Optional validation feature matrix.
+    :type eval_features: Any, optional
+    :param eval_targets: Optional validation target vector.
+    :type eval_targets: Optional[numpy.ndarray]
+    :returns: Tuple of ``(regressor, eval_history)`` where ``eval_history`` mirrors
+        :meth:`xgboost.XGBRegressor.evals_result`.
+    :rtype: Tuple[XGBRegressor, Dict[str, Dict[str, List[float]]]]
+    """
 
     booster = config.booster
     regressor = XGBRegressor(
@@ -232,11 +343,12 @@ def _train_regressor(
     eval_set = []
     if eval_features is not None and eval_targets is not None:
         eval_set = [(features, targets), (eval_features, eval_targets)]
+    if eval_set:
+        regressor.set_params(eval_metric=["mae", "rmse"])
     regressor.fit(
         features,
         targets,
         eval_set=eval_set if eval_set else None,
-        eval_metric=["mae", "rmse"],
         verbose=False,
     )
     history = regressor.evals_result() if eval_set else {}
@@ -248,7 +360,16 @@ def _baseline_metrics(
     before: np.ndarray,
     after: np.ndarray,
 ) -> Dict[str, float]:
-    """Compute MAE/RMSE/R² when predicting ``after`` using ``before`` directly."""
+    """
+    Compute baseline metrics assuming the post-study index equals the pre-study value.
+
+    :param before: Baseline opinion indices.
+    :type before: numpy.ndarray
+    :param after: Post-study opinion indices.
+    :type after: numpy.ndarray
+    :returns: Dictionary containing MAE, RMSE, and R² for the baseline predictor.
+    :rtype: Dict[str, float]
+    """
 
     mae = float(mean_absolute_error(after, before))
     rmse = float(math.sqrt(mean_squared_error(after, before)))
@@ -265,7 +386,16 @@ def _model_metrics(
     predictions: np.ndarray,
     after: np.ndarray,
 ) -> Dict[str, float]:
-    """Compute MAE/RMSE/R² comparing model ``predictions`` to ``after`` targets."""
+    """
+    Compute evaluation metrics comparing model predictions to ground truth.
+
+    :param predictions: Predicted post-study opinion indices.
+    :type predictions: numpy.ndarray
+    :param after: Actual post-study opinion indices.
+    :type after: numpy.ndarray
+    :returns: Dictionary containing MAE, RMSE, and R² metrics.
+    :rtype: Dict[str, float]
+    """
 
     mae = float(mean_absolute_error(after, predictions))
     rmse = float(math.sqrt(mean_squared_error(after, predictions)))
@@ -278,7 +408,15 @@ def _model_metrics(
 
 
 def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
-    """Return opinion study specifications matching ``tokens``."""
+    """
+    Resolve CLI tokens into the corresponding opinion study specifications.
+
+    :param tokens: Collection of study identifiers provided by the user.
+    :type tokens: Sequence[str]
+    :returns: Ordered list of matching :class:`OpinionSpec` definitions.
+    :rtype: List[OpinionSpec]
+    :raises ValueError: If an unknown study key is requested.
+    """
 
     if not tokens:
         return list(DEFAULT_SPECS)
@@ -297,6 +435,7 @@ def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
     return resolved
 
 
+# pylint: disable=too-many-locals
 def _evaluate_spec(
     *,
     dataset,
@@ -305,7 +444,23 @@ def _evaluate_spec(
     dataset_source: str,
     request: OpinionEvalRequest,
 ) -> Optional[Dict[str, Any]]:
-    """Evaluate a single study specification and persist outputs."""
+    """
+    Evaluate a single opinion study and persist metrics plus predictions.
+
+    :param dataset: Dataset dictionary containing train/eval splits.
+    :type dataset: Mapping[str, Sequence[dict]]
+    :param spec: Opinion study specification to evaluate.
+    :type spec: OpinionSpec
+    :param base_dir: Base output directory for study artefacts.
+    :type base_dir: Path
+    :param dataset_source: Human-readable dataset identifier for reporting.
+    :type dataset_source: str
+    :param request: Evaluation request describing feature space and configuration.
+    :type request: OpinionEvalRequest
+    :returns: Metrics payload summarising the evaluation, or ``None`` when skipped.
+    :rtype: Optional[Dict[str, Any]]
+    :raises FileExistsError: If outputs already exist and overwriting is disabled.
+    """
 
     train_examples = collect_examples(
         dataset[TRAIN_SPLIT],
@@ -448,7 +603,12 @@ def run_opinion_eval(
     """
     Execute the opinion regression workflow and persist artefacts under ``request.out_dir``.
 
+    :param request: Evaluation request describing dataset and training configuration.
+    :type request: OpinionEvalRequest
+    :param studies: Optional subset of study keys to process (defaults to all).
+    :type studies: Sequence[str] | None
     :returns: Mapping of study key to metric summary.
+    :rtype: Dict[str, Dict[str, Any]]
     """
 
     _vectorizer_available()

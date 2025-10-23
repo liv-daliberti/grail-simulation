@@ -347,6 +347,12 @@
             <span class="s2">&quot;into this directory.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--jobs&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Parallel worker processes used for filtering and example mapping.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span></div>
 
 
@@ -365,6 +371,15 @@
         <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">jobs</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jobs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jobs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;clean_grail&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Ignoring invalid --jobs value </span><span class="si">%d</span><span class="s2">; expected &gt;= 1.&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">jobs</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">jobs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">jobs</span>
+
     <span class="n">build_options</span> <span class="o">=</span> <span class="n">BuildOptions</span><span class="p">(</span>
         <span class="n">validation_ratio</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">validation_ratio</span><span class="p">,</span>
         <span class="n">train_split</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">train_split</span><span class="p">,</span>
@@ -372,6 +387,7 @@
         <span class="n">system_prompt</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
         <span class="n">sol_key</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sol_key</span><span class="p">,</span>
         <span class="n">max_history</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_history</span><span class="p">,</span>
+        <span class="n">num_proc</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">full_dataset</span> <span class="o">=</span> <span class="n">build_clean_dataset</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">build_options</span><span class="p">)</span>
 

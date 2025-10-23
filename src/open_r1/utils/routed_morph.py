@@ -19,6 +19,8 @@ from typing import List, Optional
 
 import requests
 
+from .router_common import build_router_payload
+
 
 class RoutedMorphSandbox:
     """
@@ -74,16 +76,12 @@ class RoutedMorphSandbox:
         actual_timeout = timeout if timeout is not None else self.timeout
         actual_request_timeout = request_timeout if request_timeout is not None else self.request_timeout
 
-        # Default to Python for all scripts if languages is not provided
-        if languages is None:
-            languages = ["python"] * len(scripts)
-
-        payload = {
-            "scripts": scripts,
-            "languages": languages,
-            "timeout": actual_timeout,
-            "request_timeout": actual_request_timeout,
-        }
+        languages, payload = build_router_payload(
+            scripts,
+            languages,
+            timeout=actual_timeout,
+            request_timeout=actual_request_timeout,
+        )
 
         try:
             endpoint = f"http://{self.router_url}/execute_batch"

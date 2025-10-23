@@ -1,10 +1,14 @@
 """Command-line interface for the XGBoost slate baseline."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
 import argparse
 import logging
 from pathlib import Path
+
+from common.cli_args import add_comma_separated_argument, add_sentence_transformer_normalise_flags
+from common.cli_options import add_log_level_argument, add_overwrite_argument
 
 from .evaluate import run_eval
 
@@ -106,7 +110,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--sentence_transformer_model",
         default="sentence-transformers/all-mpnet-base-v2",
-        help="SentenceTransformer model identifier used when --text_vectorizer=sentence_transformer.",
+        help=(
+            "SentenceTransformer model identifier used when "
+            "--text_vectorizer=sentence_transformer."
+        ),
     )
     parser.add_argument(
         "--sentence_transformer_device",
@@ -119,19 +126,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=32,
         help="Batch size applied during sentence-transformer encoding.",
     )
-    parser.add_argument(
-        "--sentence_transformer_normalize",
+    add_sentence_transformer_normalise_flags(
+        parser,
         dest="sentence_transformer_normalize",
-        action="store_true",
-        help="L2-normalise sentence-transformer embeddings (default).",
+        enable_flags=("--sentence_transformer_normalize",),
+        disable_flags=("--sentence_transformer_no_normalize",),
+        enable_help="L2-normalise sentence-transformer embeddings (default).",
+        disable_help="Disable L2-normalisation for sentence-transformer embeddings.",
     )
-    parser.add_argument(
-        "--sentence_transformer_no_normalize",
-        dest="sentence_transformer_normalize",
-        action="store_false",
-        help="Disable L2-normalisation for sentence-transformer embeddings.",
-    )
-    parser.set_defaults(sentence_transformer_normalize=True)
     parser.add_argument(
         "--xgb_learning_rate",
         type=float,
@@ -189,12 +191,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Comma-separated list of issues to evaluate (defaults to all).",
     )
-    parser.add_argument(
-        "--participant-studies",
-        "--participant_studies",
-        default="",
+    add_comma_separated_argument(
+        parser,
+        flags=("--participant-studies", "--participant_studies"),
         dest="participant_studies",
-        help="Comma-separated participant study keys to evaluate (defaults to all).",
+        help_text="Comma-separated participant study keys to evaluate (defaults to all).",
     )
     parser.add_argument(
         "--cache_dir",
@@ -206,16 +207,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=str(Path("models") / "xgb"),
         help="Directory for predictions, metrics, and saved models.",
     )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Allow overwriting metrics/prediction files in --out_dir.",
-    )
-    parser.add_argument(
-        "--log_level",
-        default="INFO",
-        help="Logging level (DEBUG, INFO, WARNING, ERROR).",
-    )
+    add_overwrite_argument(parser)
+    add_log_level_argument(parser)
     return parser
 
 

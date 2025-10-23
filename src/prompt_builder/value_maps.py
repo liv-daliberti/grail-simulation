@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Callable, Dict, Iterable, Optional
 
-from .constants import YT_FREQ_MAP
+from .constants import NEWS_TRUST_FIELD_NAMES, YT_FREQ_MAP
 from .parsers import is_nanlike
 
 RACE_CODE_MAP = {
@@ -302,24 +302,9 @@ PERCENTAGE_FIELDS = {
     "affpol_comfort_w2",
     "affpol_smart",
     "affpol_smart_w2",
-    "news_trust",
-    "trust_majornews_w1",
-    "trust_localnews_w1",
-    "trust_majornews_w2",
-    "trust_localnews_w2",
-    "trust_majornews_w3",
-    "trust_localnews_w3",
-}
+} | set(NEWS_TRUST_FIELD_NAMES)
 
-NEWS_TRUST_FIELDS = {
-    "news_trust",
-    "trust_majornews_w1",
-    "trust_localnews_w1",
-    "trust_majornews_w2",
-    "trust_localnews_w2",
-    "trust_majornews_w3",
-    "trust_localnews_w3",
-}
+NEWS_TRUST_FIELDS = set(NEWS_TRUST_FIELD_NAMES)
 
 CURRENCY_FIELDS = {
     "minwage_text_w1",
@@ -447,7 +432,7 @@ def _format_currency_field(value: Any) -> Optional[str]:
     return _format_currency(numeric)
 
 
-def _format_state(field: str, value: Any) -> Optional[str]:
+def _format_state(value: Any) -> Optional[str]:
     """Map a state code to its canonical label when possible."""
 
     text = str(value).strip()
@@ -462,26 +447,34 @@ def _format_state(field: str, value: Any) -> Optional[str]:
 def _normalize_mapping_lookup(mapping: Dict[str, str], key: str) -> Optional[str]:
     """Return the best-effort value from ``mapping`` handling numeric variants."""
 
-    if key in mapping:
-        return mapping[key]
-    simplified = key.lstrip("0")
-    if simplified in mapping:
-        return mapping[simplified]
-    if key.endswith(".0"):
-        trimmed = key[:-2]
-        if trimmed in mapping:
-            return mapping[trimmed]
-    try:
-        numeric = float(key)
-    except (TypeError, ValueError):
-        return None
-    if math.isfinite(numeric) and numeric.is_integer():
-        candidate = str(int(numeric))
+    text_key = str(key)
+    candidates = [text_key]
+
+    simplified = text_key.lstrip("0")
+    if simplified and simplified != text_key:
+        candidates.append(simplified)
+    if text_key.endswith(".0"):
+        trimmed = text_key[:-2]
+        if trimmed:
+            candidates.append(trimmed)
+
+    for candidate in candidates:
         if candidate in mapping:
             return mapping[candidate]
-    formatted = f"{numeric:g}"
-    if formatted in mapping:
-        return mapping[formatted]
+
+    try:
+        numeric = float(text_key)
+    except (TypeError, ValueError):
+        return None
+
+    if math.isfinite(numeric):
+        if numeric.is_integer():
+            integer_candidate = str(int(numeric))
+            if integer_candidate in mapping:
+                return mapping[integer_candidate]
+        formatted = f"{numeric:g}"
+        if formatted in mapping:
+            return mapping[formatted]
     return None
 
 
@@ -532,6 +525,32 @@ def _format_news_trust(raw: Any) -> Optional[str]:
     return f"{descriptor} (about {score}%)"
 
 
+def _apply_special_renderers(field_lower: str, value: Any, text: str) -> Optional[str]:
+    """Resolve field-specific renderers that rely on shared lookups."""
+
+    result: Optional[str] = None
+    if field_lower in POLITICAL_INTEREST_FIELDS:
+        result = _format_percentage_field(value, precision=1)
+    elif field_lower in FEELING_THERMOMETER_FIELDS:
+        result = _format_feeling_thermometer(value)
+    elif field_lower in NEWS_TRUST_FIELDS:
+        result = _format_news_trust(value)
+    elif field_lower in PERCENTAGE_FIELDS:
+        result = _format_percentage_field(value)
+    elif field_lower in CURRENCY_FIELDS:
+        result = _format_currency_field(value)
+    elif field_lower in SCALE_0_100_FIELDS:
+        result = _format_percentage_field(value)
+    elif field_lower in GUN_IMPORTANCE_FIELDS:
+        key = text.rstrip(".0")
+        result = GUN_IMPORTANCE_MAP.get(key)
+    else:
+        renderer = CUSTOM_FIELD_RENDERERS.get(field_lower)
+        if renderer:
+            result = renderer(value)
+    return result
+
+
 def format_field_value(field: str, value: Any) -> str:
     """
     Convert dataset field ``value`` into human-readable text based on ``field``.
@@ -556,7 +575,7 @@ def format_field_value(field: str, value: Any) -> str:
     result: Optional[str] = None
 
     if field_lower in STATE_FIELD_NAMES:
-        result = _format_state(field_lower, value)
+        result = _format_state(value)
     else:
         mapping = FIELD_VALUE_MAPS.get(field_lower)
         if mapping:
@@ -568,25 +587,8 @@ def format_field_value(field: str, value: Any) -> str:
     if result:
         return result
 
-    if field_lower in POLITICAL_INTEREST_FIELDS:
-        result = _format_percentage_field(value, precision=1)
-    if not result and field_lower in FEELING_THERMOMETER_FIELDS:
-        result = _format_feeling_thermometer(value)
-    if not result and field_lower in NEWS_TRUST_FIELDS:
-        result = _format_news_trust(value)
-    if not result and field_lower in PERCENTAGE_FIELDS:
-        result = _format_percentage_field(value)
-    if not result and field_lower in CURRENCY_FIELDS:
-        result = _format_currency_field(value)
-    if not result and field_lower in SCALE_0_100_FIELDS:
-        result = _format_percentage_field(value)
-    if not result and field_lower in GUN_IMPORTANCE_FIELDS:
-        key = text.rstrip(".0")
-        result = GUN_IMPORTANCE_MAP.get(key)
     if not result:
-        renderer = CUSTOM_FIELD_RENDERERS.get(field_lower)
-        if renderer:
-            result = renderer(value)
+        result = _apply_special_renderers(field_lower, value, text)
 
     return result or text
 

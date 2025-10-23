@@ -265,7 +265,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_div</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose_issue_slug</span><span class="p">,</span> <span class="n">prepare_dataset</span><span class="p">,</span> <span class="n">safe_div</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
@@ -273,6 +273,7 @@
     <span class="n">SOLUTION_COLUMN</span><span class="p">,</span>
     <span class="n">TRAIN_SPLIT</span><span class="p">,</span>
     <span class="n">filter_dataset_for_issue</span><span class="p">,</span>
+    <span class="n">filter_dataset_for_participant_studies</span><span class="p">,</span>
     <span class="n">issues_in_dataset</span><span class="p">,</span>
     <span class="n">load_dataset_source</span><span class="p">,</span>
 <span class="p">)</span>
@@ -294,6 +295,14 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;xgb.eval&quot;</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a cleaned list of comma-separated tokens.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+
 <span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <div class="viewcode-block" id="IssueMetrics">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.evaluate.IssueMetrics">[docs]</a>
@@ -302,6 +311,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing evaluation metrics for a single issue.&quot;&quot;&quot;</span>
 
     <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">participant_studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">evaluated</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">correct</span><span class="p">:</span> <span class="nb">int</span>
@@ -312,7 +322,9 @@
     <span class="n">avg_probability</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">xgboost_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></div>
+    <span class="n">xgboost_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">curve_metrics_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -329,11 +341,14 @@
 <span class="sd">    :vartype extra_fields: Sequence[str]</span>
 <span class="sd">    :ivar eval_max: Optional cap on the number of evaluation rows (0 evaluates all).</span>
 <span class="sd">    :vartype eval_max: int</span>
+<span class="sd">    :ivar participant_studies: Tokenised participant study filters applied to the splits.</span>
+<span class="sd">    :vartype participant_studies: Sequence[str]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">eval_max</span><span class="p">:</span> <span class="nb">int</span></div>
+    <span class="n">eval_max</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">participant_studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
 
 
 
@@ -406,20 +421,21 @@
 <span class="sd">    :param args: Parsed CLI arguments produced via :func:`xgb.cli.build_parser`.</span>
 <span class="sd">    :type args: argparse.Namespace</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">os_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
-    <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
-
-    <span class="n">dataset_source</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="n">DEFAULT_DATASET_SOURCE</span>
-    <span class="n">base_ds</span> <span class="o">=</span> <span class="n">load_dataset_source</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">available_issues</span> <span class="o">=</span> <span class="n">issues_in_dataset</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
+    <span class="n">dataset_source</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">available_issues</span> <span class="o">=</span> <span class="n">prepare_dataset</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">default_source</span><span class="o">=</span><span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
+        <span class="n">cache_dir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span>
+        <span class="n">loader</span><span class="o">=</span><span class="n">load_dataset_source</span><span class="p">,</span>
+        <span class="n">issue_lookup</span><span class="o">=</span><span class="n">issues_in_dataset</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">:</span>
         <span class="n">requested</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="n">requested</span> <span class="k">if</span> <span class="n">requested</span> <span class="k">else</span> <span class="n">available_issues</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="n">available_issues</span>
+
+    <span class="n">study_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
 
     <span class="n">extra_fields</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -428,7 +444,14 @@
     <span class="p">]</span>
 
     <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
-        <span class="n">_evaluate_issue</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">dataset_source</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span></div>
+        <span class="n">_evaluate_issue</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">issue</span><span class="p">,</span>
+            <span class="n">base_ds</span><span class="p">,</span>
+            <span class="n">dataset_source</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">study_tokens</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 
@@ -438,6 +461,7 @@
     <span class="n">base_ds</span><span class="p">,</span>
     <span class="n">dataset_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">study_tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue for the XGBoost baseline and persist outputs.</span>
 
@@ -446,13 +470,35 @@
 <span class="sd">    :param base_ds: Loaded dataset dictionary containing train/eval splits.</span>
 <span class="sd">    :param dataset_source: String describing the data source (path or hub id).</span>
 <span class="sd">    :param extra_fields: Additional text fields appended to the feature document.</span>
+<span class="sd">    :param study_tokens: Participant study filters applied to train/eval splits.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span> <span class="ow">and</span> <span class="n">issue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;all&quot;</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[XGBoost] Evaluating issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">study_tokens</span> <span class="k">if</span> <span class="n">token</span><span class="p">]</span>
+    <span class="n">issue_slug</span> <span class="o">=</span> <span class="n">compose_issue_slug</span><span class="p">(</span><span class="n">issue</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[XGBoost] Evaluating issue=</span><span class="si">%s</span><span class="s2"> participant_studies=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">issue_slug</span><span class="p">,</span>
+        <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_issue</span><span class="p">(</span><span class="n">base_ds</span><span class="p">,</span> <span class="n">issue</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">filter_dataset_for_participant_studies</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
     <span class="n">train_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span>
     <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">]</span>
+
+    <span class="n">train_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)</span>
+    <span class="n">eval_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">train_rows</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">eval_rows</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;[XGBoost] Skipping issue=</span><span class="si">%s</span><span class="s2"> (train_rows=</span><span class="si">%d</span><span class="s2"> eval_rows=</span><span class="si">%d</span><span class="s2">) after participant study filter.&quot;</span><span class="p">,</span>
+            <span class="n">issue_slug</span><span class="p">,</span>
+            <span class="n">train_rows</span><span class="p">,</span>
+            <span class="n">eval_rows</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">_load_or_train_model</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">train_ds</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span>
 
@@ -460,14 +506,23 @@
         <span class="n">dataset_source</span><span class="o">=</span><span class="n">dataset_source</span><span class="p">,</span>
         <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
         <span class="n">eval_max</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">eval_max</span><span class="p">,</span>
+        <span class="n">participant_studies</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">tokens</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="n">evaluate_issue</span><span class="p">(</span>
+    <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">eval_curve</span> <span class="o">=</span> <span class="n">evaluate_issue</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
         <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
         <span class="n">config</span><span class="o">=</span><span class="n">eval_config</span><span class="p">,</span>
     <span class="p">)</span>
-
+    <span class="n">curve_bundle</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="n">eval_curve</span><span class="p">}</span>
+    <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_metrics_for_split</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_curve</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_examples&quot;</span><span class="p">):</span>
+        <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve</span>
+    <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span> <span class="o">=</span> <span class="n">curve_bundle</span>
     <span class="n">_write_outputs</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;[XGBoost] Issue=</span><span class="si">%s</span><span class="s2"> accuracy=</span><span class="si">%.3f</span><span class="s2"> coverage=</span><span class="si">%.3f</span><span class="s2"> evaluated=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -569,6 +624,11 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2"> already exists. Use --overwrite to replace outputs.&quot;</span>
         <span class="p">)</span>
     <span class="n">ensure_directory</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span><span class="p">:</span>
+        <span class="n">curve_path</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;xgb_curves_</span><span class="si">{</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">.json&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">curve_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">curve_path</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">metrics</span><span class="p">),</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;predictions.jsonl&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
@@ -584,7 +644,7 @@
     <span class="n">eval_ds</span><span class="p">,</span>
     <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">EvaluationConfig</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">IssueMetrics</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">IssueMetrics</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Evaluate a trained XGBoost model on the provided evaluation split.</span>
 
@@ -603,7 +663,8 @@
     <span class="n">records</span> <span class="o">=</span> <span class="n">_collect_prediction_records</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
     <span class="n">metrics</span> <span class="o">=</span> <span class="n">_summarise_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="n">predictions</span> <span class="o">=</span> <span class="n">_records_to_predictions</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span></div>
+    <span class="n">curve_payload</span> <span class="o">=</span> <span class="n">_accuracy_curve_from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">curve_payload</span></div>
 
 
 
@@ -684,6 +745,7 @@
     <span class="n">summary</span> <span class="o">=</span> <span class="n">_summarise_outcomes</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">IssueMetrics</span><span class="p">(</span>
         <span class="n">issue</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">participant_studies</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant_studies</span><span class="p">),</span>
         <span class="n">dataset_source</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_source</span><span class="p">,</span>
         <span class="n">evaluated</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">evaluated</span><span class="p">,</span>
         <span class="n">correct</span><span class="o">=</span><span class="n">summary</span><span class="o">.</span><span class="n">correct</span><span class="p">,</span>
@@ -715,6 +777,53 @@
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">records</span>
     <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_accuracy_curve_from_records</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">PredictionOutcome</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">target_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return cumulative accuracy checkpoints computed from ``records``.&quot;&quot;&quot;</span>
+
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy_by_step&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;stride&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">target_points</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">target_points</span><span class="p">)</span>
+    <span class="n">stride</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">total</span> <span class="o">//</span> <span class="n">target_points</span><span class="p">)</span>
+    <span class="n">checkpoints</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">_index</span><span class="p">,</span> <span class="n">outcome</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">correct</span><span class="p">:</span>
+            <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">total</span> <span class="ow">or</span> <span class="n">idx</span> <span class="o">%</span> <span class="n">stride</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">checkpoints</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">total</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">checkpoints</span><span class="p">:</span>
+        <span class="n">checkpoints</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">total</span><span class="p">)]</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;accuracy_by_step&quot;</span><span class="p">:</span> <span class="n">checkpoints</span><span class="p">,</span>
+        <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+        <span class="s2">&quot;stride&quot;</span><span class="p">:</span> <span class="n">stride</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_curve_metrics_for_split</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">XGBoostSlateModel</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">target_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute cumulative accuracy metrics for ``dataset``.&quot;&quot;&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">EvaluationConfig</span><span class="p">(</span>
+        <span class="n">dataset_source</span><span class="o">=</span><span class="s2">&quot;curve&quot;</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
+        <span class="n">eval_max</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">participant_studies</span><span class="o">=</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">_collect_prediction_records</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_accuracy_curve_from_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">target_points</span><span class="o">=</span><span class="n">target_points</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_probabilities</span><span class="p">(</span>

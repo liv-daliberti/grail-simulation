@@ -273,7 +273,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># pylint: disable=unused-import</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>  <span class="c1"># pylint: disable=unused-import</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seed</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.trainer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalStrategy</span><span class="p">,</span> <span class="n">get_last_checkpoint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.trainer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">TrlParser</span><span class="p">,</span> <span class="n">get_peft_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>
 
@@ -286,6 +286,15 @@
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
+    <span class="n">DEFAULT_SYSTEM_PROMPT</span><span class="p">,</span>
+    <span class="n">build_training_example</span><span class="p">,</span>
+    <span class="n">collect_passthrough_fields</span><span class="p">,</span>
+    <span class="n">configure_eval</span> <span class="k">as</span> <span class="n">shared_configure_eval</span><span class="p">,</span>
+    <span class="n">prepare_eval_dataset</span> <span class="k">as</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">,</span>
+    <span class="n">resolve_checkpoint</span> <span class="k">as</span> <span class="n">shared_resolve_checkpoint</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.rewards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_reward_funcs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_tokenizer</span>
 
@@ -294,50 +303,7 @@
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - fallback when datasets is unavailable at lint time</span>
     <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>
 
-<span class="n">DEFAULT_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;You are choosing EXACTLY ONE item from a short slate for a specific viewer.</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Think briefly in &lt;think&gt;…&lt;/think&gt;, then output ONLY the option NUMBER &quot;</span>
-    <span class="s2">&quot;(1..N) inside &lt;answer&gt;…&lt;/answer&gt;.</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Format (STRICT): &lt;think&gt;…&lt;/think&gt;&lt;answer&gt;3&lt;/answer&gt;&quot;</span>
-<span class="p">)</span>
-
-<span class="n">PASSTHROUGH_KEYS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;issue&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;session_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;step_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_order_key&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;issue_source&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;issue_detail&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_source&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_title&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_channel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_channel_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;urlid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;topic_id&quot;</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="n">KEEP_COLUMNS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;prompt&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;answer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gold_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;n_options&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;viewer_profile&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;state_text&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_items&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_text&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;current_video_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;current_video_title&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;task&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;is_replay&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mix_group_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">,</span>
-<span class="p">}</span>
+<span class="n">KEEP_COLUMNS</span> <span class="o">=</span> <span class="n">BASE_TRAIN_KEEP_COLUMNS</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -483,35 +449,21 @@
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">example</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">sys_msg</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">user_msg</span><span class="p">},</span>
-        <span class="p">],</span>
-        <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">gold_idx</span><span class="p">),</span>
-        <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_idx</span><span class="p">,</span>
-        <span class="s2">&quot;gold_id&quot;</span><span class="p">:</span> <span class="n">gold_id</span><span class="p">,</span>
-        <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="s2">&quot;viewer_profile&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">synthesize_viewer_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">)),</span>
-        <span class="s2">&quot;state_text&quot;</span><span class="p">:</span> <span class="n">user_msg</span><span class="p">,</span>
-        <span class="s2">&quot;slate_items&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
-        <span class="s2">&quot;slate_text&quot;</span><span class="p">:</span> <span class="n">slate_text</span><span class="p">,</span>
-        <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;current_video_id&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;current_video_title&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="s2">&quot;GRAIL&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;is_replay&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="s2">&quot;mix_group_id&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-        <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">PASSTHROUGH_KEYS</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ex</span><span class="p">:</span>
-            <span class="n">example</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">example</span>
+    <span class="k">return</span> <span class="n">build_training_example</span><span class="p">(</span>
+        <span class="n">system_prompt</span><span class="o">=</span><span class="n">sys_msg</span><span class="p">,</span>
+        <span class="n">user_prompt</span><span class="o">=</span><span class="n">user_msg</span><span class="p">,</span>
+        <span class="n">gold_index</span><span class="o">=</span><span class="n">gold_idx</span><span class="p">,</span>
+        <span class="n">gold_id</span><span class="o">=</span><span class="n">gold_id</span><span class="p">,</span>
+        <span class="n">n_options</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">viewer_profile</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">synthesize_viewer_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">)),</span>
+        <span class="n">slate_items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
+        <span class="n">slate_text</span><span class="o">=</span><span class="n">slate_text</span><span class="p">,</span>
+        <span class="n">watched_detailed_json</span><span class="o">=</span><span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">)),</span>
+        <span class="n">watched_vids_json</span><span class="o">=</span><span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">)),</span>
+        <span class="n">current_video_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">current_video_title</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">collect_passthrough_fields</span><span class="p">(</span><span class="n">ex</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_valid_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">solution_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -636,67 +588,27 @@
     <span class="n">script_args</span><span class="p">:</span> <span class="n">GRPOScriptArguments</span><span class="p">,</span>
     <span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare the evaluation dataset when ``do_eval`` is enabled.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper around the shared evaluation dataset preparation helper.&quot;&quot;&quot;</span>
 
-<span class="sd">    :param dataset: Dataset dictionary produced by :func:`_build_dataset`.</span>
-<span class="sd">    :param script_args: Script arguments providing split names.</span>
-<span class="sd">    :param training_args: Training configuration containing evaluation flags.</span>
-<span class="sd">    :returns: Evaluation dataset or ``None`` when evaluation is disabled/unavailable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">test_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_test_split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">test_split</span> <span class="ow">and</span> <span class="n">test_split</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;[grpo] do_eval enabled but missing test split &#39;</span><span class="si">%s</span><span class="s2">&#39;; disabling eval&quot;</span><span class="p">,</span>
-            <span class="n">test_split</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">training_args</span><span class="o">.</span><span class="n">do_eval</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">test_split</span><span class="p">]</span>
-    <span class="n">max_eval</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;max_eval_samples&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_eval</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">max_eval</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">eval_ds</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">training_args</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_eval</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">eval_ds</span>
+    <span class="k">return</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">script_args</span><span class="p">,</span>
+        <span class="n">training_args</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust evaluation strategy to ensure periodic evaluation runs.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper around the shared evaluation configuration helper.&quot;&quot;&quot;</span>
 
-<span class="sd">    :param training_args: Training configuration mutated in place.</span>
-<span class="sd">    :param eval_ds: Prepared evaluation dataset (or ``None``).</span>
-<span class="sd">    :raises ValueError: If ``eval_steps`` is missing when evaluation is enabled.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;evaluation_strategy&quot;</span><span class="p">,</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[grpo] forcing evaluation_strategy=&#39;steps&#39; because do_eval is enabled&quot;</span><span class="p">)</span>
-        <span class="n">training_args</span><span class="o">.</span><span class="n">evaluation_strategy</span> <span class="o">=</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">STEPS</span>
-    <span class="n">eval_steps</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;eval_steps&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">eval_steps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">eval_steps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;eval_steps must be &gt; 0 when do_eval is enabled. &quot;</span>
-            <span class="s2">&quot;Set a positive value in the config.&quot;</span>
-        <span class="p">)</span>
+    <span class="n">shared_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the checkpoint path to resume from when available.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the checkpoint path to resume from when available.&quot;&quot;&quot;</span>
 
-<span class="sd">    :param training_args: Training configuration containing resume parameters.</span>
-<span class="sd">    :returns: Path to the checkpoint directory or ``None`` if not found.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">resume</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;resume_from_checkpoint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">resume</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">resume</span>
-    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span>
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_last_checkpoint</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">shared_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="main">

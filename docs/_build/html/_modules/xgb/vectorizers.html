@@ -890,7 +890,9 @@
     <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Word2VecVectorizer</span><span class="p">(</span><span class="n">word2vec</span> <span class="ow">or</span> <span class="n">Word2VecVectorizerConfig</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">SentenceTransformerVectorizer</span><span class="p">(</span><span class="n">sentence_transformer</span> <span class="ow">or</span> <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">SentenceTransformerVectorizer</span><span class="p">(</span>
+            <span class="n">sentence_transformer</span> <span class="ow">or</span> <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">()</span>
+        <span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported text vectorizer &#39;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
 
 

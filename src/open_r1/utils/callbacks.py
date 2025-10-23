@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from concurrent.futures import Future
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import torch
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
@@ -198,51 +198,3 @@ class ReplayBufferCallback(TrainerCallback):
             f"{num_rep}/{batch_sz} replay • buffer = {buf_size}",
             flush=True,
         )
-# ---------------------------------------------------------------------------
-#  Registry ------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-
-CALLBACKS = {
-    "push_to_hub_revision": PushToHubRevisionCallback,
-    "caching_callback"    : SuccessCachingCallback,
-    "replay_buffer_callback": ReplayBufferCallback,
-}
-
-# ---------------------------------------------------------------------------
-#  Factory -------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-
-def get_callbacks(
-    train_cfg,
-    model_cfg,
-    *,
-    replay_buffer: Optional[ReplayBuffer] = None,
-    tokenizer=None,
-):
-    """Instantiate the callbacks listed in ``train_cfg.callbacks``."""
-    cb_list: List[TrainerCallback] = []
-
-    for name in train_cfg.callbacks:
-        if name not in CALLBACKS:
-            raise ValueError(f"Unknown callback '{name}'")
-
-        cls = CALLBACKS[name]
-
-        if name == "push_to_hub_revision":
-            cb_list.append(cls(model_cfg))
-
-        elif name == "caching_callback":
-            if replay_buffer is None:
-                raise ValueError("SuccessCachingCallback requires `replay_buffer`.")
-            # ↓↓↓ pass the lower threshold here
-            cb_list.append(cls(replay_buffer, acc_threshold=0.0))
-
-        elif name == "replay_buffer_callback":
-            if replay_buffer is None or tokenizer is None:
-                raise ValueError("ReplayBufferCallback requires both `replay_buffer` and `tokenizer`.")
-            cb_list.append(cls(replay_buffer=replay_buffer, tokenizer=tokenizer))
-
-        else:          
-            cb_list.append(cls())
-
-    return cb_list

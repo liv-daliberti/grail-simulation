@@ -280,7 +280,7 @@ It is the public surface that downstream tooling should import when they
 need to build or persist cleaned prompt datasets.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="clean_data.clean_data.BuildOptions">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">clean_data.clean_data.</span></span><span class="sig-name descname"><span class="pre">BuildOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/clean_data.html#BuildOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.clean_data.BuildOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">clean_data.clean_data.</span></span><span class="sig-name descname"><span class="pre">BuildOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/clean_data.html#BuildOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.clean_data.BuildOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration used when building cleaned prompt datasets.</p>
 <dl class="field-list simple">
@@ -292,12 +292,18 @@ need to build or persist cleaned prompt datasets.</p>
 <li><p><strong>system_prompt</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>max_history</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_proc</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.clean_data.BuildOptions.max_history">
 <span class="sig-name descname"><span class="pre">max_history</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></em><a class="headerlink" href="#clean_data.clean_data.BuildOptions.max_history" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="clean_data.clean_data.BuildOptions.num_proc">
+<span class="sig-name descname"><span class="pre">num_proc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#clean_data.clean_data.BuildOptions.num_proc" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -449,7 +455,7 @@ view can apply this helper to recover the previous behaviour.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.clean_data.map_rows_to_examples">
-<span class="sig-prename descclassname"><span class="pre">clean_data.clean_data.</span></span><span class="sig-name descname"><span class="pre">map_rows_to_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/clean_data.html#map_rows_to_examples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.clean_data.map_rows_to_examples" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.clean_data.</span></span><span class="sig-name descname"><span class="pre">map_rows_to_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/clean_data.html#map_rows_to_examples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.clean_data.map_rows_to_examples" title="Link to this definition">¶</a></dt>
 <dd><p>Convert interaction rows into cleaned prompt examples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -458,6 +464,7 @@ view can apply this helper to recover the previous behaviour.</p>
 <li><p><strong>system_prompt</strong> (<em>str</em><em> | </em><em>None</em>) – Optional system prompt override applied to every row.</p></li>
 <li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>) – Alternate column containing the gold next-video identifier.</p></li>
 <li><p><strong>max_history</strong> (<em>int</em>) – Maximum number of prior interactions to embed in <code class="docutils literal notranslate"><span class="pre">state_text</span></code>.</p></li>
+<li><p><strong>num_proc</strong> (<em>int</em><em> | </em><em>None</em>) – Optional number of worker processes passed to <code class="docutils literal notranslate"><span class="pre">datasets.Dataset.map</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -669,13 +676,14 @@ entry points rather than imported by downstream consumers directly.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="clean_data.filters.filter_prompt_ready">
-<span class="sig-prename descclassname"><span class="pre">clean_data.filters.</span></span><span class="sig-name descname"><span class="pre">filter_prompt_ready</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/filters.html#filter_prompt_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.filters.filter_prompt_ready" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">clean_data.filters.</span></span><span class="sig-name descname"><span class="pre">filter_prompt_ready</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/filters.html#filter_prompt_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.filters.filter_prompt_ready" title="Link to this definition">¶</a></dt>
 <dd><p>Drop rows that cannot produce a valid prompt/example.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Input dataset keyed by split.</p></li>
 <li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>) – Alternate gold-id column used to validate the target choice.</p></li>
+<li><p><strong>num_proc</strong> (<em>int</em><em> | </em><em>None</em>) – Optional number of worker processes used by <code class="docutils literal notranslate"><span class="pre">datasets.filter</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2773,6 +2781,7 @@ coefficient, standard error, 95% CI, and two-sided p-value.</p>
 <li><a class="reference internal" href="#module-clean_data">Core Modules</a><ul>
 <li><a class="reference internal" href="#clean_data.clean_data.BuildOptions"><code class="docutils literal notranslate"><span class="pre">BuildOptions</span></code></a><ul>
 <li><a class="reference internal" href="#clean_data.clean_data.BuildOptions.max_history"><code class="docutils literal notranslate"><span class="pre">BuildOptions.max_history</span></code></a></li>
+<li><a class="reference internal" href="#clean_data.clean_data.BuildOptions.num_proc"><code class="docutils literal notranslate"><span class="pre">BuildOptions.num_proc</span></code></a></li>
 <li><a class="reference internal" href="#clean_data.clean_data.BuildOptions.sol_key"><code class="docutils literal notranslate"><span class="pre">BuildOptions.sol_key</span></code></a></li>
 <li><a class="reference internal" href="#clean_data.clean_data.BuildOptions.system_prompt"><code class="docutils literal notranslate"><span class="pre">BuildOptions.system_prompt</span></code></a></li>
 <li><a class="reference internal" href="#clean_data.clean_data.BuildOptions.train_split"><code class="docutils literal notranslate"><span class="pre">BuildOptions.train_split</span></code></a></li>

@@ -18,6 +18,8 @@
 from typing import List, Optional
 
 import requests
+
+from .router_common import build_router_payload
 from e2b_code_interpreter.models import Execution, ExecutionError, Result
 
 
@@ -67,17 +69,12 @@ class RoutedSandbox:
         if request_timeout is None:
             request_timeout = 30  # Default to 30 seconds
 
-        # Default to Python for all scripts if languages is not provided
-        if languages is None:
-            languages = ["python"] * len(scripts)
-
-        # Prepare the payload for the HTTP POST request
-        payload = {
-            "scripts": scripts,
-            "languages": languages,
-            "timeout": timeout,
-            "request_timeout": request_timeout,
-        }
+        languages, payload = build_router_payload(
+            scripts,
+            languages,
+            timeout=timeout,
+            request_timeout=request_timeout,
+        )
 
         # Send the request to the E2B Router
         response = requests.post(

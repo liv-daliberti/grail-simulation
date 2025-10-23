@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
@@ -26,8 +27,7 @@ from transformers import (
     AutoTokenizer,
     set_seed,
 )
-from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
-from trl import ModelConfig, TrlParser, get_peft_config
+from trl import ModelConfig, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
 from prompt_builder import (
@@ -38,8 +38,19 @@ from prompt_builder import (
     synthesize_viewer_sentence,
 )
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
+from open_r1.dataset_utils import drop_marked_rows, slate_has_gold
 from open_r1.rewards import get_reward_funcs
+from open_r1.shared import (
+    BASE_TRAIN_KEEP_COLUMNS,
+    build_training_example,
+    collect_passthrough_fields,
+    configure_eval as shared_configure_eval,
+    parse_and_run,
+    prepare_eval_dataset as shared_prepare_eval_dataset,
+    resolve_checkpoint as shared_resolve_checkpoint,
+)
 from open_r1.utils import get_dataset, get_model, get_tokenizer
+from .constants import DEFAULT_SYSTEM_PROMPT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from datasets import DatasetDict
@@ -50,50 +61,7 @@ logger = logging.getLogger(__name__)
 
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
-PASSTHROUGH_FIELDS = {
-    "issue",
-    "session_id",
-    "step_index",
-    "display_step",
-    "display_order_key",
-    "issue_source",
-    "issue_detail",
-    "slate_source",
-    "next_video_id",
-    "next_video_title",
-    "next_video_channel",
-    "next_video_channel_id",
-    "urlid",
-    "topic_id",
-}
-TRAIN_KEEP_COLUMNS = {
-    "prompt",
-    "answer",
-    "gold_index",
-    "gold_id",
-    "n_options",
-    "viewer_profile",
-    "state_text",
-    "slate_items",
-    "slate_text",
-    "slate_items_with_meta",
-    "watched_detailed_json",
-    "watched_vids_json",
-    "current_video_id",
-    "current_video_title",
-    "task",
-    "is_replay",
-    "accuracy",
-    "mix_group_id",
-    "mix_copy_idx",
-}
-
-DEFAULT_SYSTEM_PROMPT = (
-    "You are choosing EXACTLY ONE item from a short slate for a specific viewer.\n"
-    "Think briefly in <think>…</think>, then output ONLY the option NUMBER "
-    "(1..N) inside <answer>…</answer>.\n"
-    "Format (STRICT): <think>…</think><answer>3</answer>"
-)
+TRAIN_KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS | {"slate_items_with_meta"}
 
 
 def _completion_text(payload: Any) -> str:
@@ -246,18 +214,6 @@ def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
     return _derive_next_from_history(ex, current)
 
 
-def _has_valid_slate(example: Dict[str, Any], solution_key: Optional[str]) -> bool:
-    """Return ``True`` when ``example`` contains a slate with the gold option."""
-
-    items = _load_slate_items(example)
-    if not items:
-        return False
-    gold = _get_gold_next_id(example, solution_key)
-    if not gold:
-        return False
-    return _gold_index_from_items(gold, items) >= 1
-
-
 def _row_to_example(
     ex: Dict[str, Any],
     system_prompt: Optional[str],
@@ -284,35 +240,26 @@ def _row_to_example(
         for idx, item in enumerate(items, 1)
     )
 
-    example = {
-        "prompt": [
-            {"role": "system", "content": sys_msg},
-            {"role": "user", "content": user_msg},
-        ],
-        "answer": str(gold_idx),
-        "gold_index": gold_idx,
-        "gold_id": gold_id,
-        "n_options": int(ex.get("n_options") or len(items) or 0),
-        "viewer_profile": str(ex.get("viewer_profile_sentence") or synthesize_viewer_sentence(ex)),
-        "state_text": user_msg,
-        "slate_items": items,
-        "slate_text": slate_text,
+    extra_fields = {
         "slate_items_with_meta": as_list_json(ex.get("slate_items_json")),
-        "watched_detailed_json": as_list_json(ex.get("watched_detailed_json")),
-        "watched_vids_json": as_list_json(ex.get("watched_vids_json")),
-        "current_video_id": str(ex.get("current_video_id") or ""),
-        "current_video_title": str(ex.get("current_video_title") or ""),
-        "task": "GRAIL",
-        "is_replay": False,
-        "accuracy": 0.0,
-        "mix_group_id": -1,
-        "mix_copy_idx": -1,
+        **collect_passthrough_fields(ex),
     }
 
-    passthrough_data = {key: ex.get(key) for key in PASSTHROUGH_FIELDS if key in ex}
-    example.update(passthrough_data)
-
-    return example
+    return build_training_example(
+        system_prompt=sys_msg,
+        user_prompt=user_msg,
+        gold_index=gold_idx,
+        gold_id=gold_id,
+        n_options=int(ex.get("n_options") or len(items) or 0),
+        viewer_profile=str(ex.get("viewer_profile_sentence") or synthesize_viewer_sentence(ex)),
+        slate_items=items,
+        slate_text=slate_text,
+        watched_detailed_json=as_list_json(ex.get("watched_detailed_json")),
+        watched_vids_json=as_list_json(ex.get("watched_vids_json")),
+        current_video_id=str(ex.get("current_video_id") or ""),
+        current_video_title=str(ex.get("current_video_title") or ""),
+        extra_fields=extra_fields,
+    )
 
 
 def _render_disc_text(
@@ -369,14 +316,16 @@ def _prepare_dataset(
 
         return _row_to_example(example, system_prompt, solution_key, max_hist=max_hist)
 
-    filtered = raw_dataset.filter(lambda ex: _has_valid_slate(ex, solution_key))
+    validator = partial(
+        slate_has_gold,
+        load_slate_items=_load_slate_items,
+        lookup_gold_id=_get_gold_next_id,
+        resolve_gold_index=_gold_index_from_items,
+    )
+    filtered = raw_dataset.filter(validator, fn_kwargs={"solution_key": solution_key})
     formatted = filtered.map(_format_example, load_from_cache_file=False)
 
-    if "__drop__" in formatted[train_split].column_names:
-        for split in list(formatted.keys()):
-            mask = [not flag for flag in formatted[split]["__drop__"]]
-            keep_indices = [idx for idx, keep in enumerate(mask) if keep]
-            formatted[split] = formatted[split].select(keep_indices)
+    drop_marked_rows(formatted, train_split)
 
     for split in list(formatted.keys()):
         drop_cols = [
@@ -521,7 +470,7 @@ def _safe_int(value: Any, default: int = -1) -> int:
         return default
 
 
-def _context_from_completion(
+def _context_from_completion(  # pylint: disable=too-many-arguments
     completion: Any,
     viewer: Any,
     state: Any,
@@ -783,57 +732,10 @@ def _build_dataset_and_tokenizer(
         script_args.dataset_train_split,
     )
     return dataset, tokenizer
-
-
-def _prepare_eval_dataset(
-    dataset: DatasetDict,
-    script_args: GRPOScriptArguments,
-    training_args: GRPOConfig,
-) -> Optional[Any]:
-    """Return the evaluation dataset subset for the GAIL pipeline."""
-
-    if not getattr(training_args, "do_eval", False):
-        return None
-    test_split = getattr(script_args, "dataset_test_split", None)
-    if not (test_split and test_split in dataset):
-        logger.warning(
-            "[grail] do_eval enabled but test split '%s' missing; disabling eval",
-            test_split,
-        )
-        training_args.do_eval = False
-        return None
-    eval_ds = dataset[test_split]
-    max_eval = getattr(training_args, "max_eval_samples", None)
-    if isinstance(max_eval, int) and 0 < max_eval < len(eval_ds):
-        return eval_ds.shuffle(seed=training_args.seed).select(range(max_eval))
-    return eval_ds
-
-
-def _configure_eval(training_args: GRPOConfig, eval_ds: Optional[Any]) -> None:
-    """Adjust evaluation scheduling for the GAIL GRPO trainer."""
-
-    if not getattr(training_args, "do_eval", False) or eval_ds is None:
-        return
-    strategy = getattr(training_args, "evaluation_strategy", IntervalStrategy.NO)
-    if strategy == IntervalStrategy.NO:
-        logger.info("[grail] forcing evaluation_strategy='steps' because do_eval is enabled")
-        training_args.evaluation_strategy = IntervalStrategy.STEPS
-    eval_steps = getattr(training_args, "eval_steps", None)
-    if eval_steps is None or int(eval_steps) <= 0:
-        raise ValueError(
-            "eval_steps must be > 0 when do_eval is enabled. Set a positive value in the config."
-        )
-
-
 def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
     """Return checkpoint path for the GAIL pipeline, respecting overrides."""
 
-    resume = getattr(training_args, "resume_from_checkpoint", None)
-    if resume:
-        return resume
-    if os.path.isdir(training_args.output_dir):
-        return get_last_checkpoint(training_args.output_dir)
-    return None
+    return shared_resolve_checkpoint(training_args)
 
 
 def main(
@@ -861,8 +763,14 @@ def main(
     model.config.return_dict_in_generate = True
 
     train_split = script_args.dataset_train_split
-    eval_ds = _prepare_eval_dataset(dataset, script_args, training_args)
-    _configure_eval(training_args, eval_ds)
+    eval_ds = shared_prepare_eval_dataset(
+        dataset,
+        script_args,
+        training_args,
+        logger=logger,
+        prefix="grail",
+    )
+    shared_configure_eval(training_args, eval_ds, logger=logger, prefix="grail")
 
     trainer = GRPOTrainer(
         model=model,
@@ -895,6 +803,4 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = TrlParser((GRPOScriptArguments, GRPOConfig, ModelConfig))
-    parsed_script_args, parsed_training_args, parsed_model_args = parser.parse_args_and_config()
-    main(parsed_script_args, parsed_training_args, parsed_model_args)
+    parse_and_run(main, (GRPOScriptArguments, GRPOConfig, ModelConfig))

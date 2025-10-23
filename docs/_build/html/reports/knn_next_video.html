@@ -260,18 +260,15 @@
         <article role="main" id="furo-main-content">
           <section id="knn-next-video-baseline">
 <h1>KNN Next-Video Baseline<a class="headerlink" href="#knn-next-video-baseline" title="Link to this heading">¶</a></h1>
-<p>This report summarizes the slate-ranking KNN models that predict the next video a viewer will click.<br />
-All results are now organized by the three study cohorts that appear in the cleaned GRAIL dataset:</p>
+<p>This report summarises the slate-ranking KNN model that predicts the next video a viewer will click.</p>
 <ul class="simple">
-<li><p><strong>Study 1 – Gun Control (MTurk)</strong></p></li>
-<li><p><strong>Study 2 – Minimum Wage (MTurk)</strong></p></li>
-<li><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></li>
-</ul>
-<p>Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected <code class="docutils literal notranslate"><span class="pre">k</span></code>, and baseline comparisons for TF-IDF, Word2Vec, and Sentence-Transformer feature spaces.</p>
-<ul class="simple">
-<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">data/cleaned_grail</span></code></p></li>
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
 <li><p>Split: validation</p></li>
 <li><p>Metric: accuracy on eligible slates (gold index present)</p></li>
+<li><p>Baseline column: accuracy from always recommending the most-frequent gold index for the study.</p></li>
+<li><p>Δ column: improvement over that baseline accuracy.</p></li>
+<li><p>Random column: expected accuracy from uniformly sampling one candidate per slate.</p></li>
+<li><p>Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)</p></li>
 </ul>
 <section id="tf-idf-feature-space">
 <h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
@@ -280,22 +277,49 @@ All results are now organized by the three study cohorts that appear in the clea
 <thead>
 <tr class="row-odd"><th class="head"><p>Study</p></th>
 <th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head"><p>95% CI</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
 <th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>Most-frequent baseline ↑</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Total</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.889</p></td>
+<td><p>[0.859, 0.922]</p></td>
+<td class="text-right"><p>+0.349</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>0.338</p></td>
+<td><p>[0.300, 0.372]</p></td>
+<td class="text-right"><p>-0.030</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>0.292</p></td>
+<td><p>[0.270, 0.317]</p></td>
+<td class="text-right"><p>-0.187</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>1,200</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">tfidf/elbow_study1.png</span></code>, <code class="docutils literal notranslate"><span class="pre">tfidf/elbow_study2.png</span></code>, <code class="docutils literal notranslate"><span class="pre">tfidf/elbow_study3.png</span></code></p></li>
-</ul>
 </section>
 <section id="word2vec-feature-space">
 <h2>Word2Vec Feature Space<a class="headerlink" href="#word2vec-feature-space" title="Link to this heading">¶</a></h2>
@@ -304,22 +328,49 @@ All results are now organized by the three study cohorts that appear in the clea
 <thead>
 <tr class="row-odd"><th class="head"><p>Study</p></th>
 <th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head"><p>95% CI</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
 <th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>Most-frequent baseline ↑</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Total</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.859</p></td>
+<td><p>[0.824, 0.896]</p></td>
+<td class="text-right"><p>+0.319</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>0.268</p></td>
+<td><p>[0.232, 0.305]</p></td>
+<td class="text-right"><p>-0.100</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>0.288</p></td>
+<td><p>[0.263, 0.313]</p></td>
+<td class="text-right"><p>-0.191</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>10</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>1,200</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study1.png</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study2.png</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec/elbow_study3.png</span></code></p></li>
-</ul>
 </section>
 <section id="sentence-transformer-feature-space">
 <h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
@@ -328,29 +379,78 @@ All results are now organized by the three study cohorts that appear in the clea
 <thead>
 <tr class="row-odd"><th class="head"><p>Study</p></th>
 <th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head"><p>95% CI</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
 <th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>Most-frequent baseline ↑</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Total</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><em>Pipeline run will populate these rows</em></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
-<td class="text-right"><p></p></td>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.801</p></td>
+<td><p>[0.765, 0.838]</p></td>
+<td class="text-right"><p>+0.261</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>0.308</p></td>
+<td><p>[0.276, 0.350]</p></td>
+<td class="text-right"><p>-0.060</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>0.322</p></td>
+<td><p>[0.294, 0.346]</p></td>
+<td class="text-right"><p>-0.158</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>1,200</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<ul class="simple">
-<li><p>Plots: <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study1.png</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study2.png</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence_transformer/elbow_study3.png</span></code></p></li>
-</ul>
+</section>
+<section id="accuracy-curves">
+<h2>Accuracy Curves<a class="headerlink" href="#accuracy-curves" title="Link to this heading">¶</a></h2>
+<section id="accuracy-curves-tfidf">
+<h3>Accuracy Curves – Tfidf<a class="headerlink" href="#accuracy-curves-tfidf" title="Link to this heading">¶</a></h3>
+<p><img alt="TFIDF – Study 1 – Gun Control (MTurk)" src="../_images/study1.png" />
+<img alt="TFIDF – Study 2 – Minimum Wage (MTurk)" src="../_images/study2.png" />
+<img alt="TFIDF – Study 3 – Minimum Wage (YouGov)" src="../_images/study3.png" /></p>
+</section>
+<section id="accuracy-curves-word2vec">
+<h3>Accuracy Curves – Word2Vec<a class="headerlink" href="#accuracy-curves-word2vec" title="Link to this heading">¶</a></h3>
+<p><img alt="WORD2VEC – Study 1 – Gun Control (MTurk)" src="../_images/study11.png" />
+<img alt="WORD2VEC – Study 2 – Minimum Wage (MTurk)" src="../_images/study21.png" />
+<img alt="WORD2VEC – Study 3 – Minimum Wage (YouGov)" src="../_images/study31.png" /></p>
+</section>
+<section id="accuracy-curves-sentence-transformer">
+<h3>Accuracy Curves – Sentence Transformer<a class="headerlink" href="#accuracy-curves-sentence-transformer" title="Link to this heading">¶</a></h3>
+<p><img alt="SENTENCE_TRANSFORMER – Study 1 – Gun Control (MTurk)" src="../_images/study12.png" />
+<img alt="SENTENCE_TRANSFORMER – Study 2 – Minimum Wage (MTurk)" src="../_images/study22.png" />
+<img alt="SENTENCE_TRANSFORMER – Study 3 – Minimum Wage (YouGov)" src="../_images/study32.png" /></p>
+</section>
 </section>
 <section id="observations">
 <h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>Slate metrics are scoped per study, allowing each feature space to tune <code class="docutils literal notranslate"><span class="pre">k</span></code> and hyperparameters per cohort.</p></li>
-<li><p>Study-specific directories live under <code class="docutils literal notranslate"><span class="pre">models/knn/&lt;feature-space&gt;/study{1,2,3}</span></code> with per-<code class="docutils literal notranslate"><span class="pre">k</span></code> predictions and metrics JSON.</p></li>
-<li><p>Regenerate this README via <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.pipeline</span></code> (or <code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">training/training-knn.sh</span></code>) after any new training run.</p></li>
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.889 (baseline 0.540, Δ +0.349, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.338 (baseline 0.368, Δ -0.030, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.292 (baseline 0.479, Δ -0.187, k=2, eligible 1,200); averages: mean Δ +0.044, mean random 0.279.</p></li>
+<li><p>WORD2VEC: Study 1 – Gun Control (MTurk): 0.859 (baseline 0.540, Δ +0.319, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.268 (baseline 0.368, Δ -0.100, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.288 (baseline 0.479, Δ -0.191, k=10, eligible 1,200); averages: mean Δ +0.010, mean random 0.279.</p></li>
+<li><p>SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.801 (baseline 0.540, Δ +0.261, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.308 (baseline 0.368, Δ -0.060, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.322 (baseline 0.479, Δ -0.158, k=2, eligible 1,200); averages: mean Δ +0.015, mean random 0.279.</p></li>
+<li><p>Random values correspond to the expected accuracy from a uniform guess across the slate options.</p></li>
 </ul>
 </section>
 </section>
@@ -414,6 +514,12 @@ All results are now organized by the three study cohorts that appear in the clea
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
 <li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a></li>
+<li><a class="reference internal" href="#accuracy-curves">Accuracy Curves</a><ul>
+<li><a class="reference internal" href="#accuracy-curves-tfidf">Accuracy Curves – Tfidf</a></li>
+<li><a class="reference internal" href="#accuracy-curves-word2vec">Accuracy Curves – Word2Vec</a></li>
+<li><a class="reference internal" href="#accuracy-curves-sentence-transformer">Accuracy Curves – Sentence Transformer</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#observations">Observations</a></li>
 </ul>
 </li>

@@ -510,11 +510,16 @@ def run_eval(args: Any) -> None:
     with open(metrics_json, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, ensure_ascii=False, indent=2)
 
-    summary = (
-        f"[DONE] dataset={dataset_name} split={eval_split}  n={total_seen}  eligible={eligible_overall} "
-        f"accuracy={overall_accuracy:.4f}  parsed_ok={parsed_rate:.3f}  "
-        f"format_rate={format_rate:.3f}"
-    )
+    summary_bits = [
+        f"[DONE] dataset={dataset_name}",
+        f"split={eval_split}",
+        f"n={total_seen}",
+        f"eligible={eligible_overall}",
+        f"accuracy={overall_accuracy:.4f}",
+        f"parsed_ok={parsed_rate:.3f}",
+        f"format_rate={format_rate:.3f}",
+    ]
+    summary = "  ".join(summary_bits)
     print(summary)
     print(f"[WROTE] per-example: {out_jsonl}")
     print(f"[WROTE] metrics:     {metrics_json}")

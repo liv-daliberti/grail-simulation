@@ -94,6 +94,7 @@ def test_pipeline_sentence_transformer_sweep(tmp_path: Path) -> None:
         sentence_batch_size=16,
         sentence_normalize=True,
         feature_spaces=("sentence_transformer",),
+        jobs=1,
     )
     configs = _build_sweep_configs(context)
     assert any(cfg.feature_space == "sentence_transformer" for cfg in configs)

@@ -1195,20 +1195,6 @@ the <code class="docutils literal notranslate"><span class="pre">PUREACC_ALLOW_B
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="open_r1.rewards.reasoning_steps_reward">
-<span class="sig-prename descclassname"><span class="pre">open_r1.rewards.</span></span><span class="sig-name descname"><span class="pre">reasoning_steps_reward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">completions</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/rewards.html#reasoning_steps_reward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.rewards.reasoning_steps_reward" title="Link to this definition">¶</a></dt>
-<dd><p>Reward function that checks for clear step-by-step reasoning.</p>
-<dl class="simple">
-<dt>Regex pattern:</dt><dd><p>Step d+:  matches “Step 1:”, “Step 2:”, etc.
-^d+.     matches numbered lists like “1.”, “2.”, etc. at line start
-n-        matches bullet points with hyphens
-n*       matches bullet points with asterisks
-First,|Second,|Next,|Finally,  matches transition words</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="open_r1.rewards.tag_count_reward">
 <span class="sig-prename descclassname"><span class="pre">open_r1.rewards.</span></span><span class="sig-name descname"><span class="pre">tag_count_reward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">completions</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/rewards.html#tag_count_reward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.rewards.tag_count_reward" title="Link to this definition">¶</a></dt>
 <dd><p>Reward function that checks if we produce the desired number of think and
@@ -1434,17 +1420,6 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 <dd><p>Register the owning trainer instance for later log inspection.</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.callbacks.get_callbacks">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">get_callbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_cfg</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#get_callbacks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.get_callbacks" title="Link to this definition">¶</a></dt>
-<dd><p>Instantiate the callbacks listed in <code class="docutils literal notranslate"><span class="pre">train_cfg.callbacks</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a><em> | </em><em>None</em>)</p>
-</dd>
-</dl>
 </dd></dl>
 
 <p id="module-open_r1.utils.code_providers">Code execution providers for executing and evaluating code snippets.</p>
@@ -1682,99 +1657,6 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </dd>
 </dl>
 </dd></dl>
-
-<p id="module-open_r1.utils.hierarchical_rollout">Hierarchical rollout utilities extending the GRPO trainer.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">HierarchicalGRPOTrainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollout_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalGRPOTrainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GRPOTrainer</span></code></p>
-<p>GRPO trainer that supports hierarchical rollouts and optional vLLM generation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>rollout_fn</strong> (<em>Any</em>)</p></li>
-<li><p><strong>tokenizer</strong> (<em>Any</em>)</p></li>
-<li><p><strong>return_reason</strong> (<em>bool</em>)</p></li>
-<li><p><strong>callbacks</strong> (<em>list</em><em>[</em><em>Any</em><em>]</em>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollout_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalGRPOTrainer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Initialise the trainer with optional rollout function and callback factories.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>rollout_fn</strong> (<em>Any</em>)</p></li>
-<li><p><strong>tokenizer</strong> (<em>Any</em>)</p></li>
-<li><p><strong>return_reason</strong> (<em>bool</em>)</p></li>
-<li><p><strong>callbacks</strong> (<em>list</em><em>[</em><em>Any</em><em>]</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalRollout">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">HierarchicalRollout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vllm_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_reason_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalRollout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalRollout" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="simple">
-<dt>Two-stage generation:</dt><dd><ol class="arabic simple">
-<li><p>Generate until &lt;/think&gt; (or first &lt;answer&gt;), append the tags.</p></li>
-<li><p>Feed that full sequence back in to finish the answer.</p></li>
-</ol>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>transformers.generation.utils.GenerationMixin</em>)</p></li>
-<li><p><strong>tokenizer</strong> (<em>transformers.PreTrainedTokenizerBase</em>)</p></li>
-<li><p><strong>vllm_client</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>max_reason_tokens</strong> (<em>int</em>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vllm_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_reason_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/hierarchical_rollout.html#HierarchicalRollout.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Initialise the rollout helper with model/tokenizer and optional vLLM client.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>transformers.generation.utils.GenerationMixin</em>)</p></li>
-<li><p><strong>tokenizer</strong> (<em>transformers.PreTrainedTokenizerBase</em>)</p></li>
-<li><p><strong>vllm_client</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>max_reason_tokens</strong> (<em>int</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.is_conversational">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">is_conversational</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.is_conversational" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.maybe_apply_chat_template">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">maybe_apply_chat_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.maybe_apply_chat_template" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.pad">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">pad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.pad" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.hierarchical_rollout.unwrap_model_for_generation">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.hierarchical_rollout.</span></span><span class="sig-name descname"><span class="pre">unwrap_model_for_generation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.hierarchical_rollout.unwrap_model_for_generation" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <p id="module-open_r1.utils.hub">Helpers for pushing training artifacts to the Hugging Face Hub.</p>
 <dl class="py function">
@@ -2077,26 +1959,6 @@ training loop remains untouched.  <cite>isw</cite> stays all‑ones.</p></li>
 
 </dd></dl>
 
-<p id="module-open_r1.utils.replay_dataset">Dataset helpers for mixing fresh and replayed experiences during training.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="open_r1.utils.replay_dataset.ReplayMixDataset">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.replay_dataset.</span></span><span class="sig-name descname"><span class="pre">ReplayMixDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#ReplayMixDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.ReplayMixDataset" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
-<p>Dataset wrapper that annotates rows with the replay flag.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="open_r1.utils.replay_dataset.ReplayMixDataset.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tok</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#ReplayMixDataset.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.ReplayMixDataset.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Store the underlying dataset and tokenizer used for assertions.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.replay_dataset.replay_collate">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.replay_dataset.</span></span><span class="sig-name descname"><span class="pre">replay_collate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_prob</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/replay_dataset.html#replay_collate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.replay_dataset.replay_collate" title="Link to this definition">¶</a></dt>
-<dd><p>Identity collate that simply clears replay flags and preserves accuracy.</p>
-</dd></dl>
-
 <p id="module-open_r1.utils.routed_morph">Thin wrapper around the MorphCloud router batch execution API.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.routed_morph.RoutedMorphSandbox">
@@ -2244,65 +2106,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<p id="module-open_r1.utils.vllm_patch">Helpers for talking to an external <cite>trl vllm-serve</cite> instance.</p>
-<dl class="simple">
-<dt>vLLM ≤ 0.8.5 returns <em>token IDs</em> by default:</dt><dd><p>{“completion_ids”: [[ids…]], “prompt_ids”: [[ids…]]}</p>
-</dd>
-</dl>
-<p>This helper now detects that schema and decodes it if a tokenizer is passed.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.vllm_patch.safe_generate">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.vllm_patch.</span></span><span class="sig-name descname"><span class="pre">safe_generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'http://localhost:8000/generate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/vllm_patch.html#safe_generate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.vllm_patch.safe_generate" title="Link to this definition">¶</a></dt>
-<dd><p>Robust call to /generate with retry + schema-agnostic decoding.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>prompts</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>url</strong> (<em>str</em>)</p></li>
-<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
-<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
-<li><p><strong>top_p</strong> (<em>float</em>)</p></li>
-<li><p><strong>n</strong> (<em>int</em>)</p></li>
-<li><p><strong>stream</strong> (<em>bool</em>)</p></li>
-<li><p><strong>max_retries</strong> (<em>int</em>)</p></li>
-<li><p><strong>backoff</strong> (<em>float</em>)</p></li>
-<li><p><strong>timeout</strong> (<em>float</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>List</em>[str]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.vllm_patch.safe_request">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.vllm_patch.</span></span><span class="sig-name descname"><span class="pre">safe_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/vllm_patch.html#safe_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.vllm_patch.safe_request" title="Link to this definition">¶</a></dt>
-<dd><p>Perform a GET request with retry/backoff handling.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>url</strong> (<em>str</em>)</p></li>
-<li><p><strong>max_retries</strong> (<em>int</em>)</p></li>
-<li><p><strong>backoff</strong> (<em>float</em>)</p></li>
-<li><p><strong>timeout</strong> (<em>float</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<p id="module-open_r1.utils.wandb_logging">Utility for wiring Weights &amp; Biases environment variables from configs.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.wandb_logging.init_wandb_training">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.wandb_logging.</span></span><span class="sig-name descname"><span class="pre">init_wandb_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/wandb_logging.html#init_wandb_training"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.wandb_logging.init_wandb_training" title="Link to this definition">¶</a></dt>
-<dd><p>Populate Weights &amp; Biases environment variables from training arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>training_args</strong> – Namespace or dataclass with <code class="docutils literal notranslate"><span class="pre">wandb_*</span></code> attributes.</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
@@ -2475,7 +2278,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.rewards.ioi_code_reward"><code class="docutils literal notranslate"><span class="pre">ioi_code_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.len_reward"><code class="docutils literal notranslate"><span class="pre">len_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.pure_accuracy_reward"><code class="docutils literal notranslate"><span class="pre">pure_accuracy_reward()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.rewards.reasoning_steps_reward"><code class="docutils literal notranslate"><span class="pre">reasoning_steps_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.tag_count_reward"><code class="docutils literal notranslate"><span class="pre">tag_count_reward()</span></code></a></li>
 </ul>
 </li>
@@ -2501,7 +2303,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.utils.callbacks.SuccessCachingCallback.set_trainer"><code class="docutils literal notranslate"><span class="pre">SuccessCachingCallback.set_trainer()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#open_r1.utils.callbacks.get_callbacks"><code class="docutils literal notranslate"><span class="pre">get_callbacks()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider"><code class="docutils literal notranslate"><span class="pre">CodeExecutionProvider</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider.execute_scripts"><code class="docutils literal notranslate"><span class="pre">CodeExecutionProvider.execute_scripts()</span></code></a></li>
 </ul>
@@ -2522,18 +2323,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.utils.evaluation.register_lighteval_task"><code class="docutils literal notranslate"><span class="pre">register_lighteval_task()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.evaluation.run_benchmark_jobs"><code class="docutils literal notranslate"><span class="pre">run_benchmark_jobs()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.evaluation.run_lighteval_job"><code class="docutils literal notranslate"><span class="pre">run_lighteval_job()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalGRPOTrainer</span></code></a><ul>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.HierarchicalGRPOTrainer.__init__"><code class="docutils literal notranslate"><span class="pre">HierarchicalGRPOTrainer.__init__()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.HierarchicalRollout"><code class="docutils literal notranslate"><span class="pre">HierarchicalRollout</span></code></a><ul>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.HierarchicalRollout.__init__"><code class="docutils literal notranslate"><span class="pre">HierarchicalRollout.__init__()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.is_conversational"><code class="docutils literal notranslate"><span class="pre">is_conversational()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.maybe_apply_chat_template"><code class="docutils literal notranslate"><span class="pre">maybe_apply_chat_template()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.pad"><code class="docutils literal notranslate"><span class="pre">pad()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.hierarchical_rollout.unwrap_model_for_generation"><code class="docutils literal notranslate"><span class="pre">unwrap_model_for_generation()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.hub.check_hub_revision_exists"><code class="docutils literal notranslate"><span class="pre">check_hub_revision_exists()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.hub.get_gpu_count_for_vllm"><code class="docutils literal notranslate"><span class="pre">get_gpu_count_for_vllm()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.hub.get_param_count_from_repo_id"><code class="docutils literal notranslate"><span class="pre">get_param_count_from_repo_id()</span></code></a></li>
@@ -2557,11 +2346,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer.update_priority_by_uid"><code class="docutils literal notranslate"><span class="pre">ReplayBuffer.update_priority_by_uid()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#open_r1.utils.replay_dataset.ReplayMixDataset"><code class="docutils literal notranslate"><span class="pre">ReplayMixDataset</span></code></a><ul>
-<li><a class="reference internal" href="#open_r1.utils.replay_dataset.ReplayMixDataset.__init__"><code class="docutils literal notranslate"><span class="pre">ReplayMixDataset.__init__()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#open_r1.utils.replay_dataset.replay_collate"><code class="docutils literal notranslate"><span class="pre">replay_collate()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.router_url"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.router_url</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.timeout"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.timeout</span></code></a></li>
@@ -2576,9 +2360,6 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox.run_code"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox.run_code()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#open_r1.utils.vllm_patch.safe_generate"><code class="docutils literal notranslate"><span class="pre">safe_generate()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.vllm_patch.safe_request"><code class="docutils literal notranslate"><span class="pre">safe_request()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.wandb_logging.init_wandb_training"><code class="docutils literal notranslate"><span class="pre">init_wandb_training()</span></code></a></li>
 </ul>
 </li>
 </ul>

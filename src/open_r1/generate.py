@@ -22,7 +22,7 @@ from distilabel.steps import StepResources
 from distilabel.steps.tasks import TextGeneration
 
 
-def build_distilabel_pipeline(
+def build_distilabel_pipeline(  # pylint: disable=too-many-arguments
     model: str,
     *,
     base_url: str = "http://localhost:8000/v1",

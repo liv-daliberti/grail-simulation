@@ -17,10 +17,10 @@ import io
 import logging
 import lzma
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 try:
     import datasets
@@ -33,7 +33,9 @@ except ImportError:  # pragma: no cover - optional dependency for linting
     Features = Any  # type: ignore
     HFSequence = Any  # type: ignore
     Value = Any  # type: ignore
-    DatasetGenerationCastError = Exception  # type: ignore
+
+    class DatasetGenerationCastError(Exception):  # type: ignore
+        """Fallback stub when datasets is unavailable."""
 
 try:
     import pandas as pd
@@ -149,6 +151,15 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
     return DatasetDict(dict(loaded.items()))
 
 
+@dataclass(frozen=True)
+class _ReadAttempt:
+    """Capture a single pandas CSV parsing attempt configuration."""
+
+    engine: str
+    sep: Optional[str]
+    on_bad_lines: Optional[str] = None
+
+
 def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     """Load a flat CSV dataset while unioning columns across data files.
 
@@ -165,8 +176,8 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
 
     if pd is None:  # pragma: no cover - environment guard
         raise RuntimeError(
-            "pandas is required to load '%s' due to column mismatches. Install pandas"
-            " to enable the union fallback." % dataset_name
+            f"pandas is required to load '{dataset_name}' due to column mismatches. "
+            "Install pandas to enable the union fallback."
         )
 
     builder = datasets.load_dataset_builder(dataset_name)
@@ -174,239 +185,276 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     if not data_files:
         raise RuntimeError(f"Dataset '{dataset_name}' does not expose data_files metadata")
 
-    # Normalise split -> list[str]
+    split_files = _normalise_split_mappings(data_files)
+    features: Optional[Features] = getattr(builder.info, "features", None)
+    loader = _ColumnUnionLoader(dataset_name, builder, features)
+    unioned = loader.build(split_files)
+    if not unioned:
+        raise RuntimeError(f"No data could be loaded for dataset '{dataset_name}'")
+    return DatasetDict(unioned)
+
+
+def _normalise_split_mappings(data_files: Dict[str, Any]) -> Dict[str, list[str]]:
+    """Coerce the builder ``data_files`` mapping into ``split -> [files]`` form."""
+
     split_files: Dict[str, list[str]] = {}
     for split_name, files in data_files.items():
         if isinstance(files, str):
             split_files[split_name] = [files]
-        else:
+        elif isinstance(files, Sequence):
             split_files[split_name] = list(files)
+        else:
+            raise RuntimeError(
+                f"Unsupported data_files entry for split '{split_name}': {type(files)!r}"
+            )
+    return split_files
 
-    fs = builder._fs  # type: ignore[attr-defined]
-    expected_columns: set[str] = set()
-    features: Optional[Features] = getattr(builder.info, "features", None)
-    if isinstance(features, Features):
-        expected_columns = set(features.keys())
-    unioned_splits: Dict[str, Dataset] = {}
 
-    for split_name, file_list in split_files.items():
-        frames = []
-        canonical_columns = expected_columns.copy()
+@dataclass
+class _ColumnUnionLoader:
+    """Helper that recreates CSV datasets while unioning distinct column sets."""
 
-        def _resolve_file_ref(file_ref_obj):
-            open_fs = fs  # type: ignore[attr-defined]
-            open_path = file_ref_obj
-            if isinstance(file_ref_obj, str) and "://" in file_ref_obj:
-                if url_to_fs is None:
-                    raise RuntimeError(
-                        "Encountered remote data file '%s' but fsspec is unavailable. "
-                        "Install fsspec to enable remote downloads." % file_ref_obj
-                    )
-                remote_fs, remote_path = url_to_fs(file_ref_obj)
-                return remote_fs, remote_path
-            try:
-                with open_fs.open(open_path, "rb"):  # type: ignore[attr-defined]
-                    pass
-            except FileNotFoundError:
-                if (
-                    url_to_fs is not None
-                    and isinstance(file_ref_obj, str)
-                    and "://" not in file_ref_obj
-                ):
-                    remote_fs, remote_path = url_to_fs(file_ref_obj)
-                    return remote_fs, remote_path
-                raise
-            return open_fs, open_path
+    dataset_name: str
+    builder: Any
+    features: Optional[Features]
+    expected_columns: set[str] = field(init=False)
+    fs: Any = field(init=False)
 
-        def _read_csv_frame(active_fs, active_path):
-            with active_fs.open(active_path, "rb") as raw_handle:  # type: ignore[attr-defined]
-                raw_bytes = raw_handle.read()
+    def __post_init__(self) -> None:
+        if isinstance(self.features, Features):
+            self.expected_columns = set(self.features.keys())
+        else:
+            self.expected_columns = set()
+        filesystem = getattr(self.builder, "_fs", None)
+        if filesystem is None:  # pragma: no cover - defensive branch
+            raise RuntimeError(
+                f"Dataset builder for '{self.dataset_name}' does not expose a filesystem handle"
+            )
+        self.fs = filesystem
 
-            def _decompress_payload(payload: bytes) -> bytes:
-                try:
-                    if payload.startswith(b"\x1f\x8b\x08"):
-                        return gzip.decompress(payload)
-                    if payload.startswith(b"PK\x03\x04"):
-                        with zipfile.ZipFile(io.BytesIO(payload)) as zf:
-                            for name in zf.namelist():
-                                if not name.endswith("/"):
-                                    return zf.read(name)
-                        log.debug(
-                            "Zip archive '%s' does not contain file entries; using raw bytes",
-                            active_path,
-                        )
-                        return payload
-                    if payload.startswith(b"BZh"):
-                        return bz2.decompress(payload)
-                    if payload.startswith(b"\xfd7zXZ\x00") or payload.startswith(b"\x5d\x00\x00"):
-                        return lzma.decompress(payload)
-                except (OSError, zipfile.BadZipFile, lzma.LZMAError) as err:
-                    log.debug(
-                        "Failed to decompress '%s' despite matching signature; falling back to raw "
-                        "bytes (%s)",
-                        active_path,
-                        err,
-                    )
-                return payload
+    def build(self, split_files: Dict[str, list[str]]) -> Dict[str, Dataset]:
+        """Union column schemas for every split and return the reconstructed datasets."""
+        unioned: Dict[str, Dataset] = {}
+        for split_name, file_refs in split_files.items():
+            dataset = self._build_split(split_name, file_refs)
+            if dataset is not None:
+                unioned[split_name] = dataset
+        return unioned
 
-            data_bytes = _decompress_payload(raw_bytes)
-            sample_bytes = data_bytes[:16384]
-            last_decode_err: Optional[UnicodeDecodeError] = None
-            last_parser_err: Optional[Exception] = None
-            last_generic_err: Optional[Exception] = None
-
-            for encoding in ("utf-8", "utf-8-sig", "latin-1"):
-                try:
-                    sample_text = sample_bytes.decode(encoding)
-                    last_decode_err = None
-                except UnicodeDecodeError as err:
-                    last_decode_err = err
-                    continue
-                except Exception as err:  # noqa: BLE001
-                    last_generic_err = err
-                    continue
-
-                sniffed_delimiter: Optional[str] = None
-                try:
-                    sniffed = csv.Sniffer().sniff(
-                        sample_text,
-                        delimiters=[",", "\t", ";", "|", "\x1f"],
-                    )
-                    sniffed_delimiter = sniffed.delimiter
-                except csv.Error:
-                    sniffed_delimiter = None
-
-                candidate_delimiters = []
-                if sniffed_delimiter:
-                    candidate_delimiters.append(sniffed_delimiter)
-                candidate_delimiters.extend([",", "\t", ";", "|", "\x1f"])
-
-                seen_attempts: set[tuple] = set()
-                attempt_specs = []
-                for delim in candidate_delimiters:
-                    key = ("c", delim, None)
-                    if key not in seen_attempts:
-                        attempt_specs.append({"engine": "c", "sep": delim})
-                        seen_attempts.add(key)
-                    key = ("python", delim, None)
-                    if key not in seen_attempts:
-                        attempt_specs.append({"engine": "python", "sep": delim})
-                        seen_attempts.add(key)
-                for spec in (
-                    {"engine": "python", "sep": None, "on_bad_lines": None},
-                    {"engine": "python", "sep": None, "on_bad_lines": "skip"},
-                ):
-                    key = (
-                        spec["engine"],
-                        spec["sep"],
-                        spec.get("on_bad_lines"),
-                    )
-                    if key not in seen_attempts:
-                        attempt_specs.append(spec)
-                        seen_attempts.add(key)
-
-                for attempt in attempt_specs:
-                    kwargs: Dict[str, Any] = {
-                        "encoding": encoding,
-                        "low_memory": False,
-                        "engine": attempt["engine"],
-                    }
-                    if attempt["sep"] is not None:
-                        kwargs["sep"] = attempt["sep"]
-                    if attempt.get("on_bad_lines") and attempt["engine"] == "python":
-                        kwargs["on_bad_lines"] = attempt["on_bad_lines"]
-                    try:
-                        frame = pd.read_csv(io.BytesIO(data_bytes), **kwargs)
-                    except UnicodeDecodeError as err:
-                        last_decode_err = err
-                        break
-                    except pd.errors.ParserError as err:  # type: ignore[attr-defined]
-                        last_parser_err = err
-                        continue
-                    except Exception as err:  # noqa: BLE001
-                        last_generic_err = err
-                        continue
-                    return frame
-            if last_decode_err is not None:
-                raise last_decode_err
-            if last_parser_err is not None:
-                raise last_parser_err
-            if last_generic_err is not None:
-                raise last_generic_err
-            raise RuntimeError(f"Unable to read CSV file '{active_path}' using available fallbacks")
-
-        def _maybe_canonical_name(column: str, frame_columns: set[str]) -> str:
-            if "_pre" not in column:
-                return column
-            candidates = []
-            if column.endswith("_pre"):
-                candidates.append(column[:-4])
-            if "_pre_" in column:
-                candidates.append(column.replace("_pre_", "_", 1))
-            if "_pre" in column:
-                candidates.append(column.replace("_pre", "", 1))
-            for candidate in candidates:
-                candidate = candidate.strip("_")
-                if not candidate or candidate == column:
-                    continue
-                if candidate in frame_columns:
-                    continue
-                if expected_columns and candidate in expected_columns:
-                    return candidate
-                if not expected_columns:
-                    return candidate
-            return column
-
-        for file_ref in file_list:
-            open_fs, open_path = _resolve_file_ref(file_ref)
-            frame = _read_csv_frame(open_fs, open_path)
-            if "Unnamed: 0" in frame.columns:
-                frame = frame.drop(columns=["Unnamed: 0"])
-            frame_columns = set(frame.columns)
-            rename_map = {}
-            for col in frame.columns:
-                new_name = _maybe_canonical_name(col, frame_columns)
-                if new_name != col:
-                    rename_map[col] = new_name
-            if rename_map:
-                frame = frame.rename(columns=rename_map)
-            canonical_columns.update(frame.columns)
+    def _build_split(self, split_name: str, file_refs: list[str]) -> Optional[Dataset]:
+        frames: list[pd.DataFrame] = []
+        for file_ref in file_refs:
+            filesystem, path = self._resolve_file_ref(file_ref)
+            frame = self._read_csv_frame(filesystem, path)
+            frame = self._postprocess_frame(frame)
             frames.append(frame)
 
         if not frames:
-            continue
+            log.debug("No frames produced for split '%s'", split_name)
+            return None
 
+        combined = self._combine_frames(frames)
+        combined = self._apply_feature_casts(combined)
+        return Dataset.from_pandas(combined, preserve_index=False)
+
+    def _resolve_file_ref(self, file_ref: Any) -> Tuple[Any, Any]:
+        if isinstance(file_ref, str) and "://" in file_ref:
+            if url_to_fs is None:
+                raise RuntimeError(
+                    f"Encountered remote data file '{file_ref}' but fsspec is unavailable. "
+                    "Install fsspec to enable remote downloads."
+                )
+            return url_to_fs(file_ref)
+
+        try:
+            with self.fs.open(file_ref, "rb"):
+                return self.fs, file_ref
+        except FileNotFoundError:
+            if url_to_fs is not None and isinstance(file_ref, str):
+                return url_to_fs(file_ref)
+            raise
+
+    def _read_csv_frame(self, filesystem: Any, path: Any) -> pd.DataFrame:
+        with filesystem.open(path, "rb") as raw_handle:
+            raw_bytes = raw_handle.read()
+
+        data_bytes = self._decompress_payload(raw_bytes, path)
+        sample_bytes = data_bytes[:16384]
+        decoded_samples = self._decode_sample_texts(sample_bytes)
+
+        for encoding, sample_text in decoded_samples:
+            for attempt in self._build_attempts(sample_text):
+                try:
+                    return self._read_with_attempt(data_bytes, encoding, attempt)
+                except UnicodeDecodeError:
+                    break
+                except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError, OSError):
+                    continue
+
+        raise RuntimeError(f"Unable to read CSV file '{path}' using available fallbacks")
+
+    @staticmethod
+    def _decompress_payload(payload: bytes, path: Any) -> bytes:
+        try:
+            if payload.startswith(b"\x1f\x8b\x08"):
+                return gzip.decompress(payload)
+            if payload.startswith(b"PK\x03\x04"):
+                with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                    for name in archive.namelist():
+                        if not name.endswith("/"):
+                            return archive.read(name)
+                log.debug("Zip archive '%s' does not contain file entries; using raw bytes", path)
+                return payload
+            if payload.startswith(b"BZh"):
+                return bz2.decompress(payload)
+            if payload.startswith(b"\xfd7zXZ\x00") or payload.startswith(b"\x5d\x00\x00"):
+                return lzma.decompress(payload)
+        except (OSError, zipfile.BadZipFile, lzma.LZMAError) as err:
+            log.debug(
+                (
+                    "Failed to decompress '%s' despite matching signature; falling back to raw "
+                    "bytes (%s)"
+                ),
+                path,
+                err,
+            )
+        return payload
+
+    @staticmethod
+    def _decode_sample_texts(sample_bytes: bytes) -> list[tuple[str, str]]:
+        decoded: list[tuple[str, str]] = []
+        last_decode_err: Optional[UnicodeDecodeError] = None
+        last_lookup_err: Optional[LookupError] = None
+
+        for encoding in ("utf-8", "utf-8-sig", "latin-1"):
+            try:
+                decoded.append((encoding, sample_bytes.decode(encoding)))
+            except UnicodeDecodeError as err:
+                last_decode_err = err
+            except LookupError as err:
+                last_lookup_err = err
+
+        if decoded:
+            return decoded
+        if last_decode_err is not None:
+            raise last_decode_err
+        if last_lookup_err is not None:
+            raise last_lookup_err
+        raise UnicodeDecodeError("unicodeescape", b"", 0, 1, "no valid encoding candidates found")
+
+    def _build_attempts(self, sample_text: str) -> list[_ReadAttempt]:
+        delimiters = self._candidate_delimiters(sample_text)
+        attempts: list[_ReadAttempt] = []
+        seen: set[tuple[str, Optional[str], Optional[str]]] = set()
+
+        for delimiter in delimiters:
+            for engine in ("c", "python"):
+                key = (engine, delimiter, None)
+                if key not in seen:
+                    attempts.append(_ReadAttempt(engine=engine, sep=delimiter))
+                    seen.add(key)
+
+        for on_bad_lines in (None, "skip"):
+            key = ("python", None, on_bad_lines)
+            if key not in seen:
+                attempts.append(_ReadAttempt(engine="python", sep=None, on_bad_lines=on_bad_lines))
+                seen.add(key)
+
+        return attempts
+
+    @staticmethod
+    def _candidate_delimiters(sample_text: str) -> list[str]:
+        try:
+            sniffed = csv.Sniffer().sniff(
+                sample_text,
+                delimiters=[",", "\t", ";", "|", "\x1f"],
+            )
+            primary = [sniffed.delimiter]
+        except csv.Error:
+            primary = []
+        fallbacks = [",", "\t", ";", "|", "\x1f"]
+        return primary + fallbacks
+
+    @staticmethod
+    def _read_with_attempt(data_bytes: bytes, encoding: str, attempt: _ReadAttempt) -> pd.DataFrame:
+        kwargs: Dict[str, Any] = {
+            "encoding": encoding,
+            "low_memory": False,
+            "engine": attempt.engine,
+        }
+        if attempt.sep is not None:
+            kwargs["sep"] = attempt.sep
+        if attempt.on_bad_lines and attempt.engine == "python":
+            kwargs["on_bad_lines"] = attempt.on_bad_lines
+        return pd.read_csv(io.BytesIO(data_bytes), **kwargs)
+
+    def _postprocess_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
+        frame = frame.drop(columns=["Unnamed: 0"], errors="ignore")
+        frame_columns = set(frame.columns)
+        rename_map = {}
+        for column in frame.columns:
+            new_name = self._maybe_canonical_name(column, frame_columns)
+            if new_name != column:
+                rename_map[column] = new_name
+        if rename_map:
+            frame = frame.rename(columns=rename_map)
+        return frame
+
+    def _maybe_canonical_name(self, column: str, frame_columns: set[str]) -> str:
+        if "_pre" not in column:
+            return column
+
+        candidates = self._candidate_column_names(column)
+        for candidate in candidates:
+            if not candidate or candidate == column:
+                continue
+            if candidate in frame_columns:
+                continue
+            if self.expected_columns and candidate in self.expected_columns:
+                return candidate
+            if not self.expected_columns:
+                return candidate
+        return column
+
+    @staticmethod
+    def _candidate_column_names(column: str) -> list[str]:
+        candidates: list[str] = []
+        if column.endswith("_pre"):
+            candidates.append(column[:-4])
+        if "_pre_" in column:
+            candidates.append(column.replace("_pre_", "_", 1))
+        if "_pre" in column:
+            candidates.append(column.replace("_pre", "", 1))
+        return [candidate.strip("_") for candidate in candidates]
+
+    @staticmethod
+    def _combine_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
         all_columns = sorted({col for frame in frames for col in frame.columns})
-        aligned_frames = [
-            frame.reindex(columns=all_columns, fill_value=pd.NA) for frame in frames
-        ]
+        aligned = [frame.reindex(columns=all_columns, fill_value=pd.NA) for frame in frames]
+        return pd.concat(aligned, ignore_index=True)
 
-        combined = pd.concat(aligned_frames, ignore_index=True)
+    def _apply_feature_casts(self, frame: pd.DataFrame) -> pd.DataFrame:
+        if frame.empty:
+            return frame
 
-        object_columns = combined.select_dtypes(include="object").columns
-        if len(object_columns) > 0:
-            for column_name in object_columns:
-                expected_feature = None
-                if isinstance(features, Features):
-                    expected_feature = features.get(column_name)
-                expected_dtype = getattr(expected_feature, "dtype", None)
-                if expected_feature is None or expected_dtype == "string":
-                    combined[column_name] = combined[column_name].astype("string")
+        object_columns = frame.select_dtypes(include="object").columns
+        for column_name in object_columns:
+            feature = None
+            if isinstance(self.features, Features):
+                feature = self.features.get(column_name)
+            expected_dtype = getattr(feature, "dtype", None)
+            if feature is None or expected_dtype == "string":
+                frame[column_name] = frame[column_name].astype("string")
 
-        if isinstance(features, Features):
-            for column_name, feature in features.items():
+        if isinstance(self.features, Features):
+            for column_name, feature in self.features.items():
                 if not isinstance(feature, Value):
                     continue
-                if column_name not in combined.columns:
+                if column_name not in frame.columns:
                     continue
                 if feature.dtype == "string":
-                    combined[column_name] = combined[column_name].astype("string")
-        unioned_splits[split_name] = Dataset.from_pandas(combined, preserve_index=False)
-
-    if not unioned_splits:
-        raise RuntimeError(f"No data could be loaded for dataset '{dataset_name}'")
-
-    return DatasetDict(unioned_splits)
+                    frame[column_name] = frame[column_name].astype("string")
+        return frame
 
 
 def map_rows_to_examples(

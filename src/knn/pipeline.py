@@ -20,6 +20,8 @@ import logging
 import os
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
+from common.pipeline_stage import prepare_sweep_execution
+
 from .pipeline_context import (
     MetricSummary,
     OpinionStudySelection,
@@ -52,7 +54,6 @@ from .pipeline_data import (
     warn_if_issue_tokens_used as _warn_if_issue_tokens_used,
 )
 from .pipeline_utils import (
-    default_word2vec_workers as _default_word2vec_workers,
     ensure_dir as _ensure_dir,
     extract_metric_summary as _extract_metric_summary,
     extract_opinion_summary as _extract_opinion_summary,
@@ -199,32 +200,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         slate_count = len(planned_tasks)
         opinion_count = len(planned_opinion_tasks)
         total_tasks = slate_count + opinion_count
-        if total_tasks == 0:
-            LOGGER.info("No sweep tasks pending; existing metrics cover the grid.")
-            return
-        task_id = args.sweep_task_id
+        task_id = prepare_sweep_execution(
+            total_tasks=total_tasks,
+            cli_task_id=args.sweep_task_id,
+            cli_task_count=args.sweep_task_count,
+            logger=LOGGER,
+        )
         if task_id is None:
-            env_value = os.environ.get("SLURM_ARRAY_TASK_ID")
-            if env_value is None:
-                raise RuntimeError(
-                    "Sweep stage requires --sweep-task-id or the SLURM_ARRAY_TASK_ID environment variable."
-                )
-            try:
-                task_id = int(env_value)
-            except ValueError as exc:
-                raise RuntimeError(
-                    f"Invalid SLURM_ARRAY_TASK_ID '{env_value}'; expected an integer."
-                ) from exc
-        if args.sweep_task_count is not None and args.sweep_task_count != total_tasks:
-            LOGGER.warning(
-                "Sweep task count mismatch: expected=%d provided=%d.",
-                total_tasks,
-                args.sweep_task_count,
-            )
-        if task_id < 0 or task_id >= total_tasks:
-            raise RuntimeError(
-                f"Sweep task index {task_id} outside valid range 0..{total_tasks - 1}."
-            )
+            return
         if task_id < slate_count:
             task = planned_tasks[task_id]
             if context.reuse_sweeps and task.metrics_path.exists():

@@ -9,18 +9,11 @@ from typing import Any, Dict, Sequence
 
 import numpy as np
 
-try:  # pragma: no cover - optional dependency
-    import joblib
-except ImportError:  # pragma: no cover - optional dependency
-    joblib = None  # type: ignore[assignment]
-
-try:  # pragma: no cover - optional dependency
-    from sklearn.feature_extraction.text import TfidfVectorizer
-except ImportError:  # pragma: no cover - optional dependency
-    TfidfVectorizer = None  # type: ignore[assignment]
-
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+from common.vectorizers import create_tfidf_vectorizer
 from knn.features import Word2VecConfig, Word2VecFeatureBuilder
+
+from ._optional import TfidfVectorizer, joblib
 
 __all__ = [
     "BaseTextVectorizer",
@@ -44,15 +37,10 @@ class BaseTextVectorizer:
         """
         Fit the vectoriser on ``documents`` and return the resulting features.
 
-        Parameters
-        ----------
-        documents:
-            Corpus used to establish model parameters.
-
-        Returns
-        -------
-        Any
-            Implementation-specific feature matrix.
+        :param documents: Corpus used to establish model parameters.
+        :type documents: Sequence[str]
+        :returns: Implementation-specific feature matrix.
+        :rtype: Any
         """
 
         raise NotImplementedError
@@ -61,15 +49,10 @@ class BaseTextVectorizer:
         """
         Encode ``documents`` using the fitted vectoriser.
 
-        Parameters
-        ----------
-        documents:
-            Inputs to transform with the learned representation.
-
-        Returns
-        -------
-        Any
-            Feature matrix aligned with the fitted model state.
+        :param documents: Inputs transformed with the learned representation.
+        :type documents: Sequence[str]
+        :returns: Feature matrix aligned with the fitted model state.
+        :rtype: Any
         """
 
         raise NotImplementedError
@@ -78,10 +61,8 @@ class BaseTextVectorizer:
         """
         Return the number of features produced during transformation.
 
-        Returns
-        -------
-        int
-            Width of the feature representation.
+        :returns: Width of the feature representation.
+        :rtype: int
         """
 
         raise NotImplementedError
@@ -90,10 +71,8 @@ class BaseTextVectorizer:
         """
         Persist the trained vectoriser into ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Destination folder for serialised artefacts.
+        :param directory: Destination folder for serialised artefacts.
+        :type directory: Path
         """
 
         raise NotImplementedError
@@ -103,21 +82,21 @@ class BaseTextVectorizer:
         """
         Reconstruct a vectoriser from ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Location containing saved model artefacts.
-
-        Returns
-        -------
-        BaseTextVectorizer
-            Fully initialised subclass instance.
+        :param directory: Location containing saved model artefacts.
+        :type directory: Path
+        :returns: Fully initialised subclass instance.
+        :rtype: BaseTextVectorizer
         """
 
         raise NotImplementedError
 
     def metadata(self) -> Dict[str, Any]:
-        """Return serialisable metadata describing the vectoriser."""
+        """
+        Return serialisable metadata describing the vectoriser.
+
+        :returns: Dictionary describing the vectoriser kind and dimension.
+        :rtype: Dict[str, Any]
+        """
 
         return {"kind": self.kind, "dimension": self.feature_dimension()}
 
@@ -138,38 +117,23 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Create a TF-IDF vectoriser wrapper.
 
-        Parameters
-        ----------
-        config:
-            Hyper-parameters controlling vocabulary size and tokenisation.
+        :param config: Hyper-parameters controlling vocabulary size and tokenisation.
+        :type config: TfidfConfig
         """
 
         if TfidfVectorizer is None:  # pragma: no cover - optional dependency
             raise ImportError("Install scikit-learn to use TF-IDF vectorisation.")
         self.config = config
-        self.vectorizer = TfidfVectorizer(
-            lowercase=True,
-            strip_accents="unicode",
-            ngram_range=(1, 2),
-            min_df=1,
-            stop_words=None,
-            token_pattern=r"(?u)\b[\w\-]{2,}\b",
-            max_features=config.max_features,
-        )
+        self.vectorizer = create_tfidf_vectorizer(max_features=config.max_features)
 
     def fit_transform(self, documents: Sequence[str]):
         """
         Fit the TF-IDF vectoriser and transform ``documents``.
 
-        Parameters
-        ----------
-        documents:
-            Corpus used for fitting and transformation.
-
-        Returns
-        -------
-        Any
-            Sparse matrix of TF-IDF features.
+        :param documents: Corpus used for fitting and transformation.
+        :type documents: Sequence[str]
+        :returns: Sparse matrix of TF-IDF features.
+        :rtype: Any
         """
 
         return self.vectorizer.fit_transform(documents)
@@ -178,15 +142,10 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Transform ``documents`` using the fitted TF-IDF model.
 
-        Parameters
-        ----------
-        documents:
-            Input texts to encode.
-
-        Returns
-        -------
-        Any
-            Sparse matrix of TF-IDF features matching the fitted vocabulary.
+        :param documents: Input texts to encode.
+        :type documents: Sequence[str]
+        :returns: Sparse matrix of TF-IDF features matching the fitted vocabulary.
+        :rtype: Any
         """
 
         return self.vectorizer.transform(documents)
@@ -195,10 +154,8 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Return the number of TF-IDF features exposed by the model.
 
-        Returns
-        -------
-        int
-            Vocabulary size reflected in the vectoriser.
+        :returns: Vocabulary size reflected in the vectoriser.
+        :rtype: int
         """
 
         n_features = getattr(self.vectorizer, "max_features", None)
@@ -212,10 +169,8 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Persist the fitted TF-IDF vectoriser to ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Destination folder receiving the serialised model artefacts.
+        :param directory: Destination folder receiving the serialised model artefacts.
+        :type directory: Path
         """
 
         directory.mkdir(parents=True, exist_ok=True)
@@ -230,15 +185,10 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Restore a TF-IDF vectoriser previously saved with :meth:`save`.
 
-        Parameters
-        ----------
-        directory:
-            Folder containing the saved estimator and metadata.
-
-        Returns
-        -------
-        TfidfVectorizerWrapper
-            Reconstructed wrapper ready for inference.
+        :param directory: Folder containing the saved estimator and metadata.
+        :type directory: Path
+        :returns: Reconstructed wrapper ready for inference.
+        :rtype: TfidfVectorizerWrapper
         """
 
         if joblib is None:  # pragma: no cover - optional dependency
@@ -273,10 +223,8 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Build a Word2Vec-backed vectoriser.
 
-        Parameters
-        ----------
-        config:
-            Training and inference options for the Word2Vec feature builder.
+        :param config: Training and inference options for the Word2Vec feature builder.
+        :type config: Word2VecVectorizerConfig
         """
 
         self.config = config
@@ -297,15 +245,10 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Train the Word2Vec model and encode ``documents``.
 
-        Parameters
-        ----------
-        documents:
-            Corpus used for model fitting and embedding aggregation.
-
-        Returns
-        -------
-        numpy.ndarray
-            Dense embedding matrix with one row per document.
+        :param documents: Corpus used for model fitting and embedding aggregation.
+        :type documents: Sequence[str]
+        :returns: Dense embedding matrix with one row per document.
+        :rtype: numpy.ndarray
         """
 
         self._builder.train(documents)
@@ -315,15 +258,10 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Encode ``documents`` using the fitted Word2Vec model.
 
-        Parameters
-        ----------
-        documents:
-            Texts to convert into averaged embeddings.
-
-        Returns
-        -------
-        numpy.ndarray
-            Dense embedding matrix using the cached embeddings.
+        :param documents: Texts to convert into averaged embeddings.
+        :type documents: Sequence[str]
+        :returns: Dense embedding matrix using the cached embeddings.
+        :rtype: numpy.ndarray
         """
 
         return self._builder.transform(documents)
@@ -332,10 +270,8 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Return the dimensionality of the produced Word2Vec embeddings.
 
-        Returns
-        -------
-        int
-            Embedding size configured for the model.
+        :returns: Embedding size configured for the model.
+        :rtype: int
         """
 
         return int(self._builder.config.vector_size)
@@ -344,10 +280,8 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Store the Word2Vec model artefacts in ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Destination folder receiving the trained embeddings and metadata.
+        :param directory: Destination folder receiving the trained embeddings and metadata.
+        :type directory: Path
         """
 
         directory.mkdir(parents=True, exist_ok=True)
@@ -373,15 +307,10 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Load a Word2Vec vectoriser from ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Folder containing a previous call to :meth:`save`.
-
-        Returns
-        -------
-        Word2VecVectorizer
-            Rehydrated vectoriser with weights and configuration applied.
+        :param directory: Folder containing a previous call to :meth:`save`.
+        :type directory: Path
+        :returns: Rehydrated vectoriser with weights and configuration applied.
+        :rtype: Word2VecVectorizer
         """
 
         with open(directory / VECTORISER_META, "r", encoding="utf-8") as handle:
@@ -411,10 +340,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Create a vectoriser backed by a sentence-transformer model.
 
-        Parameters
-        ----------
-        config:
-            Encoder settings forwarded to :class:`common.embeddings.SentenceTransformerEncoder`.
+        :param config: Encoder settings forwarded to :class:`common.embeddings.SentenceTransformerEncoder`.
+        :type config: SentenceTransformerVectorizerConfig
         """
 
         self.config = config
@@ -432,15 +359,10 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Encode ``documents`` while caching the embedding dimensionality.
 
-        Parameters
-        ----------
-        documents:
-            Texts to embed via the underlying sentence-transformer.
-
-        Returns
-        -------
-        numpy.ndarray
-            Dense array of unit-normalised document embeddings.
+        :param documents: Texts to embed via the underlying sentence-transformer.
+        :type documents: Sequence[str]
+        :returns: Dense array of unit-normalised document embeddings.
+        :rtype: numpy.ndarray
         """
 
         encoded = self._encoder.encode(documents)
@@ -451,15 +373,10 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Encode ``documents`` using the cached sentence-transformer model.
 
-        Parameters
-        ----------
-        documents:
-            Text inputs to convert into embeddings.
-
-        Returns
-        -------
-        numpy.ndarray
-            Dense embedding array reusing the cached model instance.
+        :param documents: Text inputs to convert into embeddings.
+        :type documents: Sequence[str]
+        :returns: Dense embedding array reusing the cached model instance.
+        :rtype: numpy.ndarray
         """
 
         encoded = self._encoder.encode(documents)
@@ -471,10 +388,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Return the dimensionality of the sentence-transformer embeddings.
 
-        Returns
-        -------
-        int
-            Embedding width either cached from training or derived on demand.
+        :returns: Embedding width either cached from training or derived on demand.
+        :rtype: int
         """
 
         if self._dimension is not None:
@@ -486,10 +401,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Persist the vectoriser configuration metadata to ``directory``.
 
-        Parameters
-        ----------
-        directory:
-            Destination folder receiving the serialised configuration.
+        :param directory: Destination folder receiving the serialised configuration.
+        :type directory: Path
         """
 
         directory.mkdir(parents=True, exist_ok=True)
@@ -510,15 +423,10 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Restore configuration needed to rebuild the sentence-transformer encoder.
 
-        Parameters
-        ----------
-        directory:
-            Folder containing metadata generated by :meth:`save`.
-
-        Returns
-        -------
-        SentenceTransformerVectorizer
-            Vectoriser initialised with the persisted configuration.
+        :param directory: Folder containing metadata generated by :meth:`save`.
+        :type directory: Path
+        :returns: Vectoriser initialised with the persisted configuration.
+        :rtype: SentenceTransformerVectorizer
         """
 
         with open(directory / VECTORISER_META, "r", encoding="utf-8") as handle:
@@ -534,19 +442,43 @@ def create_vectorizer(
     word2vec: Word2VecVectorizerConfig | None = None,
     sentence_transformer: SentenceTransformerVectorizerConfig | None = None,
 ) -> BaseTextVectorizer:
-    """Return a vectoriser instance for ``kind``."""
+    """
+    Instantiate a text vectoriser matching ``kind``.
+
+    :param kind: Vectoriser identifier (``tfidf``, ``word2vec``, ``sentence_transformer``).
+    :type kind: str
+    :param tfidf: Optional TF-IDF configuration.
+    :type tfidf: TfidfConfig | None
+    :param word2vec: Optional Word2Vec configuration.
+    :type word2vec: Word2VecVectorizerConfig | None
+    :param sentence_transformer: Optional sentence-transformer configuration.
+    :type sentence_transformer: SentenceTransformerVectorizerConfig | None
+    :returns: Concrete vectoriser instance.
+    :rtype: BaseTextVectorizer
+    :raises ValueError: If the vectoriser kind is unsupported.
+    """
 
     if kind == "tfidf":
         return TfidfVectorizerWrapper(tfidf or TfidfConfig())
     if kind == "word2vec":
         return Word2VecVectorizer(word2vec or Word2VecVectorizerConfig())
     if kind == "sentence_transformer":
-        return SentenceTransformerVectorizer(sentence_transformer or SentenceTransformerVectorizerConfig())
+        return SentenceTransformerVectorizer(
+            sentence_transformer or SentenceTransformerVectorizerConfig()
+        )
     raise ValueError(f"Unsupported text vectorizer '{kind}'.")
 
 
 def load_vectorizer(directory: Path) -> BaseTextVectorizer:
-    """Load a vectoriser saved via :meth:`BaseTextVectorizer.save`."""
+    """
+    Load a vectoriser saved via :meth:`BaseTextVectorizer.save`.
+
+    :param directory: Directory containing the serialized vectoriser.
+    :type directory: Path
+    :returns: Restored vectoriser instance.
+    :rtype: BaseTextVectorizer
+    :raises ValueError: If the persisted vectoriser kind is unsupported.
+    """
 
     with open(directory / VECTORISER_META, "r", encoding="utf-8") as handle:
         meta = json.load(handle)

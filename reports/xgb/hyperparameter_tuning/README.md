@@ -109,4 +109,3 @@ This summary lists the top-performing configurations uncovered for each particip
 | Column subsample | 0.6 ×2, 1 ×1 |
 | L2 regularisation | 0.5 ×3 |
 | L1 regularisation | 0.1 ×2, 0 ×1 |
-

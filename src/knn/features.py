@@ -13,12 +13,10 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     Word2Vec = None
 
-from common import get_logger
 from common.prompt_docs import (
     DEFAULT_TITLE_DIRS as _DEFAULT_TITLE_DIRS,
     EXTRA_FIELD_LABELS as _COMMON_EXTRA_FIELD_LABELS,
-    PromptDocumentBuilder,
-    default_title_resolver,
+    create_prompt_document_builder,
 )
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
@@ -26,48 +24,91 @@ from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 DEFAULT_TITLE_DIRS = _DEFAULT_TITLE_DIRS
 EXTRA_FIELD_LABELS = _COMMON_EXTRA_FIELD_LABELS
 
-_PROMPT_DOC_BUILDER = PromptDocumentBuilder(
+_PROMPT_DOC_BUILDER = create_prompt_document_builder(
     prompt_column=PROMPT_COLUMN,
     solution_column=SOLUTION_COLUMN,
     max_history=PROMPT_MAX_HISTORY,
-    title_lookup=default_title_resolver(),
     log_prefix="[KNN]",
-    logger=get_logger("knn.features"),
+    logger_name="knn.features",
 )
 
 
 def title_for(video_id: str) -> Optional[str]:
-    """Return a human-readable title for a YouTube id if available."""
+    """
+    Look up a human-readable title for a given YouTube identifier.
+
+    :param video_id: Candidate YouTube video identifier to resolve.
+    :type video_id: str
+    :returns: Title associated with ``video_id`` when present in the cache.
+    :rtype: Optional[str]
+    """
 
     return _PROMPT_DOC_BUILDER.title_for(video_id)
 
 
 def viewer_profile_sentence(example: dict) -> str:
-    """Return the viewer profile sentence for ``example``."""
+    """
+    Compose the viewer profile sentence associated with a dataset row.
+
+    :param example: Interaction example containing viewer profile fields.
+    :type example: dict
+    :returns: Natural-language sentence describing the participant profile.
+    :rtype: str
+    """
 
     return _PROMPT_DOC_BUILDER.viewer_profile_sentence(example)
 
 
 def prompt_from_builder(example: dict) -> str:
-    """Return the prompt text for ``example`` using the shared builder."""
+    """
+    Assemble the full prompt text for a dataset example.
+
+    :param example: Interaction example containing prompt components.
+    :type example: dict
+    :returns: Prompt text used for feature extraction.
+    :rtype: str
+    """
 
     return _PROMPT_DOC_BUILDER.prompt_from_builder(example)
 
 
 def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
-    """Return the currently watched title/id, if known."""
+    """
+    Retrieve the currently watched item for an interaction.
+
+    :param example: Interaction example describing viewer activity.
+    :type example: dict
+    :returns: Tuple of ``(title, video_id)`` when the "now watching" context exists.
+    :rtype: Optional[Tuple[str, str]]
+    """
 
     return _PROMPT_DOC_BUILDER.extract_now_watching(example)
 
 
 def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
-    """Return the slate as ``(title, video_id)`` pairs."""
+    """
+    Extract the slate of candidate items from an interaction example.
+
+    :param example: Dataset row containing slate metadata.
+    :type example: dict
+    :returns: Ordered list of ``(title, video_id)`` tuples.
+    :rtype: List[Tuple[str, str]]
+    """
 
     return _PROMPT_DOC_BUILDER.extract_slate_items(example)
 
 
 def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
-    """Return concatenated text used to featurise ``example``."""
+    """
+    Concatenate prompt components into a single document for featurisation.
+
+    :param example: Dataset row describing the prompt and slate context.
+    :type example: dict
+    :param extra_fields: Optional additional column names appended to the document.
+    :type extra_fields: Sequence[str] | None
+    :returns: Combined prompt text passed to vectorisers.
+    :rtype: str
+    """
 
     return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
 
@@ -78,7 +119,20 @@ def prepare_training_documents(
     seed: int,
     extra_fields: Sequence[str] | None = None,
 ):
-    """Return TF-IDF training documents and associated labels."""
+    """
+    Prepare prompt documents, labels, and metadata for TF-IDF training.
+
+    :param train_ds: Dataset split providing training rows.
+    :type train_ds: datasets.Dataset | Sequence[dict]
+    :param max_train: Optional cap on the number of training rows retained (0 keeps all).
+    :type max_train: int
+    :param seed: Random seed used when subsampling ``train_ds``.
+    :type seed: int
+    :param extra_fields: Additional columns appended to the prompt document.
+    :type extra_fields: Sequence[str] | None
+    :returns: Tuple of ``(documents, label_ids, participant_ids)``.
+    :rtype: Tuple[list[str], list[str], list[str]]
+    """
 
     return _PROMPT_DOC_BUILDER.prepare_training_documents(
         train_ds,
@@ -95,7 +149,24 @@ def prepare_training_documents(
 
 @dataclass
 class Word2VecConfig:
-    """Configuration options for Word2Vec embeddings."""
+    """
+    Configuration options for Word2Vec embeddings.
+
+    :ivar vector_size: Dimensionality of the learned embedding vectors.
+    :vartype vector_size: int
+    :ivar window: Context window size used during training.
+    :vartype window: int
+    :ivar min_count: Minimum token frequency retained in the vocabulary.
+    :vartype min_count: int
+    :ivar epochs: Number of Word2Vec training epochs.
+    :vartype epochs: int
+    :ivar model_dir: Directory where trained embeddings are persisted.
+    :vartype model_dir: Path
+    :ivar seed: Random seed for Word2Vec initialisation.
+    :vartype seed: int
+    :ivar workers: Number of worker threads allocated to training.
+    :vartype workers: int
+    """
 
     vector_size: int = 256
     window: int = 5
@@ -107,27 +178,45 @@ class Word2VecConfig:
 
 
 class Word2VecFeatureBuilder:
-    """Create Word2Vec embeddings from viewer prompts."""
+    """
+    Create Word2Vec embeddings from viewer prompts.
+
+    :ivar config: Configuration bundle controlling Word2Vec training/inference.
+    :vartype config: Word2VecConfig
+    :ivar _model: Loaded gensim :class:`~gensim.models.Word2Vec` instance.
+    :vartype _model: gensim.models.Word2Vec | None
+    """
 
     def __init__(self, config: Optional[Word2VecConfig] = None) -> None:
-        """Initialise the builder with optional configuration overrides.
+        """
+        Initialise the builder with optional configuration overrides.
 
-        :param config: Optional :class:`Word2VecConfig` instance.
+        :param config: Optional configuration bundle to override defaults.
+        :type config: Word2VecConfig | None
         """
         self.config = config or Word2VecConfig()
         self._model = None
 
     @staticmethod
     def _tokenize(text: str) -> List[str]:
-        """Tokenise input text into whitespace-delimited lower-case tokens.
+        """
+        Tokenise input text into whitespace-delimited lower-case tokens.
 
-        :param text: Text to split.
-        :returns: List of tokens.
+        :param text: Text to split into tokens.
+        :type text: str
+        :returns: List of lower-cased tokens extracted from ``text``.
+        :rtype: List[str]
         """
         return text.lower().split()
 
     def train(self, corpus: Iterable[str]) -> None:
-        """Train a Word2Vec model using the provided corpus."""
+        """
+        Train a Word2Vec model using the provided corpus.
+
+        :param corpus: Iterable of documents used to fit the embeddings.
+        :type corpus: Iterable[str]
+        :raises ImportError: If :mod:`gensim` is unavailable.
+        """
 
         if Word2Vec is None:  # pragma: no cover - optional dependency
             raise ImportError("Install gensim to enable Word2Vec embeddings")
@@ -145,14 +234,26 @@ class Word2VecFeatureBuilder:
         self.save(self.config.model_dir)
 
     def load(self, directory: Path) -> None:
-        """Load a previously trained Word2Vec model from disk."""
+        """
+        Load a previously trained Word2Vec model from disk.
+
+        :param directory: Directory containing the saved Word2Vec model.
+        :type directory: Path
+        :raises ImportError: If :mod:`gensim` is unavailable.
+        """
 
         if Word2Vec is None:  # pragma: no cover - optional dependency
             raise ImportError("Install gensim to enable Word2Vec embeddings")
         self._model = Word2Vec.load(str(directory / "word2vec.model"))
 
     def save(self, directory: Path) -> None:
-        """Persist the trained model to ``directory``."""
+        """
+        Persist the trained model to ``directory``.
+
+        :param directory: Destination directory receiving the model artefact.
+        :type directory: Path
+        :raises RuntimeError: If the model has not been trained or loaded.
+        """
 
         if self._model is None:
             raise RuntimeError("Word2Vec model must be trained before saving")
@@ -160,12 +261,25 @@ class Word2VecFeatureBuilder:
         self._model.save(str(directory / "word2vec.model"))
 
     def is_trained(self) -> bool:
-        """Return True when the underlying Word2Vec model is ready for inference."""
+        """
+        Indicate whether the underlying Word2Vec model is ready for inference.
+
+        :returns: ``True`` when a trained model is loaded.
+        :rtype: bool
+        """
 
         return self._model is not None
 
     def encode(self, text: str) -> np.ndarray:
-        """Return the averaged embedding vector for ``text``."""
+        """
+        Return the averaged embedding vector for ``text``.
+
+        :param text: Document to encode using the fitted embeddings.
+        :type text: str
+        :returns: Averaged embedding vector representing ``text``.
+        :rtype: numpy.ndarray
+        :raises RuntimeError: If the model has not been trained or loaded.
+        """
 
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")
@@ -175,7 +289,15 @@ class Word2VecFeatureBuilder:
         return np.asarray(self._model.wv[tokens].mean(axis=0), dtype=np.float32)
 
     def transform(self, corpus: Sequence[str]) -> np.ndarray:
-        """Return stacked embeddings for ``corpus``."""
+        """
+        Return stacked embeddings for ``corpus``.
+
+        :param corpus: Sequence of documents to transform.
+        :type corpus: Sequence[str]
+        :returns: Matrix of shape ``(len(corpus), vector_size)``.
+        :rtype: numpy.ndarray
+        :raises RuntimeError: If the model has not been trained or loaded.
+        """
 
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")

@@ -32,6 +32,16 @@ LANGUAGE_FRIENDLY_NAMES = {
     "fr_ca": "French",
 }
 
+NEWS_TRUST_FIELD_NAMES = (
+    "news_trust",
+    "trust_majornews_w1",
+    "trust_localnews_w1",
+    "trust_majornews_w2",
+    "trust_localnews_w2",
+    "trust_majornews_w3",
+    "trust_localnews_w3",
+)
+
 GUN_FIELD_LABELS: Dict[str, str] = {
     "right_to_own_importance": "Right-to-own importance",
     "assault_ban": "Supports assault weapons ban",

@@ -1,9 +1,9 @@
+# pylint: disable=duplicate-code
 """Evaluation loop and metrics for the XGBoost slate baseline."""
 
 from __future__ import annotations
 
 import json
-import os
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from common.eval_utils import safe_div
+from common.eval_utils import compose_issue_slug, prepare_dataset, safe_div
 
 from .data import (
     DEFAULT_DATASET_SOURCE,
@@ -42,7 +42,14 @@ logger = get_logger("xgb.eval")
 
 
 def _split_tokens(raw: Optional[str]) -> List[str]:
-    """Return a cleaned list of comma-separated tokens."""
+    """
+    Split a comma-delimited string into trimmed tokens.
+
+    :param raw: Raw comma-separated string provided via CLI flags.
+    :type raw: Optional[str]
+    :returns: Sequence of non-empty tokens.
+    :rtype: List[str]
+    """
 
     if not raw:
         return []
@@ -134,7 +141,18 @@ class PredictionOutcome:
 
 @dataclass(frozen=True)
 class ProbabilityContext:
-    """Aggregated probability metadata for a slate prediction."""
+    """
+    Aggregated probability metadata for a slate prediction.
+
+    :ivar best_probability: Probability assigned to the chosen candidate.
+    :vartype best_probability: float
+    :ivar record_probability: Flag indicating whether the probability should contribute
+        to averages (only when the candidate was observed during training).
+    :vartype record_probability: bool
+    :ivar known_candidate_hit: Flag signalling that the predicted candidate matches
+        the gold label and was seen during training.
+    :vartype known_candidate_hit: bool
+    """
 
     best_probability: float
     record_probability: bool
@@ -143,7 +161,20 @@ class ProbabilityContext:
 
 @dataclass(frozen=True)
 class OutcomeSummary:
-    """Aggregated metrics derived from prediction outcomes."""
+    """
+    Aggregated metrics derived from prediction outcomes.
+
+    :ivar evaluated: Number of evaluation rows processed.
+    :vartype evaluated: int
+    :ivar correct: Count of correct slate selections.
+    :vartype correct: int
+    :ivar known_hits: Count of correct selections among candidates observed during training.
+    :vartype known_hits: int
+    :ivar known_total: Count of evaluations with at least one known candidate.
+    :vartype known_total: int
+    :ivar avg_probability: Mean probability assigned to known predictions.
+    :vartype avg_probability: float
+    """
 
     evaluated: int
     correct: int
@@ -159,14 +190,13 @@ def run_eval(args) -> None:
     :param args: Parsed CLI arguments produced via :func:`xgb.cli.build_parser`.
     :type args: argparse.Namespace
     """
-
-    os_env = os.environ
-    os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
-    os_env.setdefault("HF_HOME", args.cache_dir)
-
-    dataset_source = args.dataset or DEFAULT_DATASET_SOURCE
-    base_ds = load_dataset_source(dataset_source, args.cache_dir)
-    available_issues = issues_in_dataset(base_ds)
+    dataset_source, base_ds, available_issues = prepare_dataset(
+        dataset=getattr(args, "dataset", None),
+        default_source=DEFAULT_DATASET_SOURCE,
+        cache_dir=args.cache_dir,
+        loader=load_dataset_source,
+        issue_lookup=issues_in_dataset,
+    )
 
     if args.issues:
         requested = [token.strip() for token in args.issues.split(",") if token.strip()]
@@ -193,6 +223,7 @@ def run_eval(args) -> None:
         )
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def _evaluate_issue(
     args,
     issue: str,
@@ -211,17 +242,8 @@ def _evaluate_issue(
     :param study_tokens: Participant study filters applied to train/eval splits.
     """
 
-    issue_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
     tokens = [token for token in study_tokens if token]
-    suffix_parts: List[str] = []
-    seen_suffix: set[str] = set()
-    for token in tokens:
-        slug = token.replace(" ", "_")
-        if slug and slug.lower() != "all" and slug not in seen_suffix:
-            suffix_parts.append(slug)
-            seen_suffix.add(slug)
-    if suffix_parts:
-        issue_slug = f"{issue_slug}_{'_'.join(suffix_parts)}"
+    issue_slug = compose_issue_slug(issue, tokens)
 
     logger.info(
         "[XGBoost] Evaluating issue=%s participant_studies=%s",
@@ -240,7 +262,8 @@ def _evaluate_issue(
 
     if train_rows == 0 or eval_rows == 0:
         logger.warning(
-            "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant study filter.",
+            "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant "
+            "study filter.",
             issue_slug,
             train_rows,
             eval_rows,
@@ -418,7 +441,18 @@ def _evaluate_single_example(
     example: dict,
     extra_fields: Sequence[str],
 ) -> PredictionOutcome:
-    """Return the prediction outcome for a single example."""
+    """
+    Score a single interaction and package the outcome metadata.
+
+    :param model: Trained slate model used for inference.
+    :type model: XGBoostSlateModel
+    :param example: Dataset row containing prompt text and slate candidates.
+    :type example: dict
+    :param extra_fields: Additional columns appended to the feature document.
+    :type extra_fields: Sequence[str]
+    :returns: Rich prediction bundle describing the model decision.
+    :rtype: PredictionOutcome
+    """
     prediction_idx, probability_map = predict_among_slate(
         model,
         example,
@@ -465,7 +499,18 @@ def _collect_prediction_records(
     eval_ds,
     config: EvaluationConfig,
 ) -> List[tuple[int, PredictionOutcome]]:
-    """Return indexed prediction outcomes for the evaluation split."""
+    """
+    Collect indexed prediction outcomes for the evaluation split.
+
+    :param model: Trained slate model used to score candidate lists.
+    :type model: XGBoostSlateModel
+    :param eval_ds: Iterable of dataset rows representing the evaluation split.
+    :type eval_ds: datasets.Dataset | Sequence[dict]
+    :param config: Evaluation configuration controlling maximum rows and extra fields.
+    :type config: EvaluationConfig
+    :returns: Ordered list mapping dataset indices to :class:`PredictionOutcome`.
+    :rtype: List[tuple[int, PredictionOutcome]]
+    """
     records: List[tuple[int, PredictionOutcome]] = []
     for index, example in enumerate(eval_ds):
         if config.eval_max and len(records) >= config.eval_max:
@@ -485,7 +530,20 @@ def _summarise_records(
     issue_slug: str,
     model: XGBoostSlateModel,
 ) -> IssueMetrics:
-    """Aggregate prediction records into an :class:`IssueMetrics` summary."""
+    """
+    Aggregate prediction records into an :class:`IssueMetrics` summary.
+
+    :param records: Indexed prediction outcomes for the evaluation split.
+    :type records: List[tuple[int, PredictionOutcome]]
+    :param config: Evaluation configuration specifying dataset metadata.
+    :type config: EvaluationConfig
+    :param issue_slug: Slug identifying the evaluated issue.
+    :type issue_slug: str
+    :param model: Trained model bundle used to augment metrics with parameters.
+    :type model: XGBoostSlateModel
+    :returns: Metrics ready for serialisation to ``metrics.json``.
+    :rtype: IssueMetrics
+    """
     summary = _summarise_outcomes(records)
     return IssueMetrics(
         issue=issue_slug,
@@ -508,7 +566,16 @@ def _records_to_predictions(
     records: List[tuple[int, PredictionOutcome]],
     issue_slug: str,
 ) -> List[Dict[str, Any]]:
-    """Serialise prediction records into API-friendly dictionaries."""
+    """
+    Serialise prediction outcomes into JSON-friendly dictionaries.
+
+    :param records: Indexed prediction outcomes emitted by :func:`_collect_prediction_records`.
+    :type records: List[tuple[int, PredictionOutcome]]
+    :param issue_slug: Identifier describing the evaluated issue.
+    :type issue_slug: str
+    :returns: List of dictionaries mirroring the JSONL predictions format.
+    :rtype: List[Dict[str, Any]]
+    """
     return [
         {
             "issue": issue_slug,
@@ -528,7 +595,16 @@ def _accuracy_curve_from_records(
     *,
     target_points: int = 50,
 ) -> Dict[str, Any]:
-    """Return cumulative accuracy checkpoints computed from ``records``."""
+    """
+    Build cumulative accuracy checkpoints for plotting learning curves.
+
+    :param records: Ordered prediction outcomes produced during evaluation.
+    :type records: Sequence[tuple[int, PredictionOutcome]]
+    :param target_points: Approximate number of checkpoints to retain.
+    :type target_points: int
+    :returns: Mapping containing the accuracy curve, total examples, and stride.
+    :rtype: Dict[str, Any]
+    """
 
     total = len(records)
     if total == 0:
@@ -558,7 +634,20 @@ def _curve_metrics_for_split(
     *,
     target_points: int = 50,
 ) -> Dict[str, Any]:
-    """Compute cumulative accuracy metrics for ``dataset``."""
+    """
+    Compute cumulative accuracy metrics for an arbitrary dataset split.
+
+    :param model: Trained slate model used for inference.
+    :type model: XGBoostSlateModel
+    :param dataset: Iterable of dataset rows to evaluate.
+    :type dataset: datasets.Dataset | Sequence[dict]
+    :param extra_fields: Additional columns appended to the feature document.
+    :type extra_fields: Sequence[str]
+    :param target_points: Approximate number of checkpoints to retain.
+    :type target_points: int
+    :returns: Accuracy curve payload mirroring :func:`_accuracy_curve_from_records`.
+    :rtype: Dict[str, Any]
+    """
 
     config = EvaluationConfig(
         dataset_source="curve",
@@ -579,6 +668,7 @@ def _candidate_probabilities(
     :param slate: Ordered sequence of slate options ``(title, video_id)``.
     :param probability_map: Mapping from canonical video id to predicted probability.
     :returns: Tuple of ``(candidate_probabilities, known_candidate_ids)`` keyed by 1-based index.
+    :rtype: tuple[Dict[int, float], Dict[int, str]]
     """
 
     candidate_probs = {
@@ -607,6 +697,7 @@ def _probability_context(
     :param known_candidates: Mapping from 1-based index to canonical id when seen during training.
     :param gold_id_canon: Canonicalised gold video identifier.
     :returns: :class:`ProbabilityContext` describing probabilities and hits.
+    :rtype: ProbabilityContext
     """
 
     best_probability = (
@@ -633,7 +724,9 @@ def _summarise_outcomes(
     """Aggregate prediction outcomes into summary counts.
 
     :param records: Sequence of ``(index, PredictionOutcome)`` tuples.
+    :type records: List[tuple[int, PredictionOutcome]]
     :returns: :class:`OutcomeSummary` containing accuracy, coverage, and averages.
+    :rtype: OutcomeSummary
     """
 
     outcomes = [outcome for _, outcome in records]

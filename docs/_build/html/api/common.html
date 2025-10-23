@@ -264,6 +264,37 @@
 title resolution, and safe numerical operations used across the baselines.</p>
 <p id="module-common">Shared utilities reused across multiple baselines.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="common.OpinionStudySelection">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">OpinionStudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline_utils.html#OpinionStudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.OpinionStudySelection" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">StudyT</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">OutcomeT</span></code>]</p>
+<p>Base selection container shared between opinion pipelines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>study</strong> (<em>StudyT</em>)</p></li>
+<li><p><strong>outcome</strong> (<em>OutcomeT</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="common.OpinionStudySelection.config">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#common.OpinionStudySelection.config" title="Link to this definition">¶</a></dt>
+<dd><p>Return the configuration promoting this study outcome.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.OpinionStudySelection.outcome">
+<span class="sig-name descname"><span class="pre">outcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">OutcomeT</span></em><a class="headerlink" href="#common.OpinionStudySelection.outcome" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.OpinionStudySelection.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">StudyT</span></em><a class="headerlink" href="#common.OpinionStudySelection.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="common.TitleResolver">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.TitleResolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -312,6 +343,50 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="common.add_comma_separated_argument">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">add_comma_separated_argument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/cli_args.html#add_comma_separated_argument"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.add_comma_separated_argument" title="Link to this definition">¶</a></dt>
+<dd><p>Register an argument that captures comma-separated values.</p>
+<p>The helper keeps flag combinations consistent across CLIs that surface the
+same semantics (e.g., study filters).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parser</strong> (<em>ArgumentParser</em>)</p></li>
+<li><p><strong>flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
+<li><p><strong>dest</strong> (<em>str</em>)</p></li>
+<li><p><strong>help_text</strong> (<em>str</em>)</p></li>
+<li><p><strong>default</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.add_sentence_transformer_normalise_flags">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">add_sentence_transformer_normalise_flags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sentence_transformer_normalize'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('--sentence-transformer-normalize',)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('--sentence-transformer-no-normalize',)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_help</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Enable</span> <span class="pre">L2-normalisation</span> <span class="pre">for</span> <span class="pre">sentence-transformer</span> <span class="pre">embeddings</span> <span class="pre">(default).'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_help</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Disable</span> <span class="pre">L2-normalisation</span> <span class="pre">for</span> <span class="pre">sentence-transformer</span> <span class="pre">embeddings.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/cli_args.html#add_sentence_transformer_normalise_flags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.add_sentence_transformer_normalise_flags" title="Link to this definition">¶</a></dt>
+<dd><p>Add paired boolean flags controlling sentence-transformer normalisation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parser</strong> (<em>ArgumentParser</em>)</p></li>
+<li><p><strong>dest</strong> (<em>str</em>)</p></li>
+<li><p><strong>default</strong> (<em>bool</em>)</p></li>
+<li><p><strong>enable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
+<li><p><strong>disable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
+<li><p><strong>enable_help</strong> (<em>str</em>)</p></li>
+<li><p><strong>disable_help</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="common.canon_text">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/text.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.canon_text" title="Link to this definition">¶</a></dt>
 <dd><p>Return a lowercased alphanumeric canonical representation.</p>
@@ -335,6 +410,20 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.create_tfidf_vectorizer">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">create_tfidf_vectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/vectorizers.html#create_tfidf_vectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.create_tfidf_vectorizer" title="Link to this definition">¶</a></dt>
+<dd><p>Return a TF-IDF vectoriser with the shared configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>sklearn.feature_extraction.text.TfidfVectorizer</p>
 </dd>
 </dl>
 </dd></dl>
@@ -370,6 +459,26 @@ caller-provided override).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Logger</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.merge_ordered">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">merge_ordered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cached</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executed</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline_utils.html#merge_ordered"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.merge_ordered" title="Link to this definition">¶</a></dt>
+<dd><p>Merge cached and freshly executed results preserving order indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cached</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Previously materialised results (e.g., metrics read from disk).</p></li>
+<li><p><strong>executed</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Newly computed results from the current run.</p></li>
+<li><p><strong>order_key</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>]</em><em>, </em><em>int</em><em>]</em>) – Callable returning a deterministic integer position for each result.</p></li>
+<li><p><strong>on_replace</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>, </em><em>T</em><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Optional callback invoked when an executed item replaces a cached one
+at the same index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>T</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -754,15 +863,25 @@ caller-provided override).</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Common Utilities API</a><ul>
+<li><a class="reference internal" href="#common.OpinionStudySelection"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></a><ul>
+<li><a class="reference internal" href="#common.OpinionStudySelection.config"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.config</span></code></a></li>
+<li><a class="reference internal" href="#common.OpinionStudySelection.outcome"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.outcome</span></code></a></li>
+<li><a class="reference internal" href="#common.OpinionStudySelection.study"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.study</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#common.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a><ul>
 <li><a class="reference internal" href="#common.TitleResolver.__init__"><code class="docutils literal notranslate"><span class="pre">TitleResolver.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#common.TitleResolver.resolve"><code class="docutils literal notranslate"><span class="pre">TitleResolver.resolve()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#common.add_comma_separated_argument"><code class="docutils literal notranslate"><span class="pre">add_comma_separated_argument()</span></code></a></li>
+<li><a class="reference internal" href="#common.add_sentence_transformer_normalise_flags"><code class="docutils literal notranslate"><span class="pre">add_sentence_transformer_normalise_flags()</span></code></a></li>
 <li><a class="reference internal" href="#common.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
 <li><a class="reference internal" href="#common.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
+<li><a class="reference internal" href="#common.create_tfidf_vectorizer"><code class="docutils literal notranslate"><span class="pre">create_tfidf_vectorizer()</span></code></a></li>
 <li><a class="reference internal" href="#common.ensure_directory"><code class="docutils literal notranslate"><span class="pre">ensure_directory()</span></code></a></li>
 <li><a class="reference internal" href="#common.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li><a class="reference internal" href="#common.merge_ordered"><code class="docutils literal notranslate"><span class="pre">merge_ordered()</span></code></a></li>
 <li><a class="reference internal" href="#common.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li><a class="reference internal" href="#common.safe_div"><code class="docutils literal notranslate"><span class="pre">safe_div()</span></code></a></li>
 <li><a class="reference internal" href="#common.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>

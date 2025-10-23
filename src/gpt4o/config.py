@@ -42,9 +42,12 @@ PROMPT_COLUMN: str = os.environ.get("GPT4O_PROMPT_COLUMN", "state_text")
 SOLUTION_COLUMN: str = os.environ.get("GPT4O_SOLUTION_COLUMN", "video_id")
 
 # Defaults for locating auxiliary title metadata
+_DEFAULT_TITLE_ROOT = Path(
+    "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees"
+)
 DEFAULT_TITLE_DIRS: list[str] = [
-    "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_gun",
-    "/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_wage",
+    str(_DEFAULT_TITLE_ROOT / "trees_gun"),
+    str(_DEFAULT_TITLE_ROOT / "trees_wage"),
 ]
 
 
@@ -65,10 +68,12 @@ Your job:
 
 Output format (STRICT):
   • First output your hidden reasoning in <think>…</think>.
-    – In your thinking, reference candidates by their numbers and names (or ids) to justify the choice.
+    – In your thinking, reference candidates by their numbers and names (or ids)
+      to justify the choice.
   • Then output ONLY the chosen option’s NUMBER inside <answer>…</answer>.
     – Do NOT output the name, id, or any extra text—ONLY the number.
-    – Do NOT include punctuation, quotes, or a period after the number.
+    – Do NOT include punctuation, quotes,
+      or a period after the number.
 
 Examples of valid <answer>:
   <answer>

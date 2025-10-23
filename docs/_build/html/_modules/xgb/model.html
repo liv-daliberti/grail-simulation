@@ -257,6 +257,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -295,6 +296,26 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBClassifier</span>  <span class="c1"># type: ignore</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">XGBClassifier</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;xgb.model&quot;</span><span class="p">)</span>
+<span class="n">_gpu_training_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_should_retry_on_cpu</span><span class="p">(</span><span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when a GPU-specific failure should trigger a CPU retry.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tree_method</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">tree_method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+    <span class="n">lowered</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">gpu_indicators</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;cudaerrorinitializationerror&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cudaerrornodevice&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cuda driver version&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cuda driver initialization failed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gpu is not enabled&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">gpu_indicators</span><span class="p">)</span>
 
 <div class="viewcode-block" id="XGBoostSlateModel">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.XGBoostSlateModel">[docs]</a>
@@ -375,7 +396,8 @@
 <span class="sd">    :vartype seed: int</span>
 <span class="sd">    :ivar max_features: Maximum number of TF-IDF features (``None`` for unlimited).</span>
 <span class="sd">    :vartype max_features: int | None</span>
-<span class="sd">    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``, or ``sentence_transformer``).</span>
+<span class="sd">    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``,</span>
+<span class="sd">        or ``sentence_transformer``).</span>
 <span class="sd">    :vartype vectorizer_kind: str</span>
 <span class="sd">    :ivar booster: Hyper-parameter bundle applied when initialising the booster.</span>
 <span class="sd">    :vartype booster: XGBoostBoosterParams</span>
@@ -424,7 +446,11 @@
 
     <span class="n">train_config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">XGBoostTrainConfig</span><span class="p">()</span>
     <span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">capped</span> <span class="o">=</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="ow">and</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">capped</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span>
+        <span class="k">if</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="ow">and</span> <span class="n">train_config</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
     <span class="n">train_config</span><span class="o">.</span><span class="n">tfidf</span><span class="o">.</span><span class="n">max_features</span> <span class="o">=</span> <span class="n">capped</span>
     <span class="n">vectorizer</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">booster</span> <span class="o">=</span> <span class="n">_build_model_components</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
@@ -580,6 +606,13 @@
     <span class="n">booster_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">extra_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="n">unique_labels</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
     <span class="n">booster_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;num_class&quot;</span><span class="p">,</span> <span class="n">unique_labels</span><span class="p">)</span>
+
+    <span class="n">requested_method</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">tree_method</span> <span class="ow">or</span> <span class="s2">&quot;hist&quot;</span>
+    <span class="n">use_gpu</span> <span class="o">=</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_gpu_training_enabled</span>
+    <span class="n">effective_method</span> <span class="o">=</span> <span class="n">requested_method</span> <span class="k">if</span> <span class="n">use_gpu</span> <span class="k">else</span> <span class="p">(</span>
+        <span class="s2">&quot;hist&quot;</span> <span class="k">if</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">requested_method</span>
+    <span class="p">)</span>
+
     <span class="n">booster</span> <span class="o">=</span> <span class="n">XGBClassifier</span><span class="p">(</span>
         <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;multi:softprob&quot;</span><span class="p">,</span>
         <span class="n">eval_metric</span><span class="o">=</span><span class="s2">&quot;mlogloss&quot;</span><span class="p">,</span>
@@ -588,15 +621,63 @@
         <span class="n">learning_rate</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
         <span class="n">subsample</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">subsample</span><span class="p">,</span>
         <span class="n">colsample_bytree</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">colsample_bytree</span><span class="p">,</span>
-        <span class="n">tree_method</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
+        <span class="n">tree_method</span><span class="o">=</span><span class="n">effective_method</span><span class="p">,</span>
         <span class="n">reg_lambda</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">,</span>
         <span class="n">reg_alpha</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">reg_alpha</span><span class="p">,</span>
         <span class="n">random_state</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
         <span class="n">nthread</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">booster_kwargs</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">booster</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">booster</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - runtime guard</span>
+        <span class="k">if</span> <span class="n">use_gpu</span> <span class="ow">and</span> <span class="n">_should_retry_on_cpu</span><span class="p">(</span><span class="n">requested_method</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;XGBoost GPU training failed with &#39;</span><span class="si">%s</span><span class="s2">&#39;. Retrying current task on CPU.&quot;</span><span class="p">,</span>
+                <span class="n">exc</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">_disable_gpu_boosters</span><span class="p">()</span>
+            <span class="n">cpu_kwargs</span> <span class="o">=</span> <span class="n">_scrub_gpu_kwargs</span><span class="p">(</span><span class="n">booster_kwargs</span><span class="p">)</span>
+            <span class="n">cpu_booster</span> <span class="o">=</span> <span class="n">XGBClassifier</span><span class="p">(</span>
+                <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;multi:softprob&quot;</span><span class="p">,</span>
+                <span class="n">eval_metric</span><span class="o">=</span><span class="s2">&quot;mlogloss&quot;</span><span class="p">,</span>
+                <span class="n">n_estimators</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">n_estimators</span><span class="p">,</span>
+                <span class="n">max_depth</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
+                <span class="n">learning_rate</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
+                <span class="n">subsample</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">subsample</span><span class="p">,</span>
+                <span class="n">colsample_bytree</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">colsample_bytree</span><span class="p">,</span>
+                <span class="n">tree_method</span><span class="o">=</span><span class="s2">&quot;hist&quot;</span><span class="p">,</span>
+                <span class="n">reg_lambda</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">,</span>
+                <span class="n">reg_alpha</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">reg_alpha</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+                <span class="n">nthread</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">cpu_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">cpu_booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">cpu_booster</span>
+        <span class="k">raise</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_disable_gpu_boosters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Disable GPU boosters for subsequent runs after a failure.&quot;&quot;&quot;</span>
+
+    <span class="k">global</span> <span class="n">_gpu_training_enabled</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="k">if</span> <span class="n">_gpu_training_enabled</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Disabling XGBoost GPU boosters for the remainder of this process.&quot;</span><span class="p">)</span>
+    <span class="n">_gpu_training_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scrub_gpu_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a copy of kwargs without GPU-specific overrides.&quot;&quot;&quot;</span>
+
+    <span class="n">cleaned</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">cleaned</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;gpu_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predictor&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">):</span>
+        <span class="n">cleaned</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;predictor&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tree_method&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">):</span>
+        <span class="n">cleaned</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;tree_method&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cleaned</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_model_components</span><span class="p">(</span>

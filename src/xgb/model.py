@@ -9,12 +9,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
-try:  # pragma: no cover - optional dependency
-    import joblib
-except ImportError:  # pragma: no cover - optional dependency
-    joblib = None  # type: ignore[assignment]
-
 import numpy as np
+
+from ._optional import LabelEncoder, joblib
 
 from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
 from .utils import canon_video_id
@@ -27,30 +24,39 @@ from .vectorizers import (
     load_vectorizer,
 )
 
-try:  # pragma: no cover - optional dependency
-    from sklearn.preprocessing import LabelEncoder
-except ImportError:  # pragma: no cover - optional dependency
-    LabelEncoder = None  # type: ignore[assignment]
-
 
 def _ensure_label_encoder_available(action: str) -> None:
-    """Ensure optional scikit-learn dependency is present before continuing."""
+    """
+    Guard helper ensuring scikit-learn is installed before continuing.
+
+    :param action: Short description of the attempted action for error messaging.
+    :type action: str
+    :raises ImportError: If scikit-learn's :class:`~sklearn.preprocessing.LabelEncoder`
+        is unavailable.
+    """
     if LabelEncoder is None:  # pragma: no cover - optional dependency
         raise ImportError(f"Install scikit-learn to {action}.")
 
 try:  # pragma: no cover - optional dependency
     from xgboost import XGBClassifier  # type: ignore
-    from xgboost.core import XGBoostError  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     XGBClassifier = None  # type: ignore
-    XGBoostError = None  # type: ignore
 
 LOGGER = logging.getLogger("xgb.model")
-_GPU_TRAINING_ENABLED = True
+gpu_training_enabled = True  # pylint: disable=invalid-name
 
 
 def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
-    """Return True when a GPU-specific failure should trigger a CPU retry."""
+    """
+    Determine whether a GPU-specific failure warrants retrying on CPU.
+
+    :param tree_method: Requested tree construction algorithm.
+    :type tree_method: str
+    :param exc: Exception raised during booster training.
+    :type exc: Exception
+    :returns: ``True`` when the failure appears related to missing GPU support.
+    :rtype: bool
+    """
 
     if not tree_method or not str(tree_method).lower().startswith("gpu"):
         return False
@@ -136,7 +142,8 @@ class XGBoostTrainConfig:
     :vartype seed: int
     :ivar max_features: Maximum number of TF-IDF features (``None`` for unlimited).
     :vartype max_features: int | None
-    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``, or ``sentence_transformer``).
+    :ivar vectorizer_kind: Feature extraction strategy (``tfidf``, ``word2vec``,
+        or ``sentence_transformer``).
     :vartype vectorizer_kind: str
     :ivar booster: Hyper-parameter bundle applied when initialising the booster.
     :vartype booster: XGBoostBoosterParams
@@ -182,7 +189,11 @@ def fit_xgboost_model(
 
     train_config = config or XGBoostTrainConfig()
     train_config.vectorizer_kind = (train_config.vectorizer_kind or "tfidf").lower()
-    capped = train_config.max_features if train_config.max_features and train_config.max_features > 0 else None
+    capped = (
+        train_config.max_features
+        if train_config.max_features and train_config.max_features > 0
+        else None
+    )
     train_config.tfidf.max_features = capped
     vectorizer, encoder, booster = _build_model_components(
         train_ds=train_ds,
@@ -306,7 +317,15 @@ def predict_among_slate(
 
 
 def _encode_labels(labels_id: Sequence[str]) -> Tuple[LabelEncoder, Any]:
-    """Return an encoder and numeric labels derived from ``labels_id``."""
+    """
+    Fit a label encoder and transform the provided identifiers.
+
+    :param labels_id: Collection of canonical video identifiers.
+    :type labels_id: Sequence[str]
+    :returns: Tuple of ``(encoder, encoded_labels)``.
+    :rtype: Tuple[LabelEncoder, Any]
+    :raises RuntimeError: If fewer than two unique labels are supplied.
+    """
     _ensure_label_encoder_available("encode prompt labels for XGBoost")
     encoder = LabelEncoder()
     encoded = encoder.fit_transform(labels_id)
@@ -323,14 +342,26 @@ def _train_booster(
     matrix,
     labels,
 ) -> Any:
-    """Instantiate and fit the XGBoost booster component."""
+    """
+    Instantiate and fit the XGBoost booster component.
+
+    :param train_config: Training configuration containing booster hyper-parameters.
+    :type train_config: XGBoostTrainConfig
+    :param matrix: Feature matrix produced by the text vectoriser.
+    :type matrix: Any
+    :param labels: Numeric labels aligned with ``matrix`` rows.
+    :type labels: Any
+    :returns: Fitted XGBoost classifier implementing ``predict_proba``.
+    :rtype: Any
+    :raises Exception: Propagated when booster training fails on both GPU and CPU.
+    """
     params = train_config.booster
     booster_kwargs = dict(params.extra_kwargs or {})
     unique_labels = int(np.unique(labels).size)
     booster_kwargs.setdefault("num_class", unique_labels)
 
     requested_method = params.tree_method or "hist"
-    use_gpu = requested_method.lower().startswith("gpu") and _GPU_TRAINING_ENABLED
+    use_gpu = requested_method.lower().startswith("gpu") and gpu_training_enabled
     effective_method = requested_method if use_gpu else (
         "hist" if requested_method.lower().startswith("gpu") else requested_method
     )
@@ -382,16 +413,27 @@ def _train_booster(
 
 
 def _disable_gpu_boosters() -> None:
-    """Disable GPU boosters for subsequent runs after a failure."""
+    """
+    Disable GPU-backed boosters for the remainder of the process.
 
-    global _GPU_TRAINING_ENABLED  # pylint: disable=global-statement
-    if _GPU_TRAINING_ENABLED:
+    Invoked after repeated GPU failures to prevent recurring retries.
+    """
+
+    global gpu_training_enabled  # pylint: disable=global-statement
+    if gpu_training_enabled:
         LOGGER.warning("Disabling XGBoost GPU boosters for the remainder of this process.")
-    _GPU_TRAINING_ENABLED = False
+    gpu_training_enabled = False
 
 
 def _scrub_gpu_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    """Return a copy of kwargs without GPU-specific overrides."""
+    """
+    Remove GPU-specific keyword arguments from a booster configuration.
+
+    :param kwargs: Keyword arguments forwarded to :class:`xgboost.XGBClassifier`.
+    :type kwargs: Dict[str, Any]
+    :returns: Copy of ``kwargs`` without GPU-specific options.
+    :rtype: Dict[str, Any]
+    """
 
     cleaned = dict(kwargs)
     cleaned.pop("gpu_id", None)
@@ -408,7 +450,19 @@ def _build_model_components(
     train_config: XGBoostTrainConfig,
     extra_fields: Sequence[str] | None,
 ) -> Tuple[BaseTextVectorizer, LabelEncoder, Any]:
-    """Return fitted vectoriser, label encoder, and trained booster."""
+    """
+    Construct the model components required for training and inference.
+
+    :param train_ds: Dataset split providing training examples.
+    :type train_ds: datasets.Dataset | Sequence[dict]
+    :param train_config: Configuration bundle controlling sampling and hyper-parameters.
+    :type train_config: XGBoostTrainConfig
+    :param extra_fields: Additional prompt columns appended during featurisation.
+    :type extra_fields: Sequence[str] | None
+    :returns: Tuple of ``(vectorizer, label_encoder, booster)``.
+    :rtype: Tuple[BaseTextVectorizer, LabelEncoder, Any]
+    :raises RuntimeError: If no documents are produced for training.
+    """
 
     docs, labels_id, _ = prepare_prompt_documents(
         train_ds,
@@ -441,7 +495,16 @@ def _select_best_candidate(
     slate_pairs: Sequence[tuple[str, str]],
     probability_map: Dict[str, float],
 ) -> Optional[int]:
-    """Return the highest scoring slate index, applying fallback heuristics."""
+    """
+    Select the highest-scoring slate option using primary and fallback keys.
+
+    :param slate_pairs: Sequence of ``(title, video_id)`` pairs representing the slate.
+    :type slate_pairs: Sequence[tuple[str, str]]
+    :param probability_map: Probability lookup keyed by canonical video id.
+    :type probability_map: Dict[str, float]
+    :returns: 1-based index of the preferred candidate, or ``None`` when unavailable.
+    :rtype: Optional[int]
+    """
     primary = _best_index_by_key(slate_pairs, probability_map, _candidate_id_key)
     if primary is not None:
         return primary
@@ -453,7 +516,18 @@ def _best_index_by_key(
     probability_map: Dict[str, float],
     key_fn: Callable[[str, str], str],
 ) -> Optional[int]:
-    """Return the best slate index according to ``key_fn`` lookup."""
+    """
+    Return the index of the candidate maximising ``probability_map`` lookups.
+
+    :param slate_pairs: Sequence of ``(title, video_id)`` pairs representing the slate.
+    :type slate_pairs: Sequence[tuple[str, str]]
+    :param probability_map: Probability lookup keyed by canonical identifiers.
+    :type probability_map: Dict[str, float]
+    :param key_fn: Callable deriving lookup keys from candidate metadata.
+    :type key_fn: Callable[[str, str], str]
+    :returns: 1-based best index or ``None`` when no candidate receives a score.
+    :rtype: Optional[int]
+    """
     best_index: Optional[int] = None
     best_score = -math.inf
     for idx, (title, video_id) in enumerate(slate_pairs, start=1):
@@ -467,12 +541,30 @@ def _best_index_by_key(
 
 
 def _candidate_id_key(title: str, video_id: str) -> str:
-    """Return the canonical id associated with ``video_id`` (falling back to ``title``)."""
+    """
+    Derive the canonical lookup key for a candidate video.
+
+    :param title: Candidate title extracted from the slate.
+    :type title: str
+    :param video_id: Raw video identifier associated with the candidate.
+    :type video_id: str
+    :returns: Canonical identifier prioritising ``video_id`` and falling back to ``title``.
+    :rtype: str
+    """
     return canon_video_id(video_id) or canon_video_id(title)
 
 
 def _fallback_candidate_key(title: str, video_id: str) -> str:
-    """Return a fallback key using canonical id or derived title."""
+    """
+    Derive a fallback lookup key when the primary identifier is missing.
+
+    :param title: Candidate title extracted from the slate.
+    :type title: str
+    :param video_id: Raw video identifier associated with the candidate.
+    :type video_id: str
+    :returns: Canonical identifier based on ID, title lookup, or derived title text.
+    :rtype: str
+    """
     candidate = canon_video_id(video_id)
     if candidate:
         return candidate

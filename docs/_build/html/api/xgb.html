@@ -293,6 +293,34 @@ normalisation.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="xgb.data.filter_dataset_for_participant_studies">
+<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_dataset_for_participant_studies" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dataset filtered to rows whose <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> matches <code class="docutils literal notranslate"><span class="pre">studies</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p></li>
+<li><p><strong>studies</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>datasets.DatasetDict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="xgb.data.filter_split_for_participant_studies">
+<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_split_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_split_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_split_for_participant_studies" title="Link to this definition">¶</a></dt>
+<dd><p>Filter a HF dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="xgb.data.issues_in_dataset">
 <span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">issues_in_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#issues_in_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.issues_in_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Return the list of issue labels present in the dataset.</p>
@@ -694,7 +722,8 @@ normalisation.</p>
 <li><p><strong>max_train</strong> (<em>int</em>) – Maximum number of rows sampled from the training split (0 keeps all).</p></li>
 <li><p><strong>seed</strong> (<em>int</em>) – Random seed used for subsampling.</p></li>
 <li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>) – Maximum number of TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> for unlimited).</p></li>
-<li><p><strong>vectorizer_kind</strong> (<em>str</em>) – Feature extraction strategy (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>, or <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p></li>
+<li><p><strong>vectorizer_kind</strong> (<em>str</em>) – Feature extraction strategy (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>,
+or <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p></li>
 <li><p><strong>booster</strong> (<a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams"><em>XGBoostBoosterParams</em></a>) – Hyper-parameter bundle applied when initialising the booster.</p></li>
 </ul>
 </dd>
@@ -1343,7 +1372,7 @@ per-video probabilities.</p>
 <p id="module-xgb.evaluate">Evaluation loop and metrics for the XGBoost slate baseline.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.evaluate.EvaluationConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/evaluate.html#EvaluationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.EvaluationConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/evaluate.html#EvaluationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.EvaluationConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration bundle shared across evaluation helpers.</p>
 <dl class="field-list simple">
@@ -1352,6 +1381,7 @@ per-video probabilities.</p>
 <li><p><strong>dataset_source</strong> (<em>str</em>) – Identifier for the dataset source (path or HF id).</p></li>
 <li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional column names appended to prompt documents.</p></li>
 <li><p><strong>eval_max</strong> (<em>int</em>) – Optional cap on the number of evaluation rows (0 evaluates all).</p></li>
+<li><p><strong>participant_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Tokenised participant study filters applied to the splits.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
@@ -1359,6 +1389,7 @@ per-video probabilities.</p>
 <li><p><strong>dataset_source</strong> (<em>str</em>)</p></li>
 <li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>eval_max</strong> (<em>int</em>)</p></li>
+<li><p><strong>participant_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1377,17 +1408,23 @@ per-video probabilities.</p>
 <span class="sig-name descname"><span class="pre">extra_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.evaluate.EvaluationConfig.extra_fields" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.EvaluationConfig.participant_studies">
+<span class="sig-name descname"><span class="pre">participant_studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.evaluate.EvaluationConfig.participant_studies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">IssueMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xgboost_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/evaluate.html#IssueMetrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.IssueMetrics" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">IssueMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xgboost_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/evaluate.html#IssueMetrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.IssueMetrics" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container describing evaluation metrics for a single issue.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>participant_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>dataset_source</strong> (<em>str</em>)</p></li>
 <li><p><strong>evaluated</strong> (<em>int</em>)</p></li>
 <li><p><strong>correct</strong> (<em>int</em>)</p></li>
@@ -1399,6 +1436,8 @@ per-video probabilities.</p>
 <li><p><strong>timestamp</strong> (<em>float</em>)</p></li>
 <li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>xgboost_params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>curve_metrics</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>curve_metrics_path</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1420,6 +1459,16 @@ per-video probabilities.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.coverage">
 <span class="sig-name descname"><span class="pre">coverage</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.coverage" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.curve_metrics">
+<span class="sig-name descname"><span class="pre">curve_metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.curve_metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.curve_metrics_path">
+<span class="sig-name descname"><span class="pre">curve_metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.curve_metrics_path" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1450,6 +1499,11 @@ per-video probabilities.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.known_candidate_total">
 <span class="sig-name descname"><span class="pre">known_candidate_total</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.known_candidate_total" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.participant_studies">
+<span class="sig-name descname"><span class="pre">participant_studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.participant_studies" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1598,6 +1652,1075 @@ caller-provided override).</p>
 </dd></dl>
 
 </section>
+<section id="pipeline-orchestration">
+<h2>Pipeline Orchestration<a class="headerlink" href="#pipeline-orchestration" title="Link to this heading">¶</a></h2>
+<p>The orchestration layer exposes dedicated stages for the slate-ranking and
+opinion-regression tasks. Pass <code class="docutils literal notranslate"><span class="pre">--tasks</span></code> to <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">xgb.pipeline</span></code> (or the
+training wrapper scripts) to select which portions to run:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">next_video</span></code> – plan and execute hyper-parameter sweeps for the slate model,
+promote the best configurations, and run the final validation pass.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">opinion</span></code> – run the opinion-regression sweeps independently, select the best
+booster parameters, and train the regression models used in downstream
+reporting.</p></li>
+</ul>
+<p>When a task is disabled the generated Markdown reports now include a short note
+explaining that the section was intentionally skipped.</p>
+<p id="module-xgb.pipeline">High-level orchestration for the XGBoost baselines.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline.</span></span><span class="sig-name descname"><span class="pre">OpinionStageConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_participants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse_existing</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionStageConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Inputs required to launch the opinion regression stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>)</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>base_out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.base_out_dir">
+<span class="sig-name descname"><span class="pre">base_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.base_out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.cache_dir">
+<span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.cache_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.extra_fields">
+<span class="sig-name descname"><span class="pre">extra_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.extra_fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.max_features">
+<span class="sig-name descname"><span class="pre">max_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.max_features" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.max_participants">
+<span class="sig-name descname"><span class="pre">max_participants</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.max_participants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.overwrite">
+<span class="sig-name descname"><span class="pre">overwrite</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.overwrite" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.reuse_existing">
+<span class="sig-name descname"><span class="pre">reuse_existing</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.reuse_existing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.studies">
+<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.studies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionStageConfig.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionStageConfig.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepRunContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_participants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepRunContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration shared across opinion sweep evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>)</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.cache_dir">
+<span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.cache_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.extra_fields">
+<span class="sig-name descname"><span class="pre">extra_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.extra_fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.max_features">
+<span class="sig-name descname"><span class="pre">max_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.max_features" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.max_participants">
+<span class="sig-name descname"><span class="pre">max_participants</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.max_participants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.overwrite">
+<span class="sig-name descname"><span class="pre">overwrite</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.overwrite" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.sweep_dir">
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.OpinionSweepRunContext.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.OpinionSweepRunContext.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepRunContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepRunContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline.SweepRunContext" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>CLI arguments shared across sweep invocations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext.base_cli">
+<span class="sig-name descname"><span class="pre">base_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline.SweepRunContext.base_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext.extra_cli">
+<span class="sig-name descname"><span class="pre">extra_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline.SweepRunContext.extra_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext.jobs">
+<span class="sig-name descname"><span class="pre">jobs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline.SweepRunContext.jobs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext.sweep_dir">
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline.SweepRunContext.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline.SweepRunContext.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline.SweepRunContext.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="xgb.pipeline.main">
+<span class="sig-prename descclassname"><span class="pre">xgb.pipeline.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entry point orchestrating the full XGBoost workflow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-xgb.pipeline_cli">Argument parsing helpers for the XGBoost pipeline.</p>
+<p id="module-xgb.pipeline_context">Data classes shared across the XGBoost pipeline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">FinalEvalContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse_existing</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#FinalEvalContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Runtime configuration for final slate evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>save_model_dir</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.base_cli">
+<span class="sig-name descname"><span class="pre">base_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.base_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.extra_cli">
+<span class="sig-name descname"><span class="pre">extra_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.extra_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.out_dir">
+<span class="sig-name descname"><span class="pre">out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.reuse_existing">
+<span class="sig-name descname"><span class="pre">reuse_existing</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.reuse_existing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.save_model_dir">
+<span class="sig-name descname"><span class="pre">save_model_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.save_model_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.FinalEvalContext.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.FinalEvalContext.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">NextVideoMetricSummary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accuracy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_hits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_total</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_availability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#NextVideoMetricSummary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Normalised view of slate metrics emitted by the XGBoost evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>coverage</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>evaluated</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>correct</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>known_hits</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>known_total</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>known_availability</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>avg_probability</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>issue_label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>study_label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.accuracy">
+<span class="sig-name descname"><span class="pre">accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.avg_probability">
+<span class="sig-name descname"><span class="pre">avg_probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.avg_probability" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.correct">
+<span class="sig-name descname"><span class="pre">correct</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.correct" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.coverage">
+<span class="sig-name descname"><span class="pre">coverage</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.coverage" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.evaluated">
+<span class="sig-name descname"><span class="pre">evaluated</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.evaluated" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.issue_label">
+<span class="sig-name descname"><span class="pre">issue_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.issue_label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.known_availability">
+<span class="sig-name descname"><span class="pre">known_availability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.known_availability" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.known_hits">
+<span class="sig-name descname"><span class="pre">known_hits</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.known_hits" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.known_total">
+<span class="sig-name descname"><span class="pre">known_total</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.known_total" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.NextVideoMetricSummary.study_label">
+<span class="sig-name descname"><span class="pre">study_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.NextVideoMetricSummary.study_label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionStageConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_participants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse_existing</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionStageConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Inputs required to launch the opinion regression stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>)</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>base_out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.base_out_dir">
+<span class="sig-name descname"><span class="pre">base_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.base_out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.cache_dir">
+<span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.cache_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.extra_fields">
+<span class="sig-name descname"><span class="pre">extra_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.extra_fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.max_features">
+<span class="sig-name descname"><span class="pre">max_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.max_features" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.max_participants">
+<span class="sig-name descname"><span class="pre">max_participants</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.max_participants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.overwrite">
+<span class="sig-name descname"><span class="pre">overwrite</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.overwrite" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.reuse_existing">
+<span class="sig-name descname"><span class="pre">reuse_existing</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.reuse_existing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.studies">
+<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.studies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStageConfig.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStageConfig.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionStudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionStudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Selected configuration for the final opinion regression evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><em>OpinionSweepOutcome</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.config">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.config" title="Link to this definition">¶</a></dt>
+<dd><p>Return the selected sweep configuration for this study.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.outcome">
+<span class="sig-name descname"><span class="pre">outcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><span class="pre">OpinionSweepOutcome</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.outcome" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSummary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mae_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_mae</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participants</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSummary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Normalised view of opinion-regression metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mae_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rmse_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>r2_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>baseline_mae</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>mae_delta</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>participants</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.baseline_mae">
+<span class="sig-name descname"><span class="pre">baseline_mae</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.baseline_mae" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.mae_after">
+<span class="sig-name descname"><span class="pre">mae_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.mae_after" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.mae_delta">
+<span class="sig-name descname"><span class="pre">mae_delta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.mae_delta" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.participants">
+<span class="sig-name descname"><span class="pre">participants</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.participants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.r2_after">
+<span class="sig-name descname"><span class="pre">r2_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.r2_after" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.rmse_after">
+<span class="sig-name descname"><span class="pre">rmse_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.rmse_after" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.split">
+<span class="sig-name descname"><span class="pre">split</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.split" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Metrics captured for a (study, config) combination during opinion sweeps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>order_index</strong> (<em>int</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>mae</strong> (<em>float</em>)</p></li>
+<li><p><strong>rmse</strong> (<em>float</em>)</p></li>
+<li><p><strong>r2</strong> (<em>float</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.mae">
+<span class="sig-name descname"><span class="pre">mae</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.mae" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.metrics_path">
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.order_index">
+<span class="sig-name descname"><span class="pre">order_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.order_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.r2">
+<span class="sig-name descname"><span class="pre">r2</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.r2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.rmse">
+<span class="sig-name descname"><span class="pre">rmse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.rmse" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepRunContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_participants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepRunContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration shared across opinion sweep evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>)</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.cache_dir">
+<span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.cache_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.extra_fields">
+<span class="sig-name descname"><span class="pre">extra_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.extra_fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.max_features">
+<span class="sig-name descname"><span class="pre">max_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.max_features" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.max_participants">
+<span class="sig-name descname"><span class="pre">max_participants</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.max_participants" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.overwrite">
+<span class="sig-name descname"><span class="pre">overwrite</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.overwrite" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.sweep_dir">
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepRunContext.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepRunContext.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container describing a single opinion sweep execution request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>request_args</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.index">
+<span class="sig-name descname"><span class="pre">index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.metrics_path">
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.metrics_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.request_args">
+<span class="sig-name descname"><span class="pre">request_args</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.request_args" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">StudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#StudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.StudySelection" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Selected configuration for the final evaluation of a participant study.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><em>SweepOutcome</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.config">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.config" title="Link to this definition">¶</a></dt>
+<dd><p>Return the selected sweep configuration for this study.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.evaluation_slug">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.evaluation_slug" title="Link to this definition">¶</a></dt>
+<dd><p>Return the evaluation slug used for artefact directories.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.outcome">
+<span class="sig-name descname"><span class="pre">outcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><span class="pre">SweepOutcome</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.outcome" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">StudySpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#StudySpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.StudySpec" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Descriptor for a participant study and its associated issue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>)</p></li>
+<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>label</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.evaluation_slug">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.evaluation_slug" title="Link to this definition">¶</a></dt>
+<dd><p>Return the slug used for evaluation artefacts.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.issue_slug">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">issue_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.issue_slug" title="Link to this definition">¶</a></dt>
+<dd><p>Return a filesystem-safe slug for the associated issue.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.key">
+<span class="sig-name descname"><span class="pre">key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.study_slug">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">study_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.study_slug" title="Link to this definition">¶</a></dt>
+<dd><p>Return a filesystem-safe slug for the study key.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_vectorizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorizer_tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subsample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colsample_bytree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_lambda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorizer_cli=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hyper-parameter configuration evaluated during sweeps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text_vectorizer</strong> (<em>str</em>)</p></li>
+<li><p><strong>vectorizer_tag</strong> (<em>str</em>)</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em>)</p></li>
+<li><p><strong>n_estimators</strong> (<em>int</em>)</p></li>
+<li><p><strong>subsample</strong> (<em>float</em>)</p></li>
+<li><p><strong>colsample_bytree</strong> (<em>float</em>)</p></li>
+<li><p><strong>reg_lambda</strong> (<em>float</em>)</p></li>
+<li><p><strong>reg_alpha</strong> (<em>float</em>)</p></li>
+<li><p><strong>vectorizer_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.booster_params">
+<span class="sig-name descname"><span class="pre">booster_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.booster_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.booster_params" title="Link to this definition">¶</a></dt>
+<dd><p>Convert the sweep config into <code class="xref py py-class docutils literal notranslate"><span class="pre">XGBoostBoosterParams</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams"><em>XGBoostBoosterParams</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.cli_args">
+<span class="sig-name descname"><span class="pre">cli_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.cli_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.cli_args" title="Link to this definition">¶</a></dt>
+<dd><p>Return CLI overrides encoding this configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.colsample_bytree">
+<span class="sig-name descname"><span class="pre">colsample_bytree</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.colsample_bytree" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.label">
+<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.label" title="Link to this definition">¶</a></dt>
+<dd><p>Filesystem-friendly label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.learning_rate">
+<span class="sig-name descname"><span class="pre">learning_rate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.learning_rate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.max_depth">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.max_depth" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.n_estimators">
+<span class="sig-name descname"><span class="pre">n_estimators</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.n_estimators" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.reg_alpha">
+<span class="sig-name descname"><span class="pre">reg_alpha</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.reg_alpha" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.reg_lambda">
+<span class="sig-name descname"><span class="pre">reg_lambda</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.reg_lambda" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.subsample">
+<span class="sig-name descname"><span class="pre">subsample</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.subsample" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.text_vectorizer">
+<span class="sig-name descname"><span class="pre">text_vectorizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.text_vectorizer" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.vectorizer_cli">
+<span class="sig-name descname"><span class="pre">vectorizer_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.vectorizer_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.vectorizer_tag">
+<span class="sig-name descname"><span class="pre">vectorizer_tag</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.vectorizer_tag" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Metrics captured for a (study, config) combination.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>order_index</strong> (<em>int</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
+<li><p><strong>coverage</strong> (<em>float</em>)</p></li>
+<li><p><strong>evaluated</strong> (<em>int</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.accuracy">
+<span class="sig-name descname"><span class="pre">accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.coverage">
+<span class="sig-name descname"><span class="pre">coverage</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.coverage" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.evaluated">
+<span class="sig-name descname"><span class="pre">evaluated</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.evaluated" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.metrics_path">
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.metrics_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.order_index">
+<span class="sig-name descname"><span class="pre">order_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.order_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepRunContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepRunContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>CLI arguments shared across sweep invocations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext.base_cli">
+<span class="sig-name descname"><span class="pre">base_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext.base_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext.extra_cli">
+<span class="sig-name descname"><span class="pre">extra_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext.extra_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext.jobs">
+<span class="sig-name descname"><span class="pre">jobs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext.jobs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext.sweep_dir">
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepRunContext.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepRunContext.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepTask" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container describing a single sweep execution request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>run_root</strong> (<em>Path</em>)</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.base_cli">
+<span class="sig-name descname"><span class="pre">base_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.base_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.extra_cli">
+<span class="sig-name descname"><span class="pre">extra_cli</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.extra_cli" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.index">
+<span class="sig-name descname"><span class="pre">index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.metrics_path">
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.metrics_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.run_root">
+<span class="sig-name descname"><span class="pre">run_root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.run_root" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.study">
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.tree_method">
+<span class="sig-name descname"><span class="pre">tree_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.tree_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-xgb.pipeline_evaluate">Finalize-stage helpers for the XGBoost pipeline.</p>
+<p id="module-xgb.pipeline_reports">Report generation helpers for the XGBoost pipeline.</p>
+<p id="module-xgb.pipeline_sweeps">Sweep orchestration helpers for the XGBoost pipeline.</p>
+</section>
 </section>
 
         </article>
@@ -1658,6 +2781,8 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#">XGBoost Baseline API</a><ul>
 <li><a class="reference internal" href="#vectoriser-options">Vectoriser Options</a><ul>
 <li><a class="reference internal" href="#xgb.data.filter_dataset_for_issue"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_issue()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.data.filter_dataset_for_participant_studies"><code class="docutils literal notranslate"><span class="pre">filter_dataset_for_participant_studies()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.data.filter_split_for_participant_studies"><code class="docutils literal notranslate"><span class="pre">filter_split_for_participant_studies()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.data.issues_in_dataset"><code class="docutils literal notranslate"><span class="pre">issues_in_dataset()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.data.load_dataset_source"><code class="docutils literal notranslate"><span class="pre">load_dataset_source()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.features.assemble_document"><code class="docutils literal notranslate"><span class="pre">assemble_document()</span></code></a></li>
@@ -1776,6 +2901,7 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.dataset_source"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.dataset_source</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.eval_max"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.eval_max</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.extra_fields"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.extra_fields</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.EvaluationConfig.participant_studies"><code class="docutils literal notranslate"><span class="pre">EvaluationConfig.participant_studies</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics"><code class="docutils literal notranslate"><span class="pre">IssueMetrics</span></code></a><ul>
@@ -1783,12 +2909,15 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.avg_probability"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.avg_probability</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.correct"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.correct</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.coverage"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.coverage</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.curve_metrics"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.curve_metrics</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.curve_metrics_path"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.curve_metrics_path</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.dataset_source"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.dataset_source</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.evaluated"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.evaluated</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.extra_fields"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.extra_fields</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.issue"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.issue</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.known_candidate_hits"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.known_candidate_hits</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.known_candidate_total"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.known_candidate_total</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.participant_studies"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.participant_studies</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.timestamp"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.timestamp</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.xgboost_params"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.xgboost_params</span></code></a></li>
 </ul>
@@ -1801,6 +2930,193 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#xgb.utils.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.utils.ensure_directory"><code class="docutils literal notranslate"><span class="pre">ensure_directory()</span></code></a></li>
 <li><a class="reference internal" href="#xgb.utils.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pipeline-orchestration">Pipeline Orchestration</a><ul>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.base_out_dir"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.base_out_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.cache_dir"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.extra_fields"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.extra_fields</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.max_features"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.max_features</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.max_participants"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.max_participants</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.overwrite"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.overwrite</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.reuse_existing"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.reuse_existing</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.seed"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.studies"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.studies</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionStageConfig.tree_method"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.cache_dir"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.extra_fields"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.extra_fields</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.max_features"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.max_features</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.max_participants"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.max_participants</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.overwrite"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.overwrite</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.seed"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.sweep_dir"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.sweep_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.OpinionSweepRunContext.tree_method"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext"><code class="docutils literal notranslate"><span class="pre">SweepRunContext</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext.base_cli"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.base_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext.extra_cli"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.extra_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext.jobs"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.jobs</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext.sweep_dir"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.sweep_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline.SweepRunContext.tree_method"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.base_cli"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.base_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.extra_cli"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.extra_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.out_dir"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.out_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.reuse_existing"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.reuse_existing</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.save_model_dir"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.save_model_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.FinalEvalContext.tree_method"><code class="docutils literal notranslate"><span class="pre">FinalEvalContext.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.accuracy"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.accuracy</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.avg_probability"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.avg_probability</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.correct"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.correct</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.coverage"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.coverage</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.dataset"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.evaluated"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.evaluated</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.issue"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.issue</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.issue_label"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.issue_label</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.known_availability"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.known_availability</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.known_hits"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.known_hits</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.known_total"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.known_total</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.NextVideoMetricSummary.study_label"><code class="docutils literal notranslate"><span class="pre">NextVideoMetricSummary.study_label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.base_out_dir"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.base_out_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.cache_dir"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.extra_fields"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.extra_fields</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.max_features"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.max_features</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.max_participants"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.max_participants</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.overwrite"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.overwrite</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.reuse_existing"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.reuse_existing</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.seed"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.studies"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.studies</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.tree_method"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.config"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.outcome"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.outcome</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.study"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.study</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary"><code class="docutils literal notranslate"><span class="pre">OpinionSummary</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.baseline_mae"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.baseline_mae</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.label"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.label</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.mae_after"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.mae_after</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.mae_delta"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.mae_delta</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.participants"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.participants</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.r2_after"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.r2_after</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.rmse_after"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.rmse_after</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.split"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.split</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.config"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.mae"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.mae</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.metrics</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics_path"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.metrics_path</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.order_index"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.order_index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.r2"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.r2</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.rmse"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.rmse</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.study"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.study</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.cache_dir"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.extra_fields"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.extra_fields</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.max_features"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.max_features</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.max_participants"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.max_participants</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.overwrite"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.overwrite</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.seed"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.seed</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.sweep_dir"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.sweep_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepRunContext.tree_method"><code class="docutils literal notranslate"><span class="pre">OpinionSweepRunContext.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.config"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.index"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.metrics_path"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.metrics_path</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.request_args"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.request_args</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.study"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.study</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection"><code class="docutils literal notranslate"><span class="pre">StudySelection</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.config"><code class="docutils literal notranslate"><span class="pre">StudySelection.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.evaluation_slug"><code class="docutils literal notranslate"><span class="pre">StudySelection.evaluation_slug</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.outcome"><code class="docutils literal notranslate"><span class="pre">StudySelection.outcome</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.study"><code class="docutils literal notranslate"><span class="pre">StudySelection.study</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec"><code class="docutils literal notranslate"><span class="pre">StudySpec</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.evaluation_slug"><code class="docutils literal notranslate"><span class="pre">StudySpec.evaluation_slug</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.issue"><code class="docutils literal notranslate"><span class="pre">StudySpec.issue</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.issue_slug"><code class="docutils literal notranslate"><span class="pre">StudySpec.issue_slug</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.key"><code class="docutils literal notranslate"><span class="pre">StudySpec.key</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.label"><code class="docutils literal notranslate"><span class="pre">StudySpec.label</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.study_slug"><code class="docutils literal notranslate"><span class="pre">StudySpec.study_slug</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig"><code class="docutils literal notranslate"><span class="pre">SweepConfig</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.booster_params"><code class="docutils literal notranslate"><span class="pre">SweepConfig.booster_params()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.cli_args"><code class="docutils literal notranslate"><span class="pre">SweepConfig.cli_args()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.colsample_bytree"><code class="docutils literal notranslate"><span class="pre">SweepConfig.colsample_bytree</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.label"><code class="docutils literal notranslate"><span class="pre">SweepConfig.label()</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.learning_rate"><code class="docutils literal notranslate"><span class="pre">SweepConfig.learning_rate</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.max_depth"><code class="docutils literal notranslate"><span class="pre">SweepConfig.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.n_estimators"><code class="docutils literal notranslate"><span class="pre">SweepConfig.n_estimators</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.reg_alpha"><code class="docutils literal notranslate"><span class="pre">SweepConfig.reg_alpha</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.reg_lambda"><code class="docutils literal notranslate"><span class="pre">SweepConfig.reg_lambda</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.subsample"><code class="docutils literal notranslate"><span class="pre">SweepConfig.subsample</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.text_vectorizer"><code class="docutils literal notranslate"><span class="pre">SweepConfig.text_vectorizer</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.vectorizer_cli"><code class="docutils literal notranslate"><span class="pre">SweepConfig.vectorizer_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepConfig.vectorizer_tag"><code class="docutils literal notranslate"><span class="pre">SweepConfig.vectorizer_tag</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome"><code class="docutils literal notranslate"><span class="pre">SweepOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.accuracy"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.accuracy</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.config"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.coverage"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.coverage</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.evaluated"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.evaluated</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.metrics"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.metrics</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.metrics_path"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.metrics_path</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.order_index"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.order_index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome.study"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.study</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext"><code class="docutils literal notranslate"><span class="pre">SweepRunContext</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext.base_cli"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.base_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext.extra_cli"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.extra_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext.jobs"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.jobs</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext.sweep_dir"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.sweep_dir</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepRunContext.tree_method"><code class="docutils literal notranslate"><span class="pre">SweepRunContext.tree_method</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask"><code class="docutils literal notranslate"><span class="pre">SweepTask</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.base_cli"><code class="docutils literal notranslate"><span class="pre">SweepTask.base_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.config"><code class="docutils literal notranslate"><span class="pre">SweepTask.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.extra_cli"><code class="docutils literal notranslate"><span class="pre">SweepTask.extra_cli</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.index"><code class="docutils literal notranslate"><span class="pre">SweepTask.index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.metrics_path"><code class="docutils literal notranslate"><span class="pre">SweepTask.metrics_path</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.run_root"><code class="docutils literal notranslate"><span class="pre">SweepTask.run_root</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.study"><code class="docutils literal notranslate"><span class="pre">SweepTask.study</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.tree_method"><code class="docutils literal notranslate"><span class="pre">SweepTask.tree_method</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

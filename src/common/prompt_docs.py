@@ -6,11 +6,16 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from numpy.random import default_rng
 
 from common import canon_text, canon_video_id, get_logger
+from common.prompt_fields import (
+    NOW_PLAYING_ID_KEYS,
+    NOW_PLAYING_TITLE_KEYS,
+    NOW_PLAYING_TITLE_KEYS_WITH_META,
+)
 from common.title_index import TitleResolver
 try:
     from prompt_builder import (
@@ -68,6 +73,26 @@ def default_title_resolver() -> TitleResolver:
     return _default_title_resolver_cache
 
 
+def create_prompt_document_builder(
+    *,
+    prompt_column: str,
+    solution_column: str,
+    max_history: int,
+    log_prefix: str,
+    logger_name: str,
+) -> "PromptDocumentBuilder":
+    """Construct a :class:`PromptDocumentBuilder` with shared defaults."""
+
+    return PromptDocumentBuilder(
+        prompt_column=prompt_column,
+        solution_column=solution_column,
+        max_history=max_history,
+        title_lookup=default_title_resolver(),
+        log_prefix=log_prefix,
+        logger=get_logger(logger_name),
+    )
+
+
 def _looks_like_legacy_prompt(prompt_text: str) -> bool:
     """Return ``True`` when ``prompt_text`` matches the legacy prompt layout."""
 
@@ -107,6 +132,32 @@ def _is_nanlike(value: object) -> bool:
     return string in {"", "nan", "none", "null", "na", "n/a"}
 
 
+def load_trajectory_entries(payload: object) -> List[Mapping[str, object]]:
+    """Return sanitized trajectory entries extracted from ``payload``."""
+
+    if isinstance(payload, str) and payload.strip():
+        try:
+            data = json.loads(payload)
+        except (TypeError, ValueError, json.JSONDecodeError):  # pragma: no cover - defensive
+            return []
+    elif isinstance(payload, Mapping):
+        data = payload
+    else:
+        return []
+
+    if not isinstance(data, Mapping):
+        return []
+    rows = data.get("order") or data.get("videos") or data.get("history") or []
+    if not isinstance(rows, Sequence):
+        return []
+
+    entries: List[Mapping[str, object]] = []
+    for entry in rows:
+        if isinstance(entry, Mapping):
+            entries.append(entry)
+    return entries
+
+
 def _extract_now_watching(
     example: dict,
     title_lookup: TitleLookup | None,
@@ -115,46 +166,12 @@ def _extract_now_watching(
 
     video_id = _pick_ci(example, "video_id", "videoId")
     if video_id and not _is_nanlike(video_id):
-        title = _pick_ci(
-            example,
-            "current_video_title",
-            "now_playing_title",
-            "watching_title",
-            "currentVideoTitle",
-            "nowPlayingTitle",
-            "watchingTitle",
-            "now_title",
-            "current_title",
-            "meta_originTitle",
-        )
+        title = _pick_ci(example, *NOW_PLAYING_TITLE_KEYS_WITH_META)
         if _is_nanlike(title) and title_lookup is not None:
             title = title_lookup(video_id)
         return (title or "(untitled)", str(video_id))
-    title = _pick_ci(
-        example,
-        "current_video_title",
-        "now_playing_title",
-        "watching_title",
-        "currentVideoTitle",
-        "nowPlayingTitle",
-        "watchingTitle",
-        "now_title",
-        "current_title",
-    )
-    video_id = _pick_ci(
-        example,
-        "current_video_id",
-        "now_playing_id",
-        "watching_id",
-        "currentVideoId",
-        "nowPlayingId",
-        "watchingId",
-        "now_id",
-        "current_id",
-        "originId",
-        "video_id",
-        "videoId",
-    )
+    title = _pick_ci(example, *NOW_PLAYING_TITLE_KEYS)
+    video_id = _pick_ci(example, *NOW_PLAYING_ID_KEYS)
     if (title and not _is_nanlike(title)) or (video_id and not _is_nanlike(video_id)):
         if _is_nanlike(title) and title_lookup is not None:
             title = title_lookup(video_id) or ""
@@ -247,36 +264,25 @@ def _extract_slate_items(
                 _append_item(title_raw, vid_raw)
 
     if not items:
-        trajectory_json = example.get("trajectory_json")
-        if isinstance(trajectory_json, str) and trajectory_json.strip():
-            try:
-                data = json.loads(trajectory_json)
-            except (TypeError, ValueError, json.JSONDecodeError):  # pragma: no cover - defensive
-                data = None
-            if isinstance(data, dict):
-                rows = data.get("order") or data.get("videos") or data.get("history") or []
-                if isinstance(rows, list):
-                    for entry in rows:
-                        if not isinstance(entry, dict):
-                            continue
-                        raw_id = _pick_ci(
-                            entry,
-                            "video_id",
-                            "id",
-                            "videoId",
-                            "originId",
-                            "content_id",
-                        )
-                        title = _pick_ci(
-                            entry,
-                            "title",
-                            "video_title",
-                            "name",
-                            "surface",
-                            "text",
-                            "videoTitle",
-                        )
-                        _append_item(title, raw_id)
+        for entry in load_trajectory_entries(example.get("trajectory_json")):
+            raw_id = _pick_ci(
+                entry,
+                "video_id",
+                "id",
+                "videoId",
+                "originId",
+                "content_id",
+            )
+            title = _pick_ci(
+                entry,
+                "title",
+                "video_title",
+                "name",
+                "surface",
+                "text",
+                "videoTitle",
+            )
+            _append_item(title, raw_id)
 
     if not items:
         return []
@@ -492,5 +498,7 @@ __all__ = [
     "DEFAULT_TITLE_DIRS",
     "EXTRA_FIELD_LABELS",
     "PromptDocumentBuilder",
+    "create_prompt_document_builder",
     "default_title_resolver",
+    "load_trajectory_entries",
 ]

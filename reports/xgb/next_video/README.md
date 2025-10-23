@@ -26,4 +26,3 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 - Portfolio mean accuracy 0.599 across 3 studies.
 - Mean coverage 0.600.
 - Known candidate availability averages 0.999.
-

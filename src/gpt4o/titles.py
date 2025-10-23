@@ -15,6 +15,21 @@ class TitleResolver(_BaseTitleResolver):
 
         :param kwargs: Optional keyword overrides forwarded to the base class.
         """
-        defaults = {"default_dirs": DEFAULT_TITLE_DIRS}
-        defaults.update(kwargs)
-        super().__init__(**defaults)
+        super().__init__(**self._merge_defaults(kwargs))
+
+    @staticmethod
+    def _merge_defaults(overrides: dict[str, object]) -> dict[str, object]:
+        """Return keyword arguments merged with the shared defaults."""
+
+        defaults: dict[str, object] = {"default_dirs": DEFAULT_TITLE_DIRS}
+        defaults.update(overrides)
+        return defaults
+
+    @classmethod
+    def with_directories(cls, *directories: str, **kwargs) -> "TitleResolver":
+        """Return a resolver overriding the default search directories."""
+
+        params = cls._merge_defaults(kwargs)
+        if directories:
+            params["default_dirs"] = list(directories)
+        return cls(**params)

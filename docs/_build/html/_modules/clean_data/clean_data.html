@@ -271,10 +271,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">lzma</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>
@@ -287,7 +287,9 @@
     <span class="n">Features</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">HFSequence</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
     <span class="n">Value</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-    <span class="n">DatasetGenerationCastError</span> <span class="o">=</span> <span class="ne">Exception</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">DatasetGenerationCastError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback stub when datasets is unavailable.&quot;&quot;&quot;</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -354,7 +356,9 @@
     <span class="n">validation_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;validation&quot;</span>
     <span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">max_history</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span></div>
+    <span class="n">max_history</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -407,6 +411,15 @@
 
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReadAttempt</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture a single pandas CSV parsing attempt configuration.&quot;&quot;&quot;</span>
+
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">on_bad_lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_with_column_union</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a flat CSV dataset while unioning columns across data files.</span>
 
@@ -423,8 +436,8 @@
 
     <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - environment guard</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;pandas is required to load &#39;</span><span class="si">%s</span><span class="s2">&#39; due to column mismatches. Install pandas&quot;</span>
-            <span class="s2">&quot; to enable the union fallback.&quot;</span> <span class="o">%</span> <span class="n">dataset_name</span>
+            <span class="sa">f</span><span class="s2">&quot;pandas is required to load &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; due to column mismatches. &quot;</span>
+            <span class="s2">&quot;Install pandas to enable the union fallback.&quot;</span>
         <span class="p">)</span>
 
     <span class="n">builder</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_dataset_builder</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
@@ -432,224 +445,276 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">data_files</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose data_files metadata&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Normalise split -&gt; list[str]</span>
+    <span class="n">split_files</span> <span class="o">=</span> <span class="n">_normalise_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">_ColumnUnionLoader</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">builder</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+    <span class="n">unioned</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">split_files</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">unioned</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data could be loaded for dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">unioned</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalise_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce the builder ``data_files`` mapping into ``split -&gt; [files]`` form.&quot;&quot;&quot;</span>
+
     <span class="n">split_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">data_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">files</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">):</span>
             <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported data_files entry for split &#39;</span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_files</span>
 
-    <span class="n">fs</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">_fs</span>  <span class="c1"># type: ignore[attr-defined]</span>
-    <span class="n">expected_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
-        <span class="n">expected_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">unioned_splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">file_list</span> <span class="ow">in</span> <span class="n">split_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">canonical_columns</span> <span class="o">=</span> <span class="n">expected_columns</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ColumnUnionLoader</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper that recreates CSV datasets while unioning distinct column sets.&quot;&quot;&quot;</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_file_ref</span><span class="p">(</span><span class="n">file_ref_obj</span><span class="p">):</span>
-            <span class="n">open_fs</span> <span class="o">=</span> <span class="n">fs</span>  <span class="c1"># type: ignore[attr-defined]</span>
-            <span class="n">open_path</span> <span class="o">=</span> <span class="n">file_ref_obj</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref_obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">file_ref_obj</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                        <span class="s2">&quot;Encountered remote data file &#39;</span><span class="si">%s</span><span class="s2">&#39; but fsspec is unavailable. &quot;</span>
-                        <span class="s2">&quot;Install fsspec to enable remote downloads.&quot;</span> <span class="o">%</span> <span class="n">file_ref_obj</span>
-                    <span class="p">)</span>
-                <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span> <span class="o">=</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref_obj</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">open_fs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">open_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">):</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                    <span class="k">pass</span>
-            <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-                <span class="k">if</span> <span class="p">(</span>
-                    <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref_obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_ref_obj</span>
-                <span class="p">):</span>
-                    <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span> <span class="o">=</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref_obj</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">remote_fs</span><span class="p">,</span> <span class="n">remote_path</span>
-                <span class="k">raise</span>
-            <span class="k">return</span> <span class="n">open_fs</span><span class="p">,</span> <span class="n">open_path</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">builder</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span>
+    <span class="n">expected_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fs</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">_read_csv_frame</span><span class="p">(</span><span class="n">active_fs</span><span class="p">,</span> <span class="n">active_path</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">active_fs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">active_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">raw_handle</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="n">raw_bytes</span> <span class="o">=</span> <span class="n">raw_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">filesystem</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builder</span><span class="p">,</span> <span class="s2">&quot;_fs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filesystem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive branch</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Dataset builder for &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose a filesystem handle&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">filesystem</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">_decompress_payload</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x1f\x8b\x08</span><span class="s2">&quot;</span><span class="p">):</span>
-                        <span class="k">return</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;PK</span><span class="se">\x03\x04</span><span class="s2">&quot;</span><span class="p">):</span>
-                        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
-                            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">():</span>
-                                <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
-                                    <span class="k">return</span> <span class="n">zf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                            <span class="s2">&quot;Zip archive &#39;</span><span class="si">%s</span><span class="s2">&#39; does not contain file entries; using raw bytes&quot;</span><span class="p">,</span>
-                            <span class="n">active_path</span><span class="p">,</span>
-                        <span class="p">)</span>
-                        <span class="k">return</span> <span class="n">payload</span>
-                    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;BZh&quot;</span><span class="p">):</span>
-                        <span class="k">return</span> <span class="n">bz2</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xfd</span><span class="s2">7zXZ</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x5d\x00\x00</span><span class="s2">&quot;</span><span class="p">):</span>
-                        <span class="k">return</span> <span class="n">lzma</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-                <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span><span class="p">,</span> <span class="n">lzma</span><span class="o">.</span><span class="n">LZMAError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                        <span class="s2">&quot;Failed to decompress &#39;</span><span class="si">%s</span><span class="s2">&#39; despite matching signature; falling back to raw &quot;</span>
-                        <span class="s2">&quot;bytes (</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
-                        <span class="n">active_path</span><span class="p">,</span>
-                        <span class="n">err</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">return</span> <span class="n">payload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Union column schemas for every split and return the reconstructed datasets.&quot;&quot;&quot;</span>
+        <span class="n">unioned</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">file_refs</span> <span class="ow">in</span> <span class="n">split_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_split</span><span class="p">(</span><span class="n">split_name</span><span class="p">,</span> <span class="n">file_refs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">unioned</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="k">return</span> <span class="n">unioned</span>
 
-            <span class="n">data_bytes</span> <span class="o">=</span> <span class="n">_decompress_payload</span><span class="p">(</span><span class="n">raw_bytes</span><span class="p">)</span>
-            <span class="n">sample_bytes</span> <span class="o">=</span> <span class="n">data_bytes</span><span class="p">[:</span><span class="mi">16384</span><span class="p">]</span>
-            <span class="n">last_decode_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">UnicodeDecodeError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">last_parser_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">last_generic_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-            <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8-sig&quot;</span><span class="p">,</span> <span class="s2">&quot;latin-1&quot;</span><span class="p">):</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">sample_text</span> <span class="o">=</span> <span class="n">sample_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
-                    <span class="n">last_decode_err</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                    <span class="n">last_decode_err</span> <span class="o">=</span> <span class="n">err</span>
-                    <span class="k">continue</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-                    <span class="n">last_generic_err</span> <span class="o">=</span> <span class="n">err</span>
-                    <span class="k">continue</span>
-
-                <span class="n">sniffed_delimiter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">sniffed</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">Sniffer</span><span class="p">()</span><span class="o">.</span><span class="n">sniff</span><span class="p">(</span>
-                        <span class="n">sample_text</span><span class="p">,</span>
-                        <span class="n">delimiters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">],</span>
-                    <span class="p">)</span>
-                    <span class="n">sniffed_delimiter</span> <span class="o">=</span> <span class="n">sniffed</span><span class="o">.</span><span class="n">delimiter</span>
-                <span class="k">except</span> <span class="n">csv</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
-                    <span class="n">sniffed_delimiter</span> <span class="o">=</span> <span class="kc">None</span>
-
-                <span class="n">candidate_delimiters</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">if</span> <span class="n">sniffed_delimiter</span><span class="p">:</span>
-                    <span class="n">candidate_delimiters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sniffed_delimiter</span><span class="p">)</span>
-                <span class="n">candidate_delimiters</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">])</span>
-
-                <span class="n">seen_attempts</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-                <span class="n">attempt_specs</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">delim</span> <span class="ow">in</span> <span class="n">candidate_delimiters</span><span class="p">:</span>
-                    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="n">delim</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_attempts</span><span class="p">:</span>
-                        <span class="n">attempt_specs</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="n">delim</span><span class="p">})</span>
-                        <span class="n">seen_attempts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">delim</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_attempts</span><span class="p">:</span>
-                        <span class="n">attempt_specs</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="n">delim</span><span class="p">})</span>
-                        <span class="n">seen_attempts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span>
-                    <span class="p">{</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;on_bad_lines&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
-                    <span class="p">{</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;sep&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;on_bad_lines&quot;</span><span class="p">:</span> <span class="s2">&quot;skip&quot;</span><span class="p">},</span>
-                <span class="p">):</span>
-                    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">spec</span><span class="p">[</span><span class="s2">&quot;engine&quot;</span><span class="p">],</span>
-                        <span class="n">spec</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">],</span>
-                        <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_attempts</span><span class="p">:</span>
-                        <span class="n">attempt_specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-                        <span class="n">seen_attempts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="n">attempt_specs</span><span class="p">:</span>
-                    <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                        <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">,</span>
-                        <span class="s2">&quot;low_memory&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                        <span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="n">attempt</span><span class="p">[</span><span class="s2">&quot;engine&quot;</span><span class="p">],</span>
-                    <span class="p">}</span>
-                    <span class="k">if</span> <span class="n">attempt</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">attempt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">attempt</span><span class="p">[</span><span class="s2">&quot;engine&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;python&quot;</span><span class="p">:</span>
-                        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="p">[</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">]</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                        <span class="n">last_decode_err</span> <span class="o">=</span> <span class="n">err</span>
-                        <span class="k">break</span>
-                    <span class="k">except</span> <span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ParserError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                        <span class="n">last_parser_err</span> <span class="o">=</span> <span class="n">err</span>
-                        <span class="k">continue</span>
-                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-                        <span class="n">last_generic_err</span> <span class="o">=</span> <span class="n">err</span>
-                        <span class="k">continue</span>
-                    <span class="k">return</span> <span class="n">frame</span>
-            <span class="k">if</span> <span class="n">last_decode_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">last_decode_err</span>
-            <span class="k">if</span> <span class="n">last_parser_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">last_parser_err</span>
-            <span class="k">if</span> <span class="n">last_generic_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">last_generic_err</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to read CSV file &#39;</span><span class="si">{</span><span class="n">active_path</span><span class="si">}</span><span class="s2">&#39; using available fallbacks&quot;</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_canonical_name</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">column</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">):</span>
-                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
-            <span class="k">if</span> <span class="s2">&quot;_pre_&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre_&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-            <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="n">candidate</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span> <span class="ow">or</span> <span class="n">candidate</span> <span class="o">==</span> <span class="n">column</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">frame_columns</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">expected_columns</span> <span class="ow">and</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">expected_columns</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">candidate</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">expected_columns</span> <span class="ow">and</span> <span class="n">candidate</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">canonical_columns</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">candidate</span>
-            <span class="k">return</span> <span class="n">column</span>
-
-        <span class="k">for</span> <span class="n">file_ref</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">:</span>
-            <span class="n">open_fs</span><span class="p">,</span> <span class="n">open_path</span> <span class="o">=</span> <span class="n">_resolve_file_ref</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="n">_read_csv_frame</span><span class="p">(</span><span class="n">open_fs</span><span class="p">,</span> <span class="n">open_path</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s2">&quot;Unnamed: 0&quot;</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnamed: 0&quot;</span><span class="p">])</span>
-            <span class="n">frame_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-            <span class="n">rename_map</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">new_name</span> <span class="o">=</span> <span class="n">_maybe_canonical_name</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">new_name</span> <span class="o">!=</span> <span class="n">col</span><span class="p">:</span>
-                    <span class="n">rename_map</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_name</span>
-            <span class="k">if</span> <span class="n">rename_map</span><span class="p">:</span>
-                <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_map</span><span class="p">)</span>
-            <span class="n">canonical_columns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">]:</span>
+        <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">file_ref</span> <span class="ow">in</span> <span class="n">file_refs</span><span class="p">:</span>
+            <span class="n">filesystem</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_file_ref</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_csv_frame</span><span class="p">(</span><span class="n">filesystem</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_postprocess_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
             <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span><span class="p">:</span>
-            <span class="k">continue</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No frames produced for split &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
+        <span class="n">combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine_frames</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_feature_casts</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_file_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_ref</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">file_ref</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Encountered remote data file &#39;</span><span class="si">{</span><span class="n">file_ref</span><span class="si">}</span><span class="s2">&#39; but fsspec is unavailable. &quot;</span>
+                    <span class="s2">&quot;Install fsspec to enable remote downloads.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">file_ref</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_csv_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filesystem</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">raw_handle</span><span class="p">:</span>
+            <span class="n">raw_bytes</span> <span class="o">=</span> <span class="n">raw_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="n">data_bytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress_payload</span><span class="p">(</span><span class="n">raw_bytes</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">sample_bytes</span> <span class="o">=</span> <span class="n">data_bytes</span><span class="p">[:</span><span class="mi">16384</span><span class="p">]</span>
+        <span class="n">decoded_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_sample_texts</span><span class="p">(</span><span class="n">sample_bytes</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">sample_text</span> <span class="ow">in</span> <span class="n">decoded_samples</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_attempts</span><span class="p">(</span><span class="n">sample_text</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_with_attempt</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">attempt</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ParserError</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">EmptyDataError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to read CSV file &#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#39; using available fallbacks&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decompress_payload</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x1f\x8b\x08</span><span class="s2">&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;PK</span><span class="se">\x03\x04</span><span class="s2">&quot;</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+                            <span class="k">return</span> <span class="n">archive</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Zip archive &#39;</span><span class="si">%s</span><span class="s2">&#39; does not contain file entries; using raw bytes&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">payload</span>
+            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;BZh&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">bz2</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xfd</span><span class="s2">7zXZ</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x5d\x00\x00</span><span class="s2">&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">lzma</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span><span class="p">,</span> <span class="n">lzma</span><span class="o">.</span><span class="n">LZMAError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;Failed to decompress &#39;</span><span class="si">%s</span><span class="s2">&#39; despite matching signature; falling back to raw &quot;</span>
+                    <span class="s2">&quot;bytes (</span><span class="si">%s</span><span class="s2">)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">path</span><span class="p">,</span>
+                <span class="n">err</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">payload</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_sample_texts</span><span class="p">(</span><span class="n">sample_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="n">decoded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">last_decode_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">UnicodeDecodeError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">last_lookup_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">LookupError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8-sig&quot;</span><span class="p">,</span> <span class="s2">&quot;latin-1&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">decoded</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">encoding</span><span class="p">,</span> <span class="n">sample_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)))</span>
+            <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">last_decode_err</span> <span class="o">=</span> <span class="n">err</span>
+            <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">last_lookup_err</span> <span class="o">=</span> <span class="n">err</span>
+
+        <span class="k">if</span> <span class="n">decoded</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">decoded</span>
+        <span class="k">if</span> <span class="n">last_decode_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">last_decode_err</span>
+        <span class="k">if</span> <span class="n">last_lookup_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">last_lookup_err</span>
+        <span class="k">raise</span> <span class="ne">UnicodeDecodeError</span><span class="p">(</span><span class="s2">&quot;unicodeescape&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;no valid encoding candidates found&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_attempts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ReadAttempt</span><span class="p">]:</span>
+        <span class="n">delimiters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_delimiters</span><span class="p">(</span><span class="n">sample_text</span><span class="p">)</span>
+        <span class="n">attempts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ReadAttempt</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">delimiter</span> <span class="ow">in</span> <span class="n">delimiters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;python&quot;</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ReadAttempt</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">delimiter</span><span class="p">))</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">on_bad_lines</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">on_bad_lines</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ReadAttempt</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_bad_lines</span><span class="o">=</span><span class="n">on_bad_lines</span><span class="p">))</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">attempts</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_delimiters</span><span class="p">(</span><span class="n">sample_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sniffed</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">Sniffer</span><span class="p">()</span><span class="o">.</span><span class="n">sniff</span><span class="p">(</span>
+                <span class="n">sample_text</span><span class="p">,</span>
+                <span class="n">delimiters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">primary</span> <span class="o">=</span> <span class="p">[</span><span class="n">sniffed</span><span class="o">.</span><span class="n">delimiter</span><span class="p">]</span>
+        <span class="k">except</span> <span class="n">csv</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">primary</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fallbacks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">primary</span> <span class="o">+</span> <span class="n">fallbacks</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_with_attempt</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attempt</span><span class="p">:</span> <span class="n">_ReadAttempt</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">,</span>
+            <span class="s2">&quot;low_memory&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="n">attempt</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">attempt</span><span class="o">.</span><span class="n">sep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="o">.</span><span class="n">sep</span>
+        <span class="k">if</span> <span class="n">attempt</span><span class="o">.</span><span class="n">on_bad_lines</span> <span class="ow">and</span> <span class="n">attempt</span><span class="o">.</span><span class="n">engine</span> <span class="o">==</span> <span class="s2">&quot;python&quot;</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="o">.</span><span class="n">on_bad_lines</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_postprocess_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnamed: 0&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+        <span class="n">frame_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">rename_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">new_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_canonical_name</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_name</span> <span class="o">!=</span> <span class="n">column</span><span class="p">:</span>
+                <span class="n">rename_map</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_name</span>
+        <span class="k">if</span> <span class="n">rename_map</span><span class="p">:</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_map</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">frame</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_canonical_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">column</span>
+
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_column_names</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span> <span class="ow">or</span> <span class="n">candidate</span> <span class="o">==</span> <span class="n">column</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">frame_columns</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="ow">and</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">candidate</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">candidate</span>
+        <span class="k">return</span> <span class="n">column</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_column_names</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">):</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s2">&quot;_pre_&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre_&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_combine_frames</span><span class="p">(</span><span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="n">all_columns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
-        <span class="n">aligned_frames</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
-            <span class="n">missing_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">all_columns</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">missing_cols</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">missing_cols</span><span class="p">:</span>
-                    <span class="n">frame</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
-            <span class="n">aligned_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">all_columns</span><span class="p">])</span>
+        <span class="n">aligned</span> <span class="o">=</span> <span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">all_columns</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">NA</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">aligned</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">aligned_frames</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">unioned_splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_feature_casts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">frame</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">unioned_splits</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data could be loaded for dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        <span class="n">object_columns</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">object_columns</span><span class="p">:</span>
+            <span class="n">feature</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
+                <span class="n">feature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
+            <span class="n">expected_dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">feature</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">expected_dtype</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">:</span>
+                <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">unioned_splits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">column_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">:</span>
+                    <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">frame</span>
 
 
 <div class="viewcode-block" id="map_rows_to_examples">
@@ -660,6 +725,7 @@
     <span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">max_history</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert interaction rows into cleaned prompt examples.</span>
 
@@ -667,8 +733,12 @@
 <span class="sd">    :param system_prompt: Optional system prompt override applied to every row.</span>
 <span class="sd">    :param sol_key: Alternate column containing the gold next-video identifier.</span>
 <span class="sd">    :param max_history: Maximum number of prior interactions to embed in ``state_text``.</span>
+<span class="sd">    :param num_proc: Optional number of worker processes passed to ``datasets.Dataset.map``.</span>
 <span class="sd">    :returns: Dataset mapping where each split has been converted to prompt-ready rows.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">num_proc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num_proc</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_proc must be &gt;= 1 when provided.&quot;</span><span class="p">)</span>
 
     <span class="n">mapped</span> <span class="o">=</span> <span class="n">DatasetDict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -681,6 +751,7 @@
             <span class="p">),</span>
             <span class="n">remove_columns</span><span class="o">=</span><span class="n">split_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">,</span>
             <span class="n">load_from_cache_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">num_proc</span><span class="o">=</span><span class="n">num_proc</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">mapped</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_split</span>
     <span class="k">return</span> <span class="n">mapped</span></div>
@@ -766,7 +837,7 @@
 
     <span class="n">raw</span> <span class="o">=</span> <span class="n">load_raw</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">validation_ratio</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">validation_ratio</span><span class="p">)</span>
 
-    <span class="n">filtered</span> <span class="o">=</span> <span class="n">filter_prompt_ready</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">sol_key</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">sol_key</span><span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">filter_prompt_ready</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">sol_key</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">sol_key</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">num_proc</span><span class="p">)</span>
     <span class="n">issue_counts</span> <span class="o">=</span> <span class="n">compute_issue_counts</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">issue_counts</span><span class="p">:</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Issue distribution per split: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_counts</span><span class="p">)</span>
@@ -776,6 +847,7 @@
         <span class="n">system_prompt</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
         <span class="n">sol_key</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">sol_key</span><span class="p">,</span>
         <span class="n">max_history</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">max_history</span><span class="p">,</span>
+        <span class="n">num_proc</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">num_proc</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">desired</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>

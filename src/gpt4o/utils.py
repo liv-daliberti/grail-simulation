@@ -5,16 +5,38 @@ from __future__ import annotations
 import re
 
 from common.text import (
-    CANON_RE,
-    YTID_RE,
-    canon_text,
-    canon_video_id,
-    resolve_paths_from_env,
-    split_env_list,
+    canon_text as _canon_text,
+    canon_video_id as _canon_video_id,
+    resolve_paths_from_env as _resolve_paths_from_env,
+    split_env_list as _split_env_list,
 )
 
 ANS_TAG = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 INDEX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
+
+
+def canon_text(value: str | None) -> str:
+    """Normalise ``value`` using the shared canonical text helper."""
+
+    return _canon_text(value)
+
+
+def canon_video_id(value: str | None) -> str:
+    """Extract a canonical YouTube id from ``value``."""
+
+    return _canon_video_id(value)
+
+
+def split_env_list(raw: str | None) -> list[str]:
+    """Split ``raw`` using the separators understood by the common helper."""
+
+    return _split_env_list(raw)
+
+
+def resolve_paths_from_env(env_vars: list[str]) -> list[str]:
+    """Return resolved filesystem paths aggregated from ``env_vars``."""
+
+    return _resolve_paths_from_env(env_vars)
 
 
 def is_nan_like(value: object | None) -> bool:

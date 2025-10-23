@@ -17,4 +17,3 @@ PYTHONPATH=src python -m xgb.pipeline --stage full \
 ```
 
 Stages can be invoked individually (`plan`, `sweeps`, `finalize`, `reports`) to match existing SLURM workflows.
-

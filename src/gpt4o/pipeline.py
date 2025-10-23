@@ -14,12 +14,17 @@ and the scripted pipeline.
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import List, Mapping, Sequence, Tuple
+
+from common.cli_args import add_comma_separated_argument
+from common.cli_options import add_log_level_argument, add_overwrite_argument
+from common.pipeline_io import write_markdown_lines
+from common.pipeline_io import load_metrics_json
+from common.report_utils import start_markdown_report
 
 from .cli import build_parser as build_gpt_parser
 from .evaluate import run_eval
@@ -68,6 +73,17 @@ class SweepOutcome:
     metrics: Mapping[str, object]
 
 
+@dataclass(frozen=True)
+class PipelinePaths:
+    """Convenience container aggregating resolved output directories."""
+
+    out_dir: Path
+    final_out_dir: Path
+    sweep_dir: Path
+    reports_dir: Path
+    cache_dir: str
+
+
 # ---------------------------------------------------------------------------
 # Argument parsing helpers
 # ---------------------------------------------------------------------------
@@ -77,7 +93,9 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     """Parse pipeline arguments while preserving additional CLI options."""
 
     parser = argparse.ArgumentParser(
-        description="Hyper-parameter sweeps, selection, and reporting for the GPT-4o slate baseline."
+        description=(
+            "Hyper-parameter sweeps, selection, and reporting for the GPT-4o slate baseline."
+        )
     )
     parser.add_argument("--dataset", default=None, help="Dataset path or HuggingFace dataset id.")
     parser.add_argument(
@@ -111,10 +129,13 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         default="",
         help="Comma-separated issue labels to filter (defaults to all issues).",
     )
-    parser.add_argument(
-        "--studies",
-        default="",
-        help="Comma-separated participant study identifiers to filter (defaults to all studies).",
+    add_comma_separated_argument(
+        parser,
+        flags="--studies",
+        dest="studies",
+        help_text=(
+            "Comma-separated participant study identifiers to filter (defaults to all studies)."
+        ),
     )
     parser.add_argument(
         "--temperature-grid",
@@ -126,16 +147,8 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         default="32,48",
         help="Comma-separated max_token values explored during sweeps.",
     )
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        help="Logging level for the pipeline logger.",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Allow overwriting of existing sweep and evaluation directories.",
-    )
+    add_log_level_argument(parser)
+    add_overwrite_argument(parser)
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -203,6 +216,56 @@ def _parse_int_grid(raw: str, fallback: int) -> List[int]:
     return values or [fallback]
 
 
+def _resolve_paths(args: argparse.Namespace) -> PipelinePaths:
+    """Return the resolved output/report directories for the pipeline run."""
+
+    root = _repo_root()
+    out_dir = Path(args.out_dir or _default_out_dir(root))
+    reports_dir = Path(args.reports_dir or _default_reports_dir(root))
+    sweep_dir = Path(args.sweep_dir or (out_dir / "sweeps"))
+    final_out_dir = out_dir / "next_video"
+    final_out_dir.mkdir(parents=True, exist_ok=True)
+    sweep_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = str(args.cache_dir or _default_cache_dir(root))
+    return PipelinePaths(
+        out_dir=out_dir,
+        final_out_dir=final_out_dir,
+        sweep_dir=sweep_dir,
+        reports_dir=reports_dir,
+        cache_dir=cache_dir,
+    )
+
+
+def _configure_environment(cache_dir: str) -> None:
+    """Ensure HuggingFace caches default to ``cache_dir``."""
+
+    os.environ.setdefault("HF_DATASETS_CACHE", cache_dir)
+    os.environ.setdefault("HF_HOME", cache_dir)
+
+
+def _build_base_cli_args(args: argparse.Namespace, *, cache_dir: str) -> List[str]:
+    """Return common CLI arguments forwarded to ``gpt4o.cli``."""
+
+    base_cli: List[str] = [
+        "--cache_dir",
+        cache_dir,
+        "--eval_max",
+        str(args.eval_max),
+        "--log_level",
+        args.log_level.upper(),
+    ]
+    dataset = args.dataset or ""
+    if dataset:
+        base_cli.extend(["--dataset", dataset])
+    if args.issues:
+        base_cli.extend(["--issues", args.issues])
+    if args.studies:
+        base_cli.extend(["--studies", args.studies])
+    if args.overwrite:
+        base_cli.append("--overwrite")
+    return base_cli
+
+
 def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     """Construct the Cartesian product of temperature and max-token sweeps."""
 
@@ -227,16 +290,6 @@ def _run_gpt_cli(cli_args: Sequence[str]) -> None:
     namespace = parser.parse_args(list(cli_args))
     run_eval(namespace)
 
-
-def _load_metrics(path: Path) -> Mapping[str, object]:
-    """Load evaluation metrics from ``path``."""
-
-    if not path.exists():
-        raise FileNotFoundError(f"Missing metrics file: {path}")
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
 def _run_sweeps(
     *,
     configs: Sequence[SweepConfig],
@@ -257,7 +310,7 @@ def _run_sweeps(
         LOGGER.info("[SWEEP] config=%s", config.label())
         _run_gpt_cli(cli_args)
         metrics_path = run_dir / "metrics.json"
-        metrics = _load_metrics(metrics_path)
+        metrics = load_metrics_json(metrics_path)
         outcomes.append(
             SweepOutcome(
                 config=config,
@@ -309,7 +362,7 @@ def _run_final_evaluation(
     LOGGER.info("[FINAL] config=%s -> %s", config.label(), run_dir)
     _run_gpt_cli(cli_args)
     metrics_path = run_dir / "metrics.json"
-    metrics = _load_metrics(metrics_path)
+    metrics = load_metrics_json(metrics_path)
     return run_dir, metrics
 
 
@@ -335,28 +388,37 @@ def _write_catalog_report(reports_dir: Path) -> None:
         "Model predictions and metrics JSON files live under `models/gpt4o/`.",
         "",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_markdown_lines(path, lines)
 
 
-def _write_sweep_report(directory: Path, outcomes: Sequence[SweepOutcome], selected: SweepOutcome) -> None:
+def _write_sweep_report(
+    directory: Path,
+    outcomes: Sequence[SweepOutcome],
+    selected: SweepOutcome,
+) -> None:
     """Write the hyper-parameter sweep report summarising all outcomes."""
 
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "README.md"
-    lines: List[str] = []
-    lines.append("# GPT-4o Hyper-parameter Sweep")
-    lines.append("")
+    path, lines = start_markdown_report(directory, title="GPT-4o Hyper-parameter Sweep")
     if not outcomes:
         lines.append("No sweep runs were executed.")
         lines.append("")
-        path.write_text("\n".join(lines), encoding="utf-8")
+        write_markdown_lines(path, lines)
         return
     lines.append(
         "The table below captures accuracy on eligible slates plus formatting/parse rates for "
         "each temperature/max-token configuration. The selected configuration is marked with ✓."
     )
     lines.append("")
-    lines.append("| Config | Temperature | Max tokens | Accuracy ↑ | Parsed ↑ | Formatted ↑ | Selected |")
+    header_cells = [
+        "Config",
+        "Temperature",
+        "Max tokens",
+        "Accuracy ↑",
+        "Parsed ↑",
+        "Formatted ↑",
+        "Selected",
+    ]
+    lines.append("| " + " | ".join(header_cells) + " |")
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- |")
     for outcome in outcomes:
         mark = "✓" if outcome.config == selected.config else ""
@@ -366,7 +428,7 @@ def _write_sweep_report(directory: Path, outcomes: Sequence[SweepOutcome], selec
             f"{_format_rate(outcome.parsed_rate)} | {_format_rate(outcome.format_rate)} | {mark} |"
         )
     lines.append("")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_markdown_lines(path, lines)
 
 
 def _write_next_video_report(
@@ -376,11 +438,7 @@ def _write_next_video_report(
 ) -> None:
     """Write the next-video evaluation report for the selected configuration."""
 
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "README.md"
-    lines: List[str] = []
-    lines.append("# GPT-4o Next-Video Baseline")
-    lines.append("")
+    path, lines = start_markdown_report(directory, title="GPT-4o Next-Video Baseline")
     lines.append(
         f"- **Selected configuration:** `{selected.config.label()}` "
         f"(temperature={selected.config.temperature:.2f}, max_tokens={selected.config.max_tokens})"
@@ -422,7 +480,14 @@ def _write_next_video_report(
             parsed_rate = _format_rate(float(stats.get("parsed_rate", 0.0)))
             format_rate = _format_rate(float(stats.get("format_rate", 0.0)))
             lines.append(
-                f"| {group or 'unspecified'} | {seen} | {eligible} | {accuracy} | {parsed_rate} | {format_rate} |"
+                "| {group} | {seen} | {eligible} | {accuracy} | {parsed} | {formatted} |".format(
+                    group=group or "unspecified",
+                    seen=seen,
+                    eligible=eligible,
+                    accuracy=accuracy,
+                    parsed=parsed_rate,
+                    formatted=format_rate,
+                )
             )
         lines.append("")
 
@@ -441,7 +506,7 @@ def _write_next_video_report(
         lines.append(notes.strip())
         lines.append("")
 
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_markdown_lines(path, lines)
 
 
 def _write_reports(
@@ -472,18 +537,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         format="%(asctime)s %(levelname)s: %(message)s",
     )
 
-    root = _repo_root()
-    out_dir = Path(args.out_dir or _default_out_dir(root))
-    cache_dir = str(args.cache_dir or _default_cache_dir(root))
-    reports_dir = Path(args.reports_dir or _default_reports_dir(root))
-    sweep_dir = Path(args.sweep_dir or (out_dir / "sweeps"))
-    final_out_dir = out_dir / "next_video"
-    final_out_dir.mkdir(parents=True, exist_ok=True)
-    sweep_dir.mkdir(parents=True, exist_ok=True)
-
-    # Propagate cache configuration to the subprocess environment.
-    os.environ.setdefault("HF_DATASETS_CACHE", cache_dir)
-    os.environ.setdefault("HF_HOME", cache_dir)
+    paths = _resolve_paths(args)
+    _configure_environment(paths.cache_dir)
 
     configs = _build_sweep_configs(args)
     LOGGER.info("Planned %d GPT-4o configurations.", len(configs))
@@ -493,29 +548,13 @@ def main(argv: Sequence[str] | None = None) -> None:
             LOGGER.info("[DRY-RUN] would evaluate config=%s", config.label())
         return
 
-    base_cli: List[str] = [
-        "--cache_dir",
-        cache_dir,
-        "--eval_max",
-        str(args.eval_max),
-        "--log_level",
-        args.log_level.upper(),
-    ]
-    dataset = args.dataset or ""
-    if dataset:
-        base_cli.extend(["--dataset", dataset])
-    if args.issues:
-        base_cli.extend(["--issues", args.issues])
-    if args.studies:
-        base_cli.extend(["--studies", args.studies])
-    if args.overwrite:
-        base_cli.append("--overwrite")
+    base_cli = _build_base_cli_args(args, cache_dir=paths.cache_dir)
 
     outcomes = _run_sweeps(
         configs=configs,
         base_cli=base_cli,
         extra_cli=extra_cli,
-        sweep_dir=sweep_dir,
+        sweep_dir=paths.sweep_dir,
     )
     selected = _select_best(outcomes)
     LOGGER.info("Selected configuration: %s", selected.config.label())
@@ -524,12 +563,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         config=selected.config,
         base_cli=base_cli,
         extra_cli=extra_cli,
-        out_dir=final_out_dir,
+        out_dir=paths.final_out_dir,
     )
 
     LOGGER.info("Final metrics stored under %s", final_dir)
     _write_reports(
-        reports_dir=reports_dir,
+        reports_dir=paths.reports_dir,
         outcomes=outcomes,
         selected=selected,
         final_metrics=final_metrics,

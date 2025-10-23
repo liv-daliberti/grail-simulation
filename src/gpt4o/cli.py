@@ -6,6 +6,8 @@ import argparse
 import logging
 from pathlib import Path
 
+from common.cli_args import add_comma_separated_argument
+
 from .config import DEFAULT_CACHE_DIR
 from .evaluate import run_eval
 
@@ -30,10 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Comma-separated list of issue labels to evaluate (defaults to all issues).",
     )
-    parser.add_argument(
-        "--studies",
-        default="",
-        help="Comma-separated participant study identifiers to filter (defaults to all studies).",
+    add_comma_separated_argument(
+        parser,
+        flags="--studies",
+        dest="studies",
+        help_text=(
+            "Comma-separated participant study identifiers to filter (defaults to all studies)."
+        ),
     )
     parser.add_argument(
         "--out_dir",

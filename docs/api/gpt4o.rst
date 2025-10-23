@@ -45,3 +45,11 @@ preparing conversations, and rendering leaderboard titles.
    :members:
    :undoc-members:
    :show-inheritance:
+
+Pipeline Orchestration
+----------------------
+
+.. automodule:: gpt4o.pipeline
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -283,11 +283,16 @@
 
 <div class="viewcode-block" id="filter_prompt_ready">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.filters.filter_prompt_ready">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">filter_prompt_ready</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_prompt_ready</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
+    <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop rows that cannot produce a valid prompt/example.</span>
 
 <span class="sd">    :param dataset: Input dataset keyed by split.</span>
 <span class="sd">    :param sol_key: Alternate gold-id column used to validate the target choice.</span>
+<span class="sd">    :param num_proc: Optional number of worker processes used by ``datasets.filter``.</span>
 <span class="sd">    :returns: Dataset dictionary with non-compliant rows removed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -302,9 +307,12 @@
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">gold_index_from_items</span><span class="p">(</span><span class="n">gold</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span>
 
+    <span class="k">if</span> <span class="n">num_proc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num_proc</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_proc must be &gt;= 1 when provided.&quot;</span><span class="p">)</span>
+
     <span class="n">filtered</span> <span class="o">=</span> <span class="n">DatasetDict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ok</span><span class="p">)</span>
+        <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ok</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="n">num_proc</span><span class="p">)</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Counts after prompt filter: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">filtered</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
     <span class="k">return</span> <span class="n">filtered</span></div>
 

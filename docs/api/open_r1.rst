@@ -67,11 +67,6 @@ Utility Modules
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: open_r1.utils.hierarchical_rollout
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: open_r1.utils.hub
    :members:
    :undoc-members:
@@ -92,27 +87,12 @@ Utility Modules
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: open_r1.utils.replay_dataset
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: open_r1.utils.routed_morph
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: open_r1.utils.routed_sandbox
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: open_r1.utils.vllm_patch
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: open_r1.utils.wandb_logging
    :members:
    :undoc-members:
    :show-inheritance:

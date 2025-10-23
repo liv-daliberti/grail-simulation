@@ -534,6 +534,129 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dl>
 </dd></dl>
 
+<section id="module-gpt4o.pipeline">
+<span id="pipeline-orchestration"></span><h2>Pipeline Orchestration<a class="headerlink" href="#module-gpt4o.pipeline" title="Link to this heading">¶</a></h2>
+<p>End-to-end orchestration for the GPT-4o slate baseline.</p>
+<p>This module mirrors the structure of the KNN and XGBoost pipelines:</p>
+<ol class="arabic simple">
+<li><p>Hyper-parameter sweeps over temperature / max_token settings.</p></li>
+<li><p>Selection of the best-performing configuration.</p></li>
+<li><p>Final evaluation run with the chosen configuration.</p></li>
+<li><p>Markdown report regeneration under <code class="docutils literal notranslate"><span class="pre">reports/gpt4o</span></code>.</p></li>
+</ol>
+<p>Each sweep delegates to <a class="reference internal" href="#module-gpt4o.cli" title="gpt4o.cli"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gpt4o.cli</span></code></a> to avoid drift between the public CLI
+and the scripted pipeline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Describe a GPT-4o configuration evaluated during sweeps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
+<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.cli_args">
+<span class="sig-name descname"><span class="pre">cli_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig.cli_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.cli_args" title="Link to this definition">¶</a></dt>
+<dd><p>Return CLI overrides encoding this configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.label">
+<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig.label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.label" title="Link to this definition">¶</a></dt>
+<dd><p>Return a filesystem-friendly identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.max_tokens">
+<span class="sig-name descname"><span class="pre">max_tokens</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.max_tokens" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.temperature" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Capture metrics gathered during a sweep run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
+<li><p><strong>parsed_rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>format_rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.accuracy">
+<span class="sig-name descname"><span class="pre">accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.format_rate">
+<span class="sig-name descname"><span class="pre">format_rate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.format_rate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.metrics_path">
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.metrics_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.parsed_rate">
+<span class="sig-name descname"><span class="pre">parsed_rate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.parsed_rate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.pipeline.main">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.main" title="Link to this definition">¶</a></dt>
+<dd><p>Execute sweeps, selection, final evaluation, and report regeneration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
         </article>
@@ -613,6 +736,26 @@ We keep the behaviour but allow shell overrides to win.</p>
 </li>
 <li><a class="reference internal" href="#gpt4o.utils.is_nan_like"><code class="docutils literal notranslate"><span class="pre">is_nan_like()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+<li><a class="reference internal" href="#module-gpt4o.pipeline">Pipeline Orchestration</a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig"><code class="docutils literal notranslate"><span class="pre">SweepConfig</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.cli_args"><code class="docutils literal notranslate"><span class="pre">SweepConfig.cli_args()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.label"><code class="docutils literal notranslate"><span class="pre">SweepConfig.label()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.max_tokens"><code class="docutils literal notranslate"><span class="pre">SweepConfig.max_tokens</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.temperature"><code class="docutils literal notranslate"><span class="pre">SweepConfig.temperature</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome"><code class="docutils literal notranslate"><span class="pre">SweepOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.accuracy"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.accuracy</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.config"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.config</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.format_rate"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.format_rate</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.metrics"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.metrics</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.metrics_path"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.metrics_path</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.parsed_rate"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.parsed_rate</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.pipeline.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

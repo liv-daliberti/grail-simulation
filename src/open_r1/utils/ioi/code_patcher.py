@@ -88,15 +88,6 @@ def fix_cpp_includes(source_code):
     return code_header + source_code
 
 
-def is_patchable(lang):
-    """Return ``True`` when the language is eligible for automated patching.
-
-    :param lang: Language descriptor string.
-    :returns: Whether the submission can be post-processed safely.
-    """
-    return lang in ("python", "python3", "Python 3", "PyPy 3", "PyPy 3-64", "cpp") or "C++" in lang
-
-
 def patch_code(text, lang):
     """Apply language-specific patching to the submitted source text.
 

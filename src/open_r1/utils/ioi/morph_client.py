@@ -25,10 +25,6 @@ logging.getLogger("paramiko").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
-class MorphCloudError(Exception):
-    """Raised when a MorphCloud operation fails."""
-
-
 class MorphCloudExecutionClient:
     """Asynchronous helper for interacting with MorphCloud execution instances."""
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.machinery
 import sys
 
 
@@ -18,4 +19,5 @@ def ensure_openai_stub() -> None:
             pass
 
     module.AzureOpenAI = AzureOpenAI
+    module.__spec__ = importlib.machinery.ModuleSpec("openai", loader=None)
     sys.modules["openai"] = module

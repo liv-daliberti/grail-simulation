@@ -27,6 +27,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
+try:  # pragma: no cover - optional dependency
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+    from matplotlib import pyplot as plt  # type: ignore[assignment]
+except ImportError:  # pragma: no cover - optional dependency
+    plt = None  # type: ignore[assignment]
+
 from knn.cli import build_parser
 from knn.data import DEFAULT_DATASET_SOURCE
 from knn.evaluate import run_eval

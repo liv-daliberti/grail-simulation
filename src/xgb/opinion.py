@@ -209,8 +209,10 @@ def _train_regressor(
     features,
     targets: np.ndarray,
     config: OpinionTrainConfig,
-) -> XGBRegressor:
-    """Return a fitted :class:`xgboost.XGBRegressor`."""
+    eval_features=None,
+    eval_targets: np.ndarray | None = None,
+) -> Tuple[XGBRegressor, Dict[str, Dict[str, List[float]]]]:
+    """Return a fitted :class:`xgboost.XGBRegressor` and evaluation history."""
 
     booster = config.booster
     regressor = XGBRegressor(
@@ -226,8 +228,19 @@ def _train_regressor(
         n_jobs=-1,
         random_state=config.seed,
     )
-    regressor.fit(features, targets)
-    return regressor
+
+    eval_set = []
+    if eval_features is not None and eval_targets is not None:
+        eval_set = [(features, targets), (eval_features, eval_targets)]
+    regressor.fit(
+        features,
+        targets,
+        eval_set=eval_set if eval_set else None,
+        eval_metric=["mae", "rmse"],
+        verbose=False,
+    )
+    history = regressor.evals_result() if eval_set else {}
+    return regressor, history
 
 
 def _baseline_metrics(
@@ -325,13 +338,15 @@ def _evaluate_spec(
     eval_features = vectorizer.transform([ex.document for ex in eval_examples])
 
     train_targets = np.array([ex.after for ex in train_examples], dtype=float)
-    regressor = _train_regressor(
+    eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
+    regressor, eval_history = _train_regressor(
         features=train_features,
         targets=train_targets,
         config=request.train_config,
+        eval_features=eval_features,
+        eval_targets=eval_targets,
     )
 
-    eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
     predictions = regressor.predict(eval_features)
     metrics = _model_metrics(predictions=predictions, after=eval_targets)
     baseline = _baseline_metrics(
@@ -345,6 +360,32 @@ def _evaluate_spec(
             f"{study_dir} already exists. Use overwrite=True to replace outputs."
         )
     study_dir.mkdir(parents=True, exist_ok=True)
+
+    curve_metrics: Optional[Dict[str, Any]] = None
+    if eval_history:
+        curve_metrics = {"metric": "mae"}
+        dataset_map = {"validation_0": "train", "validation_1": "validation"}
+        for history_key, label in dataset_map.items():
+            history = eval_history.get(history_key, {})
+            mae_sequence = history.get("mae", [])
+            rmse_sequence = history.get("rmse", [])
+            if not mae_sequence and not rmse_sequence:
+                continue
+            series_bundle: Dict[str, Dict[str, float]] = {}
+            if mae_sequence:
+                series_bundle["mae_by_round"] = {
+                    str(idx + 1): float(value) for idx, value in enumerate(mae_sequence)
+                }
+            if rmse_sequence:
+                series_bundle["rmse_by_round"] = {
+                    str(idx + 1): float(value) for idx, value in enumerate(rmse_sequence)
+                }
+            curve_metrics[label] = series_bundle
+        eval_mae_sequence = eval_history.get("validation_1", {}).get("mae", [])
+        if eval_mae_sequence:
+            best_round = min(range(len(eval_mae_sequence)), key=lambda idx: eval_mae_sequence[idx])
+            curve_metrics["best_round"] = int(best_round + 1)
+            curve_metrics["best_mae"] = float(eval_mae_sequence[best_round])
 
     payload: Dict[str, Any] = {
         "model": "xgb_opinion",
@@ -371,6 +412,8 @@ def _evaluate_spec(
             "tree_method": request.train_config.booster.tree_method,
         },
     }
+    if curve_metrics:
+        payload["curve_metrics"] = curve_metrics
 
     metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
     with open(metrics_path, "w", encoding="utf-8") as handle:

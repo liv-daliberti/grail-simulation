@@ -34,25 +34,41 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 | Study 2 – Minimum Wage (MTurk) | 0.308 | [0.276, 0.350] | -0.060 | 0.368 | 0.255 | 3 | 671 | 671 |
 | Study 3 – Minimum Wage (YouGov) | 0.322 | [0.294, 0.346] | -0.158 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
 
-## Accuracy Curves
+### Study 1 – Gun Control (MTurk) (TFIDF)
 
-### Accuracy Curves – Tfidf
+![Accuracy curve](curves/tfidf/study1.png)
 
-![TFIDF – Study 1 – Gun Control (MTurk)](curves/tfidf/study1.png)
-![TFIDF – Study 2 – Minimum Wage (MTurk)](curves/tfidf/study2.png)
-![TFIDF – Study 3 – Minimum Wage (YouGov)](curves/tfidf/study3.png)
+### Study 2 – Minimum Wage (MTurk) (TFIDF)
 
-### Accuracy Curves – Word2Vec
+![Accuracy curve](curves/tfidf/study2.png)
 
-![WORD2VEC – Study 1 – Gun Control (MTurk)](curves/word2vec/study1.png)
-![WORD2VEC – Study 2 – Minimum Wage (MTurk)](curves/word2vec/study2.png)
-![WORD2VEC – Study 3 – Minimum Wage (YouGov)](curves/word2vec/study3.png)
+### Study 3 – Minimum Wage (YouGov) (TFIDF)
 
-### Accuracy Curves – Sentence Transformer
+![Accuracy curve](curves/tfidf/study3.png)
 
-![SENTENCE_TRANSFORMER – Study 1 – Gun Control (MTurk)](curves/sentence_transformer/study1.png)
-![SENTENCE_TRANSFORMER – Study 2 – Minimum Wage (MTurk)](curves/sentence_transformer/study2.png)
-![SENTENCE_TRANSFORMER – Study 3 – Minimum Wage (YouGov)](curves/sentence_transformer/study3.png)
+### Study 1 – Gun Control (MTurk) (WORD2VEC)
+
+![Accuracy curve](curves/word2vec/study1.png)
+
+### Study 2 – Minimum Wage (MTurk) (WORD2VEC)
+
+![Accuracy curve](curves/word2vec/study2.png)
+
+### Study 3 – Minimum Wage (YouGov) (WORD2VEC)
+
+![Accuracy curve](curves/word2vec/study3.png)
+
+### Study 1 – Gun Control (MTurk) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study1.png)
+
+### Study 2 – Minimum Wage (MTurk) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study2.png)
+
+### Study 3 – Minimum Wage (YouGov) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study3.png)
 
 ## Observations
 
@@ -60,3 +76,21 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 - WORD2VEC: Study 1 – Gun Control (MTurk): 0.859 (baseline 0.540, Δ +0.319, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.268 (baseline 0.368, Δ -0.100, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.288 (baseline 0.479, Δ -0.191, k=10, eligible 1,200); averages: mean Δ +0.010, mean random 0.279.
 - SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.801 (baseline 0.540, Δ +0.261, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.308 (baseline 0.368, Δ -0.060, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.322 (baseline 0.479, Δ -0.158, k=2, eligible 1,200); averages: mean Δ +0.015, mean random 0.279.
 - Random values correspond to the expected accuracy from a uniform guess across the slate options.
+
+## Cross-Study Holdouts
+
+## TF-IDF Feature Space
+
+| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.257 | -0.283 | 0.540 | 2 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.283 | -0.085 | 0.368 | 2 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.282 | -0.198 | 0.479 | 4 | 1,200 |
+
+## Word2Vec Feature Space
+
+| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.336 | -0.204 | 0.540 | 2 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.265 | -0.103 | 0.368 | 2 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.265 | -0.214 | 0.479 | 2 | 1,200 |

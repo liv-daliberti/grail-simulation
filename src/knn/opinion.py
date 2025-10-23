@@ -325,6 +325,7 @@ def predict_post_indices(
     index: OpinionIndex,
     eval_examples: Sequence[OpinionExample],
     k_values: Sequence[int],
+    exclude_self: bool = False,
 ) -> Dict[str, Any]:
     """Return predictions and aggregate metrics for ``eval_examples``."""
 
@@ -334,8 +335,19 @@ def predict_post_indices(
             "per_k_predictions": {int(k): [] for k in k_values},
         }
 
-    unique_k = sorted({int(k) for k in k_values if int(k) > 0})
-    max_k = min(max(unique_k), len(index.participant_keys))
+    requested_k = [int(k) for k in k_values if int(k) > 0]
+    if not requested_k:
+        return {
+            "rows": [],
+            "per_k_predictions": {},
+            "per_k_change_predictions": {},
+        }
+    max_available = len(index.participant_keys) - (1 if exclude_self else 0)
+    max_available = max(1, max_available)
+    unique_k = sorted({k for k in requested_k if k <= max_available})
+    if not unique_k:
+        unique_k = [min(max_available, max(requested_k))]
+    max_k = max(unique_k)
 
     documents = [example.document for example in eval_examples]
     matrix_eval = _transform_documents(index=index, documents=documents)
@@ -354,11 +366,35 @@ def predict_post_indices(
         indices = neighbour_indices[row_idx]
         similarities = _similarity_from_distances(distances, metric=index.metric)
 
+        filtered_indices: List[int] = []
+        filtered_weights: List[float] = []
+        for candidate_idx, weight in zip(indices, similarities):
+            if exclude_self:
+                participant_key = index.participant_keys[candidate_idx]
+                if (
+                    participant_key[0] == example.participant_id
+                    and participant_key[1] == example.participant_study
+                ):
+                    continue
+            filtered_indices.append(int(candidate_idx))
+            filtered_weights.append(float(weight))
+            if len(filtered_indices) >= max_k:
+                break
+
+        if not filtered_indices:
+            continue
+
+        filtered_indices_arr = np.asarray(filtered_indices, dtype=np.int32)
+        filtered_weights_arr = np.asarray(filtered_weights, dtype=np.float32)
+
         record_after: Dict[int, float] = {}
         record_change: Dict[int, float] = {}
         for k in unique_k:
-            top_indices = indices[:k]
-            top_weights = similarities[:k]
+            if len(filtered_indices_arr) < k:
+                continue
+
+            top_indices = filtered_indices_arr[:k]
+            top_weights = filtered_weights_arr[:k]
             top_targets_after = index.targets_after[top_indices]
             top_targets_before = index.targets_before[top_indices]
             top_changes = top_targets_after - top_targets_before
@@ -418,6 +454,52 @@ def _summary_metrics(
             "mae_change": change_mae,
         }
     return metrics
+
+
+def _curve_payload(
+    metrics_by_k: Dict[int, Dict[str, float]],
+    *,
+    n_examples: int,
+) -> Optional[Dict[str, Any]]:
+    """Convert ``metrics_by_k`` into a serialisable curve bundle."""
+
+    if not metrics_by_k:
+        return None
+
+    sorted_items = sorted(metrics_by_k.items())
+    mae_by_k = {}
+    r2_by_k = {}
+    best_entry = None
+    for k, values in sorted_items:
+        raw_mae = float(values.get("mae_after", float("nan")))
+        raw_r2 = float(values.get("r2_after", float("nan")))
+        mae_value = raw_mae if math.isfinite(raw_mae) else float("inf")
+        r2_value = raw_r2 if math.isfinite(raw_r2) else float("-inf")
+        mae_by_k[str(int(k))] = raw_mae if math.isfinite(raw_mae) else None
+        r2_by_k[str(int(k))] = raw_r2 if math.isfinite(raw_r2) else None
+        if best_entry is None:
+            best_entry = (int(k), mae_value, r2_value)
+        else:
+            if mae_value < best_entry[1] - 1e-9:
+                best_entry = (int(k), mae_value, r2_value)
+            elif abs(mae_value - best_entry[1]) <= 1e-9 and r2_value > best_entry[2]:
+                best_entry = (int(k), mae_value, r2_value)
+
+    best_k = best_entry[0] if best_entry else sorted_items[0][0]
+    best_mae_value = best_entry[1] if best_entry else float("inf")
+    best_mae = best_mae_value if math.isfinite(best_mae_value) else None
+    best_r2_value = best_entry[2] if best_entry else float("-inf")
+    best_r2 = best_r2_value if math.isfinite(best_r2_value) else None
+
+    return {
+        "metric": "mae_after",
+        "mae_by_k": mae_by_k,
+        "r2_by_k": r2_by_k,
+        "best_k": int(best_k),
+        "best_mae": best_mae,
+        "best_r2": best_r2,
+        "n_examples": int(n_examples),
+    }
 
 
 def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, float]:
@@ -546,6 +628,7 @@ def _write_outputs(
     baseline: Dict[str, float],
     best_k: int,
     outputs_root: Path,
+    curve_metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Persist per-example predictions, metrics, and plots."""
 
@@ -620,6 +703,8 @@ def _write_outputs(
             "change_heatmap": str(heatmap_path),
         },
     }
+    if curve_metrics:
+        serializable_metrics["curve_metrics"] = curve_metrics
     with open(metrics_path, "w", encoding="utf-8") as handle:
         json.dump(serializable_metrics, handle, ensure_ascii=False, indent=2)
 
@@ -717,6 +802,25 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)
             continue
 
+        train_curve_metrics: Optional[Dict[str, Any]] = None
+        if train_examples:
+            train_predictions_bundle = predict_post_indices(
+                index=index,
+                eval_examples=train_examples,
+                k_values=k_values,
+                exclude_self=True,
+            )
+            train_metrics_by_k = _summary_metrics(
+                predictions=train_predictions_bundle["per_k_predictions"],
+                eval_examples=train_examples,
+            )
+            train_curve = _curve_payload(
+                train_metrics_by_k,
+                n_examples=len(train_examples),
+            )
+            if train_curve:
+                train_curve_metrics = train_curve
+
         predictions_bundle = predict_post_indices(
             index=index,
             eval_examples=eval_examples,
@@ -734,6 +838,19 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             best_k = k_values[0]
 
         baseline = _baseline_metrics(eval_examples)
+        eval_curve_metrics = _curve_payload(
+            metrics_by_k,
+            n_examples=len(eval_examples),
+        )
+        curve_bundle: Optional[Dict[str, Any]] = None
+        if eval_curve_metrics:
+            curve_bundle = {"eval": eval_curve_metrics}
+            if train_curve_metrics:
+                curve_bundle["train"] = train_curve_metrics
+        elif train_curve_metrics:
+            curve_bundle = {"train": train_curve_metrics}
+        if curve_bundle is not None:
+            curve_bundle["metric"] = "mae_after"
         _write_outputs(
             args=args,
             spec=spec,
@@ -743,6 +860,7 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             baseline=baseline,
             best_k=best_k,
             outputs_root=outputs_root,
+            curve_metrics=curve_bundle,
         )
 
         LOGGER.info(

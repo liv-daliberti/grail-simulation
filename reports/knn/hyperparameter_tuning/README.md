@@ -31,7 +31,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-none** | 0.889 | 0.000 | 2 | 548 |
+| 1 | metric-cosine_text-none | 0.889 | 0.000 | 2 | 548 |
 | 2 | metric-cosine_text-viewerprofile_statetext | 0.881 | 0.007 | 2 | 548 |
 | 3 | metric-l2_text-none | 0.318 | 0.571 | 2 | 548 |
 
@@ -39,7 +39,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext** | 0.338 | 0.000 | 3 | 671 |
+| 1 | metric-cosine_text-viewerprofile_statetext | 0.338 | 0.000 | 3 | 671 |
 | 2 | metric-l2_text-viewerprofile_statetext | 0.323 | 0.015 | 3 | 671 |
 | 3 | metric-cosine_text-none | 0.311 | 0.027 | 4 | 671 |
 
@@ -47,7 +47,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext** | 0.292 | 0.000 | 2 | 1200 |
+| 1 | metric-cosine_text-viewerprofile_statetext | 0.292 | 0.000 | 2 | 1200 |
 | 2 | metric-l2_text-viewerprofile_statetext | 0.288 | 0.004 | 2 | 1200 |
 | 3 | metric-cosine_text-none | 0.284 | 0.008 | 2 | 1200 |
 
@@ -58,7 +58,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-none_sz128_win5_min1** | 0.861 | 0.000 | 2 | 548 |
+| 1 | metric-cosine_text-none_sz128_win5_min1 | 0.861 | 0.000 | 2 | 548 |
 | 2 | metric-cosine_text-none_sz128_win10_min1 | 0.861 | 0.000 | 2 | 548 |
 | 3 | metric-cosine_text-none_sz256_win5_min1 | 0.861 | 0.000 | 2 | 548 |
 
@@ -66,7 +66,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-none_sz256_win5_min1** | 0.334 | 0.000 | 10 | 671 |
+| 1 | metric-cosine_text-none_sz256_win5_min1 | 0.334 | 0.000 | 10 | 671 |
 | 2 | metric-cosine_text-none_sz256_win10_min1 | 0.334 | 0.000 | 10 | 671 |
 | 3 | metric-cosine_text-viewerprofile_statetext_sz256_win10_min1 | 0.334 | 0.000 | 10 | 671 |
 
@@ -74,7 +74,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext_sz256_win5_min1** | 0.288 | 0.000 | 10 | 1200 |
+| 1 | metric-cosine_text-viewerprofile_statetext_sz256_win5_min1 | 0.288 | 0.000 | 10 | 1200 |
 | 2 | metric-cosine_text-none_sz256_win10_min1 | 0.286 | 0.003 | 2 | 1200 |
 | 3 | metric-l2_text-none_sz256_win10_min1 | 0.280 | 0.008 | 2 | 1200 |
 
@@ -85,7 +85,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.801 | 0.000 | 2 | 548 |
+| 1 | metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.801 | 0.000 | 2 | 548 |
 | 2 | metric-cosine_text-none_model-allmpnetbasev2 | 0.792 | 0.009 | 2 | 548 |
 | 3 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.279 | 0.522 | 2 | 548 |
 
@@ -93,7 +93,7 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.308 | 0.000 | 3 | 671 |
+| 1 | metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.308 | 0.000 | 3 | 671 |
 | 2 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.300 | 0.009 | 3 | 671 |
 | 3 | metric-cosine_text-none_model-allmpnetbasev2 | 0.289 | 0.019 | 2 | 671 |
 
@@ -101,16 +101,16 @@ The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces
 
 | Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
 | ---: | --- | ---: | ---: | ---: | ---: |
-| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.322 | 0.000 | 2 | 1200 |
+| 1 | metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.322 | 0.000 | 2 | 1200 |
 | 2 | metric-l2_text-none_model-allmpnetbasev2 | 0.321 | 0.001 | 3 | 1200 |
 | 3 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.315 | 0.007 | 2 | 1200 |
 
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (baseline 0.540, Δ +0.349, k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (baseline 0.368, Δ -0.030, k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.187, k=2) using cosine distance with extra fields `viewer_profile,state_text`.
-- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (baseline 0.540, Δ +0.321, k=2) using cosine distance, no extra fields, size=128, window=5, min_count=1; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (baseline 0.368, Δ -0.034, k=10) using cosine distance, no extra fields, size=256, window=5, min_count=1; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (baseline 0.479, Δ -0.191, k=10) using cosine distance, extra fields `viewer_profile,state_text`, size=256, window=5, min_count=1.
-- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (baseline 0.540, Δ +0.261, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (baseline 0.368, Δ -0.060, k=3) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2.
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (baseline 0.540, Δ +0.349, k=2) using cosine distance with base prompt only; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (baseline 0.368, Δ -0.030, k=3) using cosine distance with Viewer Profile, State Text; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.187, k=2) using cosine distance with Viewer Profile, State Text.
+- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (baseline 0.540, Δ +0.321, k=2) using word2vec (128d, window 5, min_count 1) with base prompt only; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (baseline 0.368, Δ -0.034, k=10) using word2vec (256d, window 5, min_count 1) with base prompt only; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (baseline 0.479, Δ -0.191, k=10) using word2vec (256d, window 5, min_count 1) with Viewer Profile, State Text.
+- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (baseline 0.540, Δ +0.261, k=2) using sentence-transformer `sentence-transformers/all-mpnet-base-v2` with Viewer Profile, State Text; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (baseline 0.368, Δ -0.060, k=3) using sentence-transformer `sentence-transformers/all-mpnet-base-v2` with Viewer Profile, State Text; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=2) using sentence-transformer `sentence-transformers/all-mpnet-base-v2` with Viewer Profile, State Text.
 
 
 ## Post-Study Opinion Regression

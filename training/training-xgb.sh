@@ -58,8 +58,9 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 : "${XGB_FINAL_MEM:=}"
 : "${XGB_FINAL_TIME:=}"
 export XGB_REUSE_FINAL
+: "${XGB_PIPELINE_TASKS:=next_video,opinion}"
 
-export PYTHONPATH="${PYTHONPATH:-}:${ROOT_DIR}/src"
+export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT_DIR}"
 
 print_usage() {
@@ -99,6 +100,18 @@ Environment overrides:
   XGB_FINAL_TIME         Wallclock limit for the finalize stage
   XGB_FINAL_SBATCH_FLAGS Additional sbatch flags appended to the finalize submission
 EOF
+}
+
+append_flag_once() {
+  local -n target=$1
+  local flag=$2
+  local value=$3
+  for ((i = 0; i < ${#target[@]}; ++i)); do
+    if [[ "${target[i]}" == "${flag}" ]]; then
+      return
+    fi
+  done
+  target+=("${flag}" "${value}")
 }
 
 check_python_env() {
@@ -211,12 +224,37 @@ run_plan() {
   check_python_env
   local -a args=("$@")
   ensure_reuse_final_flag args
+  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
   ensure_reuse_final_flag pipeline_args
+  append_flag_once pipeline_args --tasks "${XGB_PIPELINE_TASKS}"
+
+  local pipeline_tasks_raw="${XGB_PIPELINE_TASKS:-next_video,opinion}"
+  IFS=',' read -r -a pipeline_task_tokens <<<"${pipeline_tasks_raw}"
+  local want_next_video=0
+  local want_opinion=0
+  for token in "${pipeline_task_tokens[@]}"; do
+    local trimmed
+    trimmed=$(echo "${token}" | tr '[:upper:]' '[:lower:]' | xargs 2>/dev/null)
+    [[ -z "${trimmed}" ]] && continue
+    case "${trimmed}" in
+      next_video|next-video|nextvideo|slate)
+        want_next_video=1
+        ;;
+      opinion|opinion_stage)
+        want_opinion=1
+        ;;
+    esac
+  done
+  if (( want_next_video == 0 && want_opinion == 0 )); then
+    want_next_video=1
+    want_opinion=1
+  fi
+
   local plan_output
   plan_output=$(run_plan "${pipeline_args[@]}")
   local total_tasks
@@ -278,7 +316,7 @@ submit_jobs() {
   else
     IFS=',' read -r -a gpu_feature_tokens <<<"${gpu_feature_list}"
     for token in "${gpu_feature_tokens[@]}"; do
-      token=$(echo "${token}" | xargs)
+      token=$(echo "${token}" | tr '[:upper:]' '[:lower:]' | xargs)
       if [[ -n "${token}" ]]; then
         GPU_FEATURE_MAP["${token}"]=1
       fi
@@ -300,13 +338,21 @@ submit_jobs() {
   while IFS=$'	' read -r idx study issue feature label; do
     [[ -z "${idx}" ]] && continue
     local idx_num=$((10#${idx}))
+    local feature_lower
+    feature_lower=$(echo "${feature}" | tr '[:upper:]' '[:lower:]')
     local type="cpu"
     if (( gpu_enabled )); then
       local is_gpu_task=0
-      if (( gpu_match_all )); then
-        is_gpu_task=1
-      elif [[ -n "${GPU_FEATURE_MAP[${feature}]:-}" ]]; then
-        is_gpu_task=1
+      if [[ "${feature_lower}" == "opinion" ]]; then
+        if [[ -n "${GPU_FEATURE_MAP[opinion]:-}" ]]; then
+          is_gpu_task=1
+        fi
+      else
+        if (( gpu_match_all )); then
+          is_gpu_task=1
+        elif [[ -n "${GPU_FEATURE_MAP[${feature_lower}]:-}" ]]; then
+          is_gpu_task=1
+        fi
       fi
       if (( is_gpu_task )); then
         type="gpu"
@@ -517,7 +563,7 @@ submit_jobs() {
   local default_gpu_cpus="${XGB_GPU_CPUS:-16}"
   local default_gpu_time="${XGB_GPU_TIME:-${finalize_time}}"
   local should_use_gpu_finalize=0
-  if (( gpu_enabled )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]]; then
+  if (( gpu_enabled )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]] && (( want_next_video )); then
     should_use_gpu_finalize=1
   fi
   if (( should_use_gpu_finalize )); then
@@ -587,6 +633,7 @@ run_finalize_local() {
   ensure_reuse_final_flag args
   echo "[xgb] Running finalize stage locally."
   check_python_env
+  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage finalize "${args[@]}"
 }
 
@@ -612,6 +659,7 @@ run_sweeps_worker() {
     sweep_args+=(--sweep-task-count "${count}")
   fi
   check_python_env
+  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage sweeps "${sweep_args[@]}" "${args[@]}"
 }
 
@@ -651,8 +699,7 @@ case "${stage}" in
     run_sweeps_worker "$@"
     ;;
   finalize)
-    check_python_env
-    "${PYTHON_BIN}" -m xgb.pipeline --stage finalize "$@"
+    run_finalize_local "$@"
     ;;
   plan)
     run_plan "$@"

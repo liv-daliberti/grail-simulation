@@ -502,6 +502,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l10p1 | 0.349 | 0.349 | 234/671 | 1.000 | 0.534 | 671 |
 | tfidf_lr0p03_depth3_estim350_sub1_col0p8_l21p5_l11 | 0.349 | 0.349 | 234/671 | 1.000 | 0.511 | 671 |
 | tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l20p5_l11 | 0.349 | 0.349 | 234/671 | 1.000 | 0.536 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21p5_l11 | 0.349 | 0.349 | 234/671 | 1.000 | 0.526 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p8_col0p8_l21_l11 | 0.347 | 0.347 | 233/671 | 1.000 | 0.413 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p6_l20p5_l10p5 | 0.347 | 0.347 | 233/671 | 1.000 | 0.427 | 671 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col0p8_l20p5_l10p1 | 0.347 | 0.347 | 233/671 | 1.000 | 0.436 | 671 |
@@ -553,6 +554,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim350_sub1_col1_l20p5_l11 | 0.337 | 0.337 | 226/671 | 1.000 | 0.521 | 671 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21p5_l10 | 0.337 | 0.337 | 226/671 | 1.000 | 0.552 | 671 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col0p8_l21p5_l10 | 0.335 | 0.335 | 225/671 | 1.000 | 0.556 | 671 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col1_l21p5_l10p1 | 0.335 | 0.335 | 225/671 | 1.000 | 0.553 | 671 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col0p6_l21_l10p1 | 0.334 | 0.334 | 224/671 | 1.000 | 0.557 | 671 |
 
 ## Study 3 – Minimum Wage (YouGov)
@@ -792,6 +794,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim450_sub0p7_col1_l21_l10 | 0.412 | 0.412 | 494/1,200 | 1.000 | 0.544 | 1,200 |
 | tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l10p1 | 0.411 | 0.411 | 493/1,200 | 1.000 | 0.523 | 1,200 |
 | tfidf_lr0p03_depth3_estim350_sub0p9_col1_l21p5_l10 | 0.411 | 0.411 | 493/1,200 | 1.000 | 0.518 | 1,200 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col0p8_l21p5_l10p5 | 0.406 | 0.406 | 487/1,200 | 1.000 | 0.533 | 1,200 |
 
 ### Selection Summary
 

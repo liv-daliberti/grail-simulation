@@ -1709,6 +1709,9 @@ def _next_video_intro(
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
         "- Metric: accuracy on eligible slates (gold index present)",
+        "- Baseline column: accuracy from always recommending the most-frequent gold index for the study.",
+        "- Δ column: improvement over that baseline accuracy.",
+        "- Random column: expected accuracy from uniformly sampling one candidate per slate.",
         *(
             [
                 "- Uncertainty: "
@@ -1888,6 +1891,7 @@ def _next_video_observations(
             bullet_bits.append("averages: " + ", ".join(extras))
         if bullet_bits:
             lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
+    lines.append("- Random values correspond to the expected accuracy from a uniform guess across the slate options.")
     lines.append("")
     return lines
 

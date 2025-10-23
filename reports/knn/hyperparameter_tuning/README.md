@@ -1,53 +1,119 @@
 # KNN Hyperparameter Tuning Notes
 
-This document consolidates the `k` sweeps run for both KNN baselines (next-video classification and post-study opinion regression).
+This document consolidates the selected grid searches for the KNN baselines.
 
 ## Next-Video Prediction
 
-The latest sweeps cover TF-IDF, Word2Vec, and Sentence-Transformer feature spaces with:
-
-- `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100}`
+The latest sweeps cover the TFIDF, WORD2VEC, SENTENCE-TRANSFORMER feature spaces with:
+- `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100,125,150}`
 - Distance metrics: cosine and L2
 - Text-field augmentations: none, `viewer_profile,state_text`
-- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count = 1, epochs = 10  
-  (training uses up to 40 worker threads – see `training/training-knn.sh`)
-- Sentence-Transformer variants: model checkpoints pulled from the `--sentence-transformer-model`
-  CLI flag (default: `sentence-transformers/all-mpnet-base-v2`) with configurable batch size and
-  optional embedding normalisation.
+- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}
+- Sentence-transformer model: `sentence-transformers/all-mpnet-base-v2`
 
-All artifacts (metrics JSON, per-`k` predictions, error-based elbow plots) live under
-`models/knn/sweeps/{tfidf,word2vec,sentence_transformer}/`.
+| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
+| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| TFIDF | Study 1 – Gun Control (MTurk) | cosine | none | tfidf | — | — | — | 0.889 | 0.540 | +0.349 | 2 | 548 |
+| TFIDF | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.338 | 0.368 | -0.030 | 3 | 671 |
+| TFIDF | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | tfidf | — | — | — | 0.292 | 0.479 | -0.187 | 2 | 1,200 |
+| WORD2VEC | Study 1 – Gun Control (MTurk) | cosine | none | word2vec | 128 | 5 | 1 | 0.861 | 0.540 | +0.321 | 2 | 548 |
+| WORD2VEC | Study 2 – Minimum Wage (MTurk) | cosine | none | word2vec | 256 | 5 | 1 | 0.334 | 0.368 | -0.034 | 10 | 671 |
+| WORD2VEC | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | word2vec | 256 | 5 | 1 | 0.288 | 0.479 | -0.191 | 10 | 1,200 |
+| SENTENCE_TRANSFORMER | Study 1 – Gun Control (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.801 | 0.540 | +0.261 | 2 | 548 |
+| SENTENCE_TRANSFORMER | Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.308 | 0.368 | -0.060 | 3 | 671 |
+| SENTENCE_TRANSFORMER | Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile,state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.322 | 0.479 | -0.158 | 2 | 1,200 |
 
-### Best configurations (validation split, per study)
+### Configuration Leaderboards
 
-| Feature space | Study | Metric | Text fields | Vec size | Window | Min count | Accuracy | Best k |
-| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
-| _Populated after pipeline run_ |  |  |  |  |  |  |  |  |
+## TF-IDF Feature Space
 
-Observations (updated after each run):
+#### Study 1 – Gun Control (MTurk)
 
-- Each study is swept independently; the same feature space can therefore pick different `k`, distance metrics, or text augments for Study 1 vs Study 2/3.
-- Word2Vec models write their tuned configs beneath `models/knn/word2vec/sweeps/study{1,2,3}/...` so it is easy to diff trained embeddings between studies.
-- Sentence-Transformer runs mirror this layout in `models/knn/sentence_transformer/sweeps/study{1,2,3}/...`, capturing the model id and normalisation choice alongside the metrics.
-- TF-IDF sweeps remain lightweight—`viewer_profile,state_text` is still the only augmentation evaluated by default, but feel free to expand via `WORD2VEC_SWEEP_*` / `KNN_TEXT_FIELDS` (and the analogous `SENTENCE_TRANSFORMER_*` environment variables).
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-none** | 0.889 | 0.000 | 2 | 548 |
+| 2 | metric-cosine_text-viewerprofile_statetext | 0.881 | 0.007 | 2 | 548 |
+| 3 | metric-l2_text-none | 0.318 | 0.571 | 2 | 548 |
 
-The elbow plots are now labeled with the data split used (“validation split”), clarifying that the
-curves reflect held-out evaluation error rather than the training data.
+#### Study 2 – Minimum Wage (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext** | 0.338 | 0.000 | 3 | 671 |
+| 2 | metric-l2_text-viewerprofile_statetext | 0.323 | 0.015 | 3 | 671 |
+| 3 | metric-cosine_text-none | 0.311 | 0.027 | 4 | 671 |
+
+#### Study 3 – Minimum Wage (YouGov)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext** | 0.292 | 0.000 | 2 | 1200 |
+| 2 | metric-l2_text-viewerprofile_statetext | 0.288 | 0.004 | 2 | 1200 |
+| 3 | metric-cosine_text-none | 0.284 | 0.008 | 2 | 1200 |
+
+
+## Word2Vec Feature Space
+
+#### Study 1 – Gun Control (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-none_sz128_win5_min1** | 0.861 | 0.000 | 2 | 548 |
+| 2 | metric-cosine_text-none_sz128_win10_min1 | 0.861 | 0.000 | 2 | 548 |
+| 3 | metric-cosine_text-none_sz256_win5_min1 | 0.861 | 0.000 | 2 | 548 |
+
+#### Study 2 – Minimum Wage (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-none_sz256_win5_min1** | 0.334 | 0.000 | 10 | 671 |
+| 2 | metric-cosine_text-none_sz256_win10_min1 | 0.334 | 0.000 | 10 | 671 |
+| 3 | metric-cosine_text-viewerprofile_statetext_sz256_win10_min1 | 0.334 | 0.000 | 10 | 671 |
+
+#### Study 3 – Minimum Wage (YouGov)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext_sz256_win5_min1** | 0.288 | 0.000 | 10 | 1200 |
+| 2 | metric-cosine_text-none_sz256_win10_min1 | 0.286 | 0.003 | 2 | 1200 |
+| 3 | metric-l2_text-none_sz256_win10_min1 | 0.280 | 0.008 | 2 | 1200 |
+
+
+## Sentence-Transformer Feature Space
+
+#### Study 1 – Gun Control (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.801 | 0.000 | 2 | 548 |
+| 2 | metric-cosine_text-none_model-allmpnetbasev2 | 0.792 | 0.009 | 2 | 548 |
+| 3 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.279 | 0.522 | 2 | 548 |
+
+#### Study 2 – Minimum Wage (MTurk)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.308 | 0.000 | 3 | 671 |
+| 2 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.300 | 0.009 | 3 | 671 |
+| 3 | metric-cosine_text-none_model-allmpnetbasev2 | 0.289 | 0.019 | 2 | 671 |
+
+#### Study 3 – Minimum Wage (YouGov)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Best k | Eligible |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | **metric-cosine_text-viewerprofile_statetext_model-allmpnetbasev2** | 0.322 | 0.000 | 2 | 1200 |
+| 2 | metric-l2_text-none_model-allmpnetbasev2 | 0.321 | 0.001 | 3 | 1200 |
+| 3 | metric-l2_text-viewerprofile_statetext_model-allmpnetbasev2 | 0.315 | 0.007 | 2 | 1200 |
+
+
+### Observations
+
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.889 (baseline 0.540, Δ +0.349, k=2) using cosine distance with no extra fields; Study 2 – Minimum Wage (MTurk): accuracy 0.338 (baseline 0.368, Δ -0.030, k=3) using cosine distance with extra fields `viewer_profile,state_text`; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.187, k=2) using cosine distance with extra fields `viewer_profile,state_text`.
+- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.861 (baseline 0.540, Δ +0.321, k=2) using cosine distance, no extra fields, size=128, window=5, min_count=1; Study 2 – Minimum Wage (MTurk): accuracy 0.334 (baseline 0.368, Δ -0.034, k=10) using cosine distance, no extra fields, size=256, window=5, min_count=1; Study 3 – Minimum Wage (YouGov): accuracy 0.288 (baseline 0.479, Δ -0.191, k=10) using cosine distance, extra fields `viewer_profile,state_text`, size=256, window=5, min_count=1.
+- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): accuracy 0.801 (baseline 0.540, Δ +0.261, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (baseline 0.368, Δ -0.060, k=3) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=2) using cosine distance, extra fields `viewer_profile,state_text`, model=sentence-transformers/all-mpnet-base-v2.
+
 
 ## Post-Study Opinion Regression
 
-| Feature space | Study | R² @ best k | Best k | Trend |
-| --- | --- | ---: | ---: | --- |
-| TF-IDF | Study 1 (gun control) | 0.184 | 10 | R² plateaus between k = 10 and 25 |
-| TF-IDF | Study 2 (MTurk wage) | 0.374 | 25 | Gradual gains up to k ≈ 25 |
-| TF-IDF | Study 3 (YouGov wage) | 0.181 | 50 | Requires wide neighborhoods; still below baseline MAE |
-| Word2Vec | Study 1 (gun control) | 0.214 | 5 | Peaks around k = 5–10 |
-| Word2Vec | Study 2 (MTurk wage) | 0.440 | 10 | Clear improvement up to k = 10 |
-| Word2Vec | Study 3 (YouGov wage) | 0.251 | 50 | Benefits from large k (30–50) |
-| Sentence-Transformer | _Populated after pipeline run_ | — | — | Results emitted once the sentence-transformer sweep is executed |
-
-Key takeaways:
-
-- Opinion regression needs larger neighborhoods than slate prediction, especially on the YouGov study.
-- Word2Vec and Sentence-Transformer embeddings consistently reach higher R² than TF-IDF, but all feature spaces are still outperformed by the trivial “no change” baseline on MAE.
-- No evidence of overfitting at large k for regression—the curves flatten rather than spike—suggesting further gains may require richer viewer features instead of additional neighbors.
+Opinion runs reuse the per-study slate configurations gathered above.
+See `reports/knn/opinion/README.md` for detailed metrics and plots.

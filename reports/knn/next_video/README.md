@@ -1,44 +1,19 @@
 # KNN Next-Video Baseline
 
-This report summarizes the slate-ranking KNN models that predict the next video a viewer will click.  
-All results are now organized by the three study cohorts that appear in the cleaned GRAIL dataset:
+This report summarises the slate-ranking KNN model that predicts the next video a viewer will click.
 
-- **Study 1 – Gun Control (MTurk)**
-- **Study 2 – Minimum Wage (MTurk)**
-- **Study 3 – Minimum Wage (YouGov)**
-
-Each pipeline run refreshes the tables below with validation accuracy, the elbow-selected `k`, and baseline comparisons for TF-IDF, Word2Vec, and Sentence-Transformer feature spaces.
-
-- Dataset: `data/cleaned_grail`
+- Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation
 - Metric: accuracy on eligible slates (gold index present)
+- Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)
 
 ## TF-IDF Feature Space
 
-| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
-| --- | ---: | ---: | ---: |
-| _Pipeline run will populate these rows_ |  |  |  |
-
-- Plots: `tfidf/elbow_study1.png`, `tfidf/elbow_study2.png`, `tfidf/elbow_study3.png`
-
-## Word2Vec Feature Space
-
-| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
-| --- | ---: | ---: | ---: |
-| _Pipeline run will populate these rows_ |  |  |  |
-
-- Plots: `word2vec/elbow_study1.png`, `word2vec/elbow_study2.png`, `word2vec/elbow_study3.png`
-
-## Sentence-Transformer Feature Space
-
-| Study | Accuracy ↑ | Best k | Most-frequent baseline ↑ |
-| --- | ---: | ---: | ---: |
-| _Pipeline run will populate these rows_ |  |  |  |
-
-- Plots: `sentence_transformer/elbow_study1.png`, `sentence_transformer/elbow_study2.png`, `sentence_transformer/elbow_study3.png`
+| Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.889 | [0.859, 0.922] | +0.349 | 0.540 | 0.326 | 2 | 548 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.338 | [0.300, 0.372] | -0.030 | 0.368 | 0.255 | 3 | 671 | 671 |
 
 ## Observations
 
-- Slate metrics are scoped per study, allowing each feature space to tune `k` and hyperparameters per cohort.
-- Study-specific directories live under `models/knn/<feature-space>/study{1,2,3}` with per-`k` predictions and metrics JSON.
-- Regenerate this README via `reports/build-reports.sh` (or `python -m knn.pipeline --stage reports`) after any new training run.
+- TFIDF: Study 1 – Gun Control (MTurk): 0.889 (baseline 0.540, Δ +0.349, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.338 (baseline 0.368, Δ -0.030, k=3, eligible 671); averages: mean Δ +0.159, mean random 0.291.

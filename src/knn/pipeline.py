@@ -1894,7 +1894,7 @@ def _next_video_observations(
 
 def _build_hyperparameter_report(
     *,
-    output_path: Path,
+    output_dir: Path,
     selections: Mapping[str, Mapping[str, StudySelection]],
     sweep_outcomes: Sequence[SweepOutcome],
     studies: Sequence[StudySpec],
@@ -1902,8 +1902,10 @@ def _build_hyperparameter_report(
     feature_spaces: Sequence[str],
     sentence_model: Optional[str],
 ) -> None:
-    """Write the hyperparameter tuning summary to ``output_path``."""
+    """Write the hyperparameter tuning summary under ``output_dir``."""
 
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "README.md"
     lines: List[str] = []
     lines.extend(_hyperparameter_report_intro(k_sweep, feature_spaces, sentence_model))
     lines.extend(_hyperparameter_table_section(selections, studies))
@@ -1922,16 +1924,17 @@ def _build_hyperparameter_report(
 
 def _build_next_video_report(
     *,
-    output_path: Path,
+    output_dir: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
     feature_spaces: Sequence[str],
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
     allow_incomplete: bool = False,
 ) -> None:
-    """Compose the next-video evaluation report at ``output_path``."""
+    """Compose the next-video evaluation report under ``output_dir``."""
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "README.md"
     if not metrics_by_feature:
         if not allow_incomplete:
             raise RuntimeError("No slate metrics available to build the next-video report.")
@@ -2147,8 +2150,14 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
     reports_root = repo_root / "reports" / "knn"
     feature_spaces = report_bundle.feature_spaces
     allow_incomplete = report_bundle.allow_incomplete
+    legacy_hyper_file = reports_root / "hyperparameter_tuning.md"
+    legacy_next_file = reports_root / "next_video.md"
+    if legacy_hyper_file.exists():
+        legacy_hyper_file.unlink()
+    if legacy_next_file.exists():
+        legacy_next_file.unlink()
     _build_hyperparameter_report(
-        output_path=reports_root / "hyperparameter_tuning.md",
+        output_dir=reports_root / "hyperparameter_tuning",
         selections=report_bundle.selections,
         sweep_outcomes=report_bundle.sweep_outcomes,
         studies=report_bundle.studies,
@@ -2157,7 +2166,7 @@ def _generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
         sentence_model=report_bundle.sentence_model,
     )
     _build_next_video_report(
-        output_path=reports_root / "next_video.md",
+        output_dir=reports_root / "next_video",
         metrics_by_feature=report_bundle.metrics_by_feature,
         studies=report_bundle.studies,
         feature_spaces=feature_spaces,

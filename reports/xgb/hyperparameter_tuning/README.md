@@ -709,6 +709,7 @@ This summary lists the XGBoost configurations explored for each participant stud
 | tfidf_lr0p03_depth3_estim150_sub1_col0p6_l20p5_l11 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.434 | 1,200 |
 | tfidf_lr0p03_depth3_estim250_sub0p7_col0p6_l21_l10 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.490 | 1,200 |
 | tfidf_lr0p03_depth3_estim350_sub0p9_col0p6_l20p5_l11 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.514 | 1,200 |
+| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10 | 0.422 | 0.422 | 506/1,200 | 1.000 | 0.511 | 1,200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col0p6_l20p5_l10 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.440 | 1,200 |
 | tfidf_lr0p03_depth3_estim150_sub0p7_col1_l20p5_l11 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.435 | 1,200 |
 | tfidf_lr0p03_depth3_estim350_sub0p7_col1_l21_l10p5 | 0.421 | 0.421 | 505/1,200 | 1.000 | 0.519 | 1,200 |

@@ -1271,6 +1271,13 @@ def _write_reports(
 
     reports_dir.mkdir(parents=True, exist_ok=True)
 
+    legacy_hyper_file = reports_dir / "hyperparameter_tuning.md"
+    legacy_next_file = reports_dir / "next_video.md"
+    if legacy_hyper_file.exists():
+        legacy_hyper_file.unlink()
+    if legacy_next_file.exists():
+        legacy_next_file.unlink()
+
     _write_catalog_report(reports_dir)
     _write_hyperparameter_report(
         reports_dir / "hyperparameter_tuning",
@@ -1299,15 +1306,26 @@ def _write_catalog_report(reports_dir: Path) -> None:
     lines: List[str] = []
     lines.append("# XGBoost Report Catalog")
     lines.append("")
-    lines.append("Generated artefacts for the XGBoost baselines:")
-    lines.append("")
-    lines.append("- `next_video/` – slate-ranking accuracy for the selected configuration.")
-    lines.append("- `opinion/` – post-study opinion regression results.")
     lines.append(
-        "- `hyperparameter_tuning/` – notes from the sweep that selected the configuration."
+        "The Markdown artefacts in this directory are produced by `python -m xgb.pipeline` "
+        "(or `training/training-xgb.sh`) and track the XGBoost baselines that accompany the simulation:"
     )
     lines.append("")
-    lines.append("Model checkpoints and raw metrics live under `models/xgb/`.")
+    lines.append("- `hyperparameter_tuning/README.md` – sweep grids, configuration deltas, and parameter frequency summaries.")
+    lines.append("- `next_video/README.md` – validation accuracy, coverage, and probability diagnostics for the slate-ranking task.")
+    lines.append("- `opinion/README.md` – post-study opinion regression metrics with MAE deltas versus the no-change baseline.")
+    lines.append("")
+    lines.append("Raw metrics, model checkpoints, and intermediate artefacts referenced by these reports live beneath `models/xgb/…`.")
+    lines.append("")
+    lines.append("## Refreshing Reports")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("PYTHONPATH=src python -m xgb.pipeline --stage full \\")
+    lines.append("  --out-dir models/xgb \\")
+    lines.append("  --reports-dir reports/xgb")
+    lines.append("```")
+    lines.append("")
+    lines.append("Stages can be invoked individually (`plan`, `sweeps`, `finalize`, `reports`) to match existing SLURM workflows.")
     lines.append("")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

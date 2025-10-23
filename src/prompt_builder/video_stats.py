@@ -23,7 +23,12 @@ VideoStats = Dict[str, Optional[int]]
 
 
 def _candidate_paths() -> Iterable[Path]:
-    """Yield potential filesystem locations for the stats bundle."""
+    """
+    Yield potential filesystem locations for the stats bundle.
+
+    :returns: Iterator of candidate paths searched in order.
+    :rtype: Iterable[Path]
+    """
 
     override = os.getenv("GRAIL_VIDEO_STATS_PATH")
     if override:
@@ -41,6 +46,9 @@ def get_video_stats() -> Dict[str, VideoStats]:
     The function searches a small set of candidate locations and caches the first
     successful load for the duration of the process. Missing files yield an empty
     mapping.
+
+    :returns: Mapping from video id to engagement metric dictionary.
+    :rtype: Dict[str, VideoStats]
     """
 
     for path in _candidate_paths():
@@ -67,7 +75,14 @@ def get_video_stats() -> Dict[str, VideoStats]:
 
 
 def lookup_video_stats(video_id: str) -> VideoStats:
-    """Return engagement metrics for ``video_id`` when available."""
+    """
+    Return engagement metrics for ``video_id`` when available.
+
+    :param video_id: YouTube video identifier.
+    :type video_id: str
+    :returns: Engagement metrics dictionary or an empty mapping.
+    :rtype: VideoStats
+    """
 
     if not video_id:
         return {}
@@ -75,7 +90,14 @@ def lookup_video_stats(video_id: str) -> VideoStats:
 
 
 def _coerce_int(value: object) -> Optional[int]:
-    """Convert ``value`` into an integer when reasonable."""
+    """
+    Convert ``value`` into an integer when reasonable.
+
+    :param value: Raw value that may encode a numeric quantity.
+    :type value: object
+    :returns: Integer representation or ``None`` when conversion is unsafe.
+    :rtype: Optional[int]
+    """
 
     if value is None:
         return None

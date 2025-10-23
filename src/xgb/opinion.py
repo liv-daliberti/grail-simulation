@@ -10,7 +10,13 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from common.opinion import opinion_example_kwargs
+from common.opinion import (
+    DEFAULT_SPECS,
+    OpinionExample,
+    OpinionSpec,
+    float_or_none,
+    opinion_example_kwargs,
+)
 
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -37,57 +43,6 @@ from .model import XGBoostBoosterParams
 from .utils import get_logger
 
 LOGGER = get_logger("xgb.opinion")
-
-
-@dataclass(frozen=True)
-class OpinionSpec:
-    """
-    Columns describing a single participant study.
-
-    :ivar key: Opinion study identifier used in the dataset.
-    :vartype key: str
-    :ivar issue: Issue key associated with the participant study.
-    :vartype issue: str
-    :ivar label: Human-readable label for reporting.
-    :vartype label: str
-    :ivar before_column: Name of the column holding the pre-study index.
-    :vartype before_column: str
-    :ivar after_column: Name of the column holding the post-study index.
-    :vartype after_column: str
-    """
-
-    key: str
-    issue: str
-    label: str
-    before_column: str
-    after_column: str
-
-
-@dataclass
-class OpinionExample:
-    """
-    Collapsed participant-level prompt and opinion indices.
-
-    :ivar participant_id: Unique identifier of the participant.
-    :vartype participant_id: str
-    :ivar participant_study: Study key associated with the participant.
-    :vartype participant_study: str
-    :ivar issue: Issue key for the interaction.
-    :vartype issue: str
-    :ivar document: Prompt document assembled from the participant history.
-    :vartype document: str
-    :ivar before: Baseline opinion index value.
-    :vartype before: float
-    :ivar after: Post-study opinion index value.
-    :vartype after: float
-    """
-
-    participant_id: str
-    participant_study: str
-    issue: str
-    document: str
-    before: float
-    after: float
 
 
 @dataclass(frozen=True)
@@ -139,52 +94,6 @@ class OpinionEvalRequest:
     extra_fields: Sequence[str]
     train_config: OpinionTrainConfig
     overwrite: bool = True
-
-
-DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
-    OpinionSpec(
-        key="study1",
-        issue="gun_control",
-        label="Study 1 – Gun Control (MTurk)",
-        before_column="gun_index",
-        after_column="gun_index_2",
-    ),
-    OpinionSpec(
-        key="study2",
-        issue="minimum_wage",
-        label="Study 2 – Minimum Wage (MTurk)",
-        before_column="mw_index_w1",
-        after_column="mw_index_w2",
-    ),
-    OpinionSpec(
-        key="study3",
-        issue="minimum_wage",
-        label="Study 3 – Minimum Wage (YouGov)",
-        before_column="mw_index_w1",
-        after_column="mw_index_w2",
-    ),
-)
-
-
-def float_or_none(value: Any) -> Optional[float]:
-    """
-    Convert an arbitrary value to ``float`` when possible.
-
-    :param value: Raw value extracted from the dataset.
-    :type value: Any
-    :returns: Floating-point representation or ``None`` when conversion fails.
-    :rtype: Optional[float]
-    """
-
-    if value is None:
-        return None
-    try:
-        parsed = float(value)
-    except (TypeError, ValueError):
-        return None
-    if math.isnan(parsed):
-        return None
-    return parsed
 
 
 def _vectorizer_available() -> None:

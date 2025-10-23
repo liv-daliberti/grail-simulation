@@ -1,6 +1,6 @@
 """Evaluation loop for the GPT-4o slate baseline."""
 
-# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code
 
 from __future__ import annotations
 

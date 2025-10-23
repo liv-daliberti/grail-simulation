@@ -57,10 +57,22 @@ class SubtaskResult:
         Returns:
             str: The status with the highest priority (lowest value)
         """
-        status_prios = {"CE": -1, "RE": 0, "WA": 1, "MLE": 2, "TLE": 3, "PA": 4, "AC": 5, "SKIPPED": 999}
+        status_prios = {
+            "CE": -1,
+            "RE": 0,
+            "WA": 1,
+            "MLE": 2,
+            "TLE": 3,
+            "PA": 4,
+            "AC": 5,
+            "SKIPPED": 999,
+        }
         if not self.test_results:
             return "SKIPPED"
-        return min((result.status for result in self.test_results), key=status_prios.__getitem__)
+        return min(
+            (result.status for result in self.test_results),
+            key=status_prios.__getitem__,
+        )
 
     @property
     def score(self):
@@ -70,11 +82,10 @@ class SubtaskResult:
         Returns:
             float: The rounded minimum score
         """
-        return (
-            0
-            if not self.test_results
-            else round(min(test_result.score for test_result in self.test_results), self.score_precision)
-        )
+        scores = [test_result.score for test_result in self.test_results]
+        if not scores:
+            return 0
+        return round(min(scores), self.score_precision)
 
     @property
     def weighted_score(self):
@@ -84,14 +95,10 @@ class SubtaskResult:
         Returns:
             float: The rounded weighted score
         """
-        return (
-            0
-            if not self.test_results
-            else round(
-                min(test_result.score for test_result in self.test_results) * self.points,
-                self.score_precision,
-            )
-        )
+        scores = [test_result.score for test_result in self.test_results]
+        if not scores:
+            return 0
+        return round(min(scores) * self.points, self.score_precision)
 
     def to_dict(self):
         """
@@ -120,7 +127,8 @@ def _extract_single_status(score: float, feedback: str) -> str:
     :type score: float
     :param feedback: Feedback message from the execution.
     :type feedback: str
-    :return: Status code (``"CE"``, ``"MLE"``, ``"TLE"``, ``"WA"``, ``"RE"``, ``"AC"``, or ``"PA"``).
+    :return: Status code indicating the failure mode:
+        ``"CE"``, ``"MLE"``, ``"TLE"``, ``"WA"``, ``"RE"``, ``"AC"``, or ``"PA"``.
     :rtype: str
     """
     if score == 0.0:
@@ -145,8 +153,7 @@ async def score_single_test_case(
     subtask: dict,
     *,
     test_name: str,
-    test_input: str,
-    test_output: str,
+    test_case: tuple[str, Optional[str]],
     submission: str,
 ) -> TestResult:
     """
@@ -167,8 +174,14 @@ async def score_single_test_case(
     :return: Result of the test case execution.
     :rtype: TestResult
     """
-    # Run submission for this test case
-    score, feedback = await run_submission(client, subtask, test_input, submission, test_output)
+    test_input, expected_output = test_case
+    score, feedback = await run_submission(
+        client,
+        subtask,
+        test_input,
+        submission,
+        expected_output,
+    )
     score = float(score)
 
     return TestResult(
@@ -197,8 +210,8 @@ async def score_subtask(
     :type submission: str
     :param test_case_run_cache: Optional cache of previously run test cases.
     :type test_case_run_cache: dict | None
-    :param test_batch_size: Number of test cases to evaluate in parallel before checking for failures;
-        ``-1`` evaluates all test cases concurrently.
+    :param test_batch_size: Number of test cases to evaluate in parallel before
+        checking for failures; ``-1`` evaluates all test cases concurrently.
     :type test_batch_size: int
     :return: Result of the subtask evaluation.
     :rtype: SubtaskResult
@@ -228,9 +241,11 @@ async def score_subtask(
 
     # we skip submissions where no code was extracted
     # no need to do anything, as we have a failed cached result
-    if not submission or any(
-        test_result.status != "SKIPPED" and test_result.score == 0.0 for test_result in subtask_result.test_results
-    ):
+    should_skip = not submission or any(
+        test_result.status != "SKIPPED" and test_result.score == 0.0
+        for test_result in subtask_result.test_results
+    )
+    if should_skip:
         return subtask_result
 
     if "test_cases" in subtask:
@@ -240,23 +255,29 @@ async def score_subtask(
     else:
         test_cases = load_ioi_tests(subtask["year"], subtask["id"])
 
-    # run one batch, check if any of them failed (0 score): if so stop evaluating; otherwise continue with the next batch of test cases.
+    # run one batch, check if any failed (0 score): stop and skip remaining tests
     for test_batch_to_run in batched(tests_to_run, test_batch_size):
-        results = await asyncio.gather(
-            *[
-                asyncio.create_task(
-                    score_single_test_case(
-                        client,
-                        subtask,
-                        test_name=test_name,
-                        test_input=test_cases[test_name][0],
-                        test_output=test_cases[test_name][1],
-                        submission=submission,
-                    )
+        tasks = []
+        for _, test_name in test_batch_to_run:
+            raw_case = test_cases[test_name]
+            if isinstance(raw_case, (list, tuple)):
+                normalized_case = (
+                    raw_case[0],
+                    raw_case[1] if len(raw_case) > 1 else None,
                 )
-                for _, test_name in test_batch_to_run
-            ]
-        )
+            else:
+                normalized_case = (raw_case, None)
+            task = asyncio.create_task(
+                score_single_test_case(
+                    client,
+                    subtask,
+                    test_name=test_name,
+                    test_case=normalized_case,
+                    submission=submission,
+                )
+            )
+            tasks.append(task)
+        results = await asyncio.gather(*tasks)
         for (ti, test_name), test_result in zip(test_batch_to_run, results):
             if test_case_run_cache is not None:
                 test_case_run_cache[test_name] = test_result
@@ -290,7 +311,17 @@ async def score_subtasks(
     # avoid rerunning tests present in multiple subtasks
     test_case_run_cache = {}
 
-    return [await score_subtask(client, subtask, submission, test_case_run_cache, skip_mode) for subtask in subtasks]
+    results: list[SubtaskResult] = []
+    for subtask in subtasks:
+        result = await score_subtask(
+            client,
+            subtask,
+            submission,
+            test_case_run_cache,
+            skip_mode,
+        )
+        results.append(result)
+    return results
 
 
 async def run_submission(
@@ -316,17 +347,20 @@ async def run_submission(
     :return: Tuple containing ``(score, feedback)``.
     :rtype: tuple[str, str]
     """
+    files = [
+        {"name": f"graders/{problem['id'].lower()}.cpp", "content": submission},
+        {"name": "input.txt", "content": test_input},
+    ]
+    if test_output:
+        files.append({"name": "correct_output.txt", "content": test_output})
+    files.extend(
+        {"name": name, "content": content}
+        for name, content in problem["grader_files"]
+        if content
+    )
+
     data = {
-        "files": [
-            # the actual submission
-            {"name": f"graders/{problem['id'].lower()}.cpp", "content": submission},
-            # pass the input
-            {"name": "input.txt", "content": test_input},
-            # pass the expected output
-            *([{"name": "correct_output.txt", "content": test_output}] if test_output else []),
-            # grader files
-            *({"name": name, "content": content} for name, content in problem["grader_files"] if content),
-        ],
+        "files": files,
         "run_timeout": round(
             (problem["time_limit"] + 3) * 1000
         ),  # +3 seconds hard limit. time limits are handled by the ioi script
@@ -337,8 +371,8 @@ async def run_submission(
 
 async def execute_ioi(client, data) -> tuple[str, str]:
     """
-    Requests to the IOI package return the score as a float in the stdout, as well as optional feedback/errors in stderr.
-    Returns a tuple of (score, feedback).
+    Requests to the IOI package return the score as a float in stdout, plus
+    optional feedback or errors in stderr. Returns ``(score, feedback)``.
     """
     response = await client.send_execute(data)
 
@@ -364,10 +398,16 @@ async def execute_ioi(client, data) -> tuple[str, str]:
     elif run_result["signal"] == "SIGKILL":
         score, feedback = "0", "Time limit exceeded"
     elif run_result["code"] != 0:
-        raise PistonError(
-            f"language={response['language']}, version={response['version']}, "
-            f"exit code={run_result['code']}, stderr={run_result['stderr']}, signal={run_result['signal']}"
+        details = ", ".join(
+            [
+                f"language={response['language']}",
+                f"version={response['version']}",
+                f"exit code={run_result['code']}",
+                f"stderr={run_result['stderr']}",
+                f"signal={run_result['signal']}",
+            ]
         )
+        raise PistonError(details)
     else:
         score, feedback = "0", "Unknown error"
     return score, feedback

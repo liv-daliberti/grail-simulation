@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import time
-from typing import List, Optional
+from typing import Any, Dict, List
 
 import requests
 
@@ -55,36 +55,56 @@ def safe_generate(
     *,
     prompts: List[str],
     url: str = "http://localhost:8000/generate",
-    max_tokens: int = 256,
-    temperature: float = 0.7,
-    top_p: float = 0.9,
-    n: int = 1,
-    stream: bool = False,
-    tokenizer=None,                 # ← new optional arg
-    max_retries: int = 3,
-    backoff: float = 1.0,
-    timeout: float = 30.0,
+    tokenizer: Any | None = None,  # ← optional tokenizer for token-ID responses
+    **options: Any,
 ) -> List[List[str]]:
     """Robust call to /generate with retry + schema-agnostic decoding."""
+    defaults: Dict[str, Any] = {
+        "max_tokens": 256,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "n": 1,
+        "stream": False,
+        "max_retries": 3,
+        "backoff": 1.0,
+        "timeout": 30.0,
+    }
+    unknown = set(options) - set(defaults)
+    if unknown:
+        raise TypeError(f"safe_generate received unexpected options: {sorted(unknown)}")
+    settings = {**defaults, **options}
+
+    stream = settings["stream"]
     payload = {
         "prompts": prompts,
-        "temperature": temperature,
-        "top_p": top_p,
-        "n": n,
-        "max_tokens": max_tokens,
+        "temperature": settings["temperature"],
+        "top_p": settings["top_p"],
+        "n": settings["n"],
+        "max_tokens": settings["max_tokens"],
         "stream": stream,
     }
 
-    for attempt in range(max_retries):
+    for attempt in range(settings["max_retries"]):
         try:
-            r = requests.post(url, json=payload, timeout=timeout, stream=stream)
-            if r.status_code == 200:
-                if stream:
-                    return _consume_stream_response(r, len(prompts))
-                return _parse_nonstream_json(r.json(), tokenizer)
-            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:120]}")
-        except (requests.ConnectionError, requests.Timeout, RuntimeError) as e:
-            if attempt < max_retries - 1:
-                time.sleep(backoff * (2**attempt))
+            response = requests.post(
+                url,
+                json=payload,
+                timeout=settings["timeout"],
+                stream=stream,
+            )
+            response.raise_for_status()
+            if stream:
+                return _consume_stream_response(response, len(prompts))
+            return _parse_nonstream_json(response.json(), tokenizer)
+        except (
+            requests.ConnectionError,
+            requests.Timeout,
+            requests.HTTPError,
+            RuntimeError,
+        ) as exc:
+            if attempt < settings["max_retries"] - 1:
+                time.sleep(settings["backoff"] * (2**attempt))
             else:
-                raise RuntimeError(f"safe_generate failed: {e}") from e
+                raise RuntimeError(f"safe_generate failed: {exc}") from exc
+
+    raise RuntimeError("safe_generate exhausted retries without a response")

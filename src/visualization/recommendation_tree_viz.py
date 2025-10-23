@@ -1,4 +1,9 @@
-"""Render Guns and GRAIL recommendation trees as Graphviz diagrams."""
+"""Utilities for visualising Guns and GRAIL recommendation data with Graphviz.
+
+The helpers in this module transform recommender exports and cleaned session datasets
+into annotated Graphviz diagrams that illustrate decision paths, node metadata, and
+viewer engagement metrics.
+"""
 
 # pylint: disable=too-many-lines
 
@@ -21,7 +26,15 @@ from graphviz import Digraph
 
 @dataclass
 class TreeEdge:
-    """Directed edge connecting two nodes in the recommendation tree."""
+    """Directed edge connecting two nodes in the recommendation tree.
+
+    :param parent: Identifier of the upstream node that produced the recommendation.
+    :type parent: str
+    :param child: Identifier of the downstream node that was recommended.
+    :type child: str
+    :param rank: One-based recommendation rank assigned by the model, when available.
+    :type rank: int | None
+    """
 
     parent: str
     child: str
@@ -30,7 +43,15 @@ class TreeEdge:
 
 @dataclass
 class TreeData:
-    """Container holding recommendation tree nodes and edges."""
+    """Container holding recommendation tree nodes and edges.
+
+    :param root: Identifier of the tree root, typically the entry video.
+    :type root: str
+    :param nodes: Mapping from node identifiers to their underlying row data.
+    :type nodes: dict[str, Mapping[str, object]]
+    :param edges: List of directed edges describing parent-child relationships.
+    :type edges: list[TreeEdge]
+    """
 
     root: str
     nodes: Dict[str, Mapping[str, object]]
@@ -38,18 +59,33 @@ class TreeData:
 
 
 class SafeDict(dict):
-    """Dictionary that returns an empty string for missing keys."""
+    """Dictionary that returns placeholder values for missing template keys.
+
+    Instances behave like a regular ``dict`` but ensure format strings never raise a
+    :class:`KeyError` by substituting empty strings for absent fields.
+    """
 
     def __missing__(self, key: str) -> str:
-        """Return an empty string for missing ``key`` to ease template formatting."""
+        """Return an empty string when ``key`` is absent during template formatting.
+
+        :param key: Lookup key requested by :meth:`str.format_map`.
+        :type key: str
+        :returns: Empty string to keep format operations resilient.
+        :rtype: str
+        """
         return ""
 
 
 def _natural_sort_key(value: str) -> Tuple[int, str, str]:
-    """Return a tuple suitable for natural sorting of strings with numeric suffixes.
+    """Return a tuple suitable for natural sorting of identifiers with numerics.
 
-    :param value: String containing optional numeric segments.
-    :returns: Tuple sorting by numeric portion, alphabetic prefix, and original text.
+    The returned tuple allows call sites to sort values such as ``rec1`` and ``rec10`` in
+    numerical order rather than purely lexicographical order.
+
+    :param value: String that may contain interleaved alphabetic and numeric segments.
+    :type value: str
+    :returns: Comparison tuple of ``(numeric_suffix, alphabetic_prefix, original_value)``.
+    :rtype: tuple[int, str, str]
     """
     prefix = "".join(ch for ch in value if not ch.isdigit())
     digits = "".join(ch for ch in value if ch.isdigit())
@@ -59,9 +95,12 @@ def _natural_sort_key(value: str) -> Tuple[int, str, str]:
 def _wrap_text(text: str, width: Optional[int]) -> str:
     """Wrap ``text`` to the specified ``width`` using newline separators.
 
-    :param text: Original text to wrap.
-    :param width: Maximum line length; no wrapping when ``None`` or ``<= 0``.
-    :returns: Wrapped text with newline separators.
+    :param text: Original text block that should be wrapped for readability.
+    :type text: str
+    :param width: Maximum line length; disables wrapping when ``None`` or ``<= 0``.
+    :type width: int | None
+    :returns: Wrapped text with newline separators inserted at breakpoints.
+    :rtype: str
     """
     if not width or width <= 0:
         return text
@@ -69,7 +108,16 @@ def _wrap_text(text: str, width: Optional[int]) -> str:
 
 
 def parse_issue_counts(spec: str) -> Dict[str, int]:
-    """Parse comma-separated issue=count specifications."""
+    """Parse comma-separated ``issue=count`` specifications into a mapping.
+
+    The helper is primarily used to interpret ``--batch-issues`` CLI payloads.
+
+    :param spec: Comma-separated string such as ``"minimum_wage=2,gun_control=1"``.
+    :type spec: str
+    :returns: Normalised mapping from issue identifiers to positive integer counts.
+    :rtype: dict[str, int]
+    :raises ValueError: If the input string does not follow the ``issue=count`` format.
+    """
     result: Dict[str, int] = {}
     if not spec:
         return result
@@ -105,11 +153,20 @@ def load_tree_csv(
 ) -> TreeData:
     """Load a recommendation tree from a CSV export.
 
+    The CSV is expected to contain a unique identifier column as well as several columns
+    whose names share a prefix (for example ``rec1`` ... ``rec5``). Each prefixed column
+    is interpreted as a ranked recommendation edge.
+
     :param csv_path: Path to the CSV file generated by the recommender pipeline.
-    :param id_column: Column name that stores the node identifier.
-    :param child_prefixes: Column prefixes that denote recommendation targets.
-    :returns: Populated :class:`TreeData` describing the tree.
-    :raises ValueError: If the recommendation columns cannot be inferred.
+    :type csv_path: Path
+    :param id_column: Column name that stores the node identifier; automatically detected
+        in a case-insensitive fashion when not present verbatim.
+    :type id_column: str
+    :param child_prefixes: One or more column prefixes that denote recommendation targets.
+    :type child_prefixes: Sequence[str]
+    :returns: Populated :class:`TreeData` describing the recommendations and root node.
+    :rtype: TreeData
+    :raises ValueError: If no recommendation columns can be inferred from the provided CSV.
     """
     # pylint: disable=too-many-locals
     df = pd.read_csv(csv_path)
@@ -164,10 +221,16 @@ def load_metadata(
 ) -> Dict[str, Mapping[str, object]]:
     """Load per-node metadata to enrich node labels.
 
-    :param metadata_path: CSV, JSON, or JSONL file with metadata rows.
-    :param id_column: Column containing the node identifier.
-    :returns: Mapping from node identifier to metadata dictionaries.
-    :raises ValueError: If the identifier column is missing in a CSV file.
+    Metadata files may be authored in CSV, JSON, or JSONL formats. The loader produces a
+    dictionary keyed by node identifier, which is merged into the label template context.
+
+    :param metadata_path: Path to the metadata file, or ``None`` to skip enrichment.
+    :type metadata_path: Path | None
+    :param id_column: Column containing the node identifier within the metadata file.
+    :type id_column: str
+    :returns: Mapping from node identifiers to metadata dictionaries.
+    :rtype: dict[str, Mapping[str, object]]
+    :raises ValueError: If the identifier column is missing in a CSV metadata file.
     """
     # pylint: disable=too-many-branches
     if metadata_path is None:
@@ -215,12 +278,22 @@ def format_node_label(
 ) -> str:
     """Render a node label based on the configured template.
 
+    Labels are constructed from both the raw tree row and any auxiliary metadata. Missing
+    template keys are tolerated thanks to :class:`SafeDict`. When the formatted template
+    results in an empty string, the function falls back to common title fields.
+
     :param node_id: Identifier of the node being rendered.
-    :param node_data: Raw data associated with the node.
+    :type node_id: str
+    :param node_data: Raw data associated with the node sourced from the tree CSV.
+    :type node_data: Mapping[str, object]
     :param metadata: Supplemental metadata keyed by node identifier.
-    :param template: Python format string used for the label.
-    :param wrap_width: Optional character width used to wrap the label.
-    :returns: Formatted label string, including the node id when requested.
+    :type metadata: Mapping[str, Mapping[str, object]]
+    :param template: Python format string used for the label body.
+    :type template: str
+    :param wrap_width: Optional character width used to wrap the label text.
+    :type wrap_width: int | None
+    :returns: Formatted label string with reasonable fallbacks and ``wrap_width`` applied.
+    :rtype: str
     """
     context = SafeDict({"id": node_id, **metadata.get(node_id, {}), **node_data})
     try:
@@ -238,8 +311,14 @@ def format_node_label(
 def _extract_sequences_from_object(obj: object) -> List[List[str]]:
     """Extract sequences of identifiers from a heterogeneous object.
 
+    The helper accepts the diverse payloads encountered in real trajectory dumps. Lists,
+    tuples, dictionaries, and delimited strings are normalised into lists of string
+    identifiers.
+
     :param obj: Candidate object containing sequence information.
-    :returns: Collection of sequences found within ``obj``.
+    :type obj: object
+    :returns: Collection of identifier sequences discovered within ``obj``.
+    :rtype: list[list[str]]
     """
     if isinstance(obj, list):
         return [
@@ -266,9 +345,15 @@ def load_trajectories(
 ) -> List[List[str]]:
     """Load viewer trajectories from text, CSV, or JSON representations.
 
-    :param path: Path to the trajectory file, or ``None`` to skip loading.
-    :param delimiter: Delimiter used when parsing plain-text files.
+    The loader gracefully handles repeated identifiers, blank entries, and numeric values,
+    returning deduplicated and stringified sequences suitable for downstream aggregation.
+
+    :param path: Path to the trajectory file, or ``None`` to skip loading trajectories.
+    :type path: Path | None
+    :param delimiter: Delimiter used when parsing free-form text files.
+    :type delimiter: str
     :returns: Normalised viewer trajectories as lists of identifiers.
+    :rtype: list[list[str]]
     """
     # pylint: disable=too-many-branches,too-many-locals
     if path is None:
@@ -329,10 +414,15 @@ def load_trajectories(
 
 
 def compute_depths(tree: TreeData) -> Dict[str, int]:
-    """Compute the depth (distance from the root) for every node.
+    """Compute the depth (distance from the root) for every node in ``tree``.
 
-    :param tree: Recommendation tree.
-    :returns: Mapping of node identifiers to zero-based depth.
+    A breadth-first traversal considers every parent-child relation once and produces a
+    zero-based depth for each reachable node.
+
+    :param tree: Recommendation tree structure.
+    :type tree: TreeData
+    :returns: Mapping from node identifiers to zero-based depth.
+    :rtype: dict[str, int]
     """
     adjacency: Dict[str, List[str]] = {}
     for edge in tree.edges:
@@ -351,8 +441,10 @@ def compute_depths(tree: TreeData) -> Dict[str, int]:
 def aggregate_counts(sequences: Iterable[Sequence[str]]) -> Tuple[Counter, Counter]:
     """Aggregate node and edge visitation counts from viewer trajectories.
 
-    :param sequences: Iterable of node identifier sequences.
-    :returns: Tuple of ``(node_counts, edge_counts)``.
+    :param sequences: Iterable of node identifier sequences, each representing a viewer.
+    :type sequences: Iterable[Sequence[str]]
+    :returns: Tuple of ``(node_counts, edge_counts)`` counters with visit frequencies.
+    :rtype: tuple[Counter, Counter]
     """
     node_counts: Counter = Counter()
     edge_counts: Counter = Counter()
@@ -372,7 +464,9 @@ def _group_rows_by_session(
     """Group dataset rows by session identifier and sort within each session.
 
     :param rows: Iterable of dataset rows emitted by the cleaned dataset.
-    :returns: Mapping from session identifier to chronological rows.
+    :type rows: Sequence[Mapping[str, object]]
+    :returns: Mapping from session identifiers to chronologically sorted rows.
+    :rtype: dict[str, list[Mapping[str, object]]]
     """
     sessions: Dict[str, List[Mapping[str, object]]] = {}
     for row in rows:
@@ -401,18 +495,34 @@ def build_graph(
 ) -> Digraph:
     """Render a recommendation tree as a Graphviz graph.
 
+    The resulting diagram supports optional highlighting of a user journey, overlays visit
+    counts, and displays recommendation rank labels. Layout is controlled entirely through
+    Graphviz attributes.
+
     :param tree: Tree structure to render.
-    :param metadata: Supplemental metadata per node.
+    :type tree: TreeData
+    :param metadata: Supplemental metadata per node used by :func:`format_node_label`.
+    :type metadata: Mapping[str, Mapping[str, object]]
     :param label_template: Template used to render each node label.
-    :param wrap_width: Optional wrapping width for labels.
-    :param highlight_path: Sequence of nodes to emphasise.
-    :param node_counts: Aggregated node view counts.
-    :param edge_counts: Aggregated edge traversal counts.
-    :param max_depth: Optional depth limit for rendered nodes.
-    :param rankdir: Graphviz rank direction (e.g. ``"LR"``).
-    :param engine: Graphviz layout engine.
-    :param show_rank_labels: Whether to annotate edges with recommendation rank.
-    :returns: Configured :class:`graphviz.Digraph` instance.
+    :type label_template: str
+    :param wrap_width: Optional wrapping width for labels; ``None`` disables wrapping.
+    :type wrap_width: int | None
+    :param highlight_path: Sequence of nodes to emphasise visually.
+    :type highlight_path: Sequence[str]
+    :param node_counts: Aggregated node view counts sourced from viewer trajectories.
+    :type node_counts: Counter
+    :param edge_counts: Aggregated edge traversal counts from viewer trajectories.
+    :type edge_counts: Counter
+    :param max_depth: Optional depth limit controlling which nodes are rendered.
+    :type max_depth: int | None
+    :param rankdir: Graphviz rank direction (for example ``"LR"`` or ``"TB"``).
+    :type rankdir: str
+    :param engine: Graphviz layout engine name.
+    :type engine: str
+    :param show_rank_labels: Whether to annotate edges with their recommendation rank.
+    :type show_rank_labels: bool
+    :returns: Configured :class:`graphviz.Digraph` instance ready for rendering.
+    :rtype: graphviz.Digraph
     """
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     depths = compute_depths(tree)
@@ -485,8 +595,14 @@ def build_graph(
 def _load_cleaned_dataset(path: Path):
     """Load a HuggingFace dataset exported by ``clean_data.py``.
 
+    The function supports both saved-to-disk datasets as well as flat JSON/CSV exports,
+    deferring heavy imports until runtime so command-line usage remains lightweight.
+
     :param path: Path to the dataset folder or file.
-    :returns: Dataset object compatible with the HuggingFace datasets API.
+    :type path: Path
+    :returns: Dataset object compatible with the HuggingFace ``datasets`` API.
+    :rtype: datasets.Dataset | datasets.DatasetDict
+    :raises ImportError: If the optional ``datasets`` dependency is not installed.
     :raises ValueError: If the file extension is not supported.
     """
     # pylint: disable=import-outside-toplevel
@@ -513,12 +629,16 @@ def _collect_rows(
     split: Optional[str] = None,
     issue: Optional[str] = None,
 ) -> List[Dict[str, object]]:
-    """Collect dataset rows, optionally filtering by split and issue.
+    """Collect dataset rows, optionally filtering by split name and issue.
 
     :param dataset: Dataset object or mapping of split names to datasets.
-    :param split: Optional split name (e.g. ``"train"`` or ``"validation"``).
+    :type dataset: datasets.Dataset | datasets.DatasetDict | Mapping[str, object]
+    :param split: Optional split name (for example ``"train"`` or ``"validation"``).
+    :type split: str | None
     :param issue: Optional issue identifier to filter rows.
-    :returns: List of dictionaries representing dataset rows.
+    :type issue: str | None
+    :returns: Rows materialised as standard dictionaries to simplify downstream use.
+    :rtype: list[dict[str, object]]
     """
     rows: List[Dict[str, object]] = []
     dataset_items = None
@@ -549,12 +669,18 @@ def _extract_session_rows(
     """Extract the rows that correspond to a target viewer session.
 
     :param dataset: HuggingFace dataset or mapping of splits.
-    :param session_id: Specific session identifier to fetch, defaults to first available.
+    :type dataset: datasets.Dataset | datasets.DatasetDict | Mapping[str, object]
+    :param session_id: Specific session identifier to fetch; defaults to the first available.
+    :type session_id: str | None
     :param split: Optional split name for filtering.
+    :type split: str | None
     :param issue: Optional issue identifier filter.
-    :param max_steps: Optional maximum number of steps to include.
-    :returns: Selected session identifier and its chronologically ordered rows.
-    :raises ValueError: If the session cannot be located.
+    :type issue: str | None
+    :param max_steps: Optional maximum number of recommendation steps to include.
+    :type max_steps: int | None
+    :returns: Tuple of the resolved session identifier and its chronologically ordered rows.
+    :rtype: tuple[str, list[dict[str, object]]]
+    :raises ValueError: If no matching session can be located with the provided filters.
     """
     rows = _collect_rows(dataset, split=split, issue=issue)
     if not rows:
@@ -579,9 +705,12 @@ def _extract_session_rows(
 def _find_watch_details(row: Mapping[str, object], video_id: str) -> Mapping[str, object]:
     """Find the watch metadata for a given video inside a session row.
 
-    :param row: Session row with watch details embedded.
+    :param row: Session row with watch details embedded in ``watched_detailed_json``.
+    :type row: Mapping[str, object]
     :param video_id: Identifier of the video to search for.
-    :returns: Matching watch information, or an empty mapping.
+    :type video_id: str
+    :returns: Matching watch information, or an empty mapping when not present.
+    :rtype: Mapping[str, object]
     """
     entries = row.get("watched_detailed_json")
     if isinstance(entries, list):
@@ -604,13 +733,23 @@ def build_session_graph(
 ) -> Digraph:
     """Visualise a single viewer session as a Graphviz graph.
 
+    Nodes represent the current video and available recommendations at every step, while
+    edges track both recommendation rank and the option ultimately selected by the viewer.
+
     :param rows: Chronologically ordered session rows.
+    :type rows: Sequence[Mapping[str, object]]
     :param label_template: Template used to render node labels.
-    :param wrap_width: Optional wrapping width for labels.
-    :param rankdir: Graph orientation (Graphviz ``rankdir`` attribute).
+    :type label_template: str
+    :param wrap_width: Optional wrapping width for labels; ``None`` and ``0`` disable wrapping.
+    :type wrap_width: int | None
+    :param rankdir: Graph orientation encoded using Graphviz's ``rankdir`` attribute.
+    :type rankdir: str
     :param engine: Graphviz layout engine to use.
-    :param highlight_path: Sequence of video identifiers to highlight.
-    :returns: Configured :class:`graphviz.Digraph` instance.
+    :type engine: str
+    :param highlight_path: Sequence of video identifiers to highlight visually.
+    :type highlight_path: Sequence[str]
+    :returns: Configured :class:`graphviz.Digraph` instance describing the session.
+    :rtype: graphviz.Digraph
     """
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
     graph = Digraph(comment="Viewer session", engine=engine, format="png")
@@ -727,10 +866,18 @@ def build_session_graph(
 def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[str]) -> Path:
     """Render a Graphviz graph to disk, normalising the output path.
 
+    The helper mimics Graphviz CLI behaviour by inferring the format from the filename,
+    setting :attr:`Digraph.format`, and renaming the intermediate output produced by
+    :meth:`graphviz.Digraph.render`.
+
     :param graph: Graphviz graph to render.
+    :type graph: graphviz.Digraph
     :param output_path: Target output file path.
+    :type output_path: Path
     :param output_format: Optional format override (otherwise inferred from ``output_path``).
-    :returns: Path to the rendered output file.
+    :type output_format: str | None
+    :returns: Path to the rendered output file on disk.
+    :rtype: Path
     """
     format_to_use = output_format or output_path.suffix.lstrip(".")
     if not format_to_use:
@@ -750,9 +897,14 @@ def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[s
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     """Parse CLI arguments for the recommendation visualiser.
 
-    :param argv: Optional explicit argument vector.
-    :returns: Parsed arguments namespace.
-    :raises SystemExit: If required arguments are missing.
+    The parser supports both recommendation-tree mode and session-visualisation mode,
+    validating that the correct combination of flags is supplied before returning.
+
+    :param argv: Optional explicit argument vector for testing.
+    :type argv: Sequence[str] | None
+    :returns: Parsed arguments namespace ready for downstream consumption.
+    :rtype: argparse.Namespace
+    :raises SystemExit: If required arguments are missing or incompatible.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tree", type=Path, help="Path to a tree CSV file.")
@@ -897,8 +1049,13 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[Sequence[str]] = None) -> None:
     """Entry point for the recommendation tree visualiser.
 
-    :param argv: Optional list of CLI arguments.
-    :raises SystemExit: When the command arguments are inconsistent.
+    Depending on the provided arguments the command renders either recommendation trees
+    from CSV exports or viewer sessions sourced from cleaned datasets. Errors are
+    communicated via :class:`SystemExit` to match typical CLI semantics.
+
+    :param argv: Optional list of CLI arguments mirroring :data:`sys.argv[1:]`.
+    :type argv: Sequence[str] | None
+    :raises SystemExit: When the command arguments are inconsistent or data is invalid.
     """
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     args = parse_args(argv)

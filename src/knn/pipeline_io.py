@@ -1,5 +1,4 @@
 """Filesystem helpers for loading persisted KNN metrics."""
-
 from __future__ import annotations
 
 import json
@@ -9,20 +8,35 @@ from typing import Dict, Mapping, Sequence
 from .pipeline_context import StudySpec
 from .pipeline_data import issue_slug_for_study
 
-
 def load_metrics(run_dir: Path, issue_slug: str) -> tuple[Mapping[str, object], Path]:
-    """Load the evaluation metrics JSON for ``issue_slug``."""
+    """
+    Load the evaluation metrics JSON for a specific study/issue from ``run_dir``.
 
+    :param run_dir: Directory containing per-issue subdirectories with metrics artefacts.
+    :type run_dir: Path
+    :param issue_slug: Issue slug used to locate the metrics file on disk.
+    :type issue_slug: str
+    :returns: Tuple containing the parsed metrics payload and the filesystem path used.
+    :rtype: tuple[Mapping[str, object], Path]
+    :raises FileNotFoundError: If the expected metrics file does not exist.
+    """
     metrics_path = run_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
     if not metrics_path.exists():
         raise FileNotFoundError(f"Missing metrics file: {metrics_path}")
     with open(metrics_path, "r", encoding="utf-8") as handle:
         return json.load(handle), metrics_path
 
-
 def load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mapping[str, object]]:
-    """Return metrics keyed by study for the opinion task."""
+    """
+    Collect opinion-task metrics for every study under ``out_dir``.
 
+    :param out_dir: Root directory containing opinion evaluation artefacts.
+    :type out_dir: Path
+    :param feature_space: Feature space identifier (e.g. ``tfidf`` or ``word2vec``) used to scope the search.
+    :type feature_space: str
+    :returns: Mapping keyed by study slug with the deserialised metrics dictionary.
+    :rtype: Dict[str, Mapping[str, object]]
+    """
     result: Dict[str, Mapping[str, object]] = {}
     base_dir = out_dir / "opinion" / feature_space
     if not base_dir.exists():
@@ -37,15 +51,24 @@ def load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mapping
             result[study_dir.name] = json.load(handle)
     return result
 
-
 def load_final_metrics_from_disk(
     *,
     out_dir: Path,
     feature_spaces: Sequence[str],
     studies: Sequence[StudySpec],
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
-    """Load slate metrics written by prior runs instead of recomputing them."""
+    """
+    Load slate metrics written by prior runs instead of recomputing them.
 
+    :param out_dir: Directory where per-feature-space results are persisted.
+    :type out_dir: Path
+    :param feature_spaces: Iterable of feature space names to inspect.
+    :type feature_spaces: Sequence[str]
+    :param studies: Studies to look up within each feature directory.
+    :type studies: Sequence[StudySpec]
+    :returns: Nested mapping ``feature_space -> study -> metrics`` for all cached results found.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
     metrics_by_feature: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space in feature_spaces:
         feature_dir = out_dir / feature_space
@@ -63,15 +86,24 @@ def load_final_metrics_from_disk(
             metrics_by_feature[feature_space] = per_study
     return metrics_by_feature
 
-
 def load_loso_metrics_from_disk(
     *,
     out_dir: Path,
     feature_spaces: Sequence[str],
     studies: Sequence[StudySpec],
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
-    """Load leave-one-study-out metrics produced by previous pipeline runs."""
+    """
+    Load leave-one-study-out metrics produced by previous pipeline runs.
 
+    :param out_dir: Directory containing persisted evaluation artefacts.
+    :type out_dir: Path
+    :param feature_spaces: Feature space configurations to inspect for cached LOSO runs.
+    :type feature_spaces: Sequence[str]
+    :param studies: Studies that were treated as hold-outs in the LOSO evaluation.
+    :type studies: Sequence[StudySpec]
+    :returns: Mapping ``feature_space -> study -> metrics`` for every cached LOSO evaluation located.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space in feature_spaces:
         loso_dir = out_dir / feature_space / "loso"
@@ -88,7 +120,6 @@ def load_loso_metrics_from_disk(
         if per_study:
             cross_metrics[feature_space] = per_study
     return cross_metrics
-
 
 __all__ = [
     "load_final_metrics_from_disk",

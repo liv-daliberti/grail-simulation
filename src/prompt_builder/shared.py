@@ -12,7 +12,18 @@ def first_non_nan_value(
     selected: Dict[str, Any],
     *keys: str,
 ) -> Optional[Any]:
-    """Return the first non-null/non-NaN-like value from ``example`` or ``selected``."""
+    """
+    Return the first value from ``example`` or ``selected`` that is not NaN-like.
+
+    :param example: Primary dataset row containing viewer or survey metadata.
+    :type example: Dict[str, Any]
+    :param selected: Secondary mapping representing ``selected_survey_row`` fields.
+    :type selected: Dict[str, Any]
+    :param keys: Ordered candidate field names to inspect in both mappings.
+    :type keys: str
+    :returns: The first value that is neither ``None`` nor :func:`prompt_builder.parsers.is_nanlike`.
+    :rtype: Optional[Any]
+    """
 
     for key in keys:
         if key in example:

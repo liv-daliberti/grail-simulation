@@ -3,11 +3,11 @@
 from itertools import islice
 
 
-def batched(iterable, n):
-    "Batch data into lists of length n. The last batch may be shorter."
+def batched(iterable, batch_size):
+    "Batch data into lists of length ``batch_size``. The last batch may be shorter."
     # batched('ABCDEFG', 3) --> ABC DEF G
-    if n < 1:
+    if batch_size < 1:
         return iterable
-    it = iter(iterable)
-    while batch := list(islice(it, n)):
+    iterator = iter(iterable)
+    while batch := list(islice(iterator, batch_size)):
         yield batch

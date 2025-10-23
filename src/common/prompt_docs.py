@@ -65,7 +65,18 @@ _default_title_resolver_cache: Optional[TitleResolver] = None
 
 
 def default_title_resolver() -> TitleResolver:
-    """Return a lazily constructed title resolver for the cleaned GRAIL dataset."""
+    """
+
+    Return a lazily constructed title resolver for the cleaned GRAIL dataset.
+
+
+
+    :returns: Result produced by ``default_title_resolver``.
+
+    :rtype: TitleResolver
+
+    """
+
 
     global _default_title_resolver_cache  # pylint: disable=global-statement
     if _default_title_resolver_cache is None:
@@ -81,7 +92,38 @@ def create_prompt_document_builder(
     log_prefix: str,
     logger_name: str,
 ) -> "PromptDocumentBuilder":
-    """Construct a :class:`PromptDocumentBuilder` with shared defaults."""
+    """
+
+    Construct a :class:`PromptDocumentBuilder` with shared defaults.
+
+
+
+    :param prompt_column: Value provided for ``prompt_column``.
+
+    :type prompt_column: str
+
+    :param solution_column: Value provided for ``solution_column``.
+
+    :type solution_column: str
+
+    :param max_history: Value provided for ``max_history``.
+
+    :type max_history: int
+
+    :param log_prefix: Value provided for ``log_prefix``.
+
+    :type log_prefix: str
+
+    :param logger_name: Value provided for ``logger_name``.
+
+    :type logger_name: str
+
+    :returns: Result produced by ``create_prompt_document_builder``.
+
+    :rtype: 'PromptDocumentBuilder'
+
+    """
+
 
     return PromptDocumentBuilder(
         prompt_column=prompt_column,
@@ -94,7 +136,22 @@ def create_prompt_document_builder(
 
 
 def _looks_like_legacy_prompt(prompt_text: str) -> bool:
-    """Return ``True`` when ``prompt_text`` matches the legacy prompt layout."""
+    """
+
+    Return ``True`` when ``prompt_text`` matches the legacy prompt layout.
+
+
+
+    :param prompt_text: Value provided for ``prompt_text``.
+
+    :type prompt_text: str
+
+    :returns: Result produced by ``_looks_like_legacy_prompt``.
+
+    :rtype: bool
+
+    """
+
 
     legacy_tokens = (
         "PROFILE:",
@@ -108,7 +165,26 @@ def _looks_like_legacy_prompt(prompt_text: str) -> bool:
 
 
 def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
-    """Return the first non-empty value from ``mapping`` matching ``alternates``."""
+    """
+
+    Return the first non-empty value from ``mapping`` matching ``alternates``.
+
+
+
+    :param mapping: Value provided for ``mapping``.
+
+    :type mapping: dict
+
+    :param alternates: Value provided for ``alternates``.
+
+    :type alternates: str
+
+    :returns: Result produced by ``_pick_ci``.
+
+    :rtype: Optional[str]
+
+    """
+
 
     if not isinstance(mapping, dict):
         return None
@@ -124,7 +200,22 @@ def _pick_ci(mapping: dict, *alternates: str) -> Optional[str]:
 
 
 def _is_nanlike(value: object) -> bool:
-    """Return ``True`` when ``value`` should be treated as a missing token."""
+    """
+
+    Return ``True`` when ``value`` should be treated as a missing token.
+
+
+
+    :param value: Value provided for ``value``.
+
+    :type value: object
+
+    :returns: Result produced by ``_is_nanlike``.
+
+    :rtype: bool
+
+    """
+
 
     if value is None:
         return True
@@ -133,7 +224,22 @@ def _is_nanlike(value: object) -> bool:
 
 
 def load_trajectory_entries(payload: object) -> List[Mapping[str, object]]:
-    """Return sanitized trajectory entries extracted from ``payload``."""
+    """
+
+    Return sanitized trajectory entries extracted from ``payload``.
+
+
+
+    :param payload: Value provided for ``payload``.
+
+    :type payload: object
+
+    :returns: Result produced by ``load_trajectory_entries``.
+
+    :rtype: List[Mapping[str, object]]
+
+    """
+
 
     if isinstance(payload, str) and payload.strip():
         try:
@@ -162,7 +268,26 @@ def _extract_now_watching(
     example: dict,
     title_lookup: TitleLookup | None,
 ) -> Optional[Tuple[str, str]]:
-    """Return ``(title, video_id)`` describing the currently watched video."""
+    """
+
+    Return ``(title, video_id)`` describing the currently watched video.
+
+
+
+    :param example: Value provided for ``example``.
+
+    :type example: dict
+
+    :param title_lookup: Value provided for ``title_lookup``.
+
+    :type title_lookup: TitleLookup | None
+
+    :returns: Result produced by ``_extract_now_watching``.
+
+    :rtype: Optional[Tuple[str, str]]
+
+    """
+
 
     video_id = _pick_ci(example, "video_id", "videoId")
     if video_id and not _is_nanlike(video_id):
@@ -183,21 +308,63 @@ def _extract_slate_items(
     example: dict,
     title_lookup: TitleLookup | None,
 ) -> List[Tuple[str, str]]:
-    """Return a list of ``(title, video_id)`` tuples extracted from ``example``."""
+    """
+
+    Return a list of ``(title, video_id)`` tuples extracted from ``example``.
+
+
+
+    :param example: Value provided for ``example``.
+
+    :type example: dict
+
+    :param title_lookup: Value provided for ``title_lookup``.
+
+    :type title_lookup: TitleLookup | None
+
+    :returns: Result produced by ``_extract_slate_items``.
+
+    :rtype: List[Tuple[str, str]]
+
+    """
+
 
     def _clean_title(value: object) -> str:
-        """Return a trimmed title string when ``value`` is text-like."""
+        """
+        Normalise a title-like value into a trimmed string.
+
+        :param value: Candidate title extracted from the dataset.
+        :type value: object
+        :returns: Stripped title when ``value`` is a string, otherwise an empty string.
+        :rtype: str
+        """
         return value.strip() if isinstance(value, str) else ""
 
     def _clean_id(value: object) -> str:
-        """Return a canonical 11-character YouTube id or an empty string."""
+        """
+        Canonicalise a raw identifier into an 11-character YouTube id.
+
+        :param value: Candidate identifier supplied by the dataset.
+        :type value: object
+        :returns: Canonical id when valid, otherwise an empty string.
+        :rtype: str
+        """
         if not value:
             return ""
         candidate = canon_video_id(str(value))
         return candidate if len(candidate) == 11 else ""
 
     def _append_item(title: object, video_id: object) -> None:
-        """Append a cleaned ``(title, id)`` tuple to ``items`` when present."""
+        """
+        Append a cleaned ``(title, id)`` tuple to the local ``items`` list.
+
+        :param title: Raw title candidate extracted from the slate entry.
+        :type title: object
+        :param video_id: Raw identifier associated with the slate entry.
+        :type video_id: object
+        :returns: ``None``. The function mutates the surrounding ``items`` list in place.
+        :rtype: None
+        """
         cleaned_title = _clean_title(title)
         cleaned_id = _clean_id(video_id)
         if not cleaned_id and isinstance(title, str):
@@ -211,7 +378,14 @@ def _extract_slate_items(
             items.append((cleaned_title or "(untitled)", cleaned_id))
 
     def _from_structured(array: object) -> List[Tuple[str, str]]:
-        """Convert a structured slate array into ``(title, id)`` pairs."""
+        """
+        Convert a structured slate array into ``(title, id)`` pairs.
+
+        :param array: Slate metadata encoded as a list of dictionaries.
+        :type array: object
+        :returns: Cleaned ``(title, video_id)`` tuples extracted from ``array``.
+        :rtype: List[Tuple[str, str]]
+        """
         structured: List[Tuple[str, str]] = []
         if not isinstance(array, list):
             return structured
@@ -300,7 +474,26 @@ def _extract_slate_items(
 
 
 def _format_extra_field(example: dict, field_name: str) -> str:
-    """Return a labelled, human-readable representation of an extra field."""
+    """
+
+    Return a labelled, human-readable representation of an extra field.
+
+
+
+    :param example: Value provided for ``example``.
+
+    :type example: dict
+
+    :param field_name: Value provided for ``field_name``.
+
+    :type field_name: str
+
+    :returns: Result produced by ``_format_extra_field``.
+
+    :rtype: str
+
+    """
+
 
     value = example.get(field_name)
     formatted = prompt_value_maps.format_field_value(field_name, value)
@@ -320,7 +513,38 @@ def _format_extra_field(example: dict, field_name: str) -> str:
 
 @dataclass
 class PromptDocumentBuilder:
-    """Assemble prompt documents and training corpora for baseline models."""
+    """
+
+    Assemble prompt documents and training corpora for baseline models.
+
+
+
+    :ivar prompt_column: Attribute ``prompt_column``.
+
+    :vartype prompt_column: str
+
+    :ivar solution_column: Attribute ``solution_column``.
+
+    :vartype solution_column: str
+
+    :ivar max_history: Attribute ``max_history``.
+
+    :vartype max_history: int
+
+    :ivar title_lookup: Attribute ``title_lookup``.
+
+    :vartype title_lookup: TitleLookup | None
+
+    :ivar log_prefix: Attribute ``log_prefix``.
+
+    :vartype log_prefix: str
+
+    :ivar logger: Attribute ``logger``.
+
+    :vartype logger: logging.Logger
+
+    """
+
 
     prompt_column: str
     solution_column: str
@@ -330,14 +554,52 @@ class PromptDocumentBuilder:
     logger: logging.Logger = field(default_factory=lambda: get_logger("prompt-docs"))
 
     def _log(self, level: str, message: str, *args: object) -> None:
-        """Emit a log message while respecting the configured prefix."""
+        """
+
+        Emit a log message while respecting the configured prefix.
+
+
+
+        :param level: Value provided for ``level``.
+
+        :type level: str
+
+        :param message: Value provided for ``message``.
+
+        :type message: str
+
+        :param args: Value provided for ``args``.
+
+        :type args: object
+
+        :returns: ``None``.
+
+        :rtype: None
+
+        """
+
 
         log_fn = getattr(self.logger, level)
         prefix = f"{self.log_prefix} " if self.log_prefix else ""
         log_fn(prefix + message, *args)
 
     def title_for(self, video_id: str) -> Optional[str]:
-        """Return the title associated with ``video_id`` when available."""
+        """
+
+        Return the title associated with ``video_id`` when available.
+
+
+
+        :param video_id: Value provided for ``video_id``.
+
+        :type video_id: str
+
+        :returns: Result produced by ``title_for``.
+
+        :rtype: Optional[str]
+
+        """
+
 
         if not video_id:
             return None
@@ -349,7 +611,22 @@ class PromptDocumentBuilder:
             return None
 
     def viewer_profile_sentence(self, example: dict) -> str:
-        """Return a cleaned viewer profile sentence, synthesising when needed."""
+        """
+
+        Return a cleaned viewer profile sentence, synthesising when needed.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :returns: Result produced by ``viewer_profile_sentence``.
+
+        :rtype: str
+
+        """
+
 
         sentence = clean_text(example.get("viewer_profile_sentence"))
         if not sentence:
@@ -362,7 +639,22 @@ class PromptDocumentBuilder:
         return sentence or ""
 
     def prompt_from_builder(self, example: dict) -> str:
-        """Return an existing prompt or fall back to :func:`build_user_prompt`."""
+        """
+
+        Return an existing prompt or fall back to :func:`build_user_prompt`.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :returns: Result produced by ``prompt_from_builder``.
+
+        :rtype: str
+
+        """
+
 
         existing = example.get(self.prompt_column) or example.get("prompt")
         if isinstance(existing, str):
@@ -375,12 +667,42 @@ class PromptDocumentBuilder:
             return ""
 
     def extract_now_watching(self, example: dict) -> Optional[Tuple[str, str]]:
-        """Return the now-watching tuple (title, id) when present."""
+        """
+
+        Return the now-watching tuple (title, id) when present.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :returns: Result produced by ``extract_now_watching``.
+
+        :rtype: Optional[Tuple[str, str]]
+
+        """
+
 
         return _extract_now_watching(example, self.title_lookup)
 
     def extract_slate_items(self, example: dict) -> List[Tuple[str, str]]:
-        """Return the slate items as a list of ``(title, id)`` pairs."""
+        """
+
+        Return the slate items as a list of ``(title, id)`` pairs.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :returns: Result produced by ``extract_slate_items``.
+
+        :rtype: List[Tuple[str, str]]
+
+        """
+
 
         return _extract_slate_items(example, self.title_lookup)
 
@@ -389,13 +711,39 @@ class PromptDocumentBuilder:
         example: dict,
         extra_fields: Sequence[str] | None = None,
     ) -> str:
-        """Assemble a whitespace-joined prompt document for slate modelling."""
+        """
+
+        Assemble a whitespace-joined prompt document for slate modelling.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :param extra_fields: Value provided for ``extra_fields``.
+
+        :type extra_fields: Sequence[str] | None
+
+        :returns: Result produced by ``assemble_document``.
+
+        :rtype: str
+
+        """
+
 
         # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks,too-many-statements
         extra_fields = extra_fields or []
 
         def _good(text: str) -> bool:
-            """Return ``True`` when ``text`` is a meaningful, non-placeholder string."""
+            """
+            Determine whether ``text`` is a meaningful, non-placeholder string.
+
+            :param text: String candidate extracted from the dataset.
+            :type text: str
+            :returns: ``True`` when ``text`` contains informative content.
+            :rtype: bool
+            """
 
             return bool(text and text.lower() not in {"", "nan", "none", "(none)"})
 
@@ -439,7 +787,26 @@ class PromptDocumentBuilder:
         example: dict,
         extra_fields: Sequence[str] | None,
     ) -> Optional[tuple[str, str, str]]:
-        """Return the document and label tuple extracted from ``example``."""
+        """
+
+        Return the document and label tuple extracted from ``example``.
+
+
+
+        :param example: Value provided for ``example``.
+
+        :type example: dict
+
+        :param extra_fields: Value provided for ``extra_fields``.
+
+        :type extra_fields: Sequence[str] | None
+
+        :returns: Result produced by ``_record_from_example``.
+
+        :rtype: Optional[tuple[str, str, str]]
+
+        """
+
 
         document = self.assemble_document(example, extra_fields).strip()
         if not document:
@@ -456,7 +823,34 @@ class PromptDocumentBuilder:
         seed: int,
         extra_fields: Sequence[str] | None = None,
     ) -> Tuple[List[str], List[str], List[str]]:
-        """Return filtered training documents and labels sampled from ``train_ds``."""
+        """
+
+        Return filtered training documents and labels sampled from ``train_ds``.
+
+
+
+        :param train_ds: Value provided for ``train_ds``.
+
+        :type train_ds: Sequence
+
+        :param max_train: Value provided for ``max_train``.
+
+        :type max_train: int
+
+        :param seed: Value provided for ``seed``.
+
+        :type seed: int
+
+        :param extra_fields: Value provided for ``extra_fields``.
+
+        :type extra_fields: Sequence[str] | None
+
+        :returns: Result produced by ``prepare_training_documents``.
+
+        :rtype: Tuple[List[str], List[str], List[str]]
+
+        """
+
 
         # pylint: disable=too-many-locals
         n_rows = len(train_ds)  # type: ignore[arg-type]

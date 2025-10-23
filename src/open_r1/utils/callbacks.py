@@ -12,9 +12,9 @@ from __future__ import annotations
 import logging
 import subprocess
 from concurrent.futures import Future
+from types import SimpleNamespace
 from typing import Dict, Optional
 
-import torch
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 
 from open_r1.utils.replay_buffer import ReplayBuffer
@@ -41,18 +41,6 @@ def _slurm_available() -> bool:
 #  Push-to-hub callback ------------------------------------------------------
 # ---------------------------------------------------------------------------
 
-class _DummyCfg:
-    """Lightweight attribute container used for hub/benchmark helpers."""
-
-    def __init__(self, **kw):  # convenience holder for hub + benchmark helpers
-        """Populate the namespace with arbitrary keyword attributes.
-
-        :param kw: Keyword arguments to expose as attributes.
-        """
-        self.benchmarks = None
-        for k, v in kw.items():
-            setattr(self, k, v)
-
 class PushToHubRevisionCallback(TrainerCallback):
     """Callback that pushes checkpoints to the Hub using revision tags."""
 
@@ -68,15 +56,16 @@ class PushToHubRevisionCallback(TrainerCallback):
             return
 
         step_tag = f"step-{state.global_step:09d}"
-        dummy = _DummyCfg(
-            hub_model_id    = args.hub_model_id,
-            hub_model_revision = f"{args.hub_model_revision}-{step_tag}",
-            output_dir      = f"{args.output_dir}/checkpoint-{state.global_step}",
-            system_prompt   = args.system_prompt,
+        dummy = SimpleNamespace(
+            benchmarks=None,
+            hub_model_id=args.hub_model_id,
+            hub_model_revision=f"{args.hub_model_revision}-{step_tag}",
+            output_dir=f"{args.output_dir}/checkpoint-{state.global_step}",
+            system_prompt=args.system_prompt,
         )
 
         # lazy import – avoids circular deps if huggingface_hub absent
-        from .hub import push_to_hub_revision
+        from .hub import push_to_hub_revision  # pylint: disable=import-outside-toplevel
         fut: Future = push_to_hub_revision(dummy, extra_ignore_patterns=["*.pt"])
 
         # (optional) spawn benchmark job when the upload finishes
@@ -86,7 +75,7 @@ class PushToHubRevisionCallback(TrainerCallback):
 
                 :param _: Completed future returned by the upload helper.
                 """
-                from .evaluation import run_benchmark_jobs
+                from .evaluation import run_benchmark_jobs  # pylint: disable=import-outside-toplevel
                 self.log.info("Upload done – submitting benchmark job.")
                 dummy.benchmarks = args.benchmarks
                 run_benchmark_jobs(dummy, self.model_cfg)
@@ -120,19 +109,18 @@ class SuccessCachingCallback(TrainerCallback):
     # ---------- main hook -------------------------------------------------
     def on_log(
         self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
-        logs: Optional[Dict[str, float]] = None,
-        **kwargs,
+        _args: TrainingArguments,
+        _state: TrainerState,
+        _control: TrainerControl,
+        _logs: Optional[Dict[str, float]] = None,
+        **_kwargs,
     ) -> None:
         """Scrape textual logs and add high-accuracy prompts to the buffer."""
-        # nothing to do if trainer not yet registered or no textual logs
-        if self._trainer is None or not hasattr(self._trainer, "_textual_logs"):
+        if self._trainer is None:
             return
 
-        txt_logs = self._trainer._textual_logs
-        if not txt_logs["prompt"]:                  # empty until first eval step
+        txt_logs = getattr(self._trainer, "_textual_logs", None)
+        if not txt_logs or not txt_logs["prompt"]:  # empty until first eval step
             return
 
         # pick the accuracy reward head (name may differ in your config)
@@ -166,35 +154,45 @@ class ReplayBufferCallback(TrainerCallback):
 
     # ←–––– this fires AFTER loss.backward() and BEFORE scheduler/step().
     # It always receives both `inputs` and `outputs`.
-    def on_train_batch_end(self, args, state, control, **kw):
+    def on_train_batch_end(self, args, _state, _control, **batch_kwargs):
         """Inspect training outputs and enqueue prompts crossing the threshold."""
-        outs    = kw["outputs"]             # dict from training_step
-        inputs  = kw["inputs"]              # the batch fed forward
-
-        rewards = outs.get("rewards", {})
+        outputs = batch_kwargs["outputs"]             # dict from training_step
+        rewards = outputs.get("rewards", {})
         if self.key not in rewards:
-            return                           # key mismatch → nothing to do
+            return
 
-        acc_vec = rewards[self.key].detach().cpu()   # tensor (B,)
-        print("accuracy vector", acc_vec)
-        ids_vec = inputs["input_ids"]                 # tensor (B, seq)
-        is_rep  = inputs.get("is_replay")             # tensor (B,) or None
+        batch_inputs = batch_kwargs["inputs"]
+        input_ids = batch_inputs["input_ids"]
+        accuracies = rewards[self.key].detach().cpu().tolist()
 
-        added = 0
-        for acc, ids in zip(acc_vec.tolist(), ids_vec):
-            if acc >= self.thr:
-                prompt = self.tok.decode(ids, skip_special_tokens=True)
-                self.buf.add(prompt)
-                added += 1
+        added = sum(
+            self._maybe_store_prompt(accuracy, token_ids)
+            for accuracy, token_ids in zip(accuracies, input_ids)
+        )
 
-        # diagnostics
-        rank      = args.local_rank if args.local_rank != -1 else 0
-        buf_size  = len(self.buf)
-        num_rep   = int(is_rep.sum().item()) if is_rep is not None else 0
-        batch_sz  = len(ids_vec)
+        self._log_batch_stats(
+            args,
+            batch_inputs.get("is_replay"),
+            len(input_ids),
+            added,
+        )
+
+    def _maybe_store_prompt(self, accuracy: float, token_ids) -> int:
+        """Decode and store prompts meeting the accuracy threshold."""
+        if accuracy < self.thr:
+            return 0
+        prompt = self.tok.decode(token_ids, skip_special_tokens=True)
+        self.buf.add(prompt)
+        return 1
+
+    def _log_batch_stats(self, args, replay_flags, batch_size: int, added: int) -> None:
+        """Log replay buffer statistics for debugging."""
+        local_rank = getattr(args, "local_rank", -1)
+        rank = local_rank if local_rank != -1 else 0
+        replay_count = int(replay_flags.sum().item()) if replay_flags is not None else 0
 
         print(
             f"[ReplayBufferCallback][rank{rank}] added {added} new • "
-            f"{num_rep}/{batch_sz} replay • buffer = {buf_size}",
+            f"{replay_count}/{batch_size} replay • buffer = {len(self.buf)}",
             flush=True,
         )

@@ -1,18 +1,16 @@
+# pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements
 """Evaluation loop and metrics for the KNN baseline."""
-
-# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import subprocess
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 import numpy as np
 from numpy.random import default_rng
@@ -51,27 +49,46 @@ from .index import (
     save_word2vec_index,
 )
 
-
 BUCKET_LABELS = ["unknown", "1", "2", "3", "4", "5+"]
 
-
 def _split_tokens(raw: Optional[str]) -> List[str]:
-    """Return a list of comma-separated tokens with whitespace trimmed."""
+    """
+    Return a list of comma-separated tokens with whitespace trimmed.
 
+    :param raw: Raw comma-separated string or ``None`` when no tokens are supplied.
+
+    :type raw: Optional[str]
+
+    :returns: a list of comma-separated tokens with whitespace trimmed
+
+    :rtype: List[str]
+
+    """
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
-
 @lru_cache(maxsize=1)
 def _collect_repo_state() -> Dict[str, Any]:
-    """Return git provenance for the current repository."""
+    """
+    Return git provenance for the current repository.
 
+    :returns: git provenance for the current repository
+
+    :rtype: Dict[str, Any]
+
+    """
     repo_root = Path(__file__).resolve().parents[2]
 
     def _run_git(args: Sequence[str]) -> Optional[str]:
-        """Run ``git`` with ``args`` and return stdout when successful."""
+        """
+        Execute ``git`` with ``args`` and capture standard output.
 
+        :param args: Sequence of command-line arguments passed to ``git``.
+        :type args: Sequence[str]
+        :returns: Stripped stdout when the command succeeds, otherwise ``None``.
+        :rtype: Optional[str]
+        """
         try:
             result = subprocess.run(
                 ["git", *args],
@@ -98,10 +115,23 @@ def _collect_repo_state() -> Dict[str, Any]:
         "git_status": status or "",
     }
 
-
 def _filter_split_for_issues(split_ds, issues: Sequence[str]):
-    """Return ``split_ds`` filtered to the requested issue tokens."""
+    """
+    Return ``split_ds`` filtered to the requested issue tokens.
 
+    :param split_ds: Dataset split object being filtered or transformed.
+
+    :type split_ds: Any
+
+    :param issues: Iterable of issue identifiers used to filter the dataset.
+
+    :type issues: Sequence[str]
+
+    :returns: ``split_ds`` filtered to the requested issue tokens
+
+    :rtype: Any
+
+    """
     normalized = {token.strip().lower() for token in issues if token.strip()}
     if not normalized:
         return split_ds
@@ -109,17 +139,32 @@ def _filter_split_for_issues(split_ds, issues: Sequence[str]):
         return split_ds
 
     def _match_issue(row: Mapping[str, Any]) -> bool:
-        """Return ``True`` when the row's issue matches the normalized filter set."""
+        """
+        Determine whether a row's ``issue`` matches the normalised filter set.
 
+        :param row: Dataset example retrieved from ``split_ds``.
+        :type row: Mapping[str, Any]
+        :returns: ``True`` when the row belongs to the requested issue slice.
+        :rtype: bool
+        """
         value = row.get("issue")
         return str(value).strip().lower() in normalized
 
     return split_ds.filter(_match_issue)
 
-
 def _dataset_split_provenance(split_ds) -> Dict[str, Any]:
-    """Return provenance metadata for a single HF dataset split."""
+    """
+    Return provenance metadata for a single HF dataset split.
 
+    :param split_ds: Dataset split object being filtered or transformed.
+
+    :type split_ds: Any
+
+    :returns: provenance metadata for a single HF dataset split
+
+    :rtype: Dict[str, Any]
+
+    """
     provenance: Dict[str, Any] = {
         "num_rows": int(len(split_ds)),
         "fingerprint": getattr(split_ds, "_fingerprint", None),
@@ -130,13 +175,22 @@ def _dataset_split_provenance(split_ds) -> Dict[str, Any]:
         provenance["dataset_revision"] = revision
     return provenance
 
+def _collect_dataset_provenance(dataset: Mapping[str, Any]) -> Dict[str, Any]:
+    """
+    Return provenance metadata for all splits contained in ``dataset``.
 
-def _collect_dataset_provenance(ds: Mapping[str, Any]) -> Dict[str, Any]:
-    """Return provenance metadata for all splits contained in ``ds``."""
+    :param dataset: Dataset object containing the splits required for evaluation.
 
+    :type dataset: Mapping[str, Any]
+
+    :returns: provenance metadata for all splits contained in ``dataset``
+
+    :rtype: Dict[str, Any]
+
+    """
     splits: Dict[str, Any] = {}
     revision: Optional[str] = None
-    for split_name, split_ds in ds.items():
+    for split_name, split_ds in dataset.items():
         split_info = _dataset_split_provenance(split_ds)
         splits[split_name] = split_info
         if revision is None and split_info.get("dataset_revision"):
@@ -146,10 +200,23 @@ def _collect_dataset_provenance(ds: Mapping[str, Any]) -> Dict[str, Any]:
         "splits": splits,
     }
 
-
 def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
-    """Return a stable grouping key used for bootstrap resampling."""
+    """
+    Return a stable grouping key used for bootstrap resampling.
 
+    :param example: Single dataset example under inspection.
+
+    :type example: Mapping[str, Any]
+
+    :param fallback_index: Secondary index consulted when the primary lookup fails.
+
+    :type fallback_index: int
+
+    :returns: a stable grouping key used for bootstrap resampling
+
+    :rtype: str
+
+    """
     urlid = str(example.get("urlid") or "").strip()
     if urlid and urlid.lower() != "nan":
         return f"urlid::{urlid}"
@@ -161,10 +228,23 @@ def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> s
         return f"session::{session}"
     return f"row::{fallback_index}"
 
-
 def _accuracy_for_rows(rows: Sequence[Mapping[str, Any]], k_val: int) -> float:
-    """Return accuracy for ``rows`` using predictions at ``k_val``."""
+    """
+    Return accuracy for ``rows`` using predictions at ``k_val``.
 
+    :param rows: Iterable of evaluation rows or metrics to analyse.
+
+    :type rows: Sequence[Mapping[str, Any]]
+
+    :param k_val: Specific ``k`` value under evaluation.
+
+    :type k_val: int
+
+    :returns: accuracy for ``rows`` using predictions at ``k_val``
+
+    :rtype: float
+
+    """
     if not rows:
         return 0.0
     correct = 0
@@ -178,10 +258,23 @@ def _accuracy_for_rows(rows: Sequence[Mapping[str, Any]], k_val: int) -> float:
             correct += 1
     return safe_div(correct, total)
 
-
 def _baseline_accuracy_for_rows(rows: Sequence[Mapping[str, Any]], baseline_index: Optional[int]) -> float:
-    """Return accuracy for the most frequent baseline over ``rows``."""
+    """
+    Return accuracy for the most frequent baseline over ``rows``.
 
+    :param rows: Iterable of evaluation rows or metrics to analyse.
+
+    :type rows: Sequence[Mapping[str, Any]]
+
+    :param baseline_index: Precomputed index that produces baseline recommendations.
+
+    :type baseline_index: Optional[int]
+
+    :returns: accuracy for the most frequent baseline over ``rows``
+
+    :rtype: float
+
+    """
     if baseline_index is None:
         return 0.0
     if not rows:
@@ -196,7 +289,6 @@ def _baseline_accuracy_for_rows(rows: Sequence[Mapping[str, Any]], baseline_inde
             correct += 1
     return safe_div(correct, total)
 
-
 def _bootstrap_uncertainty(
     *,
     rows: Sequence[Mapping[str, Any]],
@@ -205,8 +297,34 @@ def _bootstrap_uncertainty(
     replicates: int,
     seed: int,
 ) -> Optional[Dict[str, Any]]:
-    """Return bootstrap-based uncertainty estimates for accuracy metrics."""
+    """
+    Return bootstrap-based uncertainty estimates for accuracy metrics.
 
+    :param rows: Iterable of evaluation rows or metrics to analyse.
+
+    :type rows: Sequence[Mapping[str, Any]]
+
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
+
+    :type best_k: int
+
+    :param baseline_index: Precomputed index that produces baseline recommendations.
+
+    :type baseline_index: Optional[int]
+
+    :param replicates: Number of bootstrap replicates to sample.
+
+    :type replicates: int
+
+    :param seed: Seed used to initialise pseudo-random operations.
+
+    :type seed: int
+
+    :returns: bootstrap-based uncertainty estimates for accuracy metrics
+
+    :rtype: Optional[Dict[str, Any]]
+
+    """
     if replicates <= 0:
         return None
     eligible_rows = [row for row in rows if row.get("eligible")]
@@ -259,25 +377,45 @@ def _bootstrap_uncertainty(
         }
     return result
 
-
 def parse_k_values(k_default: int, sweep: str) -> List[int]:
     """
-    Derive the sorted set of ``k`` values requested for evaluation.
+        Derive the sorted set of ``k`` values requested for evaluation.
 
-    Parameters
-    ----------
-    k_default:
-        The baseline ``k`` value supplied via the CLI (used when the sweep is empty).
-    sweep:
-        Comma-delimited string of additional ``k`` candidates provided by the user.
+        Parameters
 
-    Returns
-    -------
-    list[int]
-        Strictly positive ``k`` values in ascending order. Falls back to ``k_default``
-        (or ``25`` when unset) if the sweep does not contain any valid integers.
+        ----------
+
+        k_default:
+
+            The baseline ``k`` value supplied via the CLI (used when the sweep is empty).
+
+        sweep:
+
+            Comma-delimited string of additional ``k`` candidates provided by the user.
+
+        Returns
+
+        -------
+
+        list[int]
+
+            Strictly positive ``k`` values in ascending order. Falls back to ``k_default``
+
+            (or ``25`` when unset) if the sweep does not contain any valid integers.
+
+    :param k_default: Fallback ``k`` value applied when no sweep result is available.
+
+    :type k_default: int
+
+    :param sweep: Sweep configuration or CLI payload under inspection.
+
+    :type sweep: str
+
+    :returns: Sorted list of unique ``k`` values parsed from the sweep specification.
+
+    :rtype: List[int]
+
     """
-
     values = {int(k_default)} if k_default else set()
     for token in sweep.split(","):
         token = token.strip()
@@ -290,25 +428,45 @@ def parse_k_values(k_default: int, sweep: str) -> List[int]:
     k_vals = sorted(k for k in values if k > 0)
     return k_vals or [int(k_default) if k_default else 25]
 
-
 def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> int:
     """
-    Choose an appropriate ``k`` by applying a simple elbow heuristic.
+        Choose an appropriate ``k`` by applying a simple elbow heuristic.
 
-    Parameters
-    ----------
-    k_values:
-        Sorted sequence of evaluated ``k`` values.
-    accuracy_by_k:
-        Observed accuracy for each ``k`` on the validation split.
+        Parameters
 
-    Returns
-    -------
-    int
-        The ``k`` value where marginal gains fall below half of the initial slope,
-        or the accuracy-maximising ``k`` when the heuristic cannot be applied.
+        ----------
+
+        k_values:
+
+            Sorted sequence of evaluated ``k`` values.
+
+        accuracy_by_k:
+
+            Observed accuracy for each ``k`` on the validation split.
+
+        Returns
+
+        -------
+
+        int
+
+            The ``k`` value where marginal gains fall below half of the initial slope,
+
+            or the accuracy-maximising ``k`` when the heuristic cannot be applied.
+
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.
+
+    :type accuracy_by_k: Dict[int, float]
+
+    :returns: Neighbourhood size that maximises the provided accuracy scores.
+
+    :rtype: int
+
     """
-
     if len(k_values) <= 2:
         return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
     accuracies = [accuracy_by_k.get(k, 0.0) for k in k_values]
@@ -326,22 +484,35 @@ def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> i
             return k_values[idx]
     return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
 
-
 def resolve_reports_dir(out_dir: Path) -> Path:
     """
-    Resolve the canonical reports directory corresponding to ``out_dir``.
+        Resolve the canonical reports directory corresponding to ``out_dir``.
 
-    Parameters
-    ----------
-    out_dir:
-        Directory containing pipeline artefacts (typically under ``models/knn``).
+        Parameters
 
-    Returns
-    -------
-    pathlib.Path
-        Path pointing at the root ``reports`` directory for the repository.
+        ----------
+
+        out_dir:
+
+            Directory containing pipeline artefacts (typically under ``models/knn``).
+
+        Returns
+
+        -------
+
+        pathlib.Path
+
+            Path pointing at the root ``reports`` directory for the repository.
+
+    :param out_dir: Output directory receiving generated metrics and reports.
+
+    :type out_dir: Path
+
+    :returns: Directory path where the generated report files will be stored.
+
+    :rtype: Path
+
     """
-
     resolved = out_dir.resolve()
     parents = list(resolved.parents)
     if len(parents) >= 1 and parents[0].name == "knn":
@@ -355,7 +526,6 @@ def resolve_reports_dir(out_dir: Path) -> Path:
         root_dir = resolved.parent
     return root_dir / "reports"
 
-
 def plot_elbow(
     k_values: Sequence[int],
     accuracy_by_k: Dict[int, float],
@@ -365,22 +535,57 @@ def plot_elbow(
     data_split: str = "validation",
 ) -> None:
     """
-    Generate an error-rate plot to visualise the KNN elbow heuristic.
+        Generate an error-rate plot to visualise the KNN elbow heuristic.
 
-    Parameters
-    ----------
-    k_values:
-        Iterable of evaluated ``k`` values.
-    accuracy_by_k:
-        Mapping from ``k`` to accuracy on the selected split.
-    best_k:
-        The configuration chosen for downstream reporting.
-    output_path:
-        Destination filename for the generated PNG.
-    data_split:
-        Human-readable label describing the evaluation split (defaults to ``validation``).
+        Parameters
+
+        ----------
+
+        k_values:
+
+            Iterable of evaluated ``k`` values.
+
+        accuracy_by_k:
+
+            Mapping from ``k`` to accuracy on the selected split.
+
+        best_k:
+
+            The configuration chosen for downstream reporting.
+
+        output_path:
+
+            Destination filename for the generated PNG.
+
+        data_split:
+
+            Human-readable label describing the evaluation split (defaults to ``validation``).
+
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.
+
+    :type accuracy_by_k: Dict[int, float]
+
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
+
+    :type best_k: int
+
+    :param output_path: Filesystem path for the generated report or figure.
+
+    :type output_path: Path
+
+    :param data_split: Name of the dataset split from which metrics were derived.
+
+    :type data_split: str
+
+    :returns: None.
+
+    :rtype: None
+
     """
-
     if plt is None:
         logging.warning("[KNN] Skipping elbow plot (matplotlib not installed)")
         return
@@ -417,36 +622,55 @@ def plot_elbow(
     plt.savefig(output_path, dpi=150)
     plt.close()
 
-
 def compute_auc_from_curve(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> tuple[float, float]:
     """
-    Compute the area under the accuracy-vs-``k`` curve.
+        Compute the area under the accuracy-vs-``k`` curve.
 
-    Parameters
-    ----------
-    k_values:
-        Iterable of evaluated ``k`` values.
-    accuracy_by_k:
-        Mapping from ``k`` to measured accuracy.
+        Parameters
 
-    Returns
-    -------
-    tuple[float, float]
-        ``(auc_area, auc_normalized)`` where ``auc_area`` is the trapezoidal
-        integral and ``auc_normalized`` scales the area by the extent of ``k``.
+        ----------
+
+        k_values:
+
+            Iterable of evaluated ``k`` values.
+
+        accuracy_by_k:
+
+            Mapping from ``k`` to measured accuracy.
+
+        Returns
+
+        -------
+
+        tuple[float, float]
+
+            ``(auc_area, auc_normalized)`` where ``auc_area`` is the trapezoidal
+
+            integral and ``auc_normalized`` scales the area by the extent of ``k``.
+
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.
+
+    :type accuracy_by_k: Dict[int, float]
+
+    :returns: Area-under-curve value computed from the accuracy trajectory.
+
+    :rtype: tuple[float, float]
+
     """
-
     if not k_values:
         return 0.0, 0.0
     sorted_k = sorted({int(k) for k in k_values})
-    ys = [float(accuracy_by_k.get(k, 0.0)) for k in sorted_k]
+    accuracy_values = [float(accuracy_by_k.get(k, 0.0)) for k in sorted_k]
     if len(sorted_k) == 1:
-        value = ys[0]
+        value = accuracy_values[0]
         return value, value
-    area = float(np.trapz(ys, sorted_k))
+    area = float(np.trapz(accuracy_values, sorted_k))
     span = float(sorted_k[-1] - sorted_k[0]) or 1.0
     return area, area / span
-
 
 def _normalise_feature_space(feature_space: str | None) -> str:
     """Return the validated feature space identifier.
@@ -455,12 +679,10 @@ def _normalise_feature_space(feature_space: str | None) -> str:
     :returns: Lowercase feature-space token (``tfidf`` or ``word2vec``).
     :raises ValueError: If an unsupported feature space is supplied.
     """
-
     value = (feature_space or "tfidf").lower()
     if value not in {"tfidf", "word2vec", "sentence_transformer"}:
         raise ValueError(f"Unsupported feature space '{feature_space}'")
     return value
-
 
 def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
     """Return the Word2Vec configuration derived from CLI arguments.
@@ -469,7 +691,6 @@ def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
     :param issue_slug: Current issue being processed (used to namespace models).
     :returns: Populated :class:`~knn.features.Word2VecConfig` instance.
     """
-
     default_cfg = Word2VecConfig()
     model_root = Path(args.word2vec_model_dir) if args.word2vec_model_dir else default_cfg.model_dir
     return Word2VecConfig(
@@ -482,10 +703,19 @@ def _word2vec_config_from_args(args, issue_slug: str) -> Word2VecConfig:
         workers=int(getattr(args, "word2vec_workers", default_cfg.workers)),
     )
 
-
 def _sentence_transformer_config_from_args(args) -> SentenceTransformerConfig:
-    """Return the SentenceTransformer configuration derived from CLI arguments."""
+    """
+    Return the SentenceTransformer configuration derived from CLI arguments.
 
+    :param args: Namespace object containing parsed command-line arguments.
+
+    :type args: Any
+
+    :returns: the SentenceTransformer configuration derived from CLI arguments
+
+    :rtype: SentenceTransformerConfig
+
+    """
     device_raw = getattr(args, "sentence_transformer_device", "")
     device = device_raw if device_raw else None
     return SentenceTransformerConfig(
@@ -494,7 +724,6 @@ def _sentence_transformer_config_from_args(args) -> SentenceTransformerConfig:
         batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
         normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
     )
-
 
 def _fit_index_for_issue(
     *,
@@ -514,7 +743,6 @@ def _fit_index_for_issue(
     :returns: Dictionary describing the fitted index artifacts.
     :raises ValueError: If the requested feature space is unsupported.
     """
-
     if feature_space == "tfidf":
         logging.info("[KNN] Building TF-IDF index for issue=%s", issue_slug)
         index = build_tfidf_index(
@@ -558,7 +786,6 @@ def _fit_index_for_issue(
 
     raise ValueError(f"Unsupported feature space '{feature_space}'")
 
-
 def _load_index_for_issue(
     *,
     feature_space: str,
@@ -573,7 +800,6 @@ def _load_index_for_issue(
     :returns: Dictionary with the loaded index artifacts.
     :raises ValueError: If the feature space is not recognised.
     """
-
     load_path = Path(args.load_index) / issue_slug
     if feature_space == "tfidf":
         logging.info("[KNN] Loading TF-IDF index for issue=%s", issue_slug)
@@ -585,7 +811,6 @@ def _load_index_for_issue(
         logging.info("[KNN] Loading SentenceTransformer index for issue=%s", issue_slug)
         return load_sentence_transformer_index(load_path)
     raise ValueError(f"Unsupported feature space '{feature_space}'")
-
 
 def _build_or_load_index(
     *,
@@ -603,7 +828,6 @@ def _build_or_load_index(
     :returns: Dictionary describing the fitted or loaded KNN index.
     :raises ValueError: When neither ``--fit-index`` nor ``--load-index`` is used.
     """
-
     feature_space = _normalise_feature_space(getattr(args, "feature_space", None))
     if args.fit_index:
         return _fit_index_for_issue(
@@ -621,16 +845,28 @@ def _build_or_load_index(
         )
     raise ValueError("Set either --fit_index or --load_index to obtain a KNN index")
 
-
 def run_eval(args) -> None:  # pylint: disable=too-many-locals
     """
-    Evaluate the KNN baseline across the issues specified on the CLI.
+        Evaluate the KNN baseline across the issues specified on the CLI.
 
-    Parameters
-    ----------
-    args:
-        Namespace returned by :func:`knn.cli.build_parser`, including dataset,
-        feature-space, and sweep configuration.
+        Parameters
+
+        ----------
+
+        args:
+
+            Namespace returned by :func:`knn.cli.build_parser`, including dataset,
+
+            feature-space, and sweep configuration.
+
+    :param args: Namespace object containing parsed command-line arguments.
+
+    :type args: Any
+
+    :returns: None.
+
+    :rtype: None
+
     """
     dataset_source, base_ds, available_issues = prepare_dataset(
         dataset=getattr(args, "dataset", None),
@@ -643,8 +879,16 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
     issue_lookup = {issue.lower(): issue for issue in available_issues}
 
     def _resolve_issue_list(tokens: List[str], fallback: Sequence[str]) -> List[str]:
-        """Normalise user-provided issue tokens against available issues."""
+        """
+        Normalise user-provided issue tokens against available issues.
 
+        :param tokens: Raw issue tokens supplied via CLI flags.
+        :type tokens: List[str]
+        :param fallback: Issues to fall back to when the token list is empty.
+        :type fallback: Sequence[str]
+        :returns: List of resolved issue identifiers ready for evaluation.
+        :rtype: List[str]
+        """
         if not tokens:
             return list(fallback)
         if any(token.lower() == "all" for token in tokens):
@@ -772,9 +1016,7 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
             provenance=provenance,
         )
 
-
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
-
 
 def _write_issue_outputs(
     *,
@@ -812,7 +1054,6 @@ def _write_issue_outputs(
     :param extra_fields: Extra text fields contributing to the query document.
     :param curve_metrics: Serialised evaluation/train curve diagnostics.
     """
-
     best_accuracy = accuracy_by_k.get(best_k, 0.0)
     eligible_overall = int(per_k_stats.get(best_k, {}).get("eligible", 0))
 
@@ -1029,7 +1270,6 @@ def _accumulate_row(
     :param query_config: Configuration controlling query generation.
     :returns: Serialised per-example record including predictions for each ``k``.
     """
-
     slate_pairs = extract_slate_items(example)
     n_options = len(slate_pairs)
     n_bucket = bin_nopts(n_options)
@@ -1093,7 +1333,6 @@ def _accumulate_row(
         "group_key": group_key,
     }
 
-
 def _evaluate_dataset_split(
     *,
     dataset,
@@ -1119,7 +1358,6 @@ def _evaluate_dataset_split(
     :param log_k: Optional ``k`` to report accuracy for in progress logs.
     :returns: Dictionary containing rows, aggregate stats, and counts.
     """
-
     rows: List[Dict[str, Any]] = [] if capture_rows else []
     gold_hist: Dict[int, int] = {}
     bucket_stats = {
@@ -1199,7 +1437,6 @@ def _evaluate_dataset_split(
         "n_examples": int(limit),
     }
 
-
 def _update_correct_counts(
     rows: Sequence[Dict[str, Any]],
     best_k: int,
@@ -1213,7 +1450,6 @@ def _update_correct_counts(
     :param bucket_stats: Mutable dictionary storing per-bucket correctness.
     :param single_multi_stats: Mutable dictionary tracking single vs multi counts.
     """
-
     for row in rows:
         if not row["eligible"]:
             continue
@@ -1227,7 +1463,6 @@ def _update_correct_counts(
             else:
                 single_multi_stats["corr_multi"] += 1
 
-
 def _curve_summary(
     *,
     k_values: Sequence[int],
@@ -1236,8 +1471,34 @@ def _curve_summary(
     best_k: int,
     n_examples: int,
 ) -> Dict[str, Any]:
-    """Return a serialisable summary for accuracy-vs-k curves."""
+    """
+    Return a serialisable summary for accuracy-vs-k curves.
 
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.
+
+    :type accuracy_by_k: Dict[int, float]
+
+    :param per_k_stats: Detailed per-``k`` statistics derived from the evaluation curve.
+
+    :type per_k_stats: Dict[int, Dict[str, int]]
+
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
+
+    :type best_k: int
+
+    :param n_examples: Total number of evaluation examples summarised in the bundle.
+
+    :type n_examples: int
+
+    :returns: a serialisable summary for accuracy-vs-k curves
+
+    :rtype: Dict[str, Any]
+
+    """
     area, normalised = compute_auc_from_curve(k_values, accuracy_by_k)
     sorted_k = sorted({int(k) for k in k_values})
     accuracy_serialised = {
@@ -1263,7 +1524,6 @@ def _curve_summary(
         "n_examples": int(n_examples),
     }
 
-
 def evaluate_issue(
     *,
     issue_slug: str,
@@ -1278,32 +1538,97 @@ def evaluate_issue(
     provenance: Mapping[str, Any],
 ) -> None:  # pylint: disable=too-many-locals
     """
-    Evaluate a single issue slice and persist metrics, curves, and predictions.
+        Evaluate a single issue slice and persist metrics, curves, and predictions.
 
-    Parameters
-    ----------
-    issue_slug:
-        Normalised identifier for the issue under evaluation (used in paths).
-    dataset_source:
-        Name or path of the dataset backing the current run.
-    train_ds:
-        Training split (may be ``None``) used for optional curve diagnostics.
-    eval_ds:
-        Evaluation split containing the rows scored for reporting.
-    k_values:
-        Sequence of ``k`` values to consider when computing accuracy.
-    knn_index:
-        Prepared KNN index artefacts for the active feature space.
-    extra_fields:
-        Additional text fields concatenated into the query document.
-    feature_space:
-        Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).
-    args:
-        Parsed CLI namespace controlling evaluation behaviour.
-    provenance:
-        Mapping of provenance metadata recorded alongside the metrics.
+        Parameters
+
+        ----------
+
+        issue_slug:
+
+            Normalised identifier for the issue under evaluation (used in paths).
+
+        dataset_source:
+
+            Name or path of the dataset backing the current run.
+
+        train_ds:
+
+            Training split (may be ``None``) used for optional curve diagnostics.
+
+        eval_ds:
+
+            Evaluation split containing the rows scored for reporting.
+
+        k_values:
+
+            Sequence of ``k`` values to consider when computing accuracy.
+
+        knn_index:
+
+            Prepared KNN index artefacts for the active feature space.
+
+        extra_fields:
+
+            Additional text fields concatenated into the query document.
+
+        feature_space:
+
+            Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).
+
+        args:
+
+            Parsed CLI namespace controlling evaluation behaviour.
+
+        provenance:
+
+            Mapping of provenance metadata recorded alongside the metrics.
+
+    :param issue_slug: Slugified identifier representing the study/issue on disk.
+
+    :type issue_slug: str
+
+    :param dataset_source: Identifier describing where the dataset was loaded from.
+
+    :type dataset_source: str
+
+    :param train_ds: Training dataset split used to build the index.
+
+    :type train_ds: Any
+
+    :param eval_ds: Evaluation dataset split passed to the scorer.
+
+    :type eval_ds: Any
+
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param knn_index: Fitted KNN index used to score neighbours.
+
+    :type knn_index: Dict[str, Any]
+
+    :param extra_fields: Additional dataset columns included when building prompts or outputs.
+
+    :type extra_fields: Sequence[str]
+
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param args: Namespace object containing parsed command-line arguments.
+
+    :type args: Any
+
+    :param provenance: Metadata describing how the evaluation artefacts were produced.
+
+    :type provenance: Mapping[str, Any]
+
+    :returns: None.
+
+    :rtype: None
+
     """
-
     k_values_int = sorted({int(k) for k in k_values if int(k) > 0})
     eval_max = args.eval_max if args.eval_max and args.eval_max > 0 else None
     eval_summary = _evaluate_dataset_split(
@@ -1403,47 +1728,47 @@ def evaluate_issue(
         uncertainty=uncertainty,
     )
 
-def bin_nopts(n: int) -> str:
-    """
-    Bucket the number of slate options into reporting-friendly categories.
-
-    Parameters
-    ----------
-    n:
-        Count of available options for the current example.
-
-    Returns
-    -------
-    str
-        One of ``{"1", "2", "3", "4", "5+"}`` describing the option cardinality.
-    """
-
-    if n <= 1:
+def bin_nopts(option_count: int) -> str:
+    """Bucket the number of slate options into reporting-friendly categories."""
+    if option_count <= 1:
         return "1"
-    if n == 2:
+    if option_count == 2:
         return "2"
-    if n == 3:
+    if option_count == 3:
         return "3"
-    if n == 4:
+    if option_count == 4:
         return "4"
     return "5+"
 
-
 def bucket_from_pos(pos_idx: int) -> str:
     """
-    Bucket a 0-based position index into the standard reporting bins.
+        Bucket a 0-based position index into the standard reporting bins.
 
-    Parameters
-    ----------
-    pos_idx:
-        Zero-based position of the correct item within the retrieved slate.
+        Parameters
 
-    Returns
-    -------
-    str
-        One of ``{"unknown", "1", "2", "3", "4", "5+"}`` describing the bucket.
+        ----------
+
+        pos_idx:
+
+            Zero-based position of the correct item within the retrieved slate.
+
+        Returns
+
+        -------
+
+        str
+
+            One of ``{"unknown", "1", "2", "3", "4", "5+"}`` describing the bucket.
+
+    :param pos_idx: Position index being transformed into a categorical bucket.
+
+    :type pos_idx: int
+
+    :returns: Named bucket representing the supplied positional index.
+
+    :rtype: str
+
     """
-
     if pos_idx < 0:
         return "unknown"
     if pos_idx == 0:
@@ -1456,24 +1781,36 @@ def bucket_from_pos(pos_idx: int) -> str:
         return "4"
     return "5+"
 
-
 def canon(text: str) -> str:
     """
-    Canonicalise a text fragment by lowercasing and removing punctuation.
+        Canonicalise a text fragment by lowercasing and removing punctuation.
 
-    Parameters
-    ----------
-    text:
-        Raw text fragment to normalise.
+        Parameters
 
-    Returns
-    -------
-    str
-        Canonical form suitable for equality comparisons.
+        ----------
+
+        text:
+
+            Raw text fragment to normalise.
+
+        Returns
+
+        -------
+
+        str
+
+            Canonical form suitable for equality comparisons.
+
+    :param text: Free-form text string that requires normalisation.
+
+    :type text: str
+
+    :returns: Canonicalised text normalised for downstream processing.
+
+    :rtype: str
+
     """
-
     return re.sub(r"[^a-z0-9]+", "", (text or "").lower().strip())
-
 
 __all__ = [
     "parse_k_values",

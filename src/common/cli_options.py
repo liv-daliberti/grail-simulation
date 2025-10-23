@@ -6,7 +6,22 @@ import argparse
 
 
 def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
-    """Add the ``--jobs`` argument controlling parallelism."""
+    """
+
+    Add the ``--jobs`` argument controlling parallelism.
+
+
+
+    :param parser: Value provided for ``parser``.
+
+    :type parser: argparse.ArgumentParser
+
+    :returns: ``None``.
+
+    :rtype: None
+
+    """
+
 
     parser.add_argument(
         "--jobs",
@@ -17,7 +32,22 @@ def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add the common stage and sweep-task arguments."""
+    """
+
+    Add the common stage and sweep-task arguments.
+
+
+
+    :param parser: Value provided for ``parser``.
+
+    :type parser: argparse.ArgumentParser
+
+    :returns: ``None``.
+
+    :rtype: None
+
+    """
+
 
     parser.add_argument(
         "--stage",
@@ -40,7 +70,22 @@ def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
-    """Add the shared ``--log-level`` argument."""
+    """
+
+    Add the shared ``--log-level`` argument.
+
+
+
+    :param parser: Value provided for ``parser``.
+
+    :type parser: argparse.ArgumentParser
+
+    :returns: ``None``.
+
+    :rtype: None
+
+    """
+
 
     parser.add_argument(
         "--log-level",
@@ -51,7 +96,22 @@ def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_overwrite_argument(parser: argparse.ArgumentParser) -> None:
-    """Add the standard ``--overwrite`` boolean flag."""
+    """
+
+    Add the standard ``--overwrite`` boolean flag.
+
+
+
+    :param parser: Value provided for ``parser``.
+
+    :type parser: argparse.ArgumentParser
+
+    :returns: ``None``.
+
+    :rtype: None
+
+    """
+
 
     parser.add_argument(
         "--overwrite",

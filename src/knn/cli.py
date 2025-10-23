@@ -1,5 +1,4 @@
 """Command-line interface for the refactored KNN baseline."""
-
 from __future__ import annotations
 
 import argparse
@@ -22,19 +21,26 @@ DEFAULT_KNN_TEXT_FIELDS = (
     "gun_identity"
 )
 
-
 def build_parser() -> argparse.ArgumentParser:
-    """Return the argument parser for the KNN baseline CLI.
-
-    :returns: Configured :class:`argparse.ArgumentParser` instance with all KNN options.
     """
+    Build the command-line parser that drives the refactored KNN workflows.
 
+    The parser exposes switches for both slate (next-video) and opinion
+    prediction flows, including feature-space selection, pre-computed index
+    reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.
+
+    :returns: Parser pre-populated with all supported CLI arguments for the KNN baseline.
+    :rtype: argparse.ArgumentParser
+    """
     parser = argparse.ArgumentParser(description="KNN baselines for GRAIL (TF-IDF / Word2Vec)")
     parser.add_argument(
         "--task",
         choices=["slate", "opinion"],
         default="slate",
-        help="Select evaluation target: 'slate' for next-video recommendation or 'opinion' for post-study indices.",
+        help=(
+            "Select evaluation target: 'slate' for next-video recommendation or "
+            "'opinion' for post-study indices."
+        ),
     )
     parser.add_argument(
         "--feature-space",
@@ -164,7 +170,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--sentence_transformer_model",
         default="sentence-transformers/all-mpnet-base-v2",
         dest="sentence_transformer_model",
-        help="SentenceTransformer model identifier when using the sentence_transformer feature space.",
+        help=(
+            "SentenceTransformer model identifier when using the "
+            "sentence_transformer feature space."
+        ),
     )
     parser.add_argument(
         "--sentence-transformer-device",
@@ -218,7 +227,10 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=500,
         dest="bootstrap_replicates",
-        help="Number of bootstrap replicates used to compute uncertainty intervals (0 disables bootstrap).",
+        help=(
+            "Number of bootstrap replicates used to compute uncertainty intervals "
+            "(0 disables bootstrap)."
+        ),
     )
     parser.add_argument(
         "--bootstrap-seed",
@@ -245,14 +257,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--train_issues",
         default="",
         dest="train_issues",
-        help="Optional comma-separated list of issues used to TRAIN the KNN index. Defaults to --issues when unset.",
+        help=(
+            "Optional comma-separated list of issues used to TRAIN the KNN index. "
+            "Defaults to --issues when unset."
+        ),
     )
     parser.add_argument(
         "--eval-issues",
         "--eval_issues",
         default="",
         dest="eval_issues",
-        help="Optional comma-separated list of issues used for EVALUATION. Defaults to --issues when unset.",
+        help=(
+            "Optional comma-separated list of issues used for EVALUATION. "
+            "Defaults to --issues when unset."
+        ),
     )
     add_comma_separated_argument(
         parser,
@@ -269,8 +287,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         dest="train_participant_studies",
         help=(
-            "Optional comma-separated list of participant study keys to use when FITTING the index. "
-            "Defaults to --participant-studies when unset."
+            "Optional comma-separated list of participant study keys used when "
+            "FITTING the index. Defaults to --participant-studies when unset."
         ),
     )
     parser.add_argument(
@@ -279,8 +297,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         dest="eval_participant_studies",
         help=(
-            "Optional comma-separated list of participant study keys to use for EVALUATION. "
-            "Defaults to --participant-studies when unset."
+            "Optional comma-separated list of participant study keys used for "
+            "EVALUATION. Defaults to --participant-studies when unset."
         ),
     )
     parser.add_argument(
@@ -292,14 +310,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     return parser
 
-
 def main(argv: list[str] | None = None) -> None:
-    """Parse CLI arguments and execute the evaluation routine.
-
-    :param argv: Optional list of command-line arguments. When ``None`` the values
-        are read from :data:`sys.argv`.
     """
+    Dispatch execution for the CLI by parsing arguments and invoking the correct runner.
 
+    :param argv: Optional argument vector supplied for testing. When ``None``,
+        :data:`sys.argv` is used verbatim.
+    :type argv: list[str] | None
+    :returns: ``None``. The function delegates work to the slate or opinion pipeline.
+    :rtype: None
+    :raises ValueError: If ``--task`` is neither ``slate`` nor ``opinion``.
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
@@ -308,13 +329,12 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.task == "opinion":
-        from .opinion import run_opinion_eval
+        from .opinion import run_opinion_eval  # pylint: disable=import-outside-toplevel
 
         run_opinion_eval(args)
         return
 
     raise ValueError(f"Unsupported task '{args.task}'.")
-
 
 if __name__ == "__main__":  # pragma: no cover
     main()

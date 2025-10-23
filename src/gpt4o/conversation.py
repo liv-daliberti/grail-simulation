@@ -22,11 +22,11 @@ from common.prompt_fields import (
     NOW_PLAYING_TITLE_KEYS,
     NOW_PLAYING_TITLE_KEYS_WITH_META,
 )
-_PROMPT_CONSTANTS = import_module("prompt_builder.constants")
-YT_FREQ_MAP = _PROMPT_CONSTANTS.YT_FREQ_MAP
-
 from .config import PROMPT_COLUMN, SOLUTION_COLUMN, SYSTEM_PROMPT
 from .utils import canon_text, canon_video_id, is_nan_like, truthy
+
+_PROMPT_CONSTANTS = import_module("prompt_builder.constants")
+YT_FREQ_MAP = _PROMPT_CONSTANTS.YT_FREQ_MAP
 
 _PROMPT_DOC_BUILDER = PromptDocumentBuilder(
     prompt_column=PROMPT_COLUMN,

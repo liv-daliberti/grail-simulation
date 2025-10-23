@@ -17,7 +17,30 @@ __all__ = ["SentenceTransformerConfig", "SentenceTransformerEncoder"]
 
 @dataclass(frozen=True)
 class SentenceTransformerConfig:
-    """Configuration controlling SentenceTransformer inference."""
+    """
+
+    Configuration controlling SentenceTransformer inference.
+
+
+
+    :ivar model_name: Attribute ``model_name``.
+
+    :vartype model_name: str
+
+    :ivar device: Attribute ``device``.
+
+    :vartype device: str | None
+
+    :ivar batch_size: Attribute ``batch_size``.
+
+    :vartype batch_size: int
+
+    :ivar normalize: Attribute ``normalize``.
+
+    :vartype normalize: bool
+
+    """
+
 
     model_name: str = "sentence-transformers/all-mpnet-base-v2"
     device: str | None = None
@@ -26,23 +49,37 @@ class SentenceTransformerConfig:
 
 
 class SentenceTransformerEncoder:
-    """Thin wrapper over ``sentence_transformers`` with lazy loading."""
+    """
+    Thin wrapper over ``sentence_transformers`` with lazy loading.
+
+    :ivar config: Runtime configuration controlling inference behaviour.
+    :vartype config: SentenceTransformerConfig
+    :ivar _model: Lazily initialised SentenceTransformer instance (``None`` until used).
+    :vartype _model: SentenceTransformer | None
+    """
+
 
     def __init__(self, config: SentenceTransformerConfig) -> None:
         """
         Initialise the encoder with runtime configuration.
 
-        Parameters
-        ----------
-        config:
-            Behavioural options used when loading and invoking the model.
+        :param config: Behavioural options used when loading and invoking the model.
+        :type config: SentenceTransformerConfig
         """
+
 
         self.config = config
         self._model: SentenceTransformer | None = None  # type: ignore[valid-type]
 
     def _ensure_model(self) -> SentenceTransformer:
-        """Return a loaded SentenceTransformer model."""
+        """
+        Return a loaded SentenceTransformer model, initialising it when necessary.
+
+        :returns: Cached SentenceTransformer instance ready for inference.
+        :rtype: SentenceTransformer
+        :raises ImportError: If the ``sentence-transformers`` package is unavailable.
+        """
+
 
         if SentenceTransformer is None:  # pragma: no cover - optional dependency
             raise ImportError(
@@ -53,7 +90,15 @@ class SentenceTransformerEncoder:
         return self._model
 
     def encode(self, texts: Sequence[str]) -> np.ndarray:
-        """Return embeddings for ``texts``."""
+        """
+        Encode a batch of texts into dense embeddings.
+
+        :param texts: Sequence of documents to embed.
+        :type texts: Sequence[str]
+        :returns: Matrix of shape ``(len(texts), embedding_dimension)``.
+        :rtype: numpy.ndarray
+        """
+
 
         model = self._ensure_model()
         if not texts:
@@ -72,12 +117,26 @@ class SentenceTransformerEncoder:
         return array
 
     def encode_iter(self, texts: Iterable[str]) -> np.ndarray:
-        """Encode an iterable of texts by materialising it once."""
+        """
+        Encode an iterable of texts by materialising it once.
+
+        :param texts: Iterable of documents to embed.
+        :type texts: Iterable[str]
+        :returns: Matrix of embeddings corresponding to ``texts``.
+        :rtype: numpy.ndarray
+        """
+
 
         return self.encode(list(texts))
 
     def embedding_dimension(self) -> int:
-        """Return the dimensionality of the produced embeddings."""
+        """
+        Return the dimensionality of the produced embeddings.
+
+        :returns: Number of features emitted by the underlying encoder.
+        :rtype: int
+        """
+
 
         model = self._ensure_model()
         if hasattr(model, "get_sentence_embedding_dimension"):

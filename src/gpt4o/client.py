@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import Dict, List
-
-from openai import AzureOpenAI
+from typing import Any, Dict, List, TYPE_CHECKING
 
 from .config import (
     DEPLOYMENT_NAME,
@@ -16,21 +14,46 @@ from .config import (
     ensure_azure_env,
 )
 
+if TYPE_CHECKING:  # pragma: no cover
+    from openai import AzureOpenAI as AzureOpenAIType
+else:
+    AzureOpenAIType = Any  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from openai import AzureOpenAI as _AzureOpenAI  # type: ignore
+except ImportError as exc:  # pragma: no cover - optional dependency
+    _AzureOpenAI = None  # type: ignore[assignment]
+    _AZURE_OPENAI_IMPORT_ERROR = exc
+else:  # pragma: no cover
+    _AZURE_OPENAI_IMPORT_ERROR = None
+
+
+def _require_openai() -> Any:
+    """Return the Azure OpenAI class, raising an informative error if missing."""
+
+    if _AzureOpenAI is None:
+        raise ImportError(
+            "The 'openai' package is required to use Azure OpenAI client helpers. "
+            "Install it with `pip install openai`."
+        ) from _AZURE_OPENAI_IMPORT_ERROR
+    return _AzureOpenAI
+
 
 @lru_cache(maxsize=1)
 def _cached_client(
     api_key: str, endpoint: str, api_version: str
-) -> AzureOpenAI:
+) -> AzureOpenAIType:
     """Return a cached Azure OpenAI client instance."""
 
-    return AzureOpenAI(
+    client_cls = _require_openai()
+    return client_cls(
         api_key=api_key,
         azure_endpoint=endpoint,
         api_version=api_version,
     )
 
 
-def get_client() -> AzureOpenAI:
+def get_client() -> AzureOpenAIType:
     """Construct or reuse the singleton Azure OpenAI client."""
 
     ensure_azure_env()

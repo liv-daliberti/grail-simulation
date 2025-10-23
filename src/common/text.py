@@ -15,7 +15,22 @@ CANON_RE = re.compile(_CANON_EXPR)
 
 
 def canon_text(text: str | None) -> str:
-    """Return a lowercased alphanumeric canonical representation."""
+    """
+
+    Return a lowercased alphanumeric canonical representation.
+
+
+
+    :param text: Value provided for ``text``.
+
+    :type text: str | None
+
+    :returns: Result produced by ``canon_text``.
+
+    :rtype: str
+
+    """
+
 
     if not text:
         return ""
@@ -23,7 +38,22 @@ def canon_text(text: str | None) -> str:
 
 
 def canon_video_id(value: object | None) -> str:
-    """Normalise a YouTube id when present in ``value``."""
+    """
+
+    Normalise a YouTube id when present in ``value``.
+
+
+
+    :param value: Value provided for ``value``.
+
+    :type value: object | None
+
+    :returns: Result produced by ``canon_video_id``.
+
+    :rtype: str
+
+    """
+
 
     if value is None:
         return ""
@@ -36,7 +66,22 @@ def canon_video_id(value: object | None) -> str:
 
 
 def split_env_list(value: str | None) -> list[str]:
-    """Parse a colon/comma/space separated list from an environment string."""
+    """
+
+    Parse a colon/comma/space separated list from an environment string.
+
+
+
+    :param value: Value provided for ``value``.
+
+    :type value: str | None
+
+    :returns: Result produced by ``split_env_list``.
+
+    :rtype: list[str]
+
+    """
+
 
     if not value:
         return []
@@ -48,7 +93,22 @@ def split_env_list(value: str | None) -> list[str]:
 
 
 def resolve_paths_from_env(variable_names: Iterable[str]) -> list[str]:
-    """Collect file or directory paths from a set of environment variables."""
+    """
+
+    Collect file or directory paths from a set of environment variables.
+
+
+
+    :param variable_names: Value provided for ``variable_names``.
+
+    :type variable_names: Iterable[str]
+
+    :returns: Result produced by ``resolve_paths_from_env``.
+
+    :rtype: list[str]
+
+    """
+
 
     paths: list[str] = []
     for name in variable_names:

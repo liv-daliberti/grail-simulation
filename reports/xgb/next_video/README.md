@@ -6,6 +6,15 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 - Split: validation
 - Metrics: accuracy, coverage of known candidates, and availability of known neighbours.
 
+## Portfolio Summary
+
+- Weighted accuracy 0.546 across 2,419 evaluated slates.
+- Weighted known-candidate coverage 0.546 over 2,417 eligible slates.
+- Known-candidate availability 0.999 relative to all evaluated slates.
+- Mean predicted probability on known candidates 0.600 (across 3 studies with recorded probabilities).
+- Highest study accuracy: Study 1 – Gun Control (MTurk) (0.973).
+- Lowest study accuracy: Study 2 – Minimum Wage (MTurk) (0.382).
+
 | Study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ |
 | --- | --- | ---: | --- | ---: | --- | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | Gun Control | 0.973 | 533/548 | 0.976 | 533/546 | 0.996 | 0.924 |

@@ -12,30 +12,15 @@ Running :mod:`knn.pipeline` executes the full workflow requested by
 The module reuses the existing :mod:`knn.cli` entry points to avoid code drift
 between the scripted workflow and the public command-line interface.
 """
-
-
+# pylint: disable=line-too-long
 from __future__ import annotations
 
 import logging
-import os
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from common.pipeline_stage import prepare_sweep_execution
 
-from .pipeline_context import (
-    MetricSummary,
-    OpinionStudySelection,
-    OpinionSummary,
-    OpinionSweepOutcome,
-    OpinionSweepTask,
-    PipelineContext,
-    ReportBundle,
-    StudySelection,
-    StudySpec,
-    SweepConfig,
-    SweepOutcome,
-    SweepTask,
-)
+from .pipeline_context import PipelineContext, ReportBundle
 from .pipeline_cli import (
     build_base_cli as _build_base_cli,
     build_pipeline_context as _build_pipeline_context,
@@ -80,6 +65,7 @@ from .pipeline_sweeps import (
     emit_sweep_plan as _emit_sweep_plan,
     execute_opinion_sweep_task as _execute_opinion_sweep_task,
     execute_opinion_sweep_tasks as _execute_opinion_sweep_tasks,
+    execute_sweep_task as _execute_sweep_task,
     execute_sweep_tasks as _execute_sweep_tasks,
     format_opinion_sweep_task_descriptor as _format_opinion_sweep_task_descriptor,
     format_sweep_task_descriptor as _format_sweep_task_descriptor,
@@ -101,6 +87,16 @@ from .pipeline_evaluate import (
 )
 from .pipeline_reports import generate_reports as _generate_reports
 
+if TYPE_CHECKING:
+    from .pipeline_context import (
+        OpinionStudySelection,
+        OpinionSweepOutcome,
+        OpinionSweepTask,
+        StudySelection,
+        SweepOutcome,
+        SweepTask,
+    )
+
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
@@ -110,11 +106,20 @@ __all__ = [
     "_build_sweep_configs",
 ]
 
-
-
 def main(argv: Sequence[str] | None = None) -> None:
-    """Coordinate sweeps, evaluations, and report generation for the KNN pipeline."""
+    """
+    Coordinate sweeps, evaluations, and report generation for the KNN pipeline.
 
+    :param argv: Optional argument vector override used when invoking the CLI programmatically.
+
+    :type argv: Sequence[str] | None
+
+    :returns: None.
+
+    :rtype: None
+
+    """
+    # pylint: disable=too-many-branches,too-many-locals,too-many-return-statements,too-many-statements
     args, extra_cli = _parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 
@@ -464,7 +469,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         include_opinion=context.run_opinion,
     )
     _generate_reports(root, report_bundle)
-
 
 if __name__ == "__main__":  # pragma: no cover
     main()

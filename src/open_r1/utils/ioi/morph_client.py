@@ -5,19 +5,19 @@ import json
 import logging
 import os
 import tempfile
+from contextlib import suppress
 from typing import Any, Dict, Optional, Tuple
 
 from dotenv import load_dotenv
 from open_r1.utils.import_utils import is_morph_available
 
 
-# Replace direct imports with conditional imports
 if is_morph_available():
     from morphcloud.api import Instance, InstanceExecResponse, MorphCloudClient
 else:
-    Instance = None
-    InstanceExecResponse = None
-    MorphCloudClient = None
+    Instance = None  # type: ignore[assignment]  # pylint: disable=invalid-name
+    InstanceExecResponse = None  # type: ignore[assignment]  # pylint: disable=invalid-name
+    MorphCloudClient = None  # type: ignore[assignment]  # pylint: disable=invalid-name
 
 
 # Silence verbose logs from dependencies
@@ -41,7 +41,11 @@ class MorphCloudExecutionClient:
         :param spans_log_path: Path to the spans log file.
         """
 
+        if MorphCloudClient is None:
+            raise ImportError("MorphCloud client is unavailable; install morphcloud to use this helper.")
+
         self.client = MorphCloudClient(api_key=api_key, base_url=base_url)
+        self.spans_log_path = spans_log_path
         self._snapshot_lock = asyncio.Lock()
 
     async def _prepare_instance(self, snapshot_id=None) -> Instance:
@@ -60,22 +64,25 @@ class MorphCloudExecutionClient:
             snapshot = await self._get_or_create_base_snapshot()
             snapshot_id = snapshot.id
 
+        instance = None
         try:
             instance = await self.client.instances.astart(
                 snapshot_id, ttl_seconds=600
             )  # Auto-terminate after 10 minutes
             await instance.await_until_ready(timeout=300)
             return instance
-        except asyncio.TimeoutError as e:
-            print(f"Timeout while preparing instance: {str(e)}")
-            if instance:
-                try:
+        except asyncio.TimeoutError as exc:
+            print(f"Timeout while preparing instance: {exc}")
+            if instance is not None:
+                with suppress(Exception):
                     await instance.astop()
-                except Exception:
-                    pass
             raise
 
-    async def _prepare_files(self, data: Dict[str, Any], temp_dir: str) -> Tuple[str, Dict[str, Any], Dict[str, str]]:
+    async def _prepare_files(
+        self,
+        data: Dict[str, Any],
+        temp_dir: str,
+    ) -> Tuple[str, Dict[str, Any], Dict[str, str]]:
         """
         Process files, determine problem ID, and prepare configuration.
 
@@ -111,21 +118,25 @@ class MorphCloudExecutionClient:
 
         for file in graders_files:
             if "manager.cpp" in file["name"]:
-                grader_config["task_type"] = "Communication"
-                grader_config["task_type_parameters_Communication_num_processes"] = 1
-                grader_config["task_type_parameters_Communication_user_io"] = "std_io"
+                grader_config.update(
+                    {
+                        "task_type": "Communication",
+                        "task_type_parameters_Communication_num_processes": 1,
+                        "task_type_parameters_Communication_user_io": "std_io",
+                    }
+                )
                 break
 
         config_path = os.path.join(temp_dir, "grader_config.json")
-        with open(config_path, "w") as f:
-            json.dump(grader_config, f)
+        with open(config_path, "w", encoding="utf-8") as file_obj:
+            json.dump(grader_config, file_obj)
 
         local_files = {"grader_config.json": config_path}
 
         for file in data["files"]:
             local_path = os.path.join(temp_dir, os.path.basename(file["name"]))
-            with open(local_path, "w") as f:
-                f.write(file["content"])
+            with open(local_path, "w", encoding="utf-8") as file_obj:
+                file_obj.write(file["content"])
             local_files[file["name"]] = local_path
 
         return problem_id, grader_config, local_files
@@ -151,7 +162,10 @@ class MorphCloudExecutionClient:
 
             await instance.aupload(local_path, target_path)
 
-        await instance.aupload(local_files["grader_config.json"], "/workspace/graders/grader_config.json")
+        await instance.aupload(
+            local_files["grader_config.json"],
+            "/workspace/graders/grader_config.json",
+        )
 
         return True
 
@@ -168,7 +182,9 @@ class MorphCloudExecutionClient:
         compile_result = await instance.aexec("cd /workspace && ./compile")
 
         if compile_result.exit_code != 0:
-            raise RuntimeError(f"Compilation error exit code {compile_result.exit_code}\n{compile_result.stderr}")
+            raise RuntimeError(
+                f"Compilation error exit code {compile_result.exit_code}\n{compile_result.stderr}"
+            )
 
         return compile_result
 
@@ -206,7 +222,12 @@ class MorphCloudExecutionClient:
 
         return "0", "Unknown error"
 
-    async def _execute_with_instance(self, instance: Instance, data: Dict[str, Any], temp_dir: str) -> Tuple[str, str]:
+    async def _execute_with_instance(
+        self,
+        instance: Instance,
+        data: Dict[str, Any],
+        temp_dir: str,
+    ) -> Tuple[str, str]:
         """Execute code using a prepared instance.
 
         :param instance: Ready MorphCloud instance.
@@ -221,7 +242,7 @@ class MorphCloudExecutionClient:
         """
         await instance.await_until_ready(timeout=300)
 
-        problem_id, grader_config, local_files = await self._prepare_files(data, temp_dir)
+        _, _, local_files = await self._prepare_files(data, temp_dir)
 
         await self._upload_files(instance, local_files)
 
@@ -243,11 +264,8 @@ class MorphCloudExecutionClient:
         :rtype: tuple[str, str]
         :raises Exception: If execution fails.
         """
-        instance = None
-
-        # Set timeouts to ensure we don't block indefinitely
-        # INSTANCE_TIMEOUT = 300  # 5 minutes for instance operations
-        TOTAL_EXECUTION_TIMEOUT = 600  # 10 minutes total execution time
+        # Limit the overall execution time to avoid hanging tasks.
+        total_execution_timeout = 600  # 10 minutes total execution time
 
         with tempfile.TemporaryDirectory(prefix="morph_exec_") as temp_dir:
             snapshot = await self._get_or_create_base_snapshot()
@@ -259,7 +277,7 @@ class MorphCloudExecutionClient:
                 # Use asyncio.wait_for to add overall timeout to the execution process
                 return await asyncio.wait_for(
                     self._execute_with_instance(instance, data, temp_dir),
-                    timeout=TOTAL_EXECUTION_TIMEOUT,
+                    timeout=total_execution_timeout,
                 )
 
     async def execute(self, data: Dict[str, Any]) -> Tuple[str, str]:
@@ -301,18 +319,24 @@ class MorphCloudExecutionClient:
                 else:
                     return "0", "Execution timed out after multiple retries"
 
-            except Exception as e:
+            except Exception as error:  # pylint: disable=broad-exception-caught
                 # Calculate exponential backoff
                 if attempt < max_retries:
-                    retry_delay = min(base_delay * (2**attempt), 30)  # Exponential backoff, capped at 30 seconds
-
-                    print(
-                        f"Execution failed with {type(e).__name__}: {str(e)}, retrying in {retry_delay:.2f}s ({attempt + 1}/{max_retries})"
+                    retry_delay = min(
+                        base_delay * (2**attempt),
+                        30,
+                    )  # Exponential backoff, capped at 30 seconds
+                    error_name = type(error).__name__
+                    retry_msg = (
+                        f"Execution failed with {error_name}: {error}, "
+                        f"retrying in {retry_delay:.2f}s ({attempt + 1}/{max_retries})"
                     )
+                    print(retry_msg)
                     await asyncio.sleep(retry_delay)
                 else:
-                    print(f"Execution failed after {max_retries} retries: {type(e).__name__}: {str(e)}")
-                    return "0", f"Execution failed after multiple retries: {str(e)}"
+                    error_name = type(error).__name__
+                    print(f"Execution failed after {max_retries} retries: {error_name}: {error}")
+                    return "0", f"Execution failed after multiple retries: {error}"
 
     async def _get_or_create_base_snapshot(self):
         """Get or create a snapshot with the necessary dependencies and scripts for evaluation."""
@@ -336,50 +360,37 @@ class MorphCloudExecutionClient:
                     base_snapshot.id, ttl_seconds=900
                 )  # Auto-terminate after 15 minutes
 
-                try:
+                async with temp_instance:
                     # Wait for the instance to be ready
                     await temp_instance.await_until_ready(timeout=300)
 
-                    # Get script contents
                     compile_script = await self._get_compile_script()
                     run_script = await self._get_run_script()
 
-                    # Use temporary directory to store scripts
                     with tempfile.TemporaryDirectory(prefix="morph_setup_") as temp_dir:
-                        # Create paths for script files
                         compile_path = os.path.join(temp_dir, "compile.sh")
                         run_path = os.path.join(temp_dir, "run.sh")
 
-                        # Write scripts to temp files
-                        with open(compile_path, "w") as f:
-                            f.write(compile_script)
+                        with open(compile_path, "w", encoding="utf-8") as file_obj:
+                            file_obj.write(compile_script)
 
-                        with open(run_path, "w") as f:
-                            f.write(run_script)
+                        with open(run_path, "w", encoding="utf-8") as file_obj:
+                            file_obj.write(run_script)
 
-                        async with temp_instance:
-                            # Install dependencies
-                            await temp_instance.aexec("apt-get update && apt-get install -y build-essential cmake g++")
+                        await temp_instance.aexec(
+                            "apt-get update && apt-get install -y build-essential cmake g++"
+                        )
 
-                            # Create workspace directory
-                            await temp_instance.aexec(
-                                "mkdir -p /workspace && mkdir -p /workspace/graders && chmod 777 /workspace"
-                            )
+                        await temp_instance.aexec(
+                            "mkdir -p /workspace && mkdir -p /workspace/graders && chmod 777 /workspace"
+                        )
 
-                            # Upload scripts to instance
-                            await temp_instance.aupload(compile_path, "/workspace/compile")
-                            await temp_instance.aupload(run_path, "/workspace/run")
+                        await temp_instance.aupload(compile_path, "/workspace/compile")
+                        await temp_instance.aupload(run_path, "/workspace/run")
 
-                            # Make scripts executable
-                            await temp_instance.aexec("chmod +x /workspace/compile /workspace/run")
+                        await temp_instance.aexec("chmod +x /workspace/compile /workspace/run")
 
-                            # Create snapshot from the prepared instance
-                            final_snapshot = await temp_instance.asnapshot(digest="ioi-evaluation-morph")
-
-                except Exception as e:
-                    # Ensure instance is stopped if anything fails
-                    await temp_instance.astop()
-                    raise e
+                        final_snapshot = await temp_instance.asnapshot(digest="ioi-evaluation-morph")
             else:
                 final_snapshot = base_snapshots[0]
 

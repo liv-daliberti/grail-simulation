@@ -17,7 +17,38 @@ def execute_indexed_tasks(
     logger,
     label: str = "task",
 ) -> List[ResultT]:
-    """Execute ``tasks`` using ``worker`` with optional parallelism."""
+    """
+
+    Execute ``tasks`` using ``worker`` with optional parallelism.
+
+
+
+    :param tasks: Value provided for ``tasks``.
+
+    :type tasks: Sequence[TaskT]
+
+    :param worker: Value provided for ``worker``.
+
+    :type worker: Callable[[TaskT], ResultT]
+
+    :param jobs: Value provided for ``jobs``.
+
+    :type jobs: int
+
+    :param logger: Value provided for ``logger``.
+
+    :type logger: Any
+
+    :param label: Value provided for ``label``.
+
+    :type label: str
+
+    :returns: Result produced by ``execute_indexed_tasks``.
+
+    :rtype: List[ResultT]
+
+    """
+
 
     if not tasks:
         return []
@@ -46,10 +77,28 @@ def execute_sequential_tasks(
     tasks: Sequence[TaskT],
     worker: Callable[[TaskT], ResultT],
 ) -> List[ResultT]:
-    """Execute ``tasks`` sequentially and collect the results."""
+    """
+
+    Execute ``tasks`` sequentially and collect the results.
+
+
+
+    :param tasks: Value provided for ``tasks``.
+
+    :type tasks: Sequence[TaskT]
+
+    :param worker: Value provided for ``worker``.
+
+    :type worker: Callable[[TaskT], ResultT]
+
+    :returns: Result produced by ``execute_sequential_tasks``.
+
+    :rtype: List[ResultT]
+
+    """
+
 
     results: List[ResultT] = []
     for task in tasks:
         results.append(worker(task))
     return results
-

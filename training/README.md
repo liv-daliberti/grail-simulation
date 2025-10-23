@@ -37,12 +37,12 @@ Under the hood the scripts:
 Logs land under `${LOG_DIR:-logs/knn}` for the kNN launcher and
 `${LOG_DIR:-logs/xgb}` for the XGBoost launcher. You can override these paths
 via the `LOG_DIR` environment variable (see `--help` output). Each submission
-also writes the full sweep catalogue to `${LOG_DIR}/<job-name>_plan.txt` for
+also writes the full sweep catalog to `${LOG_DIR}/<job-name>_plan.txt` for
 later inspection.
 
 Manual entry points remain available:
 
-- `training/training-knn.sh plan [...]` – print the sweep catalogue without
+- `training/training-knn.sh plan [...]` – print the sweep catalog without
   submitting jobs.
 - `training/training-knn.sh finalize [...]` – run the finalize stage locally.
 - `sbatch training/training-knn.sh sweeps [...]` – launch individual worker

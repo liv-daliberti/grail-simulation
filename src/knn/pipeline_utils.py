@@ -1,5 +1,4 @@
 """Utility helpers shared across the KNN pipeline."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,57 +8,97 @@ from common.pipeline_formatters import safe_float, safe_int
 
 from .pipeline_context import MetricSummary, OpinionSummary
 
-
 def ensure_dir(path: Path) -> Path:
-    """Ensure ``path`` exists and return it."""
+    """
+    Ensure the given directory exists and return it.
 
+    :param path: Directory path that should be created if missing.
+    :type path: Path
+    :returns: The original ``Path`` instance for convenient chaining.
+    :rtype: Path
+    """
     path.mkdir(parents=True, exist_ok=True)
     return path
 
-
 def snake_to_title(value: str) -> str:
-    """Convert a snake_case string into Title Case."""
+    """
+    Convert a ``snake_case`` string into Title Case.
 
+    :param value: String containing underscore-separated tokens.
+    :type value: str
+    :returns: Title-cased string with spaces instead of underscores.
+    :rtype: str
+    """
     return value.replace("_", " ").title()
 
-
 def format_float(value: float) -> str:
-    """Format a floating-point metric with three decimal places."""
+    """
+    Format a floating-point metric with three decimal places.
 
+    :param value: Numeric metric to render.
+    :type value: float
+    :returns: Formatted string (``{value:.3f}``).
+    :rtype: str
+    """
     return f"{value:.3f}"
 
-
 def format_optional_float(value: Optional[float]) -> str:
-    """Format optional floating-point metrics."""
+    """
+    Format an optional floating-point metric.
 
+    :param value: Metric value or ``None`` when unavailable.
+    :type value: Optional[float]
+    :returns: Formatted float or an em dash when ``None``.
+    :rtype: str
+    """
     return format_float(value) if value is not None else "—"
 
-
 def format_delta(delta: Optional[float]) -> str:
-    """Format a signed improvement metric."""
+    """
+    Format a signed improvement metric.
 
+    :param delta: Change relative to a baseline.
+    :type delta: Optional[float]
+    :returns: Signed string (``+0.000`` style) or an em dash when ``None``.
+    :rtype: str
+    """
     return f"{delta:+.3f}" if delta is not None else "—"
 
-
 def format_count(value: Optional[int]) -> str:
-    """Format integer counts with thousands separators."""
+    """
+    Format integer counts with thousands separators.
 
+    :param value: Count to render.
+    :type value: Optional[int]
+    :returns: Formatted count or an em dash when ``None``.
+    :rtype: str
+    """
     if value is None:
         return "—"
     return f"{value:,}"
 
-
 def format_k(value: Optional[int]) -> str:
-    """Format the selected k hyperparameter."""
+    """
+    Format the selected ``k`` hyper-parameter.
 
+    :param value: Neighbourhood size under consideration.
+    :type value: Optional[int]
+    :returns: String representation of ``k`` or an em dash when unset.
+    :rtype: str
+    """
     if value is None or value <= 0:
         return "—"
     return str(value)
 
-
 def format_uncertainty_details(uncertainty: Mapping[str, object]) -> str:
-    """Format auxiliary uncertainty metadata for reporting."""
+    """
+    Format auxiliary uncertainty metadata for reporting.
 
+    :param uncertainty: Mapping containing extra uncertainty fields.
+    :type uncertainty: Mapping[str, object]
+    :returns: Parenthesised detail string or an empty string.
+    :rtype: str
+    """
     if not isinstance(uncertainty, Mapping):
         return ""
     detail_bits: List[str] = []
@@ -70,10 +109,15 @@ def format_uncertainty_details(uncertainty: Mapping[str, object]) -> str:
         detail_bits.append(f"{key}={value}")
     return f" ({', '.join(detail_bits)})" if detail_bits else ""
 
-
 def parse_ci(ci_value: object) -> Optional[Tuple[float, float]]:
-    """Return a numeric confidence-interval tuple when available."""
+    """
+    Convert confidence-interval payloads into numeric tuples.
 
+    :param ci_value: Mapping or sequence describing a confidence interval.
+    :type ci_value: object
+    :returns: Tuple containing ``(low, high)`` bounds when available.
+    :rtype: Optional[Tuple[float, float]]
+    """
     if isinstance(ci_value, Mapping):
         low = safe_float(ci_value.get("low"))
         high = safe_float(ci_value.get("high"))
@@ -87,10 +131,15 @@ def parse_ci(ci_value: object) -> Optional[Tuple[float, float]]:
             return (low, high)
     return None
 
-
 def extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
-    """Collect reusable slate metrics fields."""
+    """
+    Collect reusable next-video metric fields from ``data``.
 
+    :param data: Raw metrics dictionary emitted by the evaluation stage.
+    :type data: Mapping[str, object]
+    :returns: Normalised metric summary for downstream reports.
+    :rtype: MetricSummary
+    """
     accuracy = safe_float(data.get("accuracy_overall"))
     best_k = safe_int(data.get("best_k"))
     n_total = safe_int(data.get("n_total"))
@@ -120,10 +169,15 @@ def extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
         n_eligible=n_eligible,
     )
 
-
 def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
-    """Collect opinion regression metrics into a normalized structure."""
+    """
+    Collect opinion regression metrics into a normalised structure.
 
+    :param data: Raw metrics dictionary emitted by the opinion pipeline.
+    :type data: Mapping[str, object]
+    :returns: Normalised opinion summary for reporting.
+    :rtype: OpinionSummary
+    """
     best_metrics = data.get("best_metrics", {})
     baseline = data.get("baseline", {})
     mae_after = safe_float(best_metrics.get("mae_after"))
@@ -151,7 +205,6 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         dataset=str(dataset) if dataset else None,
         split=str(split) if split else None,
     )
-
 
 __all__ = [
     "ensure_dir",

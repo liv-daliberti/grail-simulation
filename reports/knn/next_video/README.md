@@ -10,6 +10,16 @@ This report summarises the slate-ranking KNN model that predicts the next video 
 - Random column: expected accuracy from uniformly sampling one candidate per slate.
 - Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)
 
+## Portfolio Summary
+
+| Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | Studies |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TFIDF | 0.440 | -0.022 | 0.271 | 2,419 | 3 |
+| WORD2VEC | 0.412 | -0.050 | 0.271 | 2,419 | 3 |
+| SENTENCE_TRANSFORMER | 0.427 | -0.036 | 0.271 | 2,419 | 3 |
+
+Best-performing feature space: **TFIDF** with weighted accuracy 0.440 across 2,419 eligible slates (3 studies).
+
 ## TF-IDF Feature Space
 
 | Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |

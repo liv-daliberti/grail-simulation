@@ -1,5 +1,5 @@
 """Report generation helpers for the XGBoost pipeline."""
-# pylint: disable=line-too-long,duplicate-code
+# pylint: disable=line-too-long,duplicate-code,too-many-lines
 
 from __future__ import annotations
 
@@ -320,6 +320,94 @@ def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[s
         lines.append(
             f"- Mean R² { _format_optional_float(sum(r2_scores) / len(r2_scores)) }."
         )
+    lines.append("")
+    return lines
+
+
+def _next_video_portfolio_summary(
+    metrics: Mapping[str, Mapping[str, object]],
+) -> List[str]:
+    """
+    Generate weighted portfolio statistics for next-video evaluations.
+
+    :param metrics: Mapping from study key to final evaluation metrics.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :returns: Markdown lines highlighting portfolio-level performance.
+    :rtype: List[str]
+    """
+
+    total_correct = 0
+    total_evaluated = 0
+    total_known_hits = 0
+    total_known_total = 0
+    accuracy_entries: List[Tuple[float, str]] = []
+    probability_values: List[float] = []
+
+    for study_key, payload in metrics.items():
+        summary = _extract_next_video_summary(payload)
+        if summary.correct is not None and summary.evaluated is not None:
+            total_correct += summary.correct
+            total_evaluated += summary.evaluated
+        if summary.known_hits is not None and summary.known_total is not None:
+            total_known_hits += summary.known_hits
+            total_known_total += summary.known_total
+        label = summary.study_label or study_key
+        if summary.accuracy is not None:
+            accuracy_entries.append((summary.accuracy, label))
+        if summary.avg_probability is not None:
+            probability_values.append(summary.avg_probability)
+
+    if not total_evaluated and not accuracy_entries:
+        return []
+
+    weighted_accuracy: Optional[float] = None
+    if total_evaluated:
+        weighted_accuracy = total_correct / total_evaluated
+    weighted_coverage: Optional[float] = None
+    if total_known_total:
+        weighted_coverage = total_known_hits / total_known_total
+    weighted_availability: Optional[float] = None
+    if total_evaluated:
+        weighted_availability = total_known_total / total_evaluated
+    mean_probability: Optional[float] = None
+    if probability_values:
+        mean_probability = sum(probability_values) / len(probability_values)
+
+    lines: List[str] = ["## Portfolio Summary", ""]
+    if total_evaluated:
+        lines.append(
+            f"- Weighted accuracy {_format_optional_float(weighted_accuracy)} "
+            f"across {_format_count(total_evaluated)} evaluated slates."
+        )
+    if total_known_total:
+        lines.append(
+            f"- Weighted known-candidate coverage {_format_optional_float(weighted_coverage)} "
+            f"over {_format_count(total_known_total)} eligible slates."
+        )
+    if weighted_availability is not None:
+        lines.append(
+            f"- Known-candidate availability {_format_optional_float(weighted_availability)} "
+            f"relative to all evaluated slates."
+        )
+    if mean_probability is not None:
+        probability_count = len(probability_values)
+        study_label = "study" if probability_count == 1 else "studies"
+        lines.append(
+            f"- Mean predicted probability on known candidates "
+            f"{_format_optional_float(mean_probability)} "
+            f"(across {probability_count} {study_label} with recorded probabilities)."
+        )
+
+    if accuracy_entries:
+        best_accuracy, best_label = max(accuracy_entries, key=lambda item: item[0])
+        lines.append(
+            f"- Highest study accuracy: {best_label} ({_format_optional_float(best_accuracy)})."
+        )
+        if len(accuracy_entries) > 1:
+            worst_accuracy, worst_label = min(accuracy_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Lowest study accuracy: {worst_label} ({_format_optional_float(worst_accuracy)})."
+            )
     lines.append("")
     return lines
 
@@ -842,6 +930,7 @@ def _write_next_video_report(
         lines.append("- Split: validation")
         lines.append("- Metrics: accuracy, coverage of known candidates, and availability of known neighbours.")
         lines.append("")
+        lines.extend(_next_video_portfolio_summary(metrics))
     else:
         lines.append("Accuracy on the validation split for the selected slate configuration.")
         lines.append("")

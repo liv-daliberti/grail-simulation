@@ -14,7 +14,38 @@ def prepare_sweep_execution(
     logger,
     env_var: str = "SLURM_ARRAY_TASK_ID",
 ) -> Optional[int]:
-    """Validate sweep arguments and return the task index to execute."""
+    """
+
+    Validate sweep arguments and return the task index to execute.
+
+
+
+    :param total_tasks: Value provided for ``total_tasks``.
+
+    :type total_tasks: int
+
+    :param cli_task_id: Value provided for ``cli_task_id``.
+
+    :type cli_task_id: Optional[int]
+
+    :param cli_task_count: Value provided for ``cli_task_count``.
+
+    :type cli_task_count: Optional[int]
+
+    :param logger: Value provided for ``logger``.
+
+    :type logger: Any
+
+    :param env_var: Value provided for ``env_var``.
+
+    :type env_var: str
+
+    :returns: Result produced by ``prepare_sweep_execution``.
+
+    :rtype: Optional[int]
+
+    """
+
 
     if total_tasks == 0:
         logger.info("No sweep tasks pending; existing metrics cover the grid.")
@@ -25,7 +56,8 @@ def prepare_sweep_execution(
         env_value = os.environ.get(env_var)
         if env_value is None:
             raise RuntimeError(
-                "Sweep stage requires --sweep-task-id or the SLURM_ARRAY_TASK_ID environment variable."
+                "Sweep stage requires --sweep-task-id or the "
+                "SLURM_ARRAY_TASK_ID environment variable."
             )
         try:
             task_id = int(env_value)
@@ -41,9 +73,8 @@ def prepare_sweep_execution(
             cli_task_count,
         )
 
-    if not (0 <= task_id < total_tasks):
+    if not 0 <= task_id < total_tasks:
         raise RuntimeError(
             f"Sweep task index {task_id} out of range (0..{total_tasks - 1})."
         )
     return task_id
-

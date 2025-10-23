@@ -1,10 +1,10 @@
 """Shared data classes for the modular KNN pipeline."""
-
+# pylint: disable=line-too-long
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_types import (
     OpinionStudySelection as BaseOpinionStudySelection,
@@ -12,11 +12,36 @@ from common.pipeline_types import (
     StudySpec,
 )
 
-
 @dataclass(frozen=True)
-class SweepConfig:
-    """Describe a single hyper-parameter configuration to evaluate."""
+class SweepConfig:  # pylint: disable=too-many-instance-attributes
+    """
+    Describe a single hyper-parameter configuration scheduled for execution.
 
+    :ivar feature_space: Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).
+    :vartype feature_space: str
+    :ivar metric: Distance metric passed to the KNN scorer (``l2`` or ``cosine``).
+    :vartype metric: str
+    :ivar text_fields: Additional text columns merged into the viewer prompt.
+    :vartype text_fields: Tuple[str, ...]
+    :ivar word2vec_size: Word2Vec embedding dimensionality when ``feature_space`` is ``word2vec``.
+    :vartype word2vec_size: int | None
+    :ivar word2vec_window: Word2Vec context window size for training.
+    :vartype word2vec_window: int | None
+    :ivar word2vec_min_count: Minimum token frequency retained in the Word2Vec vocabulary.
+    :vartype word2vec_min_count: int | None
+    :ivar word2vec_epochs: Number of epochs used when (re)training the Word2Vec model.
+    :vartype word2vec_epochs: int | None
+    :ivar word2vec_workers: Worker count for Word2Vec training/encoding.
+    :vartype word2vec_workers: int | None
+    :ivar sentence_transformer_model: SentenceTransformer model identifier evaluated for this sweep.
+    :vartype sentence_transformer_model: str | None
+    :ivar sentence_transformer_device: Device override applied when encoding sentence embeddings.
+    :vartype sentence_transformer_device: str | None
+    :ivar sentence_transformer_batch_size: Batch size used when generating sentence embeddings.
+    :vartype sentence_transformer_batch_size: int | None
+    :ivar sentence_transformer_normalize: Whether embeddings are L2-normalised prior to similarity scoring.
+    :vartype sentence_transformer_normalize: bool | None
+    """
     feature_space: str
     metric: str
     text_fields: Tuple[str, ...]
@@ -31,8 +56,12 @@ class SweepConfig:
     sentence_transformer_normalize: bool | None = None
 
     def label(self) -> str:
-        """Return a filesystem-friendly identifier for this configuration."""
+        """
+        Create a filesystem-friendly identifier summarising the configuration.
 
+        :returns: Underscore-delimited label that highlights metric, text fields, and model specifics.
+        :rtype: str
+        """
         text_label = "none"
         if self.text_fields:
             text_label = "_".join(field.replace("_", "") for field in self.text_fields)
@@ -52,8 +81,15 @@ class SweepConfig:
         return "_".join(parts)
 
     def cli_args(self, *, word2vec_model_dir: Path | None) -> list[str]:
-        """Return CLI overrides implementing this configuration."""
+        """
+        Translate the configuration into CLI arguments understood by :mod:`knn.cli`.
 
+        :param word2vec_model_dir: Directory housing cached Word2Vec models to reuse during sweeps.
+        :type word2vec_model_dir: Path | None
+        :returns: Argument vector providing the minimal overrides required to reproduce the configuration.
+        :rtype: list[str]
+        :raises ValueError: If mandatory Word2Vec parameters are omitted for a Word2Vec sweep.
+        """
         args: list[str] = [
             "--feature-space",
             self.feature_space,
@@ -102,11 +138,30 @@ class SweepConfig:
                 )
         return args
 
-
 @dataclass
-class SweepOutcome:
-    """Capture metrics for a configuration/issue pair."""
+class SweepOutcome:  # pylint: disable=too-many-instance-attributes
+    """
+    Persisted metrics for evaluating a configuration against a single study.
 
+    :ivar order_index: Stable position reflecting the original sweep submission order.
+    :vartype order_index: int
+    :ivar study: Study metadata describing the evaluated dataset slice.
+    :vartype study: StudySpec
+    :ivar feature_space: Feature space evaluated by the sweep run.
+    :vartype feature_space: str
+    :ivar config: Hyper-parameter configuration that produced the metrics.
+    :vartype config: SweepConfig
+    :ivar accuracy: Held-out accuracy achieved on the validation split.
+    :vartype accuracy: float
+    :ivar best_k: Optimal neighbour count determined for the study.
+    :vartype best_k: int
+    :ivar eligible: Number of evaluation rows contributing to the metrics.
+    :vartype eligible: int
+    :ivar metrics_path: Filesystem path to the JSON metrics artefact.
+    :vartype metrics_path: Path
+    :ivar metrics: Raw metrics dictionary loaded from :attr:`metrics_path`.
+    :vartype metrics: Mapping[str, object]
+    """
     order_index: int
     study: "StudySpec"
     feature_space: str
@@ -117,11 +172,32 @@ class SweepOutcome:
     metrics_path: Path
     metrics: Mapping[str, object]
 
-
 @dataclass(frozen=True)
-class SweepTask:
-    """Container describing a single sweep execution request."""
+class SweepTask:  # pylint: disable=too-many-instance-attributes
+    """
+    Describe an executable sweep job with resolved CLI arguments and paths.
 
+    :ivar index: Stable ordinal used to preserve scheduling order.
+    :vartype index: int
+    :ivar study: Study specification that the sweep job evaluates.
+    :vartype study: StudySpec
+    :ivar config: Hyper-parameter configuration to realise in the job.
+    :vartype config: SweepConfig
+    :ivar base_cli: Shared CLI arguments applied to every sweep invocation.
+    :vartype base_cli: Tuple[str, ...]
+    :ivar extra_cli: User-specified CLI arguments appended to the invocation.
+    :vartype extra_cli: Tuple[str, ...]
+    :ivar run_root: Directory where intermediate sweep artefacts are written.
+    :vartype run_root: Path
+    :ivar word2vec_model_dir: Optional directory providing cached Word2Vec models.
+    :vartype word2vec_model_dir: Path | None
+    :ivar issue: Human-readable issue label aligned with the study.
+    :vartype issue: str
+    :ivar issue_slug: Normalised slug used for filesystem naming.
+    :vartype issue_slug: str
+    :ivar metrics_path: Expected location of the metrics JSON produced by the run.
+    :vartype metrics_path: Path
+    """
     index: int
     study: "StudySpec"
     config: SweepConfig
@@ -133,29 +209,68 @@ class SweepTask:
     issue_slug: str
     metrics_path: Path
 
-
-
 @dataclass
-class StudySelection(BaseStudySelection[SweepOutcome]):
-    """Selected configuration for a specific study within a feature space."""
+class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-many-instance-attributes
+    """
+    Selected configuration for a specific study within a feature space.
 
+    :ivar study: Study metadata chosen for final evaluation.
+    :vartype study: StudySpec
+    :ivar outcome: Winning sweep outcome promoted for the study.
+    :vartype outcome: SweepOutcome
+    """
     @property
     def accuracy(self) -> float:
-        """Return the held-out accuracy achieved by the selection."""
+        """
+        Return the held-out accuracy achieved by the selection.
 
+        :returns: the held-out accuracy achieved by the selection
+
+        :rtype: float
+
+        """
         return self.outcome.accuracy
 
     @property
     def best_k(self) -> int:
-        """Return the optimal ``k`` discovered during sweeps."""
+        """
+        Return the optimal ``k`` discovered during sweeps.
 
+        :returns: the optimal ``k`` discovered during sweeps
+
+        :rtype: int
+
+        """
         return self.outcome.best_k
 
-
 @dataclass
-class OpinionSweepOutcome:
-    """Metrics captured for a configuration/study pair during opinion sweeps."""
+class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
+    """
+    Metrics captured for a configuration/study pair during opinion sweeps.
 
+    :ivar order_index: Stable order matching how sweep jobs were enqueued.
+    :vartype order_index: int
+    :ivar study: Opinion study associated with the outcome.
+    :vartype study: StudySpec
+    :ivar config: Hyper-parameter configuration that produced the outcome.
+    :vartype config: SweepConfig
+    :ivar feature_space: Feature space evaluated by the opinion sweep.
+    :vartype feature_space: str
+    :ivar mae: Mean absolute error achieved on the validation split.
+    :vartype mae: float
+    :ivar rmse: Root-mean-square error achieved on the validation split.
+    :vartype rmse: float
+    :ivar r2: Coefficient of determination for the opinion regression.
+    :vartype r2: float
+    :ivar best_k: Optimal neighbour count determined for the study.
+    :vartype best_k: int
+    :ivar participants: Number of participants contributing to the metrics.
+    :vartype participants: int
+    :ivar metrics_path: Filesystem path to the metrics JSON artefact.
+    :vartype metrics_path: Path
+    :ivar metrics: Raw metrics payload loaded from :attr:`metrics_path`.
+    :vartype metrics: Mapping[str, object]
+    """
     order_index: int
     study: StudySpec
     config: SweepConfig
@@ -168,11 +283,28 @@ class OpinionSweepOutcome:
     metrics_path: Path
     metrics: Mapping[str, object]
 
-
 @dataclass(frozen=True)
-class OpinionSweepTask:
-    """Description of an opinion-sweep execution request."""
+class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes
+    """
+    Describe an opinion-sweep job paired with its execution context.
 
+    :ivar index: Stable ordinal matching the submission order.
+    :vartype index: int
+    :ivar study: Opinion study that the sweep job targets.
+    :vartype study: StudySpec
+    :ivar config: Hyper-parameter configuration under evaluation.
+    :vartype config: SweepConfig
+    :ivar base_cli: Baseline CLI arguments reused across tasks.
+    :vartype base_cli: Tuple[str, ...]
+    :ivar extra_cli: Additional passthrough CLI arguments for the job.
+    :vartype extra_cli: Tuple[str, ...]
+    :ivar run_root: Directory where opinion sweep outputs are written.
+    :vartype run_root: Path
+    :ivar word2vec_model_dir: Optional directory providing cached Word2Vec models.
+    :vartype word2vec_model_dir: Path | None
+    :ivar metrics_path: Expected location of the metrics JSON produced by the run.
+    :vartype metrics_path: Path
+    """
     index: int
     study: StudySpec
     config: SweepConfig
@@ -182,21 +314,82 @@ class OpinionSweepTask:
     word2vec_model_dir: Path | None
     metrics_path: Path
 
+# ``typing`` evaluates generic subscripts at runtime, so avoid instantiating the
+# generic base while the module loads to prevent ``TypeError`` when Python
+# validates the number of parameters. Static analyzers still see the narrowed
+# generic thanks to the TYPE_CHECKING branch.
+if TYPE_CHECKING:
+    OpinionSelectionBase = BaseOpinionStudySelection[OpinionSweepOutcome]
+else:
+    OpinionSelectionBase = BaseOpinionStudySelection
 
-class OpinionStudySelection(BaseOpinionStudySelection[OpinionSweepOutcome]):
-    """Selected configuration for the final opinion evaluation."""
+class OpinionStudySelection(OpinionSelectionBase):  # pylint: disable=too-many-instance-attributes
+    """
+    Selected configuration for the final opinion evaluation.
 
+    :ivar study: Opinion study metadata chosen for final evaluation.
+    :vartype study: StudySpec
+    :ivar outcome: Winning opinion sweep outcome promoted for the study.
+    :vartype outcome: OpinionSweepOutcome
+    """
     @property
     def best_k(self) -> int:
-        """Return the selected ``k`` for the study."""
+        """
+        Return the selected ``k`` for the study.
 
+        :returns: the selected ``k`` for the study
+
+        :rtype: int
+
+        """
         return self.outcome.best_k
 
-
 @dataclass(frozen=True)
-class PipelineContext:
-    """Normalised configuration for a pipeline run."""
+class PipelineContext:  # pylint: disable=too-many-instance-attributes
+    """
+    Normalised configuration for a pipeline run.
 
+    :ivar dataset: Dataset path or HuggingFace identifier used for all workloads.
+    :vartype dataset: str
+    :ivar out_dir: Output directory where sweeps, reports, and metrics are written.
+    :vartype out_dir: Path
+    :ivar cache_dir: Hugging Face datasets cache directory.
+    :vartype cache_dir: str
+    :ivar sweep_dir: Directory that stores hyper-parameter sweep outputs.
+    :vartype sweep_dir: Path
+    :ivar word2vec_model_dir: Location used to persist or read Word2Vec models.
+    :vartype word2vec_model_dir: Path
+    :ivar k_sweep: Comma-separated list of ``k`` values evaluated during sweeps.
+    :vartype k_sweep: str
+    :ivar study_tokens: Study identifiers supplied via CLI or environment overrides.
+    :vartype study_tokens: Tuple[str, ...]
+    :ivar word2vec_epochs: Number of epochs to use when training Word2Vec embeddings.
+    :vartype word2vec_epochs: int
+    :ivar word2vec_workers: Number of parallel workers for Word2Vec processing.
+    :vartype word2vec_workers: int
+    :ivar sentence_model: SentenceTransformer model identifier to encode viewer prompts.
+    :vartype sentence_model: str
+    :ivar sentence_device: Device hint (``cpu``/``cuda``) for SentenceTransformer, if provided.
+    :vartype sentence_device: str | None
+    :ivar sentence_batch_size: Batch size used during SentenceTransformer encoding.
+    :vartype sentence_batch_size: int
+    :ivar sentence_normalize: Flag indicating whether embeddings are L2-normalised.
+    :vartype sentence_normalize: bool
+    :ivar feature_spaces: Feature spaces that should be evaluated during the run.
+    :vartype feature_spaces: Tuple[str, ...]
+    :ivar jobs: Level of parallelism when scheduling sweep or evaluation tasks.
+    :vartype jobs: int
+    :ivar reuse_sweeps: Whether cached sweep artefacts can be reused instead of re-running.
+    :vartype reuse_sweeps: bool
+    :ivar reuse_final: Whether cached final evaluation artefacts can be reused.
+    :vartype reuse_final: bool
+    :ivar allow_incomplete: Permit finalize/report stages to run with partial sweep coverage.
+    :vartype allow_incomplete: bool
+    :ivar run_next_video: Toggle controlling whether slate evaluation is executed.
+    :vartype run_next_video: bool
+    :ivar run_opinion: Toggle controlling whether opinion evaluation is executed.
+    :vartype run_opinion: bool
+    """
     dataset: str
     out_dir: Path
     cache_dir: str
@@ -218,11 +411,40 @@ class PipelineContext:
     run_next_video: bool = True
     run_opinion: bool = True
 
-
 @dataclass(frozen=True)
-class ReportBundle:
-    """Inputs required to render the Markdown summaries."""
+class ReportBundle:  # pylint: disable=too-many-instance-attributes
+    """
+    Aggregated artefacts required to render Markdown reports for the pipeline run.
 
+    :ivar selections: Winning slate selections keyed by feature space and study slug.
+    :vartype selections: Mapping[str, Mapping[str, StudySelection]]
+    :ivar sweep_outcomes: Chronological list of all slate sweep outcomes.
+    :vartype sweep_outcomes: Sequence[SweepOutcome]
+    :ivar opinion_selections: Winning opinion selections keyed by feature space and study slug.
+    :vartype opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :ivar opinion_sweep_outcomes: Chronological list of all opinion sweep outcomes.
+    :vartype opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    :ivar studies: Study descriptors used when rendering friendly labels.
+    :vartype studies: Sequence[StudySpec]
+    :ivar metrics_by_feature: Cached final slate metrics grouped by feature space and study.
+    :vartype metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :ivar opinion_metrics: Cached final opinion metrics grouped by feature space and study.
+    :vartype opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :ivar k_sweep: Textual representation of the ``k`` sweep grid.
+    :vartype k_sweep: str
+    :ivar loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.
+    :vartype loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None
+    :ivar feature_spaces: Ordered set of feature spaces included in the bundle.
+    :vartype feature_spaces: Tuple[str, ...]
+    :ivar sentence_model: SentenceTransformer model name when reports include that feature space.
+    :vartype sentence_model: Optional[str]
+    :ivar allow_incomplete: Whether missing sweeps are tolerated when rendering summaries.
+    :vartype allow_incomplete: bool
+    :ivar include_next_video: Flag indicating whether slate sections should be generated.
+    :vartype include_next_video: bool
+    :ivar include_opinion: Flag indicating whether opinion sections should be generated.
+    :vartype include_opinion: bool
+    """
     selections: Mapping[str, Mapping[str, StudySelection]]
     sweep_outcomes: Sequence[SweepOutcome]
     opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]] = field(
@@ -244,11 +466,28 @@ class ReportBundle:
     include_next_video: bool = True
     include_opinion: bool = True
 
-
 @dataclass(frozen=True)
-class MetricSummary:
-    """Normalised slice of common slate metrics."""
+class MetricSummary:  # pylint: disable=too-many-instance-attributes
+    """
+    Normalised slice of slate evaluation metrics used across reports.
 
+    :ivar accuracy: Validation accuracy for the selected configuration.
+    :vartype accuracy: Optional[float]
+    :ivar accuracy_ci: 95% confidence interval for :attr:`accuracy`.
+    :vartype accuracy_ci: Optional[Tuple[float, float]]
+    :ivar baseline: Baseline accuracy from the most-frequent-gold comparator.
+    :vartype baseline: Optional[float]
+    :ivar baseline_ci: 95% confidence interval for :attr:`baseline`.
+    :vartype baseline_ci: Optional[Tuple[float, float]]
+    :ivar random_baseline: Expected accuracy for a random slate selection baseline.
+    :vartype random_baseline: Optional[float]
+    :ivar best_k: ``k`` value delivering the best validation accuracy.
+    :vartype best_k: Optional[int]
+    :ivar n_total: Total number of evaluation rows considered.
+    :vartype n_total: Optional[int]
+    :ivar n_eligible: Number of rows eligible for the final metric.
+    :vartype n_eligible: Optional[int]
+    """
     accuracy: Optional[float] = None
     accuracy_ci: Optional[Tuple[float, float]] = None
     baseline: Optional[float] = None
@@ -258,11 +497,32 @@ class MetricSummary:
     n_total: Optional[int] = None
     n_eligible: Optional[int] = None
 
-
 @dataclass(frozen=True)
-class OpinionSummary:
-    """Normalised view of opinion-regression metrics."""
+class OpinionSummary:  # pylint: disable=too-many-instance-attributes
+    """
+    Normalised view of opinion-regression metrics.
 
+    :ivar mae: Mean absolute error for the selected configuration.
+    :vartype mae: Optional[float]
+    :ivar rmse: Root-mean-square error for the selected configuration.
+    :vartype rmse: Optional[float]
+    :ivar r2: Coefficient of determination capturing explained variance.
+    :vartype r2: Optional[float]
+    :ivar mae_change: Normalised change in MAE relative to the baseline.
+    :vartype mae_change: Optional[float]
+    :ivar baseline_mae: Baseline MAE measured using pre-study opinions.
+    :vartype baseline_mae: Optional[float]
+    :ivar mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
+    :vartype mae_delta: Optional[float]
+    :ivar best_k: Neighbourhood size delivering the final metrics.
+    :vartype best_k: Optional[int]
+    :ivar participants: Number of participants included in the evaluation split.
+    :vartype participants: Optional[int]
+    :ivar dataset: Name of the dataset used to compute the metrics.
+    :vartype dataset: Optional[str]
+    :ivar split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
+    :vartype split: Optional[str]
+    """
     mae: Optional[float] = None
     rmse: Optional[float] = None
     r2: Optional[float] = None
@@ -273,7 +533,6 @@ class OpinionSummary:
     participants: Optional[int] = None
     dataset: Optional[str] = None
     split: Optional[str] = None
-
 
 __all__ = [
     "MetricSummary",

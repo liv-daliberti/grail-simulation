@@ -148,11 +148,11 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- `reports/build-reports.sh` – regenerates the published KNN/XGB reports from existing artefacts (legacy `scripts/run-build-reports.sh` now forwards here). The pre-commit hook runs this entrypoint so report markdown stays current without retraining.
+- `reports/build-reports.sh` – regenerates the published KNN/XGB reports from existing artifacts (legacy `scripts/run-build-reports.sh` now forwards here). The pre-commit hook runs this entrypoint so report markdown stays current without retraining.
 - `scripts/run-clean-data-suite.sh` – end-to-end dataset cleaning plus prompt/political-science replicas.
 - `scripts/update-reports.sh` – aggregates the clean-data suite, KNN/XGB rebuilds, prompt samples, and GPT-4o pipeline so every report is current.
 - Sphinx docs build (`sphinx-build -b html -n -W --keep-going docs docs/_build/html`) keeps the documentation green.
-- GitHub Actions (see `.github/workflows/`) install `development/requirements-dev.txt`, invoke these scripts, and publish docs/report artifacts on push and PRs. The `Build Reports` workflow calls `reports/build-reports.sh`, which regenerates Markdown from checked-in sweep artefacts and bails out if metrics are missing so training never reruns in CI. Full script descriptions live in `scripts/README.md`.
+- GitHub Actions (see `.github/workflows/`) install `development/requirements-dev.txt`, invoke these scripts, and publish docs/report artifacts on push and PRs. The `Build Reports` workflow calls `reports/build-reports.sh`, which regenerates Markdown from checked-in sweep artifacts and bails out if metrics are missing so training never reruns in CI. Full script descriptions live in `scripts/README.md`.
 
 Pytest markers in `development/pytest.ini` scope the suites that back the workflows above:
 

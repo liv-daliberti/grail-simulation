@@ -16,7 +16,8 @@ def fix_python3_imports(source_code):
     replacements = [
         # Fix collections.abc imports (changed in Python 3.3+)
         (
-            r"from collections import (Mapping|Sequence|Set|Container|MutableMapping|MutableSet|MutableSequence)",
+            r"from collections import "
+            r"(Mapping|Sequence|Set|Container|MutableMapping|MutableSet|MutableSequence)",
             r"from collections.abc import \1",
         ),
         # Fix imp module deprecation (deprecated in 3.4)
@@ -48,7 +49,8 @@ def fix_python3_imports(source_code):
         (
             i
             for i, line in enumerate(lines)
-            if line.strip().startswith("import") or (line.strip().startswith("from") and "import" in line)
+            if line.strip().startswith("import")
+            or (line.strip().startswith("from") and "import" in line)
         ),
         default=0,
     )
@@ -61,7 +63,13 @@ def fix_python3_imports(source_code):
         import_section += "\nfrom math import gcd"
 
     if "set_int_max_str_digits" not in source_code:
-        import_section += "\nimport sys\nsys.set_int_max_str_digits(0)"
+        import_section += "\n".join(
+            [
+                "",
+                "import sys",
+                "sys.set_int_max_str_digits(0)",
+            ]
+        )
 
     source_code = import_section + "\n" + main_source
 
@@ -99,7 +107,7 @@ def patch_code(text, lang):
         return text
     if lang in ("python", "python3", "Python 3", "PyPy 3", "PyPy 3-64"):
         return fix_python3_imports(text)
-    elif "cpp" in lang or "C++" in lang:
+    if "cpp" in lang or "C++" in lang:
         return fix_cpp_includes(text)
     return text
 

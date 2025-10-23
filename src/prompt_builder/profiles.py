@@ -226,10 +226,13 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
 
 
 def _load_selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract the ``selected_survey_row`` field as a plain dictionary.
+    """
+    Extract the ``selected_survey_row`` field as a plain dictionary.
 
     :param ex: Dataset example containing optional survey-row metadata.
+    :type ex: Dict[str, Any]
     :returns: Mapping of selected survey responses or an empty dictionary.
+    :rtype: Dict[str, Any]
     """
     raw = ex.get("selected_survey_row")
     if isinstance(raw, Mapping):
@@ -255,7 +258,9 @@ def _ensure_sentence(text: str) -> str:
     """Ensure that ``text`` ends with sentence punctuation.
 
     :param text: Candidate fragment to normalise.
+    :type text: str
     :returns: Sentence-terminated string or an empty string when missing.
+    :rtype: str
     """
     stripped = (text or "").strip()
     if not stripped:
@@ -274,10 +279,15 @@ def _first_text(
     """Return the first textual value among ``keys`` with optional length limit.
 
     :param ex: Primary dataset example.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :param keys: Candidate field names searched in order.
+    :type keys: str
     :param limit: Optional maximum length passed to :func:`clean_text`.
+    :type limit: Optional[int]
     :returns: Cleaned text fragment or an empty string.
+    :rtype: str
     """
     for key in keys:
         for dataset in (ex, selected):
@@ -297,7 +307,9 @@ def _clean_fragment(text: str) -> str:
     """Return a trimmed fragment without trailing periods.
 
     :param text: Text fragment to normalise.
+    :type text: str
     :returns: Stripped fragment.
+    :rtype: str
     """
     return (text or "").strip().rstrip(".")
 
@@ -306,7 +318,9 @@ def _phrases_from_items(items: Sequence[str]) -> List[str]:
     """Convert labeled item strings into a list of readable phrases.
 
     :param items: Iterable of ``label: value`` strings.
+    :type items: Sequence[str]
     :returns: List of single phrases suitable for inclusion in sentences.
+    :rtype: List[str]
     """
     phrases: List[str] = []
     for item in items:
@@ -342,8 +356,11 @@ def _sentencize(prefix: str, items: Sequence[str]) -> str:
     """Join ``items`` into a grammatically correct sentence prefixed by text.
 
     :param prefix: Leading phrase preceding the list.
+    :type prefix: str
     :param items: Sequence of phrase fragments.
+    :type items: Sequence[str]
     :returns: Sentence string or empty string when ``items`` is empty.
+    :rtype: str
     """
     phrases = _phrases_from_items(items)
     if not phrases:
@@ -357,8 +374,11 @@ def _demographic_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List
     """Assemble demographic sentences covering identity, location, and status.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of demographic sentences (may contain empties).
+    :rtype: List[str]
     """
     sentences: List[str] = []
     sentences.extend(_identity_sentences(ex, selected))
@@ -376,8 +396,11 @@ def _identity_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     """Build sentences describing age, gender, and race identity fragments.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of identity-related sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     age_fragment = describe_age_fragment(
@@ -429,8 +452,11 @@ def _location_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     """Return sentences summarising the viewer's location context.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of location-specific sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     city = _first_text(ex, selected, "city", "city_name")
@@ -473,8 +499,11 @@ def _education_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[s
     """Return sentences summarising educational attainment.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of education-focused sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     education = _first_text(
@@ -519,8 +548,11 @@ def _income_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
     """Return sentences describing household income details.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of income-related sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     income = _first_text(
@@ -555,8 +587,11 @@ def _employment_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[
     """Return sentences covering employment status and occupation.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of employment-related sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     employment = _first_text(
@@ -590,8 +625,11 @@ def _family_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
     """Return sentences capturing family structure details.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of family-oriented sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     marital_sentence = _marital_sentence(ex, selected)
@@ -605,7 +643,15 @@ def _family_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
 
 
 def _marital_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a sentence describing the viewer's marital status."""
+    """Return a sentence describing the viewer's marital status.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Sentence covering marital status, or ``None`` when unavailable.
+    :rtype: Optional[str]
+    """
     marital = _first_text(ex, selected, "marital_status", "married", "marital")
     if not marital:
         return None
@@ -613,7 +659,15 @@ def _marital_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
 
 
 def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
-    """Return sentences describing whether children are present in the household."""
+    """Return sentences describing whether children are present in the household.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: List containing at most one sentence about children.
+    :rtype: List[str]
+    """
     children_raw = first_non_nan_value(
         ex,
         selected,
@@ -646,7 +700,15 @@ def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
 
 
 def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a sentence summarising household size when available."""
+    """Return a sentence summarising household size when available.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Household-size sentence or ``None`` when the data is missing.
+    :rtype: Optional[str]
+    """
     household = _first_text(ex, selected, "household_size", "hh_size")
     if not household:
         return None
@@ -672,8 +734,11 @@ def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     """Return sentences covering religious identity and related context.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of religion-related sentences.
+    :rtype: List[str]
     """
     sentences: List[str] = []
     identity = _religion_identity_sentence(ex, selected)
@@ -689,7 +754,15 @@ def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
 
 
 def _religion_identity_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a sentence describing religious affiliation when available."""
+    """Return a sentence describing religious affiliation when available.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Sentence describing religion, or ``None`` if absent.
+    :rtype: Optional[str]
+    """
     religion = _first_text(
         ex,
         selected,
@@ -705,7 +778,15 @@ def _religion_identity_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) ->
 
 
 def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a sentence summarising religious attendance or importance."""
+    """Return a sentence summarising religious attendance or importance.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Sentence about attendance or importance, or ``None`` if missing.
+    :rtype: Optional[str]
+    """
     attendance = _first_text(
         ex,
         selected,
@@ -726,7 +807,15 @@ def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Option
 
 
 def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a sentence indicating veteran status when known."""
+    """Return a sentence indicating veteran status when known.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Veteran status sentence, or ``None`` when indeterminate.
+    :rtype: Optional[str]
+    """
     veteran_raw = first_non_nan_value(
         ex,
         selected,
@@ -748,7 +837,15 @@ def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
 
 
 def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
-    """Return sentences describing the language used to complete the survey."""
+    """Return sentences describing the language used to complete the survey.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: List containing a single sentence about the survey language, or empty.
+    :rtype: List[str]
+    """
     language = first_non_nan_value(
         ex,
         selected,
@@ -814,7 +911,15 @@ def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
 
 
 def _gun_ownership_entry(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
-    """Return a phrase describing gun ownership status."""
+    """Return a phrase describing gun ownership status.
+
+    :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
+    :returns: Phrase describing ownership, or ``None`` when unknown.
+    :rtype: Optional[str]
+    """
     ownership = first_non_nan_value(ex, selected, "gun_own", "gunowner", "owns_gun")
     if ownership is None:
         return None
@@ -840,8 +945,11 @@ def _gun_labeled_entries(
     """Return labelled gun-policy entries and the keys that were consumed.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: Tuple of ``(entries, known_keys)``.
+    :rtype: tuple[List[str], set[str]]
     """
     entries: List[str] = []
     known_keys: set[str] = {"gun_own", "gunowner", "owns_gun"}
@@ -861,8 +969,11 @@ def _gun_additional_entries(ex: Dict[str, Any], known_keys: set[str]) -> List[st
     """Return additional gun-policy entries excluding previously seen keys.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param known_keys: Lowercased keys already consumed.
+    :type known_keys: set[str]
     :returns: List of ``label: value`` strings for additional fields.
+    :rtype: List[str]
     """
     entries: List[str] = []
     for key in sorted(ex.keys()):
@@ -880,7 +991,17 @@ def _gun_additional_entries(ex: Dict[str, Any], known_keys: set[str]) -> List[st
 
 
 def _render_gun_phrase(key: str, label: str, value: Any) -> Optional[str]:
-    """Return a natural-language phrase for a gun-policy field."""
+    """Return a natural-language phrase for a gun-policy field.
+
+    :param key: Lowercased field name.
+    :type key: str
+    :param label: Human-readable label associated with the field.
+    :type label: str
+    :param value: Raw value to render.
+    :type value: Any
+    :returns: Phrase describing the field, or ``None`` when no rendering applies.
+    :rtype: Optional[str]
+    """
 
     yes_no = format_yes_no(value, yes="yes", no="no")
     if yes_no in {"yes", "no"}:
@@ -903,7 +1024,15 @@ def _render_gun_phrase(key: str, label: str, value: Any) -> Optional[str]:
 
 
 def _render_gun_boolean_phrase(key: str, affirmative: bool) -> Optional[str]:
-    """Return the canned yes/no phrase for ``key`` when available."""
+    """Return the canned yes/no phrase for ``key`` when available.
+
+    :param key: Lowercased field name.
+    :type key: str
+    :param affirmative: Whether the value is interpreted as ``True``.
+    :type affirmative: bool
+    :returns: Phrase reflecting the boolean interpretation, or ``None`` when unsupported.
+    :rtype: Optional[str]
+    """
 
     phrases = GUN_BOOLEAN_PHRASES.get(key)
     if not phrases:
@@ -913,7 +1042,15 @@ def _render_gun_boolean_phrase(key: str, affirmative: bool) -> Optional[str]:
 
 
 def _render_gun_metric_phrase(key: str, formatted: str) -> Optional[str]:
-    """Return the metric-oriented phrase for ``key`` if a template exists."""
+    """Return the metric-oriented phrase for ``key`` if a template exists.
+
+    :param key: Lowercased field name.
+    :type key: str
+    :param formatted: Pre-formatted value string.
+    :type formatted: str
+    :returns: Phrase incorporating the metric, or ``None`` when no template exists.
+    :rtype: Optional[str]
+    """
 
     template = GUN_METRIC_LABELS.get(key)
     if not template:
@@ -922,7 +1059,17 @@ def _render_gun_metric_phrase(key: str, formatted: str) -> Optional[str]:
 
 
 def _render_gun_generic_phrase(key: str, label: str, formatted: str) -> Optional[str]:
-    """Fallback renderer for gun-policy fields without specialised templates."""
+    """Fallback renderer for gun-policy fields without specialised templates.
+
+    :param key: Lowercased field name.
+    :type key: str
+    :param label: Original label describing the field.
+    :type label: str
+    :param formatted: Pre-formatted value string.
+    :type formatted: str
+    :returns: Phrase describing the field or ``None`` when nothing suitable is found.
+    :rtype: Optional[str]
+    """
 
     template = GUN_GENERIC_LABELS.get(key)
     if template:
@@ -939,8 +1086,11 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     """Return sentences covering minimum-wage and wage policy attitudes.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of minimum-wage sentences.
+    :rtype: List[str]
     """
     wage_section: List[str] = []
     for key, label in MIN_WAGE_FIELD_LABELS.items():
@@ -980,8 +1130,11 @@ def _media_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     """Return sentences describing overall media consumption habits.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of media-related sentences.
+    :rtype: List[str]
     """
     media_section: List[str] = []
     media_section.extend(_youtube_frequency_sentences(ex, selected))
@@ -1003,8 +1156,11 @@ def _youtube_frequency_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -
     """Return phrases describing YouTube watch frequency.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of frequency phrases (0 or 1 entry).
+    :rtype: List[str]
     """
     freq_raw = first_non_nan_value(
         ex,
@@ -1031,8 +1187,11 @@ def _youtube_binge_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> Li
     """Return phrases describing binge behaviour and reported watch time.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :returns: List of binge-related phrases (0 or 1 entry).
+    :rtype: List[str]
     """
     binge_raw = first_non_nan_value(ex, selected, "binge_youtube", "youtube_time")
     if binge_raw is None:
@@ -1052,9 +1211,13 @@ def _first_available_text(
     """Return the first non-empty text value across ``keys``.
 
     :param ex: Dataset example containing viewer metadata.
+    :type ex: Dict[str, Any]
     :param selected: Selected survey-row mapping.
+    :type selected: Dict[str, Any]
     :param keys: Sequence of candidate field names.
+    :type keys: Sequence[str]
     :returns: Cleaned text or an empty string.
+    :rtype: str
     """
     for key in keys:
         text = _first_text(ex, selected, key, limit=220)

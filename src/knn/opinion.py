@@ -1,5 +1,4 @@
 """Post-study opinion index evaluation for the KNN baselines."""
-
 from __future__ import annotations
 
 import json
@@ -8,7 +7,7 @@ import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 from numpy.random import default_rng
@@ -17,7 +16,13 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import NearestNeighbors
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
-from common.opinion import opinion_example_kwargs
+from common.opinion import (
+    DEFAULT_SPECS,
+    OpinionExample as BaseOpinionExample,
+    OpinionSpec,
+    float_or_none,
+    opinion_example_kwargs,
+)
 from common.vectorizers import create_tfidf_vectorizer
 
 from .data import (
@@ -37,38 +42,46 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     plt = None
 
-
 LOGGER = logging.getLogger("knn.opinion")
 
-
-@dataclass(frozen=True)
-class OpinionSpec:
-    """Configuration describing one study's opinion index columns."""
-
-    key: str
-    issue: str
-    label: str
-    before_column: str
-    after_column: str
-
-
 @dataclass
-class OpinionExample:
-    """Collapsed participant-level prompt and opinion values."""
+class OpinionExample(BaseOpinionExample):  # pylint: disable=too-many-instance-attributes
+    """
+    Collapsed participant-level prompt and opinion values with session context.
 
-    participant_id: str
-    participant_study: str
-    issue: str
-    document: str
-    before: float
-    after: float
+    :ivar step_index: Interaction step index retained from the raw dataset.
+    :vartype step_index: int
+    :ivar session_id: Session identifier associated with the participant example.
+    :vartype session_id: Optional[str]
+    """
+
     step_index: int
     session_id: Optional[str]
 
-
 @dataclass
-class OpinionIndex:
-    """Vectorised training corpus and associated metadata."""
+class OpinionIndex:  # pylint: disable=too-many-instance-attributes
+    """
+    Vectorised training corpus, cached targets, and fitted neighbour index.
+
+    :ivar feature_space: Feature space identifier (tfidf, word2vec, sentence_transformer).
+    :vartype feature_space: str
+    :ivar metric: Distance metric used by the KNN index.
+    :vartype metric: str
+    :ivar matrix: Document-term matrix or embedding matrix backing the index.
+    :vartype matrix: Any
+    :ivar vectorizer: Trained vectoriser or embedding builder.
+    :vartype vectorizer: Any
+    :ivar embeds: Optional Word2Vec feature builder used for inference.
+    :vartype embeds: Optional[Any]
+    :ivar targets_after: Post-study opinion targets aligned with the corpus.
+    :vartype targets_after: numpy.ndarray
+    :ivar targets_before: Pre-study opinion targets aligned with the corpus.
+    :vartype targets_before: numpy.ndarray
+    :ivar participant_keys: Participant/study identifiers aligned with targets.
+    :vartype participant_keys: List[Tuple[str, str]]
+    :ivar neighbors: Fitted :class:`sklearn.neighbors.NearestNeighbors` index.
+    :vartype neighbors: NearestNeighbors
+    """
 
     feature_space: str
     metric: str
@@ -80,55 +93,27 @@ class OpinionIndex:
     participant_keys: List[Tuple[str, str]]
     neighbors: NearestNeighbors
 
-
-DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
-    OpinionSpec(
-        key="study1",
-        issue="gun_control",
-        label="Study 1 – Gun Control (MTurk)",
-        before_column="gun_index",
-        after_column="gun_index_2",
-    ),
-    OpinionSpec(
-        key="study2",
-        issue="minimum_wage",
-        label="Study 2 – Minimum Wage (MTurk)",
-        before_column="mw_index_w1",
-        after_column="mw_index_w2",
-    ),
-    OpinionSpec(
-        key="study3",
-        issue="minimum_wage",
-        label="Study 3 – Minimum Wage (YouGov)",
-        before_column="mw_index_w1",
-        after_column="mw_index_w2",
-    ),
-)
-
-
 def find_spec(key: str) -> OpinionSpec:
-    """Return the :class:`OpinionSpec` matching ``key``."""
+    """
+    Return the :class:`OpinionSpec` matching ``key``.
 
+    :param key: Dictionary key identifying the current record.
+
+    :type key: str
+
+    :returns: the :class:`OpinionSpec` matching ``key``
+
+    :rtype: OpinionSpec
+
+    """
     normalised = key.strip().lower()
     for spec in DEFAULT_SPECS:
         if spec.key.lower() == normalised:
             return spec
-    raise KeyError(f"Unknown opinion study '{key}'. Expected one of {[s.key for s in DEFAULT_SPECS]!r}")
-
-
-def float_or_none(value: Any) -> Optional[float]:
-    """Return ``value`` converted to ``float`` or ``None`` when invalid."""
-
-    if value is None:
-        return None
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return None
-    if math.isnan(number):
-        return None
-    return number
-
+    expected_keys = [spec.key for spec in DEFAULT_SPECS]
+    raise KeyError(
+        f"Unknown opinion study '{key}'. Expected one of {expected_keys!r}"
+    )
 
 def collect_examples(
     dataset,
@@ -138,7 +123,22 @@ def collect_examples(
     max_examples: int | None,
     seed: int,
 ) -> List[OpinionExample]:
-    """Collapse a split down to participant-level opinion rows."""
+    """
+    Collapse the dataset split into participant-level opinion rows.
+
+    :param dataset: Dataset split providing raw participant interactions.
+    :type dataset: datasets.Dataset | Sequence[Mapping[str, Any]]
+    :param spec: Opinion study specification describing the target columns.
+    :type spec: OpinionSpec
+    :param extra_fields: Additional prompt columns appended to each document.
+    :type extra_fields: Sequence[str]
+    :param max_examples: Optional cap on participants retained from the split.
+    :type max_examples: int | None
+    :param seed: Random seed applied when subsampling participants.
+    :type seed: int
+    :returns: Participant-level examples combining prompts and opinion values.
+    :rtype: List[OpinionExample]
+    """
 
     LOGGER.info(
         "[OPINION] Collapsing dataset split for study=%s issue=%s rows=%d",
@@ -198,14 +198,22 @@ def collect_examples(
 
     return collapsed
 
-
 def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]:
-    """Fit a TF-IDF vectoriser using the supplied documents."""
+    """
+    Fit a TF-IDF vectoriser using the supplied documents.
 
+    :param documents: Iterable of vectorisable documents consumed by the index.
+
+    :type documents: Sequence[str]
+
+    :returns: Fitted TF-IDF vectoriser and sparse matrix for the provided documents.
+
+    :rtype: Tuple[TfidfVectorizer, Any]
+
+    """
     vectorizer = create_tfidf_vectorizer(max_features=None)
     matrix = vectorizer.fit_transform(documents).astype(np.float32)
     return vectorizer, matrix
-
 
 def build_index(
     *,
@@ -217,8 +225,42 @@ def build_index(
     word2vec_config: Optional[Word2VecConfig] = None,
     sentence_config: Optional[SentenceTransformerConfig] = None,
 ) -> OpinionIndex:
-    """Vectorise ``examples`` and construct a neighbour index."""
+    """
+    Vectorise ``examples`` and construct a neighbour index.
 
+    :param examples: Collection of dataset rows used in the evaluation.
+
+    :type examples: Sequence[OpinionExample]
+
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param spec: Opinion study specification containing issue metadata.
+
+    :type spec: OpinionSpec
+
+    :param seed: Seed used to initialise pseudo-random operations.
+
+    :type seed: int
+
+    :param metric: Name of the evaluation metric being inspected.
+
+    :type metric: str
+
+    :param word2vec_config: Configuration object carrying Word2Vec hyper-parameters.
+
+    :type word2vec_config: Optional[Word2VecConfig]
+
+    :param sentence_config: Sentence-transformer configuration describing encoding details.
+
+    :type sentence_config: Optional[SentenceTransformerConfig]
+
+    :returns: Tuple containing the fitted index and any feature-space-specific metadata.
+
+    :rtype: OpinionIndex
+
+    """
     documents = [example.document for example in examples]
     feature_space = (feature_space or "tfidf").lower()
 
@@ -276,14 +318,27 @@ def build_index(
         neighbors=neighbors,
     )
 
-
 def _transform_documents(
     *,
     index: OpinionIndex,
     documents: Sequence[str],
 ) -> Any:
-    """Transform ``documents`` into the feature space of ``index``."""
+    """
+    Transform ``documents`` into the feature space of ``index``.
 
+    :param index: KNN index object or registry being manipulated.
+
+    :type index: OpinionIndex
+
+    :param documents: Iterable of vectorisable documents consumed by the index.
+
+    :type documents: Sequence[str]
+
+    :returns: Matrix of transformed document vectors ready for nearest-neighbour search.
+
+    :rtype: Any
+
+    """
     if index.feature_space == "tfidf":
         if index.vectorizer is None:
             raise RuntimeError("TF-IDF vectoriser missing from index.")
@@ -295,10 +350,23 @@ def _transform_documents(
         return np.asarray(transformed, dtype=np.float32)
     raise ValueError(f"Unsupported feature space '{index.feature_space}'.")
 
-
 def _similarity_from_distances(distances: np.ndarray, *, metric: str) -> np.ndarray:
-    """Convert neighbour distances into similarity weights."""
+    """
+    Convert neighbour distances into similarity weights.
 
+    :param distances: Array of neighbour distances returned by the index.
+
+    :type distances: np.ndarray
+
+    :param metric: Name of the evaluation metric being inspected.
+
+    :type metric: str
+
+    :returns: Similarity scores derived from the provided distance array.
+
+    :rtype: np.ndarray
+
+    """
     metric_norm = (metric or "cosine").lower()
     distances = np.asarray(distances, dtype=np.float32)
     if metric_norm == "cosine":
@@ -307,15 +375,27 @@ def _similarity_from_distances(distances: np.ndarray, *, metric: str) -> np.ndar
     weights = 1.0 / (distances + 1e-6)
     return np.clip(weights, 0.0, None)
 
-
 def _weighted_mean(values: np.ndarray, weights: np.ndarray) -> float:
-    """Return the weighted mean of ``values`` with fallback for zero weights."""
+    """
+    Return the weighted mean of ``values`` with fallback for zero weights.
 
+    :param values: Sequence of numeric values contributing to an aggregate statistic.
+
+    :type values: np.ndarray
+
+    :param weights: Optional weight values aligned with the provided observations.
+
+    :type weights: np.ndarray
+
+    :returns: the weighted mean of ``values`` with fallback for zero weights
+
+    :rtype: float
+
+    """
     total = float(weights.sum())
     if total <= 1e-8:
         return float(values.mean()) if values.size else float("nan")
     return float(np.dot(values, weights) / total)
-
 
 def predict_post_indices(
     *,
@@ -324,8 +404,30 @@ def predict_post_indices(
     k_values: Sequence[int],
     exclude_self: bool = False,
 ) -> Dict[str, Any]:
-    """Return predictions and aggregate metrics for ``eval_examples``."""
+    """
+    Return predictions and aggregate metrics for ``eval_examples``.
 
+    :param index: KNN index object or registry being manipulated.
+
+    :type index: OpinionIndex
+
+    :param eval_examples: Iterable of evaluation examples to score with the index.
+
+    :type eval_examples: Sequence[OpinionExample]
+
+    :param k_values: Iterable of ``k`` values to evaluate or report.
+
+    :type k_values: Sequence[int]
+
+    :param exclude_self: Whether to drop the query point when collecting nearest neighbours.
+
+    :type exclude_self: bool
+
+    :returns: predictions and aggregate metrics for ``eval_examples``
+
+    :rtype: Dict[str, Any]
+
+    """
     if not eval_examples:
         return {
             "rows": [],
@@ -423,14 +525,27 @@ def predict_post_indices(
         "per_k_change_predictions": per_k_change_predictions,
     }
 
-
 def _summary_metrics(
     *,
     predictions: Dict[int, List[float]],
     eval_examples: Sequence[OpinionExample],
 ) -> Dict[int, Dict[str, float]]:
-    """Return MAE, RMSE, and R^2 metrics for each ``k``."""
+    """
+    Return MAE, RMSE, and R^2 metrics for each ``k``.
 
+    :param predictions: Sequence of KNN prediction records emitted during evaluation.
+
+    :type predictions: Dict[int, List[float]]
+
+    :param eval_examples: Iterable of evaluation examples to score with the index.
+
+    :type eval_examples: Sequence[OpinionExample]
+
+    :returns: MAE, RMSE, and R^2 metrics for each ``k``
+
+    :rtype: Dict[int, Dict[str, float]]
+
+    """
     truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
     truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
     change_truth = truth_after - truth_before
@@ -441,25 +556,38 @@ def _summary_metrics(
         change_pred = preds_arr - truth_before
         mae = float(mean_absolute_error(truth_after, preds_arr))
         rmse = float(math.sqrt(mean_squared_error(truth_after, preds_arr)))
-        r2 = float(r2_score(truth_after, preds_arr))
+        r_squared = float(r2_score(truth_after, preds_arr))
         change_mae = float(mean_absolute_error(change_truth, change_pred))
 
         metrics[int(k)] = {
             "mae_after": mae,
             "rmse_after": rmse,
-            "r2_after": r2,
+            "r2_after": r_squared,
             "mae_change": change_mae,
         }
     return metrics
-
 
 def _curve_payload(
     metrics_by_k: Dict[int, Dict[str, float]],
     *,
     n_examples: int,
 ) -> Optional[Dict[str, Any]]:
-    """Convert ``metrics_by_k`` into a serialisable curve bundle."""
+    """
+    Convert ``metrics_by_k`` into a serialisable curve bundle.
 
+    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.
+
+    :type metrics_by_k: Dict[int, Dict[str, float]]
+
+    :param n_examples: Total number of evaluation examples summarised in the bundle.
+
+    :type n_examples: int
+
+    :returns: Dictionary summarising the evaluation curve, including AUC and per-k metrics.
+
+    :rtype: Optional[Dict[str, Any]]
+
+    """
     if not metrics_by_k:
         return None
 
@@ -498,17 +626,27 @@ def _curve_payload(
         "n_examples": int(n_examples),
     }
 
-
 def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, float]:
-    """Return baseline error metrics for opinion prediction."""
+    """
+    Return baseline error metrics for opinion prediction.
 
+    :param eval_examples: Iterable of evaluation examples to score with the index.
+
+    :type eval_examples: Sequence[OpinionExample]
+
+    :returns: baseline error metrics for opinion prediction
+
+    :rtype: Dict[str, float]
+
+    """
     truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
     truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
     change_truth = truth_after - truth_before
 
     baseline_mean = float(truth_after.mean()) if truth_after.size else float("nan")
-    mae_mean = float(mean_absolute_error(truth_after, np.full_like(truth_after, baseline_mean)))
-    rmse_mean = float(math.sqrt(mean_squared_error(truth_after, np.full_like(truth_after, baseline_mean))))
+    baseline_predictions = np.full_like(truth_after, baseline_mean)
+    mae_mean = float(mean_absolute_error(truth_after, baseline_predictions))
+    rmse_mean = float(math.sqrt(mean_squared_error(truth_after, baseline_predictions)))
 
     mae_no_change = float(mean_absolute_error(truth_after, truth_before))
     change_zero = np.zeros_like(change_truth)
@@ -522,15 +660,32 @@ def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, floa
         "global_mean_after": baseline_mean,
     }
 
-
 def _plot_metric(
     *,
     metrics_by_k: Dict[int, Dict[str, float]],
     metric_key: str,
     output_path: Path,
 ) -> None:
-    """Save a line plot of ``metric_key`` vs. ``k`` if matplotlib is available."""
+    """
+    Save a line plot of ``metric_key`` vs. ``k`` if matplotlib is available.
 
+    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.
+
+    :type metrics_by_k: Dict[int, Dict[str, float]]
+
+    :param metric_key: Dictionary key pointing to a metric within the payload.
+
+    :type metric_key: str
+
+    :param output_path: Filesystem path for the generated report or figure.
+
+    :type output_path: Path
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     if plt is None:  # pragma: no cover - optional dependency
         LOGGER.warning("[OPINION] Skipping %s plot (matplotlib not installed).", metric_key)
         return
@@ -540,12 +695,12 @@ def _plot_metric(
         return
 
     sorted_items = sorted(metrics_by_k.items())
-    ks = [item[0] for item in sorted_items]
+    k_values = [item[0] for item in sorted_items]
     values = [item[1][metric_key] for item in sorted_items]
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.figure(figsize=(6, 4))
-    plt.plot(ks, values, marker="o")
+    plt.plot(k_values, values, marker="o")
     plt.title(f"{metric_key} vs k")
     plt.xlabel("k")
     plt.ylabel(metric_key)
@@ -554,15 +709,32 @@ def _plot_metric(
     plt.savefig(output_path, dpi=150)
     plt.close()
 
-
 def _plot_change_heatmap(
     *,
     actual_changes: Sequence[float],
     predicted_changes: Sequence[float],
     output_path: Path,
 ) -> None:
-    """Render a 2D histogram comparing actual vs. predicted opinion shifts."""
+    """
+    Render a 2D histogram comparing actual vs. predicted opinion shifts.
 
+    :param actual_changes: Sequence of observed opinion deltas for participants.
+
+    :type actual_changes: Sequence[float]
+
+    :param predicted_changes: Predicted opinion deltas returned by the model.
+
+    :type predicted_changes: Sequence[float]
+
+    :param output_path: Filesystem path for the generated report or figure.
+
+    :type output_path: Path
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     if plt is None:  # pragma: no cover - optional dependency
         LOGGER.warning("[OPINION] Skipping opinion-change heatmap (matplotlib not installed).")
         return
@@ -614,7 +786,6 @@ def _plot_change_heatmap(
     plt.savefig(output_path, dpi=150)
     plt.close()
 
-
 def _write_outputs(
     *,
     args,
@@ -627,8 +798,50 @@ def _write_outputs(
     outputs_root: Path,
     curve_metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Persist per-example predictions, metrics, and plots."""
+    """
+    Persist per-example predictions, metrics, and plots.
 
+    :param args: Namespace object containing parsed command-line arguments.
+
+    :type args: Any
+
+    :param spec: Opinion study specification containing issue metadata.
+
+    :type spec: OpinionSpec
+
+    :param index: KNN index object or registry being manipulated.
+
+    :type index: OpinionIndex
+
+    :param rows: Iterable of evaluation rows or metrics to analyse.
+
+    :type rows: Sequence[Dict[str, Any]]
+
+    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.
+
+    :type metrics_by_k: Dict[int, Dict[str, float]]
+
+    :param baseline: Baseline metrics record used for comparison in the report.
+
+    :type baseline: Dict[str, float]
+
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
+
+    :type best_k: int
+
+    :param outputs_root: Root directory that stores opinion-evaluation artefacts.
+
+    :type outputs_root: Path
+
+    :param curve_metrics: Aggregate metrics summarising performance across the curve.
+
+    :type curve_metrics: Optional[Dict[str, Any]]
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     feature_space = index.feature_space
     study_dir = outputs_root / spec.key
     study_dir.mkdir(parents=True, exist_ok=True)
@@ -711,10 +924,20 @@ def _write_outputs(
         metrics_path,
     )
 
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def run_opinion_eval(args) -> None:
+    """
+    Execute the post-study opinion index evaluation.
 
-def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
-    """Execute the post-study opinion index evaluation."""
+    :param args: Namespace object containing parsed command-line arguments.
 
+    :type args: Any
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     os_env = os.environ
     os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
     os_env.setdefault("HF_HOME", args.cache_dir)
@@ -756,7 +979,11 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
     if feature_space == "sentence_transformer":
         device_raw = getattr(args, "sentence_transformer_device", "")
         sentence_cfg = SentenceTransformerConfig(
-            model_name=getattr(args, "sentence_transformer_model", SentenceTransformerConfig().model_name),
+            model_name=getattr(
+                args,
+                "sentence_transformer_model",
+                SentenceTransformerConfig().model_name,
+            ),
             device=device_raw or None,
             batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
             normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
@@ -868,6 +1095,5 @@ def run_opinion_eval(args) -> None:  # pylint: disable=too-many-locals
             float(metrics_by_k.get(best_k, {}).get("r2_after", float("nan"))),
             float(metrics_by_k.get(best_k, {}).get("mae_after", float("nan"))),
         )
-
 
 __all__ = ["run_opinion_eval", "OpinionSpec", "DEFAULT_SPECS"]

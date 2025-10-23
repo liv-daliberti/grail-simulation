@@ -340,7 +340,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Create a vectoriser backed by a sentence-transformer model.
 
-        :param config: Encoder settings forwarded to :class:`common.embeddings.SentenceTransformerEncoder`.
+        :param config: Encoder settings forwarded to
+            :class:`common.embeddings.SentenceTransformerEncoder`.
         :type config: SentenceTransformerVectorizerConfig
         """
 

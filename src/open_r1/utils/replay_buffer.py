@@ -1,3 +1,4 @@
+# pylint: disable=broad-exception-caught,invalid-name,keyword-arg-before-vararg,too-many-instance-attributes
 """Replay buffer helpers for bandit-style GRPO training."""
 
 from __future__ import annotations
@@ -8,7 +9,6 @@ import threading
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
-import torch.distributed as dist
 
 def _prompt_key(prompt: Sequence[Dict[str, str]]) -> Tuple[Tuple[str, str], ...]:
     """Return a hashable key summarising the prompt messages."""
@@ -257,7 +257,7 @@ class ReplayBuffer:
                 "tail_mu": [float(m) for m in self._mean[tail]],
                 "tail_n": self._n[tail],
             }
-            
+
     # ----------------- sampling -----------------
     def sample(
         self,

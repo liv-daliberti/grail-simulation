@@ -1,5 +1,4 @@
 """Feature extraction helpers for the refactored KNN baselines."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -32,7 +31,6 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
     logger_name="knn.features",
 )
 
-
 def title_for(video_id: str) -> Optional[str]:
     """
     Look up a human-readable title for a given YouTube identifier.
@@ -42,9 +40,7 @@ def title_for(video_id: str) -> Optional[str]:
     :returns: Title associated with ``video_id`` when present in the cache.
     :rtype: Optional[str]
     """
-
     return _PROMPT_DOC_BUILDER.title_for(video_id)
-
 
 def viewer_profile_sentence(example: dict) -> str:
     """
@@ -55,9 +51,7 @@ def viewer_profile_sentence(example: dict) -> str:
     :returns: Natural-language sentence describing the participant profile.
     :rtype: str
     """
-
     return _PROMPT_DOC_BUILDER.viewer_profile_sentence(example)
-
 
 def prompt_from_builder(example: dict) -> str:
     """
@@ -68,9 +62,7 @@ def prompt_from_builder(example: dict) -> str:
     :returns: Prompt text used for feature extraction.
     :rtype: str
     """
-
     return _PROMPT_DOC_BUILDER.prompt_from_builder(example)
-
 
 def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
     """
@@ -81,9 +73,7 @@ def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
     :returns: Tuple of ``(title, video_id)`` when the "now watching" context exists.
     :rtype: Optional[Tuple[str, str]]
     """
-
     return _PROMPT_DOC_BUILDER.extract_now_watching(example)
-
 
 def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
     """
@@ -94,9 +84,7 @@ def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
     :returns: Ordered list of ``(title, video_id)`` tuples.
     :rtype: List[Tuple[str, str]]
     """
-
     return _PROMPT_DOC_BUILDER.extract_slate_items(example)
-
 
 def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
     """
@@ -109,9 +97,7 @@ def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) 
     :returns: Combined prompt text passed to vectorisers.
     :rtype: str
     """
-
     return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
-
 
 def prepare_training_documents(
     train_ds,
@@ -133,7 +119,6 @@ def prepare_training_documents(
     :returns: Tuple of ``(documents, label_ids, participant_ids)``.
     :rtype: Tuple[list[str], list[str], list[str]]
     """
-
     return _PROMPT_DOC_BUILDER.prepare_training_documents(
         train_ds,
         max_train,
@@ -141,11 +126,9 @@ def prepare_training_documents(
         extra_fields,
     )
 
-
 # ---------------------------------------------------------------------------
 # TF-IDF + Word2Vec interfaces
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Word2VecConfig:
@@ -167,7 +150,6 @@ class Word2VecConfig:
     :ivar workers: Number of worker threads allocated to training.
     :vartype workers: int
     """
-
     vector_size: int = 256
     window: int = 5
     min_count: int = 2
@@ -175,7 +157,6 @@ class Word2VecConfig:
     model_dir: Path = Path("models/knn_word2vec")
     seed: int = 42
     workers: int = 1
-
 
 class Word2VecFeatureBuilder:
     """
@@ -186,7 +167,6 @@ class Word2VecFeatureBuilder:
     :ivar _model: Loaded gensim :class:`~gensim.models.Word2Vec` instance.
     :vartype _model: gensim.models.Word2Vec | None
     """
-
     def __init__(self, config: Optional[Word2VecConfig] = None) -> None:
         """
         Initialise the builder with optional configuration overrides.
@@ -217,7 +197,6 @@ class Word2VecFeatureBuilder:
         :type corpus: Iterable[str]
         :raises ImportError: If :mod:`gensim` is unavailable.
         """
-
         if Word2Vec is None:  # pragma: no cover - optional dependency
             raise ImportError("Install gensim to enable Word2Vec embeddings")
         sentences = [self._tokenize(text) for text in corpus]
@@ -241,7 +220,6 @@ class Word2VecFeatureBuilder:
         :type directory: Path
         :raises ImportError: If :mod:`gensim` is unavailable.
         """
-
         if Word2Vec is None:  # pragma: no cover - optional dependency
             raise ImportError("Install gensim to enable Word2Vec embeddings")
         self._model = Word2Vec.load(str(directory / "word2vec.model"))
@@ -254,7 +232,6 @@ class Word2VecFeatureBuilder:
         :type directory: Path
         :raises RuntimeError: If the model has not been trained or loaded.
         """
-
         if self._model is None:
             raise RuntimeError("Word2Vec model must be trained before saving")
         directory.mkdir(parents=True, exist_ok=True)
@@ -267,7 +244,6 @@ class Word2VecFeatureBuilder:
         :returns: ``True`` when a trained model is loaded.
         :rtype: bool
         """
-
         return self._model is not None
 
     def encode(self, text: str) -> np.ndarray:
@@ -280,7 +256,6 @@ class Word2VecFeatureBuilder:
         :rtype: numpy.ndarray
         :raises RuntimeError: If the model has not been trained or loaded.
         """
-
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")
         tokens = [token for token in self._tokenize(text) if token in self._model.wv]
@@ -298,14 +273,12 @@ class Word2VecFeatureBuilder:
         :rtype: numpy.ndarray
         :raises RuntimeError: If the model has not been trained or loaded.
         """
-
         if self._model is None:
             raise RuntimeError("Word2Vec model has not been trained/loaded")
         if not corpus:
             return np.zeros((0, self._model.vector_size), dtype=np.float32)
         vectors = [self.encode(text) for text in corpus]
         return np.vstack(vectors).astype(np.float32)
-
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",

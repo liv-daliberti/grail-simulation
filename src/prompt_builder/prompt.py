@@ -20,8 +20,11 @@ def _last_index(xs: Any, val: Any) -> Optional[int]:
     """Return the last index of ``val`` within ``xs`` when ``xs`` is a list.
 
     :param xs: Sequence potentially containing ``val``.
+    :type xs: Any
     :param val: Value to locate.
+    :type val: Any
     :returns: Zero-based index or ``None`` when not found.
+    :rtype: Optional[int]
     """
     if not isinstance(xs, list) or val is None:
         return None
@@ -33,7 +36,14 @@ def _last_index(xs: Any, val: Any) -> Optional[int]:
 
 
 def _selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
-    """Return the ``selected_survey_row`` mapping, if present."""
+    """
+    Extract the ``selected_survey_row`` mapping from ``ex`` when available.
+
+    :param ex: Dataset example potentially containing inline or serialised survey metadata.
+    :type ex: Dict[str, Any]
+    :returns: Normalised dictionary representation of the selected survey row.
+    :rtype: Dict[str, Any]
+    """
 
     raw = ex.get("selected_survey_row")
     if isinstance(raw, Mapping):
@@ -123,7 +133,18 @@ def _viewer_summary_line(
     selected: Dict[str, Any],
     profile: ProfileRender,
 ) -> str:
-    """Return a condensed single-line viewer description."""
+    """
+    Build a compact viewer descriptor suitable for the ``VIEWER`` heading.
+
+    :param ex: Primary dataset row with viewer and survey metadata.
+    :type ex: Dict[str, Any]
+    :param selected: Normalised ``selected_survey_row`` mapping extracted from ``ex``.
+    :type selected: Dict[str, Any]
+    :param profile: Full profile rendering returned by :func:`prompt_builder.profiles.render_profile`.
+    :type profile: ProfileRender
+    :returns: Single sentence summarising identity and location, or an empty string.
+    :rtype: str
+    """
 
     merged: Dict[str, Any] = dict(selected)
     merged.update(ex)
@@ -155,7 +176,14 @@ def _viewer_summary_line(
 
 
 def _fragments_from_profile(profile: ProfileRender) -> List[str]:
-    """Fallback viewer fragments derived from existing profile sentences."""
+    """
+    Derive fallback fragments from an existing :class:`ProfileRender`.
+
+    :param profile: Rendered profile containing ordered sentences.
+    :type profile: ProfileRender
+    :returns: List containing the first sentence stripped of punctuation, or empty when unavailable.
+    :rtype: List[str]
+    """
 
     for sentence in profile.sentences:
         cleaned = sentence.strip()
@@ -165,7 +193,14 @@ def _fragments_from_profile(profile: ProfileRender) -> List[str]:
 
 
 def _normalize_viewer_fragments(raw: str) -> List[str]:
-    """Convert the synthesised viewer sentence into semicolon-ready fragments."""
+    """
+    Split a synthesised viewer sentence into semicolon-ready fragments.
+
+    :param raw: Raw viewer sentence produced by :func:`synthesize_viewer_sentence`.
+    :type raw: str
+    :returns: Ordered list of descriptive fragments prioritising identity elements.
+    :rtype: List[str]
+    """
 
     text = raw.strip().rstrip(".").replace(",\n", ", ").replace("\n", " ")
     parts = [part.strip() for part in text.split(", ") if part.strip()]
@@ -204,7 +239,14 @@ def _normalize_viewer_fragments(raw: str) -> List[str]:
 
 
 def _looks_like_gender_fragment(text: str) -> bool:
-    """Return ``True`` when the fragment appears to describe gender."""
+    """
+    Heuristically determine whether ``text`` refers to gender.
+
+    :param text: Fragment extracted from a viewer sentence.
+    :type text: str
+    :returns: ``True`` when gender-related keywords are detected.
+    :rtype: bool
+    """
 
     lowered = text.lower()
     gender_keywords = [
@@ -220,7 +262,14 @@ def _looks_like_gender_fragment(text: str) -> bool:
 
 
 def _looks_like_race_fragment(text: str) -> bool:
-    """Return ``True`` when the fragment appears to describe race/ethnicity."""
+    """
+    Heuristically determine whether ``text`` refers to race or ethnicity.
+
+    :param text: Fragment extracted from a viewer sentence.
+    :type text: str
+    :returns: ``True`` when race-related keywords are detected.
+    :rtype: bool
+    """
 
     lowered = text.lower()
     race_keywords = [
@@ -243,7 +292,14 @@ def _looks_like_race_fragment(text: str) -> bool:
 
 
 def _location_fragment(profile: ProfileRender) -> str:
-    """Extract a location fragment from profile sentences when available."""
+    """
+    Extract a location fragment from profile sentences when available.
+
+    :param profile: Rendered profile containing viewer sentences.
+    :type profile: ProfileRender
+    :returns: Fragment such as ``\"lives in Seattle, Washington\"`` or ``\"\"`` if none found.
+    :rtype: str
+    """
 
     for sentence in profile.sentences:
         stripped = sentence.strip()
@@ -261,7 +317,16 @@ def _initial_viewpoint_line(
     ex: Dict[str, Any],
     selected: Dict[str, Any],
 ) -> str:
-    """Return a concise description of the viewer's initial stance on the issue."""
+    """
+    Construct a concise description of the viewer's initial stance on the active issue.
+
+    :param ex: Dataset example containing issue identifier and survey responses.
+    :type ex: Dict[str, Any]
+    :param selected: Normalised ``selected_survey_row`` mapping.
+    :type selected: Dict[str, Any]
+    :returns: Natural-language stance description, or an empty string when the issue is unknown.
+    :rtype: str
+    """
 
     issue_raw = first_non_nan_value(ex, selected, "issue") or ex.get("topic")
     issue = str(issue_raw or "").strip().lower()
@@ -277,7 +342,18 @@ def _first_yes_no(
     selected: Dict[str, Any],
     keys: Sequence[str],
 ) -> Optional[str]:
-    """Return the first yes/no text resolved across ``keys``."""
+    """
+    Retrieve the first yes/no style response across ``keys``.
+
+    :param ex: Dataset example consulted before fallback values.
+    :type ex: Dict[str, Any]
+    :param selected: Normalised ``selected_survey_row`` mapping.
+    :type selected: Dict[str, Any]
+    :param keys: Ordered field names searched for boolean responses.
+    :type keys: Sequence[str]
+    :returns: Lowercase ``\"yes\"`` or ``\"no\"`` when found, otherwise ``None``.
+    :rtype: Optional[str]
+    """
 
     for key in keys:
         value = first_non_nan_value(ex, selected, key)
@@ -293,13 +369,44 @@ def _minimum_wage_viewpoint(
     ex: Dict[str, Any],
     selected: Dict[str, Any],
 ) -> str:
-    """Return a single-sentence summary of minimum wage attitudes."""
+    """
+    Summarise the viewer's stance on minimum wage policy.
+
+    :param ex: Dataset example with minimum wage survey responses.
+    :type ex: Dict[str, Any]
+    :param selected: Normalised ``selected_survey_row`` mapping.
+    :type selected: Dict[str, Any]
+    :returns: Sentence describing support level or preferred wage, or ``\"\"`` if indeterminate.
+    :rtype: str
+    """
 
     def yes_no_phrase(keys: Sequence[str], yes: str, no: str) -> Optional[str]:
+        """
+        Map yes/no style responses across ``keys`` to canned phrases.
+
+        :param keys: Ordered field names examined for boolean responses.
+        :type keys: Sequence[str]
+        :param yes: Phrase returned when a ``\"yes\"`` response is found.
+        :type yes: str
+        :param no: Phrase returned when a ``\"no\"`` response is found.
+        :type no: str
+        :returns: Matching phrase or ``None`` when no definitive response exists.
+        :rtype: Optional[str]
+        """
         verdict = _first_yes_no(ex, selected, keys)
         return {"yes": yes, "no": no}.get(verdict or "")
 
     def first_formatted(keys: Sequence[str], template: str) -> Optional[str]:
+        """
+        Format the first non-missing value across ``keys`` using ``template``.
+
+        :param keys: Candidate field names to inspect.
+        :type keys: Sequence[str]
+        :param template: ``str.format`` template that receives the formatted value.
+        :type template: str
+        :returns: Rendered string or ``None`` when no values are available.
+        :rtype: Optional[str]
+        """
         for key in keys:
             value = first_non_nan_value(ex, selected, key)
             if value is None:
@@ -339,7 +446,16 @@ def _gun_control_viewpoint(
     ex: Dict[str, Any],
     selected: Dict[str, Any],
 ) -> str:
-    """Return a single-sentence summary of gun policy attitudes."""
+    """
+    Summarise the viewer's stance on gun control policy.
+
+    :param ex: Dataset example with gun policy responses.
+    :type ex: Dict[str, Any]
+    :param selected: Normalised ``selected_survey_row`` mapping.
+    :type selected: Dict[str, Any]
+    :returns: Sentence describing support level for specific gun policies, or ``\"\"`` if unknown.
+    :rtype: str
+    """
 
     for key, (yes_phrase, no_phrase) in (
         ("stricter_laws", ("Supports stricter gun laws", "Opposes stricter gun laws")),
@@ -379,7 +495,16 @@ def _gun_control_viewpoint(
 
 
 def _current_video_line(ex: Dict[str, Any], show_ids: bool) -> str:
-    """Return a single-line description of the currently playing video."""
+    """
+    Summarise the current video being watched.
+
+    :param ex: Dataset example containing ``current_video_*`` fields.
+    :type ex: Dict[str, Any]
+    :param show_ids: Whether to include the YouTube video id in the output.
+    :type show_ids: bool
+    :returns: Readable description of the active video or ``\"\"`` if no data exists.
+    :rtype: str
+    """
 
     title = clean_text(ex.get("current_video_title"), limit=160)
     current_id = clean_text(ex.get("current_video_id"))
@@ -397,7 +522,18 @@ def _current_video_line(ex: Dict[str, Any], show_ids: bool) -> str:
 
 
 def _history_lines(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[str]:
-    """Return lines summarising prior session history."""
+    """
+    Format prior watch history as numbered lines.
+
+    :param ex: Dataset example containing ``watch_history`` details.
+    :type ex: Dict[str, Any]
+    :param show_ids: Whether to append YouTube ids to each entry.
+    :type show_ids: bool
+    :param max_hist: Maximum number of history entries to include.
+    :type max_hist: int
+    :returns: Ordered list of numbered history lines, newest last.
+    :rtype: List[str]
+    """
 
     prior_entries = _prior_entries(ex)
     if not prior_entries:
@@ -417,7 +553,14 @@ def _history_lines(ex: Dict[str, Any], show_ids: bool, max_hist: int) -> List[st
 
 
 def _survey_lines(ex: Dict[str, Any]) -> List[str]:
-    """Return formatted survey highlight lines."""
+    """
+    Produce sentence fragments highlighting survey responses.
+
+    :param ex: Dataset example potentially containing ``survey_highlights`` metadata.
+    :type ex: Dict[str, Any]
+    :returns: List containing a single formatted survey highlight sentence, or empty when unavailable.
+    :rtype: List[str]
+    """
 
     sentence = _survey_highlights(ex).strip()
     if not sentence:
@@ -429,7 +572,16 @@ def _survey_lines(ex: Dict[str, Any]) -> List[str]:
 
 
 def _options_lines(ex: Dict[str, Any], show_ids: bool) -> List[str]:
-    """Return lines describing the recommendation slate options."""
+    """
+    Render recommendation options as numbered lines.
+
+    :param ex: Dataset example containing ``slate_items_json`` data.
+    :type ex: Dict[str, Any]
+    :param show_ids: Whether to display YouTube ids alongside titles.
+    :type show_ids: bool
+    :returns: List of formatted option strings ready for inclusion in the prompt.
+    :rtype: List[str]
+    """
 
     items = as_list_json(ex.get("slate_items_json"))
     if not items:
@@ -510,7 +662,14 @@ _TENS: dict[int, str] = {
 
 
 def _int_to_words(number: int) -> Optional[str]:
-    """Convert ``number`` (0-999) into its hyphenated English representation."""
+    """
+    Convert ``number`` (0–999) into a hyphenated English phrase.
+
+    :param number: Integer value to verbalise.
+    :type number: int
+    :returns: Lowercase English words or ``None`` when the number is outside the supported range.
+    :rtype: Optional[str]
+    """
 
     if number < 0 or number > 999:
         return None
@@ -538,7 +697,14 @@ def _int_to_words(number: int) -> Optional[str]:
 
 
 def _percentage_to_words(value: str) -> Optional[str]:
-    """Convert a percentage string into an approximate verbal description."""
+    """
+    Convert a percentage string into an approximate verbal description.
+
+    :param value: Percentage text such as ``\"65%\"``.
+    :type value: str
+    :returns: Phrase like ``\"about sixty-five percent\"`` or ``None`` if parsing fails.
+    :rtype: Optional[str]
+    """
 
     text = value.strip()
     if not text.endswith("%"):
@@ -559,7 +725,16 @@ def _percentage_to_words(value: str) -> Optional[str]:
 
 
 def _highlight_value(field: str, raw_value: Any) -> str:
-    """Return a human-readable survey highlight value for ``field``."""
+    """
+    Convert ``raw_value`` into a highlight-ready description for ``field``.
+
+    :param field: Dataset field name associated with the highlight.
+    :type field: str
+    :param raw_value: Original value retrieved from the interaction row.
+    :type raw_value: Any
+    :returns: Readable summary string or ``\"\"`` if the field should be skipped.
+    :rtype: str
+    """
 
     if field == "gun_enthusiasm":
         verdict = format_yes_no(raw_value, yes="yes", no="no")
@@ -578,7 +753,14 @@ def _highlight_value(field: str, raw_value: Any) -> str:
 
 
 def _survey_highlights(ex: Dict[str, Any]) -> str:
-    """Return a sentence summarising key survey features."""
+    """
+    Build a sentence summarising the most relevant survey highlights.
+
+    :param ex: Dataset example containing highlight candidate fields.
+    :type ex: Dict[str, Any]
+    :returns: Sentence prefixed with ``\"Survey highlights:\"`` or ``\"\"`` if nothing applies.
+    :rtype: str
+    """
 
     highlights: List[str] = []
     for field, template in SURVEY_HIGHLIGHT_SPECS:
@@ -607,7 +789,18 @@ def _survey_highlights(ex: Dict[str, Any]) -> str:
 
 
 def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
-    """Return a human-readable line for a specific slate option."""
+    """
+    Render a single entry in the recommendation slate.
+
+    :param position: One-based index of the recommendation.
+    :type position: int
+    :param item: Slate item metadata including title, id, and channel.
+    :type item: Dict[str, Any]
+    :param show_ids: Whether to append the YouTube id when present.
+    :type show_ids: bool
+    :returns: Fully formatted option line ready for inclusion in the prompt.
+    :rtype: str
+    """
 
     title = clean_text(item.get("title"), limit=160)
     option_id = clean_text(item.get("id"))
@@ -638,10 +831,13 @@ def _option_line(position: int, item: Dict[str, Any], show_ids: bool) -> str:
 
 
 def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
-    """Return watch-history entries preceding the current video.
+    """
+    Return watch-history entries that precede the current video.
 
-    :param ex: Interaction row containing history payloads.
+    :param ex: Interaction row containing watch history payloads.
+    :type ex: Dict[str, Any]
     :returns: List of entry dictionaries ordered chronologically.
+    :rtype: List[dict]
     """
     vids = as_list_json(ex.get("watched_vids_json"))
     detailed = as_list_json(ex.get("watched_detailed_json"))
@@ -663,11 +859,15 @@ def _prior_entries(ex: Dict[str, Any]) -> List[dict]:
 
 
 def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
-    """Return a formatted descriptor summarising a watched video.
+    """
+    Produce a narrative description of a previously watched video.
 
     :param record: Dictionary containing watch metadata.
+    :type record: Dict[str, Any]
     :param show_ids: Whether to include identifiers in the descriptor.
+    :type show_ids: bool
     :returns: Descriptor string describing watch progress and metadata.
+    :rtype: str
     """
     title = clean_text(
         record.get("title") or record.get("name") or record.get("video_title"),
@@ -718,9 +918,18 @@ def _watched_descriptor(record: Dict[str, Any], show_ids: bool) -> str:
 
 def _extract_duration_seconds(
     record: Dict[str, Any],
-    keys: Sequence[str],
+   keys: Sequence[str],
 ) -> Optional[float]:
-    """Return the first positive duration found in ``record`` for ``keys``."""
+    """
+    Extract the first positive duration from ``record`` across ``keys``.
+
+    :param record: Mapping containing raw duration values.
+    :type record: Dict[str, Any]
+    :param keys: Candidate field names inspected in order.
+    :type keys: Sequence[str]
+    :returns: Duration in seconds when a positive value is found, otherwise ``None``.
+    :rtype: Optional[float]
+    """
 
     for key in keys:
         if key not in record:
@@ -741,10 +950,13 @@ def _extract_duration_seconds(
 
 
 def _format_duration(item: Dict[str, Any]) -> str:
-    """Return a formatted duration string for a slate item.
+    """
+    Convert raw duration metadata into a seconds string.
 
     :param item: Dictionary containing duration metadata.
-    :returns: Seconds string (e.g. ``\"120s\"``) or empty string when unavailable.
+    :type item: Dict[str, Any]
+    :returns: Seconds string (e.g. ``\"120s\"``) or ``\"\"`` when unavailable.
+    :rtype: str
     """
     duration_raw = (
         item.get("length_seconds")
@@ -763,10 +975,28 @@ def _format_duration(item: Dict[str, Any]) -> str:
 
 
 def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> str:
-    """Return a summary line covering likes, comments, and shares."""
+    """
+    Summarise engagement metrics for a recommendation option.
+
+    :param item: Slate item metadata containing inline engagement counts.
+    :type item: Dict[str, Any]
+    :param stats: Lookup statistics sourced from :func:`prompt_builder.video_stats.lookup_video_stats`.
+    :type stats: Dict[str, Any]
+    :returns: Comma-separated phrase describing views, likes, comments, and shares when available.
+    :rtype: str
+    """
 
     def first_present(source: Dict[str, Any], keys: Sequence[str]) -> Any:
-        """Return the first non-missing value from ``source`` matching ``keys``."""
+        """
+        Return the first non-missing value from ``source`` matching ``keys``.
+
+        :param source: Mapping containing potential metric values.
+        :type source: Dict[str, Any]
+        :param keys: Field names to probe in order.
+        :type keys: Sequence[str]
+        :returns: Raw value when found, otherwise ``None``.
+        :rtype: Any
+        """
 
         for key in keys:
             if key not in source:

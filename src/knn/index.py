@@ -1,5 +1,4 @@
 """TF-IDF index construction and slate-level prediction helpers."""
-
 from __future__ import annotations
 
 import json
@@ -24,38 +23,83 @@ from .features import (
     title_for,
 )
 
-
 @dataclass(frozen=True)
 class SlateQueryConfig:
-    """Configuration controlling slate scoring behaviour."""
+    """
+    Configuration controlling slate scoring behaviour.
 
+    :ivar text_fields: Dataset fields whose text is appended to the viewer prompt.
+    :vartype text_fields: Sequence[str]
+    :ivar lowercase: Whether viewer prompts should be normalised to lowercase.
+    :vartype lowercase: bool
+    :ivar metric: Distance metric (``cosine`` or ``l2``) applied when comparing embeddings.
+    :vartype metric: str | None
+
+    """
     text_fields: Sequence[str] = ()
     lowercase: bool = True
     metric: str | None = None
 
-
 @dataclass(frozen=True)
 class SlateIndexData:
-    """Pre-computed index artifacts used during slate scoring."""
+    """
+    Pre-computed index artifacts used during slate scoring.
 
+    :ivar feature_space: Feature space used to build the index (tfidf, word2vec, etc.).
+    :vartype feature_space: str
+    :ivar vectorizer: Tokeniser or embedding model used to transform documents.
+    :vartype vectorizer: Any
+    :ivar matrix: Encoded document matrix used for nearest-neighbour lookup.
+    :vartype matrix: Any
+    :ivar label_id_canon: Canonicalised video identifiers aligned with matrix rows.
+    :vartype label_id_canon: np.ndarray
+    :ivar label_title_canon: Canonicalised video titles aligned with matrix rows.
+    :vartype label_title_canon: np.ndarray
+
+    """
     feature_space: str
     vectorizer: Any
     matrix: Any
     label_id_canon: np.ndarray
     label_title_canon: np.ndarray
 
-
 @dataclass(frozen=True)
 class CandidateScorer:
-    """Callable helper for scoring slate candidates."""
+    """
+    Callable helper for scoring slate candidates.
 
+    :ivar index_data: Pre-computed index artefacts required to score candidates.
+    :vartype index_data: SlateIndexData
+    :ivar base_parts: Normalised components of the viewer prompt shared across candidates.
+    :vartype base_parts: Sequence[str]
+    :ivar config: Query configuration detailing how prompts are assembled and compared.
+    :vartype config: SlateQueryConfig
+    :ivar unique_k: Unique set of neighbour counts to report in the score output.
+    :vartype unique_k: Sequence[int]
+
+    """
     index_data: SlateIndexData
     base_parts: Sequence[str]
     config: SlateQueryConfig
     unique_k: Sequence[int]
 
     def score(self, title: str, video_id: str) -> Dict[int, float]:
-        """Return per-``k`` scores for the given slate candidate."""
+        """
+        Return per-``k`` scores for the given slate candidate.
+
+        :param title: Human-readable title associated with the candidate slate item.
+
+        :type title: str
+
+        :param video_id: Identifier of the candidate video being scored.
+
+        :type video_id: str
+
+        :returns: per-``k`` scores for the given slate candidate
+
+        :rtype: Dict[int, float]
+
+        """
         query, sims = _candidate_query(
             index_data=self.index_data,
             base_parts=self.base_parts,
@@ -81,7 +125,6 @@ class CandidateScorer:
         )
         return _aggregate_scores(score_vector, self.unique_k)
 
-
 def build_tfidf_index(
     train_ds,
     *,
@@ -100,7 +143,6 @@ def build_tfidf_index(
     :returns: Dictionary containing the fitted vectoriser, sparse matrix, and
         label metadata.
     """
-
     docs, labels_id, labels_title = prepare_training_documents(
         train_ds,
         max_train=max_train,
@@ -118,7 +160,6 @@ def build_tfidf_index(
         "labels_id": labels_id,
         "labels_title": labels_title,
     }
-
 
 def build_word2vec_index(
     train_ds,
@@ -138,7 +179,6 @@ def build_word2vec_index(
     :returns: Dictionary containing the trained Word2Vec model and embeddings.
     :raises ImportError: If gensim is unavailable.
     """
-
     docs, labels_id, labels_title = prepare_training_documents(
         train_ds,
         max_train=max_train,
@@ -165,7 +205,6 @@ def build_word2vec_index(
         "word2vec_config": builder.config,
     }
 
-
 def build_sentence_transformer_index(
     train_ds,
     *,
@@ -184,7 +223,6 @@ def build_sentence_transformer_index(
     :returns: Dictionary containing the encoder, dense matrix, and label metadata.
     :raises ImportError: If ``sentence_transformers`` is unavailable.
     """
-
     docs, labels_id, labels_title = prepare_training_documents(
         train_ds,
         max_train=max_train,
@@ -205,14 +243,12 @@ def build_sentence_transformer_index(
         "sentence_transformer_config": st_config,
     }
 
-
 def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     """Persist the TF-IDF index to ``out_dir`` for later reuse.
 
     :param index: Dictionary returned by :func:`build_tfidf_index`.
     :param out_dir: Target directory where artifacts will be written.
     """
-
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
     joblib.dump(index["vectorizer"], directory / "vectorizer.joblib")
@@ -235,14 +271,12 @@ def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     with open(directory / "meta.json", "w", encoding="utf-8") as handle:
         json.dump(meta, handle, indent=2)
 
-
 def load_tfidf_index(in_dir: str) -> Dict[str, Any]:
     """Load a TF-IDF index previously saved via :func:`save_tfidf_index`.
 
     :param in_dir: Directory containing the persisted TF-IDF artifacts.
     :returns: Dictionary with the loaded vectoriser, matrix, and labels.
     """
-
     directory = Path(in_dir)
     vectorizer = joblib.load(directory / "vectorizer.joblib")
     matrix = sparse.load_npz(directory / "X.npz")
@@ -256,14 +290,12 @@ def load_tfidf_index(in_dir: str) -> Dict[str, Any]:
         "labels_title": labels_title,
     }
 
-
 def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
     """Persist the Word2Vec index to ``out_dir`` for later reuse.
 
     :param index: Dictionary returned by :func:`build_word2vec_index`.
     :param out_dir: Target directory where embeddings and metadata are stored.
     """
-
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
 
@@ -304,10 +336,23 @@ def save_word2vec_index(index: Dict[str, Any], out_dir: str) -> None:
     with open(directory / "meta.json", "w", encoding="utf-8") as handle:
         json.dump(meta, handle, indent=2)
 
-
 def save_sentence_transformer_index(index: Dict[str, Any], out_dir: str) -> None:
-    """Persist the sentence-transformer index to ``out_dir`` for later reuse."""
+    """
+    Persist the sentence-transformer index to ``out_dir`` for later reuse.
 
+    :param index: KNN index object or registry being manipulated.
+
+    :type index: Dict[str, Any]
+
+    :param out_dir: Output directory receiving generated metrics and reports.
+
+    :type out_dir: str
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
 
@@ -324,7 +369,9 @@ def save_sentence_transformer_index(index: Dict[str, Any], out_dir: str) -> None
         allow_pickle=True,
     )
 
-    config_obj: SentenceTransformerConfig = index.get("sentence_transformer_config") or SentenceTransformerConfig()
+    config_obj: SentenceTransformerConfig = (
+        index.get("sentence_transformer_config") or SentenceTransformerConfig()
+    )
     meta = {
         "feature_space": "sentence_transformer",
         "n_docs": int(matrix.shape[0]),
@@ -339,14 +386,12 @@ def save_sentence_transformer_index(index: Dict[str, Any], out_dir: str) -> None
     with open(directory / "meta.json", "w", encoding="utf-8") as handle:
         json.dump(meta, handle, indent=2)
 
-
 def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
     """Load a Word2Vec index previously saved via :func:`save_word2vec_index`.
 
     :param in_dir: Directory containing the persisted Word2Vec artifacts.
     :returns: Dictionary with the restored Word2Vec model, embeddings, and labels.
     """
-
     directory = Path(in_dir)
 
     meta_path = directory / "meta.json"
@@ -381,10 +426,19 @@ def load_word2vec_index(in_dir: str) -> Dict[str, Any]:
         "word2vec_config": config,
     }
 
-
 def load_sentence_transformer_index(in_dir: str) -> Dict[str, Any]:
-    """Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`."""
+    """
+    Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`.
 
+    :param in_dir: Directory containing previously persisted artefacts to load from disk.
+
+    :type in_dir: str
+
+    :returns: Tuple of the loaded sentence-transformer index and associated metadata.
+
+    :rtype: Dict[str, Any]
+
+    """
     directory = Path(in_dir)
     matrix = np.load(directory / "X.npy").astype(np.float32, copy=False)
     labels_id = np.load(directory / "labels_id.npy", allow_pickle=True).tolist()
@@ -408,7 +462,6 @@ def load_sentence_transformer_index(in_dir: str) -> Dict[str, Any]:
         "sentence_transformer_config": config,
     }
 
-
 def _safe_str(value: Any, *, lowercase: bool = True) -> str:
     """Return a normalised string representation of ``value``.
 
@@ -416,14 +469,12 @@ def _safe_str(value: Any, *, lowercase: bool = True) -> str:
     :param lowercase: Whether the result should be lowercased.
     :returns: Stripped string representation safe for tokenisation.
     """
-
     try:
         text = "" if value is None else str(value)
     except (TypeError, ValueError):  # pragma: no cover - defensive
         text = ""
     text = text.strip()
     return text.lower() if lowercase else text
-
 
 def _build_base_parts(
     example: dict,
@@ -451,7 +502,6 @@ def _build_base_parts(
         parts.append(" ".join(surfaces))
     return parts
 
-
 def _surface_text(title: str, video_id: str) -> str:
     """Return the most human-friendly representation for a candidate surface.
 
@@ -462,7 +512,6 @@ def _surface_text(title: str, video_id: str) -> str:
     if title and title.strip() and title != "(untitled)":
         return title
     return title_for(video_id) or video_id or ""
-
 
 def _score_candidates(
     index_data: SlateIndexData,
@@ -487,7 +536,6 @@ def _score_candidates(
         for k, score in candidate_scores.items():
             scores_by_k[k].append(score)
     return scores_by_k
-
 
 def _candidate_query(
     index_data: SlateIndexData,
@@ -520,7 +568,6 @@ def _candidate_query(
     query = index_data.vectorizer.transform([query_text])
     sims = (query @ index_data.matrix.T).toarray().ravel()
     return query, sims
-
 
 def _score_vector_from_similarity(
     *,
@@ -569,7 +616,6 @@ def _score_vector_from_similarity(
         return -dists
     return sims_masked
 
-
 def _aggregate_scores(score_vector: np.ndarray, unique_k: Sequence[int]) -> Dict[int, float]:
     """Aggregate neighbour scores for each ``k`` value.
 
@@ -583,7 +629,6 @@ def _aggregate_scores(score_vector: np.ndarray, unique_k: Sequence[int]) -> Dict
         k: float(cumulative[int(min(max(1, k), sorted_scores.size)) - 1])
         for k in unique_k
     }
-
 
 def _candidate_mask(
     title: str,
@@ -606,7 +651,6 @@ def _candidate_mask(
         mask |= index_data.label_title_canon == title_canon
     return mask
 
-
 def knn_predict_among_slate_multi(
     *,
     knn_index: Dict[str, Any],
@@ -623,7 +667,6 @@ def knn_predict_among_slate_multi(
     :returns: Mapping from ``k`` to the predicted 1-based option index. ``None``
         indicates that a prediction could not be produced for that ``k``.
     """
-
     config = config or SlateQueryConfig()
     if config.metric not in (None, "l2", "cosine"):
         raise ValueError(f"Unsupported metric '{config.metric}'")
@@ -658,14 +701,12 @@ def knn_predict_among_slate_multi(
             predictions[k] = int(np.argmax(scores)) + 1
     return predictions
 
-
 def _build_index_data(knn_index: Dict[str, Any]) -> Optional[SlateIndexData]:
     """Construct :class:`SlateIndexData` from a raw index dictionary.
 
     :param knn_index: Dictionary describing the fitted index artifacts.
     :returns: :class:`SlateIndexData` instance or ``None`` when the index is invalid.
     """
-
     if not knn_index or "vectorizer" not in knn_index:
         return None
     labels_id = np.asarray(knn_index["labels_id"], dtype=object)
@@ -679,16 +720,13 @@ def _build_index_data(knn_index: Dict[str, Any]) -> Optional[SlateIndexData]:
         label_title_canon=np.asarray([_canon(label or "") for label in labels_title], dtype=object),
     )
 
-
 def _canon(text: str) -> str:
     """Return a canonicalised alphanumeric string.
 
     :param text: Input string to canonicalise.
     :returns: Lowercased string with non-alphanumeric characters removed.
     """
-
     return re.sub(r"[^a-z0-9]+", "", (text or "").lower().strip())
-
 
 def _canon_vid(value: str) -> str:
     """Return the canonical 11-character YouTube video identifier.
@@ -696,12 +734,10 @@ def _canon_vid(value: str) -> str:
     :param value: Raw candidate identifier.
     :returns: Canonical video id or the stripped input when no match is found.
     """
-
     if not isinstance(value, str):
         return ""
     match = re.search(r"([A-Za-z0-9_-]{11})", value)
     return match.group(1) if match else value.strip()
-
 
 __all__ = [
     "build_tfidf_index",

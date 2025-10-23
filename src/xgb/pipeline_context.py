@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Tuple
+from typing import List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from common.pipeline_types import (
     OpinionStudySelection as BaseOpinionStudySelection,
@@ -356,7 +356,15 @@ class OpinionSweepTask:
     metrics_path: Path
 
 # pylint: disable=too-few-public-methods
-class OpinionStudySelection(BaseOpinionStudySelection[OpinionSweepOutcome]):
+# Avoid triggering runtime generic parameter validation while still exposing
+# the specialised type to static analyzers.
+if TYPE_CHECKING:
+    OpinionSelectionBase = BaseOpinionStudySelection[OpinionSweepOutcome]
+else:
+    OpinionSelectionBase = BaseOpinionStudySelection
+
+
+class OpinionStudySelection(OpinionSelectionBase):
     """
     Selected configuration for the final opinion regression evaluation.
 

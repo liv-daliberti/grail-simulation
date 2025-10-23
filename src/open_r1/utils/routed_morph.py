@@ -51,6 +51,18 @@ class RoutedMorphSandbox:
         self.timeout = timeout
         self.request_timeout = request_timeout
 
+    def configure_timeouts(
+        self,
+        *,
+        timeout: Optional[int] = None,
+        request_timeout: Optional[int] = None,
+    ) -> None:
+        """Update default execution or request timeouts."""
+        if timeout is not None:
+            self.timeout = timeout
+        if request_timeout is not None:
+            self.request_timeout = request_timeout
+
     def run_code(
         self,
         scripts: List[str],
@@ -74,7 +86,9 @@ class RoutedMorphSandbox:
         """
 
         actual_timeout = timeout if timeout is not None else self.timeout
-        actual_request_timeout = request_timeout if request_timeout is not None else self.request_timeout
+        actual_request_timeout = (
+            request_timeout if request_timeout is not None else self.request_timeout
+        )
 
         languages, payload = build_router_payload(
             scripts,
@@ -85,40 +99,41 @@ class RoutedMorphSandbox:
 
         try:
             endpoint = f"http://{self.router_url}/execute_batch"
-            response = requests.post(endpoint, json=payload, timeout=actual_request_timeout)
+            response = requests.post(
+                endpoint,
+                json=payload,
+                timeout=actual_request_timeout,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            message = f"Error communicating with MorphCloud router: {exc}"
+            print(message)
+            return self._build_error_results(len(scripts), message)
 
-            if response.status_code != 200:
-                error = f"Request to MorphCloud router failed with status code: {response.status_code}"
-                print(error)
+        response_data = response.json()
+        return [
+            type(
+                "obj",
+                (object,),
+                {
+                    "text": item.get("text"),
+                    "exception_str": item.get("exception_str"),
+                },
+            )
+            for item in response_data
+        ]
 
-                results = []
-                for _ in scripts:
-                    results.append(type("obj", (object,), {"text": None, "exception_str": error}))
-                return results
-
-            response_data = response.json()
-            results = []
-
-            for item in response_data:
-                # Log the response data to see what we're getting
-                # print(f"RoutedMorphSandbox: Got response item: {item}")
-                result = type(
-                    "obj",
-                    (object,),
-                    {
-                        "text": item.get("text"),
-                        "exception_str": item.get("exception_str"),
-                    },
-                )
-                results.append(result)
-
-            return results
-
-        except Exception as e:
-            error = f"Error communicating with MorphCloud router: {str(e)}"
-            print(error)
-
-            results = []
-            for _ in scripts:
-                results.append(type("obj", (object,), {"text": None, "exception_str": error}))
-            return results
+    @staticmethod
+    def _build_error_results(count: int, message: str) -> List:
+        """Return MorphCloud-compatible error stubs."""
+        return [
+            type(
+                "obj",
+                (object,),
+                {
+                    "text": None,
+                    "exception_str": message,
+                },
+            )
+            for _ in range(count)
+        ]

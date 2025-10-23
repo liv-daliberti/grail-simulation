@@ -1,5 +1,5 @@
+# pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements
 """Report generation helpers for the modular KNN pipeline."""
-
 from __future__ import annotations
 
 import logging
@@ -32,14 +32,31 @@ from .pipeline_utils import (
 
 LOGGER = logging.getLogger("knn.pipeline.reports")
 
-
 def _hyperparameter_report_intro(
     k_sweep: str,
     feature_spaces: Sequence[str],
     sentence_model: Optional[str],
 ) -> List[str]:
-    """Return the Markdown header introducing the hyperparameter report."""
+    """
+    Return the Markdown header introducing the hyperparameter report.
 
+    :param k_sweep: Comma-separated list of ``k`` values evaluated during a sweep.
+
+    :type k_sweep: str
+
+    :param feature_spaces: Ordered collection of feature space names under consideration.
+
+    :type feature_spaces: Sequence[str]
+
+    :param sentence_model: SentenceTransformer model identifier referenced in the report.
+
+    :type sentence_model: Optional[str]
+
+    :returns: the Markdown header introducing the hyperparameter report
+
+    :rtype: List[str]
+
+    """
     feature_label = ", ".join(space.replace("_", "-").upper() for space in feature_spaces)
     lines = [
         "# KNN Hyperparameter Tuning Notes",
@@ -66,14 +83,31 @@ def _hyperparameter_report_intro(
     )
     return lines
 
-
 def _hyperparameter_feature_rows(
     feature_space: str,
     per_study: Mapping[str, StudySelection],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Return table rows covering ``feature_space`` selections."""
+    """
+    Return table rows covering ``feature_space`` selections.
 
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param per_study: Mapping of study keys to their associated selections or metrics.
+
+    :type per_study: Mapping[str, StudySelection]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: table rows covering ``feature_space`` selections
+
+    :rtype: List[str]
+
+    """
     rows: List[str] = []
     for study in studies:
         selection = per_study.get(study.key)
@@ -82,14 +116,31 @@ def _hyperparameter_feature_rows(
         rows.append(_format_hyperparameter_row(feature_space, study, selection))
     return rows
 
-
 def _format_hyperparameter_row(
     feature_space: str,
     study: StudySpec,
     selection: StudySelection,
 ) -> str:
-    """Format a Markdown table row summarising a sweep selection."""
+    """
+    Format a Markdown table row summarising a sweep selection.
 
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param study: Study specification for the item currently being processed.
+
+    :type study: StudySpec
+
+    :param selection: Winning sweep selection for the current study.
+
+    :type selection: StudySelection
+
+    :returns: Markdown table row describing a single study/feature selection.
+
+    :rtype: str
+
+    """
     config = selection.config
     text_label = ",".join(config.text_fields) if config.text_fields else "none"
     size = str(config.word2vec_size) if config.word2vec_size is not None else "—"
@@ -115,13 +166,26 @@ def _format_hyperparameter_row(
         f"{format_k(summary.best_k or selection.best_k)} | {format_count(eligible)} |"
     )
 
-
 def _hyperparameter_table_section(
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Render the hyperparameter summary table for each feature space."""
+    """
+    Render the hyperparameter summary table for each feature space.
 
+    :param selections: Mapping of feature spaces to their chosen study selections.
+
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown section with tables summarising hyperparameter selections.
+
+    :rtype: List[str]
+
+    """
     lines: List[str] = []
     ordered_spaces = [
         space
@@ -137,7 +201,6 @@ def _hyperparameter_table_section(
     lines.append("")
     return lines
 
-
 def _hyperparameter_leaderboard_section(
     *,
     sweep_outcomes: Sequence[SweepOutcome],
@@ -145,8 +208,30 @@ def _hyperparameter_leaderboard_section(
     studies: Sequence[StudySpec],
     top_n: int,
 ) -> List[str]:
-    """Return detailed leaderboards for the top-performing sweep configurations."""
+    """
+    Return detailed leaderboards for the top-performing sweep configurations.
 
+    :param sweep_outcomes: Iterable of sweep outcomes used to select final configurations.
+
+    :type sweep_outcomes: Sequence[SweepOutcome]
+
+    :param selections: Mapping of feature spaces to their chosen study selections.
+
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param top_n: Number of top items to retain when truncating the index.
+
+    :type top_n: int
+
+    :returns: detailed leaderboards for the top-performing sweep configurations
+
+    :rtype: List[str]
+
+    """
     if not sweep_outcomes:
         return []
 
@@ -194,34 +279,54 @@ def _hyperparameter_leaderboard_section(
                 label_display = f"**{config_label}**" if config_label == selected_label else config_label
                 delta = max(0.0, best_accuracy - outcome.accuracy)
                 lines.append(
-                    "| {rank} | {label} | {acc} | {delta} | {k} | {eligible} |".format(
-                        rank=idx,
-                        label=label_display,
-                        acc=format_float(outcome.accuracy),
-                        delta=format_float(delta),
-                        k=outcome.best_k,
-                        eligible=outcome.eligible,
-                    )
+                    f"| {idx} | "
+                    f"{label_display} | "
+                    f"{format_float(outcome.accuracy)} | "
+                    f"{format_float(delta)} | "
+                    f"{outcome.best_k} | "
+                    f"{outcome.eligible} |"
                 )
             lines.append("")
         lines.append("")
     return lines
 
-
 def _describe_text_fields(fields: Sequence[str]) -> str:
-    """Return a readable description of text-field augmentations."""
+    """
+    Return a readable description of text-field augmentations.
 
+    :param fields: Iterable of dataset field names incorporated into the prompt.
+
+    :type fields: Sequence[str]
+
+    :returns: a readable description of text-field augmentations
+
+    :rtype: str
+
+    """
     if not fields:
         return "base prompt only"
     return ", ".join(snake_to_title(field) for field in fields)
-
 
 def _hyperparameter_observations_section(
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Summarise key takeaways from the hyperparameter sweeps."""
+    """
+    Summarise key takeaways from the hyperparameter sweeps.
 
+    :param selections: Mapping of feature spaces to their chosen study selections.
+
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown section containing narrative observations for the hyperparameter report.
+
+    :rtype: List[str]
+
+    """
     lines: List[str] = ["### Observations", ""]
     for feature_space in ("tfidf", "word2vec", "sentence_transformer"):
         per_feature = selections.get(feature_space)
@@ -262,10 +367,15 @@ def _hyperparameter_observations_section(
     lines.append("")
     return lines
 
-
 def _hyperparameter_opinion_section() -> List[str]:
-    """Return the blurb linking to opinion-regression sweeps."""
+    """
+    Return the blurb linking to opinion-regression sweeps.
 
+    :returns: the blurb linking to opinion-regression sweeps
+
+    :rtype: List[str]
+
+    """
     return [
         "",
         "## Post-Study Opinion Regression",
@@ -275,10 +385,19 @@ def _hyperparameter_opinion_section() -> List[str]:
         "",
     ]
 
-
 def _feature_space_heading(feature_space: str) -> str:
-    """Return the Markdown heading for ``feature_space``."""
+    """
+    Return the Markdown heading for ``feature_space``.
 
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :returns: the Markdown heading for ``feature_space``
+
+    :rtype: str
+
+    """
     if feature_space == "tfidf":
         return "## TF-IDF Feature Space"
     if feature_space == "word2vec":
@@ -287,12 +406,21 @@ def _feature_space_heading(feature_space: str) -> str:
         return "## Sentence-Transformer Feature Space"
     return f"## {feature_space.replace('_', ' ').title()} Feature Space"
 
-
 def _next_video_dataset_info(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
 ) -> Tuple[str, str]:
-    """Extract a representative dataset name and split from metrics payloads."""
+    """
+    Extract a representative dataset name and split from metrics payloads.
 
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
+
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :returns: Collection of Markdown lines describing the next-video dataset and splits.
+
+    :rtype: Tuple[str, str]
+
+    """
     for per_feature in metrics_by_feature.values():
         for study_metrics in per_feature.values():
             dataset = study_metrics.get("dataset")
@@ -301,12 +429,21 @@ def _next_video_dataset_info(
                 return str(dataset), str(split)
     raise RuntimeError("No slate metrics available to build the next-video report.")
 
-
 def _next_video_uncertainty_info(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
 ) -> Optional[Mapping[str, object]]:
-    """Return the first uncertainty payload available for reporting."""
+    """
+    Return the first uncertainty payload available for reporting.
 
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
+
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :returns: the first uncertainty payload available for reporting
+
+    :rtype: Optional[Mapping[str, object]]
+
+    """
     for per_feature in metrics_by_feature.values():
         for study_metrics in per_feature.values():
             uncertainty = study_metrics.get("uncertainty")
@@ -314,14 +451,31 @@ def _next_video_uncertainty_info(
                 return uncertainty
     return None
 
-
 def _next_video_intro(
     dataset_name: str,
     split: str,
     uncertainty: Optional[Mapping[str, object]] = None,
 ) -> List[str]:
-    """Return the introductory Markdown section for the next-video report."""
+    """
+    Return the introductory Markdown section for the next-video report.
 
+    :param dataset_name: Human-readable label for the dataset being summarised.
+
+    :type dataset_name: str
+
+    :param split: Dataset split identifier such as ``train`` or ``validation``.
+
+    :type split: str
+
+    :param uncertainty: Auxiliary uncertainty information accompanying a metric.
+
+    :type uncertainty: Optional[Mapping[str, object]]
+
+    :returns: the introductory Markdown section for the next-video report
+
+    :rtype: List[str]
+
+    """
     intro = [
         "# KNN Next-Video Baseline",
         "",
@@ -344,24 +498,143 @@ def _next_video_intro(
     return intro
 
 
-def _format_ci(ci_value: object) -> str:
-    """Format a 95% confidence interval if present."""
+def _next_video_portfolio_summary(
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    feature_spaces: Sequence[str],
+) -> List[str]:
+    """
+    Render weighted portfolio statistics across feature spaces.
 
-    ci = parse_ci(ci_value)
-    if ci is None:
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space.
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param feature_spaces: Ordered feature spaces considered by the pipeline.
+    :type feature_spaces: Sequence[str]
+    :returns: Markdown lines summarising portfolio-level performance.
+    :rtype: List[str]
+    """
+    ordered_spaces = [
+        space for space in ("tfidf", "word2vec", "sentence_transformer") if space in feature_spaces
+    ]
+    for space in feature_spaces:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+    for space in metrics_by_feature:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+
+    rows: List[str] = []
+    best_feature: Optional[str] = None
+    best_accuracy: Optional[float] = None
+    best_eligible: int = 0
+    best_study_count: int = 0
+
+    for feature_space in ordered_spaces:
+        per_feature = metrics_by_feature.get(feature_space, {})
+        if not per_feature:
+            continue
+        accuracy_total = 0.0
+        accuracy_weight = 0
+        baseline_total = 0.0
+        baseline_weight = 0
+        random_total = 0.0
+        random_weight = 0
+        studies_with_metrics = 0
+        for data in per_feature.values():
+            summary = extract_metric_summary(data)
+            if summary.n_eligible is None or summary.n_eligible <= 0:
+                continue
+            eligible = summary.n_eligible
+            recorded = False
+            if summary.accuracy is not None:
+                accuracy_total += summary.accuracy * eligible
+                accuracy_weight += eligible
+                recorded = True
+            if summary.baseline is not None:
+                baseline_total += summary.baseline * eligible
+                baseline_weight += eligible
+                recorded = True
+            if summary.random_baseline is not None:
+                random_total += summary.random_baseline * eligible
+                random_weight += eligible
+                recorded = True
+            if recorded:
+                studies_with_metrics += 1
+        if not studies_with_metrics:
+            continue
+        weighted_accuracy = accuracy_total / accuracy_weight if accuracy_weight else None
+        weighted_baseline = baseline_total / baseline_weight if baseline_weight else None
+        weighted_random = random_total / random_weight if random_weight else None
+        eligible_total = max(accuracy_weight, baseline_weight, random_weight)
+        delta_value: Optional[float] = None
+        if weighted_accuracy is not None and weighted_baseline is not None:
+            delta_value = weighted_accuracy - weighted_baseline
+        rows.append(
+            f"| {feature_space.upper()} | {format_optional_float(weighted_accuracy)} | "
+            f"{format_delta(delta_value)} | {format_optional_float(weighted_random)} | "
+            f"{format_count(eligible_total)} | {format_count(studies_with_metrics)} |"
+        )
+        if weighted_accuracy is not None:
+            if best_accuracy is None or weighted_accuracy > best_accuracy:
+                best_accuracy = weighted_accuracy
+                best_feature = feature_space
+                best_eligible = eligible_total
+                best_study_count = studies_with_metrics
+
+    if not rows:
+        return []
+
+    lines: List[str] = ["## Portfolio Summary", ""]
+    lines.append(
+        "| Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | Studies |"
+    )
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
+    lines.extend(rows)
+    lines.append("")
+    if best_feature is not None and best_accuracy is not None:
+        lines.append(
+            f"Best-performing feature space: **{best_feature.upper()}** with weighted accuracy "
+            f"{format_optional_float(best_accuracy)} across {format_count(best_eligible)} eligible slates "
+            f"({format_count(best_study_count)} studies)."
+        )
+        lines.append("")
+    return lines
+
+def _format_ci(ci_value: object) -> str:
+    """
+    Format a 95% confidence interval if present.
+
+    :param ci_value: Confidence-interval payload extracted from a metrics dictionary.
+
+    :type ci_value: object
+
+    :returns: Human-readable confidence-interval string formatted for Markdown tables.
+
+    :rtype: str
+
+    """
+    confidence_interval = parse_ci(ci_value)
+    if confidence_interval is None:
         return "—"
-    low, high = ci
+    low, high = confidence_interval
     return f"[{low:.3f}, {high:.3f}]"
 
-
 def _extract_curve_series(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
-    """Return sorted k/accuracy pairs extracted from ``curve_block``."""
+    """
+    Return sorted k/accuracy pairs extracted from ``curve_block``.
 
+    :param curve_block: Markdown block describing a single KNN performance curve.
+
+    :type curve_block: Mapping[str, object]
+
+    :returns: sorted k/accuracy pairs extracted from ``curve_block``
+
+    :rtype: Tuple[List[int], List[float]]
+
+    """
     accuracy_map = curve_block.get("accuracy_by_k")
     if not isinstance(accuracy_map, Mapping):
         return ([], [])
     return extract_numeric_series(accuracy_map)
-
 
 def _plot_knn_curve_bundle(
     *,
@@ -370,8 +643,30 @@ def _plot_knn_curve_bundle(
     study: StudySpec,
     metrics: Mapping[str, object],
 ) -> Optional[str]:
-    """Save a train/validation accuracy curve plot for ``study`` when possible."""
+    """
+    Save a train/validation accuracy curve plot for ``study`` when possible.
 
+    :param base_dir: Base directory that contains task-specific output subdirectories.
+
+    :type base_dir: Path
+
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param study: Study specification for the item currently being processed.
+
+    :type study: StudySpec
+
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, object]
+
+    :returns: Matplotlib figure handle for the rendered KNN performance curves.
+
+    :rtype: Optional[str]
+
+    """
     if plt is None:  # pragma: no cover - optional dependency
         return None
     curve_bundle = metrics.get("curve_metrics")
@@ -411,14 +706,31 @@ def _plot_knn_curve_bundle(
     except ValueError:
         return plot_path.as_posix()
 
-
 def _next_video_feature_section(
     feature_space: str,
     metrics: Mapping[str, Mapping[str, object]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Render the next-video metrics table for ``feature_space``."""
+    """
+    Render the next-video metrics table for ``feature_space``.
 
+    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
+
+    :type feature_space: str
+
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, Mapping[str, object]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown section summarising feature-space results for next-video evaluation.
+
+    :rtype: List[str]
+
+    """
     if not metrics:
         return []
     lines: List[str] = [
@@ -448,15 +760,32 @@ def _next_video_feature_section(
     lines.append("")
     return lines
 
-
 def _next_video_curve_sections(
     *,
     output_dir: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Render Markdown sections embedding train/validation accuracy curves."""
+    """
+    Render Markdown sections embedding train/validation accuracy curves.
 
+    :param output_dir: Directory where the rendered report should be written.
+
+    :type output_dir: Path
+
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
+
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown sections that document next-video learning curves.
+
+    :rtype: List[str]
+
+    """
     if plt is None:  # pragma: no cover - optional dependency
         LOGGER.debug("Matplotlib not available; skipping KNN curve plots.")
         return []
@@ -496,13 +825,26 @@ def _next_video_curve_sections(
         sections.extend(image_lines)
     return sections
 
-
 def _next_video_observations(
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Summarise per-feature observations for next-video metrics."""
+    """
+    Summarise per-feature observations for next-video metrics.
 
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
+
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown bullet list capturing qualitative next-video observations.
+
+    :rtype: List[str]
+
+    """
     lines: List[str] = ["## Observations", ""]
     ordered_spaces = [
         space
@@ -557,13 +899,26 @@ def _next_video_observations(
     lines.append("")
     return lines
 
-
 def _next_video_loso_section(
     loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Return a section summarising leave-one-study-out accuracy."""
+    """
+    Return a section summarising leave-one-study-out accuracy.
 
+    :param loso_metrics: Leave-one-study-out metrics grouped by feature space and holdout.
+
+    :type loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: a section summarising leave-one-study-out accuracy
+
+    :rtype: List[str]
+
+    """
     if not loso_metrics:
         return []
     lines: List[str] = ["## Cross-Study Holdouts", ""]
@@ -601,7 +956,6 @@ def _next_video_loso_section(
         lines.append("")
     return lines
 
-
 def _build_hyperparameter_report(
     *,
     output_dir: Path,
@@ -612,8 +966,42 @@ def _build_hyperparameter_report(
     feature_spaces: Sequence[str],
     sentence_model: Optional[str],
 ) -> None:
-    """Write the hyperparameter tuning summary under ``output_dir``."""
+    """
+    Write the hyperparameter tuning summary under ``output_dir``.
 
+    :param output_dir: Directory where the rendered report should be written.
+
+    :type output_dir: Path
+
+    :param selections: Mapping of feature spaces to their chosen study selections.
+
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+
+    :param sweep_outcomes: Iterable of sweep outcomes used to select final configurations.
+
+    :type sweep_outcomes: Sequence[SweepOutcome]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param k_sweep: Comma-separated list of ``k`` values evaluated during a sweep.
+
+    :type k_sweep: str
+
+    :param feature_spaces: Ordered collection of feature space names under consideration.
+
+    :type feature_spaces: Sequence[str]
+
+    :param sentence_model: SentenceTransformer model identifier referenced in the report.
+
+    :type sentence_model: Optional[str]
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "README.md"
     lines: List[str] = []
@@ -631,7 +1019,6 @@ def _build_hyperparameter_report(
     lines.extend(_hyperparameter_opinion_section())
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
-
 def _build_next_video_report(
     *,
     output_dir: Path,
@@ -641,8 +1028,38 @@ def _build_next_video_report(
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
     allow_incomplete: bool = False,
 ) -> None:
-    """Compose the next-video evaluation report under ``output_dir``."""
+    """
+    Compose the next-video evaluation report under ``output_dir``.
 
+    :param output_dir: Directory where the rendered report should be written.
+
+    :type output_dir: Path
+
+    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
+
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param feature_spaces: Ordered collection of feature space names under consideration.
+
+    :type feature_spaces: Sequence[str]
+
+    :param loso_metrics: Leave-one-study-out metrics grouped by feature space and holdout.
+
+    :type loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]]
+
+    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
+
+    :type allow_incomplete: bool
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "README.md"
     if not metrics_by_feature:
@@ -663,6 +1080,12 @@ def _build_next_video_report(
     uncertainty = _next_video_uncertainty_info(metrics_by_feature)
     lines: List[str] = []
     lines.extend(_next_video_intro(dataset_name, split, uncertainty))
+    lines.extend(
+        _next_video_portfolio_summary(
+            metrics_by_feature=metrics_by_feature,
+            feature_spaces=feature_spaces,
+        )
+    )
     ordered_spaces = [
         space
         for space in ("tfidf", "word2vec", "sentence_transformer")
@@ -686,10 +1109,23 @@ def _build_next_video_report(
         lines.extend(_next_video_loso_section(loso_metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
-
 def _opinion_report_intro(dataset_name: str, split: str) -> List[str]:
-    """Return the introductory Markdown section for the opinion report."""
+    """
+    Return the introductory Markdown section for the opinion report.
 
+    :param dataset_name: Human-readable label for the dataset being summarised.
+
+    :type dataset_name: str
+
+    :param split: Dataset split identifier such as ``train`` or ``validation``.
+
+    :type split: str
+
+    :returns: the introductory Markdown section for the opinion report
+
+    :rtype: List[str]
+
+    """
     return [
         "# KNN Opinion Shift Study",
         "",
@@ -701,12 +1137,21 @@ def _opinion_report_intro(dataset_name: str, split: str) -> List[str]:
         "",
     ]
 
-
 def _opinion_dataset_info(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
 ) -> Tuple[str, str]:
-    """Extract dataset metadata from the opinion metrics bundle."""
+    """
+    Extract dataset metadata from the opinion metrics bundle.
 
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :returns: Markdown fragment describing the opinion dataset and preprocessing decisions.
+
+    :rtype: Tuple[str, str]
+
+    """
     for per_feature in metrics.values():
         for study_metrics in per_feature.values():
             summary = extract_opinion_summary(study_metrics)
@@ -716,13 +1161,26 @@ def _opinion_dataset_info(
             )
     return ("data/cleaned_grail", "validation")
 
-
 def _opinion_feature_sections(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Render opinion metrics tables grouped by feature space."""
+    """
+    Render opinion metrics tables grouped by feature space.
 
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown sections summarising opinion metrics per feature space.
+
+    :rtype: List[str]
+
+    """
     lines: List[str] = []
     ordered_spaces = [
         space
@@ -752,10 +1210,23 @@ def _opinion_feature_sections(
         lines.append("")
     return lines
 
-
 def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
-    """Return a Markdown table row for opinion metrics."""
+    """
+    Return a Markdown table row for opinion metrics.
 
+    :param study: Study specification for the item currently being processed.
+
+    :type study: StudySpec
+
+    :param data: Raw metrics mapping produced by an evaluation stage.
+
+    :type data: Mapping[str, object]
+
+    :returns: a Markdown table row for opinion metrics
+
+    :rtype: str
+
+    """
     summary = extract_opinion_summary(data)
     label = str(data.get("label", study.label))
     participants_text = format_count(summary.participants)
@@ -767,10 +1238,15 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
         f"{format_optional_float(summary.baseline_mae)} |"
     )
 
-
 def _opinion_heatmap_section() -> List[str]:
-    """Return the Markdown section referencing opinion heatmaps."""
+    """
+    Return the Markdown section referencing opinion heatmaps.
 
+    :returns: the Markdown section referencing opinion heatmaps
+
+    :rtype: List[str]
+
+    """
     return [
         "### Opinion Change Heatmaps",
         "",
@@ -778,13 +1254,26 @@ def _opinion_heatmap_section() -> List[str]:
         "",
     ]
 
-
 def _opinion_takeaways(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
 ) -> List[str]:
-    """Generate takeaway bullets comparing opinion performance."""
+    """
+    Generate takeaway bullets comparing opinion performance.
 
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :returns: Markdown bullet list capturing the key takeaways from opinion evaluation.
+
+    :rtype: List[str]
+
+    """
     lines: List[str] = ["## Takeaways", ""]
     for study in studies:
         per_study: Dict[str, Tuple[OpinionSummary, Mapping[str, object]]] = {}
@@ -831,7 +1320,6 @@ def _opinion_takeaways(
     lines.append("")
     return lines
 
-
 def _build_opinion_report(
     *,
     output_path: Path,
@@ -839,8 +1327,30 @@ def _build_opinion_report(
     studies: Sequence[StudySpec],
     allow_incomplete: bool = False,
 ) -> None:
-    """Compose the opinion regression report at ``output_path``."""
+    """
+    Compose the opinion regression report at ``output_path``.
 
+    :param output_path: Filesystem path for the generated report or figure.
+
+    :type output_path: Path
+
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
+
+    :type allow_incomplete: bool
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if not metrics:
         if not allow_incomplete:
@@ -863,14 +1373,31 @@ def _build_opinion_report(
     lines.extend(_opinion_takeaways(metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
-
 def _build_catalog_report(
     reports_root: Path,
     include_next_video: bool,
     include_opinion: bool,
 ) -> None:
-    """Create the catalog README summarising generated artefacts."""
+    """
+    Create the catalog README summarising generated artefacts.
 
+    :param reports_root: Filesystem directory that will receive the Markdown reports.
+
+    :type reports_root: Path
+
+    :param include_next_video: Flag signalling whether next-video report sections should be rendered.
+
+    :type include_next_video: bool
+
+    :param include_opinion: Flag signalling whether opinion report sections should be rendered.
+
+    :type include_opinion: bool
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     reports_root.mkdir(parents=True, exist_ok=True)
     path = reports_root / "README.md"
     lines: List[str] = []
@@ -921,10 +1448,23 @@ def _build_catalog_report(
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
 
-
 def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
-    """Write refreshed Markdown reports under ``reports/knn``."""
+    """
+    Write refreshed Markdown reports under ``reports/knn``.
 
+    :param repo_root: Repository root directory used for path resolution.
+
+    :type repo_root: Path
+
+    :param report_bundle: Aggregated data structure containing everything needed to emit reports.
+
+    :type report_bundle: ReportBundle
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     reports_root = repo_root / "reports" / "knn"
     feature_spaces = report_bundle.feature_spaces
     allow_incomplete = report_bundle.allow_incomplete
@@ -961,6 +1501,5 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
             studies=report_bundle.studies,
             allow_incomplete=allow_incomplete,
         )
-
 
 __all__ = ["generate_reports"]

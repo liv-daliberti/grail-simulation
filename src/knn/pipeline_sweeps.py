@@ -1,12 +1,12 @@
 """Sweep orchestration helpers for the modular KNN pipeline."""
-
+# pylint: disable=line-too-long
 from __future__ import annotations
 
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks, execute_sequential_tasks
 from common.pipeline_utils import merge_ordered
@@ -32,10 +32,19 @@ from .pipeline_utils import ensure_dir, extract_metric_summary, extract_opinion_
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
 
-
 def run_knn_cli(argv: Sequence[str]) -> None:
-    """Execute the KNN CLI entry point with ``argv``."""
+    """
+    Execute the KNN CLI entry point with ``argv``.
 
+    :param argv: Optional argument vector override used when invoking the CLI programmatically.
+
+    :type argv: Sequence[str]
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     parser = build_knn_parser()
     namespace = parser.parse_args(list(argv))
     if getattr(namespace, "task", "slate") == "slate":
@@ -46,10 +55,20 @@ def run_knn_cli(argv: Sequence[str]) -> None:
         return
     raise ValueError(f"Unsupported task '{namespace.task}'.")
 
-
 def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
-    """Return the grid of configurations evaluated during sweeps."""
+    """
+    Return the grid of configurations evaluated during sweeps.
 
+    :param context: Pipeline context encapsulating dataset paths and configuration flags.
+
+    :type context: PipelineContext
+
+    :returns: the grid of configurations evaluated during sweeps
+
+    :rtype: List[SweepConfig]
+
+    """
+    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
     text_options: Tuple[Tuple[str, ...], ...] = ((), ("viewer_profile", "state_text"))
     feature_spaces = context.feature_spaces
 
@@ -134,7 +153,6 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
 
     return configs
 
-
 def prepare_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
@@ -144,9 +162,44 @@ def prepare_sweep_tasks(
     sweep_dir: Path,
     word2vec_model_base: Path,
     reuse_existing: bool,
-) -> Tuple[List[SweepTask], List[SweepOutcome]]:
-    """Return next-video sweep tasks requiring execution and cached outcomes."""
+) -> Tuple[List[SweepTask], List[SweepOutcome]]:  # pylint: disable=too-many-arguments
+    """
+    Return next-video sweep tasks requiring execution and cached outcomes.
 
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param configs: Iterable of sweep configurations scheduled for execution.
+
+    :type configs: Sequence[SweepConfig]
+
+    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
+
+    :type base_cli: Sequence[str]
+
+    :param extra_cli: Additional CLI arguments appended to the base invocation.
+
+    :type extra_cli: Sequence[str]
+
+    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
+
+    :type sweep_dir: Path
+
+    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
+
+    :type word2vec_model_base: Path
+
+    :param reuse_existing: Whether to reuse cached results instead of recomputing them.
+
+    :type reuse_existing: bool
+
+    :returns: next-video sweep tasks requiring execution and cached outcomes
+
+    :rtype: Tuple[List[SweepTask], List[SweepOutcome]]
+
+    """
+    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
     pending_tasks: List[SweepTask] = []
     cached_outcomes: List[SweepOutcome] = []
     base_cli_tuple = tuple(base_cli)
@@ -191,7 +244,6 @@ def prepare_sweep_tasks(
             pending_tasks.append(task)
     return pending_tasks, cached_outcomes
 
-
 def prepare_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
@@ -201,9 +253,44 @@ def prepare_opinion_sweep_tasks(
     sweep_dir: Path,
     word2vec_model_base: Path,
     reuse_existing: bool,
-) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
-    """Return opinion sweep tasks requiring execution and cached outcomes."""
+) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:  # pylint: disable=too-many-arguments
+    """
+    Return opinion sweep tasks requiring execution and cached outcomes.
 
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param configs: Iterable of sweep configurations scheduled for execution.
+
+    :type configs: Sequence[SweepConfig]
+
+    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
+
+    :type base_cli: Sequence[str]
+
+    :param extra_cli: Additional CLI arguments appended to the base invocation.
+
+    :type extra_cli: Sequence[str]
+
+    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
+
+    :type sweep_dir: Path
+
+    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
+
+    :type word2vec_model_base: Path
+
+    :param reuse_existing: Whether to reuse cached results instead of recomputing them.
+
+    :type reuse_existing: bool
+
+    :returns: opinion sweep tasks requiring execution and cached outcomes
+
+    :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
+
+    """
+    # pylint: disable=too-many-branches,too-many-locals
     pending_tasks: List[OpinionSweepTask] = []
     cached_outcomes: List[OpinionSweepOutcome] = []
     base_cli_tuple = tuple(base_cli)
@@ -256,14 +343,31 @@ def prepare_opinion_sweep_tasks(
             pending_tasks.append(task)
     return pending_tasks, cached_outcomes
 
-
 def sweep_outcome_from_metrics(
     task: SweepTask,
     metrics: Mapping[str, object],
     metrics_path: Path,
 ) -> SweepOutcome:
-    """Translate cached metrics into a :class:`SweepOutcome`."""
+    """
+    Translate cached metrics into a :class:`SweepOutcome`.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: SweepTask
+
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, object]
+
+    :param metrics_path: Filesystem path where the metrics JSON artefact resides.
+
+    :type metrics_path: Path
+
+    :returns: Slate sweep outcome reconstructed from cached metrics.
+
+    :rtype: SweepOutcome
+
+    """
     summary = extract_metric_summary(metrics)
     eligible = summary.n_eligible if summary.n_eligible is not None else int(metrics.get("n_eligible", 0))
     best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
@@ -280,14 +384,31 @@ def sweep_outcome_from_metrics(
         metrics=metrics,
     )
 
-
 def opinion_sweep_outcome_from_metrics(
     task: OpinionSweepTask,
     metrics: Mapping[str, object],
     metrics_path: Path,
 ) -> OpinionSweepOutcome:
-    """Translate cached opinion metrics into an :class:`OpinionSweepOutcome`."""
+    """
+    Translate cached opinion metrics into an :class:`OpinionSweepOutcome`.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: OpinionSweepTask
+
+    :param metrics: Metrics dictionary captured from a previous pipeline stage.
+
+    :type metrics: Mapping[str, object]
+
+    :param metrics_path: Filesystem path where the metrics JSON artefact resides.
+
+    :type metrics_path: Path
+
+    :returns: Opinion sweep outcome reconstructed from cached metrics.
+
+    :rtype: OpinionSweepOutcome
+
+    """
     summary = extract_opinion_summary(metrics)
     mae = summary.mae if summary.mae is not None else float(metrics.get("best_mae", float("inf")))
     rmse = summary.rmse if summary.rmse is not None else float(
@@ -314,14 +435,38 @@ def opinion_sweep_outcome_from_metrics(
         metrics=metrics,
     )
 
-
 def merge_sweep_outcomes(
     cached: Sequence[SweepOutcome],
     executed: Sequence[SweepOutcome],
 ) -> List[SweepOutcome]:
-    """Combine cached and freshly executed sweep outcomes preserving order."""
+    """
+    Combine cached and freshly executed sweep outcomes preserving order.
 
-    def _on_replace(existing: SweepOutcome, incoming: SweepOutcome) -> None:
+    :param cached: Previously computed artefacts available for reuse.
+
+    :type cached: Sequence[SweepOutcome]
+
+    :param executed: Iterable of tasks that were actually executed during the run.
+
+    :type executed: Sequence[SweepOutcome]
+
+    :returns: Mapping of feature spaces to merged slate sweep outcomes.
+
+    :rtype: List[SweepOutcome]
+
+    """
+    def _on_replace(_existing: SweepOutcome, incoming: SweepOutcome) -> None:
+        """
+        Emit a warning when a cached sweep outcome is replaced.
+
+        :param _existing: Outcome currently registered for the task index.
+        :type _existing: SweepOutcome
+        :param incoming: Newly produced outcome that will replace ``_existing``.
+        :type incoming: SweepOutcome
+        :returns: ``None``. The function logs a warning for visibility.
+        :rtype: None
+        """
+
         LOGGER.warning(
             "Duplicate sweep outcome detected for index=%d (feature=%s study=%s). Overwriting.",
             incoming.order_index,
@@ -336,14 +481,38 @@ def merge_sweep_outcomes(
         on_replace=_on_replace,
     )
 
-
 def merge_opinion_sweep_outcomes(
     cached: Sequence[OpinionSweepOutcome],
     executed: Sequence[OpinionSweepOutcome],
 ) -> List[OpinionSweepOutcome]:
-    """Combine cached and freshly executed opinion outcomes preserving order."""
+    """
+    Combine cached and freshly executed opinion outcomes preserving order.
 
-    def _on_replace(existing: OpinionSweepOutcome, incoming: OpinionSweepOutcome) -> None:
+    :param cached: Previously computed artefacts available for reuse.
+
+    :type cached: Sequence[OpinionSweepOutcome]
+
+    :param executed: Iterable of tasks that were actually executed during the run.
+
+    :type executed: Sequence[OpinionSweepOutcome]
+
+    :returns: Mapping of feature spaces to merged opinion sweep outcomes.
+
+    :rtype: List[OpinionSweepOutcome]
+
+    """
+    def _on_replace(_existing: OpinionSweepOutcome, incoming: OpinionSweepOutcome) -> None:
+        """
+        Emit a warning when an opinion sweep outcome is replaced.
+
+        :param _existing: Previously cached opinion outcome.
+        :type _existing: OpinionSweepOutcome
+        :param incoming: Newly produced outcome that supersedes ``_existing``.
+        :type incoming: OpinionSweepOutcome
+        :returns: ``None``. The function logs a warning for visibility.
+        :rtype: None
+        """
+
         LOGGER.warning(
             "Duplicate opinion sweep outcome detected for index=%d (study=%s). Overwriting.",
             incoming.order_index,
@@ -357,28 +526,59 @@ def merge_opinion_sweep_outcomes(
         on_replace=_on_replace,
     )
 
-
 def execute_sweep_tasks(
     tasks: Sequence[SweepTask],
     *,
     jobs: int,
 ) -> List[SweepOutcome]:
-    """Run the supplied sweep tasks (possibly in parallel)."""
+    """
+    Run the supplied sweep tasks (possibly in parallel).
 
+    :param tasks: Collection of sweep tasks scheduled for execution.
+
+    :type tasks: Sequence[SweepTask]
+
+    :param jobs: Maximum number of parallel workers to schedule.
+
+    :type jobs: int
+
+    :returns: List of slate sweep outcomes generated from the provided tasks.
+
+    :rtype: List[SweepOutcome]
+
+    """
     return execute_indexed_tasks(tasks, execute_sweep_task, jobs=jobs, logger=LOGGER, label="sweep")
 
-
 def execute_opinion_sweep_tasks(tasks: Sequence[OpinionSweepTask]) -> List[OpinionSweepOutcome]:
-    """Run the supplied opinion sweep tasks sequentially."""
+    """
+    Run the supplied opinion sweep tasks sequentially.
 
+    :param tasks: Collection of sweep tasks scheduled for execution.
+
+    :type tasks: Sequence[OpinionSweepTask]
+
+    :returns: List of opinion sweep outcomes generated from the provided tasks.
+
+    :rtype: List[OpinionSweepOutcome]
+
+    """
     if not tasks:
         return []
     return execute_sequential_tasks(tasks, execute_opinion_sweep_task)
 
-
 def execute_sweep_task(task: SweepTask) -> SweepOutcome:
-    """Execute a single sweep task and return the captured metrics."""
+    """
+    Execute a single sweep task and return the captured metrics.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: SweepTask
+
+    :returns: Slate sweep outcome produced by executing the given task.
+
+    :rtype: SweepOutcome
+
+    """
     run_root = ensure_dir(task.run_root)
     model_dir = None
     if task.config.feature_space == "word2vec":
@@ -404,10 +604,19 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
     metrics, metrics_path = load_metrics(run_root, task.issue_slug)
     return sweep_outcome_from_metrics(task, metrics, metrics_path)
 
-
 def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
-    """Execute a single opinion sweep task and return the captured metrics."""
+    """
+    Execute a single opinion sweep task and return the captured metrics.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: OpinionSweepTask
+
+    :returns: Opinion sweep outcome produced by executing the given task.
+
+    :rtype: OpinionSweepOutcome
+
+    """
     run_root = ensure_dir(task.run_root)
     outputs_root = run_root / "opinion" / task.config.feature_space
     model_dir = None
@@ -439,10 +648,19 @@ def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
         metrics = json.load(handle)
     return opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
 
-
 def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:
-    """Print a human-readable sweep plan for next-video tasks."""
+    """
+    Print a human-readable sweep plan for next-video tasks.
 
+    :param tasks: Collection of sweep tasks scheduled for execution.
+
+    :type tasks: Sequence[SweepTask]
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     print(f"TOTAL_TASKS={len(tasks)}")
     if not tasks:
         return
@@ -453,14 +671,27 @@ def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:
             f"{task.config.feature_space}\t{task.config.label()}"
         )
 
-
 def emit_combined_sweep_plan(
     *,
     slate_tasks: Sequence[SweepTask],
     opinion_tasks: Sequence[OpinionSweepTask],
 ) -> None:
-    """Print a combined sweep plan covering next-video and opinion tasks."""
+    """
+    Print a combined sweep plan covering next-video and opinion tasks.
 
+    :param slate_tasks: Slate sweep tasks prepared for execution.
+
+    :type slate_tasks: Sequence[SweepTask]
+
+    :param opinion_tasks: Opinion sweep tasks queued for execution.
+
+    :type opinion_tasks: Sequence[OpinionSweepTask]
+
+    :returns: None.
+
+    :rtype: None
+
+    """
     total = len(slate_tasks) + len(opinion_tasks)
     print(f"TOTAL_TASKS={total}")
     if slate_tasks:
@@ -480,18 +711,35 @@ def emit_combined_sweep_plan(
                 f"{task.config.label()}"
             )
 
-
 def format_sweep_task_descriptor(task: SweepTask) -> str:
-    """Return a short descriptor for a sweep task."""
+    """
+    Return a short descriptor for a sweep task.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: SweepTask
+
+    :returns: a short descriptor for a sweep task
+
+    :rtype: str
+
+    """
     return f"{task.config.feature_space}:{task.study.key}:{task.config.label()}"
-
 
 def format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:
-    """Return a short descriptor for an opinion sweep task."""
+    """
+    Return a short descriptor for an opinion sweep task.
 
+    :param task: Individual sweep task describing an execution unit.
+
+    :type task: OpinionSweepTask
+
+    :returns: a short descriptor for an opinion sweep task
+
+    :rtype: str
+
+    """
     return f"{task.config.feature_space}:{task.study.key}:{task.config.label()}"
-
 
 def run_sweeps(
     *,
@@ -503,9 +751,47 @@ def run_sweeps(
     word2vec_model_base: Path,
     reuse_existing: bool,
     jobs: int,
-) -> List[SweepOutcome]:
-    """Execute hyper-parameter sweeps and collect per-run metrics."""
+) -> List[SweepOutcome]:  # pylint: disable=too-many-arguments
+    """
+    Execute hyper-parameter sweeps and collect per-run metrics.
 
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param configs: Iterable of sweep configurations scheduled for execution.
+
+    :type configs: Sequence[SweepConfig]
+
+    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
+
+    :type base_cli: Sequence[str]
+
+    :param extra_cli: Additional CLI arguments appended to the base invocation.
+
+    :type extra_cli: Sequence[str]
+
+    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
+
+    :type sweep_dir: Path
+
+    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
+
+    :type word2vec_model_base: Path
+
+    :param reuse_existing: Whether to reuse cached results instead of recomputing them.
+
+    :type reuse_existing: bool
+
+    :param jobs: Maximum number of parallel workers to schedule.
+
+    :type jobs: int
+
+    :returns: Tuple containing slate tasks, opinion tasks, and any cached sweep outcomes.
+
+    :rtype: List[SweepOutcome]
+
+    """
     pending_tasks, cached_outcomes = prepare_sweep_tasks(
         studies=studies,
         configs=configs,
@@ -518,16 +804,43 @@ def run_sweeps(
     executed_outcomes = execute_sweep_tasks(pending_tasks, jobs=jobs)
     return merge_sweep_outcomes(cached_outcomes, executed_outcomes)
 
-
 def select_best_configs(
     *,
     outcomes: Sequence[SweepOutcome],
     studies: Sequence[StudySpec],
     allow_incomplete: bool = False,
 ) -> Dict[str, Dict[str, StudySelection]]:
-    """Select the best configuration per feature space and study."""
+    """
+    Select the best configuration per feature space and study.
 
+    :param outcomes: Iterable of sweep outcomes available for aggregation.
+
+    :type outcomes: Sequence[SweepOutcome]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
+
+    :type allow_incomplete: bool
+
+    :returns: Mapping of feature spaces to their selected slate configurations.
+
+    :rtype: Dict[str, Dict[str, StudySelection]]
+
+    """
     def _is_better(candidate: SweepOutcome, incumbent: SweepOutcome) -> bool:
+        """
+        Determine whether ``candidate`` should replace the incumbent outcome.
+
+        :param candidate: Candidate sweep outcome under consideration.
+        :type candidate: SweepOutcome
+        :param incumbent: Currently selected sweep outcome.
+        :type incumbent: SweepOutcome
+        :returns: ``True`` when ``candidate`` offers a preferable accuracy/eligibility trade-off.
+        :rtype: bool
+        """
         if candidate.accuracy > incumbent.accuracy + 1e-9:
             return True
         if candidate.accuracy + 1e-9 < incumbent.accuracy:
@@ -563,16 +876,43 @@ def select_best_configs(
         raise RuntimeError("Failed to select a best configuration for any feature space.")
     return selections
 
-
 def select_best_opinion_configs(
     *,
     outcomes: Sequence[OpinionSweepOutcome],
     studies: Sequence[StudySpec],
     allow_incomplete: bool = False,
 ) -> Dict[str, Dict[str, OpinionStudySelection]]:
-    """Select the best configuration per feature space and study for opinion."""
+    """
+    Select the best configuration per feature space and study for opinion.
 
+    :param outcomes: Iterable of sweep outcomes available for aggregation.
+
+    :type outcomes: Sequence[OpinionSweepOutcome]
+
+    :param studies: Sequence of study specifications targeted by the workflow.
+
+    :type studies: Sequence[StudySpec]
+
+    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
+
+    :type allow_incomplete: bool
+
+    :returns: Mapping of feature spaces to their selected opinion configurations.
+
+    :rtype: Dict[str, Dict[str, OpinionStudySelection]]
+
+    """
     def _is_better(candidate: OpinionSweepOutcome, incumbent: OpinionSweepOutcome) -> bool:
+        """
+        Determine whether an opinion sweep candidate should replace the incumbent.
+
+        :param candidate: Candidate opinion outcome evaluated for promotion.
+        :type candidate: OpinionSweepOutcome
+        :param incumbent: Current opinion outcome selected for the study.
+        :type incumbent: OpinionSweepOutcome
+        :returns: ``True`` when ``candidate`` improves MAE/RMSE or ties on those metrics but has a lower best-``k``.
+        :rtype: bool
+        """
         if candidate.mae < incumbent.mae - 1e-9:
             return True
         if candidate.mae > incumbent.mae + 1e-9:
@@ -614,7 +954,6 @@ def select_best_opinion_configs(
     if not selections and outcomes:
         raise RuntimeError("Failed to select a best configuration for any opinion feature space.")
     return selections
-
 
 __all__ = [
     "build_sweep_configs",

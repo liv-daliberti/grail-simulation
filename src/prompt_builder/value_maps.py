@@ -191,7 +191,14 @@ STATE_FIPS_MAP = {
 
 
 def _normalize_state_code(raw: str) -> Optional[str]:
-    """Normalise a state FIPS code to a two-digit string."""
+    """
+    Normalise a state FIPS code to a two-digit string.
+
+    :param raw: Raw state code that may be 1–3 characters or numeric text.
+    :type raw: str
+    :returns: Two-character code or ``None`` when the input is invalid.
+    :rtype: Optional[str]
+    """
 
     text = raw.strip()
     if not text:
@@ -208,7 +215,16 @@ def _normalize_state_code(raw: str) -> Optional[str]:
 
 
 def _format_percentage(value: float, *, precision: int = 0) -> str:
-    """Return a percentage string with bounded input and optional precision."""
+    """
+    Format a fractional value as a percentage string.
+
+    :param value: Fractional value expected in the 0–1 range.
+    :type value: float
+    :param precision: Number of decimal places to include.
+    :type precision: int
+    :returns: Percentage string (e.g. ``\"42%\"`` or ``\"42.5%\"``).
+    :rtype: str
+    """
 
     percent = max(0.0, min(100.0, value * 100.0))
     fmt = f"{{percent:.{precision}f}}%".format(percent=percent)
@@ -218,7 +234,14 @@ def _format_percentage(value: float, *, precision: int = 0) -> str:
 
 
 def _format_scale_percentage(raw: float) -> str:
-    """Render a 0-100 scale value as an integer percentage string."""
+    """
+    Render a 0–100 scale value as an integer percentage string.
+
+    :param raw: Score already in the 0–100 scale.
+    :type raw: float
+    :returns: Integer percentage string with ``%`` suffix.
+    :rtype: str
+    """
 
     clamped = max(0.0, min(100.0, raw))
     formatted = f"{clamped:.0f}%"
@@ -226,7 +249,14 @@ def _format_scale_percentage(raw: float) -> str:
 
 
 def _format_currency(raw: float) -> str:
-    """Return a currency string with thousands separators."""
+    """
+    Return a currency string with thousands separators.
+
+    :param raw: Numeric value representing a dollar amount.
+    :type raw: float
+    :returns: Dollar-formatted string or empty string when NaN.
+    :rtype: str
+    """
 
     if math.isnan(raw):
         return ""
@@ -350,7 +380,14 @@ GUN_IMPORTANCE_FIELDS = {"gun_importance", "gun_priority"}
 
 
 def _as_float(value: Any) -> Optional[float]:
-    """Best-effort conversion of ``value`` to ``float``."""
+    """
+    Convert ``value`` to ``float`` when feasible.
+
+    :param value: Arbitrary input that may encode a numeric value.
+    :type value: Any
+    :returns: Floating-point representation or ``None`` on failure.
+    :rtype: Optional[float]
+    """
 
     try:
         return float(str(value).strip())
@@ -359,7 +396,14 @@ def _as_float(value: Any) -> Optional[float]:
 
 
 def _format_ideology(raw: Any) -> Optional[str]:
-    """Return a qualitative ideology label from numeric or textual inputs."""
+    """
+    Produce a qualitative ideology label from numeric or textual inputs.
+
+    :param raw: Raw ideology value, numeric score, or text.
+    :type raw: Any
+    :returns: Human-friendly ideology label or the original text when numeric parsing fails.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(raw)
     if numeric is None:
@@ -382,7 +426,14 @@ def _format_ideology(raw: Any) -> Optional[str]:
 
 
 def _format_news_minutes(raw: Any) -> Optional[str]:
-    """Normalise self-reported news minutes/hours into a descriptive string."""
+    """
+    Normalise self-reported news minutes/hours into a descriptive string.
+
+    :param raw: Raw value describing time spent consuming news.
+    :type raw: Any
+    :returns: Text reflecting minutes or hours, or the original text when not numeric.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(raw)
     if numeric is None:
@@ -410,7 +461,16 @@ CUSTOM_FIELD_RENDERERS: Dict[str, Callable[[Any], Optional[str]]] = {
 
 
 def _format_percentage_field(value: Any, precision: int = 0) -> Optional[str]:
-    """Format a percentage-like field while handling 0-1 and 0-100 scales."""
+    """
+    Format a percentage-like field while handling 0–1 and 0–100 scales.
+
+    :param value: Raw numeric or textual percentage representation.
+    :type value: Any
+    :param precision: Decimal precision for fractional values.
+    :type precision: int
+    :returns: Percentage string or ``None`` when parsing fails.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(value)
     if numeric is None:
@@ -421,7 +481,14 @@ def _format_percentage_field(value: Any, precision: int = 0) -> Optional[str]:
 
 
 def _format_currency_field(value: Any) -> Optional[str]:
-    """Format a currency-like field preserving existing dollar strings."""
+    """
+    Format a currency-like field preserving existing dollar strings.
+
+    :param value: Raw currency value that may already include formatting.
+    :type value: Any
+    :returns: Dollar-formatted string or ``None`` when empty.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(value)
     if numeric is None:
@@ -433,7 +500,14 @@ def _format_currency_field(value: Any) -> Optional[str]:
 
 
 def _format_state(value: Any) -> Optional[str]:
-    """Map a state code to its canonical label when possible."""
+    """
+    Map a state code to its canonical label when possible.
+
+    :param value: Raw state code or label.
+    :type value: Any
+    :returns: Canonical state name or the original text when unknown.
+    :rtype: Optional[str]
+    """
 
     text = str(value).strip()
     if not text:
@@ -445,7 +519,16 @@ def _format_state(value: Any) -> Optional[str]:
 
 
 def _normalize_mapping_lookup(mapping: Dict[str, str], key: str) -> Optional[str]:
-    """Return the best-effort value from ``mapping`` handling numeric variants."""
+    """
+    Look up ``key`` in ``mapping`` while handling numeric variants.
+
+    :param mapping: Dictionary mapping canonical keys to labels.
+    :type mapping: Dict[str, str]
+    :param key: Original key that may contain numeric formatting noise.
+    :type key: str
+    :returns: Matched value from ``mapping`` or ``None`` when not found.
+    :rtype: Optional[str]
+    """
 
     text_key = str(key)
     candidates = [text_key]
@@ -479,7 +562,14 @@ def _normalize_mapping_lookup(mapping: Dict[str, str], key: str) -> Optional[str
 
 
 def _format_feeling_thermometer(raw: Any) -> Optional[str]:
-    """Convert 0–100 feeling thermometer scores into descriptive phrases."""
+    """
+    Convert 0–100 feeling thermometer scores into descriptive phrases.
+
+    :param raw: Raw score on a 0–100 scale.
+    :type raw: Any
+    :returns: Phrase describing sentiment intensity or the original text when parsing fails.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(raw)
     if numeric is None:
@@ -501,7 +591,14 @@ def _format_feeling_thermometer(raw: Any) -> Optional[str]:
 
 
 def _format_news_trust(raw: Any) -> Optional[str]:
-    """Render fractional news-trust scores as qualitative descriptions."""
+    """
+    Render fractional news-trust scores as qualitative descriptions.
+
+    :param raw: Raw trust score expressed as a fraction or percentage.
+    :type raw: Any
+    :returns: Qualitative description with approximate percentage or original text on failure.
+    :rtype: Optional[str]
+    """
 
     numeric = _as_float(raw)
     if numeric is None:
@@ -526,7 +623,18 @@ def _format_news_trust(raw: Any) -> Optional[str]:
 
 
 def _apply_special_renderers(field_lower: str, value: Any, text: str) -> Optional[str]:
-    """Resolve field-specific renderers that rely on shared lookups."""
+    """
+    Resolve field-specific renderers that rely on shared lookups.
+
+    :param field_lower: Lowercased dataset field name.
+    :type field_lower: str
+    :param value: Raw value extracted from the dataset.
+    :type value: Any
+    :param text: String representation of ``value``.
+    :type text: str
+    :returns: Specialised rendering or ``None`` when no renderer applies.
+    :rtype: Optional[str]
+    """
 
     result: Optional[str] = None
     if field_lower in POLITICAL_INTEREST_FIELDS:
@@ -556,8 +664,11 @@ def format_field_value(field: str, value: Any) -> str:
     Convert dataset field ``value`` into human-readable text based on ``field``.
 
     :param field: Field name from the dataset row.
+    :type field: str
     :param value: Raw value associated with ``field``.
+    :type value: Any
     :returns: Human-friendly string or an empty string when nothing meaningful remains.
+    :rtype: str
     """
 
     if is_nanlike(value):

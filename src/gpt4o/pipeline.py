@@ -372,6 +372,39 @@ def _format_rate(value: float) -> str:
     return f"{value:.3f}"
 
 
+def _group_highlights(payload: Mapping[str, Mapping[str, object]]) -> List[str]:
+    """Return bullet highlights for group-level accuracy extremes."""
+
+    entries: List[Tuple[float, str, int]] = []
+    for raw_group, stats in payload.items():
+        accuracy = stats.get("accuracy")
+        try:
+            accuracy_value = float(accuracy)
+        except (TypeError, ValueError):
+            continue
+        eligible_raw = stats.get("n_eligible", 0)
+        try:
+            eligible_value = int(eligible_raw)
+        except (TypeError, ValueError):
+            eligible_value = 0
+        group_name = str(raw_group or "unspecified")
+        entries.append((accuracy_value, group_name, eligible_value))
+    if not entries:
+        return []
+    entries.sort(key=lambda item: item[0], reverse=True)
+    lines = [
+        f"- Highest accuracy: {entries[0][1]} "
+        f"({_format_rate(entries[0][0])}, eligible {entries[0][2]})."
+    ]
+    if len(entries) > 1:
+        lowest = entries[-1]
+        lines.append(
+            f"- Lowest accuracy: {lowest[1]} "
+            f"({_format_rate(lowest[0])}, eligible {lowest[2]})."
+        )
+    return lines
+
+
 def _write_catalog_report(reports_dir: Path) -> None:
     """Create the top-level GPT-4o report catalog README."""
 
@@ -479,17 +512,17 @@ def _write_next_video_report(
             accuracy = _format_rate(float(stats.get("accuracy", 0.0)))
             parsed_rate = _format_rate(float(stats.get("parsed_rate", 0.0)))
             format_rate = _format_rate(float(stats.get("format_rate", 0.0)))
+            group_name = group or "unspecified"
             lines.append(
-                "| {group} | {seen} | {eligible} | {accuracy} | {parsed} | {formatted} |".format(
-                    group=group or "unspecified",
-                    seen=seen,
-                    eligible=eligible,
-                    accuracy=accuracy,
-                    parsed=parsed_rate,
-                    formatted=format_rate,
-                )
+                f"| {group_name} | {seen} | {eligible} | {accuracy} | {parsed_rate} | {format_rate} |"
             )
         lines.append("")
+        highlight_lines = _group_highlights(payload)
+        if highlight_lines:
+            lines.append("### Highlights")
+            lines.append("")
+            lines.extend(highlight_lines)
+            lines.append("")
 
     if isinstance(group_metrics, Mapping):
         by_issue = group_metrics.get("by_issue")

@@ -19,7 +19,20 @@ from .prompt import build_user_prompt
 
 @dataclass(frozen=True)
 class PromptSample:
-    """Container capturing a rendered prompt with minimal metadata."""
+    """
+    Container capturing a rendered prompt with associated metadata.
+
+    :ivar issue: Issue label that the prompt pertains to.
+    :vartype issue: str
+    :ivar participant_study: Study identifier when available.
+    :vartype participant_study: str | None
+    :ivar participant_id: Participant identifier or ``None`` when omitted.
+    :vartype participant_id: str | None
+    :ivar split: Dataset split name (e.g. ``"train"``).
+    :vartype split: str
+    :ivar prompt: Rendered prompt text.
+    :vartype prompt: str
+    """
 
     issue: str
     participant_study: str | None
@@ -29,7 +42,11 @@ class PromptSample:
 
 
 def _ensure_dataset() -> None:
-    """Validate that the optional ``datasets`` dependency is available."""
+    """
+    Validate that the optional ``datasets`` dependency is available.
+
+    :raises ImportError: If :mod:`datasets` is not installed.
+    """
     if load_from_disk is None:  # pragma: no cover - optional dependency guard
         raise ImportError(
             "datasets must be installed to generate prompt samples "
@@ -41,7 +58,9 @@ def _iter_splits(ds: DatasetDict) -> Iterable[tuple[str, any]]:
     """Yield non-empty dataset splits and their names.
 
     :param ds: Dataset dictionary containing splits.
+    :type ds: DatasetDict
     :returns: Iterator of ``(split_name, split_dataset)`` tuples.
+    :rtype: Iterable[tuple[str, any]]
     """
     for split_name, split in ds.items():
         if split is None or len(split) == 0:
@@ -59,10 +78,15 @@ def generate_prompt_samples(
     """Load prompts for the requested ``issues`` from ``dataset_path``.
 
     :param dataset_path: Location of the cleaned dataset (Hugging Face format).
+    :type dataset_path: str
     :param issues: Iterable of issue labels to sample.
+    :type issues: Sequence[str]
     :param max_per_issue: Number of prompts to collect per issue.
+    :type max_per_issue: int
     :param max_history: History length passed to :func:`prompt_builder.prompt.build_user_prompt`.
+    :type max_history: int
     :returns: List of :class:`PromptSample` instances.
+    :rtype: List[PromptSample]
     """
 
     _ensure_dataset()
@@ -107,7 +131,9 @@ def _normalise_output_path(path: str) -> Path:
     """Return a validated Markdown output path, creating parent directories.
 
     :param path: Destination filepath provided via CLI.
+    :type path: str
     :returns: Path object pointing to a Markdown file.
+    :rtype: Path
     :raises ValueError: If the path is not Markdown.
     """
     output_path = Path(path)
@@ -118,7 +144,16 @@ def _normalise_output_path(path: str) -> Path:
 
 
 def _format_sample_heading(idx: int, sample: PromptSample) -> str:
-    """Return a Markdown heading summarising sample metadata."""
+    """
+    Build a Markdown heading summarising prompt metadata.
+
+    :param idx: One-based sample index.
+    :type idx: int
+    :param sample: Sample container with prompt details.
+    :type sample: PromptSample
+    :returns: Markdown heading string.
+    :rtype: str
+    """
     meta_parts = [
         f"Issue: {sample.issue.replace('_', ' ').title()}",
         f"Split: {sample.split}",
@@ -129,7 +164,16 @@ def _format_sample_heading(idx: int, sample: PromptSample) -> str:
 
 
 def write_samples_markdown(samples: Sequence[PromptSample], output_path: str) -> Path:
-    """Write ``samples`` to ``output_path`` in a readable Markdown layout."""
+    """
+    Write ``samples`` to ``output_path`` in a readable Markdown layout.
+
+    :param samples: Iterable of prompt samples to render.
+    :type samples: Sequence[PromptSample]
+    :param output_path: Destination Markdown file.
+    :type output_path: str
+    :returns: Path to the written Markdown file.
+    :rtype: Path
+    """
 
     destination = _normalise_output_path(output_path)
     lines: List[str] = [
@@ -151,14 +195,25 @@ def write_samples_markdown(samples: Sequence[PromptSample], output_path: str) ->
 
 
 def _parse_issue_list(raw: str | None) -> List[str]:
-    """Parse a comma-separated issue list into normalised tokens."""
+    """
+    Parse a comma-separated issue list into normalised tokens.
+
+    :param raw: Raw issue string supplied via CLI or ``None``.
+    :type raw: str | None
+    :returns: List of individual issue identifiers.
+    :rtype: List[str]
+    """
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
 
 def _build_cli() -> argparse.ArgumentParser:
-    """Construct the CLI argument parser for the sample generator."""
+    """Construct the CLI argument parser for the sample generator.
+
+    :returns: Argument parser configured for the sample generator CLI.
+    :rtype: argparse.ArgumentParser
+    """
     parser = argparse.ArgumentParser(
         description="Generate sample prompts for documentation."
     )
@@ -200,7 +255,13 @@ def _build_cli() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Entry point for the prompt-sample CLI."""
+    """
+    Entry point for the prompt-sample CLI.
+
+    :param argv: Optional list of CLI arguments; defaults to :data:`sys.argv`.
+    :type argv: Sequence[str] | None
+    :raises ValueError: If no issues are provided via ``--issues``.
+    """
     parser = _build_cli()
     args = parser.parse_args(argv)
     issues = _parse_issue_list(args.issues)

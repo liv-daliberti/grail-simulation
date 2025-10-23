@@ -11,17 +11,49 @@ _Dataset = TypeVar("_Dataset")
 
 def safe_div(numerator: float, denominator: float, *, default: float = 0.0) -> float:
     """
-    Return the division result guarding against a zero denominator.
 
-    Parameters
-    ----------
-    numerator:
-        Value forming the numerator.
-    denominator:
-        Value forming the denominator.
-    default:
-        Fallback value returned when ``denominator`` is zero.
+
+
+        Return the division result guarding against a zero denominator.
+
+
+
+        Parameters
+
+        ----------
+
+        numerator:
+
+            Value forming the numerator.
+
+        denominator:
+
+            Value forming the denominator.
+
+        default:
+
+            Fallback value returned when ``denominator`` is zero.
+
+
+
+    :param numerator: Value provided for ``numerator``.
+
+    :type numerator: float
+
+    :param denominator: Value provided for ``denominator``.
+
+    :type denominator: float
+
+    :param default: Value provided for ``default``.
+
+    :type default: float
+
+    :returns: Result produced by ``safe_div``.
+
+    :rtype: float
+
     """
+
 
     if not denominator:
         return default
@@ -29,7 +61,22 @@ def safe_div(numerator: float, denominator: float, *, default: float = 0.0) -> f
 
 
 def ensure_hf_cache(cache_dir: str) -> None:
-    """Ensure Hugging Face cache directories default to ``cache_dir``."""
+    """
+
+    Ensure Hugging Face cache directories default to ``cache_dir``.
+
+
+
+    :param cache_dir: Value provided for ``cache_dir``.
+
+    :type cache_dir: str
+
+    :returns: ``None``.
+
+    :rtype: None
+
+    """
+
 
     os.environ.setdefault("HF_DATASETS_CACHE", cache_dir)
     os.environ.setdefault("HF_HOME", cache_dir)
@@ -44,26 +91,75 @@ def prepare_dataset(
     issue_lookup: Callable[[_Dataset], Sequence[str]],
 ) -> Tuple[str, _Dataset, Sequence[str]]:
     """
-    Configure the HF cache, load the dataset, and list available issues.
 
-    Parameters
-    ----------
-    dataset:
-        Dataset identifier supplied via CLI (``None`` uses ``default_source``).
-    default_source:
-        Default dataset identifier when ``dataset`` is not provided.
-    cache_dir:
-        Directory used for Hugging Face caching.
-    loader:
-        Callable that loads the dataset for ``dataset_source``.
-    issue_lookup:
-        Callable returning the available issue labels for ``loader``'s output.
 
-    Returns
-    -------
-    tuple[str, Any, Sequence[str]]
-        The dataset source string, loaded dataset object, and issue labels.
+
+        Configure the HF cache, load the dataset, and list available issues.
+
+
+
+        Parameters
+
+        ----------
+
+        dataset:
+
+            Dataset identifier supplied via CLI (``None`` uses ``default_source``).
+
+        default_source:
+
+            Default dataset identifier when ``dataset`` is not provided.
+
+        cache_dir:
+
+            Directory used for Hugging Face caching.
+
+        loader:
+
+            Callable that loads the dataset for ``dataset_source``.
+
+        issue_lookup:
+
+            Callable returning the available issue labels for ``loader``'s output.
+
+
+
+        Returns
+
+        -------
+
+        tuple[str, Any, Sequence[str]]
+
+            The dataset source string, loaded dataset object, and issue labels.
+
+
+
+    :param dataset: Value provided for ``dataset``.
+
+    :type dataset: Optional[str]
+
+    :param default_source: Value provided for ``default_source``.
+
+    :type default_source: str
+
+    :param cache_dir: Value provided for ``cache_dir``.
+
+    :type cache_dir: str
+
+    :param loader: Value provided for ``loader``.
+
+    :type loader: Callable[[str, str], _Dataset]
+
+    :param issue_lookup: Value provided for ``issue_lookup``.
+
+    :type issue_lookup: Callable[[_Dataset], Sequence[str]]
+
+    :returns: Result produced by ``prepare_dataset``.
+
+    :rtype: Tuple[str, _Dataset, Sequence[str]]
+
     """
+
 
     ensure_hf_cache(cache_dir)
     dataset_source = dataset or default_source
@@ -74,10 +170,31 @@ def prepare_dataset(
 
 def compose_issue_slug(issue: str, study_tokens: Sequence[str]) -> str:
     """
-    Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.
 
-    Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.
+
+
+        Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.
+
+
+
+        Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.
+
+
+
+    :param issue: Value provided for ``issue``.
+
+    :type issue: str
+
+    :param study_tokens: Value provided for ``study_tokens``.
+
+    :type study_tokens: Sequence[str]
+
+    :returns: Result produced by ``compose_issue_slug``.
+
+    :rtype: str
+
     """
+
 
     base_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
     suffix_parts: list[str] = []

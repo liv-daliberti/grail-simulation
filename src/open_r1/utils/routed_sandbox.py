@@ -18,9 +18,9 @@
 from typing import List, Optional
 
 import requests
+from e2b_code_interpreter.models import Execution, ExecutionError, Result
 
 from .router_common import build_router_payload
-from e2b_code_interpreter.models import Execution, ExecutionError, Result
 
 
 class RoutedSandbox:
@@ -41,14 +41,28 @@ class RoutedSandbox:
         :type router_url: str
         """
         self.router_url = router_url
+        self.timeout = 300
+        self.request_timeout = 30
+
+    def configure_timeouts(
+        self,
+        *,
+        timeout: Optional[int] = None,
+        request_timeout: Optional[int] = None,
+    ) -> None:
+        """Update default execution or request timeouts."""
+        if timeout is not None:
+            self.timeout = timeout
+        if request_timeout is not None:
+            self.request_timeout = request_timeout
 
     def run_code(
         self,
-        scripts: list[str],
+        scripts: List[str],
         languages: Optional[List[str]] = None,
         timeout: Optional[int] = None,
         request_timeout: Optional[int] = None,
-    ) -> list[Execution]:
+    ) -> List[Execution]:
         """
         Executes a batch of scripts in the sandbox environment.
 
@@ -63,11 +77,10 @@ class RoutedSandbox:
         :return: Execution objects containing results, logs, and errors (if any) per script.
         :rtype: list[Execution]
         """
-        # Set default values for timeouts if not provided
-        if timeout is None:
-            timeout = 300  # Default to 5 minutes
-        if request_timeout is None:
-            request_timeout = 30  # Default to 30 seconds
+        timeout = timeout if timeout is not None else self.timeout
+        request_timeout = (
+            request_timeout if request_timeout is not None else self.request_timeout
+        )
 
         languages, payload = build_router_payload(
             scripts,
@@ -76,27 +89,33 @@ class RoutedSandbox:
             request_timeout=request_timeout,
         )
 
-        # Send the request to the E2B Router
-        response = requests.post(
-            f"http://{self.router_url}/execute_batch", json=payload, timeout=request_timeout
-        )
-        if not response.ok:
-            print(f"Request failed with status code: {response.status_code}")
+        try:
+            response = requests.post(
+                f"http://{self.router_url}/execute_batch",
+                json=payload,
+                timeout=request_timeout,
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"Request to E2B router failed: {exc}")
+            return [Execution() for _ in scripts]
 
-        # Parse the response and construct Execution objects
         results = response.json()
         output = []
         for result in results:
             if result["execution"] is None:
-                # If execution is None, create an empty Execution object
-                # This can happen when a script times out or fails to execute
                 execution = Execution()
             else:
+                exec_payload = result["execution"]
                 execution = Execution(
-                    results=[Result(**r) for r in result["execution"]["results"]],
-                    logs=result["execution"]["logs"],
-                    error=(ExecutionError(**result["execution"]["error"]) if result["execution"]["error"] else None),
-                    execution_count=result["execution"]["execution_count"],
+                    results=[Result(**res) for res in exec_payload["results"]],
+                    logs=exec_payload["logs"],
+                    error=(
+                        ExecutionError(**exec_payload["error"])
+                        if exec_payload["error"]
+                        else None
+                    ),
+                    execution_count=exec_payload["execution_count"],
                 )
             output.append(execution)
 

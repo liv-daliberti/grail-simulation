@@ -1,5 +1,4 @@
 """Argument parsing helpers for the modular KNN pipeline."""
-
 from __future__ import annotations
 
 import argparse
@@ -9,18 +8,25 @@ from pathlib import Path
 from typing import List, Sequence, Tuple
 
 from common.cli_args import add_comma_separated_argument
+from common.cli_options import add_jobs_argument, add_stage_arguments
 
 from .cli_utils import add_sentence_transformer_normalize_flags
-from common.cli_options import add_jobs_argument, add_stage_arguments
 
 from .pipeline_context import PipelineContext
 
 LOGGER = logging.getLogger("knn.pipeline.cli")
 
-
 def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
-    """Parse known pipeline arguments while preserving passthrough flags."""
+    """
+    Parse high-level pipeline arguments and capture any extra CLI tokens.
 
+    :param argv: Explicit argument vector used for parsing. When ``None``,
+        the function consumes :data:`sys.argv`.
+    :type argv: Sequence[str] | None
+    :returns: Pair containing the parsed namespace and a list of passthrough arguments that should
+        be forwarded to downstream CLI invocations.
+    :rtype: Tuple[argparse.Namespace, List[str]]
+    """
     parser = argparse.ArgumentParser(
         description="End-to-end sweeps, evaluation, and report regeneration for the KNN baselines."
     )
@@ -134,34 +140,61 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
     parsed, extra = parser.parse_known_args(argv)
     return parsed, list(extra)
 
-
 def repo_root() -> Path:
-    """Return the repository root (two parents above this module)."""
+    """
+    Compute the repository root by traversing upwards from this module.
 
+    :returns: Absolute path to the project root (two directories above ``pipeline_cli``).
+    :rtype: Path
+    """
     return Path(__file__).resolve().parents[2]
 
-
 def default_dataset(root: Path) -> str:
-    """Return the default dataset path rooted at ``root``."""
+    """
+    Resolve the default dataset location under the repository.
 
+    :param root: Repository root from which data directories are derived.
+    :type root: Path
+    :returns: Filesystem path pointing to ``data/cleaned_grail`` beneath ``root``.
+    :rtype: str
+    """
     return str(root / "data" / "cleaned_grail")
 
-
 def default_cache_dir(root: Path) -> str:
-    """Return the default Hugging Face cache directory under ``root``."""
+    """
+    Resolve the datasets cache directory used by the pipeline.
 
+    :param root: Repository root from which cache directories are derived.
+    :type root: Path
+    :returns: Path to ``.cache/huggingface/knn`` rooted under ``root``.
+    :rtype: str
+    """
     return str(root / ".cache" / "huggingface" / "knn")
 
-
 def default_out_dir(root: Path) -> str:
-    """Return the default KNN output directory rooted at ``root``."""
+    """
+    Resolve the default directory for all pipeline outputs.
 
+    :param root: Repository root from which output directories are derived.
+    :type root: Path
+    :returns: Path to ``models/knn`` rooted under ``root``.
+    :rtype: str
+    """
     return str(root / "models" / "knn")
 
-
 def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineContext:
-    """Normalise CLI/environment options into a reusable context object."""
+    """
+    Normalise CLI flags and environment overrides into a :class:`PipelineContext`.
 
+    :param args: Parsed pipeline arguments that may omit optional values.
+    :type args: argparse.Namespace
+    :param root: Repository root, used to derive sensible defaults for directories.
+    :type root: Path
+    :returns: Fully-populated context capturing dataset paths, sweep configuration,
+        Word2Vec parameters, SentenceTransformer settings, and task toggles.
+    :rtype: PipelineContext
+    """
+    # pylint: disable=too-many-locals,too-many-statements
     dataset = args.dataset or os.environ.get("DATASET") or default_dataset(root)
     out_dir_value = args.out_dir or os.environ.get("OUT_DIR") or default_out_dir(root)
     out_dir = Path(out_dir_value)
@@ -279,10 +312,15 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         run_opinion=run_opinion,
     )
 
-
 def build_base_cli(context: PipelineContext) -> List[str]:
-    """Return the base CLI arguments shared across pipeline steps."""
+    """
+    Construct the CLI argument prefix reused across KNN pipeline invocations.
 
+    :param context: Pipeline configuration describing dataset paths and sweep options.
+    :type context: PipelineContext
+    :returns: Argument list containing dataset/cache flags plus other shared options.
+    :rtype: List[str]
+    """
     base_cli = [
         "--dataset",
         context.dataset,
@@ -296,10 +334,17 @@ def build_base_cli(context: PipelineContext) -> List[str]:
         base_cli.extend(["--knn-k-sweep", context.k_sweep])
     return base_cli
 
-
 def log_run_configuration(studies: Sequence["StudySpec"], context: PipelineContext) -> None:
-    """Emit a concise summary of the resolved pipeline configuration."""
+    """
+    Emit a concise summary of the resolved pipeline configuration.
 
+    :param studies: Collection of study specifications that will be evaluated.
+    :type studies: Sequence[StudySpec]
+    :param context: Pipeline context describing dataset paths, jobs, and task toggles.
+    :type context: PipelineContext
+    :returns: ``None``. The function writes human-readable configuration details to the logger.
+    :rtype: None
+    """
     task_tokens: List[str] = []
     if context.run_next_video:
         task_tokens.append("next-video")
@@ -314,24 +359,37 @@ def log_run_configuration(studies: Sequence["StudySpec"], context: PipelineConte
     LOGGER.info("Output directory: %s", context.out_dir)
     LOGGER.info("Parallel jobs: %d", context.jobs)
 
-
 def log_dry_run(configs: Sequence["SweepConfig"]) -> None:
-    """Log the number of configurations planned during ``--dry-run``."""
+    """
+    Log the number of sweep configurations that would have executed.
 
+    :param configs: Planned sweep configuration objects assembled during a dry run.
+    :type configs: Sequence[SweepConfig]
+    :returns: ``None``. The function reports the count via :mod:`logging`.
+    :rtype: None
+    """
     LOGGER.info("[DRY RUN] Planned %d sweep configurations.", len(configs))
 
-
 def _split_tokens(raw: str | None) -> List[str]:
-    """Split a comma-separated string into trimmed, non-empty tokens."""
+    """
+    Split a comma-separated string into trimmed tokens, discarding empties.
 
+    :param raw: Raw comma-separated value string or ``None``.
+    :type raw: str | None
+    :returns: List of individual tokens with whitespace removed.
+    :rtype: List[str]
+    """
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
 
-
 def _default_word2vec_workers() -> int:
-    """Return the worker count for Word2Vec training based on environment hints."""
+    """
+    Determine the Word2Vec worker count from environment hints and CPU availability.
 
+    :returns: Positive worker count bounded by ``MAX_WORD2VEC_WORKERS`` and CPU cores.
+    :rtype: int
+    """
     env_value = os.environ.get("WORD2VEC_WORKERS")
     if env_value:
         try:
@@ -341,7 +399,6 @@ def _default_word2vec_workers() -> int:
     max_workers = int(os.environ.get("MAX_WORD2VEC_WORKERS", "40"))
     n_cpus = os.cpu_count() or 1
     return max(1, min(n_cpus, max_workers))
-
 
 __all__ = [
     "build_base_cli",

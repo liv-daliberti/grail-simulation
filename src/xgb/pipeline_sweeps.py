@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Sequence, Tuple, cast
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_io import load_metrics_json
@@ -593,9 +593,8 @@ def _gpu_tree_method_supported() -> bool:
     # Prefer the helper exposed in newer releases.
     maybe_has_cuda = getattr(core, "_has_cuda_support", None)
     if callable(maybe_has_cuda):
-        probe = cast(Callable[[], object], maybe_has_cuda)
         try:
-            return bool(probe())
+            return bool(maybe_has_cuda())
         except (TypeError, ValueError, RuntimeError, AttributeError):
             LOGGER.debug("Failed to query XGBoost CUDA support.", exc_info=True)
             return False

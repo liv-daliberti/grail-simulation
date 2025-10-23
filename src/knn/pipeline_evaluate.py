@@ -1,5 +1,4 @@
 """Finalize-stage helpers for the modular KNN pipeline."""
-
 from __future__ import annotations
 
 import logging
@@ -18,7 +17,7 @@ from .pipeline_utils import ensure_dir
 
 LOGGER = logging.getLogger("knn.pipeline.evaluate")
 
-
+# pylint: disable=too-many-locals
 def run_final_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
@@ -29,8 +28,26 @@ def run_final_evaluations(
     word2vec_model_dir: Path,
     reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
-    """Run final slate evaluations and return metrics grouped by feature space."""
+    """
+    Run final slate evaluations and return metrics grouped by feature space.
 
+    :param selections: Winning sweep selections keyed by feature space and study key.
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :param studies: Ordered list of studies to evaluate.
+    :type studies: Sequence[StudySpec]
+    :param base_cli: Baseline CLI arguments reused for every invocation.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI flags forwarded verbatim to the runner.
+    :type extra_cli: Sequence[str]
+    :param out_dir: Root directory receiving per-feature evaluation outputs.
+    :type out_dir: Path
+    :param word2vec_model_dir: Directory containing cached Word2Vec models for reuse.
+    :type word2vec_model_dir: Path
+    :param reuse_existing: When ``True``, reuse cached metrics instead of rerunning evaluations.
+    :type reuse_existing: bool
+    :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the final evaluations.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
     metrics_by_feature: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         feature_metrics: Dict[str, Mapping[str, object]] = {}
@@ -58,7 +75,8 @@ def run_final_evaluations(
                     metrics, _ = load_metrics(feature_out_dir, issue_slug)
                 except FileNotFoundError:
                     LOGGER.warning(
-                        "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s but none found.",
+                        "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s "
+                        "but none found.",
                         feature_space,
                         study.key,
                         metrics_path,
@@ -86,7 +104,7 @@ def run_final_evaluations(
             metrics_by_feature[feature_space] = feature_metrics
     return metrics_by_feature
 
-
+# pylint: disable=too-many-locals
 def run_opinion_evaluations(
     *,
     selections: Mapping[str, Mapping[str, OpinionStudySelection]],
@@ -97,8 +115,26 @@ def run_opinion_evaluations(
     word2vec_model_dir: Path,
     reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
-    """Run opinion regression for each feature space and return metrics."""
+    """
+    Run opinion regression for each feature space and return metrics.
 
+    :param selections: Winning opinion selections keyed by feature space and study key.
+    :type selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :param studies: Ordered list of opinion studies to evaluate.
+    :type studies: Sequence[StudySpec]
+    :param base_cli: Baseline CLI arguments reused across runs.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI flags forwarded to the runner.
+    :type extra_cli: Sequence[str]
+    :param out_dir: Directory storing opinion evaluation outputs.
+    :type out_dir: Path
+    :param word2vec_model_dir: Directory containing cached Word2Vec models.
+    :type word2vec_model_dir: Path
+    :param reuse_existing: When ``True``, reuse cached metrics instead of re-running evaluations.
+    :type reuse_existing: bool
+    :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the opinion evaluations.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
     metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
@@ -133,7 +169,7 @@ def run_opinion_evaluations(
         metrics[feature_space] = load_opinion_metrics(feature_out_dir, feature_space)
     return metrics
 
-
+# pylint: disable=too-many-locals
 def run_cross_study_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
@@ -144,8 +180,26 @@ def run_cross_study_evaluations(
     word2vec_model_dir: Path,
     reuse_existing: bool,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
-    """Run leave-one-study-out evaluations and return metrics grouped by feature space."""
+    """
+    Run leave-one-study-out evaluations and return metrics grouped by feature space.
 
+    :param selections: Winning sweep selections keyed by feature space and study key.
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :param studies: Ordered list of studies to iterate when selecting hold-outs.
+    :type studies: Sequence[StudySpec]
+    :param base_cli: Baseline CLI arguments reused across LOSO runs.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI flags forwarded to the LOSO evaluation.
+    :type extra_cli: Sequence[str]
+    :param out_dir: Root directory receiving leave-one-study-out artefacts.
+    :type out_dir: Path
+    :param word2vec_model_dir: Directory containing cached Word2Vec models and subdirectories per holdout.
+    :type word2vec_model_dir: Path
+    :param reuse_existing: When ``True``, reuse cached LOSO metrics instead of re-running evaluations.
+    :type reuse_existing: bool
+    :returns: Nested mapping ``feature_space -> holdout_study -> metrics`` for the LOSO evaluations.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     cached_cross = (
         load_loso_metrics_from_disk(
@@ -224,7 +278,6 @@ def run_cross_study_evaluations(
         if feature_metrics:
             cross_metrics[feature_space] = feature_metrics
     return cross_metrics
-
 
 __all__ = [
     "run_cross_study_evaluations",

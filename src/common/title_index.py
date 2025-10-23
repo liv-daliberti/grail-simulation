@@ -29,7 +29,26 @@ _CANDIDATE_TITLES = ["originTitle", "title", "video_title", "name"]
 
 @dataclass(frozen=True)
 class TitleResolverEnvConfig:
-    """Environment variable names used when sourcing title CSVs."""
+    """
+
+    Environment variable names used when sourcing title CSVs.
+
+
+
+    :ivar csv_var: Attribute ``csv_var``.
+
+    :vartype csv_var: str
+
+    :ivar dirs_var: Attribute ``dirs_var``.
+
+    :vartype dirs_var: str
+
+    :ivar glob_var: Attribute ``glob_var``.
+
+    :vartype glob_var: str
+
+    """
+
 
     csv_var: str = _DEFAULT_ENV_CSVS
     dirs_var: str = _DEFAULT_ENV_DIRS
@@ -37,7 +56,22 @@ class TitleResolverEnvConfig:
 
 
 def _guess_cols(header: Iterable[str]) -> Tuple[Optional[str], Optional[str]]:
-    """Guess the id/title column names within a CSV file."""
+    """
+
+    Guess the id/title column names within a CSV file.
+
+
+
+    :param header: Value provided for ``header``.
+
+    :type header: Iterable[str]
+
+    :returns: Result produced by ``_guess_cols``.
+
+    :rtype: Tuple[Optional[str], Optional[str]]
+
+    """
+
 
     lower = {column.lower(): column for column in header}
     id_col = next((lower[item.lower()] for item in _CANDIDATE_IDS if item.lower() in lower), None)
@@ -49,7 +83,23 @@ def _guess_cols(header: Iterable[str]) -> Tuple[Optional[str], Optional[str]]:
 
 
 class TitleResolver:
-    """Resolve YouTube ids to titles by scanning configured CSV sources."""
+    """
+    Resolve YouTube ids to titles by scanning configured CSV sources.
+
+    :ivar _default_dirs: Fallback directories searched for metadata CSV files.
+    :vartype _default_dirs: List[str]
+    :ivar _env_csv_var: Environment variable that lists explicit CSV paths.
+    :vartype _env_csv_var: str
+    :ivar _env_dirs_var: Environment variable enumerating directories to search.
+    :vartype _env_dirs_var: str
+    :ivar _env_glob_var: Environment variable providing glob patterns.
+    :vartype _env_glob_var: str
+    :ivar _index: Cached mapping of video ids to titles once loaded.
+    :vartype _index: Dict[str, str] | None
+    :ivar _logger: Logger instance used for diagnostic output.
+    :vartype _logger: logging.Logger
+    """
+
 
     def __init__(
         self,
@@ -74,7 +124,18 @@ class TitleResolver:
         self._logger = get_logger(logger_name)
 
     def _iter_candidate_paths(self) -> list[str]:
-        """Enumerate all CSV files that might contain title metadata."""
+        """
+
+        Enumerate all CSV files that might contain title metadata.
+
+
+
+        :returns: Result produced by ``_iter_candidate_paths``.
+
+        :rtype: list[str]
+
+        """
+
 
         # pylint: disable=too-many-branches
         files: list[str] = []
@@ -138,7 +199,22 @@ class TitleResolver:
         return index
 
     def resolve(self, video_id: str | None) -> Optional[str]:
-        """Return a title for the provided video id when available."""
+        """
+
+        Return a title for the provided video id when available.
+
+
+
+        :param video_id: Value provided for ``video_id``.
+
+        :type video_id: str | None
+
+        :returns: Result produced by ``resolve``.
+
+        :rtype: Optional[str]
+
+        """
+
 
         if not video_id:
             return None
@@ -147,7 +223,22 @@ class TitleResolver:
         return self._index.get(canon_video_id(video_id))
 
     def __call__(self, video_id: str | None) -> Optional[str]:
-        """Proxy to :meth:`resolve` allowing instances to be callable."""
+        """
+
+        Proxy to :meth:`resolve` allowing instances to be callable.
+
+
+
+        :param video_id: Value provided for ``video_id``.
+
+        :type video_id: str | None
+
+        :returns: Result produced by ``__call__``.
+
+        :rtype: Optional[str]
+
+        """
+
 
         return self.resolve(video_id)
 

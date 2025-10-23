@@ -16,7 +16,17 @@ import logging
 import os
 import re
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import numpy as np
 import torch
@@ -30,19 +40,18 @@ from transformers import (
 from trl import ModelConfig, get_peft_config
 from trl.trainer.grpo_trainer import GRPOTrainer
 
-from prompt_builder import (
-    as_list_json,
-    build_user_prompt,
-    clean_text,
-    is_nanlike,
-    synthesize_viewer_sentence,
-)
+from prompt_builder import as_list_json
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.dataset_utils import drop_marked_rows, slate_has_gold
+from open_r1.example_utils import (
+    get_gold_next_id,
+    gold_index_from_items,
+    load_slate_items,
+    row_to_training_example,
+)
 from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
-    build_training_example,
     collect_passthrough_fields,
     configure_eval as shared_configure_eval,
     parse_and_run,
@@ -50,7 +59,6 @@ from open_r1.shared import (
     resolve_checkpoint as shared_resolve_checkpoint,
 )
 from open_r1.utils import get_dataset, get_model, get_tokenizer
-from .constants import DEFAULT_SYSTEM_PROMPT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from datasets import DatasetDict
@@ -99,166 +107,27 @@ def _parse_index_from_answer_block(text: str) -> Optional[int]:
         return None
 
 
-def _canon(value: str) -> str:
-    """Lowercase and strip punctuation so ids/titles can be matched loosely."""
-    return re.sub(r"[^a-z0-9]+", "", (value or "").lower().strip())
-
-
-def _load_slate_items(ex: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Collect a normalized slate list for reward functions and the discriminator."""
-    arr = as_list_json(ex.get("slate_items_json"))
-    keep_keys = {
-        "title",
-        "id",
-        "raw_id",
-        "video_id",
-        "video_title",
-        "channel",
-        "channel_title",
-        "channel_name",
-        "channel_id",
-        "length_seconds",
-        "duration_seconds",
-        "duration",
-        "watch_seconds",
-        "score",
-        "rank",
-        "position",
-        "reason",
-        "source",
-    }
-    out: List[Dict[str, Any]] = []
-    for it in arr:
-        if not isinstance(it, dict):
-            continue
-        cleaned: Dict[str, Any] = {}
-        for key, value in it.items():
-            if key in keep_keys and not is_nanlike(value):
-                cleaned[key] = value
-        title = clean_text(
-            it.get("title") or it.get("name") or it.get("video_title") or cleaned.get("title"),
-            limit=160,
-        )
-        vid = clean_text(
-            it.get("id") or it.get("raw_id") or it.get("video_id") or cleaned.get("id")
-        )
-        channel = clean_text(
-            it.get("channel_title")
-            or it.get("channel_name")
-            or it.get("channel")
-            or cleaned.get("channel_title"),
-            limit=120,
-        )
-        if title:
-            cleaned["title"] = title
-        if vid:
-            cleaned["id"] = vid
-        if channel:
-            cleaned["channel_title"] = channel
-        if cleaned.get("id") or cleaned.get("title"):
-            out.append(cleaned)
-    return out
-
-
-def _gold_index_from_items(gold: str, items: List[Dict[str, Any]]) -> int:
-    """Return the gold selection index using ids or titles as a fallback."""
-    gold = (gold or "").strip()
-    if not gold or not items:
-        return -1
-    for idx, it in enumerate(items, 1):
-        if gold == (it.get("id") or ""):
-            return idx
-    canon = _canon(gold)
-    if canon:
-        for idx, it in enumerate(items, 1):
-            if canon == _canon(it.get("title", "")):
-                return idx
-    return -1
-
-
-def _derive_next_from_history(ex: Dict[str, Any], current_id: str) -> str:
-    """Infer the next click from watch history when the dataset lacks an explicit label."""
-    vids = as_list_json(ex.get("watched_vids_json"))
-    if current_id and isinstance(vids, list) and vids:
-        try:
-            i = vids.index(current_id)
-            if i + 1 < len(vids):
-                nxt = vids[i + 1]
-                if isinstance(nxt, str) and nxt.strip():
-                    return nxt.strip()
-        except ValueError:
-            pass
-    det = as_list_json(ex.get("watched_detailed_json"))
-    if current_id and isinstance(det, list) and det:
-        for j, r in enumerate(det):
-            if isinstance(r, dict) and (r.get("id") or "").strip() == current_id:
-                if j + 1 < len(det):
-                    nxt = (det[j + 1].get("id") or "").strip()
-                    if nxt:
-                        return nxt
-                break
-    return ""
-
-
-def _get_gold_next_id(ex: Dict[str, Any], sol_key: Optional[str]) -> str:
-    """Pick the best available gold id from preferred columns or sensible fallbacks."""
-    if sol_key and sol_key not in {"current_video_id", "current_id"}:
-        value = ex.get(sol_key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    for key in ["next_video_id", "clicked_id", "video_id", "label", "answer"]:
-        value = ex.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    current = (ex.get("current_video_id") or "").strip()
-    return _derive_next_from_history(ex, current)
-
-
 def _row_to_example(
     ex: Dict[str, Any],
     system_prompt: Optional[str],
     sol_key: Optional[str],
     max_hist: int = 12,
 ) -> Optional[Dict[str, Any]]:
-    """
-    Transform a raw dataset row into a GRPO-ready sample with prompt, answer, and metadata.
+    """Return the shared GRPO training payload for ``ex`` or ``None`` when invalid."""
 
-    Returns None when a slate is missing or the gold choice cannot be aligned to it.
-    """
-    items = _load_slate_items(ex)
-    if not items:
-        return None
-    gold_id = _get_gold_next_id(ex, sol_key)
-    gold_idx = _gold_index_from_items(gold_id, items)
-    if gold_idx < 1:
-        return None
+    def _extras(example: Mapping[str, Any], _: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
+        return {
+            "slate_items_with_meta": as_list_json(example.get("slate_items_json")),
+            **collect_passthrough_fields(example),
+        }
 
-    user_msg = build_user_prompt(ex, max_hist=max_hist)
-    sys_msg = system_prompt or DEFAULT_SYSTEM_PROMPT
-    slate_text = "\n".join(
-        f"{idx}. {(item.get('title') or item.get('id') or '(untitled)').strip()}"
-        for idx, item in enumerate(items, 1)
-    )
-
-    extra_fields = {
-        "slate_items_with_meta": as_list_json(ex.get("slate_items_json")),
-        **collect_passthrough_fields(ex),
-    }
-
-    return build_training_example(
-        system_prompt=sys_msg,
-        user_prompt=user_msg,
-        gold_index=gold_idx,
-        gold_id=gold_id,
-        n_options=int(ex.get("n_options") or len(items) or 0),
-        viewer_profile=str(ex.get("viewer_profile_sentence") or synthesize_viewer_sentence(ex)),
-        slate_items=items,
-        slate_text=slate_text,
-        watched_detailed_json=as_list_json(ex.get("watched_detailed_json")),
-        watched_vids_json=as_list_json(ex.get("watched_vids_json")),
-        current_video_id=str(ex.get("current_video_id") or ""),
-        current_video_title=str(ex.get("current_video_title") or ""),
-        extra_fields=extra_fields,
+    return row_to_training_example(
+        ex,
+        system_prompt=system_prompt,
+        solution_key=sol_key,
+        max_history=max_hist,
+        passthrough_fn=lambda example: {},
+        extra_fields_fn=_extras,
     )
 
 
@@ -318,9 +187,9 @@ def _prepare_dataset(
 
     validator = partial(
         slate_has_gold,
-        load_slate_items=_load_slate_items,
-        lookup_gold_id=_get_gold_next_id,
-        resolve_gold_index=_gold_index_from_items,
+        load_slate_items=load_slate_items,
+        lookup_gold_id=get_gold_next_id,
+        resolve_gold_index=gold_index_from_items,
     )
     filtered = raw_dataset.filter(validator, fn_kwargs={"solution_key": solution_key})
     formatted = filtered.map(_format_example, load_from_cache_file=False)

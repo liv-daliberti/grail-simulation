@@ -61,10 +61,13 @@ def secs(x: Any) -> str:
 
 
 def _is_nanlike(x: Any) -> bool:
-    """Return ``True`` when ``x`` matches a NaN-like sentinel.
+    """
+    Evaluate whether ``x`` should be treated as a NaN-equivalent sentinel.
 
-    :param x: Value to evaluate for NaN-like characteristics.
-    :returns: Whether the value should be considered missing.
+    :param x: Value of arbitrary type to test for NaN-like semantics.
+    :type x: Any
+    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a canonical missing-text token.
+    :rtype: bool
     """
     if x is None:
         return True
@@ -94,7 +97,14 @@ def is_nanlike(value: Any) -> bool:
 
 
 def _truthy_from_number(value: float) -> Optional[bool]:
-    """Return boolean interpretation for numeric markers 1/0."""
+    """
+    Interpret numeric values that conventionally encode boolean states.
+
+    :param value: Numeric marker expected to be ``1``/``0`` or close equivalents.
+    :type value: float
+    :returns: ``True`` for one-like values, ``False`` for zero-like values, otherwise ``None``.
+    :rtype: Optional[bool]
+    """
 
     if value == 1:
         return True
@@ -104,7 +114,14 @@ def _truthy_from_number(value: float) -> Optional[bool]:
 
 
 def _truthy_from_text(value: Any) -> Optional[bool]:
-    """Best-effort boolean interpretation for textual markers."""
+    """
+    Interpret textual encodings of boolean information.
+
+    :param value: Raw value that may contain a boolean label or numeric text.
+    :type value: Any
+    :returns: ``True`` or ``False`` when a known token or numeric literal is detected; ``None`` otherwise.
+    :rtype: Optional[bool]
+    """
 
     text = str(value).strip().lower()
     if not text:

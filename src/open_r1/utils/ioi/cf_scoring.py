@@ -3,11 +3,23 @@
 import asyncio
 import os
 from io import BytesIO
-from typing import Literal
+from typing import Any, Literal
 
 from async_lru import alru_cache
 
-from .piston_client import PistonClient
+try:  # pragma: no cover - optional dependency
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    pd = None  # type: ignore
+
+try:  # pragma: no cover - optional dependency
+    import aiofiles  # type: ignore
+    from aiofiles import os as aiofiles_os  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    aiofiles = None  # type: ignore
+    aiofiles_os = None  # type: ignore
+
+from .piston_client import PistonClient, PistonError
 from .utils import batched
 
 
@@ -19,7 +31,7 @@ async def score_single_test_case(
     test_output: str,
     submission: str,
     submission_language: str = "cpp",
-) -> tuple[str, str]:
+) -> dict[str, Any] | None:
     """Score a submission against a single Codeforces-style test case.
 
     :param client: Piston execution client used to run the code.
@@ -62,9 +74,9 @@ async def score_single_test_case(
             },
             language="cf_python3" if submission_language == "python" else "c++17",
         )
-    except Exception as e:
-        print(f"Error scoring submission: {e}")
-        return False
+    except (PistonError, asyncio.TimeoutError, ValueError) as exc:
+        print(f"Error scoring submission: {exc}")
+        return None
 
     return result
 
@@ -77,31 +89,40 @@ async def get_generated_contest_tests(contest_id: str) -> list[dict]:
     :returns: Mapping of problem ids to generated test-case dictionaries.
     :raises ValueError: If the tests folder is not configured or missing.
     """
-    import pandas as pd
-
-    import aiofiles
-    import aiofiles.os
+    if pd is None or aiofiles is None or aiofiles_os is None:
+        raise ImportError(
+            "The 'pandas' and 'aiofiles' packages are required to load Codeforces generated tests. "
+            "Install them with `pip install pandas aiofiles`."
+        )
 
     tests_folder = os.environ.get("CF_TESTS_FOLDER", None)
     if not tests_folder:
         raise ValueError(
-            "CF_TESTS_FOLDER environment variable not set! Please download the codeforces generated tests and set CF_TESTS_FOLDER to the folder path. See https://huggingface.co/datasets/open-r1/codeforces for more information."
+            "CF_TESTS_FOLDER environment variable not set! "
+            "Download the Codeforces generated tests and set CF_TESTS_FOLDER to the folder path. "
+            "See https://huggingface.co/datasets/open-r1/codeforces for more information."
         )
-    if not await aiofiles.os.path.exists(tests_folder):
+    if not await aiofiles_os.path.exists(tests_folder):
         raise ValueError(
-            f"CF_TESTS_FOLDER path '{tests_folder}' does not exist! Please download the codeforces generated tests and set CF_TESTS_FOLDER to the folder path. See https://huggingface.co/datasets/open-r1/codeforces for more information."
+            f"CF_TESTS_FOLDER path '{tests_folder}' does not exist! "
+            "Download the Codeforces generated tests and update CF_TESTS_FOLDER accordingly. "
+            "See https://huggingface.co/datasets/open-r1/codeforces for more information."
         )
     parquet_path = os.path.join(tests_folder, f"test_cases_{int(contest_id):04d}.parquet")
-    if not await aiofiles.os.path.exists(parquet_path):
+    if not await aiofiles_os.path.exists(parquet_path):
         return {}
 
     # Read parquet file asynchronously
-    async with aiofiles.open(parquet_path, "rb") as f:
-        content = await f.read()
-        df = pd.read_parquet(BytesIO(content))
+    async with aiofiles.open(parquet_path, "rb") as parquet_file:
+        content = await parquet_file.read()
+    parquet_frame = pd.read_parquet(BytesIO(content))  # type: ignore[arg-type]
 
     # Group by problem_id and convert to dictionary of lists
-    grouped_tests = df.groupby("problem_id").apply(lambda x: x[["input", "output"]].to_dict("records")).to_dict()
+    grouped_tests = (
+        parquet_frame.groupby("problem_id")
+        .apply(lambda frame: frame[["input", "output"]].to_dict("records"))
+        .to_dict()
+    )
 
     return grouped_tests
 
@@ -126,7 +147,7 @@ async def score_submission(
     no_compile_reward: float = -0.1,
     no_submission_reward: float = -1.0,
     submission_language: str = "cpp",
-) -> float:
+) -> float | None:
     """Aggregate scores for a submission across official and generated tests.
 
     :param client: Piston execution client used to run batches.
@@ -142,17 +163,19 @@ async def score_submission(
     """
     if submission_language not in ["python", "cpp"]:
         raise ValueError(f"Invalid submission language: {submission_language}")
-    test_cases = problem_data["official_tests"] + (await get_generated_tests(problem_data["id"]))
+    generated_tests = await get_generated_tests(problem_data["id"])
+    test_cases = problem_data["official_tests"] + generated_tests
     # invalid/not a coding problem
-    if test_cases is None or len(test_cases) == 0:
+    if not test_cases:
         return None
     # no code extracted
     if not submission:
         return no_submission_reward
 
     passed_test_cases = 0
-    # run one batch, check if any of them failed (0 score): if so stop evaluating (assuming non partial score); otherwise continue with the next batch of test cases.
-    for test_batch_to_run in batched(test_cases, test_batch_size) if test_batch_size >= 1 else [test_cases]:
+    # Evaluate batches sequentially; bail out as soon as a failure is observed.
+    batches = batched(test_cases, test_batch_size) if test_batch_size >= 1 else [test_cases]
+    for test_batch_to_run in batches:
         results = await asyncio.gather(
             *[
                 asyncio.create_task(
@@ -168,23 +191,32 @@ async def score_submission(
                 for test_case in test_batch_to_run
             ]
         )
-        if any(result and result["compile"]["code"] != 0 for result in results):
+        if any(
+            result and result["compile"]["code"] != 0
+            for result in results
+        ):
             return no_compile_reward
 
         tests_passed_results = [
-            result and result["run"]["code"] == 0 and result["run"]["stdout"].strip() == "1" for result in results
+            result
+            and result["run"]["code"] == 0
+            and result["run"]["stdout"].strip() == "1"
+            for result in results
         ]
-        if scoring_mode == "pass_fail" and any(not test_passed for test_passed in tests_passed_results):
+        if scoring_mode == "pass_fail" and any(
+            not test_passed for test_passed in tests_passed_results
+        ):
             break
-        passed_test_cases += sum(1 for test_passed in tests_passed_results if test_passed)
+        passed_test_cases += sum(
+            1 for test_passed in tests_passed_results if test_passed
+        )
 
     pass_fail_score = 1.0 if passed_test_cases == len(test_cases) else 0.0
 
     if scoring_mode == "pass_fail":
         return pass_fail_score
-    elif scoring_mode == "partial":
+    if scoring_mode == "partial":
         return passed_test_cases / len(test_cases)
-    elif scoring_mode == "weighted_sum":
+    if scoring_mode == "weighted_sum":
         return pass_fail_score + 0.1 * (passed_test_cases / len(test_cases))
-    else:
-        raise ValueError(f"Invalid scoring mode: {scoring_mode}")
+    raise ValueError(f"Invalid scoring mode: {scoring_mode}")

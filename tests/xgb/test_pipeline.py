@@ -331,6 +331,8 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
     hyper = (tmp_path / "hyperparameter_tuning" / "README.md").read_text(encoding="utf-8")
     assert "| Config | Accuracy" in hyper
     assert "**tfidf_lr0p1_depth4_estim200_sub0p9_col0p8_l21_l10**" in hyper
+    assert "### Configuration Leaderboards" in hyper
+    assert "| 1 | **tfidf_lr0p1_depth4_estim200_sub0p9_col0p8_l21_l10** | 0.820 | 0.000 |" in hyper
 
     next_video = (tmp_path / "next_video" / "README.md").read_text(encoding="utf-8")
     assert "XGBoost Next-Video Baseline" in next_video

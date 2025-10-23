@@ -238,6 +238,7 @@ submit_jobs() {
   local finalize_time="${XGB_FINAL_TIME:-00:59:00}"
   local finalize_cpus="${XGB_FINAL_CPUS:-16}"
   local max_array_size_raw="${XGB_MAX_ARRAY_SIZE:-1000}"
+  local slurm_partition=""
   local plan_log="${LOG_DIR}/${sweep_job_name}_plan.txt"
 
   printf '%s\n' "${plan_output}" > "${plan_log}"
@@ -510,16 +511,34 @@ submit_jobs() {
   local finalize_gres=""
   local finalize_nodes="${XGB_FINAL_NODES:-}"
   local finalize_mem="${XGB_FINAL_MEM:-}"
-  if (( gpu_enabled )) && (( ${#gpu_ranges[@]} > 0 )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]]; then
+  local default_gpu_partition="${XGB_GPU_PARTITION:-${slurm_partition}}"
+  local default_gpu_gres="${XGB_GPU_GRES:-gpu:1}"
+  local default_gpu_nodes="${XGB_GPU_NODES:-1}"
+  local default_gpu_cpus="${XGB_GPU_CPUS:-16}"
+  local default_gpu_time="${XGB_GPU_TIME:-${finalize_time}}"
+  local should_use_gpu_finalize=0
+  if (( gpu_enabled )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]]; then
+    should_use_gpu_finalize=1
+  fi
+  if (( should_use_gpu_finalize )); then
     finalize_export+=",SENTENCE_TRANSFORMER_DEVICE=${XGB_SENTENCE_DEVICE:-${SENTENCE_TRANSFORMER_DEVICE:-cuda}}"
-    finalize_partition="${XGB_FINAL_PARTITION:-${gpu_partition}}"
-    finalize_gres="${XGB_FINAL_GRES:-${gpu_gres}}"
-    finalize_cpus="${XGB_FINAL_CPUS:-${XGB_GPU_CPUS:-${finalize_cpus}}}"
-    finalize_time="${XGB_FINAL_TIME:-${XGB_GPU_TIME:-${finalize_time}}}"
-    finalize_nodes="${XGB_FINAL_NODES:-${XGB_GPU_NODES:-1}}"
+    finalize_partition="${XGB_FINAL_PARTITION:-${default_gpu_partition}}"
+    finalize_gres="${XGB_FINAL_GRES:-${default_gpu_gres}}"
+    finalize_cpus="${XGB_FINAL_CPUS:-${default_gpu_cpus}}"
+    finalize_time="${XGB_FINAL_TIME:-${default_gpu_time}}"
+    finalize_nodes="${XGB_FINAL_NODES:-${default_gpu_nodes}}"
     if [[ -z "${finalize_mem}" && -n "${XGB_GPU_MEM:-}" ]]; then
       finalize_mem="${XGB_GPU_MEM}"
     fi
+  else
+    finalize_time="${XGB_FINAL_TIME:-${finalize_time}}"
+    finalize_cpus="${XGB_FINAL_CPUS:-${finalize_cpus}}"
+    if [[ -z "${finalize_partition}" && -n "${slurm_partition}" ]]; then
+      finalize_partition="${slurm_partition}"
+    fi
+  fi
+  if [[ -z "${finalize_partition}" && -n "${slurm_partition}" ]]; then
+    finalize_partition="${slurm_partition}"
   fi
   local -a extra_finalize_flags=()
   if [[ -n "${XGB_FINAL_SBATCH_FLAGS:-}" ]]; then

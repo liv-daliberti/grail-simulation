@@ -21,8 +21,11 @@ from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
-HYPERPARAM_REPORT_TOP_N = 20
-"""Maximum number of sweep configurations to display per study in the report."""
+HYPERPARAM_TABLE_TOP_N = 20
+"""Maximum number of sweep configurations to display per study in the summary table."""
+
+HYPERPARAM_LEADERBOARD_TOP_N = 5
+"""Number of leaderboard entries to display per study in the detailed rankings."""
 
 
 @dataclass(frozen=True)
@@ -1398,8 +1401,10 @@ def _write_hyperparameter_report(
     lines.append("")
     lines.append(
         (
-            f"This summary lists up to the top {HYPERPARAM_REPORT_TOP_N} configurations on the leaderboard "
-            "for each participant study. The selected configuration is highlighted in bold."
+            f"This summary lists the top-performing configurations uncovered for each participant study "
+            f"(showing up to {HYPERPARAM_TABLE_TOP_N} rows per study). "
+            "Selections promoted to the final pipeline are highlighted in bold. "
+            "See the leaderboard section below for ranked deltas."
         )
     )
     lines.append("")
@@ -1444,7 +1449,7 @@ def _write_hyperparameter_report(
             reverse=True,
         )
         sorted_study_outcomes[study_key] = ordered
-        display_limit = max(1, HYPERPARAM_REPORT_TOP_N)
+        display_limit = max(1, HYPERPARAM_TABLE_TOP_N)
         displayed = ordered[:display_limit]
         selected_outcome = None
         if selection is not None:
@@ -1476,10 +1481,78 @@ def _write_hyperparameter_report(
             )
         lines.append("")
 
+    lines.extend(
+        _xgb_leaderboard_section(
+            per_study_sorted=sorted_study_outcomes,
+            selections=selections,
+            top_n=HYPERPARAM_LEADERBOARD_TOP_N,
+        )
+    )
+
     if selections:
         lines.extend(_xgb_selection_summary_section(sorted_study_outcomes, selections))
         lines.extend(_xgb_parameter_frequency_section(selections))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _xgb_leaderboard_section(
+    *,
+    per_study_sorted: Mapping[str, Sequence[SweepOutcome]],
+    selections: Mapping[str, StudySelection],
+    top_n: int,
+) -> List[str]:
+    """Render ranked leaderboards mirroring the KNN report format."""
+
+    if not per_study_sorted:
+        return []
+
+    def _descriptor(study_key: str) -> str:
+        selection = selections.get(study_key)
+        if selection is not None:
+            return selection.study.label
+        outcomes = per_study_sorted.get(study_key, ())
+        if outcomes:
+            return outcomes[0].study.label
+        return study_key
+
+    lines: List[str] = ["### Configuration Leaderboards", ""]
+    for study_key in sorted(per_study_sorted.keys(), key=lambda key: _descriptor(key).lower()):
+        outcomes = per_study_sorted[study_key]
+        if not outcomes:
+            continue
+        selection = selections.get(study_key)
+        limit = max(1, top_n)
+        best = outcomes[0]
+        best_accuracy = best.accuracy
+        best_coverage = best.coverage
+        lines.append(f"#### {_descriptor(study_key)}")
+        lines.append("")
+        lines.append("| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |")
+        lines.append("| ---: | --- | ---: | ---: | ---: | ---: | ---: |")
+        for idx, outcome in enumerate(outcomes[:limit], start=1):
+            label = outcome.config.label()
+            formatted = f"**{label}**" if selection and outcome.config == selection.config else label
+            delta_acc = None
+            if best_accuracy is not None and outcome.accuracy is not None:
+                delta_acc = max(0.0, best_accuracy - outcome.accuracy)
+            delta_cov = None
+            if best_coverage is not None and outcome.coverage is not None:
+                delta_cov = max(0.0, best_coverage - outcome.coverage)
+            lines.append(
+                "| {rank} | {label} | {acc} | {delta_acc} | {cov} | {delta_cov} | {evaluated} |".format(
+                    rank=idx,
+                    label=formatted,
+                    acc=_format_optional_float(outcome.accuracy),
+                    delta_acc=_format_optional_float(delta_acc),
+                    cov=_format_optional_float(outcome.coverage),
+                    delta_cov=_format_optional_float(delta_cov),
+                    evaluated=_format_count(outcome.evaluated),
+                )
+            )
+        if len(outcomes) > limit:
+            lines.append(f"*Showing top {limit} of {len(outcomes)} configurations.*")
+        lines.append("")
+    return lines
 
 
 def _xgb_selection_summary_section(

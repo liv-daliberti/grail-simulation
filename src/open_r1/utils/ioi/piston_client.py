@@ -1,11 +1,13 @@
 """Client abstractions for interacting with Piston execution sandboxes."""
 
+# pylint: disable=line-too-long
+
 import asyncio
 import os
 import random
 import re
 import subprocess
-from collections import Counter
+from contextlib import suppress
 from functools import lru_cache
 from typing import Union
 
@@ -90,9 +92,11 @@ class PistonClient:
         for _ in range(max_requests_per_endpoint):
             for endpoint in self.base_endpoints:
                 self.endpoint_tokens.put_nowait(endpoint)
-        self._endpoint_failures = Counter()
-        self._unhealthy_endpoints = set()
-        self._endpoint_failures_lock = asyncio.Lock()
+
+        self._endpoint_state = {
+            "unhealthy": set(),
+            "lock": asyncio.Lock(),
+        }
 
     @property
     def session(self):
@@ -194,19 +198,23 @@ class PistonClient:
         :param endpoint: Endpoint URL to check.
         :raises PistonError: When all endpoints are marked unhealthy.
         """
-        async with self._endpoint_failures_lock:
-            if endpoint in self._unhealthy_endpoints:
+        state = self._endpoint_state
+        async with state["lock"]:
+            if endpoint in state["unhealthy"]:
                 return
             try:
                 await asyncio.sleep(5)
                 await self.get_supported_runtimes()
-            except Exception as e:
-                print(f"Error checking endpoint {endpoint}, dropping it ({e})")
-                self._unhealthy_endpoints.add(endpoint)
-                if len(self._unhealthy_endpoints) >= len(self.base_endpoints):
-                    raise PistonError("All endpoints are unhealthy. Please check your Piston workers.")
+            except (aiohttp.ClientError, asyncio.TimeoutError, PistonError) as error:
+                print(f"Error checking endpoint {endpoint}, dropping it ({error})")
+                state["unhealthy"].add(endpoint)
+                if len(state["unhealthy"]) >= len(self.base_endpoints):
+                    raise PistonError(
+                        "All endpoints are unhealthy. Please check your Piston workers."
+                    ) from error
 
     async def send_execute(self, data, language="cms_ioi", max_retries=5):
+        # pylint: disable=too-many-branches
         """Execute code on a managed endpoint with retry and backoff.
 
         :param data: Execution payload forwarded to Piston.
@@ -266,16 +274,11 @@ class PistonClient:
                     await asyncio.sleep(retry_delay)
                 else:
                     await self._check_failed_endpoint(endpoint)
-            except Exception as e:
-                print(f"Propagating exception {type(e)}: {e}")
-                raise e
             finally:
                 # Ensure endpoint is always released, even if an exception occurs
                 if endpoint is not None:
-                    try:
+                    with suppress(Exception):
                         await self._release_endpoint(endpoint)
-                    except Exception as e:
-                        print(f"Error releasing endpoint {endpoint}: {e}")
                     endpoint = None
 
 

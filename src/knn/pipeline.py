@@ -20,7 +20,12 @@ from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from common.pipeline_stage import prepare_sweep_execution
 
-from .pipeline_context import PipelineContext, ReportBundle
+from .pipeline_context import (
+    EvaluationContext,
+    PipelineContext,
+    ReportBundle,
+    SweepTaskContext,
+)
 from .pipeline_cli import (
     build_base_cli as _build_base_cli,
     build_pipeline_context as _build_pipeline_context,
@@ -137,6 +142,13 @@ def main(argv: Sequence[str] | None = None) -> None:
     configs = _build_sweep_configs(context)
     stage = getattr(args, "stage", "full")
 
+    sweep_context = SweepTaskContext(
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        sweep_dir=context.sweep_dir,
+        word2vec_model_base=context.word2vec_model_dir,
+    )
+
     # Enumerate the full sweep plan once so it can be reused across stages.
     planned_tasks: List[SweepTask] = []
     cached_planned: List[SweepOutcome] = []
@@ -144,10 +156,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         planned_tasks, cached_planned = _prepare_sweep_tasks(
             studies=studies,
             configs=configs,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            sweep_dir=context.sweep_dir,
-            word2vec_model_base=context.word2vec_model_dir,
+            context=sweep_context,
             reuse_existing=context.reuse_sweeps,
         )
     planned_opinion_tasks: List[OpinionSweepTask] = []
@@ -156,10 +165,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         planned_opinion_tasks, cached_planned_opinion = _prepare_opinion_sweep_tasks(
             studies=studies,
             configs=configs,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            sweep_dir=context.sweep_dir,
-            word2vec_model_base=context.word2vec_model_dir,
+            context=sweep_context,
             reuse_existing=context.reuse_sweeps,
         )
 
@@ -268,10 +274,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         pending_tasks, cached_outcomes = _prepare_sweep_tasks(
             studies=studies,
             configs=configs,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            sweep_dir=context.sweep_dir,
-            word2vec_model_base=context.word2vec_model_dir,
+            context=sweep_context,
             reuse_existing=reuse_for_stage,
         )
     pending_opinion_tasks = []
@@ -280,10 +283,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         pending_opinion_tasks, cached_opinion_outcomes = _prepare_opinion_sweep_tasks(
             studies=studies,
             configs=configs,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            sweep_dir=context.sweep_dir,
-            word2vec_model_base=context.word2vec_model_dir,
+            context=sweep_context,
             reuse_existing=reuse_for_stage,
         )
 
@@ -414,15 +414,18 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     slate_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    eval_context = EvaluationContext(
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        out_dir=context.out_dir,
+        word2vec_model_dir=context.word2vec_model_dir,
+        reuse_existing=context.reuse_final,
+    )
     if context.run_next_video:
         slate_metrics = _run_final_evaluations(
             selections=selections,
             studies=studies,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            out_dir=context.out_dir,
-            word2vec_model_dir=context.word2vec_model_dir,
-            reuse_existing=context.reuse_final,
+            context=eval_context,
         )
 
     opinion_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
@@ -430,11 +433,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         opinion_metrics = _run_opinion_evaluations(
             selections=opinion_selections,
             studies=studies,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            out_dir=context.out_dir,
-            word2vec_model_dir=context.word2vec_model_dir,
-            reuse_existing=context.reuse_final,
+            context=eval_context,
         )
 
     loso_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
@@ -442,11 +441,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         loso_metrics = _run_cross_study_evaluations(
             selections=selections,
             studies=studies,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            out_dir=context.out_dir,
-            word2vec_model_dir=context.word2vec_model_dir,
-            reuse_existing=context.reuse_final,
+            context=eval_context,
         )
 
     if stage == "finalize":

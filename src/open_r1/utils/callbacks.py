@@ -13,7 +13,7 @@ import logging
 import subprocess
 from concurrent.futures import Future
 from types import SimpleNamespace
-from typing import Dict, Optional
+from typing import Dict, Mapping, Optional, Sequence
 
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 
@@ -120,15 +120,32 @@ class SuccessCachingCallback(TrainerCallback):
             return
 
         txt_logs = getattr(self._trainer, "_textual_logs", None)
-        if not txt_logs or not txt_logs["prompt"]:  # empty until first eval step
+        if not isinstance(txt_logs, Mapping):
+            return
+
+        prompts = txt_logs.get("prompt")
+        rewards = txt_logs.get("rewards")
+        if not (
+            isinstance(rewards, Mapping)
+            and isinstance(prompts, Sequence)
+            and not isinstance(prompts, (str, bytes))
+            and prompts
+        ):
             return
 
         # pick the accuracy reward head (name may differ in your config)
-        acc_key = next((k for k in txt_logs["rewards"] if "accuracy" in k), None)
+        acc_key = next((k for k in rewards if "accuracy" in k), None)
         if acc_key is None:
             return
 
-        for prompt, acc in zip(txt_logs["prompt"], txt_logs["rewards"][acc_key]):
+        accuracy_series = rewards.get(acc_key)
+        if not (
+            isinstance(accuracy_series, Sequence)
+            and not isinstance(accuracy_series, (str, bytes))
+        ):
+            return
+
+        for prompt, acc in zip(prompts, accuracy_series):
             if acc >= self.thr:
                 self.buf.add(prompt)
 

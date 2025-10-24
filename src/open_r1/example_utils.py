@@ -57,20 +57,27 @@ def load_slate_items(example: Mapping[str, Any]) -> List[Dict[str, Any]]:
         for key, value in item.items():
             if key in keep_keys and not is_nanlike(value):
                 cleaned[key] = value
-        title = clean_text(
-            item.get("title") or item.get("name") or item.get("video_title") or cleaned.get("title"),
-            limit=160,
+
+        title_source = (
+            item.get("title")
+            or item.get("name")
+            or item.get("video_title")
+            or cleaned.get("title")
         )
-        video_id = clean_text(
+        title = clean_text(title_source, limit=160)
+
+        video_id_source = (
             item.get("id") or item.get("raw_id") or item.get("video_id") or cleaned.get("id")
         )
-        channel = clean_text(
+        video_id = clean_text(video_id_source)
+
+        channel_source = (
             item.get("channel_title")
             or item.get("channel_name")
             or item.get("channel")
-            or cleaned.get("channel_title"),
-            limit=120,
+            or cleaned.get("channel_title")
         )
+        channel = clean_text(channel_source, limit=120)
         if title:
             cleaned["title"] = title
         if video_id:
@@ -143,6 +150,7 @@ def get_gold_next_id(example: Mapping[str, Any], solution_key: Optional[str]) ->
 ExtraFieldsFn = Callable[[Mapping[str, Any], Sequence[Mapping[str, Any]]], Mapping[str, Any]]
 
 
+# pylint: disable=too-many-arguments
 def row_to_training_example(
     example: Mapping[str, Any],
     *,

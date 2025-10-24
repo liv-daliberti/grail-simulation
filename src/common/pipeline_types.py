@@ -35,22 +35,12 @@ class StudySelection(Generic[OutcomeT]):
 
     @property
     def config(self):  # type: ignore[override]
-        """
-        Expose the configuration associated with the selected outcome.
-
-        :returns: Configuration object produced by the underlying outcome.
-        :rtype: Any
-        """
+        """Expose the configuration associated with the selected outcome."""
         return self.outcome.config
 
     @property
     def evaluation_slug(self) -> str:
-        """
-        Return the evaluation slug derived from the selected study.
-
-        :returns: Evaluation slug used for downstream artefact paths.
-        :rtype: str
-        """
+        """Return the evaluation slug derived from the selected study."""
         return self.study.evaluation_slug
 
 
@@ -78,12 +68,7 @@ class OpinionStudySelection(Generic[OutcomeT]):
 
     @property
     def config(self):  # type: ignore[override]
-        """
-        Expose the configuration associated with the selected opinion outcome.
-
-        :returns: Configuration object produced by the underlying opinion outcome.
-        :rtype: Any
-        """
+        """Expose the configuration associated with the selected opinion outcome."""
         return self.outcome.config
 
 

@@ -32,7 +32,8 @@ def load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mapping
 
     :param out_dir: Root directory containing opinion evaluation artefacts.
     :type out_dir: Path
-    :param feature_space: Feature space identifier (e.g. ``tfidf`` or ``word2vec``) used to scope the search.
+    :param feature_space: Feature space identifier (e.g. ``tfidf`` or ``word2vec``)
+        used to scope the search.
     :type feature_space: str
     :returns: Mapping keyed by study slug with the deserialised metrics dictionary.
     :rtype: Dict[str, Mapping[str, object]]
@@ -66,7 +67,8 @@ def load_final_metrics_from_disk(
     :type feature_spaces: Sequence[str]
     :param studies: Studies to look up within each feature directory.
     :type studies: Sequence[StudySpec]
-    :returns: Nested mapping ``feature_space -> study -> metrics`` for all cached results found.
+    :returns: Nested mapping ``feature_space -> study -> metrics`` for all cached
+        results found.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
     metrics_by_feature: Dict[str, Dict[str, Mapping[str, object]]] = {}
@@ -97,11 +99,13 @@ def load_loso_metrics_from_disk(
 
     :param out_dir: Directory containing persisted evaluation artefacts.
     :type out_dir: Path
-    :param feature_spaces: Feature space configurations to inspect for cached LOSO runs.
+    :param feature_spaces: Feature space configurations to inspect for cached
+        LOSO runs.
     :type feature_spaces: Sequence[str]
     :param studies: Studies that were treated as hold-outs in the LOSO evaluation.
     :type studies: Sequence[StudySpec]
-    :returns: Mapping ``feature_space -> study -> metrics`` for every cached LOSO evaluation located.
+    :returns: Mapping ``feature_space -> study -> metrics`` for every cached
+        LOSO evaluation located.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}

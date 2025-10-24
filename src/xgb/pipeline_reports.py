@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import json
 import logging
+import shlex
+import statistics
 from collections import Counter
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -21,6 +24,16 @@ from common.pipeline_formatters import (
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import extract_numeric_series, start_markdown_report
 
+from .pipeline_context import (
+    NextVideoMetricSummary,
+    OpinionStudySelection,
+    OpinionSummary,
+    OpinionSweepOutcome,
+    StudySelection,
+    SweepOutcome,
+    SweepConfig,
+)
+
 try:
     import matplotlib
     matplotlib.use("Agg", force=True)
@@ -28,14 +41,190 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     plt = None  # type: ignore[assignment]
 
-from .pipeline_context import (
-    NextVideoMetricSummary,
-    OpinionSummary,
-    StudySelection,
-    SweepOutcome,
-    SweepConfig,
-)
 
+@dataclass
+class _PortfolioAccumulator:
+    """Accumulate portfolio-level statistics across studies."""
+
+    total_correct: int = 0
+    total_evaluated: int = 0
+    total_known_hits: int = 0
+    total_known_total: int = 0
+    accuracy_entries: List[Tuple[float, str]] = field(default_factory=list)
+    probability_values: List[float] = field(default_factory=list)
+
+    def record(self, summary: "NextVideoMetricSummary", label: str) -> None:
+        """Update aggregates using the supplied study summary."""
+        self._record_accuracy(summary)
+        self._record_known(summary)
+        self._record_accuracy_entry(summary, label)
+        self._record_probability(summary)
+
+    def to_lines(self) -> List[str]:
+        """Render the accumulated statistics as markdown bullet points."""
+        if not self.total_evaluated and not self.accuracy_entries:
+            return []
+        lines: List[str] = ["## Portfolio Summary", ""]
+
+        weighted_accuracy = self._weighted_accuracy()
+        if weighted_accuracy is not None:
+            lines.append(
+                f"- Weighted accuracy {_format_optional_float(weighted_accuracy)} "
+                f"across {_format_count(self.total_evaluated)} evaluated slates."
+            )
+
+        weighted_coverage = self._weighted_coverage()
+        if weighted_coverage is not None:
+            lines.append(
+                f"- Weighted known-candidate coverage {_format_optional_float(weighted_coverage)} "
+                f"over {_format_count(self.total_known_total)} eligible slates."
+            )
+
+        weighted_availability = self._weighted_availability()
+        if weighted_availability is not None:
+            lines.append(
+                f"- Known-candidate availability {_format_optional_float(weighted_availability)} "
+                f"relative to all evaluated slates."
+            )
+
+        mean_probability = self._mean_probability()
+        if mean_probability is not None:
+            probability_count = len(self.probability_values)
+            study_label = "study" if probability_count == 1 else "studies"
+            lines.append(
+                f"- Mean predicted probability on known candidates "
+                f"{_format_optional_float(mean_probability)} "
+                f"(across {probability_count} {study_label} with recorded probabilities)."
+            )
+
+        if self.accuracy_entries:
+            best_accuracy, best_label = max(self.accuracy_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Highest study accuracy: {best_label} "
+                f"({_format_optional_float(best_accuracy)})."
+            )
+            if len(self.accuracy_entries) > 1:
+                worst_accuracy, worst_label = min(self.accuracy_entries, key=lambda item: item[0])
+                lines.append(
+                    f"- Lowest study accuracy: {worst_label} "
+                    f"({_format_optional_float(worst_accuracy)})."
+                )
+
+        lines.append("")
+        return lines
+
+    def _record_accuracy(self, summary: "NextVideoMetricSummary") -> None:
+        if summary.correct is None or summary.evaluated is None:
+            return
+        self.total_correct += summary.correct
+        self.total_evaluated += summary.evaluated
+
+    def _record_known(self, summary: "NextVideoMetricSummary") -> None:
+        if summary.known_hits is None or summary.known_total is None:
+            return
+        self.total_known_hits += summary.known_hits
+        self.total_known_total += summary.known_total
+
+    def _record_accuracy_entry(self, summary: "NextVideoMetricSummary", label: str) -> None:
+        if summary.accuracy is None:
+            return
+        self.accuracy_entries.append((summary.accuracy, label))
+
+    def _record_probability(self, summary: "NextVideoMetricSummary") -> None:
+        if summary.avg_probability is None:
+            return
+        self.probability_values.append(summary.avg_probability)
+
+    def _weighted_accuracy(self) -> Optional[float]:
+        if not self.total_evaluated:
+            return None
+        return self.total_correct / self.total_evaluated
+
+    def _weighted_coverage(self) -> Optional[float]:
+        if not self.total_known_total:
+            return None
+        return self.total_known_hits / self.total_known_total
+
+    def _weighted_availability(self) -> Optional[float]:
+        if not self.total_evaluated:
+            return None
+        return self.total_known_total / self.total_evaluated
+
+    def _mean_probability(self) -> Optional[float]:
+        if not self.probability_values:
+            return None
+        return sum(self.probability_values) / len(self.probability_values)
+
+@dataclass
+class _OpinionPortfolioAccumulator:
+    """Aggregate opinion-regression metrics across studies."""
+
+    total_weight: float = 0.0
+    weighted_mae_sum: float = 0.0
+    weighted_baseline_sum: float = 0.0
+    mae_entries: List[Tuple[float, str]] = field(default_factory=list)
+    delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+
+    def record(self, summary: OpinionSummary, label: str) -> None:
+        """Track metrics for a single study/selection."""
+        participants = float(summary.participants or 0)
+        mae_value = summary.mae_after
+        baseline_value = summary.baseline_mae
+        delta_value = summary.mae_delta
+
+        if mae_value is not None:
+            self.mae_entries.append((mae_value, label))
+        if participants and mae_value is not None:
+            self.total_weight += participants
+            self.weighted_mae_sum += mae_value * participants
+            if baseline_value is not None:
+                self.weighted_baseline_sum += baseline_value * participants
+
+        if delta_value is not None:
+            self.delta_entries.append((delta_value, label))
+
+    def to_lines(self, heading_level: str = "####") -> List[str]:
+        """Render the aggregated metrics as Markdown bullet points."""
+        if not self.mae_entries:
+            return []
+
+        lines: List[str] = [f"{heading_level} Portfolio Summary", ""]
+        weighted_mae = None
+        weighted_baseline = None
+        if self.total_weight > 0:
+            weighted_mae = self.weighted_mae_sum / self.total_weight
+            if self.weighted_baseline_sum > 0:
+                weighted_baseline = self.weighted_baseline_sum / self.total_weight
+
+        weighted_delta = None
+        if weighted_mae is not None:
+            lines.append(
+                f"- Weighted MAE {_format_optional_float(weighted_mae)} "
+                f"across {_format_count(int(self.total_weight))} participants."
+            )
+        if weighted_baseline is not None:
+            if weighted_mae is not None:
+                weighted_delta = weighted_baseline - weighted_mae
+            lines.append(
+                f"- Weighted baseline MAE {_format_optional_float(weighted_baseline)} "
+                f"({ _format_delta(weighted_delta) if weighted_delta is not None else '—' } vs. final)."
+            )
+
+        if self.delta_entries:
+            best_delta, best_label = max(self.delta_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Largest MAE reduction: {best_label} ({_format_delta(best_delta)})."
+            )
+        if len(self.mae_entries) > 1:
+            best_mae, best_label = min(self.mae_entries, key=lambda item: item[0])
+            worst_mae, worst_label = max(self.mae_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Lowest MAE: {best_label} ({_format_optional_float(best_mae)}); "
+                f"Highest MAE: {worst_label} ({_format_optional_float(worst_mae)})."
+            )
+
+        lines.append("")
+        return lines
 LOGGER = logging.getLogger("xgb.pipeline.reports")
 HYPERPARAM_TABLE_TOP_N = 10
 HYPERPARAM_LEADERBOARD_TOP_N = 5
@@ -283,6 +472,74 @@ def _plot_xgb_curve(
         return plot_path.as_posix()
 
 
+def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-statements
+    *,
+    directory: Path,
+    study_label: str,
+    study_key: str,
+    payload: Mapping[str, object],
+) -> Optional[str]:
+    """
+    Persist a MAE training/validation curve plot for the opinion regressor.
+
+    :param directory: Report directory where plots are stored.
+    :type directory: Path
+    :param study_label: Human-readable study label.
+    :type study_label: str
+    :param study_key: Study identifier used for slug generation.
+    :type study_key: str
+    :param payload: Metrics payload containing curve information.
+    :type payload: Mapping[str, object]
+    :returns: Relative path to the generated image or ``None`` when unavailable.
+    :rtype: Optional[str]
+    """
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+    curve_bundle = _load_curve_bundle(payload)
+    if not isinstance(curve_bundle, Mapping):
+        return None
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    eval_mae_map = eval_curve.get("mae_by_round") or eval_curve.get("mae_by_step")
+    if not isinstance(eval_mae_map, Mapping):
+        return None
+    eval_x, eval_y = extract_numeric_series(eval_mae_map)
+    if not eval_x:
+        return None
+
+    train_x: List[int] = []
+    train_y: List[float] = []
+    train_curve = curve_bundle.get("train")
+    if isinstance(train_curve, Mapping):
+        train_mae_map = train_curve.get("mae_by_round") or train_curve.get("mae_by_step")
+        if isinstance(train_mae_map, Mapping):
+            train_x, train_y = extract_numeric_series(train_mae_map)
+
+    curves_dir = directory / "curves"
+    curves_dir.mkdir(parents=True, exist_ok=True)
+    slug = (study_label or study_key or "study").lower().replace(" ", "_").replace("/", "_")
+    plot_path = curves_dir / f"{slug}_mae.png"
+
+    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    axis.plot(eval_x, eval_y, marker="o", label="validation MAE")
+    if train_x and train_y:
+        axis.plot(train_x, train_y, marker="o", linestyle="--", label="training MAE")
+    axis.set_title(study_label or study_key)
+    axis.set_xlabel("Boosting round")
+    axis.set_ylabel("MAE")
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
+    axis.legend()
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return plot_path.relative_to(directory).as_posix()
+    except ValueError:
+        return plot_path.as_posix()
+
+
 def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
     """
     Generate bullet-point takeaways for the opinion regression stage.
@@ -336,80 +593,12 @@ def _next_video_portfolio_summary(
     :rtype: List[str]
     """
 
-    total_correct = 0
-    total_evaluated = 0
-    total_known_hits = 0
-    total_known_total = 0
-    accuracy_entries: List[Tuple[float, str]] = []
-    probability_values: List[float] = []
-
+    accumulator = _PortfolioAccumulator()
     for study_key, payload in metrics.items():
         summary = _extract_next_video_summary(payload)
-        if summary.correct is not None and summary.evaluated is not None:
-            total_correct += summary.correct
-            total_evaluated += summary.evaluated
-        if summary.known_hits is not None and summary.known_total is not None:
-            total_known_hits += summary.known_hits
-            total_known_total += summary.known_total
         label = summary.study_label or study_key
-        if summary.accuracy is not None:
-            accuracy_entries.append((summary.accuracy, label))
-        if summary.avg_probability is not None:
-            probability_values.append(summary.avg_probability)
-
-    if not total_evaluated and not accuracy_entries:
-        return []
-
-    weighted_accuracy: Optional[float] = None
-    if total_evaluated:
-        weighted_accuracy = total_correct / total_evaluated
-    weighted_coverage: Optional[float] = None
-    if total_known_total:
-        weighted_coverage = total_known_hits / total_known_total
-    weighted_availability: Optional[float] = None
-    if total_evaluated:
-        weighted_availability = total_known_total / total_evaluated
-    mean_probability: Optional[float] = None
-    if probability_values:
-        mean_probability = sum(probability_values) / len(probability_values)
-
-    lines: List[str] = ["## Portfolio Summary", ""]
-    if total_evaluated:
-        lines.append(
-            f"- Weighted accuracy {_format_optional_float(weighted_accuracy)} "
-            f"across {_format_count(total_evaluated)} evaluated slates."
-        )
-    if total_known_total:
-        lines.append(
-            f"- Weighted known-candidate coverage {_format_optional_float(weighted_coverage)} "
-            f"over {_format_count(total_known_total)} eligible slates."
-        )
-    if weighted_availability is not None:
-        lines.append(
-            f"- Known-candidate availability {_format_optional_float(weighted_availability)} "
-            f"relative to all evaluated slates."
-        )
-    if mean_probability is not None:
-        probability_count = len(probability_values)
-        study_label = "study" if probability_count == 1 else "studies"
-        lines.append(
-            f"- Mean predicted probability on known candidates "
-            f"{_format_optional_float(mean_probability)} "
-            f"(across {probability_count} {study_label} with recorded probabilities)."
-        )
-
-    if accuracy_entries:
-        best_accuracy, best_label = max(accuracy_entries, key=lambda item: item[0])
-        lines.append(
-            f"- Highest study accuracy: {best_label} ({_format_optional_float(best_accuracy)})."
-        )
-        if len(accuracy_entries) > 1:
-            worst_accuracy, worst_label = min(accuracy_entries, key=lambda item: item[0])
-            lines.append(
-                f"- Lowest study accuracy: {worst_label} ({_format_optional_float(worst_accuracy)})."
-            )
-    lines.append("")
-    return lines
+        accumulator.record(summary, label)
+    return accumulator.to_lines()
 
 
 # pylint: disable=too-many-arguments
@@ -423,6 +612,8 @@ def _write_reports(
     allow_incomplete: bool,
     include_next_video: bool = True,
     include_opinion: bool = True,
+    opinion_outcomes: Sequence[OpinionSweepOutcome] = (),
+    opinion_selections: Mapping[str, OpinionStudySelection] | None = None,
 ) -> None:
     """
     Write the full report bundle capturing sweep and evaluation artefacts.
@@ -443,6 +634,10 @@ def _write_reports(
     :type include_next_video: bool
     :param include_opinion: Flag enabling opinion sections.
     :type include_opinion: bool
+    :param opinion_outcomes: Opinion sweep outcomes considered during selection.
+    :type opinion_outcomes: Sequence[OpinionSweepOutcome]
+    :param opinion_selections: Mapping from study key to selected opinion sweep outcome.
+    :type opinion_selections: Mapping[str, OpinionStudySelection] | None
     """
 
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -459,13 +654,24 @@ def _write_reports(
         include_next_video=include_next_video,
         include_opinion=include_opinion,
     )
-    if include_next_video:
+    if include_next_video or include_opinion:
         _write_hyperparameter_report(
             reports_dir / "hyperparameter_tuning",
-            outcomes,
-            selections,
+            outcomes if include_next_video else (),
+            selections if include_next_video else {},
+            opinion_outcomes=opinion_outcomes if include_opinion else (),
+            opinion_selections=opinion_selections or {},
             allow_incomplete=allow_incomplete,
+            include_next_video=include_next_video,
+            include_opinion=include_opinion,
         )
+    else:
+        _write_disabled_report(
+            reports_dir / "hyperparameter_tuning",
+            "Hyper-parameter Tuning",
+            "Sweep stages were disabled for this run.",
+        )
+    if include_next_video:
         _write_next_video_report(
             reports_dir / "next_video",
             final_metrics,
@@ -473,11 +679,6 @@ def _write_reports(
             allow_incomplete=allow_incomplete,
         )
     else:
-        _write_disabled_report(
-            reports_dir / "hyperparameter_tuning",
-            "Hyper-parameter Tuning",
-            "Next-video sweeps were disabled for this run.",
-        )
         _write_disabled_report(
             reports_dir / "next_video",
             "Next-Video Evaluation",
@@ -545,13 +746,17 @@ def _write_catalog_report(
     write_markdown_lines(path, lines)
 
 
-# pylint: disable=too-many-locals,too-many-statements
+# pylint: disable=too-many-arguments,too-many-locals,too-many-statements,too-many-branches
 def _write_hyperparameter_report(
     directory: Path,
     outcomes: Sequence[SweepOutcome],
     selections: Mapping[str, StudySelection],
     *,
+    opinion_outcomes: Sequence[OpinionSweepOutcome] = (),
+    opinion_selections: Mapping[str, OpinionStudySelection] | None = None,
     allow_incomplete: bool,
+    include_next_video: bool,
+    include_opinion: bool,
 ) -> None:
     """
     Create the hyper-parameter sweep summary document.
@@ -568,107 +773,391 @@ def _write_hyperparameter_report(
 
     path, lines = start_markdown_report(directory, title="Hyper-parameter Tuning")
     lines.append(
-        (
-            f"This summary lists the top-performing configurations uncovered for each participant study "
-            f"(showing up to {HYPERPARAM_TABLE_TOP_N} rows per study). "
-            "Selections promoted to the final pipeline are highlighted in bold. "
-            "See the leaderboard section below for ranked deltas."
-        )
+        "This summary lists the top-performing configurations uncovered during the hyper-parameter sweeps."
     )
+    if include_next_video:
+        lines.append(
+            f"- Next-video tables highlight up to {HYPERPARAM_TABLE_TOP_N} configurations per study ranked by validation accuracy."
+        )
+    if include_opinion:
+        lines.append(
+            f"- Opinion regression tables highlight up to {HYPERPARAM_TABLE_TOP_N} configurations per study ranked by MAE relative to the baseline."
+        )
+    lines.append("- Rows in bold mark the configuration promoted to the final evaluation.")
     lines.append("")
-    per_study: Dict[str, List[SweepOutcome]] = {}
+
+    sorted_study_outcomes: Dict[str, List[SweepOutcome]] = {}
+    if include_next_video:
+        per_study: Dict[str, List[SweepOutcome]] = {}
+        for outcome in outcomes:
+            per_study.setdefault(outcome.study.key, []).append(outcome)
+
+        if per_study:
+            lines.append("## Next-Video Sweeps")
+            lines.append("")
+
+            def _study_label(study_key: str) -> str:
+                selection = selections.get(study_key)
+                if selection is not None:
+                    return selection.study.label
+                study_outcomes = per_study.get(study_key)
+                if study_outcomes:
+                    return study_outcomes[0].study.label
+                return study_key
+
+            for study_key in sorted(per_study.keys(), key=lambda key: _study_label(key).lower()):
+                study_outcomes = per_study[study_key]
+                selection = selections.get(study_key)
+                study_label = _study_label(study_key)
+                issue_label = study_outcomes[0].study.issue.replace("_", " ").title()
+                lines.append(f"### {study_label}")
+                lines.append("")
+                lines.append(f"*Issue:* {issue_label}")
+                lines.append("")
+                lines.append("| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |")
+                lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: |")
+                ordered = sorted(
+                    study_outcomes,
+                    key=lambda item: (item.accuracy, item.coverage, item.evaluated),
+                    reverse=True,
+                )
+                sorted_study_outcomes[study_key] = ordered
+                display_limit = max(1, HYPERPARAM_TABLE_TOP_N)
+                displayed = ordered[:display_limit]
+                selected_outcome = None
+                if selection is not None:
+                    for candidate in ordered:
+                        if candidate.config == selection.config:
+                            selected_outcome = candidate
+                            break
+                if selected_outcome is not None and selected_outcome not in displayed:
+                    displayed.append(selected_outcome)
+                    displayed.sort(
+                        key=lambda item: (item.accuracy, item.coverage, item.evaluated),
+                        reverse=True,
+                    )
+                    displayed = displayed[:display_limit]
+                for outcome in displayed:
+                    label = outcome.config.label()
+                    formatted = (
+                        f"**{label}**"
+                        if selection and outcome.config == selection.config
+                        else label
+                    )
+                    summary = _extract_next_video_summary(outcome.metrics)
+                    lines.append(
+                        f"| {formatted} | {_format_optional_float(summary.accuracy)} | "
+                        f"{_format_optional_float(summary.coverage)} | "
+                        f"{_format_ratio(summary.known_hits, summary.known_total)} | "
+                        f"{_format_optional_float(summary.known_availability)} | "
+                        f"{_format_optional_float(summary.avg_probability)} | "
+                        f"{_format_count(summary.evaluated)} |"
+                    )
+                if len(ordered) > display_limit:
+                    lines.append(
+                        f"*Showing top {display_limit} of {len(ordered)} configurations.*"
+                    )
+                lines.append("")
+
+            lines.extend(
+                _xgb_leaderboard_section(
+                    per_study_sorted=sorted_study_outcomes,
+                    selections=selections,
+                    top_n=HYPERPARAM_LEADERBOARD_TOP_N,
+                )
+            )
+
+            if selections:
+                lines.extend(_xgb_selection_summary_section(sorted_study_outcomes, selections))
+                lines.extend(_xgb_parameter_frequency_section(selections))
+        else:
+            lines.append("## Next-Video Sweeps")
+            lines.append("")
+            lines.append("No next-video sweep runs were available when this report was generated.")
+            if allow_incomplete:
+                lines.append(
+                    "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
+                )
+            lines.append("")
+
+    if include_opinion:
+        lines.extend(
+            _opinion_hyperparameter_section(
+                outcomes=opinion_outcomes,
+                selections=opinion_selections or {},
+                allow_incomplete=allow_incomplete,
+            )
+        )
+
+    write_markdown_lines(path, lines)
+
+
+# pylint: disable=too-many-locals,too-many-statements,too-many-branches
+def _opinion_hyperparameter_section(
+    *,
+    outcomes: Sequence[OpinionSweepOutcome],
+    selections: Mapping[str, OpinionStudySelection],
+    allow_incomplete: bool,
+) -> List[str]:
+    """
+    Render the opinion hyper-parameter sweep summary.
+
+    :param outcomes: Opinion sweep outcomes considered during selection.
+    :type outcomes: Sequence[OpinionSweepOutcome]
+    :param selections: Mapping from study key to selected opinion sweep outcome.
+    :type selections: Mapping[str, OpinionStudySelection]
+    :param allow_incomplete: Flag controlling placeholder messaging when artefacts are missing.
+    :type allow_incomplete: bool
+    :returns: Markdown lines describing opinion sweeps.
+    :rtype: List[str]
+    """
+
+    lines: List[str] = ["## Opinion Regression Sweeps", ""]
+    per_study: Dict[str, List[OpinionSweepOutcome]] = {}
+    portfolio = _OpinionPortfolioAccumulator()
     for outcome in outcomes:
         per_study.setdefault(outcome.study.key, []).append(outcome)
 
     if not per_study:
-        lines.append("No sweep runs were available when this report was generated.")
+        lines.append("No opinion sweep runs were available when this report was generated.")
         if allow_incomplete:
             lines.append(
                 "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
             )
         lines.append("")
-        write_markdown_lines(path, lines)
-        return
+        return lines
 
     def _study_label(study_key: str) -> str:
-        """
-        Resolve a human-readable study label for sorting purposes.
-
-        :param study_key: Key identifying the participant study.
-        :type study_key: str
-        :returns: Study label derived from selections or available outcomes.
-        :rtype: str
-        """
         selection = selections.get(study_key)
         if selection is not None:
             return selection.study.label
-        study_outcomes = per_study.get(study_key)
-        if study_outcomes:
-            return study_outcomes[0].study.label
+        candidates = per_study.get(study_key)
+        if candidates:
+            return candidates[0].study.label
         return study_key
 
-    sorted_study_outcomes: Dict[str, List[SweepOutcome]] = {}
     for study_key in sorted(per_study.keys(), key=lambda key: _study_label(key).lower()):
         study_outcomes = per_study[study_key]
         selection = selections.get(study_key)
         study_label = _study_label(study_key)
         issue_label = study_outcomes[0].study.issue.replace("_", " ").title()
-        lines.append(f"## {study_label}")
+        lines.append(f"### {study_label}")
         lines.append("")
         lines.append(f"*Issue:* {issue_label}")
         lines.append("")
-        lines.append("| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |")
-        lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: |")
+        lines.append(
+            "| Config | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |"
+        )
+        lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
         ordered = sorted(
             study_outcomes,
-            key=lambda item: (item.accuracy, item.coverage, item.evaluated),
-            reverse=True,
+            key=lambda item: (item.mae, item.rmse, -item.r2, item.order_index),
         )
-        sorted_study_outcomes[study_key] = ordered
         display_limit = max(1, HYPERPARAM_TABLE_TOP_N)
         displayed = ordered[:display_limit]
-        selected_outcome = None
-        if selection is not None:
-            for candidate in ordered:
-                if candidate.config == selection.config:
-                    selected_outcome = candidate
-                    break
-        if selected_outcome is not None and selected_outcome not in displayed:
-            displayed.append(selected_outcome)
-            displayed.sort(key=lambda item: (item.accuracy, item.coverage, item.evaluated), reverse=True)
+        selected = selection.outcome if selection is not None else None
+        if selected is not None and selected not in displayed:
+            displayed.append(selected)
+            displayed.sort(
+                key=lambda item: (item.mae, item.rmse, -item.r2, item.order_index),
+            )
             displayed = displayed[:display_limit]
         for outcome in displayed:
-            label = outcome.config.label()
-            formatted = (
-                f"**{label}**" if selection and outcome.config == selection.config else label
-            )
-            summary = _extract_next_video_summary(outcome.metrics)
+            summary = _extract_opinion_summary(outcome.metrics)
+            config_label = outcome.config.label()
+            config_summary = _summarise_xgb_config(outcome.config)
+            if selection and outcome.config == selection.outcome.config:
+                config_cell = f"**{config_label}**<br>{config_summary}"
+            else:
+                config_cell = f"{config_label}<br>{config_summary}"
             lines.append(
-                f"| {formatted} | {_format_optional_float(summary.accuracy)} | "
-                f"{_format_optional_float(summary.coverage)} | "
-                f"{_format_ratio(summary.known_hits, summary.known_total)} | "
-                f"{_format_optional_float(summary.known_availability)} | "
-                f"{_format_optional_float(summary.avg_probability)} | "
-                f"{_format_count(summary.evaluated)} |"
+                f"| {config_cell} | {_format_optional_float(summary.mae_after)} | "
+                f"{_format_delta(summary.mae_delta)} | "
+                f"{_format_optional_float(summary.rmse_after)} | "
+                f"{_format_optional_float(summary.r2_after)} | "
+                f"{_format_count(summary.participants)} |"
             )
         if len(ordered) > display_limit:
             lines.append(
                 f"*Showing top {display_limit} of {len(ordered)} configurations.*"
             )
+        reproduction = _xgb_opinion_command(selection)
+        if reproduction:
+            lines.append(f"  Command: `{reproduction}`")
         lines.append("")
 
-    lines.extend(
-        _xgb_leaderboard_section(
-            per_study_sorted=sorted_study_outcomes,
-            selections=selections,
-            top_n=HYPERPARAM_LEADERBOARD_TOP_N,
-        )
-    )
+        selected_summary = None
+        if selection is not None:
+            selected_summary = _extract_opinion_summary(selection.outcome.metrics)
+        elif displayed:
+            selected_summary = _extract_opinion_summary(displayed[0].metrics)
+        if selected_summary is not None:
+            portfolio.record(selected_summary, study_label)
 
-    if selections:
-        lines.extend(_xgb_selection_summary_section(sorted_study_outcomes, selections))
-        lines.extend(_xgb_parameter_frequency_section(selections))
-    write_markdown_lines(path, lines)
+    lines.extend(portfolio.to_lines(heading_level="###"))
+    return lines
+
+
+def _opinion_cross_study_diagnostics(
+    metrics: Mapping[str, Mapping[str, object]],
+) -> List[str]:
+    """Summarise cross-study statistics for opinion metrics."""
+    if not metrics:
+        return []
+    portfolio = _OpinionPortfolioAccumulator()
+    summaries: List[OpinionSummary] = []
+    for study_key, payload in metrics.items():
+        summary = _extract_opinion_summary(payload)
+        portfolio.record(summary, summary.label or study_key)
+        summaries.append(summary)
+
+    lines: List[str] = ["## Cross-Study Diagnostics", ""]
+    lines.extend(portfolio.to_lines(heading_level="### Weighted Summary"))
+
+    maes = [summary.mae_after for summary in summaries if summary.mae_after is not None]
+    if maes:
+        mean_mae = sum(maes) / len(maes)
+        stdev_mae = statistics.pstdev(maes) if len(maes) > 1 else 0.0
+        lines.append(
+            f"- Unweighted MAE { _format_optional_float(mean_mae) } "
+            f"(σ {_format_optional_float(stdev_mae)}, range "
+            f"{_format_optional_float(min(maes))} – {_format_optional_float(max(maes))})."
+        )
+    deltas = [summary.mae_delta for summary in summaries if summary.mae_delta is not None]
+    if deltas:
+        mean_delta = sum(deltas) / len(deltas)
+        stdev_delta = statistics.pstdev(deltas) if len(deltas) > 1 else 0.0
+        lines.append(
+            f"- MAE delta mean { _format_optional_float(mean_delta) } "
+            f"(σ {_format_optional_float(stdev_delta)}, range "
+            f"{_format_optional_float(min(deltas))} – {_format_optional_float(max(deltas))})."
+        )
+    lines.append("")
+    return lines
+
+
+# pylint: disable=too-many-return-statements
+def _format_shell_command(bits: Sequence[str]) -> str:
+    """Join CLI arguments into a shell-friendly command."""
+    return " ".join(shlex.quote(str(bit)) for bit in bits if str(bit))
+
+
+def _xgb_next_video_command(selection: Optional[StudySelection]) -> Optional[str]:
+    """Build a reproduction command for a next-video sweep selection."""
+    if selection is None:
+        return None
+    metrics = selection.outcome.metrics
+    params = metrics.get("xgboost_params", {})
+    tree_method = (
+        params.get("tree_method")
+        or metrics.get("config", {}).get("tree_method")
+        or "hist"
+    )
+    dataset = (
+        metrics.get("dataset_source")
+        or metrics.get("dataset")
+        or "data/cleaned_grail"
+    )
+    extra_fields = metrics.get("extra_fields") or []
+
+    cli_bits = selection.config.cli_args(str(tree_method))
+    command: List[str] = [
+        "python",
+        "-m",
+        "xgb.cli",
+        "--fit_model",
+        "--dataset",
+        str(dataset),
+        "--issues",
+        selection.study.issue,
+        "--participant_studies",
+        selection.study.key,
+    ]
+    if extra_fields:
+        command.extend(["--extra_text_fields", ",".join(sorted(set(map(str, extra_fields))))])
+    command.extend(cli_bits)
+    command.extend(["--out_dir", "<run_dir>"])
+    return _format_shell_command(command)
+
+
+def _xgb_opinion_command(selection: Optional[OpinionStudySelection]) -> Optional[str]:
+    """Build a reproduction command for an opinion sweep selection."""
+    if selection is None:
+        return None
+    outcome = selection.outcome
+    metrics = outcome.metrics
+    config = outcome.config
+    config_block = metrics.get("config", {})
+    tree_method = (
+        config_block.get("tree_method")
+        or metrics.get("xgboost_params", {}).get("tree_method")
+        or "hist"
+    )
+    dataset = (
+        metrics.get("dataset")
+        or metrics.get("dataset_source")
+        or "data/cleaned_grail"
+    )
+    extra_fields = metrics.get("extra_fields") or []
+    max_features = config_block.get("max_features")
+
+    command: List[str] = [
+        "python",
+        "-m",
+        "xgb.pipeline",
+        "--stage",
+        "full",
+        "--tasks",
+        "opinion",
+        "--issues",
+        selection.study.issue,
+        "--studies",
+        selection.study.key,
+        "--tree-method",
+        str(tree_method),
+        "--learning-rate-grid",
+        f"{config.learning_rate:g}",
+        "--max-depth-grid",
+        str(config.max_depth),
+        "--n-estimators-grid",
+        str(config.n_estimators),
+        "--subsample-grid",
+        f"{config.subsample:g}",
+        "--colsample-grid",
+        f"{config.colsample_bytree:g}",
+        "--reg-lambda-grid",
+        f"{config.reg_lambda:g}",
+        "--reg-alpha-grid",
+        f"{config.reg_alpha:g}",
+        "--text-vectorizer-grid",
+        config.text_vectorizer,
+        "--out-dir",
+        "<models_dir>",
+    ]
+    if dataset:
+        command.extend(["--dataset", str(dataset)])
+    if extra_fields:
+        command.extend(["--extra-text-fields", ",".join(sorted(set(map(str, extra_fields))))])
+    if max_features:
+        command.extend(["--max-features", str(max_features)])
+    if config.vectorizer_cli:
+        vectorizer_bits = list(config.vectorizer_cli)
+        idx = 0
+        while idx < len(vectorizer_bits):
+            token = vectorizer_bits[idx]
+            if isinstance(token, str) and token.startswith("--"):
+                option = token.replace("_", "-")
+                command.append(option)
+                idx += 1
+                if option.endswith("-normalize") or option.endswith("-no-normalize"):
+                    continue
+                if idx < len(vectorizer_bits):
+                    command.append(str(vectorizer_bits[idx]))
+                    idx += 1
+            else:
+                command.append(str(token))
+                idx += 1
+    return _format_shell_command(command)
 
 
 # pylint: disable=too-many-locals
@@ -749,6 +1238,7 @@ def _xgb_leaderboard_section(
     return lines
 
 
+# pylint: disable=too-many-locals
 def _xgb_selection_summary_section(
     per_study_sorted: Mapping[str, Sequence[SweepOutcome]],
     selections: Mapping[str, StudySelection],
@@ -796,6 +1286,9 @@ def _xgb_selection_summary_section(
                 f"- **{descriptor_full}**: accuracy {_format_float(best.accuracy)} "
                 f"(coverage {_format_float(best.coverage)}) using {summary}."
             )
+        reproduction = _xgb_next_video_command(selection)
+        if reproduction:
+            lines.append(f"  Command: `{reproduction}`")
     lines.append("")
     return lines
 
@@ -1073,6 +1566,24 @@ def _write_opinion_report(
             f"{_format_optional_float(summary.baseline_mae)} |"
         )
     lines.append("")
+    curve_lines: List[str] = []
+    if plt is not None:
+        for study_key, payload in sorted(metrics.items()):
+            summary = _extract_opinion_summary(payload)
+            rel_path = _plot_opinion_curve(
+                directory=directory,
+                study_label=summary.label or study_key,
+                study_key=study_key,
+                payload=payload,
+            )
+            if rel_path:
+                if not curve_lines:
+                    curve_lines.extend(["## Training Curves", ""])
+                curve_lines.append(f"![{summary.label or study_key}]({rel_path})")
+                curve_lines.append("")
+    if curve_lines:
+        lines.extend(curve_lines)
+    lines.extend(_opinion_cross_study_diagnostics(metrics))
     lines.extend(_opinion_observations(metrics))
     write_markdown_lines(path, lines)
 

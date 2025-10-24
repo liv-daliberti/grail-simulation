@@ -25,6 +25,7 @@ from .pipeline_context import (
     SweepConfig,
     SweepOutcome,
     SweepTask,
+    SweepTaskContext,
 )
 from .pipeline_data import issue_slug_for_study
 from .pipeline_io import load_metrics
@@ -157,12 +158,9 @@ def prepare_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
     configs: Sequence[SweepConfig],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    sweep_dir: Path,
-    word2vec_model_base: Path,
+    context: SweepTaskContext,
     reuse_existing: bool,
-) -> Tuple[List[SweepTask], List[SweepOutcome]]:  # pylint: disable=too-many-arguments
+) -> Tuple[List[SweepTask], List[SweepOutcome]]:
     """
     Return next-video sweep tasks requiring execution and cached outcomes.
 
@@ -174,21 +172,8 @@ def prepare_sweep_tasks(
 
     :type configs: Sequence[SweepConfig]
 
-    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
-
-    :type base_cli: Sequence[str]
-
-    :param extra_cli: Additional CLI arguments appended to the base invocation.
-
-    :type extra_cli: Sequence[str]
-
-    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
-
-    :type sweep_dir: Path
-
-    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
-
-    :type word2vec_model_base: Path
+    :param context: Shared CLI/runtime parameters reused across sweep invocations.
+    :type context: SweepTaskContext
 
     :param reuse_existing: Whether to reuse cached results instead of recomputing them.
 
@@ -202,18 +187,20 @@ def prepare_sweep_tasks(
     # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
     pending_tasks: List[SweepTask] = []
     cached_outcomes: List[SweepOutcome] = []
-    base_cli_tuple = tuple(base_cli)
-    extra_cli_tuple = tuple(extra_cli)
+    base_cli_tuple = tuple(context.base_cli)
+    extra_cli_tuple = tuple(context.extra_cli)
 
     task_index = 0
     for config in configs:
         for study in studies:
             issue_slug = issue_slug_for_study(study)
-            run_root = sweep_dir / config.feature_space / study.study_slug / config.label()
+            run_root = context.sweep_dir / config.feature_space / study.study_slug / config.label()
             metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             word2vec_model_dir = None
             if config.feature_space == "word2vec":
-                word2vec_model_dir = word2vec_model_base / "sweeps" / study.study_slug / config.label()
+                word2vec_model_dir = (
+                    context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
+                )
             task = SweepTask(
                 index=task_index,
                 study=study,
@@ -248,12 +235,9 @@ def prepare_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
     configs: Sequence[SweepConfig],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    sweep_dir: Path,
-    word2vec_model_base: Path,
+    context: SweepTaskContext,
     reuse_existing: bool,
-) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:  # pylint: disable=too-many-arguments
+) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
     """
     Return opinion sweep tasks requiring execution and cached outcomes.
 
@@ -265,21 +249,8 @@ def prepare_opinion_sweep_tasks(
 
     :type configs: Sequence[SweepConfig]
 
-    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
-
-    :type base_cli: Sequence[str]
-
-    :param extra_cli: Additional CLI arguments appended to the base invocation.
-
-    :type extra_cli: Sequence[str]
-
-    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
-
-    :type sweep_dir: Path
-
-    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
-
-    :type word2vec_model_base: Path
+    :param context: Shared CLI/runtime parameters reused across sweep invocations.
+    :type context: SweepTaskContext
 
     :param reuse_existing: Whether to reuse cached results instead of recomputing them.
 
@@ -293,13 +264,15 @@ def prepare_opinion_sweep_tasks(
     # pylint: disable=too-many-branches,too-many-locals
     pending_tasks: List[OpinionSweepTask] = []
     cached_outcomes: List[OpinionSweepOutcome] = []
-    base_cli_tuple = tuple(base_cli)
-    extra_cli_tuple = tuple(extra_cli)
+    base_cli_tuple = tuple(context.base_cli)
+    extra_cli_tuple = tuple(context.extra_cli)
 
     task_index = 0
     for config in configs:
         for study in studies:
-            run_root = sweep_dir / "opinion" / config.feature_space / study.study_slug / config.label()
+            run_root = (
+                context.sweep_dir / "opinion" / config.feature_space / study.study_slug / config.label()
+            )
             metrics_path = (
                 run_root
                 / "opinion"
@@ -310,7 +283,7 @@ def prepare_opinion_sweep_tasks(
             word2vec_model_dir = None
             if config.feature_space == "word2vec":
                 word2vec_model_dir = (
-                    word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
+                    context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
                 )
             task = OpinionSweepTask(
                 index=task_index,
@@ -745,13 +718,10 @@ def run_sweeps(
     *,
     studies: Sequence[StudySpec],
     configs: Sequence[SweepConfig],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    sweep_dir: Path,
-    word2vec_model_base: Path,
+    context: SweepTaskContext,
     reuse_existing: bool,
     jobs: int,
-) -> List[SweepOutcome]:  # pylint: disable=too-many-arguments
+) -> List[SweepOutcome]:
     """
     Execute hyper-parameter sweeps and collect per-run metrics.
 
@@ -763,21 +733,8 @@ def run_sweeps(
 
     :type configs: Sequence[SweepConfig]
 
-    :param base_cli: Baseline CLI arguments reused across downstream subprocess invocations.
-
-    :type base_cli: Sequence[str]
-
-    :param extra_cli: Additional CLI arguments appended to the base invocation.
-
-    :type extra_cli: Sequence[str]
-
-    :param sweep_dir: Directory housing hyper-parameter sweep artefacts.
-
-    :type sweep_dir: Path
-
-    :param word2vec_model_base: Directory that stores Word2Vec sweep outputs and cached models.
-
-    :type word2vec_model_base: Path
+    :param context: Shared CLI/runtime parameters reused across sweep invocations.
+    :type context: SweepTaskContext
 
     :param reuse_existing: Whether to reuse cached results instead of recomputing them.
 
@@ -795,10 +752,7 @@ def run_sweeps(
     pending_tasks, cached_outcomes = prepare_sweep_tasks(
         studies=studies,
         configs=configs,
-        base_cli=base_cli,
-        extra_cli=extra_cli,
-        sweep_dir=sweep_dir,
-        word2vec_model_base=word2vec_model_base,
+        context=context,
         reuse_existing=reuse_existing,
     )
     executed_outcomes = execute_sweep_tasks(pending_tasks, jobs=jobs)
@@ -903,28 +857,25 @@ def select_best_opinion_configs(
 
     """
     def _is_better(candidate: OpinionSweepOutcome, incumbent: OpinionSweepOutcome) -> bool:
-        """
-        Determine whether an opinion sweep candidate should replace the incumbent.
+        """Return ``True`` when ``candidate`` should replace ``incumbent``."""
 
-        :param candidate: Candidate opinion outcome evaluated for promotion.
-        :type candidate: OpinionSweepOutcome
-        :param incumbent: Current opinion outcome selected for the study.
-        :type incumbent: OpinionSweepOutcome
-        :returns: ``True`` when ``candidate`` improves MAE/RMSE or ties on those metrics but has a lower best-``k``.
-        :rtype: bool
-        """
-        if candidate.mae < incumbent.mae - 1e-9:
-            return True
-        if candidate.mae > incumbent.mae + 1e-9:
-            return False
-        if candidate.rmse < incumbent.rmse - 1e-9:
-            return True
-        if candidate.rmse > incumbent.rmse + 1e-9:
-            return False
-        if candidate.participants > incumbent.participants:
-            return True
-        if candidate.participants < incumbent.participants:
-            return False
+        def _compare_metric(lhs: float | None, rhs: float | None) -> int:
+            if lhs is None or rhs is None:
+                return 0
+            delta = lhs - rhs
+            if abs(delta) <= 1e-9:
+                return 0
+            return -1 if delta < 0 else 1
+
+        for lhs, rhs in ((candidate.mae, incumbent.mae), (candidate.rmse, incumbent.rmse)):
+            result = _compare_metric(lhs, rhs)
+            if result != 0:
+                return result < 0
+
+        candidate_participants = candidate.participants or 0
+        incumbent_participants = incumbent.participants or 0
+        if candidate_participants != incumbent_participants:
+            return candidate_participants > incumbent_participants
         return candidate.best_k < incumbent.best_k
 
     selections: Dict[str, Dict[str, OpinionStudySelection]] = {}

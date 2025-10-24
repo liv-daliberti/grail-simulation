@@ -26,11 +26,13 @@ from .router_common import build_router_payload
 class RoutedSandbox:
     """
     A sandbox environment that routes code execution requests to the E2B Router.
-    This class is designed for batched execution of scripts, primarily for Python code.
-    It mimics the usage of 'Sandbox' from 'e2b_code_interpreter', but adds support for batch processing.
+    This class is designed for batched execution of scripts, primarily for Python
+    code. It mimics the usage of ``Sandbox`` from ``e2b_code_interpreter`` but
+    adds support for batch processing.
 
     Attributes:
-        router_url (str): The URL of the E2B Router to which code execution requests are sent.
+        router_url (str): The URL of the E2B Router receiving code execution
+            requests.
     """
 
     def __init__(self, router_url: str):

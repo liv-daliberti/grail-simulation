@@ -481,6 +481,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             allow_incomplete=allow_incomplete,
             include_next_video=run_next_video,
             include_opinion=run_opinion,
+            opinion_outcomes=opinion_sweep_outcomes,
+            opinion_selections=opinion_selections,
         )
         return
 
@@ -520,6 +522,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_incomplete=allow_incomplete,
         include_next_video=run_next_video,
         include_opinion=run_opinion,
+        opinion_outcomes=opinion_sweep_outcomes,
+        opinion_selections=opinion_selections,
     )
 
 

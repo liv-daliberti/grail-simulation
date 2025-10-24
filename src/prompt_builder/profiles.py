@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-import json
 import math
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -25,7 +23,7 @@ from .formatters import (
     with_indefinite_article,
 )
 from .parsers import format_yes_no, is_nanlike
-from .shared import first_non_nan_value
+from .shared import first_non_nan_value, load_selected_survey_row
 from .value_maps import format_field_value
 
 MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
@@ -234,24 +232,7 @@ def _load_selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
     :returns: Mapping of selected survey responses or an empty dictionary.
     :rtype: Dict[str, Any]
     """
-    raw = ex.get("selected_survey_row")
-    if isinstance(raw, Mapping):
-        return dict(raw)
-    if isinstance(raw, str):
-        try:
-            parsed = json.loads(raw)
-        except (TypeError, ValueError, json.JSONDecodeError):
-            return {}
-        return parsed if isinstance(parsed, dict) else {}
-    as_py = getattr(raw, "as_py", None)
-    if callable(as_py):
-        try:
-            candidate = as_py()
-        except (TypeError, ValueError):
-            return {}
-        if isinstance(candidate, dict):
-            return candidate
-    return {}
+    return load_selected_survey_row(ex)
 
 
 def _ensure_sentence(text: str) -> str:

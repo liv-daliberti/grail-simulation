@@ -1,13 +1,14 @@
 """Post-study opinion index evaluation for the KNN baselines."""
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 import json
 import logging
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 from numpy.random import default_rng
@@ -139,6 +140,7 @@ def collect_examples(
     :returns: Participant-level examples combining prompts and opinion values.
     :rtype: List[OpinionExample]
     """
+    # pylint: disable=too-many-locals
 
     LOGGER.info(
         "[OPINION] Collapsing dataset split for study=%s issue=%s rows=%d",
@@ -261,6 +263,7 @@ def build_index(
     :rtype: OpinionIndex
 
     """
+    # pylint: disable=too-many-arguments,too-many-locals,unused-argument
     documents = [example.document for example in examples]
     feature_space = (feature_space or "tfidf").lower()
 
@@ -428,6 +431,7 @@ def predict_post_indices(
     :rtype: Dict[str, Any]
 
     """
+    # pylint: disable=too-many-locals
     if not eval_examples:
         return {
             "rows": [],
@@ -525,10 +529,105 @@ def predict_post_indices(
         "per_k_change_predictions": per_k_change_predictions,
     }
 
+def _metric_bundle(
+    *,
+    truth_after: np.ndarray,
+    truth_before: np.ndarray,
+    preds_arr: np.ndarray,
+) -> Dict[str, float]:
+    """Compute evaluation metrics for the supplied predictions."""
+
+    change_truth = truth_after - truth_before
+    change_pred = preds_arr - truth_before
+    mae = float(mean_absolute_error(truth_after, preds_arr))
+    rmse = float(math.sqrt(mean_squared_error(truth_after, preds_arr)))
+    r_squared = float(r2_score(truth_after, preds_arr))
+    change_mae = float(mean_absolute_error(change_truth, change_pred))
+    return {
+        "mae_after": mae,
+        "rmse_after": rmse,
+        "r2_after": r_squared,
+        "mae_change": change_mae,
+    }
+
+
+def _row_prediction_values(
+    rows: Sequence[Dict[str, Any]],
+    k: int,
+) -> Tuple[List[float], List[float], List[float]]:
+    """Extract per-row prediction/ground-truth triples for a given ``k``."""
+
+    actual_after: List[float] = []
+    actual_before: List[float] = []
+    pred_values: List[float] = []
+    key_str = str(k)
+    for row in rows:
+        predictions_by_k = row.get("predictions_by_k") or {}
+        pred_val = predictions_by_k.get(k)
+        if pred_val is None:
+            pred_val = predictions_by_k.get(key_str)
+        if pred_val is None:
+            continue
+        after_raw = row.get("after_index", row.get("after"))
+        before_raw = row.get("before_index", row.get("before"))
+        if after_raw is None or before_raw is None:
+            continue
+        after_val = float(after_raw)
+        before_val = float(before_raw)
+        if not (math.isfinite(after_val) and math.isfinite(before_val)):
+            continue
+        pred_values.append(float(pred_val))
+        actual_after.append(after_val)
+        actual_before.append(before_val)
+    return actual_after, actual_before, pred_values
+
+
+def _metrics_from_rows(
+    predictions: Dict[int, List[float]],
+    rows: Sequence[Dict[str, Any]],
+) -> Dict[int, Dict[str, float]]:
+    """Return metrics computed from row-level prediction payloads."""
+
+    metrics: Dict[int, Dict[str, float]] = {}
+    for key in sorted({int(candidate) for candidate in predictions.keys()}):
+        actual_after, actual_before, pred_values = _row_prediction_values(rows, key)
+        if not pred_values:
+            continue
+        bundle = _metric_bundle(
+            truth_after=np.asarray(actual_after, dtype=np.float32),
+            truth_before=np.asarray(actual_before, dtype=np.float32),
+            preds_arr=np.asarray(pred_values, dtype=np.float32),
+        )
+        metrics[key] = bundle
+    return metrics
+
+
+def _metrics_from_eval_examples(
+    predictions: Dict[int, List[float]],
+    eval_examples: Sequence[OpinionExample],
+) -> Dict[int, Dict[str, float]]:
+    """Return metrics computed over the full evaluation dataset."""
+
+    truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
+    truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
+    metrics: Dict[int, Dict[str, float]] = {}
+    for k, preds in predictions.items():
+        preds_arr = np.asarray(preds, dtype=np.float32)
+        if preds_arr.size == 0 or preds_arr.size != truth_after.size:
+            continue
+        metrics[int(k)] = _metric_bundle(
+            truth_after=truth_after,
+            truth_before=truth_before,
+            preds_arr=preds_arr,
+        )
+    return metrics
+
+
 def _summary_metrics(
     *,
     predictions: Dict[int, List[float]],
     eval_examples: Sequence[OpinionExample],
+    rows: Optional[Sequence[Dict[str, Any]]] = None,
 ) -> Dict[int, Dict[str, float]]:
     """
     Return MAE, RMSE, and R^2 metrics for each ``k``.
@@ -541,31 +640,62 @@ def _summary_metrics(
 
     :type eval_examples: Sequence[OpinionExample]
 
+    :param rows: Optional iterable of per-example prediction rows. When provided,
+        metrics are computed only over examples that produced predictions for the
+        given ``k``.
+
+    :type rows: Optional[Sequence[Dict[str, Any]]]
+
     :returns: MAE, RMSE, and R^2 metrics for each ``k``
 
     :rtype: Dict[int, Dict[str, float]]
 
     """
-    truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
-    truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
-    change_truth = truth_after - truth_before
+    # pylint: disable=too-many-locals
+    if rows:
+        metrics = _metrics_from_rows(predictions, rows)
+        if metrics:
+            return metrics
+    return _metrics_from_eval_examples(predictions, eval_examples)
 
-    metrics: Dict[int, Dict[str, float]] = {}
-    for k, preds in predictions.items():
-        preds_arr = np.asarray(preds, dtype=np.float32)
-        change_pred = preds_arr - truth_before
-        mae = float(mean_absolute_error(truth_after, preds_arr))
-        rmse = float(math.sqrt(mean_squared_error(truth_after, preds_arr)))
-        r_squared = float(r2_score(truth_after, preds_arr))
-        change_mae = float(mean_absolute_error(change_truth, change_pred))
+@dataclass
+class _CurveAccumulator:
+    """Accumulate per-k metrics and track the best-performing configuration."""
 
-        metrics[int(k)] = {
-            "mae_after": mae,
-            "rmse_after": rmse,
-            "r2_after": r_squared,
-            "mae_change": change_mae,
-        }
-    return metrics
+    mae_by_k: Dict[str, Optional[float]] = field(default_factory=dict)
+    r2_by_k: Dict[str, Optional[float]] = field(default_factory=dict)
+    _best: Optional[Tuple[int, float, float]] = None
+
+    def add(self, k: int, values: Mapping[str, float]) -> None:
+        """Record metrics for a specific ``k`` and update best trackers."""
+        raw_mae = float(values.get("mae_after", float("nan")))
+        raw_r2 = float(values.get("r2_after", float("nan")))
+        mae_value = raw_mae if math.isfinite(raw_mae) else float("inf")
+        r2_value = raw_r2 if math.isfinite(raw_r2) else float("-inf")
+        self.mae_by_k[str(int(k))] = raw_mae if math.isfinite(raw_mae) else None
+        self.r2_by_k[str(int(k))] = raw_r2 if math.isfinite(raw_r2) else None
+        if self._is_preferred(mae_value, r2_value):
+            self._best = (int(k), mae_value, r2_value)
+
+    def best_summary(self, fallback_k: int) -> Tuple[int, Optional[float], Optional[float]]:
+        """Return the best-performing ``k`` and associated metrics (or fallback)."""
+        if self._best is None:
+            return fallback_k, None, None
+        best_k, mae_value, r2_value = self._best
+        best_mae = mae_value if math.isfinite(mae_value) else None
+        best_r2 = r2_value if math.isfinite(r2_value) else None
+        return best_k, best_mae, best_r2
+
+    def _is_preferred(self, mae_value: float, r2_value: float) -> bool:
+        if self._best is None:
+            return True
+        _, best_mae, best_r2 = self._best
+        if mae_value < best_mae - 1e-9:
+            return True
+        if mae_value <= best_mae + 1e-9 and r2_value > best_r2:
+            return True
+        return False
+
 
 def _curve_payload(
     metrics_by_k: Dict[int, Dict[str, float]],
@@ -591,35 +721,18 @@ def _curve_payload(
     if not metrics_by_k:
         return None
 
-    sorted_items = sorted(metrics_by_k.items())
-    mae_by_k = {}
-    r2_by_k = {}
-    best_entry = None
+    accumulator = _CurveAccumulator()
+    sorted_items = sorted((int(k), values) for k, values in metrics_by_k.items())
     for k, values in sorted_items:
-        raw_mae = float(values.get("mae_after", float("nan")))
-        raw_r2 = float(values.get("r2_after", float("nan")))
-        mae_value = raw_mae if math.isfinite(raw_mae) else float("inf")
-        r2_value = raw_r2 if math.isfinite(raw_r2) else float("-inf")
-        mae_by_k[str(int(k))] = raw_mae if math.isfinite(raw_mae) else None
-        r2_by_k[str(int(k))] = raw_r2 if math.isfinite(raw_r2) else None
-        if best_entry is None:
-            best_entry = (int(k), mae_value, r2_value)
-        else:
-            if mae_value < best_entry[1] - 1e-9:
-                best_entry = (int(k), mae_value, r2_value)
-            elif abs(mae_value - best_entry[1]) <= 1e-9 and r2_value > best_entry[2]:
-                best_entry = (int(k), mae_value, r2_value)
+        accumulator.add(k, values)
 
-    best_k = best_entry[0] if best_entry else sorted_items[0][0]
-    best_mae_value = best_entry[1] if best_entry else float("inf")
-    best_mae = best_mae_value if math.isfinite(best_mae_value) else None
-    best_r2_value = best_entry[2] if best_entry else float("-inf")
-    best_r2 = best_r2_value if math.isfinite(best_r2_value) else None
+    fallback_k = sorted_items[0][0]
+    best_k, best_mae, best_r2 = accumulator.best_summary(fallback_k)
 
     return {
         "metric": "mae_after",
-        "mae_by_k": mae_by_k,
-        "r2_by_k": r2_by_k,
+        "mae_by_k": accumulator.mae_by_k,
+        "r2_by_k": accumulator.r2_by_k,
         "best_k": int(best_k),
         "best_mae": best_mae,
         "best_r2": best_r2,
@@ -686,6 +799,7 @@ def _plot_metric(
     :rtype: None
 
     """
+    # pylint: disable=too-many-arguments,too-many-locals
     if plt is None:  # pragma: no cover - optional dependency
         LOGGER.warning("[OPINION] Skipping %s plot (matplotlib not installed).", metric_key)
         return
@@ -786,81 +900,53 @@ def _plot_change_heatmap(
     plt.savefig(output_path, dpi=150)
     plt.close()
 
-def _write_outputs(
-    *,
-    args,
-    spec: OpinionSpec,
-    index: OpinionIndex,
+@dataclass(frozen=True)
+class _OutputContext:
+    """Lightweight wrapper for output-related runtime state."""
+
+    args: Any
+    spec: OpinionSpec
+    index: OpinionIndex
+    outputs_root: Path
+
+
+@dataclass(frozen=True)
+class _OutputPayload:
+    """Container bundling metrics and per-example predictions for export."""
+
+    rows: Sequence[Dict[str, Any]]
+    metrics_by_k: Dict[int, Dict[str, float]]
+    baseline: Dict[str, float]
+    best_k: int
+    curve_metrics: Optional[Dict[str, Any]] = None
+
+
+def _opinion_change_series(
     rows: Sequence[Dict[str, Any]],
-    metrics_by_k: Dict[int, Dict[str, float]],
-    baseline: Dict[str, float],
     best_k: int,
-    outputs_root: Path,
-    curve_metrics: Optional[Dict[str, Any]] = None,
-) -> None:
-    """
-    Persist per-example predictions, metrics, and plots.
-
-    :param args: Namespace object containing parsed command-line arguments.
-
-    :type args: Any
-
-    :param spec: Opinion study specification containing issue metadata.
-
-    :type spec: OpinionSpec
-
-    :param index: KNN index object or registry being manipulated.
-
-    :type index: OpinionIndex
-
-    :param rows: Iterable of evaluation rows or metrics to analyse.
-
-    :type rows: Sequence[Dict[str, Any]]
-
-    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.
-
-    :type metrics_by_k: Dict[int, Dict[str, float]]
-
-    :param baseline: Baseline metrics record used for comparison in the report.
-
-    :type baseline: Dict[str, float]
-
-    :param best_k: Neighbourhood size selected as optimal for the evaluation.
-
-    :type best_k: int
-
-    :param outputs_root: Root directory that stores opinion-evaluation artefacts.
-
-    :type outputs_root: Path
-
-    :param curve_metrics: Aggregate metrics summarising performance across the curve.
-
-    :type curve_metrics: Optional[Dict[str, Any]]
-
-    :returns: None.
-
-    :rtype: None
-
-    """
-    feature_space = index.feature_space
-    study_dir = outputs_root / spec.key
-    study_dir.mkdir(parents=True, exist_ok=True)
+) -> Tuple[List[float], List[float]]:
+    """Return paired lists of actual and predicted opinion changes."""
 
     actual_changes: List[float] = []
     predicted_changes: List[float] = []
     for row in rows:
-        prediction = row["predictions_by_k"].get(best_k)
+        prediction = row.get("predictions_by_k", {}).get(best_k)
         if prediction is None:
             continue
         before = float(row["before_index"])
         actual_changes.append(float(row["after_index"]) - before)
-        predicted_change = row.get("predicted_change_by_k", {}).get(best_k)
+        change_lookup = row.get("predicted_change_by_k", {})
+        predicted_change = change_lookup.get(best_k)
         if predicted_change is None:
             predicted_change = float(prediction) - before
         predicted_changes.append(float(predicted_change))
+    return actual_changes, predicted_changes
 
-    predictions_path = study_dir / f"opinion_knn_{spec.key}_{EVAL_SPLIT}.jsonl"
-    with open(predictions_path, "w", encoding="utf-8") as handle:
+
+def _write_prediction_rows(path: Path, rows: Sequence[Dict[str, Any]]) -> None:
+    """Serialise per-row predictions to ``path`` in JSONL format."""
+
+    with open(path, "w", encoding="utf-8") as handle:
         for row in rows:
             change_dict = {
                 str(k): float(v) for k, v in row.get("predicted_change_by_k", {}).items()
@@ -872,49 +958,98 @@ def _write_outputs(
             }
             handle.write(json.dumps(serializable, ensure_ascii=False) + "\n")
 
-    reports_dir = resolve_reports_dir(Path(args.out_dir)) / "knn" / feature_space / "opinion"
+
+def _compose_metrics_record(
+    context: _OutputContext,
+    payload: _OutputPayload,
+    plots: Mapping[str, Path],
+) -> Dict[str, Any]:
+    """Build the metrics payload persisted alongside predictions."""
+
+    metrics_by_k = {
+        str(k): {
+            "mae_after": float(values["mae_after"]),
+            "rmse_after": float(values["rmse_after"]),
+            "r2_after": float(values["r2_after"]),
+            "mae_change": float(values["mae_change"]),
+        }
+        for k, values in payload.metrics_by_k.items()
+    }
+    record: Dict[str, Any] = {
+        "model": "knn_opinion",
+        "feature_space": context.index.feature_space,
+        "dataset": context.args.dataset or DEFAULT_DATASET_SOURCE,
+        "study": context.spec.key,
+        "issue": context.spec.issue,
+        "label": context.spec.label,
+        "split": EVAL_SPLIT,
+        "n_participants": len(payload.rows),
+        "metrics_by_k": metrics_by_k,
+        "baseline": payload.baseline,
+        "best_k": int(payload.best_k),
+        "best_metrics": payload.metrics_by_k.get(int(payload.best_k), {}),
+        "plots": {
+            "mae_vs_k": str(plots["mae"]),
+            "r2_vs_k": str(plots["r2"]),
+            "change_heatmap": str(plots["heatmap"]),
+        },
+    }
+    if payload.curve_metrics:
+        record["curve_metrics"] = payload.curve_metrics
+    return record
+
+
+def _write_outputs(
+    *,
+    context: _OutputContext,
+    payload: _OutputPayload,
+) -> None:
+    """
+    Persist per-example predictions, metrics, and plots.
+
+    :param context: Runtime configuration referencing CLI args and output roots.
+
+    :type context: _OutputContext
+
+    :param payload: Metrics, predictions, and derived artefacts to persist.
+
+    :type payload: _OutputPayload
+
+    :returns: None.
+
+    :rtype: None
+
+    """
+    feature_space = context.index.feature_space
+    study_dir = context.outputs_root / context.spec.key
+    study_dir.mkdir(parents=True, exist_ok=True)
+
+    actual_changes, predicted_changes = _opinion_change_series(payload.rows, payload.best_k)
+
+    predictions_path = study_dir / f"opinion_knn_{context.spec.key}_{EVAL_SPLIT}.jsonl"
+    _write_prediction_rows(predictions_path, payload.rows)
+
+    reports_dir = (
+        resolve_reports_dir(Path(context.args.out_dir)) / "knn" / feature_space / "opinion"
+    )
     reports_dir.mkdir(parents=True, exist_ok=True)
-    mae_plot = reports_dir / f"mae_{spec.key}.png"
-    r2_plot = reports_dir / f"r2_{spec.key}.png"
-    _plot_metric(metrics_by_k=metrics_by_k, metric_key="mae_after", output_path=mae_plot)
-    _plot_metric(metrics_by_k=metrics_by_k, metric_key="r2_after", output_path=r2_plot)
-    heatmap_path = reports_dir / f"change_heatmap_{spec.key}.png"
+    mae_plot = reports_dir / f"mae_{context.spec.key}.png"
+    r2_plot = reports_dir / f"r2_{context.spec.key}.png"
+    _plot_metric(metrics_by_k=payload.metrics_by_k, metric_key="mae_after", output_path=mae_plot)
+    _plot_metric(metrics_by_k=payload.metrics_by_k, metric_key="r2_after", output_path=r2_plot)
+    heatmap_path = reports_dir / f"change_heatmap_{context.spec.key}.png"
     _plot_change_heatmap(
         actual_changes=actual_changes,
         predicted_changes=predicted_changes,
         output_path=heatmap_path,
     )
 
-    metrics_path = study_dir / f"opinion_knn_{spec.key}_{EVAL_SPLIT}_metrics.json"
-    serializable_metrics = {
-        "model": "knn_opinion",
-        "feature_space": feature_space,
-        "dataset": args.dataset or DEFAULT_DATASET_SOURCE,
-        "study": spec.key,
-        "issue": spec.issue,
-        "label": spec.label,
-        "split": EVAL_SPLIT,
-        "n_participants": len(rows),
-        "metrics_by_k": {
-            str(k): {
-                "mae_after": float(values["mae_after"]),
-                "rmse_after": float(values["rmse_after"]),
-                "r2_after": float(values["r2_after"]),
-                "mae_change": float(values["mae_change"]),
-            }
-            for k, values in metrics_by_k.items()
-        },
-        "baseline": baseline,
-        "best_k": int(best_k),
-        "best_metrics": metrics_by_k.get(int(best_k), {}),
-        "plots": {
-            "mae_vs_k": str(mae_plot),
-            "r2_vs_k": str(r2_plot),
-            "change_heatmap": str(heatmap_path),
-        },
-    }
-    if curve_metrics:
-        serializable_metrics["curve_metrics"] = curve_metrics
+    metrics_path = study_dir / f"opinion_knn_{context.spec.key}_{EVAL_SPLIT}_metrics.json"
+    serializable_metrics = _compose_metrics_record(
+        context,
+        payload,
+        {"mae": mae_plot, "r2": r2_plot, "heatmap": heatmap_path},
+    )
     with open(metrics_path, "w", encoding="utf-8") as handle:
         json.dump(serializable_metrics, handle, ensure_ascii=False, indent=2)
 
@@ -1034,9 +1169,11 @@ def run_opinion_eval(args) -> None:
                 k_values=k_values,
                 exclude_self=True,
             )
+            train_rows = train_predictions_bundle["rows"]
             train_metrics_by_k = _summary_metrics(
                 predictions=train_predictions_bundle["per_k_predictions"],
                 eval_examples=train_examples,
+                rows=train_rows,
             )
             train_curve = _curve_payload(
                 train_metrics_by_k,
@@ -1054,6 +1191,7 @@ def run_opinion_eval(args) -> None:
         metrics_by_k = _summary_metrics(
             predictions=predictions_bundle["per_k_predictions"],
             eval_examples=eval_examples,
+            rows=rows,
         )
 
         if metrics_by_k:
@@ -1075,17 +1213,20 @@ def run_opinion_eval(args) -> None:
             curve_bundle = {"train": train_curve_metrics}
         if curve_bundle is not None:
             curve_bundle["metric"] = "mae_after"
-        _write_outputs(
+        output_context = _OutputContext(
             args=args,
             spec=spec,
             index=index,
+            outputs_root=outputs_root,
+        )
+        output_payload = _OutputPayload(
             rows=rows,
             metrics_by_k=metrics_by_k,
             baseline=baseline,
             best_k=best_k,
-            outputs_root=outputs_root,
             curve_metrics=curve_bundle,
         )
+        _write_outputs(context=output_context, payload=output_payload)
 
         LOGGER.info(
             "[OPINION][DONE] study=%s participants=%d best_k=%d r2=%.4f mae=%.4f",

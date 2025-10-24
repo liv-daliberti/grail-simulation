@@ -2,9 +2,56 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
 from typing import Any, Dict, Optional
 
 from .parsers import is_nanlike
+
+
+def load_selected_survey_row(example: Mapping[str, Any]) -> Dict[str, Any]:
+    """
+    Extract and normalise the ``selected_survey_row`` mapping from ``example``.
+
+    :param example: Dataset record potentially containing survey metadata.
+    :type example: Mapping[str, Any]
+    :returns: Dictionary representation of ``selected_survey_row`` or an empty dict.
+    :rtype: Dict[str, Any]
+    """
+
+    return normalise_selected_survey_row(example.get("selected_survey_row"))
+
+
+def normalise_selected_survey_row(raw: Any) -> Dict[str, Any]:
+    """
+    Convert ``selected_survey_row`` payloads into plain dictionaries.
+
+    Handles inline mappings, JSON-encoded strings, and Arrow scalars that expose
+    an ``as_py`` method. Falls back to an empty dictionary when parsing fails.
+
+    :param raw: Raw ``selected_survey_row`` payload.
+    :type raw: Any
+    :returns: Dictionary representation of ``raw`` or an empty dict on failure.
+    :rtype: Dict[str, Any]
+    """
+
+    if isinstance(raw, Mapping):
+        return dict(raw)
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    as_py = getattr(raw, "as_py", None)
+    if callable(as_py):
+        try:
+            candidate = as_py()
+        except (TypeError, ValueError):
+            return {}
+        if isinstance(candidate, dict):
+            return candidate
+    return {}
 
 
 def first_non_nan_value(
@@ -21,7 +68,8 @@ def first_non_nan_value(
     :type selected: Dict[str, Any]
     :param keys: Ordered candidate field names to inspect in both mappings.
     :type keys: str
-    :returns: The first value that is neither ``None`` nor :func:`prompt_builder.parsers.is_nanlike`.
+    :returns: The first value that is neither ``None`` nor
+        :func:`prompt_builder.parsers.is_nanlike`.
     :rtype: Optional[Any]
     """
 

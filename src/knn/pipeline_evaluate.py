@@ -2,14 +2,9 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Dict, Mapping, Sequence
 
-from .pipeline_context import (
-    OpinionStudySelection,
-    StudySelection,
-    StudySpec,
-)
+from .pipeline_context import EvaluationContext, OpinionStudySelection, StudySelection, StudySpec
 from .pipeline_data import issue_slug_for_study
 from .pipeline_io import load_loso_metrics_from_disk, load_metrics, load_opinion_metrics
 from .pipeline_sweeps import run_knn_cli
@@ -22,11 +17,7 @@ def run_final_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    out_dir: Path,
-    word2vec_model_dir: Path,
-    reuse_existing: bool,
+    context: EvaluationContext,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """
     Run final slate evaluations and return metrics grouped by feature space.
@@ -35,16 +26,8 @@ def run_final_evaluations(
     :type selections: Mapping[str, Mapping[str, StudySelection]]
     :param studies: Ordered list of studies to evaluate.
     :type studies: Sequence[StudySpec]
-    :param base_cli: Baseline CLI arguments reused for every invocation.
-    :type base_cli: Sequence[str]
-    :param extra_cli: Additional CLI flags forwarded verbatim to the runner.
-    :type extra_cli: Sequence[str]
-    :param out_dir: Root directory receiving per-feature evaluation outputs.
-    :type out_dir: Path
-    :param word2vec_model_dir: Directory containing cached Word2Vec models for reuse.
-    :type word2vec_model_dir: Path
-    :param reuse_existing: When ``True``, reuse cached metrics instead of rerunning evaluations.
-    :type reuse_existing: bool
+    :param context: Shared CLI/runtime parameters used for all evaluations.
+    :type context: EvaluationContext
     :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the final evaluations.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
@@ -62,15 +45,15 @@ def run_final_evaluations(
                 study.issue,
                 selection.accuracy,
             )
-            feature_out_dir = ensure_dir(out_dir / feature_space / study.study_slug)
+            feature_out_dir = ensure_dir(context.out_dir / feature_space / study.study_slug)
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(word2vec_model_dir / study.study_slug)
+                model_dir = ensure_dir(context.word2vec_model_dir / study.study_slug)
             issue_slug = issue_slug_for_study(study)
             metrics_path = (
                 feature_out_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             )
-            if reuse_existing and metrics_path.exists():
+            if context.reuse_existing and metrics_path.exists():
                 try:
                     metrics, _ = load_metrics(feature_out_dir, issue_slug)
                 except FileNotFoundError:
@@ -90,13 +73,13 @@ def run_final_evaluations(
                     )
                     continue
             cli_args: list[str] = []
-            cli_args.extend(base_cli)
+            cli_args.extend(context.base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", study.issue])
             cli_args.extend(["--participant-studies", study.key])
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
-            cli_args.extend(extra_cli)
+            cli_args.extend(context.extra_cli)
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)
             feature_metrics[study.key] = metrics
@@ -109,11 +92,7 @@ def run_opinion_evaluations(
     *,
     selections: Mapping[str, Mapping[str, OpinionStudySelection]],
     studies: Sequence[StudySpec],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    out_dir: Path,
-    word2vec_model_dir: Path,
-    reuse_existing: bool,
+    context: EvaluationContext,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """
     Run opinion regression for each feature space and return metrics.
@@ -122,31 +101,25 @@ def run_opinion_evaluations(
     :type selections: Mapping[str, Mapping[str, OpinionStudySelection]]
     :param studies: Ordered list of opinion studies to evaluate.
     :type studies: Sequence[StudySpec]
-    :param base_cli: Baseline CLI arguments reused across runs.
-    :type base_cli: Sequence[str]
-    :param extra_cli: Additional CLI flags forwarded to the runner.
-    :type extra_cli: Sequence[str]
-    :param out_dir: Directory storing opinion evaluation outputs.
-    :type out_dir: Path
-    :param word2vec_model_dir: Directory containing cached Word2Vec models.
-    :type word2vec_model_dir: Path
-    :param reuse_existing: When ``True``, reuse cached metrics instead of re-running evaluations.
-    :type reuse_existing: bool
+    :param context: Shared CLI/runtime parameters used for all evaluations.
+    :type context: EvaluationContext
     :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the opinion evaluations.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
     metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
-        feature_out_dir = ensure_dir(out_dir)
+        feature_out_dir = ensure_dir(context.out_dir)
         cached_metrics = (
-            load_opinion_metrics(feature_out_dir, feature_space) if reuse_existing else {}
+            load_opinion_metrics(feature_out_dir, feature_space)
+            if context.reuse_existing
+            else {}
         )
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            if reuse_existing and study.key in cached_metrics:
+            if context.reuse_existing and study.key in cached_metrics:
                 LOGGER.info(
                     "[OPINION][SKIP] feature=%s study=%s (metrics cached).",
                     feature_space,
@@ -156,15 +129,15 @@ def run_opinion_evaluations(
             LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(word2vec_model_dir / study.study_slug)
+                model_dir = ensure_dir(context.word2vec_model_dir / study.study_slug)
             cli_args: list[str] = []
-            cli_args.extend(base_cli)
+            cli_args.extend(context.base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--task", "opinion"])
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(["--opinion-studies", study.key])
-            cli_args.extend(extra_cli)
+            cli_args.extend(context.extra_cli)
             run_knn_cli(cli_args)
         metrics[feature_space] = load_opinion_metrics(feature_out_dir, feature_space)
     return metrics
@@ -174,11 +147,7 @@ def run_cross_study_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
     studies: Sequence[StudySpec],
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    out_dir: Path,
-    word2vec_model_dir: Path,
-    reuse_existing: bool,
+    context: EvaluationContext,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """
     Run leave-one-study-out evaluations and return metrics grouped by feature space.
@@ -187,37 +156,29 @@ def run_cross_study_evaluations(
     :type selections: Mapping[str, Mapping[str, StudySelection]]
     :param studies: Ordered list of studies to iterate when selecting hold-outs.
     :type studies: Sequence[StudySpec]
-    :param base_cli: Baseline CLI arguments reused across LOSO runs.
-    :type base_cli: Sequence[str]
-    :param extra_cli: Additional CLI flags forwarded to the LOSO evaluation.
-    :type extra_cli: Sequence[str]
-    :param out_dir: Root directory receiving leave-one-study-out artefacts.
-    :type out_dir: Path
-    :param word2vec_model_dir: Directory containing cached Word2Vec models and subdirectories per holdout.
-    :type word2vec_model_dir: Path
-    :param reuse_existing: When ``True``, reuse cached LOSO metrics instead of re-running evaluations.
-    :type reuse_existing: bool
+    :param context: Shared CLI/runtime parameters used for all evaluations.
+    :type context: EvaluationContext
     :returns: Nested mapping ``feature_space -> holdout_study -> metrics`` for the LOSO evaluations.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     cached_cross = (
         load_loso_metrics_from_disk(
-            out_dir=out_dir,
+            out_dir=context.out_dir,
             feature_spaces=tuple(selections.keys()),
             studies=studies,
         )
-        if reuse_existing
+        if context.reuse_existing
         else {}
     )
     for feature_space, per_study in selections.items():
         feature_metrics: Dict[str, Mapping[str, object]] = dict(cached_cross.get(feature_space, {}))
-        feature_out_dir = ensure_dir(out_dir / feature_space / "loso")
+        feature_out_dir = ensure_dir(context.out_dir / feature_space / "loso")
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            if reuse_existing and study.key in feature_metrics:
+            if context.reuse_existing and study.key in feature_metrics:
                 LOGGER.info(
                     "[LOSO][SKIP] feature=%s holdout=%s (metrics cached).",
                     feature_space,
@@ -235,11 +196,11 @@ def run_cross_study_evaluations(
 
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(word2vec_model_dir / "loso" / study.study_slug)
+                model_dir = ensure_dir(context.word2vec_model_dir / "loso" / study.study_slug)
 
             holdout_out_dir = ensure_dir(feature_out_dir / study.study_slug)
             cli_args: list[str] = []
-            cli_args.extend(base_cli)
+            cli_args.extend(context.base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--out-dir", str(holdout_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
@@ -247,7 +208,7 @@ def run_cross_study_evaluations(
             cli_args.extend(["--eval-participant-studies", study.key])
             cli_args.extend(["--train-issues", "all"])
             cli_args.extend(["--eval-issues", study.issue])
-            cli_args.extend(extra_cli)
+            cli_args.extend(context.extra_cli)
 
             LOGGER.info(
                 "[LOSO] feature=%s holdout=%s train_studies=%s",

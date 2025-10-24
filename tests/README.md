@@ -13,8 +13,8 @@ This directory contains the automated checks for the project. Everything is writ
 - `test_visualization_recommendation_tree_viz.py` covers graph construction and rendering utilities for recommendation trees.
 
 ### Module-specific packages
-- `common/` holds unit tests for shared utilities such as canonicalisation helpers and logging configuration.
-- `gpt4o/` targets the profile summarisation and conversation-building logic, using fixtures to stub upstream title lookups.
+- `common/` holds unit tests for shared utilities such as canonicalization helpers and logging configuration.
+- `gpt4o/` targets the profile summarization and conversation-building logic, using fixtures to stub upstream title lookups.
 - `knn/` and `xgb/` verify the recommendation baselines; each file uses `pytest.importorskip` so the tests only run when optional ML dependencies are installed.
 - `open_r1/` confirms configuration parsing and reward helpers function with the provided dependency stubs.
 - `integration/` currently contains `test_clean_prompt_flow.py`, which stitches together prompt cleaning and building to guard against regressions across packages.

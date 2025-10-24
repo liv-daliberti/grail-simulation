@@ -19,6 +19,7 @@ from knn.pipeline_context import (
     StudySpec,
     SweepConfig,
     SweepOutcome,
+    SweepTaskContext,
 )
 
 
@@ -66,13 +67,17 @@ def test_prepare_sweep_tasks_reuses_cached_metrics(monkeypatch: pytest.MonkeyPat
         lambda run_dir, slug: (stub_metrics, metrics_path),
     )
 
-    pending, cached = sweeps.prepare_sweep_tasks(
-        studies=[study],
-        configs=[config],
+    context = SweepTaskContext(
         base_cli=base_cli,
         extra_cli=extra_cli,
         sweep_dir=sweep_dir,
         word2vec_model_base=tmp_path / "w2v",
+    )
+
+    pending, cached = sweeps.prepare_sweep_tasks(
+        studies=[study],
+        configs=[config],
+        context=context,
         reuse_existing=True,
     )
     assert pending == []
@@ -109,13 +114,17 @@ def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(tmp_path: Path) -> No
     }
     metrics_path.write_text(json.dumps(metrics_payload), encoding="utf-8")
 
-    pending, cached = sweeps.prepare_opinion_sweep_tasks(
-        studies=[study],
-        configs=[config],
+    context = SweepTaskContext(
         base_cli=base_cli,
         extra_cli=extra_cli,
         sweep_dir=sweep_dir,
         word2vec_model_base=tmp_path / "w2v",
+    )
+
+    pending, cached = sweeps.prepare_opinion_sweep_tasks(
+        studies=[study],
+        configs=[config],
+        context=context,
         reuse_existing=True,
     )
     assert pending == []

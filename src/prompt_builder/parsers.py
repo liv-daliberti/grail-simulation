@@ -66,7 +66,8 @@ def _is_nanlike(x: Any) -> bool:
 
     :param x: Value of arbitrary type to test for NaN-like semantics.
     :type x: Any
-    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a canonical missing-text token.
+    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a
+        canonical missing-text token.
     :rtype: bool
     """
     if x is None:
@@ -119,7 +120,8 @@ def _truthy_from_text(value: Any) -> Optional[bool]:
 
     :param value: Raw value that may contain a boolean label or numeric text.
     :type value: Any
-    :returns: ``True`` or ``False`` when a known token or numeric literal is detected; ``None`` otherwise.
+    :returns: ``True`` or ``False`` when a known token or numeric literal is
+        detected; ``None`` otherwise.
     :rtype: Optional[bool]
     """
 

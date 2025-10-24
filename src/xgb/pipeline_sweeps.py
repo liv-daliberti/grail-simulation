@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_io import load_metrics_json
@@ -530,6 +530,9 @@ def _execute_opinion_sweep_tasks(
         label="opinion sweep",
     )
 
+# Backwards compatibility: allow legacy imports without the leading underscore.
+execute_opinion_sweep_tasks = _execute_opinion_sweep_tasks
+
 
 def _emit_combined_sweep_plan(
     *,
@@ -593,8 +596,9 @@ def _gpu_tree_method_supported() -> bool:
     # Prefer the helper exposed in newer releases.
     maybe_has_cuda = getattr(core, "_has_cuda_support", None)
     if callable(maybe_has_cuda):
+        has_cuda_callable: Callable[[], object] = maybe_has_cuda
         try:
-            return bool(maybe_has_cuda())
+            return bool(has_cuda_callable())  # pylint: disable=not-callable
         except (TypeError, ValueError, RuntimeError, AttributeError):
             LOGGER.debug("Failed to query XGBoost CUDA support.", exc_info=True)
             return False
@@ -823,6 +827,7 @@ __all__ = [
     "_merge_opinion_sweep_outcomes",
     "_execute_sweep_tasks",
     "_execute_opinion_sweep_tasks",
+    "execute_opinion_sweep_tasks",
     "_execute_sweep_task",
     "_execute_opinion_sweep_task",
     "_emit_sweep_plan",

@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Literal
 
@@ -27,8 +28,7 @@ async def score_single_test_case(
     client: PistonClient,
     problem_data: dict,
     *,
-    test_input: str,
-    test_output: str,
+    test_case: tuple[str, str],
     submission: str,
     submission_language: str = "cpp",
 ) -> dict[str, Any] | None:
@@ -36,13 +36,13 @@ async def score_single_test_case(
 
     :param client: Piston execution client used to run the code.
     :param problem_data: Metadata describing the problem (limits, checker).
-    :param test_input: Input fed to the contestant program.
-    :param test_output: Expected output for the test case.
+    :param test_case: ``(input, output)`` pair representing the test case.
     :param submission: Source code submitted by the model.
     :param submission_language: ``python`` or ``cpp`` selector.
     :returns: Raw execution result dictionary returned by Piston.
     :raises ValueError: If the submission language is unsupported.
     """
+    test_input, test_output = test_case
     if submission_language not in ["python", "cpp"]:
         raise ValueError(f"Invalid submission language: {submission_language}")
     try:
@@ -137,32 +137,36 @@ async def get_generated_tests(problem_id: str) -> list[dict]:
     return (await get_generated_contest_tests(contest_id)).get(problem_id, [])
 
 
+@dataclass(frozen=True)
+class ScoreSubmissionConfig:
+    """Configuration parameters controlling Codeforces submission scoring."""
+
+    test_batch_size: int = 1
+    scoring_mode: Literal["pass_fail", "partial", "weighted_sum"] = "weighted_sum"
+    no_compile_reward: float = -0.1
+    no_submission_reward: float = -1.0
+    submission_language: str = "cpp"
+
+
 async def score_submission(
     client: PistonClient,
     problem_data: dict,
     submission: str,
     *,
-    test_batch_size: int = 1,
-    scoring_mode: Literal["pass_fail", "partial", "weighted_sum"] = "weighted_sum",
-    no_compile_reward: float = -0.1,
-    no_submission_reward: float = -1.0,
-    submission_language: str = "cpp",
-) -> float | None:
+    config: ScoreSubmissionConfig | None = None,
+) -> float | None:  # pylint: disable=too-many-locals
     """Aggregate scores for a submission across official and generated tests.
 
     :param client: Piston execution client used to run batches.
     :param problem_data: Problem metadata including official tests.
     :param submission: Source code submitted by the model.
-    :param test_batch_size: Number of tests executed concurrently.
-    :param scoring_mode: Aggregation strategy for per-test results.
-    :param no_compile_reward: Reward when compilation fails.
-    :param no_submission_reward: Reward returned when code is missing.
-    :param submission_language: ``python`` or ``cpp`` selector.
+    :param config: Optional scoring configuration overrides.
     :returns: Scalar reward representing submission quality.
     :raises ValueError: If arguments specify unsupported options.
     """
-    if submission_language not in ["python", "cpp"]:
-        raise ValueError(f"Invalid submission language: {submission_language}")
+    options = config or ScoreSubmissionConfig()
+    if options.submission_language not in ["python", "cpp"]:
+        raise ValueError(f"Invalid submission language: {options.submission_language}")
     generated_tests = await get_generated_tests(problem_data["id"])
     test_cases = problem_data["official_tests"] + generated_tests
     # invalid/not a coding problem
@@ -170,11 +174,15 @@ async def score_submission(
         return None
     # no code extracted
     if not submission:
-        return no_submission_reward
+        return options.no_submission_reward
 
     passed_test_cases = 0
     # Evaluate batches sequentially; bail out as soon as a failure is observed.
-    batches = batched(test_cases, test_batch_size) if test_batch_size >= 1 else [test_cases]
+    batches = (
+        batched(test_cases, options.test_batch_size)
+        if options.test_batch_size >= 1
+        else [test_cases]
+    )
     for test_batch_to_run in batches:
         results = await asyncio.gather(
             *[
@@ -182,10 +190,9 @@ async def score_submission(
                     score_single_test_case(
                         client,
                         problem_data,
-                        test_input=test_case["input"],
-                        test_output=test_case["output"],
+                        test_case=(test_case["input"], test_case["output"]),
                         submission=submission,
-                        submission_language=submission_language,
+                        submission_language=options.submission_language,
                     )
                 )
                 for test_case in test_batch_to_run
@@ -195,7 +202,7 @@ async def score_submission(
             result and result["compile"]["code"] != 0
             for result in results
         ):
-            return no_compile_reward
+            return options.no_compile_reward
 
         tests_passed_results = [
             result
@@ -203,7 +210,7 @@ async def score_submission(
             and result["run"]["stdout"].strip() == "1"
             for result in results
         ]
-        if scoring_mode == "pass_fail" and any(
+        if options.scoring_mode == "pass_fail" and any(
             not test_passed for test_passed in tests_passed_results
         ):
             break
@@ -213,10 +220,10 @@ async def score_submission(
 
     pass_fail_score = 1.0 if passed_test_cases == len(test_cases) else 0.0
 
-    if scoring_mode == "pass_fail":
+    if options.scoring_mode == "pass_fail":
         return pass_fail_score
-    if scoring_mode == "partial":
+    if options.scoring_mode == "partial":
         return passed_test_cases / len(test_cases)
-    if scoring_mode == "weighted_sum":
+    if options.scoring_mode == "weighted_sum":
         return pass_fail_score + 0.1 * (passed_test_cases / len(test_cases))
-    raise ValueError(f"Invalid scoring mode: {scoring_mode}")
+    raise ValueError(f"Invalid scoring mode: {options.scoring_mode}")

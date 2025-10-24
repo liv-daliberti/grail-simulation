@@ -1,5 +1,7 @@
 """Async client helpers for executing IOI code on MorphCloud infrastructure."""
 
+# pylint: disable=line-too-long
+
 import asyncio
 import json
 import logging
@@ -25,7 +27,7 @@ logging.getLogger("paramiko").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
-class MorphCloudExecutionClient:
+class MorphCloudExecutionClient:  # pylint: disable=too-few-public-methods
     """Asynchronous helper for interacting with MorphCloud execution instances."""
 
     def __init__(
@@ -299,9 +301,10 @@ class MorphCloudExecutionClient:
             ``[0.0, 1.0]`` and ``feedback`` summarises execution details.
         :rtype: tuple[str, str]
         """
-        # NOTE: passing subtask metadata could enable snapshot reuse per subtask
-        # would cache the uploads of all files other than the submission: input.txt, correct_output.txt, grader files
-        # rather than reusing the snapshot that only has the compile/run scripts on it
+        # NOTE: passing subtask metadata could enable snapshot reuse per subtask.
+        # This would cache uploads for all files except the submission itself
+        # (input.txt, correct_output.txt, grader files) rather than only the
+        # compile/run scripts present in the base snapshot.
         # currently, run_submission -> client.execute(data) does not easily pass subtask info
 
         # Retry configuration
@@ -703,7 +706,7 @@ esac
 """
 
 
-def get_morph_client_from_env(session=None) -> MorphCloudExecutionClient:
+def get_morph_client_from_env(_session=None) -> MorphCloudExecutionClient:
     """
     Creates a MorphCloudExecutionClient instance using environment variables.
 
@@ -717,8 +720,8 @@ def get_morph_client_from_env(session=None) -> MorphCloudExecutionClient:
     """
     if not is_morph_available():
         raise ImportError(
-            "MorphCloud is not available and required for this function. Please install MorphCloud with "
-            "`pip install morphcloud` and add an API key to a `.env` file."
+            "MorphCloud is not available and required for this function. "
+            "Install it with `pip install morphcloud` and add an API key to a `.env` file."
         )
 
     load_dotenv()

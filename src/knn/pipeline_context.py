@@ -283,6 +283,38 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     metrics_path: Path
     metrics: Mapping[str, object]
 
+
+@dataclass(frozen=True)
+class SweepTaskContext:
+    """
+    Shared CLI/runtime parameters required to materialise sweep tasks.
+
+    :ivar base_cli: Baseline CLI arguments applied to each sweep invocation.
+    :vartype base_cli: Sequence[str]
+    :ivar extra_cli: Additional CLI arguments appended to the baseline invocation.
+    :vartype extra_cli: Sequence[str]
+    :ivar sweep_dir: Root directory where sweep artefacts are written.
+    :vartype sweep_dir: Path
+    :ivar word2vec_model_base: Directory storing cached Word2Vec artefacts.
+    :vartype word2vec_model_base: Path
+    """
+
+    base_cli: Sequence[str]
+    extra_cli: Sequence[str]
+    sweep_dir: Path
+    word2vec_model_base: Path
+
+
+@dataclass(frozen=True)
+class EvaluationContext:
+    """Shared CLI/runtime parameters for final evaluation stages."""
+
+    base_cli: Sequence[str]
+    extra_cli: Sequence[str]
+    out_dir: Path
+    word2vec_model_dir: Path
+    reuse_existing: bool
+
 @dataclass(frozen=True)
 class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes
     """
@@ -547,4 +579,6 @@ __all__ = [
     "SweepConfig",
     "SweepOutcome",
     "SweepTask",
+    "SweepTaskContext",
+    "EvaluationContext",
 ]

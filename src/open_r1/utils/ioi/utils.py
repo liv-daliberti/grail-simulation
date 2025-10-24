@@ -7,7 +7,12 @@ def batched(iterable, batch_size):
     "Batch data into lists of length ``batch_size``. The last batch may be shorter."
     # batched('ABCDEFG', 3) --> ABC DEF G
     if batch_size < 1:
-        return iterable
+        yield list(iterable)
+        return
+
     iterator = iter(iterable)
-    while batch := list(islice(iterator, batch_size)):
+    while True:
+        batch = list(islice(iterator, batch_size))
+        if not batch:
+            break
         yield batch

@@ -9,6 +9,26 @@ from .piston_client import PistonClient, PistonError
 from .utils import batched
 
 
+def _normalise_test_case(raw_case: object) -> tuple[str, Optional[str]]:
+    """
+    Convert a raw test-case payload into a standard ``(input, output)`` tuple.
+
+    :param raw_case: Original representation sourced from the dataset.
+    :type raw_case: object
+    :returns: Two-tuple of input and optional expected output text.
+    :rtype: Tuple[str, Optional[str]]
+    """
+    if isinstance(raw_case, (list, tuple)):
+        input_part = raw_case[0] if raw_case else ""
+        output_part = raw_case[1] if len(raw_case) > 1 else None
+    else:
+        input_part = raw_case
+        output_part = None
+    input_text = str(input_part) if input_part is not None else ""
+    output_text = str(output_part) if output_part is not None else None
+    return input_text, output_text
+
+
 @dataclass
 class TestResult:
     """
@@ -198,7 +218,7 @@ async def score_subtask(
     submission: str,
     test_case_run_cache: Optional[dict] = None,
     test_batch_size: int = 1,
-) -> SubtaskResult:
+) -> SubtaskResult:  # pylint: disable=too-many-locals
     """
     Scores all test cases in a subtask.
 
@@ -257,27 +277,18 @@ async def score_subtask(
 
     # run one batch, check if any failed (0 score): stop and skip remaining tests
     for test_batch_to_run in batched(tests_to_run, test_batch_size):
-        tasks = []
-        for _, test_name in test_batch_to_run:
-            raw_case = test_cases[test_name]
-            if isinstance(raw_case, (list, tuple)):
-                normalized_case = (
-                    raw_case[0],
-                    raw_case[1] if len(raw_case) > 1 else None,
-                )
-            else:
-                normalized_case = (raw_case, None)
-            task = asyncio.create_task(
+        results = await asyncio.gather(
+            *(
                 score_single_test_case(
                     client,
                     subtask,
                     test_name=test_name,
-                    test_case=normalized_case,
+                    test_case=_normalise_test_case(test_cases[test_name]),
                     submission=submission,
                 )
+                for _, test_name in test_batch_to_run
             )
-            tasks.append(task)
-        results = await asyncio.gather(*tasks)
+        )
         for (ti, test_name), test_result in zip(test_batch_to_run, results):
             if test_case_run_cache is not None:
                 test_case_run_cache[test_name] = test_result

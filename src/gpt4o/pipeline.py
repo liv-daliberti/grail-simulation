@@ -464,7 +464,7 @@ def _write_sweep_report(
     write_markdown_lines(path, lines)
 
 
-def _write_next_video_report(
+def _write_next_video_report(  # pylint: disable=too-many-statements
     directory: Path,
     selected: SweepOutcome,
     metrics: Mapping[str, object],
@@ -513,9 +513,11 @@ def _write_next_video_report(
             parsed_rate = _format_rate(float(stats.get("parsed_rate", 0.0)))
             format_rate = _format_rate(float(stats.get("format_rate", 0.0)))
             group_name = group or "unspecified"
-            lines.append(
-                f"| {group_name} | {seen} | {eligible} | {accuracy} | {parsed_rate} | {format_rate} |"
+            line = (
+                f"| {group_name} | {seen} | {eligible} | {accuracy} | "
+                f"{parsed_rate} | {format_rate} |"
             )
+            lines.append(line)
         lines.append("")
         highlight_lines = _group_highlights(payload)
         if highlight_lines:

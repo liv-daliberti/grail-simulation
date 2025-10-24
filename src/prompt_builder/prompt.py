@@ -1,17 +1,17 @@
 """Top-level prompt construction entry points."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
-import json
 import math
 import os
-from collections.abc import Mapping
 from typing import Any, Dict, List, Optional, Sequence
 
 from .formatters import clean_text, human_join
 from .parsers import as_list_json, format_count, format_yes_no, is_nanlike
 from .profiles import ProfileRender, render_profile, synthesize_viewer_sentence
-from .shared import first_non_nan_value
+from .shared import first_non_nan_value, load_selected_survey_row
 from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
 
@@ -44,25 +44,7 @@ def _selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
     :returns: Normalised dictionary representation of the selected survey row.
     :rtype: Dict[str, Any]
     """
-
-    raw = ex.get("selected_survey_row")
-    if isinstance(raw, Mapping):
-        return dict(raw)
-    if isinstance(raw, str):
-        try:
-            parsed = json.loads(raw)
-        except (TypeError, ValueError, json.JSONDecodeError):
-            return {}
-        return parsed if isinstance(parsed, dict) else {}
-    as_py = getattr(raw, "as_py", None)
-    if callable(as_py):
-        try:
-            candidate = as_py()
-        except (TypeError, ValueError):
-            return {}
-        if isinstance(candidate, dict):
-            return candidate
-    return {}
+    return load_selected_survey_row(ex)
 
 
 def build_user_prompt(ex: Dict[str, Any], max_hist: int = 12) -> str:
@@ -140,7 +122,8 @@ def _viewer_summary_line(
     :type ex: Dict[str, Any]
     :param selected: Normalised ``selected_survey_row`` mapping extracted from ``ex``.
     :type selected: Dict[str, Any]
-    :param profile: Full profile rendering returned by :func:`prompt_builder.profiles.render_profile`.
+    :param profile: Full profile rendering returned by
+        :func:`prompt_builder.profiles.render_profile`.
     :type profile: ProfileRender
     :returns: Single sentence summarising identity and location, or an empty string.
     :rtype: str
@@ -181,7 +164,8 @@ def _fragments_from_profile(profile: ProfileRender) -> List[str]:
 
     :param profile: Rendered profile containing ordered sentences.
     :type profile: ProfileRender
-    :returns: List containing the first sentence stripped of punctuation, or empty when unavailable.
+    :returns: List containing the first sentence stripped of punctuation, or empty
+        when unavailable.
     :rtype: List[str]
     """
 
@@ -558,7 +542,8 @@ def _survey_lines(ex: Dict[str, Any]) -> List[str]:
 
     :param ex: Dataset example potentially containing ``survey_highlights`` metadata.
     :type ex: Dict[str, Any]
-    :returns: List containing a single formatted survey highlight sentence, or empty when unavailable.
+    :returns: List containing a single formatted survey highlight sentence, or
+        empty when unavailable.
     :rtype: List[str]
     """
 
@@ -955,7 +940,7 @@ def _format_duration(item: Dict[str, Any]) -> str:
 
     :param item: Dictionary containing duration metadata.
     :type item: Dict[str, Any]
-    :returns: Seconds string (e.g. ``\"120s\"``) or ``\"\"`` when unavailable.
+    :returns: Seconds string such as ``"120s"`` or an empty string when unavailable.
     :rtype: str
     """
     duration_raw = (
@@ -980,9 +965,11 @@ def _option_engagement_summary(item: Dict[str, Any], stats: Dict[str, Any]) -> s
 
     :param item: Slate item metadata containing inline engagement counts.
     :type item: Dict[str, Any]
-    :param stats: Lookup statistics sourced from :func:`prompt_builder.video_stats.lookup_video_stats`.
+    :param stats: Lookup statistics sourced from
+        :func:`prompt_builder.video_stats.lookup_video_stats`.
     :type stats: Dict[str, Any]
-    :returns: Comma-separated phrase describing views, likes, comments, and shares when available.
+    :returns: Comma-separated phrase describing views, likes, comments, and share
+        counts when available.
     :rtype: str
     """
 

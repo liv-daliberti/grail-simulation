@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import logging
+import shlex
+import statistics
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -16,7 +19,15 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     plt = None  # type: ignore[assignment]
 
-from .pipeline_context import OpinionSummary, ReportBundle, StudySelection, StudySpec, SweepOutcome
+from .pipeline_context import (
+    OpinionSummary,
+    OpinionStudySelection,
+    OpinionSweepOutcome,
+    ReportBundle,
+    StudySelection,
+    StudySpec,
+    SweepOutcome,
+)
 from .pipeline_utils import (
     extract_metric_summary,
     extract_opinion_summary,
@@ -32,10 +43,229 @@ from .pipeline_utils import (
 
 LOGGER = logging.getLogger("knn.pipeline.reports")
 
+
+@dataclass
+class _OpinionPortfolioStats:
+    """Aggregate opinion-regression metrics across feature spaces and studies."""
+
+    total_weight: float = 0.0
+    weighted_mae_sum: float = 0.0
+    weighted_baseline_sum: float = 0.0
+    mae_entries: List[Tuple[float, str]] = field(default_factory=list)
+    delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+
+    def record(self, summary: OpinionSummary, label: str) -> None:
+        """Add a study summary to the aggregate."""
+        mae_value = summary.mae
+        baseline_value = summary.baseline_mae
+        delta_value = summary.mae_delta
+        participants = float(summary.participants or 0)
+
+        if mae_value is not None:
+            self.mae_entries.append((mae_value, label))
+            if participants > 0:
+                self.total_weight += participants
+                self.weighted_mae_sum += mae_value * participants
+                if baseline_value is not None:
+                    self.weighted_baseline_sum += baseline_value * participants
+
+        if delta_value is not None:
+            self.delta_entries.append((delta_value, label))
+
+    def to_lines(self, heading: str = "### Portfolio Summary") -> List[str]:
+        """Render aggregated statistics as Markdown."""
+        if not self.mae_entries:
+            return []
+
+        lines: List[str] = [heading, ""]
+        weighted_mae = None
+        weighted_baseline = None
+        weighted_delta = None
+        if self.total_weight > 0:
+            weighted_mae = self.weighted_mae_sum / self.total_weight
+            if self.weighted_baseline_sum > 0:
+                weighted_baseline = self.weighted_baseline_sum / self.total_weight
+                weighted_delta = weighted_baseline - weighted_mae
+
+        if weighted_mae is not None:
+            lines.append(
+                f"- Weighted MAE {format_optional_float(weighted_mae)} "
+                f"across {format_count(int(self.total_weight))} participants."
+            )
+        if weighted_baseline is not None:
+            lines.append(
+                f"- Weighted baseline MAE {format_optional_float(weighted_baseline)} "
+                f"({format_delta(weighted_delta)} vs. final)."
+            )
+        if self.delta_entries:
+            best_delta, best_label = max(self.delta_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Largest MAE reduction: {best_label} ({format_delta(best_delta)})."
+            )
+        if len(self.mae_entries) > 1:
+            best_mae, best_label = min(self.mae_entries, key=lambda item: item[0])
+            worst_mae, worst_label = max(self.mae_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Lowest MAE: {best_label} ({format_optional_float(best_mae)}); "
+                f"Highest MAE: {worst_label} ({format_optional_float(worst_mae)})."
+            )
+
+        lines.append("")
+        return lines
+
+
+def _format_shell_command(bits: Sequence[str]) -> str:
+    """Join CLI arguments into a shell-friendly command."""
+    return " ".join(shlex.quote(str(bit)) for bit in bits if str(bit))
+
+
+def _knn_next_video_command(
+    feature_space: str,
+    selection: Optional[StudySelection],
+) -> Optional[str]:
+    """Build a reproduction command for a next-video sweep selection."""
+    if selection is None:
+        return None
+    metrics = selection.outcome.metrics or {}
+    dataset = metrics.get("dataset") or "data/cleaned_grail"
+    config = selection.config
+    text_fields_value = ",".join(config.text_fields) if config.text_fields else ""
+
+    command: List[str] = [
+        "python",
+        "-m",
+        "knn.cli",
+        "--task",
+        "slate",
+        "--dataset",
+        str(dataset),
+        "--feature-space",
+        feature_space,
+        "--issues",
+        selection.study.issue,
+        "--participant-studies",
+        selection.study.key,
+        "--knn-metric",
+        config.metric,
+        "--knn-k",
+        str(selection.best_k),
+        "--knn-k-sweep",
+        str(selection.best_k),
+        "--out-dir",
+        "<run_dir>",
+    ]
+    command.extend(["--knn-text-fields", text_fields_value])
+    if config.word2vec_size is not None:
+        command.extend(["--word2vec-size", str(config.word2vec_size)])
+    if config.word2vec_window is not None:
+        command.extend(["--word2vec-window", str(config.word2vec_window)])
+    if config.word2vec_min_count is not None:
+        command.extend(["--word2vec-min-count", str(config.word2vec_min_count)])
+    if config.word2vec_epochs is not None:
+        command.extend(["--word2vec-epochs", str(config.word2vec_epochs)])
+    if config.word2vec_workers is not None:
+        command.extend(["--word2vec-workers", str(config.word2vec_workers)])
+    if config.sentence_transformer_model:
+        command.extend(
+            ["--sentence-transformer-model", config.sentence_transformer_model]
+        )
+    if config.sentence_transformer_device:
+        command.extend(
+            ["--sentence-transformer-device", config.sentence_transformer_device]
+        )
+    if config.sentence_transformer_batch_size is not None:
+        command.extend(
+            [
+                "--sentence-transformer-batch-size",
+                str(config.sentence_transformer_batch_size),
+            ]
+        )
+    if config.sentence_transformer_normalize is not None:
+        command.append(
+            "--sentence-transformer-normalize"
+            if config.sentence_transformer_normalize
+            else "--sentence-transformer-no-normalize"
+        )
+    return _format_shell_command(command)
+
+
+def _knn_opinion_command(
+    feature_space: str,
+    selection: Optional[OpinionStudySelection],
+) -> Optional[str]:
+    """Build a reproduction command for an opinion sweep selection."""
+    if selection is None:
+        return None
+    outcome = selection.outcome
+    metrics = outcome.metrics or {}
+    dataset = metrics.get("dataset") or "data/cleaned_grail"
+    config = outcome.config
+    text_fields_value = ",".join(config.text_fields) if config.text_fields else ""
+
+    command: List[str] = [
+        "python",
+        "-m",
+        "knn.cli",
+        "--task",
+        "opinion",
+        "--dataset",
+        str(dataset),
+        "--feature-space",
+        feature_space,
+        "--issues",
+        selection.study.issue,
+        "--participant-studies",
+        selection.study.key,
+        "--knn-metric",
+        config.metric,
+        "--knn-k",
+        str(outcome.best_k),
+        "--knn-k-sweep",
+        str(outcome.best_k),
+        "--out-dir",
+        "<run_dir>",
+    ]
+    command.extend(["--knn-text-fields", text_fields_value])
+    if config.word2vec_size is not None:
+        command.extend(["--word2vec-size", str(config.word2vec_size)])
+    if config.word2vec_window is not None:
+        command.extend(["--word2vec-window", str(config.word2vec_window)])
+    if config.word2vec_min_count is not None:
+        command.extend(["--word2vec-min-count", str(config.word2vec_min_count)])
+    if config.word2vec_epochs is not None:
+        command.extend(["--word2vec-epochs", str(config.word2vec_epochs)])
+    if config.word2vec_workers is not None:
+        command.extend(["--word2vec-workers", str(config.word2vec_workers)])
+    if config.sentence_transformer_model:
+        command.extend(
+            ["--sentence-transformer-model", config.sentence_transformer_model]
+        )
+    if config.sentence_transformer_device:
+        command.extend(
+            ["--sentence-transformer-device", config.sentence_transformer_device]
+        )
+    if config.sentence_transformer_batch_size is not None:
+        command.extend(
+            [
+                "--sentence-transformer-batch-size",
+                str(config.sentence_transformer_batch_size),
+            ]
+        )
+    if config.sentence_transformer_normalize is not None:
+        command.append(
+            "--sentence-transformer-normalize"
+            if config.sentence_transformer_normalize
+            else "--sentence-transformer-no-normalize"
+        )
+    return _format_shell_command(command)
+
 def _hyperparameter_report_intro(
     k_sweep: str,
     feature_spaces: Sequence[str],
     sentence_model: Optional[str],
+    *,
+    include_next_video: bool,
+    include_opinion: bool,
 ) -> List[str]:
     """
     Return the Markdown header introducing the hyperparameter report.
@@ -63,24 +293,34 @@ def _hyperparameter_report_intro(
         "",
         "This document consolidates the selected grid searches for the KNN baselines.",
         "",
-        "## Next-Video Prediction",
-        "",
-        f"The latest sweeps cover the {feature_label} feature spaces with:",
-        f"- `k ∈ {{{k_sweep}}}`",
-        "- Distance metrics: cosine and L2",
-        "- Text-field augmentations: none, `viewer_profile,state_text`",
     ]
-    if "word2vec" in feature_spaces:
-        lines.append("- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}")
-    if "sentence_transformer" in feature_spaces and sentence_model:
-        lines.append(f"- Sentence-transformer model: `{sentence_model}`")
-    lines.extend(
-        [
-            "",
-            "| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
-        ]
-    )
+    if include_next_video:
+        lines.extend(
+            [
+                "## Next-Video Prediction",
+                "",
+                f"The latest sweeps cover the {feature_label} feature spaces with:",
+                f"- `k ∈ {{{k_sweep}}}`",
+                "- Distance metrics: cosine and L2",
+                "- Text-field augmentations: none, `viewer_profile,state_text`",
+            ]
+        )
+        if "word2vec" in feature_spaces:
+            lines.append(
+                "- Word2Vec variants: vector size ∈ {128, 256}, window ∈ {5, 10}, min_count ∈ {1}"
+            )
+        if "sentence_transformer" in feature_spaces and sentence_model:
+            lines.append(f"- Sentence-transformer model: `{sentence_model}`")
+        lines.extend(
+            [
+                "",
+                "| Feature space | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+    if include_opinion and not include_next_video:
+        lines.append("Opinion-regression sweeps are summarised below.")
+        lines.append("")
     return lines
 
 def _hyperparameter_feature_rows(
@@ -333,6 +573,7 @@ def _hyperparameter_observations_section(
         if not per_feature:
             continue
         bullet_bits: List[str] = []
+        command_refs: List[Tuple[str, str]] = []
         for study in studies:
             selection = per_feature.get(study.key)
             if selection is None:
@@ -362,28 +603,190 @@ def _hyperparameter_observations_section(
                 f"k={format_k(summary.best_k or selection.best_k)}) using {config_bits}"
             )
             bullet_bits.append(detail)
+            reproduction = _knn_next_video_command(feature_space, selection)
+            if reproduction:
+                command_refs.append((study.label, reproduction))
         if bullet_bits:
             lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
+            for label, reproduction in command_refs:
+                lines.append(f"  Command ({label}): `{reproduction}`")
     lines.append("")
     return lines
 
-def _hyperparameter_opinion_section() -> List[str]:
+def _hyperparameter_opinion_section(
+    *,
+    opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]],
+    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
+    studies: Sequence[StudySpec],
+    feature_spaces: Sequence[str],
+    allow_incomplete: bool,
+) -> List[str]:
     """
-    Return the blurb linking to opinion-regression sweeps.
+    Render the opinion-regression sweep summary.
 
-    :returns: the blurb linking to opinion-regression sweeps
-
+    :param opinion_selections: Mapping of feature spaces to their chosen opinion selections.
+    :type opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :param opinion_sweep_outcomes: Chronological list of opinion sweep outcomes.
+    :type opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    :param studies: Sequence of study specifications targeted by the workflow.
+    :type studies: Sequence[StudySpec]
+    :param feature_spaces: Ordered collection of feature space names under consideration.
+    :type feature_spaces: Sequence[str]
+    :param allow_incomplete: Whether missing sweeps should surface placeholders.
+    :type allow_incomplete: bool
+    :returns: Markdown section covering opinion hyper-parameter sweeps.
     :rtype: List[str]
-
     """
-    return [
-        "",
-        "## Post-Study Opinion Regression",
-        "",
-        "Opinion runs reuse the per-study slate configurations gathered above.",
-        "See `reports/knn/opinion/README.md` for detailed metrics and plots.",
-        "",
+
+    lines: List[str] = ["", "## Post-Study Opinion Regression", ""]
+    if not opinion_sweep_outcomes:
+        lines.append("No opinion sweeps were available when this report was generated.")
+        if allow_incomplete:
+            lines.append(
+                "Run the KNN pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
+            )
+        lines.append("")
+        return lines
+
+    lines.append(
+        "Configurations are ranked by validation MAE (lower is better). "
+        "Bold rows indicate the selections promoted to the finalize stage."
+    )
+    lines.append("")
+
+    per_feature: Dict[str, Dict[str, List[OpinionSweepOutcome]]] = {}
+    portfolio = _OpinionPortfolioStats()
+    for outcome in opinion_sweep_outcomes:
+        feature_bucket = per_feature.setdefault(outcome.feature_space, {})
+        feature_bucket.setdefault(outcome.study.key, []).append(outcome)
+
+    ordered_spaces: List[str] = [
+        space for space in feature_spaces if space in per_feature
     ]
+    for space in per_feature:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+
+    top_n = 5
+    for feature_space in ordered_spaces:
+        study_outcomes = per_feature.get(feature_space, {})
+        if not study_outcomes:
+            continue
+        lines.append(_feature_space_heading(feature_space))
+        lines.append("")
+        lines.append(
+            "| Study | Metric | Text fields | Model | Vec size | Window | Min count | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |"
+        )
+        lines.append(
+            "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+        )
+        for study in studies:
+            outcomes = study_outcomes.get(study.key, [])
+            if not outcomes:
+                continue
+            selection = opinion_selections.get(feature_space, {}).get(study.key)
+            ordered = sorted(
+                outcomes,
+                key=lambda item: (item.mae, item.rmse, -item.r2, item.best_k),
+            )
+            display_limit = max(1, top_n)
+            displayed = ordered[:display_limit]
+            if selection is not None and selection.outcome not in displayed:
+                displayed.append(selection.outcome)
+                displayed = sorted(
+                    displayed,
+                    key=lambda item: (item.mae, item.rmse, -item.r2, item.best_k),
+                )[:display_limit]
+
+            for outcome in displayed:
+                summary = extract_opinion_summary(outcome.metrics or {})
+                study_cell = study.label
+                if selection and outcome.config == selection.outcome.config:
+                    study_cell = f"**{study_cell}**"
+                config = outcome.config
+                text_label = ",".join(config.text_fields) if config.text_fields else "none"
+                if feature_space == "sentence_transformer":
+                    model = config.sentence_transformer_model or "sentence-transformer"
+                elif feature_space == "word2vec":
+                    model = "word2vec"
+                else:
+                    model = "tfidf"
+                size = (
+                    str(config.word2vec_size)
+                    if config.word2vec_size is not None
+                    else "—"
+                )
+                window = (
+                    str(config.word2vec_window)
+                    if config.word2vec_window is not None
+                    else "—"
+                )
+                min_count = (
+                    str(config.word2vec_min_count)
+                    if config.word2vec_min_count is not None
+                    else "—"
+                )
+                best_k = summary.best_k if summary.best_k is not None else outcome.best_k
+                participants = (
+                    summary.participants
+                    if summary.participants is not None
+                    else outcome.participants
+                )
+                lines.append(
+                    f"| {study_cell} | {config.metric} | {text_label} | {model} | "
+                    f"{size} | {window} | {min_count} | {format_k(best_k)} | "
+                    f"{format_optional_float(summary.mae)} | "
+                    f"{format_delta(summary.mae_delta)} | "
+                    f"{format_optional_float(summary.rmse)} | "
+                    f"{format_optional_float(summary.r2)} | "
+                    f"{format_count(participants)} |"
+                )
+            if len(ordered) > display_limit:
+                lines.append(
+                    f"*Showing top {display_limit} of {len(ordered)} configurations for {study.label}.*"
+                )
+        lines.append("")
+
+        selection_map = opinion_selections.get(feature_space, {})
+        if selection_map:
+            bullet_bits: List[str] = []
+            for study in studies:
+                selection = selection_map.get(study.key)
+                if selection is None:
+                    continue
+                summary = extract_opinion_summary(selection.outcome.metrics or {})
+                portfolio.record(
+                    summary, f"{study.label} ({feature_space.upper()})"
+                )
+                bullet_bits.append(
+                    f"{study.label}: MAE {format_optional_float(summary.mae)} "
+                    f"(Δ {format_delta(summary.mae_delta)}, k={format_k(summary.best_k or selection.outcome.best_k)})"
+                )
+            if bullet_bits:
+                lines.append(
+                    f"- **{feature_space.upper()} selections**: " + "; ".join(bullet_bits) + "."
+                )
+                lines.append("")
+                for study in studies:
+                    selection = selection_map.get(study.key)
+                    if selection is None:
+                        continue
+                    reproduction = _knn_opinion_command(feature_space, selection)
+                    if reproduction:
+                        lines.append(f"  Command ({study.label}): `{reproduction}`")
+                lines.append("")
+        else:
+            # Fall back to the top-ranked configuration for aggregation.
+            for study in studies:
+                outcomes = study_outcomes.get(study.key, [])
+                if not outcomes:
+                    continue
+                summary = extract_opinion_summary(outcomes[0].metrics or {})
+                portfolio.record(
+                    summary, f"{study.label} ({feature_space.upper()})"
+                )
+    lines.extend(portfolio.to_lines())
+    return lines
 
 def _feature_space_heading(feature_space: str) -> str:
     """
@@ -965,6 +1368,11 @@ def _build_hyperparameter_report(
     k_sweep: str,
     feature_spaces: Sequence[str],
     sentence_model: Optional[str],
+    opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]] | None = None,
+    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome] = (),
+    allow_incomplete: bool = False,
+    include_next_video: bool = True,
+    include_opinion: bool = True,
 ) -> None:
     """
     Write the hyperparameter tuning summary under ``output_dir``.
@@ -1005,18 +1413,44 @@ def _build_hyperparameter_report(
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "README.md"
     lines: List[str] = []
-    lines.extend(_hyperparameter_report_intro(k_sweep, feature_spaces, sentence_model))
-    lines.extend(_hyperparameter_table_section(selections, studies))
     lines.extend(
-        _hyperparameter_leaderboard_section(
-            sweep_outcomes=sweep_outcomes,
-            selections=selections,
-            studies=studies,
-            top_n=3,
+        _hyperparameter_report_intro(
+            k_sweep,
+            feature_spaces,
+            sentence_model,
+            include_next_video=include_next_video,
+            include_opinion=include_opinion,
         )
     )
-    lines.extend(_hyperparameter_observations_section(selections, studies))
-    lines.extend(_hyperparameter_opinion_section())
+    if include_next_video:
+        if selections:
+            lines.extend(_hyperparameter_table_section(selections, studies))
+        if sweep_outcomes:
+            lines.extend(
+                _hyperparameter_leaderboard_section(
+                    sweep_outcomes=sweep_outcomes,
+                    selections=selections,
+                    studies=studies,
+                    top_n=3,
+                )
+            )
+        if selections:
+            lines.extend(_hyperparameter_observations_section(selections, studies))
+        if not selections and allow_incomplete:
+            lines.append(
+                "Next-video sweeps were not available when this report was generated."
+            )
+            lines.append("")
+    if include_opinion:
+        lines.extend(
+            _hyperparameter_opinion_section(
+                opinion_selections=opinion_selections or {},
+                opinion_sweep_outcomes=opinion_sweep_outcomes,
+                studies=studies,
+                feature_spaces=feature_spaces,
+                allow_incomplete=allow_incomplete,
+            )
+        )
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 def _build_next_video_report(
@@ -1320,6 +1754,71 @@ def _opinion_takeaways(
     lines.append("")
     return lines
 
+
+def _knn_opinion_cross_study_diagnostics(
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    """Compute cross-study diagnostic statistics for KNN opinion runs."""
+
+    if not metrics:
+        return []
+
+    lines: List[str] = ["## Cross-Study Diagnostics", ""]
+    ordered_spaces = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in metrics
+    ]
+    for space in metrics:
+        if space not in ordered_spaces:
+            ordered_spaces.append(space)
+
+    any_entries = False
+    for feature_space in ordered_spaces:
+        per_feature = metrics.get(feature_space, {})
+        if not per_feature:
+            continue
+        portfolio = _OpinionPortfolioStats()
+        summaries: List[OpinionSummary] = []
+        for study in studies:
+            payload = per_feature.get(study.key)
+            if not payload:
+                continue
+            summary = extract_opinion_summary(payload)
+            summaries.append(summary)
+            portfolio.record(summary, f"{study.label} ({feature_space.upper()})")
+        if not summaries:
+            continue
+        any_entries = True
+        lines.append(_feature_space_heading(feature_space))
+        lines.append("")
+        lines.extend(portfolio.to_lines("#### Weighted Summary"))
+
+        maes = [summary.mae for summary in summaries if summary.mae is not None]
+        if maes:
+            mean_mae = sum(maes) / len(maes)
+            stdev_mae = statistics.pstdev(maes) if len(maes) > 1 else 0.0
+            lines.append(
+                f"- Unweighted MAE {format_optional_float(mean_mae)} "
+                f"(σ {format_optional_float(stdev_mae)}, range "
+                f"{format_optional_float(min(maes))} – {format_optional_float(max(maes))})."
+            )
+        deltas = [summary.mae_delta for summary in summaries if summary.mae_delta is not None]
+        if deltas:
+            mean_delta = sum(deltas) / len(deltas)
+            stdev_delta = statistics.pstdev(deltas) if len(deltas) > 1 else 0.0
+            lines.append(
+                f"- MAE delta mean {format_optional_float(mean_delta)} "
+                f"(σ {format_optional_float(stdev_delta)}, range "
+                f"{format_optional_float(min(deltas))} – {format_optional_float(max(deltas))})."
+            )
+        lines.append("")
+
+    if not any_entries:
+        return []
+    return lines
+
 def _build_opinion_report(
     *,
     output_path: Path,
@@ -1370,6 +1869,7 @@ def _build_opinion_report(
     lines.extend(_opinion_report_intro(dataset_name, split))
     lines.extend(_opinion_feature_sections(metrics, studies))
     lines.extend(_opinion_heatmap_section())
+    lines.extend(_knn_opinion_cross_study_diagnostics(metrics, studies))
     lines.extend(_opinion_takeaways(metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -1475,16 +1975,30 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
         include_opinion=report_bundle.include_opinion,
     )
 
-    if report_bundle.include_next_video:
+    if report_bundle.include_next_video or report_bundle.include_opinion:
         _build_hyperparameter_report(
             output_dir=reports_root / "hyperparameter_tuning",
-            selections=report_bundle.selections,
-            sweep_outcomes=report_bundle.sweep_outcomes,
+            selections=report_bundle.selections if report_bundle.include_next_video else {},
+            sweep_outcomes=report_bundle.sweep_outcomes
+            if report_bundle.include_next_video
+            else (),
             studies=report_bundle.studies,
             k_sweep=report_bundle.k_sweep,
             feature_spaces=feature_spaces,
             sentence_model=report_bundle.sentence_model,
+            opinion_selections=(
+                report_bundle.opinion_selections if report_bundle.include_opinion else {}
+            ),
+            opinion_sweep_outcomes=(
+                report_bundle.opinion_sweep_outcomes
+                if report_bundle.include_opinion
+                else ()
+            ),
+            allow_incomplete=allow_incomplete,
+            include_next_video=report_bundle.include_next_video,
+            include_opinion=report_bundle.include_opinion,
         )
+    if report_bundle.include_next_video:
         _build_next_video_report(
             output_dir=reports_root / "next_video",
             metrics_by_feature=report_bundle.metrics_by_feature,

@@ -104,3 +104,9 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.440 across 2,4
 | Study 1 – Gun Control (MTurk) | 0.336 | -0.204 | 0.540 | 2 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.265 | -0.103 | 0.368 | 2 | 671 |
 | Study 3 – Minimum Wage (YouGov) | 0.265 | -0.214 | 0.479 | 2 | 1,200 |
+
+## Sentence-Transformer Feature Space
+
+| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.027 | -0.513 | 0.540 | 2 | 548 |

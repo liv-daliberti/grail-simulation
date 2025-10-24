@@ -193,18 +193,18 @@ def load_tree_csv(
     :raises ValueError: If no recommendation columns can be inferred from the provided CSV.
     """
     # pylint: disable=too-many-locals
-    df = pd.read_csv(csv_path)
-    normalized_cols = {col: col.lower() for col in df.columns}
-    if id_column not in df.columns:
+    csv_frame = pd.read_csv(csv_path)
+    normalized_cols = {col: col.lower() for col in csv_frame.columns}
+    if id_column not in csv_frame.columns:
         lowered = id_column.lower()
         for original, lower in normalized_cols.items():
             if lower == lowered:
                 id_column = original
                 break
         else:
-            id_column = df.columns[0]
+            id_column = csv_frame.columns[0]
     children_cols: List[str] = []
-    for col in df.columns:
+    for col in csv_frame.columns:
         col_lower = col.lower()
         for prefix in child_prefixes:
             if col_lower.startswith(prefix.lower()):
@@ -220,7 +220,7 @@ def load_tree_csv(
     edges: List[TreeEdge] = []
     seen_children = set()
     parent_order: List[str] = []
-    for _, row in df.iterrows():
+    for _, row in csv_frame.iterrows():
         parent = str(row[id_column])
         parent_order.append(parent)
         nodes.setdefault(parent, row.to_dict())
@@ -281,13 +281,13 @@ def load_metadata(
             if id_column in row:
                 lookup[str(row[id_column])] = row
         return lookup
-    df = pd.read_csv(metadata_path)
-    if id_column not in df.columns:
+    metadata_frame = pd.read_csv(metadata_path)
+    if id_column not in metadata_frame.columns:
         raise ValueError(
             f"Metadata file {metadata_path} is missing the identifier column '{id_column}'."
         )
     result: Dict[str, Mapping[str, object]] = {}
-    for _, row in df.iterrows():
+    for _, row in metadata_frame.iterrows():
         result[str(row[id_column])] = row.to_dict()
     return result
 

@@ -788,16 +788,27 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     cli_args.extend(task.extra_cli)
 
     evaluation_dir = task.metrics_path.parent
-    has_partial_outputs = evaluation_dir.exists() and not task.metrics_path.exists()
-    if has_partial_outputs and "--overwrite" not in cli_args:
-        LOGGER.warning(
-            "[SWEEP][RECOVER] issue=%s study=%s config=%s detected partial outputs at %s; "
-            "automatically enabling overwrite for rerun.",
-            task.study.issue,
-            task.study.key,
-            task.config.label(),
-            evaluation_dir,
-        )
+    has_existing_outputs = evaluation_dir.exists()
+    missing_metrics = not task.metrics_path.exists()
+    if has_existing_outputs and "--overwrite" not in cli_args:
+        if missing_metrics:
+            LOGGER.warning(
+                "[SWEEP][RECOVER] issue=%s study=%s config=%s detected partial outputs at %s; "
+                "automatically enabling overwrite for rerun.",
+                task.study.issue,
+                task.study.key,
+                task.config.label(),
+                evaluation_dir,
+            )
+        else:
+            LOGGER.info(
+                "[SWEEP][OVERWRITE] issue=%s study=%s config=%s existing outputs at %s; "
+                "enabling overwrite to refresh metrics.",
+                task.study.issue,
+                task.study.key,
+                task.config.label(),
+                evaluation_dir,
+            )
         cli_args.append("--overwrite")
 
     LOGGER.info(

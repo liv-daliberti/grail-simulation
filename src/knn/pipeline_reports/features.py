@@ -39,14 +39,19 @@ _normalise_fields = partial(normalise_field_values, default=_DEFAULT_FIELD_SET)
 
 
 @dataclass(frozen=True)
+class _PipelineMessages:
+    disabled: str
+    no_sweep: str
+    no_final: str
+
+
+@dataclass(frozen=True)
 class _PipelineSection:
     heading: str
     include: bool
     sweep_headers: Sequence[str]
     final_headers: Sequence[str]
-    disabled_message: str
-    no_sweep_message: str
-    no_final_message: str
+    messages: _PipelineMessages
     sweep_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
     final_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
 
@@ -70,7 +75,7 @@ def _append_section(lines: list[str], bundle: ReportBundle, spec: _PipelineSecti
     lines.append(f"## {spec.heading}")
     lines.append("")
     if not spec.include:
-        lines.append(spec.disabled_message)
+        lines.append(spec.messages.disabled)
         lines.append("")
         return set()
 
@@ -81,19 +86,21 @@ def _append_section(lines: list[str], bundle: ReportBundle, spec: _PipelineSecti
         "### Sweep Configurations",
         spec.sweep_headers,
         sweep_rows,
-        spec.no_sweep_message,
+        spec.messages.no_sweep,
     )
     append_markdown_table(
         lines,
         "### Final Evaluations",
         spec.final_headers,
         final_rows,
-        spec.no_final_message,
+        spec.messages.no_final,
     )
     return set(sweep_fields) | set(final_fields)
 
 
-def _collect_next_video_sweeps(outcomes: Sequence[SweepOutcome]) -> tuple[list[Sequence[str]], set[str]]:
+def _collect_next_video_sweeps(
+    outcomes: Sequence[SweepOutcome],
+) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and the unique field set for KNN next-video sweeps."""
     rows: list[Sequence[str]] = []
     unique: set[str] = set()
@@ -145,7 +152,9 @@ def _collect_next_video_final(bundle: ReportBundle) -> tuple[list[Sequence[str]]
     return rows, unique
 
 
-def _collect_opinion_sweeps(outcomes: Sequence[OpinionSweepOutcome]) -> tuple[list[Sequence[str]], set[str]]:
+def _collect_opinion_sweeps(
+    outcomes: Sequence[OpinionSweepOutcome],
+) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and unique fields for opinion sweeps."""
     rows: list[Sequence[str]] = []
     unique: set[str] = set()
@@ -216,9 +225,11 @@ def build_feature_report(repo_root: Path, bundle: ReportBundle) -> None:
             include=bundle.include_next_video,
             sweep_headers=("Feature space", "Study", "Configuration", "Extra text fields"),
             final_headers=("Feature space", "Study", "Extra text fields"),
-            disabled_message="Next-video stages were disabled for this run.",
-            no_sweep_message="No sweep metrics were supplied.",
-            no_final_message="No final evaluation metrics were supplied.",
+            messages=_PipelineMessages(
+                disabled="Next-video stages were disabled for this run.",
+                no_sweep="No sweep metrics were supplied.",
+                no_final="No final evaluation metrics were supplied.",
+            ),
             sweep_collector=lambda data: _collect_next_video_sweeps(data.sweep_outcomes),
             final_collector=_collect_next_video_final,
         ),
@@ -227,9 +238,11 @@ def build_feature_report(repo_root: Path, bundle: ReportBundle) -> None:
             include=bundle.include_opinion,
             sweep_headers=("Feature space", "Study", "Configuration", "Extra text fields"),
             final_headers=("Feature space", "Study", "Extra text fields"),
-            disabled_message="Opinion regression stages were disabled for this run.",
-            no_sweep_message="No opinion sweep metrics were supplied.",
-            no_final_message="No opinion metrics were recorded.",
+            messages=_PipelineMessages(
+                disabled="Opinion regression stages were disabled for this run.",
+                no_sweep="No opinion sweep metrics were supplied.",
+                no_final="No opinion metrics were recorded.",
+            ),
             sweep_collector=lambda data: _collect_opinion_sweeps(data.opinion_sweep_outcomes),
             final_collector=_collect_opinion_final,
         ),

@@ -648,6 +648,12 @@ def map_rows_to_examples(
 
     mapped = DatasetDict()
     for split_name, split_ds in dataset.items():
+        map_kwargs = {
+            "remove_columns": split_ds.column_names,
+            "load_from_cache_file": False,
+        }
+        if num_proc is not None:
+            map_kwargs["num_proc"] = num_proc
         mapped_split = split_ds.map(
             lambda ex, prompt=system_prompt: row_to_example(
                 ex,
@@ -655,9 +661,7 @@ def map_rows_to_examples(
                 sol_key,
                 max_history,
             ),
-            remove_columns=split_ds.column_names,
-            load_from_cache_file=False,
-            num_proc=num_proc,
+            **map_kwargs,
         )
         mapped[split_name] = mapped_split
     return mapped

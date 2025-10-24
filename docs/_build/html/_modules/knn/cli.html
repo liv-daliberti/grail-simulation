@@ -437,7 +437,10 @@
         <span class="s2">&quot;--word2vec_model_dir&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;word2vec_model_dir&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional directory to store/load Word2Vec models (defaults to models/knn_word2vec).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional directory to store/load Word2Vec models &quot;</span>
+            <span class="s2">&quot;(defaults to models/knn/next_video/word2vec_models).&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--sentence-transformer-model&quot;</span><span class="p">,</span>

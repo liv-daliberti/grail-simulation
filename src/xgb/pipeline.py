@@ -592,9 +592,6 @@ def main(argv: Sequence[str] | None = None) -> None:
             config=opinion_stage_config,
         )
 
-    if stage == "finalize":
-        return
-
     sweep_report = SweepReportData(
         outcomes=outcomes,
         selections=selections,

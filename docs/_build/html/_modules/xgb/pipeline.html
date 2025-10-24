@@ -528,7 +528,25 @@
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">:</span>
-        <span class="n">total_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">)</span>
+        <span class="n">slate_pending_by_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">planned_slate_tasks</span><span class="p">}</span>
+        <span class="n">slate_cached_by_index</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">:</span> <span class="n">outcome</span>
+            <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">cached_slate_planned</span>
+            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">slate_pending_by_index</span>
+        <span class="p">}</span>
+        <span class="n">slate_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">slate_pending_by_index</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">slate_cached_by_index</span><span class="p">)</span>
+        <span class="n">slate_total</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">slate_indices</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">slate_indices</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="n">opinion_pending_by_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">planned_opinion_tasks</span><span class="p">}</span>
+        <span class="n">opinion_cached_by_index</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">:</span> <span class="n">outcome</span>
+            <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">cached_opinion_planned</span>
+            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opinion_pending_by_index</span>
+        <span class="p">}</span>
+        <span class="n">opinion_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">opinion_pending_by_index</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">opinion_cached_by_index</span><span class="p">)</span>
+        <span class="n">opinion_total</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">opinion_indices</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">opinion_indices</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="n">total_tasks</span> <span class="o">=</span> <span class="n">slate_total</span> <span class="o">+</span> <span class="n">opinion_total</span>
         <span class="n">task_id</span> <span class="o">=</span> <span class="n">prepare_sweep_execution</span><span class="p">(</span>
             <span class="n">total_tasks</span><span class="o">=</span><span class="n">total_tasks</span><span class="p">,</span>
             <span class="n">cli_task_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_task_id</span><span class="p">,</span>
@@ -537,8 +555,25 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">task_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="n">task_id</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">):</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">planned_slate_tasks</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">task_id</span> <span class="o">&lt;</span> <span class="n">slate_total</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">slate_pending_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cached_outcome</span> <span class="o">=</span> <span class="n">slate_cached_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cached_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;Skipping sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                        <span class="n">task_id</span><span class="p">,</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;No sweep task registered for index </span><span class="si">%d</span><span class="s2">; skipping.&quot;</span><span class="p">,</span>
+                    <span class="n">task_id</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
             <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;Skipping sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
@@ -557,8 +592,24 @@
                 <span class="n">outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">opinion_index</span> <span class="o">=</span> <span class="n">task_id</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">planned_opinion_tasks</span><span class="p">[</span><span class="n">opinion_index</span><span class="p">]</span>
+            <span class="n">opinion_index</span> <span class="o">=</span> <span class="n">task_id</span> <span class="o">-</span> <span class="n">slate_total</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">opinion_pending_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opinion_index</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cached_outcome</span> <span class="o">=</span> <span class="n">opinion_cached_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opinion_index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cached_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;Skipping opinion sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
+                        <span class="n">opinion_index</span><span class="p">,</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;No opinion sweep task registered for index </span><span class="si">%d</span><span class="s2">; skipping.&quot;</span><span class="p">,</span>
+                    <span class="n">opinion_index</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
             <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;Skipping opinion sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>

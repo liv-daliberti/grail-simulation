@@ -53,7 +53,6 @@ from .pipeline_io import (
 from .pipeline_sweeps import (
     build_sweep_configs as _build_sweep_configs,
     emit_combined_sweep_plan as _emit_combined_sweep_plan,
-    execute_opinion_sweep_task as _execute_opinion_sweep_task,
     execute_opinion_sweep_tasks as _execute_opinion_sweep_tasks,
     execute_sweep_task as _execute_sweep_task,
     execute_sweep_tasks as _execute_sweep_tasks,
@@ -278,7 +277,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     task.metrics_path,
                 )
                 return
-            # Execute opinion sweeps via the batch helper to satisfy pylint's inference.
+            # Run the single opinion sweep via the batch helper for consistent handling.
             outcome = _execute_opinion_sweep_tasks([task])[0]
             LOGGER.info(
                 "[OPINION] Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
@@ -471,9 +470,6 @@ def main(argv: Sequence[str] | None = None) -> None:
             studies=studies,
             context=eval_context,
         )
-
-    if stage == "finalize":
-        return
 
     report_bundle = ReportBundle(
         selections=selections,

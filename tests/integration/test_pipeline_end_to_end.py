@@ -436,9 +436,230 @@ def test_knn_pipeline_opinion_only(monkeypatch: pytest.MonkeyPatch, tmp_path) ->
     assert call_log["opinion"] == 1
 
 
+def test_knn_pipeline_finalize_emits_reports(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Stage=finalize should also refresh the Markdown reports."""
+
+    study = KnnStudySpec(key="study1", issue="gun_control", label="Study 1 – Gun Control")
+    config = KnnSweepConfig(
+        feature_space="tfidf",
+        metric="cosine",
+        text_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+    )
+    sweep_outcome = KnnSweepOutcome(
+        order_index=0,
+        study=study,
+        feature_space="tfidf",
+        config=config,
+        accuracy=0.9,
+        best_k=5,
+        eligible=100,
+        metrics_path=tmp_path / "sweep_metrics.json",
+        metrics={"accuracy_overall": 0.9, "best_k": 5},
+    )
+    study_selection = KnnStudySelection(study=study, outcome=sweep_outcome)
+
+    opinion_outcome = KnnOpinionSweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        feature_space="tfidf",
+        mae=0.42,
+        rmse=0.6,
+        r2_score=0.12,
+        baseline_mae=0.5,
+        mae_delta=-0.08,
+        accuracy=None,
+        baseline_accuracy=None,
+        accuracy_delta=None,
+        best_k=7,
+        participants=75,
+        eligible=75,
+        metrics_path=tmp_path / "opinion_metrics.json",
+        metrics={"best_metrics": {"mae_after": 0.42}, "best_k": 7},
+    )
+    opinion_selection = KnnOpinionStudySelection(study=study, outcome=opinion_outcome)
+
+    captured_bundle: Dict[str, ReportBundle] = {}
+
+    monkeypatch.setattr(knn_pipeline, "_resolve_studies", lambda _tokens: [study])
+    monkeypatch.setattr(knn_pipeline, "_build_sweep_configs", lambda _context: [config])
+    monkeypatch.setattr(knn_pipeline, "_prepare_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(knn_pipeline, "_prepare_opinion_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_merge_sweep_outcomes",
+        lambda cached, executed: [sweep_outcome],
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_merge_opinion_sweep_outcomes",
+        lambda cached, executed: [opinion_outcome],
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_select_best_configs",
+        lambda outcomes, studies, allow_incomplete: {"tfidf": {study.key: study_selection}},
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_select_best_opinion_configs",
+        lambda outcomes, studies, allow_incomplete: {"tfidf": {study.key: opinion_selection}},
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_run_final_evaluations",
+        lambda *, selections, studies, context: {"tfidf": {study.key: {"accuracy_overall": 0.88}}},
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_run_cross_study_evaluations",
+        lambda *, selections, studies, context: {},
+    )
+    monkeypatch.setattr(
+        knn_pipeline,
+        "_run_opinion_evaluations",
+        lambda *, selections, studies, context: {
+            "tfidf": {study.key: {"best_metrics": {"mae_after": 0.4}}}
+        },
+    )
+
+    def fake_generate_reports(_root, bundle: ReportBundle) -> None:
+        captured_bundle["bundle"] = bundle
+
+    monkeypatch.setattr(knn_pipeline, "_generate_reports", fake_generate_reports)
+
+    dataset_path = tmp_path / "dataset"
+    dataset_path.mkdir()
+    out_dir = tmp_path / "out"
+
+    knn_pipeline.main(
+        [
+            "--stage",
+            "finalize",
+            "--dataset",
+            str(dataset_path),
+            "--out-dir",
+            str(out_dir),
+            "--feature-spaces",
+            "tfidf",
+        ]
+    )
+
+    bundle = captured_bundle["bundle"]
+    assert bundle.metrics_by_feature["tfidf"][study.key]["accuracy_overall"] == 0.88
+    assert bundle.opinion_metrics["tfidf"][study.key]["best_metrics"]["mae_after"] == 0.4
+
+
 # ---------------------------------------------------------------------------
 # XGBoost pipeline tests
 # ---------------------------------------------------------------------------
+
+
+def test_xgb_pipeline_finalize_writes_reports(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Finalize stage should emit reports without a separate pass."""
+
+    study = XgbStudySpec(key="study1", issue="gun_control", label="Study 1 – Gun Control")
+    config = XgbSweepConfig(
+        text_vectorizer="tfidf",
+        vectorizer_tag="tfidf",
+        learning_rate=0.1,
+        max_depth=4,
+        n_estimators=200,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        reg_lambda=1.0,
+        reg_alpha=0.0,
+        vectorizer_cli=(),
+    )
+    sweep_outcome = XgbSweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        accuracy=0.83,
+        coverage=0.6,
+        evaluated=150,
+        metrics_path=tmp_path / "xgb_sweep.json",
+        metrics={"accuracy": 0.83},
+    )
+    study_selection = XgbStudySelection(study=study, outcome=sweep_outcome)
+    opinion_outcome = XgbOpinionSweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        mae=0.41,
+        rmse=0.65,
+        r_squared=0.2,
+        metrics_path=tmp_path / "xgb_opinion.json",
+        metrics={"metrics": {"mae_after": 0.41}},
+    )
+    opinion_selection = XgbOpinionStudySelection(study=study, outcome=opinion_outcome)
+
+    captured_reports: Dict[str, Any] = {}
+
+    monkeypatch.setattr(xgb_pipeline, "_resolve_study_specs", lambda **_: [study])
+    monkeypatch.setattr(xgb_pipeline, "_build_sweep_configs", lambda _args: [config])
+    monkeypatch.setattr(xgb_pipeline, "_prepare_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(xgb_pipeline, "_prepare_opinion_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_merge_sweep_outcomes",
+        lambda cached, executed: [sweep_outcome],
+    )
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_merge_opinion_sweep_outcomes",
+        lambda cached, executed: [opinion_outcome],
+    )
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_select_best_configs",
+        lambda outcomes: {study.key: study_selection},
+    )
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_select_best_opinion_configs",
+        lambda outcomes: {study.key: opinion_selection},
+    )
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_run_final_evaluations",
+        lambda *, selections, context: {study.key: {"accuracy": 0.9}},
+    )
+    monkeypatch.setattr(
+        xgb_pipeline,
+        "_run_opinion_stage",
+        lambda *, selections, config: {study.key: {"mae_after": 0.34}},
+    )
+
+    def fake_write_reports(reports_dir, **kwargs) -> None:  # pylint: disable=unused-argument
+        captured_reports["dir"] = reports_dir
+        captured_reports["kwargs"] = kwargs
+
+    monkeypatch.setattr(xgb_pipeline, "_write_reports", fake_write_reports)
+
+    dataset_path = tmp_path / "dataset"
+    dataset_path.mkdir()
+    out_dir = tmp_path / "out"
+    reports_dir = tmp_path / "reports"
+
+    xgb_pipeline.main(
+        [
+            "--stage",
+            "finalize",
+            "--dataset",
+            str(dataset_path),
+            "--out-dir",
+            str(out_dir),
+            "--reports-dir",
+            str(reports_dir),
+        ]
+    )
+
+    assert captured_reports["dir"] == reports_dir
+    sweeps_report = captured_reports["kwargs"]["sweeps"]
+    assert sweeps_report.final_metrics[study.key]["accuracy"] == 0.9
+    opinion_report = captured_reports["kwargs"]["opinion"]
+    assert opinion_report.metrics[study.key]["mae_after"] == 0.34
 
 
 def test_xgb_pipeline_sweeps_and_finalize(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:

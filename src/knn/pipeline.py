@@ -195,9 +195,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if stage == "sweeps":
-        slate_count = len(planned_tasks)
-        opinion_count = len(planned_opinion_tasks)
-        total_tasks = slate_count + opinion_count
+        slate_pending_by_index = {task.index: task for task in planned_tasks}
+        slate_cached_by_index = {outcome.order_index: outcome for outcome in cached_planned}
+        opinion_pending_by_index = {task.index: task for task in planned_opinion_tasks}
+        opinion_cached_by_index = {
+            outcome.order_index: outcome for outcome in cached_planned_opinion
+        }
+
+        slate_total = len(planned_tasks) + len(cached_planned)
+        opinion_total = len(planned_opinion_tasks) + len(cached_planned_opinion)
+        total_tasks = slate_total + opinion_total
         task_id = prepare_sweep_execution(
             total_tasks=total_tasks,
             cli_task_id=args.sweep_task_id,
@@ -206,15 +213,29 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         if task_id is None:
             return
-        if task_id < slate_count:
-            task = planned_tasks[task_id]
+        if task_id < slate_total:
+            task = slate_pending_by_index.get(task_id)
+            if task is None:
+                cached = slate_cached_by_index.get(task_id)
+                if cached is not None:
+                    LOGGER.info(
+                        "Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
+                        cached.order_index,
+                        cached.study.key,
+                        cached.feature_space,
+                        cached.config.label(),
+                        cached.metrics_path,
+                    )
+                    return
+                LOGGER.warning("Sweep task %d missing from pending plan; skipping.", task_id)
+                return
             if context.reuse_sweeps and task.metrics_path.exists():
                 LOGGER.info(
                     "Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
                     task.index,
                     task.study.key,
                     task.config.feature_space,
-                    task.config.label,
+                    task.config.label(),
                     task.metrics_path,
                 )
                 return
@@ -224,19 +245,36 @@ def main(argv: Sequence[str] | None = None) -> None:
                 outcome.order_index,
                 task.study.key,
                 task.config.feature_space,
-                task.config.label,
+                task.config.label(),
                 outcome.metrics_path,
             )
         else:
-            opinion_index = task_id - slate_count
-            task = planned_opinion_tasks[opinion_index]
+            opinion_index = task_id - slate_total
+            task = opinion_pending_by_index.get(opinion_index)
+            if task is None:
+                cached = opinion_cached_by_index.get(opinion_index)
+                if cached is not None:
+                    LOGGER.info(
+                        "[OPINION] Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
+                        cached.order_index,
+                        cached.study.key,
+                        cached.feature_space,
+                        cached.config.label(),
+                        cached.metrics_path,
+                    )
+                    return
+                LOGGER.warning(
+                    "[OPINION] Sweep task %d missing from pending plan; skipping.",
+                    opinion_index,
+                )
+                return
             if context.reuse_sweeps and task.metrics_path.exists():
                 LOGGER.info(
                     "Skipping opinion sweep task %d (%s | %s | %s); metrics already present at %s.",
                     task.index,
                     task.study.key,
                     task.config.feature_space,
-                    task.config.label,
+                    task.config.label(),
                     task.metrics_path,
                 )
                 return
@@ -247,7 +285,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 outcome.order_index,
                 task.study.key,
                 task.config.feature_space,
-                task.config.label,
+                task.config.label(),
                 outcome.metrics_path,
             )
         return

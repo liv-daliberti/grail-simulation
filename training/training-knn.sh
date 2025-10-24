@@ -424,6 +424,7 @@ submit_jobs() {
   local current_type=""
   local range_start=""
   local prev_idx=""
+  local global_idx=0
   local -a cpu_ranges=()
   local -a gpu_ranges=()
   while IFS= read -r line; do
@@ -431,7 +432,8 @@ submit_jobs() {
     IFS=$'	' read -r -a fields <<<"${line}"
     local idx="${fields[0]:-}"
     [[ -z "${idx}" ]] && continue
-    local idx_num=$((10#${idx}))
+    local idx_num=${global_idx}
+    global_idx=$((global_idx + 1))
     local feature_token=""
     if (( ${#fields[@]} >= 5 )); then
       feature_token="${fields[3]}"

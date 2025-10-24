@@ -179,7 +179,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--word2vec_model_dir",
         default="",
         dest="word2vec_model_dir",
-        help="Optional directory to store/load Word2Vec models (defaults to models/knn_word2vec).",
+        help=(
+            "Optional directory to store/load Word2Vec models "
+            "(defaults to models/knn/next_video/word2vec_models)."
+        ),
     )
     parser.add_argument(
         "--sentence-transformer-model",

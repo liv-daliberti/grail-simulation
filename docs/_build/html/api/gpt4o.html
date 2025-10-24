@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Open-R1 Training API" href="open_r1.html"><link rel="prev" title="KNN Baseline API" href="knn.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
         <title>GPT-4o Tools API - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -482,7 +482,7 @@ We keep the behaviour but allow shell overrides to win.</p>
 responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">BucketAccumulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seen=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formatted=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">BucketAccumulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seen=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formatted=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Accumulate per-bucket evaluation counts.</p>
 <dl class="field-list simple">
@@ -554,7 +554,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator.record_correct">
 <span class="sig-name descname"><span class="pre">record_correct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator.record_correct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator.record_correct" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Increment the correct counter for <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
 </dd>
@@ -567,7 +568,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator.record_eligible">
 <span class="sig-name descname"><span class="pre">record_eligible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator.record_eligible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator.record_eligible" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Increment the eligible counter for <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
 </dd>
@@ -580,7 +582,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator.record_formatted">
 <span class="sig-name descname"><span class="pre">record_formatted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator.record_formatted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator.record_formatted" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Increment the correctly formatted counter for <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
 </dd>
@@ -593,7 +596,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator.record_parsed">
 <span class="sig-name descname"><span class="pre">record_parsed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator.record_parsed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator.record_parsed" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Increment the parsed counter for <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
 </dd>
@@ -606,7 +610,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.BucketAccumulator.record_seen">
 <span class="sig-name descname"><span class="pre">record_seen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#BucketAccumulator.record_seen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.BucketAccumulator.record_seen" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Increment the seen counter for <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
 </dd>
@@ -633,7 +638,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, float | int]]</p>
+<dd class="field-even"><p>Dict[str, Dict[str, float | int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -642,7 +647,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationAccumulator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationAccumulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_seen=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_ok=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_ok=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_overall=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_overall=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seen_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seen_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formatted_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_hist=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_gold_indices=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_counts=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationAccumulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationAccumulator" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationAccumulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_seen=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_ok=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_ok=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_overall=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_overall=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seen_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seen_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_single=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formatted_multi=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_hist=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_gold_indices=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_counts=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationAccumulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationAccumulator" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Stateful accumulator tracking evaluation metrics across examples.</p>
 <dl class="field-list simple">
@@ -760,7 +765,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Return per-issue and per-study aggregates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, <em>Dict</em>[str, float | int]]]</p>
+<dd class="field-odd"><p>Dict[str, Dict[str, Dict[str, float | int]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -772,7 +777,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationAccumulator.metrics_payload">
-<span class="sig-name descname"><span class="pre">metrics_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationAccumulator.metrics_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationAccumulator.metrics_payload" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">metrics_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationAccumulator.metrics_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationAccumulator.metrics_payload" title="Link to this definition">¶</a></dt>
 <dd><p>Return the metrics blob written to disk after evaluation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -780,8 +785,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <li><p><strong>model_name</strong> (<em>str</em>)</p></li>
 <li><p><strong>dataset_name</strong> (<em>str</em>)</p></li>
 <li><p><strong>eval_split</strong> (<em>str</em>)</p></li>
-<li><p><strong>requested_issues</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>requested_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>filters</strong> (<a class="reference internal" href="#gpt4o.evaluate.EvaluationFilters" title="gpt4o.evaluate.EvaluationFilters"><em>EvaluationFilters</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -863,7 +867,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd class="field-odd"><p><strong>order</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, float | int]]</p>
+<dd class="field-even"><p>Dict[str, Dict[str, float | int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -884,7 +888,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Return metrics comparing single-option and multi-option prompts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, float | int]</p>
+<dd class="field-odd"><p>Dict[str, float | int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -902,8 +906,33 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationFilters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationFilters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationFilters" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Filter selections applied during evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issues</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationFilters.issues">
+<span class="sig-name descname"><span class="pre">issues</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationFilters.issues" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationFilters.studies">
+<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationFilters.studies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.Observation">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">Observation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_formatted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_correct</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#Observation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.Observation" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">Observation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_bucket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_formatted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_correct</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#Observation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.Observation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Snapshot of a single evaluation example.</p>
 <dl class="field-list simple">
@@ -991,7 +1020,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <p id="module-gpt4o.titles">GPT-4o helpers for resolving video titles used in evaluations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.titles.TitleResolver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="common.html#common.title_index.TitleResolver" title="common.title_index.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></p>
 <p>Resolve YouTube ids to titles using shared common helpers.</p>
 <dl class="field-list simple">
@@ -1012,7 +1041,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.titles.TitleResolver.with_directories">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">with_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">directories</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver.with_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver.with_directories" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">with_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">directories</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver.with_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver.with_directories" title="Link to this definition">¶</a></dt>
 <dd><p>Return a resolver overriding the default search directories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1118,7 +1147,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Convenience container aggregating resolved output directories.</p>
 <dl class="field-list simple">
@@ -1161,7 +1190,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Describe a GPT-4o configuration evaluated during sweeps.</p>
 <dl class="field-list simple">
@@ -1208,7 +1237,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Capture metrics gathered during a sweep run.</p>
 <dl class="field-list simple">
@@ -1391,6 +1420,11 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.evaluate.EvaluationAccumulator.total_seen"><code class="docutils literal notranslate"><span class="pre">EvaluationAccumulator.total_seen</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationFilters"><code class="docutils literal notranslate"><span class="pre">EvaluationFilters</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationFilters.issues"><code class="docutils literal notranslate"><span class="pre">EvaluationFilters.issues</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationFilters.studies"><code class="docutils literal notranslate"><span class="pre">EvaluationFilters.studies</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gpt4o.evaluate.Observation"><code class="docutils literal notranslate"><span class="pre">Observation</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.evaluate.Observation.eligible"><code class="docutils literal notranslate"><span class="pre">Observation.eligible</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.Observation.gold_index"><code class="docutils literal notranslate"><span class="pre">Observation.gold_index</span></code></a></li>
@@ -1456,7 +1490,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

@@ -22,7 +22,7 @@ import re
 import shlex
 import unicodedata
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence
+from typing import List, Optional, Sequence
 
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report

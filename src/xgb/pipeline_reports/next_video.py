@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 from common.pipeline_formatters import (
     format_count as _format_count,
@@ -304,7 +304,10 @@ def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> Lis
     accuracies: List[float] = []
     coverages: List[float] = []
     availabilities: List[float] = []
-    for study_key in sorted(metrics.keys(), key=lambda key: (metrics[key].get("study_label") or key).lower()):
+    for study_key in sorted(
+        metrics.keys(),
+        key=lambda key: (metrics[key].get("study_label") or key).lower(),
+    ):
         summary = _extract_next_video_summary(metrics[study_key])
         accuracy_text = _format_optional_float(summary.accuracy)
         coverage_text = _format_optional_float(summary.coverage)
@@ -358,6 +361,204 @@ def _next_video_portfolio_summary(
     return accumulator.to_lines()
 
 
+def _report_study_label(
+    study_key: str,
+    selections: Mapping[str, StudySelection],
+) -> str:
+    """
+    Resolve the display label for a study key using the available selections.
+
+    :param study_key: Key identifying the participant study.
+    :type study_key: str
+    :param selections: Mapping from study keys to selected sweep outcomes.
+    :type selections: Mapping[str, StudySelection]
+    :returns: Human-readable study label.
+    :rtype: str
+    """
+
+    selection = selections.get(study_key)
+    if selection is not None:
+        return selection.study.label
+    return study_key
+
+
+def _report_issue_label(
+    study_key: str,
+    fallback: str,
+    selections: Mapping[str, StudySelection],
+) -> str:
+    """
+    Resolve the issue label for a study row in the report table.
+
+    :param study_key: Key identifying the participant study.
+    :type study_key: str
+    :param fallback: Fallback issue string from the metrics payload.
+    :type fallback: str
+    :param selections: Mapping from study keys to selected sweep outcomes.
+    :type selections: Mapping[str, StudySelection]
+    :returns: Human-readable issue label.
+    :rtype: str
+    """
+
+    selection = selections.get(study_key)
+    if selection is not None:
+        return selection.study.issue.replace("_", " ").title()
+    if fallback:
+        return str(fallback).replace("_", " ").title()
+    return ""
+
+
+def _next_video_header_lines(
+    metrics: Mapping[str, Mapping[str, object]],
+    allow_incomplete: bool,
+) -> Tuple[List[str], bool]:
+    """
+    Build introductory Markdown lines, handling the empty-metrics case.
+
+    :param metrics: Mapping from study key to final evaluation metrics.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :param allow_incomplete: Flag controlling placeholder messaging when artefacts are missing.
+    :type allow_incomplete: bool
+    :returns: Tuple containing Markdown lines and a flag indicating whether metrics were present.
+    :rtype: Tuple[List[str], bool]
+    """
+
+    if metrics:
+        dataset_name = _next_video_dataset_info(metrics)
+        lines = [
+            "Slate-ranking accuracy for the selected XGBoost configuration.",
+            "",
+            f"- Dataset: `{dataset_name}`",
+            "- Split: validation",
+            "- Metrics: accuracy, coverage of known candidates, and "
+            "availability of known neighbors.",
+            "",
+        ]
+        lines.extend(_next_video_portfolio_summary(metrics))
+        return lines, True
+
+    lines = [
+        "Accuracy on the validation split for the selected slate configuration.",
+        "",
+        "No finalized evaluation metrics were available when this report was generated.",
+    ]
+    if allow_incomplete:
+        lines.append(
+            "Run the pipeline with `--stage finalize` once sufficient artifacts exist "
+            "to refresh this table."
+        )
+    lines.append("")
+    return lines, False
+
+
+def _next_video_table_lines(
+    metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> List[str]:
+    """
+    Render the metrics table summarising study-level performance.
+
+    :param metrics: Mapping from study key to final evaluation metrics.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :param selections: Mapping from study key to selected sweep outcome.
+    :type selections: Mapping[str, StudySelection]
+    :returns: Markdown lines representing the metrics table.
+    :rtype: List[str]
+    """
+
+    lines = [
+        "| Study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | "
+        "Known hits / total | Known availability ↑ | Avg prob ↑ |",
+        "| --- | --- | ---: | --- | ---: | --- | ---: | ---: |",
+    ]
+    ordered_keys = sorted(
+        metrics.keys(),
+        key=lambda key: _report_study_label(key, selections).lower(),
+    )
+    for study_key in ordered_keys:
+        summary = _extract_next_video_summary(metrics[study_key])
+        study_label = summary.study_label or _report_study_label(study_key, selections)
+        fallback_issue = summary.issue or study_key
+        issue_label = summary.issue_label or _report_issue_label(
+            study_key,
+            fallback_issue,
+            selections,
+        )
+        resolved_issue = issue_label or _report_issue_label(
+            study_key,
+            "",
+            selections,
+        )
+        row_cells = [
+            study_label,
+            resolved_issue,
+            _format_optional_float(summary.accuracy),
+            _format_ratio(summary.correct, summary.evaluated),
+            _format_optional_float(summary.coverage),
+            _format_ratio(summary.known_hits, summary.known_total),
+            _format_optional_float(summary.known_availability),
+            _format_optional_float(summary.avg_probability),
+        ]
+        lines.append("| " + " | ".join(row_cells) + " |")
+    lines.append("")
+    return lines
+
+
+def _next_video_curve_lines(
+    directory: Path,
+    metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> List[str]:
+    """
+    Render accuracy curve images, preferring overview plots with fallbacks.
+
+    :param directory: Directory where the report and assets are written.
+    :type directory: Path
+    :param metrics: Mapping from study key to final evaluation metrics.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :param selections: Mapping from study key to selected sweep outcome.
+    :type selections: Mapping[str, StudySelection]
+    :returns: Markdown lines referencing generated plots.
+    :rtype: List[str]
+    """
+
+    if plt is None:
+        return []
+    ordered_keys = sorted(
+        metrics.keys(),
+        key=lambda key: _report_study_label(key, selections).lower(),
+    )
+    overview_path = _plot_xgb_curve_overview(
+        directory=directory,
+        entries=[
+            (_report_study_label(key, selections), metrics[key])
+            for key in ordered_keys
+        ],
+    )
+    if overview_path:
+        return [
+            "## Accuracy Curves",
+            "",
+            f"![Slate accuracy overview]({overview_path})",
+            "",
+        ]
+
+    lines: List[str] = []
+    for study_key in ordered_keys:
+        label = _report_study_label(study_key, selections)
+        rel_path = _plot_xgb_curve(
+            directory=directory,
+            study_label=label,
+            study_key=study_key,
+            payload=metrics[study_key],
+        )
+        if rel_path:
+            if not lines:
+                lines.extend(["## Accuracy Curves", ""])
+            lines.extend([f"![{label}]({rel_path})", ""])
+    return lines
+
+
 def _write_next_video_report(
     directory: Path,
     metrics: Mapping[str, Mapping[str, object]],
@@ -379,110 +580,14 @@ def _write_next_video_report(
     """
 
     path, lines = start_markdown_report(directory, title="XGBoost Next-Video Baseline")
-    if metrics:
-        dataset_name = _next_video_dataset_info(metrics)
-        lines.append("Slate-ranking accuracy for the selected XGBoost configuration.")
-        lines.append("")
-        lines.append(f"- Dataset: `{dataset_name}`")
-        lines.append("- Split: validation")
-        lines.append("- Metrics: accuracy, coverage of known candidates, and availability of known neighbors.")
-        lines.append("")
-        lines.extend(_next_video_portfolio_summary(metrics))
-    else:
-        lines.append("Accuracy on the validation split for the selected slate configuration.")
-        lines.append("")
-
-    if not metrics:
-        lines.append("No finalized evaluation metrics were available when this report was generated.")
-        if allow_incomplete:
-            lines.append(
-                "Run the pipeline with `--stage finalize` once sufficient artifacts exist to refresh this table."
-            )
-        lines.append("")
+    header_lines, has_metrics = _next_video_header_lines(metrics, allow_incomplete)
+    lines.extend(header_lines)
+    if not has_metrics:
         write_markdown_lines(path, lines)
         return
 
-    lines.append("| Study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ |")
-    lines.append("| --- | --- | ---: | --- | ---: | --- | ---: | ---: |")
-
-    def _study_label(study_key: str) -> str:
-        """
-        Resolve the display label for a study row in the report table.
-
-        :param study_key: Key identifying the participant study.
-        :type study_key: str
-        :returns: Human-readable study label.
-        :rtype: str
-        """
-
-        selection = selections.get(study_key)
-        if selection is not None:
-            return selection.study.label
-        return study_key
-
-    def _issue_label(study_key: str, fallback: str) -> str:
-        """
-        Resolve the issue label for a study row in the report table.
-
-        :param study_key: Key identifying the participant study.
-        :type study_key: str
-        :param fallback: Fallback issue string from the metrics payload.
-        :type fallback: str
-        :returns: Human-readable issue label.
-        :rtype: str
-        """
-
-        selection = selections.get(study_key)
-        if selection is not None:
-            return selection.study.issue.replace("_", " ").title()
-        if fallback:
-            return str(fallback).replace("_", " ").title()
-        return ""
-
-    for study_key in sorted(metrics.keys(), key=lambda key: _study_label(key).lower()):
-        payload = metrics[study_key]
-        summary = _extract_next_video_summary(payload)
-        study_label = summary.study_label or _study_label(study_key)
-        issue_label = summary.issue_label or _issue_label(
-            study_key, summary.issue or study_key
-        )
-        lines.append(
-            f"| {study_label} | {issue_label or _issue_label(study_key, '')} | "
-            f"{_format_optional_float(summary.accuracy)} | "
-            f"{_format_ratio(summary.correct, summary.evaluated)} | "
-            f"{_format_optional_float(summary.coverage)} | "
-            f"{_format_ratio(summary.known_hits, summary.known_total)} | "
-            f"{_format_optional_float(summary.known_availability)} | "
-            f"{_format_optional_float(summary.avg_probability)} |"
-        )
-    lines.append("")
-    overview_path: Optional[str] = None
-    fallback_lines: List[str] = []
-    if plt is not None:
-        ordered_keys = sorted(metrics.keys(), key=lambda key: _study_label(key).lower())
-        overview_path = _plot_xgb_curve_overview(
-            directory=directory,
-            entries=[(_study_label(key), metrics[key]) for key in ordered_keys],
-        )
-        if overview_path is None:
-            for study_key in ordered_keys:
-                payload = metrics[study_key]
-                label = _study_label(study_key)
-                rel_path = _plot_xgb_curve(
-                    directory=directory,
-                    study_label=label,
-                    study_key=study_key,
-                    payload=payload,
-                )
-                if rel_path:
-                    if not fallback_lines:
-                        fallback_lines.extend(["## Accuracy Curves", ""])
-                    fallback_lines.append(f"![{label}]({rel_path})")
-                    fallback_lines.append("")
-    if overview_path:
-        lines.extend(["## Accuracy Curves", "", f"![Slate accuracy overview]({overview_path})", ""])
-    elif fallback_lines:
-        lines.extend(fallback_lines)
+    lines.extend(_next_video_table_lines(metrics, selections))
+    lines.extend(_next_video_curve_lines(directory, metrics, selections))
     lines.extend(_next_video_observations(metrics))
 
     write_markdown_lines(path, lines)

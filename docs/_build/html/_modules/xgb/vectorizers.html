@@ -305,7 +305,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Interface for text vectorisers used by the XGBoost slate model.</span>
 
-<span class="sd">    :cvar kind: String identifier describing the vectoriser subtype.</span>
+<span class="sd">    :param kind: String identifier describing the vectoriser subtype.</span>
+<span class="sd">    :type kind: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
@@ -346,6 +347,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the number of features produced during transformation.</span>
 
+<span class="sd">        :param self: Vectoriser instance being inspected.</span>
+<span class="sd">        :type self: BaseTextVectorizer</span>
 <span class="sd">        :returns: Width of the feature representation.</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -388,6 +391,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return serialisable metadata describing the vectoriser.</span>
 
+<span class="sd">        :param self: Vectoriser instance exposed to callers.</span>
+<span class="sd">        :type self: BaseTextVectorizer</span>
 <span class="sd">        :returns: Dictionary describing the vectoriser kind and dimension.</span>
 <span class="sd">        :rtype: Dict[str, Any]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -418,7 +423,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapper around scikit-learn&#39;s TF-IDF vectoriser.</span>
 
-<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    :param config: TF-IDF configuration used to initialise the vectoriser.</span>
+<span class="sd">    :type config: TfidfConfig</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;tfidf&quot;</span>
@@ -475,6 +481,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the number of TF-IDF features exposed by the model.</span>
 
+<span class="sd">        :param self: Wrapper instance exposing the fitted TF-IDF model.</span>
+<span class="sd">        :type self: TfidfVectorizerWrapper</span>
 <span class="sd">        :returns: Vocabulary size reflected in the vectoriser.</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -569,7 +577,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Vectoriser that averages Word2Vec embeddings.</span>
 
-<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    :param config: Word2Vec configuration controlling training and inference.</span>
+<span class="sd">    :type config: Word2VecVectorizerConfig</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;word2vec&quot;</span>
@@ -636,6 +645,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the dimensionality of the produced Word2Vec embeddings.</span>
 
+<span class="sd">        :param self: Vectoriser instance exposing the Word2Vec builder.</span>
+<span class="sd">        :type self: Word2VecVectorizer</span>
 <span class="sd">        :returns: Embedding size configured for the model.</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -725,7 +736,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Vectoriser using pre-trained sentence-transformer encoders.</span>
 
-<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    :param config: Sentence-transformer configuration applied to the encoder.</span>
+<span class="sd">    :type config: SentenceTransformerVectorizerConfig</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;sentence_transformer&quot;</span>
@@ -794,6 +806,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the dimensionality of the sentence-transformer embeddings.</span>
 
+<span class="sd">        :param self: Vectoriser instance exposing the sentence-transformer encoder.</span>
+<span class="sd">        :type self: SentenceTransformerVectorizer</span>
 <span class="sd">        :returns: Embedding width either cached from training or derived on demand.</span>
 <span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>

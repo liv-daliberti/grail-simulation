@@ -282,6 +282,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_sweep_execution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FinalEvalContext</span><span class="p">,</span>
@@ -322,7 +323,7 @@
     <span class="n">_select_best_opinion_configs</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">_run_final_evaluations</span><span class="p">,</span> <span class="n">_run_opinion_stage</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_reports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionReportData</span><span class="p">,</span> <span class="n">SweepReportData</span><span class="p">,</span> <span class="n">_write_reports</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;xgb.pipeline&quot;</span><span class="p">)</span>
 
@@ -359,7 +360,10 @@
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;cleaned_grail&quot;</span><span class="p">)</span>
     <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">_default_cache_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span> <span class="ow">or</span> <span class="n">_default_out_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
-    <span class="n">sweep_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_dir</span> <span class="ow">or</span> <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">))</span>
+    <span class="n">next_video_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;next_video&quot;</span>
+    <span class="n">opinion_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;opinions&quot;</span>
+    <span class="n">sweep_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_dir</span> <span class="ow">or</span> <span class="p">(</span><span class="n">next_video_dir</span> <span class="o">/</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">))</span>
+    <span class="n">opinion_sweep_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;XGB_OPINION_SWEEP_DIR&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">opinion_dir</span> <span class="o">/</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">))</span>
     <span class="n">reports_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">reports_dir</span> <span class="ow">or</span> <span class="n">_default_reports_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
 
     <span class="n">jobs_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;jobs&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span>
@@ -388,7 +392,7 @@
         <span class="n">requested_studies</span><span class="o">=</span><span class="n">study_tokens</span><span class="p">,</span>
         <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">extra_fields</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extra_text_fields</span><span class="p">)</span>
+    <span class="n">extra_fields</span> <span class="o">=</span> <span class="n">merge_default_extra_fields</span><span class="p">(</span><span class="n">_split_tokens</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extra_text_fields</span><span class="p">))</span>
 
     <span class="n">task_log</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
@@ -456,7 +460,7 @@
         <span class="n">opinion_sweep_context</span> <span class="o">=</span> <span class="n">OpinionSweepRunContext</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
             <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span>
-            <span class="n">sweep_dir</span><span class="o">=</span><span class="n">sweep_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
+            <span class="n">sweep_dir</span><span class="o">=</span><span class="n">opinion_sweep_dir</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">),</span>
             <span class="n">max_participants</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_max_participants</span><span class="p">,</span>
             <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
@@ -717,7 +721,7 @@
         <span class="n">final_eval_context</span> <span class="o">=</span> <span class="n">FinalEvalContext</span><span class="p">(</span>
             <span class="n">base_cli</span><span class="o">=</span><span class="n">base_cli</span><span class="p">,</span>
             <span class="n">extra_cli</span><span class="o">=</span><span class="n">extra_cli</span><span class="p">,</span>
-            <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;next_video&quot;</span><span class="p">,</span>
+            <span class="n">out_dir</span><span class="o">=</span><span class="n">next_video_dir</span><span class="p">,</span>
             <span class="n">tree_method</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
             <span class="n">save_model_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_model_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_model_dir</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_final</span><span class="p">,</span>
@@ -745,20 +749,29 @@
         <span class="n">opinion_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
             <span class="n">opinion_metrics</span> <span class="o">=</span> <span class="n">_load_opinion_metrics_from_disk</span><span class="p">(</span>
-                <span class="n">opinion_dir</span><span class="o">=</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
+                <span class="n">opinion_dir</span><span class="o">=</span><span class="n">opinion_dir</span><span class="p">,</span>
                 <span class="n">studies</span><span class="o">=</span><span class="n">study_specs</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="n">_write_reports</span><span class="p">(</span>
-            <span class="n">reports_dir</span><span class="o">=</span><span class="n">reports_dir</span><span class="p">,</span>
+        <span class="n">sweep_report</span> <span class="o">=</span> <span class="n">SweepReportData</span><span class="p">(</span>
             <span class="n">outcomes</span><span class="o">=</span><span class="n">outcomes</span><span class="p">,</span>
             <span class="n">selections</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span>
             <span class="n">final_metrics</span><span class="o">=</span><span class="n">final_metrics</span><span class="p">,</span>
-            <span class="n">opinion_metrics</span><span class="o">=</span><span class="n">opinion_metrics</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">opinion_report</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">OpinionReportData</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="n">opinion_metrics</span><span class="p">,</span>
+                <span class="n">outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
+                <span class="n">selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">run_opinion</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">_write_reports</span><span class="p">(</span>
+            <span class="n">reports_dir</span><span class="o">=</span><span class="n">reports_dir</span><span class="p">,</span>
+            <span class="n">sweeps</span><span class="o">=</span><span class="n">sweep_report</span><span class="p">,</span>
             <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
             <span class="n">include_next_video</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
-            <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
-            <span class="n">opinion_outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
-            <span class="n">opinion_selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
+            <span class="n">opinion</span><span class="o">=</span><span class="n">opinion_report</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
@@ -771,7 +784,7 @@
         <span class="n">opinion_stage_config</span> <span class="o">=</span> <span class="n">OpinionStageConfig</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
             <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span>
-            <span class="n">base_out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
+            <span class="n">base_out_dir</span><span class="o">=</span><span class="n">opinion_dir</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
             <span class="n">studies</span><span class="o">=</span><span class="n">study_tokens</span><span class="p">,</span>
             <span class="n">max_participants</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_max_participants</span><span class="p">,</span>
@@ -789,17 +802,26 @@
     <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;finalize&quot;</span><span class="p">:</span>
         <span class="k">return</span>
 
-    <span class="n">_write_reports</span><span class="p">(</span>
-        <span class="n">reports_dir</span><span class="o">=</span><span class="n">reports_dir</span><span class="p">,</span>
+    <span class="n">sweep_report</span> <span class="o">=</span> <span class="n">SweepReportData</span><span class="p">(</span>
         <span class="n">outcomes</span><span class="o">=</span><span class="n">outcomes</span><span class="p">,</span>
         <span class="n">selections</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span>
         <span class="n">final_metrics</span><span class="o">=</span><span class="n">final_metrics</span><span class="p">,</span>
-        <span class="n">opinion_metrics</span><span class="o">=</span><span class="n">opinion_metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">opinion_report</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">OpinionReportData</span><span class="p">(</span>
+            <span class="n">metrics</span><span class="o">=</span><span class="n">opinion_metrics</span><span class="p">,</span>
+            <span class="n">outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
+            <span class="n">selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_opinion</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">_write_reports</span><span class="p">(</span>
+        <span class="n">reports_dir</span><span class="o">=</span><span class="n">reports_dir</span><span class="p">,</span>
+        <span class="n">sweeps</span><span class="o">=</span><span class="n">sweep_report</span><span class="p">,</span>
         <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
         <span class="n">include_next_video</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
-        <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
-        <span class="n">opinion_outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
-        <span class="n">opinion_selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
+        <span class="n">opinion</span><span class="o">=</span><span class="n">opinion_report</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

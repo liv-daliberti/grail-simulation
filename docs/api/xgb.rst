@@ -26,6 +26,7 @@ normalisation.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: CandidateMetadata
 
 .. automodule:: xgb.model
    :members:
@@ -36,6 +37,7 @@ normalisation.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: SentenceTransformerConfig
 
 .. automodule:: xgb.evaluate
    :members:

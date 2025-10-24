@@ -1155,12 +1155,14 @@ def run_opinion_eval(args) -> None:
     feature_space = str(getattr(args, "feature_space", "tfidf")).lower()
     word2vec_cfg = None
     if feature_space == "word2vec":
+        default_model_base = Path("models/knn/opinions/word2vec_models")
+        model_dir = Path(args.word2vec_model_dir) if args.word2vec_model_dir else default_model_base
         word2vec_cfg = Word2VecConfig(
             vector_size=int(args.word2vec_size),
             window=int(getattr(args, "word2vec_window", Word2VecConfig().window)),
             min_count=int(getattr(args, "word2vec_min_count", Word2VecConfig().min_count)),
             epochs=int(getattr(args, "word2vec_epochs", Word2VecConfig().epochs)),
-            model_dir=Path(args.word2vec_model_dir or Word2VecConfig().model_dir) / "opinion",
+            model_dir=model_dir,
             seed=int(getattr(args, "knn_seed", Word2VecConfig().seed)),
             workers=int(getattr(args, "word2vec_workers", Word2VecConfig().workers)),
         )

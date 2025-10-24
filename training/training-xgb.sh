@@ -421,11 +421,13 @@ submit_jobs() {
   local current_type=""
   local range_start=""
   local prev_idx=""
+  local global_idx=0
   local -a cpu_ranges=()
   local -a gpu_ranges=()
   while IFS=$'	' read -r idx study issue feature label; do
     [[ -z "${idx}" ]] && continue
-    local idx_num=$((10#${idx}))
+    local idx_num=${global_idx}
+    global_idx=$((global_idx + 1))
     local feature_lower
     feature_lower=$(echo "${feature}" | tr '[:upper:]' '[:lower:]')
     local type="cpu"

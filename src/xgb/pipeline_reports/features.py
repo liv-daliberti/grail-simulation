@@ -24,7 +24,12 @@ from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 
-from ..pipeline_context import OpinionStudySelection, OpinionSweepOutcome, StudySelection, SweepOutcome
+from ..pipeline_context import (
+    OpinionStudySelection,
+    OpinionSweepOutcome,
+    StudySelection,
+    SweepOutcome,
+)
 
 if TYPE_CHECKING:
     from .runner import OpinionReportData, SweepReportData
@@ -51,12 +56,12 @@ def _normalise_fields(values: Iterable[object] | None) -> tuple[str, ...]:
 
 def _extract_fields_from_metrics(metrics: Mapping[str, object]) -> tuple[str, ...]:
     """Pull extra-field metadata from stored metrics."""
+    config = metrics.get("config")
+    xgboost_params = metrics.get("xgboost_params")
     candidates: list[Iterable[object] | None] = [
         metrics.get("extra_fields"),
-        metrics.get("config", {}).get("extra_fields") if isinstance(metrics.get("config"), Mapping) else None,
-        metrics.get("xgboost_params", {}).get("extra_fields")
-        if isinstance(metrics.get("xgboost_params"), Mapping)
-        else None,
+        config.get("extra_fields") if isinstance(config, Mapping) else None,
+        xgboost_params.get("extra_fields") if isinstance(xgboost_params, Mapping) else None,
     ]
     for payload in candidates:
         fields = _normalise_fields(payload) if payload is not None else ()
@@ -86,7 +91,99 @@ def _render_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> list
     return lines
 
 
-def _collect_next_video_sweeps(outcomes: Sequence[SweepOutcome]) -> tuple[list[Sequence[str]], set[str]]:
+def _append_section(
+    lines: list[str],
+    heading: str,
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    empty_message: str,
+) -> None:
+    """Append a subsection summarising sweep or final metrics."""
+    lines.append(f"### {heading}")
+    lines.append("")
+    if rows:
+        lines.extend(_render_table(headers, rows))
+    else:
+        lines.append(empty_message)
+        lines.append("")
+
+
+def _append_next_video_section(
+    lines: list[str],
+    sweeps: "SweepReportData",
+    include_next_video: bool,
+) -> set[str]:
+    """Add the next-video section and return the observed fields."""
+    lines.append("## Next-Video Pipeline")
+    lines.append("")
+    if not include_next_video:
+        lines.append("Next-video tasks were disabled for this run.")
+        lines.append("")
+        return set()
+
+    sweep_rows, sweep_fields = _collect_next_video_sweeps(sweeps.outcomes)
+    final_rows, final_fields = _collect_next_video_final(
+        sweeps.selections,
+        sweeps.final_metrics,
+    )
+
+    _append_section(
+        lines,
+        "Sweep Configurations",
+        ("Study", "Configuration", "Extra text fields"),
+        sweep_rows,
+        "No sweep metrics found for the selected run.",
+    )
+    _append_section(
+        lines,
+        "Final Evaluations",
+        ("Study", "Issue", "Extra text fields"),
+        final_rows,
+        "No final evaluation metrics were supplied.",
+    )
+
+    return sweep_fields | final_fields
+
+
+def _append_opinion_section(
+    lines: list[str],
+    opinion: "OpinionReportData" | None,
+) -> set[str]:
+    """Add the opinion regression section and return the observed fields."""
+    lines.append("## Opinion Regression")
+    lines.append("")
+    if opinion is None:
+        lines.append("Opinion regression tasks were disabled for this run.")
+        lines.append("")
+        return set()
+
+    sweep_rows, sweep_fields = _collect_opinion_sweeps(opinion.outcomes)
+    final_rows, final_fields = _collect_opinion_final(
+        opinion.selections,
+        opinion.metrics,
+    )
+
+    _append_section(
+        lines,
+        "Sweep Configurations",
+        ("Study", "Configuration", "Extra text fields"),
+        sweep_rows,
+        "No opinion sweep metrics were provided.",
+    )
+    _append_section(
+        lines,
+        "Final Evaluations",
+        ("Study", "Extra text fields"),
+        final_rows,
+        "Opinion final metrics were not generated.",
+    )
+
+    return sweep_fields | final_fields
+
+
+def _collect_next_video_sweeps(
+    outcomes: Sequence[SweepOutcome],
+) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and the unique field set for next-video sweeps."""
     rows: list[Sequence[str]] = []
     unique_fields: set[str] = set()
@@ -119,8 +216,14 @@ def _collect_next_video_final(
         fields = _extract_fields_from_metrics(payload)
         unique_fields.update(fields)
         study = selections.get(study_key)
-        label = payload.get("study_label") or (study.study.label if study else study_key)
-        issue = payload.get("issue_label") or payload.get("issue") or (study.study.issue if study else "—")
+        label = payload.get("study_label") or (
+            study.study.label if study else study_key
+        )
+        issue = (
+            payload.get("issue_label")
+            or payload.get("issue")
+            or (study.study.issue if study else "—")
+        )
         rows.append(
             (
                 str(label),
@@ -142,7 +245,9 @@ def _collect_next_video_final(
     return rows, unique_fields
 
 
-def _collect_opinion_sweeps(outcomes: Sequence[OpinionSweepOutcome]) -> tuple[list[Sequence[str]], set[str]]:
+def _collect_opinion_sweeps(
+    outcomes: Sequence[OpinionSweepOutcome],
+) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and unique field set for opinion sweeps."""
     rows: list[Sequence[str]] = []
     unique_fields: set[str] = set()
@@ -213,67 +318,10 @@ def _write_feature_report(
 
     stage_fields: set[str] = set(_DEFAULT_FIELD_SET)
 
-    if include_next_video:
-        sweep_rows, sweep_fields = _collect_next_video_sweeps(sweeps.outcomes)
-        final_rows, final_fields = _collect_next_video_final(sweeps.selections, sweeps.final_metrics)
-        lines.append("## Next-Video Pipeline")
-        lines.append("")
-        if sweep_rows:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.extend(_render_table(("Study", "Configuration", "Extra text fields"), sweep_rows))
-        else:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.append("No sweep metrics found for the selected run.")
-            lines.append("")
-        if final_rows:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.extend(_render_table(("Study", "Issue", "Extra text fields"), final_rows))
-        else:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.append("No final evaluation metrics were supplied.")
-            lines.append("")
-        stage_fields.update(sweep_fields)
-        stage_fields.update(final_fields)
-    else:
-        lines.append("## Next-Video Pipeline")
-        lines.append("")
-        lines.append("Next-video tasks were disabled for this run.")
-        lines.append("")
-
-    if opinion is not None:
-        sweep_rows, sweep_fields = _collect_opinion_sweeps(opinion.outcomes)
-        final_rows, final_fields = _collect_opinion_final(opinion.selections, opinion.metrics)
-        lines.append("## Opinion Regression")
-        lines.append("")
-        if sweep_rows:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.extend(_render_table(("Study", "Configuration", "Extra text fields"), sweep_rows))
-        else:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.append("No opinion sweep metrics were provided.")
-            lines.append("")
-        if final_rows:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.extend(_render_table(("Study", "Extra text fields"), final_rows))
-        else:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.append("Opinion final metrics were not generated.")
-            lines.append("")
-        stage_fields.update(sweep_fields)
-        stage_fields.update(final_fields)
-    else:
-        lines.append("## Opinion Regression")
-        lines.append("")
-        lines.append("Opinion regression tasks were disabled for this run.")
-        lines.append("")
+    stage_fields.update(
+        _append_next_video_section(lines, sweeps, include_next_video)
+    )
+    stage_fields.update(_append_opinion_section(lines, opinion))
 
     additional_fields = sorted(field for field in stage_fields if field not in _DEFAULT_FIELD_SET)
     lines.append("## Summary")

@@ -7,21 +7,55 @@ This report tracks the supplementary text columns appended to the prompt builder
 
 ### Sweep Configurations
 
-No sweep metrics found for the selected run.
+| Study | Configuration | Extra text fields |
+| --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 
-No final evaluation metrics were supplied.
+| Study | Issue | Extra text fields |
+| --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | gun_control | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | minimum_wage | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | minimum_wage | `viewer_profile`, `state_text` |
 
 ## Opinion Regression
 
 ### Sweep Configurations
 
-No opinion sweep metrics were provided.
+| Study | Configuration | Extra text fields |
+| --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p05_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | tfidf_lr0p1_depth3_estim350_sub0p8_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 
-Opinion final metrics were not generated.
+| Study | Extra text fields |
+| --- | --- |
+| Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
+| Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text` |
 
 ## Summary
 

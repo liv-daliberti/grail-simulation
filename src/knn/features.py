@@ -91,7 +91,7 @@ class Word2VecConfig:
     window: int = 5
     min_count: int = 2
     epochs: int = 10
-    model_dir: Path = Path("models/knn_word2vec")
+    model_dir: Path = Path("models/knn/next_video/word2vec_models")
     seed: int = 42
     workers: int = 1
 

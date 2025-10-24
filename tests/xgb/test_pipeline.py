@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List
 
@@ -10,6 +11,7 @@ import pytest
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
 
+from xgb import pipeline as pipeline_module
 from xgb import pipeline_cli as cli
 from xgb import pipeline_evaluate as evaluate
 from xgb import pipeline_reports as reports
@@ -25,6 +27,7 @@ from xgb.pipeline_context import (
     SweepConfig,
     SweepOutcome,
     SweepRunContext,
+    SweepTask,
 )
 
 
@@ -181,6 +184,189 @@ def test_run_sweeps_collects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     assert outcome.metrics_path in recorded
     assert outcome.accuracy == pytest.approx(0.81)
     assert outcome.metrics["evaluated"] == 321
+
+
+def test_sweeps_stage_skips_cached_indices_without_warning(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO, logger="xgb.pipeline")
+    study = _make_study_spec()
+    config = _make_sweep_config()
+
+    cached_metrics_path = tmp_path / "cached" / "metrics.json"
+    cached_metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    cached_metrics_path.write_text(json.dumps({"accuracy": 0.9}), encoding="utf-8")
+    cached_outcome = SweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        accuracy=0.9,
+        coverage=0.5,
+        evaluated=123,
+        metrics_path=cached_metrics_path,
+        metrics={"accuracy": 0.9},
+    )
+
+    run_root = tmp_path / "pending"
+    task = SweepTask(
+        index=1,
+        study=study,
+        config=config,
+        base_cli=("--dataset", "stub"),
+        extra_cli=(),
+        run_root=run_root,
+        tree_method="hist",
+        metrics_path=run_root / "eval" / "metrics.json",
+    )
+
+    monkeypatch.setattr(pipeline_module, "_resolve_study_specs", lambda **_: [study])
+    monkeypatch.setattr(pipeline_module, "_build_sweep_configs", lambda args: [config])
+    monkeypatch.setattr(
+        pipeline_module,
+        "_prepare_sweep_tasks",
+        lambda **_: ([task], [cached_outcome]),
+    )
+    monkeypatch.setattr(pipeline_module, "_prepare_opinion_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(pipeline_module, "_execute_opinion_sweep_tasks", lambda *_, **__: [])
+
+    execute_calls: List[List[SweepTask]] = []
+
+    def fake_execute(tasks: List[SweepTask], *, jobs: int) -> List[SweepOutcome]:
+        execute_calls.append(list(tasks))
+        assert jobs == 1
+        executed_task = tasks[0]
+        executed_task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        executed_task.metrics_path.write_text(json.dumps({"accuracy": 0.7}), encoding="utf-8")
+        return [
+            SweepOutcome(
+                order_index=executed_task.index,
+                study=executed_task.study,
+                config=executed_task.config,
+                accuracy=0.7,
+                coverage=0.4,
+                evaluated=111,
+                metrics_path=executed_task.metrics_path,
+                metrics={"accuracy": 0.7},
+            )
+        ]
+
+    monkeypatch.setattr(pipeline_module, "_execute_sweep_tasks", fake_execute)
+
+    pipeline_module.main(
+        [
+            "--stage",
+            "sweeps",
+            "--sweep-task-id",
+            "0",
+            "--sweep-task-count",
+            "2",
+            "--tasks",
+            "next_video",
+            "--dataset",
+            str(tmp_path / "dataset"),
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--out-dir",
+            str(tmp_path / "out"),
+            "--sweep-dir",
+            str(tmp_path / "sweeps"),
+        ]
+    )
+
+    assert execute_calls == []
+    assert "Skipping sweep task 0" in caplog.text
+    assert "Sweep task count mismatch" not in caplog.text
+
+
+def test_sweeps_stage_executes_pending_task_with_cached_offsets(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO, logger="xgb.pipeline")
+    study = _make_study_spec()
+    config = _make_sweep_config()
+
+    cached_metrics_path = tmp_path / "cached" / "metrics.json"
+    cached_metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    cached_metrics_path.write_text(json.dumps({"accuracy": 0.8}), encoding="utf-8")
+    cached_outcome = SweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        accuracy=0.8,
+        coverage=0.55,
+        evaluated=100,
+        metrics_path=cached_metrics_path,
+        metrics={"accuracy": 0.8},
+    )
+
+    run_root = tmp_path / "pending"
+    task = SweepTask(
+        index=1,
+        study=study,
+        config=config,
+        base_cli=("--dataset", "stub"),
+        extra_cli=(),
+        run_root=run_root,
+        tree_method="hist",
+        metrics_path=run_root / "eval" / "metrics.json",
+    )
+
+    monkeypatch.setattr(pipeline_module, "_resolve_study_specs", lambda **_: [study])
+    monkeypatch.setattr(pipeline_module, "_build_sweep_configs", lambda args: [config])
+    monkeypatch.setattr(
+        pipeline_module,
+        "_prepare_sweep_tasks",
+        lambda **_: ([task], [cached_outcome]),
+    )
+    monkeypatch.setattr(pipeline_module, "_prepare_opinion_sweep_tasks", lambda **_: ([], []))
+    monkeypatch.setattr(pipeline_module, "_execute_opinion_sweep_tasks", lambda *_, **__: [])
+
+    execute_calls: List[List[SweepTask]] = []
+
+    def fake_execute(tasks: List[SweepTask], *, jobs: int) -> List[SweepOutcome]:
+        execute_calls.append(list(tasks))
+        executed_task = tasks[0]
+        executed_task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        executed_task.metrics_path.write_text(json.dumps({"accuracy": 0.75}), encoding="utf-8")
+        return [
+            SweepOutcome(
+                order_index=executed_task.index,
+                study=executed_task.study,
+                config=executed_task.config,
+                accuracy=0.75,
+                coverage=0.5,
+                evaluated=99,
+                metrics_path=executed_task.metrics_path,
+                metrics={"accuracy": 0.75},
+            )
+        ]
+
+    monkeypatch.setattr(pipeline_module, "_execute_sweep_tasks", fake_execute)
+
+    pipeline_module.main(
+        [
+            "--stage",
+            "sweeps",
+            "--sweep-task-id",
+            "1",
+            "--sweep-task-count",
+            "2",
+            "--tasks",
+            "next_video",
+            "--dataset",
+            str(tmp_path / "dataset"),
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--out-dir",
+            str(tmp_path / "out"),
+            "--sweep-dir",
+            str(tmp_path / "sweeps"),
+        ]
+    )
+
+    assert len(execute_calls) == 1
+    assert execute_calls[0][0].index == 1
+    assert "Completed sweep task 1" in caplog.text
 
 
 def test_select_best_configs_prefers_accuracy_then_coverage_then_support(tmp_path: Path) -> None:

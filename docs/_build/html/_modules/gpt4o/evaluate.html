@@ -322,30 +322,40 @@
 <div class="viewcode-block" id="BucketAccumulator.record_seen">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_seen">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">record_seen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the seen counter for ``key``.&quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
 <div class="viewcode-block" id="BucketAccumulator.record_formatted">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_formatted">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">record_formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the correctly formatted counter for ``key``.&quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
 <div class="viewcode-block" id="BucketAccumulator.record_parsed">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_parsed">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">record_parsed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the parsed counter for ``key``.&quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">parsed</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
 <div class="viewcode-block" id="BucketAccumulator.record_eligible">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_eligible">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">record_eligible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the eligible counter for ``key``.&quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">eligible</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
 <div class="viewcode-block" id="BucketAccumulator.record_correct">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_correct">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">record_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the correct counter for ``key``.&quot;&quot;&quot;</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 
@@ -406,7 +416,7 @@
 <div class="viewcode-block" id="Observation">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.Observation">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Observation</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Observation</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Snapshot of a single evaluation example.&quot;&quot;&quot;</span>
 
     <span class="n">issue_label</span><span class="p">:</span> <span class="nb">str</span>
@@ -422,10 +432,21 @@
 
 
 
+<div class="viewcode-block" id="EvaluationFilters">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationFilters">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationFilters</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter selections applied during evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
 <div class="viewcode-block" id="EvaluationAccumulator">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationAccumulator</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationAccumulator</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stateful accumulator tracking evaluation metrics across examples.&quot;&quot;&quot;</span>
 
     <span class="n">position</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
@@ -617,8 +638,7 @@
         <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">eval_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">requested_issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">requested_studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">filters</span><span class="p">:</span> <span class="n">EvaluationFilters</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the metrics blob written to disk after evaluation.&quot;&quot;&quot;</span>
 
@@ -639,8 +659,8 @@
             <span class="s2">&quot;split_single_vs_multi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_multi_summary</span><span class="p">(),</span>
             <span class="s2">&quot;group_metrics&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_summary</span><span class="p">(),</span>
             <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">requested_issues</span><span class="p">),</span>
-                <span class="s2">&quot;studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">requested_studies</span><span class="p">),</span>
+                <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">issues</span><span class="p">),</span>
+                <span class="s2">&quot;studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">studies</span><span class="p">),</span>
             <span class="p">},</span>
             <span class="s2">&quot;gold_index_distribution&quot;</span><span class="p">:</span> <span class="n">gold_distribution</span><span class="p">,</span>
             <span class="s2">&quot;baseline_most_frequent_gold_index&quot;</span><span class="p">:</span> <span class="n">baseline_most_frequent</span><span class="p">,</span>
@@ -933,8 +953,7 @@
         <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span>
         <span class="n">dataset_name</span><span class="p">,</span>
         <span class="n">eval_split</span><span class="p">,</span>
-        <span class="n">requested_issues</span><span class="p">,</span>
-        <span class="n">requested_studies</span><span class="p">,</span>
+        <span class="n">EvaluationFilters</span><span class="p">(</span><span class="n">issues</span><span class="o">=</span><span class="n">requested_issues</span><span class="p">,</span> <span class="n">studies</span><span class="o">=</span><span class="n">requested_studies</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>

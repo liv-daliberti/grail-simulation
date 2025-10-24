@@ -284,6 +284,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose_issue_slug</span><span class="p">,</span> <span class="n">prepare_dataset</span><span class="p">,</span> <span class="n">safe_div</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
@@ -495,11 +496,7 @@
 
     <span class="n">study_tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
 
-    <span class="n">extra_fields</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extra_text_fields</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="p">]</span>
+    <span class="n">extra_fields</span> <span class="o">=</span> <span class="n">merge_default_extra_fields</span><span class="p">(</span><span class="n">_split_tokens</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extra_text_fields</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
         <span class="n">_evaluate_issue</span><span class="p">(</span>

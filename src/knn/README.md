@@ -115,7 +115,8 @@ PROFILE/HISTORY context seen by other baselines:
 - TF-IDF is enabled by default, with optional extra context using
   `--knn-text-fields`.
 - Word2Vec training (via gensim) can be toggled with `--feature-space word2vec`;
-  models persist to `models/knn_word2vec/<issue>/` by default so they can be reused.
+  models persist under `models/knn/next_video/word2vec_models/` by default, namespaced per issue
+  (and per study when runs originate from the pipeline) so they can be reused.
 - Title lookups pull from metadata CSVs listed by `GRAIL_TITLE_*` environment
   variables, falling back to the shared network drive defaults.
 
@@ -191,7 +192,7 @@ for issue in minimum_wage gun_control; do
           --eval_max 200 \
           --train_curve_max 2000 \
           --cache_dir hf_cache \
-          --word2vec-model-dir models/knn_word2vec_sweeps \
+          --word2vec-model-dir models/knn/next_video/word2vec_models/sweeps \
           --word2vec-size "$size" \
           --word2vec-window "$window" \
           --word2vec-min-count 1 \

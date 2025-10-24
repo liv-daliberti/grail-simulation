@@ -270,7 +270,25 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if stage == "sweeps":
-        total_tasks = len(planned_slate_tasks) + len(planned_opinion_tasks)
+        slate_pending_by_index = {task.index: task for task in planned_slate_tasks}
+        slate_cached_by_index = {
+            outcome.order_index: outcome
+            for outcome in cached_slate_planned
+            if outcome.order_index not in slate_pending_by_index
+        }
+        slate_indices = set(slate_pending_by_index).union(slate_cached_by_index)
+        slate_total = (max(slate_indices) + 1) if slate_indices else 0
+
+        opinion_pending_by_index = {task.index: task for task in planned_opinion_tasks}
+        opinion_cached_by_index = {
+            outcome.order_index: outcome
+            for outcome in cached_opinion_planned
+            if outcome.order_index not in opinion_pending_by_index
+        }
+        opinion_indices = set(opinion_pending_by_index).union(opinion_cached_by_index)
+        opinion_total = (max(opinion_indices) + 1) if opinion_indices else 0
+
+        total_tasks = slate_total + opinion_total
         task_id = prepare_sweep_execution(
             total_tasks=total_tasks,
             cli_task_id=args.sweep_task_id,
@@ -279,8 +297,25 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
         if task_id is None:
             return
-        if task_id < len(planned_slate_tasks):
-            task = planned_slate_tasks[task_id]
+        if task_id < slate_total:
+            task = slate_pending_by_index.get(task_id)
+            if task is None:
+                cached_outcome = slate_cached_by_index.get(task_id)
+                if cached_outcome is not None:
+                    LOGGER.info(
+                        "Skipping sweep task %d (%s | %s | %s); metrics already exist at %s.",
+                        task_id,
+                        cached_outcome.study.key,
+                        cached_outcome.study.issue,
+                        cached_outcome.config.label(),
+                        cached_outcome.metrics_path,
+                    )
+                    return
+                LOGGER.warning(
+                    "No sweep task registered for index %d; skipping.",
+                    task_id,
+                )
+                return
             if reuse_sweeps and task.metrics_path.exists():
                 LOGGER.info(
                     "Skipping sweep task %d (%s); metrics already exist at %s.",
@@ -299,8 +334,24 @@ def main(argv: Sequence[str] | None = None) -> None:
                 outcome.metrics_path,
             )
         else:
-            opinion_index = task_id - len(planned_slate_tasks)
-            task = planned_opinion_tasks[opinion_index]
+            opinion_index = task_id - slate_total
+            task = opinion_pending_by_index.get(opinion_index)
+            if task is None:
+                cached_outcome = opinion_cached_by_index.get(opinion_index)
+                if cached_outcome is not None:
+                    LOGGER.info(
+                        "Skipping opinion sweep task %d (%s | %s); metrics already exist at %s.",
+                        opinion_index,
+                        cached_outcome.study.key,
+                        cached_outcome.config.label(),
+                        cached_outcome.metrics_path,
+                    )
+                    return
+                LOGGER.warning(
+                    "No opinion sweep task registered for index %d; skipping.",
+                    opinion_index,
+                )
+                return
             if reuse_sweeps and task.metrics_path.exists():
                 LOGGER.info(
                     "Skipping opinion sweep task %d (%s); metrics already exist at %s.",

@@ -98,7 +98,8 @@ def _write_catalog_report(
     lines.append("```")
     lines.append("")
     lines.append(
-        "Stages can be invoked individually (`plan`, `sweeps`, `finalize`, `reports`) to match existing SLURM workflows."
+        "Stages can be invoked individually (`plan`, `sweeps`, `finalize`, `reports`)"
+        " to match existing SLURM workflows."
     )
     lines.append("")
     write_markdown_lines(path, lines)

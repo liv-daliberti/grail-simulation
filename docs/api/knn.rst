@@ -54,6 +54,7 @@ examples feed into the training curve diagnostics.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: CandidateMetadata
 
 .. automodule:: knn.index
    :members:

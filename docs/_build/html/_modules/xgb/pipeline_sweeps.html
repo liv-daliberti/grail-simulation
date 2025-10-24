@@ -1,0 +1,1225 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+
+    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+        <title>xgb.pipeline_sweeps - GRAIL Simulation documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #1f4b8e;
+  --color-brand-content: #1f4b8e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">GRAIL Simulation  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">GRAIL Simulation  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/common.html">Common Utilities API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_stats.html">Prompt feature report</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for xgb.pipeline_sweeps</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Sweep orchestration helpers for the Grail Simulation XGBoost pipeline.</span>
+
+<span class="sd">Constructs hyper-parameter grids, prepares CLI invocations, executes sweep</span>
+<span class="sd">runs for next-video and opinion tasks, and merges cached metrics so later</span>
+<span class="sd">stages can select the best configurations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_executor</span><span class="w"> </span><span class="kn">import</span> <span class="n">execute_indexed_tasks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_metrics_json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_ordered</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_parser</span> <span class="k">as</span> <span class="n">build_xgb_parser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionEvalRequest</span><span class="p">,</span> <span class="n">OpinionTrainConfig</span><span class="p">,</span> <span class="n">run_opinion_eval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OpinionStudySelection</span><span class="p">,</span>
+    <span class="n">OpinionSweepOutcome</span><span class="p">,</span>
+    <span class="n">OpinionSweepRunContext</span><span class="p">,</span>
+    <span class="n">OpinionSweepTask</span><span class="p">,</span>
+    <span class="n">StudySelection</span><span class="p">,</span>
+    <span class="n">StudySpec</span><span class="p">,</span>
+    <span class="n">SweepConfig</span><span class="p">,</span>
+    <span class="n">SweepOutcome</span><span class="p">,</span>
+    <span class="n">SweepRunContext</span><span class="p">,</span>
+    <span class="n">SweepTask</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">xgboost</span>  <span class="c1"># type: ignore</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">xgboost</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="n">OPINION_FEATURE_SPACE</span> <span class="o">=</span> <span class="s2">&quot;tfidf&quot;</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;xgb.pipeline.sweeps&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_xgb_cli</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute the :mod:`xgb.cli` entry point with the supplied arguments.</span>
+
+<span class="sd">    :param args: Command-line arguments forwarded to :mod:`xgb.cli`.</span>
+<span class="sd">    :type args: Sequence[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">build_xgb_parser</span><span class="p">()</span>
+    <span class="n">namespace</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">run_eval</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_metrics</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load the metrics JSON emitted by a sweep or evaluation task.</span>
+
+<span class="sd">    :param path: Filesystem path pointing at the ``metrics.json`` artefact.</span>
+<span class="sd">    :type path: Path</span>
+<span class="sd">    :returns: Parsed metrics payload.</span>
+<span class="sd">    :rtype: Mapping[str, object]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">load_metrics_json</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sweep_outcome_from_metrics</span><span class="p">(</span>
+    <span class="n">task</span><span class="p">:</span> <span class="n">SweepTask</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert cached sweep metrics into an outcome instance.</span>
+
+<span class="sd">    :param task: Sweep task metadata associated with the metrics.</span>
+<span class="sd">    :type task: SweepTask</span>
+<span class="sd">    :param metrics: Metrics dictionary loaded from disk.</span>
+<span class="sd">    :type metrics: Mapping[str, object]</span>
+<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :type metrics_path: Path</span>
+<span class="sd">    :returns: Sweep outcome capturing accuracy, coverage, and metadata.</span>
+<span class="sd">    :rtype: SweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">SweepOutcome</span><span class="p">(</span>
+        <span class="n">order_index</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">study</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">accuracy</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+        <span class="n">coverage</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;coverage&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+        <span class="n">evaluated</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evaluated&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_sweep_tasks</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SweepRunContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield sweep tasks with deterministic ordering.</span>
+
+<span class="sd">    :param studies: Participant studies slated for evaluation.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :param configs: Hyper-parameter configurations to explore.</span>
+<span class="sd">    :type configs: Sequence[SweepConfig]</span>
+<span class="sd">    :param context: Shared sweep execution context.</span>
+<span class="sd">    :type context: SweepRunContext</span>
+<span class="sd">    :returns: Sequence of sweep tasks in deterministic order.</span>
+<span class="sd">    :rtype: Sequence[SweepTask]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">base_cli_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">base_cli</span><span class="p">)</span>
+    <span class="n">extra_cli_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">extra_cli</span><span class="p">)</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">task_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">study</span> <span class="ow">in</span> <span class="n">studies</span><span class="p">:</span>
+            <span class="n">run_root</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">sweep_dir</span> <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">issue_slug</span> <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">study_slug</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+            <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">run_root</span> <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">evaluation_slug</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SweepTask</span><span class="p">(</span>
+                    <span class="n">index</span><span class="o">=</span><span class="n">task_index</span><span class="p">,</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                    <span class="n">base_cli</span><span class="o">=</span><span class="n">base_cli_tuple</span><span class="p">,</span>
+                    <span class="n">extra_cli</span><span class="o">=</span><span class="n">extra_cli_tuple</span><span class="p">,</span>
+                    <span class="n">run_root</span><span class="o">=</span><span class="n">run_root</span><span class="p">,</span>
+                    <span class="n">tree_method</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
+                    <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">task_index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">tasks</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_sweep_tasks</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SweepRunContext</span><span class="p">,</span>
+    <span class="n">reuse_existing</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine pending sweep tasks and return cached outcomes.</span>
+
+<span class="sd">    :param studies: Participant studies slated for evaluation.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :param configs: Hyper-parameter configurations to explore.</span>
+<span class="sd">    :type configs: Sequence[SweepConfig]</span>
+<span class="sd">    :param context: Shared sweep execution context.</span>
+<span class="sd">    :type context: SweepRunContext</span>
+<span class="sd">    :param reuse_existing: Flag controlling whether cached artefacts should be reused.</span>
+<span class="sd">    :type reuse_existing: bool</span>
+<span class="sd">    :returns: Tuple containing pending tasks and cached outcomes.</span>
+<span class="sd">    :rtype: Tuple[List[SweepTask], List[SweepOutcome]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">_iter_sweep_tasks</span><span class="p">(</span><span class="n">studies</span><span class="o">=</span><span class="n">studies</span><span class="p">,</span> <span class="n">configs</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">):</span>
+        <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span>
+        <span class="k">if</span> <span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;[SWEEP][SKIP] issue=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> config=</span><span class="si">%s</span><span class="s2"> (cached).&quot;</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">cached_metrics</span> <span class="o">=</span> <span class="n">_load_metrics</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">)</span>
+            <span class="n">cached</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_sweep_outcome_from_metrics</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">cached_metrics</span><span class="p">,</span> <span class="n">metrics_path</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pending</span><span class="p">,</span> <span class="n">cached</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_sweep_outcomes</span><span class="p">(</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">],</span>
+    <span class="n">executed</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combine cached and freshly executed sweep outcomes preserving order.</span>
+
+<span class="sd">    :param cached: Previously cached sweep outcomes.</span>
+<span class="sd">    :type cached: Sequence[SweepOutcome]</span>
+<span class="sd">    :param executed: Outcomes produced by the current execution.</span>
+<span class="sd">    :type executed: Sequence[SweepOutcome]</span>
+<span class="sd">    :returns: Ordered list of merged outcomes.</span>
+<span class="sd">    :rtype: List[SweepOutcome]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_replace</span><span class="p">(</span><span class="n">_existing</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span> <span class="n">incoming</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Emit a warning when a cached sweep outcome is replaced.</span>
+
+<span class="sd">        :param _existing: Previously stored outcome.</span>
+<span class="sd">        :type _existing: SweepOutcome</span>
+<span class="sd">        :param incoming: Newly merged outcome replacing the cached entry.</span>
+<span class="sd">        :type incoming: SweepOutcome</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Duplicate sweep outcome for index=</span><span class="si">%d</span><span class="s2">; replacing cached result.&quot;</span><span class="p">,</span>
+            <span class="n">incoming</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">merge_ordered</span><span class="p">(</span>
+        <span class="n">cached</span><span class="p">,</span>
+        <span class="n">executed</span><span class="p">,</span>
+        <span class="n">order_key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">outcome</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
+        <span class="n">on_replace</span><span class="o">=</span><span class="n">_on_replace</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_execute_sweep_tasks</span><span class="p">(</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute sweep tasks, optionally in parallel.</span>
+
+<span class="sd">    :param tasks: Sweep tasks to execute.</span>
+<span class="sd">    :type tasks: Sequence[SweepTask]</span>
+<span class="sd">    :param jobs: Maximum number of parallel workers.</span>
+<span class="sd">    :type jobs: int</span>
+<span class="sd">    :returns: Ordered list of sweep outcomes.</span>
+<span class="sd">    :rtype: List[SweepOutcome]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">execute_indexed_tasks</span><span class="p">(</span>
+        <span class="n">tasks</span><span class="p">,</span>
+        <span class="n">_execute_sweep_task</span><span class="p">,</span>
+        <span class="n">jobs</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;sweep&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_emit_sweep_plan</span><span class="p">(</span><span class="n">tasks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print a concise sweep plan listing.</span>
+
+<span class="sd">    :param tasks: Sweep tasks to display.</span>
+<span class="sd">    :type tasks: Sequence[SweepTask]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TOTAL_TASKS=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;INDEX</span><span class="se">\t</span><span class="s2">STUDY</span><span class="se">\t</span><span class="s2">ISSUE</span><span class="se">\t</span><span class="s2">VECTORIZER</span><span class="se">\t</span><span class="s2">LABEL&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">display_index</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">display_index</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">text_vectorizer</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_sweep_task_descriptor</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">SweepTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a short descriptor for a sweep task.</span>
+
+<span class="sd">    :param task: Sweep task to describe.</span>
+<span class="sd">    :type task: SweepTask</span>
+<span class="sd">    :returns: Concise descriptor combining study and configuration.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_sweep_outcome_from_metrics</span><span class="p">(</span>
+    <span class="n">task</span><span class="p">:</span> <span class="n">OpinionSweepTask</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionSweepOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert cached opinion sweep metrics into an outcome instance.</span>
+
+<span class="sd">    :param task: Opinion sweep task metadata associated with the metrics.</span>
+<span class="sd">    :type task: OpinionSweepTask</span>
+<span class="sd">    :param metrics: Metrics dictionary loaded from disk.</span>
+<span class="sd">    :type metrics: Mapping[str, object]</span>
+<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :type metrics_path: Path</span>
+<span class="sd">    :returns: Opinion sweep outcome capturing MAE, RMSE, and R².</span>
+<span class="sd">    :rtype: OpinionSweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_safe_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert ``value`` to ``float`` with a default fallback.</span>
+
+<span class="sd">        :param value: Input value to coerce.</span>
+<span class="sd">        :type value: object</span>
+<span class="sd">        :param default: Fallback returned when coercion fails.</span>
+<span class="sd">        :type default: float</span>
+<span class="sd">        :returns: Floating-point value or ``default`` when conversion fails.</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">default</span>
+
+    <span class="n">metrics_block</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">baseline_block</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optional_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert numeric-like values into ``float`` instances when possible.</span>
+
+<span class="sd">        :param value: Candidate value extracted from the metrics payload.</span>
+<span class="sd">        :type value: object</span>
+<span class="sd">        :returns: Floating-point value or ``None`` when conversion is unsupported.</span>
+<span class="sd">        :rtype: Optional[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">accuracy_value</span> <span class="o">=</span> <span class="n">_optional_float</span><span class="p">(</span><span class="n">metrics_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">))</span>
+    <span class="n">baseline_value</span> <span class="o">=</span> <span class="n">_optional_float</span><span class="p">(</span><span class="n">baseline_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">))</span>
+    <span class="n">accuracy_delta</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">accuracy_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">baseline_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">accuracy_delta</span> <span class="o">=</span> <span class="n">accuracy_value</span> <span class="o">-</span> <span class="n">baseline_value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optional_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert numeric-like values into ``int`` instances when possible.</span>
+
+<span class="sd">        :param value: Candidate value extracted from the metrics payload.</span>
+<span class="sd">        :type value: object</span>
+<span class="sd">        :returns: Integer value or ``None`` when conversion is unsupported.</span>
+<span class="sd">        :rtype: Optional[int]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">eligible_value</span> <span class="o">=</span> <span class="n">_optional_int</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">eligible_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">eligible_value</span> <span class="o">=</span> <span class="n">_optional_int</span><span class="p">(</span><span class="n">metrics_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">OpinionSweepOutcome</span><span class="p">(</span>
+        <span class="n">order_index</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">study</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">mae</span><span class="o">=</span><span class="n">_safe_float</span><span class="p">(</span><span class="n">metrics_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">)),</span>
+        <span class="n">rmse</span><span class="o">=</span><span class="n">_safe_float</span><span class="p">(</span><span class="n">metrics_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rmse_after&quot;</span><span class="p">)),</span>
+        <span class="n">r_squared</span><span class="o">=</span><span class="n">_safe_float</span><span class="p">(</span><span class="n">metrics_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;r2_after&quot;</span><span class="p">)),</span>
+        <span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy_value</span><span class="p">,</span>
+        <span class="n">baseline_accuracy</span><span class="o">=</span><span class="n">baseline_value</span><span class="p">,</span>
+        <span class="n">accuracy_delta</span><span class="o">=</span><span class="n">accuracy_delta</span><span class="p">,</span>
+        <span class="n">eligible</span><span class="o">=</span><span class="n">eligible_value</span><span class="p">,</span>
+        <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_opinion_sweep_tasks</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">OpinionSweepRunContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield opinion sweep tasks in a deterministic order.</span>
+
+<span class="sd">    :param studies: Participant studies slated for opinion evaluation.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :param configs: Hyper-parameter configurations to explore.</span>
+<span class="sd">    :type configs: Sequence[SweepConfig]</span>
+<span class="sd">    :param context: Shared opinion sweep execution context.</span>
+<span class="sd">    :type context: OpinionSweepRunContext</span>
+<span class="sd">    :returns: Sequence of opinion sweep tasks.</span>
+<span class="sd">    :rtype: Sequence[OpinionSweepTask]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">extra_fields</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">)</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">task_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">study</span> <span class="ow">in</span> <span class="n">studies</span><span class="p">:</span>
+            <span class="n">run_root</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">sweep_dir</span> <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">issue_slug</span> <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">study_slug</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+            <span class="n">metrics_path</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">run_root</span>
+                <span class="o">/</span> <span class="n">OPINION_FEATURE_SPACE</span>
+                <span class="o">/</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span>
+                <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_xgb_</span><span class="si">{</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_validation_metrics.json&quot;</span>
+            <span class="p">)</span>
+            <span class="n">request_args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+                <span class="s2">&quot;cache_dir&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span>
+                <span class="s2">&quot;out_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">run_root</span><span class="p">),</span>
+                <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">OPINION_FEATURE_SPACE</span><span class="p">,</span>
+                <span class="s2">&quot;extra_fields&quot;</span><span class="p">:</span> <span class="n">extra_fields</span><span class="p">,</span>
+                <span class="s2">&quot;max_participants&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">max_participants</span><span class="p">),</span>
+                <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">seed</span><span class="p">),</span>
+                <span class="s2">&quot;max_features&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">max_features</span><span class="p">,</span>
+                <span class="s2">&quot;tree_method&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
+                <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">OpinionSweepTask</span><span class="p">(</span>
+                    <span class="n">index</span><span class="o">=</span><span class="n">task_index</span><span class="p">,</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                    <span class="n">request_args</span><span class="o">=</span><span class="n">request_args</span><span class="p">,</span>
+                    <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">task_index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">tasks</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_opinion_sweep_tasks</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">OpinionSweepRunContext</span><span class="p">,</span>
+    <span class="n">reuse_existing</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine pending opinion sweep tasks and return cached outcomes.</span>
+
+<span class="sd">    :param studies: Participant studies slated for opinion evaluation.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :param configs: Hyper-parameter configurations to explore.</span>
+<span class="sd">    :type configs: Sequence[SweepConfig]</span>
+<span class="sd">    :param context: Shared opinion sweep execution context.</span>
+<span class="sd">    :type context: OpinionSweepRunContext</span>
+<span class="sd">    :param reuse_existing: Flag controlling whether cached artefacts should be reused.</span>
+<span class="sd">    :type reuse_existing: bool</span>
+<span class="sd">    :returns: Tuple containing pending tasks and cached outcomes.</span>
+<span class="sd">    :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">_iter_opinion_sweep_tasks</span><span class="p">(</span>
+        <span class="n">studies</span><span class="o">=</span><span class="n">studies</span><span class="p">,</span>
+        <span class="n">configs</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span>
+        <span class="k">if</span> <span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;[OPINION][SWEEP][SKIP] study=</span><span class="si">%s</span><span class="s2"> issue=</span><span class="si">%s</span><span class="s2"> config=</span><span class="si">%s</span><span class="s2"> (cached).&quot;</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="n">_load_metrics</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">)</span>
+            <span class="n">cached</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_opinion_sweep_outcome_from_metrics</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">metrics_path</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">pending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pending</span><span class="p">,</span> <span class="n">cached</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_opinion_sweep_outcomes</span><span class="p">(</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">],</span>
+    <span class="n">executed</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combine cached and freshly executed opinion sweep outcomes preserving order.</span>
+
+<span class="sd">    :param cached: Previously cached opinion sweep outcomes.</span>
+<span class="sd">    :type cached: Sequence[OpinionSweepOutcome]</span>
+<span class="sd">    :param executed: Outcomes produced by the current execution.</span>
+<span class="sd">    :type executed: Sequence[OpinionSweepOutcome]</span>
+<span class="sd">    :returns: Ordered list of merged opinion outcomes.</span>
+<span class="sd">    :rtype: List[OpinionSweepOutcome]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_replace</span><span class="p">(</span><span class="n">_existing</span><span class="p">:</span> <span class="n">OpinionSweepOutcome</span><span class="p">,</span> <span class="n">incoming</span><span class="p">:</span> <span class="n">OpinionSweepOutcome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Emit a warning when a cached opinion sweep outcome is replaced.</span>
+
+<span class="sd">        :param _existing: Previously stored opinion outcome.</span>
+<span class="sd">        :type _existing: OpinionSweepOutcome</span>
+<span class="sd">        :param incoming: Newly merged outcome replacing the cached entry.</span>
+<span class="sd">        :type incoming: OpinionSweepOutcome</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Duplicate opinion sweep outcome for index=</span><span class="si">%d</span><span class="s2">; replacing cached result.&quot;</span><span class="p">,</span>
+            <span class="n">incoming</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">merge_ordered</span><span class="p">(</span>
+        <span class="n">cached</span><span class="p">,</span>
+        <span class="n">executed</span><span class="p">,</span>
+        <span class="n">order_key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">outcome</span><span class="p">:</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
+        <span class="n">on_replace</span><span class="o">=</span><span class="n">_on_replace</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_execute_opinion_sweep_task</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">OpinionSweepTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionSweepOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute a single opinion sweep task and return the resulting metrics.</span>
+
+<span class="sd">    :param task: Opinion sweep task to execute.</span>
+<span class="sd">    :type task: OpinionSweepTask</span>
+<span class="sd">    :returns: Opinion sweep outcome populated with metrics.</span>
+<span class="sd">    :rtype: OpinionSweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">request_args</span><span class="p">)</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;out_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+    <span class="n">out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+    <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cache_dir&quot;</span><span class="p">)</span>
+    <span class="n">feature_space</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;feature_space&quot;</span><span class="p">,</span> <span class="n">OPINION_FEATURE_SPACE</span><span class="p">))</span>
+    <span class="n">extra_fields</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;extra_fields&quot;</span><span class="p">,</span> <span class="p">()))</span>
+    <span class="n">max_participants</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_participants&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">))</span>
+    <span class="n">max_features</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_features&quot;</span><span class="p">)</span>
+    <span class="n">tree_method</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tree_method&quot;</span><span class="p">,</span> <span class="s2">&quot;hist&quot;</span><span class="p">))</span>
+    <span class="n">overwrite</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+
+    <span class="n">train_config</span> <span class="o">=</span> <span class="n">OpinionTrainConfig</span><span class="p">(</span>
+        <span class="n">max_participants</span><span class="o">=</span><span class="n">max_participants</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">max_features</span><span class="o">=</span><span class="n">max_features</span><span class="p">,</span>
+        <span class="n">booster</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">booster_params</span><span class="p">(</span><span class="n">tree_method</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="n">OpinionEvalRequest</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="k">if</span> <span class="n">dataset</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cache_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">cache_dir</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
+        <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[OPINION][SWEEP] study=</span><span class="si">%s</span><span class="s2"> issue=</span><span class="si">%s</span><span class="s2"> config=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">run_opinion_eval</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">,</span> <span class="n">studies</span><span class="o">=</span><span class="p">[</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">_load_metrics</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_opinion_sweep_outcome_from_metrics</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_execute_opinion_sweep_tasks</span><span class="p">(</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute opinion sweep tasks, optionally in parallel.</span>
+
+<span class="sd">    :param tasks: Opinion sweep tasks to execute.</span>
+<span class="sd">    :type tasks: Sequence[OpinionSweepTask]</span>
+<span class="sd">    :param jobs: Maximum number of parallel workers.</span>
+<span class="sd">    :type jobs: int</span>
+<span class="sd">    :returns: Ordered list of opinion sweep outcomes.</span>
+<span class="sd">    :rtype: List[OpinionSweepOutcome]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">execute_indexed_tasks</span><span class="p">(</span>
+        <span class="n">tasks</span><span class="p">,</span>
+        <span class="n">_execute_opinion_sweep_task</span><span class="p">,</span>
+        <span class="n">jobs</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;opinion sweep&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="c1"># Backwards compatibility: allow legacy imports without the leading underscore.</span>
+<span class="n">execute_opinion_sweep_tasks</span> <span class="o">=</span> <span class="n">_execute_opinion_sweep_tasks</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_emit_combined_sweep_plan</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">slate_tasks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepTask</span><span class="p">],</span>
+    <span class="n">opinion_tasks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepTask</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print a combined sweep plan covering next-video and opinion tasks.</span>
+
+<span class="sd">    :param slate_tasks: Next-video sweep tasks to include.</span>
+<span class="sd">    :type slate_tasks: Sequence[SweepTask]</span>
+<span class="sd">    :param opinion_tasks: Opinion sweep tasks to include.</span>
+<span class="sd">    :type opinion_tasks: Sequence[OpinionSweepTask]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_tasks</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">opinion_tasks</span><span class="p">)</span>
+    <span class="n">sections</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">slate_tasks</span><span class="p">:</span>
+        <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;next_video&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">opinion_tasks</span><span class="p">:</span>
+        <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;opinion&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sections</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sections</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TOTAL_TASKS=</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">slate_tasks</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;### NEXT_VIDEO&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;INDEX</span><span class="se">\t</span><span class="s2">STUDY</span><span class="se">\t</span><span class="s2">ISSUE</span><span class="se">\t</span><span class="s2">VECTORIZER</span><span class="se">\t</span><span class="s2">LABEL&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">display_index</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_tasks</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">display_index</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">text_vectorizer</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">opinion_tasks</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;### OPINION&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;INDEX</span><span class="se">\t</span><span class="s2">STUDY</span><span class="se">\t</span><span class="s2">ISSUE</span><span class="se">\t</span><span class="s2">VECTORIZER</span><span class="se">\t</span><span class="s2">LABEL&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">display_index</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">opinion_tasks</span><span class="p">):</span>
+            <span class="n">vectorizer</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;text_vectorizer&quot;</span><span class="p">,</span> <span class="s2">&quot;opinion&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">display_index</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vectorizer</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_opinion_sweep_task_descriptor</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">OpinionSweepTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a short descriptor for an opinion sweep task.</span>
+
+<span class="sd">    :param task: Opinion sweep task to describe.</span>
+<span class="sd">    :type task: OpinionSweepTask</span>
+<span class="sd">    :returns: Concise descriptor combining study and configuration.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gpu_tree_method_supported</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine whether the installed XGBoost build supports GPU boosters.</span>
+
+<span class="sd">    :returns: ``True`` if GPU boosters appear to be available.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">xgboost</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="n">xgboost</span><span class="o">.</span><span class="n">core</span>  <span class="c1"># type: ignore[attr-defined]</span>
+
+    <span class="c1"># Prefer the helper exposed in newer releases.</span>
+    <span class="n">maybe_has_cuda</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="s2">&quot;_has_cuda_support&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">maybe_has_cuda</span><span class="p">):</span>
+        <span class="n">has_cuda_callable</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">maybe_has_cuda</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">has_cuda_callable</span><span class="p">())</span>  <span class="c1"># pylint: disable=not-callable</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Failed to query XGBoost CUDA support.&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Fallback: inspect the shared library for a device-specific symbol.</span>
+    <span class="n">lib</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">core</span><span class="p">,</span> <span class="s2">&quot;_LIB&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="s2">&quot;XGBoosterPredictFromDeviceDMatrix&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_final_metrics_from_disk</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">next_video_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load persisted final evaluation metrics per study.</span>
+
+<span class="sd">    :param next_video_dir: Directory containing final next-video artefacts.</span>
+<span class="sd">    :type next_video_dir: Path</span>
+<span class="sd">    :param studies: Participant studies to load.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :returns: Mapping from study key to metrics payloads.</span>
+<span class="sd">    :rtype: Dict[str, Mapping[str, object]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">metrics_by_study</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">studies</span><span class="p">:</span>
+        <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">next_video_dir</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">evaluation_slug</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_load_metrics</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">))</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="p">)</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;issue_label&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">())</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;study&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;study_label&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">metrics_by_study</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">metrics</span>
+    <span class="k">return</span> <span class="n">metrics_by_study</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_opinion_metrics_from_disk</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">opinion_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load opinion regression metrics saved by previous runs.</span>
+
+<span class="sd">    :param opinion_dir: Directory containing opinion artefacts.</span>
+<span class="sd">    :type opinion_dir: Path</span>
+<span class="sd">    :param studies: Participant studies to load.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :returns: Mapping from study key to opinion metrics payload.</span>
+<span class="sd">    :rtype: Dict[str, Dict[str, object]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">studies</span><span class="p">:</span>
+        <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">opinion_dir</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_xgb_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_validation_metrics.json&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">legacy_path</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">opinion_dir</span>
+                <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span>
+                <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span>
+                <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_xgb_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_validation_metrics.json&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">legacy_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">legacy_path</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_load_metrics</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">))</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">metrics</span>
+    <span class="k">return</span> <span class="n">results</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_sweeps</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">],</span>
+    <span class="n">configs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SweepRunContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute hyper-parameter sweeps and collect outcome metadata.</span>
+
+<span class="sd">    :param studies: Participant studies slated for evaluation.</span>
+<span class="sd">    :type studies: Sequence[StudySpec]</span>
+<span class="sd">    :param configs: Hyper-parameter configurations to explore.</span>
+<span class="sd">    :type configs: Sequence[SweepConfig]</span>
+<span class="sd">    :param context: Shared sweep execution context.</span>
+<span class="sd">    :type context: SweepRunContext</span>
+<span class="sd">    :returns: Ordered list of combined cached and executed outcomes.</span>
+<span class="sd">    :rtype: List[SweepOutcome]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pending_tasks</span><span class="p">,</span> <span class="n">cached_outcomes</span> <span class="o">=</span> <span class="n">_prepare_sweep_tasks</span><span class="p">(</span>
+        <span class="n">studies</span><span class="o">=</span><span class="n">studies</span><span class="p">,</span>
+        <span class="n">configs</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">reuse_existing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">executed_outcomes</span> <span class="o">=</span> <span class="n">_execute_sweep_tasks</span><span class="p">(</span><span class="n">pending_tasks</span><span class="p">,</span> <span class="n">jobs</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">jobs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_merge_sweep_outcomes</span><span class="p">(</span><span class="n">cached_outcomes</span><span class="p">,</span> <span class="n">executed_outcomes</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_execute_sweep_task</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">SweepTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepOutcome</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute a single XGBoost sweep task and return the resulting metrics.</span>
+
+<span class="sd">    :param task: Sweep task to execute.</span>
+<span class="sd">    :type task: SweepTask</span>
+<span class="sd">    :returns: Sweep outcome populated with metrics.</span>
+<span class="sd">    :rtype: SweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">run_root</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">run_root</span>
+    <span class="n">run_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">base_cli</span><span class="p">)</span>
+    <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cli_args</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">tree_method</span><span class="p">))</span>
+    <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--issues&quot;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">])</span>
+    <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--participant_studies&quot;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+    <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--out_dir&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">run_root</span><span class="p">)])</span>
+    <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">extra_cli</span><span class="p">)</span>
+
+    <span class="n">evaluation_dir</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">has_partial_outputs</span> <span class="o">=</span> <span class="n">evaluation_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">has_partial_outputs</span> <span class="ow">and</span> <span class="s2">&quot;--overwrite&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cli_args</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;[SWEEP][RECOVER] issue=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> config=</span><span class="si">%s</span><span class="s2"> detected partial outputs at </span><span class="si">%s</span><span class="s2">; &quot;</span>
+            <span class="s2">&quot;automatically enabling overwrite for rerun.&quot;</span><span class="p">,</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+            <span class="n">evaluation_dir</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">cli_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--overwrite&quot;</span><span class="p">)</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[SWEEP] issue=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> config=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">_run_xgb_cli</span><span class="p">(</span><span class="n">cli_args</span><span class="p">)</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">_load_metrics</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SweepOutcome</span><span class="p">(</span>
+        <span class="n">order_index</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">study</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">accuracy</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+        <span class="n">coverage</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;coverage&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+        <span class="n">evaluated</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evaluated&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="n">metrics_path</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_select_best_configs</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StudySelection</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pick the best configuration per study using accuracy, coverage, and support.</span>
+
+<span class="sd">    :param outcomes: Sweep outcomes covering all studies and configurations.</span>
+<span class="sd">    :type outcomes: Sequence[SweepOutcome]</span>
+<span class="sd">    :returns: Mapping from study key to the chosen configuration.</span>
+<span class="sd">    :rtype: Dict[str, StudySelection]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">selections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StudySelection</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">selections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">StudySelection</span><span class="p">(</span><span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">incumbent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">outcome</span>
+        <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">&gt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">StudySelection</span><span class="p">(</span><span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">-</span> <span class="n">outcome</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">coverage</span> <span class="o">&gt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">coverage</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">:</span>
+                <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">StudySelection</span><span class="p">(</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">coverage</span> <span class="o">-</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">coverage</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span>
+                <span class="ow">and</span> <span class="n">outcome</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">&gt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">evaluated</span>
+            <span class="p">):</span>
+                <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">StudySelection</span><span class="p">(</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">selections</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_select_best_opinion_configs</span><span class="p">(</span>
+    <span class="n">outcomes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OpinionStudySelection</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pick the best opinion configuration per study prioritising MAE, RMSE, then R².</span>
+
+<span class="sd">    :param outcomes: Opinion sweep outcomes spanning studies and configurations.</span>
+<span class="sd">    :type outcomes: Sequence[OpinionSweepOutcome]</span>
+<span class="sd">    :returns: Mapping from study key to the chosen opinion configuration.</span>
+<span class="sd">    :rtype: Dict[str, OpinionStudySelection]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">selections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OpinionStudySelection</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">selections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">OpinionStudySelection</span><span class="p">(</span>
+                <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">incumbent</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">outcome</span>
+        <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">mae</span> <span class="o">&lt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">mae</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">OpinionStudySelection</span><span class="p">(</span>
+                <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">mae</span> <span class="o">-</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">mae</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">rmse</span> <span class="o">&lt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">rmse</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">:</span>
+                <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">OpinionStudySelection</span><span class="p">(</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">rmse</span> <span class="o">-</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">rmse</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span>
+                <span class="ow">and</span> <span class="n">outcome</span><span class="o">.</span><span class="n">r_squared</span> <span class="o">&gt;</span> <span class="n">incumbent</span><span class="o">.</span><span class="n">r_squared</span> <span class="o">+</span> <span class="mf">1e-9</span>
+            <span class="p">):</span>
+                <span class="n">selections</span><span class="p">[</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">OpinionStudySelection</span><span class="p">(</span>
+                    <span class="n">study</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="p">,</span>
+                    <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">selections</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;_run_xgb_cli&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_load_metrics&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_sweep_outcome_from_metrics&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_opinion_sweep_outcome_from_metrics&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_prepare_sweep_tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_prepare_opinion_sweep_tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_merge_sweep_outcomes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_merge_opinion_sweep_outcomes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_execute_sweep_tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_execute_opinion_sweep_tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;execute_opinion_sweep_tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_execute_sweep_task&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_execute_opinion_sweep_task&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_emit_sweep_plan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_emit_combined_sweep_plan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_format_sweep_task_descriptor&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_format_opinion_sweep_task_descriptor&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_gpu_tree_method_supported&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_load_final_metrics_from_disk&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_load_opinion_metrics_from_disk&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_run_sweeps&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_select_best_configs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_select_best_opinion_configs&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, GRAIL Simulation Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

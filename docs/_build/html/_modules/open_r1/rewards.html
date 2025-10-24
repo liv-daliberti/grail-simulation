@@ -288,9 +288,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -335,19 +333,28 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_package_available</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.code_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_provider</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.ioi</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SubtaskResult</span><span class="p">,</span>
-    <span class="n">TestResult</span><span class="p">,</span>
-    <span class="n">add_includes</span><span class="p">,</span>
-    <span class="n">get_morph_client_from_env</span><span class="p">,</span>
-    <span class="n">get_piston_client_from_env</span><span class="p">,</span>
-    <span class="n">score_subtask</span><span class="p">,</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.rewards_code</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BINARY_THRESHOLD</span> <span class="k">as</span> <span class="n">_BINARY_THRESHOLD</span><span class="p">,</span>
+    <span class="n">binary_code_reward</span> <span class="k">as</span> <span class="n">_binary_code_reward</span><span class="p">,</span>
+    <span class="n">code_reward</span> <span class="k">as</span> <span class="n">_code_reward</span><span class="p">,</span>
+    <span class="n">extract_code</span> <span class="k">as</span> <span class="n">_extract_code</span><span class="p">,</span>
+    <span class="n">get_code_format_reward</span> <span class="k">as</span> <span class="n">_get_code_format_reward</span><span class="p">,</span>
+    <span class="n">ioi_code_reward</span> <span class="k">as</span> <span class="n">_ioi_code_reward</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">PURE_ACC_ENV_FLAG</span> <span class="o">=</span> <span class="s2">&quot;PUREACC_ALLOW_BARE_NUMBER&quot;</span>
 <span class="n">PURE_ACC_TRUE_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span>
-<span class="n">BINARY_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.99</span>
+<span class="n">BINARY_THRESHOLD</span> <span class="o">=</span> <span class="n">_BINARY_THRESHOLD</span>
+<span class="n">ioi_code_reward</span> <span class="o">=</span> <span class="n">_ioi_code_reward</span>
+<span class="n">ioi_code_reward</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="vm">__name__</span>
+<span class="n">binary_code_reward</span> <span class="o">=</span> <span class="n">_binary_code_reward</span>
+<span class="n">binary_code_reward</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="vm">__name__</span>
+<span class="n">code_reward</span> <span class="o">=</span> <span class="n">_code_reward</span>
+<span class="n">code_reward</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="vm">__name__</span>
+<span class="n">extract_code</span> <span class="o">=</span> <span class="n">_extract_code</span>
+<span class="n">extract_code</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="vm">__name__</span>
+<span class="n">get_code_format_reward</span> <span class="o">=</span> <span class="n">_get_code_format_reward</span>
+<span class="n">get_code_format_reward</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="vm">__name__</span>
 <span class="n">HAS_MATH_REWARD_DEPS</span> <span class="o">=</span> <span class="n">LatexExtractionConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">NormalizationConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
 <span class="k">if</span> <span class="n">HAS_MATH_REWARD_DEPS</span><span class="p">:</span>
@@ -495,8 +502,15 @@
 <span class="sd">    2. Compare the parsed value to ``gold_index`` (1-based).</span>
 <span class="sd">    3. Optionally ensure ``1 &lt;= NUMBER &lt;= n_options`` if option counts are provided.</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        list[float]: Per-sample accuracy scores (``1.0`` or ``0.0``).</span>
+<span class="sd">    :param completions: Model completions whose answers should be evaluated.</span>
+<span class="sd">    :type completions: list[Any]</span>
+<span class="sd">    :param _answer: Placeholder argument kept for API compatibility; ignored.</span>
+<span class="sd">    :type _answer: list[str]</span>
+<span class="sd">    :param kwargs: Additional metadata such as ``gold_index`` (the reference index) and</span>
+<span class="sd">        ``n_options`` (optional option counts).</span>
+<span class="sd">    :type kwargs: dict</span>
+<span class="sd">    :returns: Per-sample accuracy scores (``1.0`` or ``0.0``).</span>
+<span class="sd">    :rtype: list[float]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gold_idx_arr</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span>
     <span class="n">option_counts</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">)</span>
@@ -568,10 +582,23 @@
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.accuracy_reward">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">accuracy_reward</span><span class="p">(</span>
     <span class="n">completions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]],</span>
-    <span class="n">solution</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+   <span class="n">solution</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+   <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reward function that checks if a completion matches the ground truth.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reward function that checks if a completion matches the ground truth.</span>
+
+<span class="sd">    :param completions: Chat-style completions where the first message contains</span>
+<span class="sd">        the assistant response to evaluate.</span>
+<span class="sd">    :type completions: list[list[dict[str, str]]]</span>
+<span class="sd">    :param solution: Ground-truth answers expressed in LaTeX.</span>
+<span class="sd">    :type solution: list[str]</span>
+<span class="sd">    :param kwargs: Additional keyword arguments (unused).</span>
+<span class="sd">    :type kwargs: dict</span>
+<span class="sd">    :returns: Binary rewards (``1.0`` for correct, ``0.0`` for incorrect) or ``None`` when</span>
+<span class="sd">        the example cannot be scored.</span>
+<span class="sd">    :rtype: list[Optional[float]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_require_math_reward_deps</span><span class="p">()</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>  <span class="c1"># Unused but kept for API compatibility</span>
     <span class="n">contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
@@ -623,7 +650,16 @@
 <div class="viewcode-block" id="formating">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.formating">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">formating</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether completions follow the expected think/answer tag format.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether completions follow the expected think/answer tag format.</span>
+
+<span class="sd">    :param completions: Chat-style completions produced by the policy.</span>
+<span class="sd">    :type completions: list[list[dict[str, str]]]</span>
+<span class="sd">    :param kwargs: Additional keyword arguments (unused).</span>
+<span class="sd">    :type kwargs: dict</span>
+<span class="sd">    :returns: A list indicating whether each completion matches the format.</span>
+<span class="sd">    :rtype: list[float]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
     <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^&lt;think&gt;\n.*?\n&lt;/think&gt;\n&lt;answer&gt;\n.*?\n&lt;/answer&gt;$&quot;</span>
     <span class="n">completion_contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
@@ -646,6 +682,17 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the usual format reward only if the sample&#39;s accuracy reward is 0.</span>
 <span class="sd">    Works with either `solution=[…]` or `answer=[…]`.</span>
+
+<span class="sd">    :param completions: Chat-style completions to evaluate.</span>
+<span class="sd">    :type completions: list[list[dict]]</span>
+<span class="sd">    :param solution: Optional list of ground-truth answers.</span>
+<span class="sd">    :type solution: list[str] | None</span>
+<span class="sd">    :param answer: Alias for ``solution``.</span>
+<span class="sd">    :type answer: list[str] | None</span>
+<span class="sd">    :param kwargs: Additional keyword arguments forwarded to :func:`accuracy_reward`.</span>
+<span class="sd">    :type kwargs: dict</span>
+<span class="sd">    :returns: Format rewards gated by accuracy (``None`` when accuracy cannot be computed).</span>
+<span class="sd">    :rtype: list[Optional[float]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">golds</span> <span class="o">=</span> <span class="n">solution</span> <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">answer</span>
 
@@ -668,15 +715,29 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">tag_count_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reward function that checks if we produce the desired number of think and</span>
-<span class="sd">    answer tags associated with `format_reward()`.</span>
+<span class="sd">    answer tags associated with :func:`format_reward`.</span>
 
 <span class="sd">    Adapted from:</span>
 <span class="sd">    https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90</span>
+
+<span class="sd">    :param completions: Chat-style completions produced by the policy.</span>
+<span class="sd">    :type completions: list[list[dict[str, str]]]</span>
+<span class="sd">    :param kwargs: Additional keyword arguments (unused).</span>
+<span class="sd">    :type kwargs: dict</span>
+<span class="sd">    :returns: Partial rewards for each completion based on tag presence.</span>
+<span class="sd">    :rtype: list[float]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">count_tags</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a partial reward based on the presence of required tags.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a partial reward based on the presence of required tags.</span>
+
+<span class="sd">        :param text: Completion text to inspect.</span>
+<span class="sd">        :type text: str</span>
+<span class="sd">        :returns: Score in ``[0, 1]`` reflecting tag compliance.</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">count</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;&lt;think&gt;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -778,7 +839,22 @@
     <span class="n">max_value_correct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a cosine-scaled reward function parameterised by length.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a cosine-scaled reward function parameterised by length.</span>
+
+<span class="sd">    :param min_value_wrong: Minimum reward for incorrect answers.</span>
+<span class="sd">    :type min_value_wrong: float</span>
+<span class="sd">    :param max_value_wrong: Maximum reward for incorrect answers.</span>
+<span class="sd">    :type max_value_wrong: float</span>
+<span class="sd">    :param min_value_correct: Minimum reward for correct answers.</span>
+<span class="sd">    :type min_value_correct: float</span>
+<span class="sd">    :param max_value_correct: Maximum reward for correct answers.</span>
+<span class="sd">    :type max_value_correct: float</span>
+<span class="sd">    :param max_len: Length corresponding to a full cosine cycle.</span>
+<span class="sd">    :type max_len: int</span>
+<span class="sd">    :returns: Configured reward function that applies cosine scaling.</span>
+<span class="sd">    :rtype: Callable[[list[Any], list[str]], list[float]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cosine_scaled_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-many-locals</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reward function that scales based on completion length using a cosine schedule.</span>
@@ -869,7 +945,16 @@
     <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ngram_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Return iterator over n-grams and the token list for English text.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return iterator over n-grams and the token list for English text.</span>
+
+<span class="sd">            :param text: Text snippet to tokenise.</span>
+<span class="sd">            :type text: str</span>
+<span class="sd">            :param ngram_length: Length of the n-grams to extract.</span>
+<span class="sd">            :type ngram_length: int</span>
+<span class="sd">            :returns: Tuple containing the n-gram iterator and the token list.</span>
+<span class="sd">            :rtype: tuple[iter, list[str]]</span>
+<span class="sd">            &quot;&quot;&quot;</span>
 
             <span class="n">words</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
             <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngram_length</span><span class="p">)]),</span> <span class="n">words</span>
@@ -881,7 +966,16 @@
         <span class="n">jieba_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;jieba&quot;</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ngram_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Return iterator over n-grams and the token list for Chinese text.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return iterator over n-grams and the token list for Chinese text.</span>
+
+<span class="sd">            :param text: Text snippet to tokenise with jieba.</span>
+<span class="sd">            :type text: str</span>
+<span class="sd">            :param ngram_length: Length of the n-grams to extract.</span>
+<span class="sd">            :type ngram_length: int</span>
+<span class="sd">            :returns: Tuple containing the n-gram iterator and the token list.</span>
+<span class="sd">            :rtype: tuple[iter, list[str]]</span>
+<span class="sd">            &quot;&quot;&quot;</span>
 
             <span class="n">seg_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">jieba_module</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
             <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">seg_list</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngram_length</span><span class="p">)]),</span> <span class="n">seg_list</span>
@@ -953,249 +1047,6 @@
     <span class="k">return</span> <span class="n">repetition_penalty_reward</span></div>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_init_event_loop</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize or get the current event loop.&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">loop</span>
-
-
-<div class="viewcode-block" id="ioi_code_reward">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.ioi_code_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">ioi_code_reward</span><span class="p">(</span>
-    <span class="n">completions</span><span class="p">,</span>
-    <span class="n">test_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">provider_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;piston&quot;</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate IOI problems using the configured execution client.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">provider_type</span> <span class="o">==</span> <span class="s2">&quot;morph&quot;</span><span class="p">:</span>
-        <span class="n">execution_client</span> <span class="o">=</span> <span class="n">get_morph_client_from_env</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># for info on setting up piston workers, see slurm/piston/README.md</span>
-        <span class="n">execution_client</span> <span class="o">=</span> <span class="n">get_piston_client_from_env</span><span class="p">()</span>
-
-    <span class="n">code_snippets</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">completion</span><span class="p">,</span> <span class="n">problem_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]):</span>
-        <span class="n">snippet</span> <span class="o">=</span> <span class="n">extract_code</span><span class="p">(</span><span class="n">completion</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">],</span> <span class="s2">&quot;cpp&quot;</span><span class="p">)</span>
-        <span class="n">code_snippets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">add_includes</span><span class="p">(</span><span class="n">snippet</span><span class="p">,</span> <span class="n">problem_id</span><span class="p">))</span>
-
-    <span class="n">problems_data</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">values</span><span class="p">))</span> <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="p">]</span>
-
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">_init_event_loop</span><span class="p">()</span>
-    <span class="n">eval_tasks</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
-            <span class="n">score_subtask</span><span class="p">(</span>
-                <span class="n">execution_client</span><span class="p">,</span>
-                <span class="n">problem_data</span><span class="p">,</span>
-                <span class="n">code</span><span class="p">,</span>
-                <span class="n">test_batch_size</span><span class="o">=</span><span class="n">test_batch_size</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">problem_data</span><span class="p">,</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">problems_data</span><span class="p">,</span> <span class="n">code_snippets</span><span class="p">)</span>
-    <span class="p">]</span>
-
-    <span class="n">gathered</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">eval_tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">safe_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SubtaskResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">gathered</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">SubtaskResult</span><span class="p">):</span>
-            <span class="n">safe_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-            <span class="k">continue</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">BaseException</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error from </span><span class="si">{</span><span class="n">provider_type</span><span class="si">}</span><span class="s2"> worker: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">safe_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SubtaskResult</span><span class="p">())</span>
-            <span class="k">continue</span>
-
-        <span class="n">safe_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">SubtaskResult</span><span class="p">(</span>
-                <span class="n">test_results</span><span class="o">=</span><span class="p">[</span><span class="n">TestResult</span><span class="p">(</span><span class="n">test_name</span><span class="o">=</span><span class="s2">&quot;synthetic&quot;</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">))]</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">score</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">safe_results</span><span class="p">]</span></div>
-
-
-
-<div class="viewcode-block" id="extract_code">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.extract_code">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_code</span><span class="p">(</span><span class="n">completion</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;python&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the last fenced code block for the requested language.&quot;&quot;&quot;</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;```</span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">\n(.*?)```&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
-    <span class="n">matches</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">completion</span><span class="p">)</span>
-    <span class="n">extracted_answer</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">matches</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">extracted_answer</span></div>
-
-
-
-<div class="viewcode-block" id="binary_code_reward">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.binary_code_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">binary_code_reward</span><span class="p">(</span>
-    <span class="n">completions</span><span class="p">,</span>
-    <span class="n">num_parallel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">provider_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;e2b&quot;</span><span class="p">,</span>
-    <span class="n">enforce_same_language</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert execution rewards into binary success scores.&quot;&quot;&quot;</span>
-    <span class="n">rewards</span> <span class="o">=</span> <span class="n">code_reward</span><span class="p">(</span>
-        <span class="n">completions</span><span class="p">,</span>
-        <span class="n">num_parallel</span><span class="o">=</span><span class="n">num_parallel</span><span class="p">,</span>
-        <span class="n">provider_type</span><span class="o">=</span><span class="n">provider_type</span><span class="p">,</span>
-        <span class="n">enforce_same_language</span><span class="o">=</span><span class="n">enforce_same_language</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">reward</span> <span class="ow">in</span> <span class="n">rewards</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">reward</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">reward</span> <span class="o">&gt;</span> <span class="n">BINARY_THRESHOLD</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">output</span></div>
-
-
-
-<div class="viewcode-block" id="code_reward">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.code_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">code_reward</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-    <span class="n">completions</span><span class="p">,</span>
-    <span class="n">num_parallel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">provider_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;e2b&quot;</span><span class="p">,</span>
-    <span class="n">enforce_same_language</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reward function that evaluates code snippets using a code execution provider.</span>
-
-<span class="sd">    Assumes the dataset contains a `verification_info` column with test cases.</span>
-
-<span class="sd">    :param completions: List of model completions to evaluate.</span>
-<span class="sd">    :type completions: list[Any]</span>
-<span class="sd">    :param num_parallel: Number of parallel code executions.</span>
-<span class="sd">    :type num_parallel: int</span>
-<span class="sd">    :param provider_type: Code execution provider to use (default ``&quot;e2b&quot;``).</span>
-<span class="sd">    :type provider_type: str</span>
-<span class="sd">    :param enforce_same_language: Whether to verify all problems share the same language.</span>
-<span class="sd">    :type enforce_same_language: bool</span>
-<span class="sd">    :param kwargs: Additional arguments passed to the verification layer.</span>
-<span class="sd">    :type kwargs: dict</span>
-<span class="sd">    :return: Reward values for each completion.</span>
-<span class="sd">    :rtype: list[float]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">evaluation_script_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">    import subprocess</span>
-<span class="s2">    import json</span>
-
-<span class="s2">    def evaluate_code(code, test_cases):</span>
-<span class="s2">        passed = 0</span>
-<span class="s2">        total = len(test_cases)</span>
-<span class="s2">        exec_timeout = 5</span>
-
-<span class="s2">        for case in test_cases:</span>
-<span class="s2">            process = subprocess.run(</span>
-<span class="s2">                [&quot;python3&quot;, &quot;-c&quot;, code],</span>
-<span class="s2">                input=case[&quot;input&quot;],</span>
-<span class="s2">                text=True,</span>
-<span class="s2">                capture_output=True,</span>
-<span class="s2">                timeout=exec_timeout</span>
-<span class="s2">            )</span>
-
-<span class="s2">            if process.returncode != 0:  # Error in execution</span>
-<span class="s2">                continue</span>
-
-<span class="s2">            output = process.stdout.strip()</span>
-
-<span class="s2">            # TODO: replace with a validator that compares structured</span>
-<span class="s2">            #       outputs rather than relying on exact stdout matches.</span>
-<span class="s2">            all_correct = True</span>
-<span class="s2">            for line1, line2 in zip(</span>
-<span class="s2">                output.split(&#39;</span><span class="se">\\</span><span class="s2">n&#39;),</span>
-<span class="s2">                case[&quot;output&quot;].split(&#39;</span><span class="se">\\</span><span class="s2">n&#39;),</span>
-<span class="s2">            ):</span>
-<span class="s2">                all_correct = all_correct and line1.strip() == line2.strip()</span>
-
-<span class="s2">            if all_correct:</span>
-<span class="s2">                passed += 1</span>
-
-<span class="s2">        success_rate = (passed / total)</span>
-<span class="s2">        return success_rate</span>
-
-<span class="s2">    code_snippet = </span><span class="si">{code}</span>
-<span class="s2">    test_cases = json.loads(</span><span class="si">{test_cases}</span><span class="s2">)</span>
-
-<span class="s2">    evaluate_code(code_snippet, test_cases)</span>
-<span class="s2">    &quot;&quot;&quot;</span>
-
-    <span class="n">code_snippets</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">extract_code</span><span class="p">(</span><span class="n">completion</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span>
-    <span class="p">]</span>
-    <span class="n">verification_info</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;verification_info&quot;</span><span class="p">]</span>
-
-    <span class="n">scripts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">code</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">code_snippets</span><span class="p">,</span> <span class="n">verification_info</span><span class="p">):</span>
-        <span class="n">script</span> <span class="o">=</span> <span class="n">evaluation_script_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">code</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">code</span><span class="p">),</span>
-            <span class="n">test_cases</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;test_cases&quot;</span><span class="p">])),</span>
-        <span class="p">)</span>
-        <span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
-
-    <span class="n">language</span> <span class="o">=</span> <span class="n">verification_info</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;language&quot;</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="n">enforce_same_language</span><span class="p">:</span>
-        <span class="n">all_same_language</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">&quot;language&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">language</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verification_info</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">all_same_language</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;verification_info entries must share the same language&quot;</span><span class="p">)</span>
-
-    <span class="n">execution_provider</span> <span class="o">=</span> <span class="n">get_provider</span><span class="p">(</span>
-        <span class="n">provider_type</span><span class="o">=</span><span class="n">provider_type</span><span class="p">,</span>
-        <span class="n">num_parallel</span><span class="o">=</span><span class="n">num_parallel</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">execution_provider</span><span class="o">.</span><span class="n">execute_scripts</span><span class="p">(</span>
-        <span class="n">scripts</span><span class="p">,</span>
-        <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">scripts</span><span class="p">),</span>
-    <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="get_code_format_reward">
-<a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.get_code_format_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_code_format_reward</span><span class="p">(</span><span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;python&quot;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format reward function specifically for code responses.</span>
-
-<span class="sd">    :param language: Programming language supported by E2B.</span>
-<span class="sd">    :type language: str</span>
-<span class="sd">    :return: Reward function that checks the language-specific format.</span>
-<span class="sd">    :rtype: Callable[[list[Any]], list[float]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;^&lt;think&gt;\n.*?\n&lt;/think&gt;\n&lt;answer&gt;\n.*?```</span><span class="si">{</span><span class="n">language</span><span class="si">}</span><span class="s2">.*?```.*?\n&lt;/answer&gt;$&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">code_format_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return 1.0 when the completion matches the language-specific format pattern.&quot;&quot;&quot;</span>
-
-        <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="n">completion_contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">completion_contents</span>
-        <span class="p">]</span>
-        <span class="k">return</span> <span class="p">[</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">match</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">code_format_reward</span></div>
-
-
-
 <div class="viewcode-block" id="get_soft_overlong_punishment">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.rewards.get_soft_overlong_punishment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_soft_overlong_punishment</span><span class="p">(</span><span class="n">max_completion_len</span><span class="p">,</span> <span class="n">soft_punish_cache</span><span class="p">):</span>
@@ -1217,7 +1068,16 @@
         <span class="n">completion_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reward function that penalizes overlong completions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reward function that penalises overlong completions.</span>
+
+<span class="sd">        :param completion_ids: Token id sequences representing generated completions.</span>
+<span class="sd">        :type completion_ids: list[list[int]]</span>
+<span class="sd">        :param kwargs: Additional keyword arguments (unused).</span>
+<span class="sd">        :type kwargs: dict</span>
+<span class="sd">        :returns: Negative rewards when completions exceed the configured limits.</span>
+<span class="sd">        :rtype: list[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
         <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">completion_ids</span><span class="p">:</span>
@@ -1241,7 +1101,18 @@
     <span class="n">_ref_model</span><span class="p">:</span> <span class="n">transformers</span><span class="o">.</span><span class="n">PreTrainedModel</span><span class="p">,</span>
     <span class="n">_tokenizer</span><span class="p">:</span> <span class="n">transformers</span><span class="o">.</span><span class="n">PreTrainedTokenizerBase</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the reward functions requested by the training script.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble the reward functions requested by the training script.</span>
+
+<span class="sd">    :param script_args: Argument namespace containing reward configuration flags.</span>
+<span class="sd">    :type script_args: argparse.Namespace</span>
+<span class="sd">    :param _ref_model: Reference model supplied for API parity (unused).</span>
+<span class="sd">    :type _ref_model: transformers.PreTrainedModel</span>
+<span class="sd">    :param _tokenizer: Tokeniser supplied for API parity (unused).</span>
+<span class="sd">    :type _tokenizer: transformers.PreTrainedTokenizerBase</span>
+<span class="sd">    :returns: Ordered list of reward callables to evaluate during training.</span>
+<span class="sd">    :rtype: list[Callable]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">enforce_same_language</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;enforce_same_language&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="n">reward_funcs_registry</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;pure_accuracy_reward&quot;</span><span class="p">:</span> <span class="n">pure_accuracy_reward</span><span class="p">,</span>

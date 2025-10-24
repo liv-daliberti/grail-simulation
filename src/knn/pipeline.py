@@ -440,7 +440,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     slate_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
-    eval_context = EvaluationContext(
+    eval_context = EvaluationContext.from_args(
         base_cli=base_cli,
         extra_cli=extra_cli,
         next_video_out_dir=context.next_video_dir,

@@ -18,16 +18,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Callable, Iterable, Mapping, Sequence
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.report_tables import (
+    append_markdown_table,
+    format_field_list,
+    normalise_field_values,
+)
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 
 from ..pipeline_context import OpinionSweepOutcome, ReportBundle, SweepOutcome
 
 _DEFAULT_FIELD_SET = tuple(DEFAULT_EXTRA_TEXT_FIELDS)
+
+_normalise_fields = partial(normalise_field_values, default=_DEFAULT_FIELD_SET)
 
 
 @dataclass(frozen=True)
@@ -41,21 +49,6 @@ class _PipelineSection:
     no_final_message: str
     sweep_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
     final_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
-
-
-def _normalise_fields(values: Iterable[object] | None) -> tuple[str, ...]:
-    """Canonicalise the incoming sequence of text fields."""
-    if values is None:
-        return _DEFAULT_FIELD_SET
-    ordered: list[str] = []
-    seen: set[str] = set()
-    for raw in values:
-        token = str(raw or "").strip()
-        if not token or token in seen:
-            continue
-        ordered.append(token)
-        seen.add(token)
-    return tuple(ordered) if ordered else _DEFAULT_FIELD_SET
 
 
 def _extract_fields_from_metrics(metrics: Mapping[str, object]) -> tuple[str, ...]:
@@ -72,44 +65,6 @@ def _extract_fields_from_metrics(metrics: Mapping[str, object]) -> tuple[str, ..
     return _DEFAULT_FIELD_SET
 
 
-def _format_field_list(fields: Sequence[str]) -> str:
-    """Render a comma-separated field list with inline code formatting."""
-    if not fields:
-        return "—"
-    return ", ".join(f"`{field}`" for field in fields)
-
-
-def _render_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> list[str]:
-    """Render a GitHub-flavoured Markdown table."""
-    if not rows:
-        return ["No entries recorded.", ""]
-    lines = [
-        "| " + " | ".join(headers) + " |",
-        "| " + " | ".join("---" for _ in headers) + " |",
-    ]
-    for row in rows:
-        lines.append("| " + " | ".join(row) + " |")
-    lines.append("")
-    return lines
-
-
-def _append_table(
-    lines: list[str],
-    title: str,
-    headers: Sequence[str],
-    rows: Sequence[Sequence[str]],
-    empty_message: str,
-) -> None:
-    """Append a table or fallback message to the report."""
-    lines.append(title)
-    lines.append("")
-    if rows:
-        lines.extend(_render_table(headers, rows))
-    else:
-        lines.append(empty_message)
-        lines.append("")
-
-
 def _append_section(lines: list[str], bundle: ReportBundle, spec: _PipelineSection) -> set[str]:
     """Append a pipeline section and return any newly observed fields."""
     lines.append(f"## {spec.heading}")
@@ -121,14 +76,14 @@ def _append_section(lines: list[str], bundle: ReportBundle, spec: _PipelineSecti
 
     sweep_rows, sweep_fields = spec.sweep_collector(bundle)
     final_rows, final_fields = spec.final_collector(bundle)
-    _append_table(
+    append_markdown_table(
         lines,
         "### Sweep Configurations",
         spec.sweep_headers,
         sweep_rows,
         spec.no_sweep_message,
     )
-    _append_table(
+    append_markdown_table(
         lines,
         "### Final Evaluations",
         spec.final_headers,
@@ -160,7 +115,7 @@ def _collect_next_video_sweeps(outcomes: Sequence[SweepOutcome]) -> tuple[list[S
                 outcome.feature_space,
                 outcome.study.label,
                 outcome.config.label(),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     return rows, unique
@@ -184,7 +139,7 @@ def _collect_next_video_final(bundle: ReportBundle) -> tuple[list[Sequence[str]]
                 (
                     feature_space,
                     str(study_label or study_key),
-                    _format_field_list(fields),
+                    format_field_list(fields),
                 )
             )
     return rows, unique
@@ -212,7 +167,7 @@ def _collect_opinion_sweeps(outcomes: Sequence[OpinionSweepOutcome]) -> tuple[li
                 outcome.feature_space,
                 outcome.study.label,
                 outcome.config.label(),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     return rows, unique
@@ -236,7 +191,7 @@ def _collect_opinion_final(bundle: ReportBundle) -> tuple[list[Sequence[str]], s
                 (
                     feature_space,
                     str(study_label or study_key),
-                    _format_field_list(fields),
+                    format_field_list(fields),
                 )
             )
     return rows, unique
@@ -286,9 +241,9 @@ def build_feature_report(repo_root: Path, bundle: ReportBundle) -> None:
     additional = sorted(field for field in observed if field not in _DEFAULT_FIELD_SET)
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"- Default extra text fields: {_format_field_list(_DEFAULT_FIELD_SET)}")
+    lines.append(f"- Default extra text fields: {format_field_list(_DEFAULT_FIELD_SET)}")
     if additional:
-        lines.append(f"- Additional fields observed: {_format_field_list(additional)}")
+        lines.append(f"- Additional fields observed: {format_field_list(additional)}")
     else:
         lines.append("- Additional fields observed: none (defaults only).")
     lines.append("")

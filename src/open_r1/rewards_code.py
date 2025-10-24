@@ -271,4 +271,3 @@ def get_code_format_reward(language: str = "python") -> Callable[[list[Any]], li
         return [1.0 if match else 0.0 for match in matches]
 
     return code_format_reward
-

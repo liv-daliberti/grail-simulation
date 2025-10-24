@@ -459,7 +459,7 @@ def test_run_final_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyP
     selections = {"word2vec": {study.key: StudySelection(study=study, outcome=outcome)}}
 
     out_dir = tmp_path / "out"
-    context = EvaluationContext(
+    context = EvaluationContext.from_args(
         base_cli=["--dataset", "stub"],
         extra_cli=[],
         out_dir=out_dir,
@@ -521,7 +521,7 @@ def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.Monke
     )
     selections = {"tfidf": {study.key: OpinionStudySelection(study=study, outcome=outcome)}}
 
-    context = EvaluationContext(
+    context = EvaluationContext.from_args(
         base_cli=["--dataset", "stub"],
         extra_cli=[],
         out_dir=tmp_path / "out",
@@ -570,7 +570,7 @@ def test_run_cross_study_evaluations_single_study_skip(
         metrics={"accuracy_overall": 0.6},
     )
     selections = {"tfidf": {study.key: StudySelection(study=study, outcome=outcome)}}
-    context = EvaluationContext(
+    context = EvaluationContext.from_args(
         base_cli=["--dataset", "stub"],
         extra_cli=[],
         out_dir=tmp_path / "out",
@@ -634,7 +634,7 @@ def test_run_cross_study_evaluations_reuses_cached_metrics(monkeypatch: pytest.M
         }
     }
 
-    context = EvaluationContext(
+    context = EvaluationContext.from_args(
         base_cli=["--dataset", "stub"],
         extra_cli=[],
         out_dir=tmp_path / "out",

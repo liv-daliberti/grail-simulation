@@ -350,7 +350,135 @@ class SweepTaskContext:
     word2vec_model_base: Path
 
 
-@dataclass(frozen=True, init=False)
+@dataclass(frozen=True)
+class EvaluationOutputs:
+    """
+    Normalised directory layout for next-video and opinion evaluation artefacts.
+
+    :param next_video: Directory where next-video artefacts are written.
+    :type next_video: Path
+    :param opinion: Directory where opinion artefacts are written.
+    :type opinion: Path
+    :param shared: Shared directory preserved for backwards compatibility.
+    :type shared: Path
+    """
+
+    next_video: Path
+    opinion: Path
+    shared: Path
+
+    @classmethod
+    def from_keywords(
+        cls,
+        *,
+        out_dir: Path | None,
+        next_video_out_dir: Path | None,
+        opinion_out_dir: Path | None,
+    ) -> "EvaluationOutputs":
+        """
+        Materialise the directory structure while supporting legacy ``out_dir`` overrides.
+
+        :param out_dir: Legacy base directory used for both tasks.
+        :type out_dir: Path | None
+        :param next_video_out_dir: Task-specific next-video output directory.
+        :type next_video_out_dir: Path | None
+        :param opinion_out_dir: Task-specific opinion output directory.
+        :type opinion_out_dir: Path | None
+        :returns: ``EvaluationOutputs`` capturing the resolved directories.
+        :rtype: EvaluationOutputs
+        :raises TypeError: When neither legacy nor task-specific directories are supplied.
+        """
+
+        resolved_opinion = (
+            opinion_out_dir
+            if opinion_out_dir is not None
+            else out_dir
+            if out_dir is not None
+            else next_video_out_dir
+        )
+        resolved_next = (
+            next_video_out_dir
+            if next_video_out_dir is not None
+            else out_dir
+            if out_dir is not None
+            else resolved_opinion
+        )
+        if resolved_opinion is None or resolved_next is None:
+            raise TypeError(
+                "EvaluationContext requires out_dir, or explicit next/opinion output directories."
+            )
+        resolved_shared = out_dir if out_dir is not None else resolved_opinion
+        return cls(
+            next_video=resolved_next,
+            opinion=resolved_opinion,
+            shared=resolved_shared,
+        )
+
+
+@dataclass(frozen=True)
+class EvaluationWord2VecPaths:
+    """
+    Normalised Word2Vec cache layout for next-video and opinion runs.
+
+    :param next_video: Directory housing Word2Vec caches for next-video runs.
+    :type next_video: Path
+    :param opinion: Directory housing Word2Vec caches for opinion runs.
+    :type opinion: Path
+    :param shared: Shared Word2Vec cache directory retained for backwards compatibility.
+    :type shared: Path
+    """
+
+    next_video: Path
+    opinion: Path
+    shared: Path
+
+    @classmethod
+    def from_keywords(
+        cls,
+        *,
+        word2vec_model_dir: Path | None,
+        next_video_word2vec_dir: Path | None,
+        opinion_word2vec_dir: Path | None,
+        fallback_parent: Path,
+    ) -> "EvaluationWord2VecPaths":
+        """
+        Materialise the Word2Vec cache directories while supporting legacy overrides.
+
+        :param word2vec_model_dir: Legacy shared Word2Vec cache directory.
+        :type word2vec_model_dir: Path | None
+        :param next_video_word2vec_dir: Next-video specific Word2Vec cache directory.
+        :type next_video_word2vec_dir: Path | None
+        :param opinion_word2vec_dir: Opinion specific Word2Vec cache directory.
+        :type opinion_word2vec_dir: Path | None
+        :param fallback_parent: Directory used to derive a cache path when none are supplied.
+        :type fallback_parent: Path
+        :returns: ``EvaluationWord2VecPaths`` capturing the resolved cache directories.
+        :rtype: EvaluationWord2VecPaths
+        """
+
+        resolved_shared = (
+            word2vec_model_dir
+            if word2vec_model_dir is not None
+            else next_video_word2vec_dir
+            if next_video_word2vec_dir is not None
+            else opinion_word2vec_dir
+            if opinion_word2vec_dir is not None
+            else fallback_parent / "word2vec_models"
+        )
+        resolved_next = (
+            next_video_word2vec_dir if next_video_word2vec_dir is not None else resolved_shared
+        )
+        resolved_opinion = (
+            opinion_word2vec_dir if opinion_word2vec_dir is not None else resolved_shared
+        )
+        return cls(
+            next_video=resolved_next,
+            opinion=resolved_opinion,
+            shared=resolved_shared,
+        )
+
+
+@dataclass(frozen=True)
 class EvaluationContext:
     """
     Shared CLI/runtime parameters for final evaluation stages.
@@ -378,79 +506,117 @@ class EvaluationContext:
 
     base_cli: Sequence[str]
     extra_cli: Sequence[str]
-    next_video_out_dir: Path
-    opinion_out_dir: Path
-    next_video_word2vec_dir: Path
-    opinion_word2vec_dir: Path
     reuse_existing: bool
-    out_dir: Path
-    word2vec_model_dir: Path
+    outputs: EvaluationOutputs
+    word2vec_models: EvaluationWord2VecPaths
 
-    def __init__(
-        self,
+    @classmethod
+    def from_args(
+        cls,
         *,
         base_cli: Sequence[str],
         extra_cli: Sequence[str],
         reuse_existing: bool,
-        out_dir: Path | None = None,
-        word2vec_model_dir: Path | None = None,
-        next_video_out_dir: Path | None = None,
-        opinion_out_dir: Path | None = None,
-        next_video_word2vec_dir: Path | None = None,
-        opinion_word2vec_dir: Path | None = None,
-    ) -> None:
+        **overrides: object,
+    ) -> "EvaluationContext":
         """
-        Allow callers to supply either the legacy ``out_dir``/``word2vec_model_dir`` pair or the
-        newer, task-specific directories. Missing values are derived to preserve backwards
-        compatibility with existing tests and workflows.
+        Build an :class:`EvaluationContext` from legacy or task-specific directory overrides.
+
+        :returns: Result produced by ``EvaluationContext``.
+        :rtype: EvaluationContext
         """
 
-        resolved_opinion_out = (
-            opinion_out_dir
-            if opinion_out_dir is not None
-            else out_dir
-            if out_dir is not None
-            else next_video_out_dir
-        )
-        resolved_next_out = (
-            next_video_out_dir
-            if next_video_out_dir is not None
-            else out_dir
-            if out_dir is not None
-            else resolved_opinion_out
-        )
-        if resolved_opinion_out is None or resolved_next_out is None:
-            raise TypeError(
-                "EvaluationContext requires out_dir, or explicit next/opinion output directories."
-            )
+        valid_keys = {
+            "out_dir",
+            "word2vec_model_dir",
+            "next_video_out_dir",
+            "opinion_out_dir",
+            "next_video_word2vec_dir",
+            "opinion_word2vec_dir",
+        }
+        unexpected = set(overrides) - valid_keys
+        if unexpected:
+            formatted = ", ".join(sorted(unexpected))
+            raise TypeError(f"EvaluationContext received unexpected keyword(s): {formatted}")
 
-        resolved_word2vec_dir = (
-            word2vec_model_dir
-            if word2vec_model_dir is not None
-            else next_video_word2vec_dir
-            if next_video_word2vec_dir is not None
-            else opinion_word2vec_dir
-            if opinion_word2vec_dir is not None
-            else resolved_next_out / "word2vec_models"
+        outputs = EvaluationOutputs.from_keywords(
+            out_dir=overrides.get("out_dir"),
+            next_video_out_dir=overrides.get("next_video_out_dir"),
+            opinion_out_dir=overrides.get("opinion_out_dir"),
         )
-        resolved_next_w2v = (
-            next_video_word2vec_dir if next_video_word2vec_dir is not None else resolved_word2vec_dir
+        word2vec_paths = EvaluationWord2VecPaths.from_keywords(
+            word2vec_model_dir=overrides.get("word2vec_model_dir"),
+            next_video_word2vec_dir=overrides.get("next_video_word2vec_dir"),
+            opinion_word2vec_dir=overrides.get("opinion_word2vec_dir"),
+            fallback_parent=outputs.next_video,
         )
-        resolved_opinion_w2v = (
-            opinion_word2vec_dir if opinion_word2vec_dir is not None else resolved_word2vec_dir
+        return cls(
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            reuse_existing=reuse_existing,
+            outputs=outputs,
+            word2vec_models=word2vec_paths,
         )
 
-        resolved_out_dir = out_dir if out_dir is not None else resolved_opinion_out
+    @property
+    def next_video_out_dir(self) -> Path:
+        """
+        Directory where next-video evaluation artefacts are written.
 
-        object.__setattr__(self, "base_cli", base_cli)
-        object.__setattr__(self, "extra_cli", extra_cli)
-        object.__setattr__(self, "reuse_existing", reuse_existing)
-        object.__setattr__(self, "next_video_out_dir", resolved_next_out)
-        object.__setattr__(self, "opinion_out_dir", resolved_opinion_out)
-        object.__setattr__(self, "next_video_word2vec_dir", resolved_next_w2v)
-        object.__setattr__(self, "opinion_word2vec_dir", resolved_opinion_w2v)
-        object.__setattr__(self, "out_dir", resolved_out_dir)
-        object.__setattr__(self, "word2vec_model_dir", resolved_word2vec_dir)
+        :rtype: Path
+        """
+
+        return self.outputs.next_video
+
+    @property
+    def opinion_out_dir(self) -> Path:
+        """
+        Directory where opinion evaluation artefacts are written.
+
+        :rtype: Path
+        """
+
+        return self.outputs.opinion
+
+    @property
+    def out_dir(self) -> Path:
+        """
+        Legacy evaluation output directory preserved for backwards compatibility.
+
+        :rtype: Path
+        """
+
+        return self.outputs.shared
+
+    @property
+    def next_video_word2vec_dir(self) -> Path:
+        """
+        Directory containing Word2Vec caches for next-video runs.
+
+        :rtype: Path
+        """
+
+        return self.word2vec_models.next_video
+
+    @property
+    def opinion_word2vec_dir(self) -> Path:
+        """
+        Directory containing Word2Vec caches for opinion runs.
+
+        :rtype: Path
+        """
+
+        return self.word2vec_models.opinion
+
+    @property
+    def word2vec_model_dir(self) -> Path:
+        """
+        Legacy shared Word2Vec cache directory preserved for backwards compatibility.
+
+        :rtype: Path
+        """
+
+        return self.word2vec_models.shared
 
 @dataclass(frozen=True)
 class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes

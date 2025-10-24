@@ -17,10 +17,16 @@
 
 from __future__ import annotations
 
+from functools import partial
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence, TYPE_CHECKING
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.report_tables import (
+    append_markdown_table,
+    format_field_list,
+    normalise_field_values,
+)
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 
@@ -36,22 +42,7 @@ if TYPE_CHECKING:
 
 _DEFAULT_FIELD_SET = tuple(DEFAULT_EXTRA_TEXT_FIELDS)
 
-
-def _normalise_fields(values: Iterable[object] | None) -> tuple[str, ...]:
-    """Return a canonical tuple of extra text fields."""
-    if values is None:
-        return _DEFAULT_FIELD_SET
-
-    ordered: list[str] = []
-    seen: set[str] = set()
-    for raw in values:
-        token = str(raw or "").strip()
-        if not token or token in seen:
-            continue
-        ordered.append(token)
-        seen.add(token)
-
-    return tuple(ordered) if ordered else _DEFAULT_FIELD_SET
+_normalise_fields = partial(normalise_field_values, default=_DEFAULT_FIELD_SET)
 
 
 def _extract_fields_from_metrics(metrics: Mapping[str, object]) -> tuple[str, ...]:
@@ -70,27 +61,6 @@ def _extract_fields_from_metrics(metrics: Mapping[str, object]) -> tuple[str, ..
     return _DEFAULT_FIELD_SET
 
 
-def _format_field_list(fields: Sequence[str]) -> str:
-    """Render a sequence of fields as inline code."""
-    if not fields:
-        return "—"
-    return ", ".join(f"`{field}`" for field in fields)
-
-
-def _render_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> list[str]:
-    """Render rows as a GitHub-flavoured Markdown table."""
-    if not rows:
-        return ["No entries recorded.", ""]
-    lines = [
-        "| " + " | ".join(headers) + " |",
-        "| " + " | ".join("---" for _ in headers) + " |",
-    ]
-    for row in rows:
-        lines.append("| " + " | ".join(row) + " |")
-    lines.append("")
-    return lines
-
-
 def _append_section(
     lines: list[str],
     heading: str,
@@ -99,13 +69,13 @@ def _append_section(
     empty_message: str,
 ) -> None:
     """Append a subsection summarising sweep or final metrics."""
-    lines.append(f"### {heading}")
-    lines.append("")
-    if rows:
-        lines.extend(_render_table(headers, rows))
-    else:
-        lines.append(empty_message)
-        lines.append("")
+    append_markdown_table(
+        lines,
+        f"### {heading}",
+        headers,
+        rows,
+        empty_message,
+    )
 
 
 def _append_next_video_section(
@@ -199,7 +169,7 @@ def _collect_next_video_sweeps(
             (
                 outcome.study.label,
                 outcome.config.label(),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     return rows, unique_fields
@@ -228,7 +198,7 @@ def _collect_next_video_final(
             (
                 str(label),
                 str(issue),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     if not rows and selections:
@@ -239,7 +209,7 @@ def _collect_next_video_final(
                 (
                     selection.study.label,
                     selection.study.issue,
-                    _format_field_list(fields),
+                    format_field_list(fields),
                 )
             )
     return rows, unique_fields
@@ -263,7 +233,7 @@ def _collect_opinion_sweeps(
             (
                 outcome.study.label,
                 outcome.config.label(),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     return rows, unique_fields
@@ -284,7 +254,7 @@ def _collect_opinion_final(
         rows.append(
             (
                 str(label),
-                _format_field_list(fields),
+                format_field_list(fields),
             )
         )
     if not rows and selections:
@@ -294,7 +264,7 @@ def _collect_opinion_final(
             rows.append(
                 (
                     selection.study.label,
-                    _format_field_list(fields),
+                    format_field_list(fields),
                 )
             )
     return rows, unique_fields
@@ -326,9 +296,9 @@ def _write_feature_report(
     additional_fields = sorted(field for field in stage_fields if field not in _DEFAULT_FIELD_SET)
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"- Default extra text fields: {_format_field_list(_DEFAULT_FIELD_SET)}")
+    lines.append(f"- Default extra text fields: {format_field_list(_DEFAULT_FIELD_SET)}")
     if additional_fields:
-        lines.append(f"- Additional fields observed: {_format_field_list(additional_fields)}")
+        lines.append(f"- Additional fields observed: {format_field_list(additional_fields)}")
     else:
         lines.append("- Additional fields observed: none (defaults only).")
     lines.append("")

@@ -213,7 +213,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -299,7 +301,15 @@ downstream analysis.</p></li>
 </ul>
 <p>Set <code class="docutils literal notranslate"><span class="pre">--train-curve-max</span></code> when invoking the CLI to limit how many training
 examples feed into the training curve diagnostics.</p>
-<p id="module-knn.data">Dataset loading and issue filtering utilities for the KNN baseline.</p>
+<p id="module-knn.data">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.filter_dataset_for_issue">
 <span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
@@ -403,7 +413,15 @@ examples feed into the training curve diagnostics.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.features">Feature extraction helpers for the refactored KNN baselines.</p>
+<p id="module-knn.features">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.features.Word2VecConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('models/knn_word2vec')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecConfig" title="Link to this definition">¶</a></dt>
@@ -734,7 +752,15 @@ examples feed into the training curve diagnostics.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.index">TF-IDF index construction and slate-level prediction helpers.</p>
+<p id="module-knn.index">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.index.build_sentence_transformer_index">
 <span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_sentence_transformer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_sentence_transformer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_sentence_transformer_index" title="Link to this definition">¶</a></dt>
@@ -982,7 +1008,7 @@ indicates that a prediction could not be produced for that <code class="docutils
 <p>Parameters</p>
 <p>text:</p>
 <blockquote>
-<div><p>Raw text fragment to normalise.</p>
+<div><p>Raw text fragment to normalize.</p>
 </div></blockquote>
 <p>Returns</p>
 <p>str</p>
@@ -992,10 +1018,10 @@ indicates that a prediction could not be produced for that <code class="docutils
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Free-form text string that requires normalisation.</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Free-form text string that requires normalization.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Canonicalised text normalised for downstream processing.</p>
+<dd class="field-even"><p>Canonicalized text normalized for downstream processing.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -1080,7 +1106,7 @@ indicates that a prediction could not be produced for that <code class="docutils
 </div></blockquote>
 <p>args:</p>
 <blockquote>
-<div><p>Parsed CLI namespace controlling evaluation behaviour.</p>
+<div><p>Parsed CLI namespace controlling evaluation behavior.</p>
 </div></blockquote>
 <p>provenance:</p>
 <blockquote>
@@ -1180,7 +1206,7 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
 <li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
-<li><p><strong>best_k</strong> (<em>int</em>) – Neighbourhood size selected as optimal for the evaluation.</p></li>
+<li><p><strong>best_k</strong> (<em>int</em>) – Neighborhood size selected as optimal for the evaluation.</p></li>
 <li><p><strong>output_path</strong> (<em>Path</em>) – Filesystem path for the generated report or figure.</p></li>
 <li><p><strong>data_split</strong> (<em>str</em>) – Name of the dataset split from which metrics were derived.</p></li>
 </ul>
@@ -1266,7 +1292,7 @@ indicates that a prediction could not be produced for that <code class="docutils
 <p>int</p>
 <blockquote>
 <div><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> value where marginal gains fall below half of the initial slope,</p>
-<p>or the accuracy-maximising <code class="docutils literal notranslate"><span class="pre">k</span></code> when the heuristic cannot be applied.</p>
+<p>or the accuracy-maximizing <code class="docutils literal notranslate"><span class="pre">k</span></code> when the heuristic cannot be applied.</p>
 </div></blockquote>
 </div></blockquote>
 <dl class="field-list simple">
@@ -1277,7 +1303,7 @@ indicates that a prediction could not be produced for that <code class="docutils
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Neighbourhood size that maximises the provided accuracy scores.</p>
+<dd class="field-even"><p>Neighborhood size that maximizes the provided accuracy scores.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
@@ -1285,7 +1311,15 @@ indicates that a prediction could not be produced for that <code class="docutils
 </dl>
 </dd></dl>
 
-<p id="module-knn.opinion">Post-study opinion index evaluation for the KNN baselines.</p>
+<p id="module-knn.opinion">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.opinion.OpinionSpec">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
@@ -1355,7 +1389,15 @@ indicates that a prediction could not be produced for that <code class="docutils
 </dl>
 </dd></dl>
 
-<p id="module-knn.cli">Command-line interface for the refactored KNN baseline.</p>
+<p id="module-knn.cli">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.cli.build_parser">
 <span class="sig-prename descclassname"><span class="pre">knn.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.cli.build_parser" title="Link to this definition">¶</a></dt>

@@ -1,10 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Session log parsing and feature engineering for CodeOcean exports.
 
 Here we translate the raw capsule sessions into the intermediate dataframe
 used by :mod:`clean_data.clean_data`: loading survey allow-lists, merging
 per-video metadata, enforcing participant filters, and emitting one row per
-viewer decision.  It is the heaviest module in the package and underpins
-both the CLI and the high-level build functions.
+viewer decision. It is the heaviest module in the package and underpins
+both the CLI and the high-level build functions. All of the routines are
+covered by the repository's Apache 2.0 license; see LICENSE for details.
 """
 
 # pylint: disable=too-many-lines
@@ -16,9 +32,9 @@ import logging
 import random
 from collections import Counter
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -54,7 +70,14 @@ log = logging.getLogger("clean_grail")
 
 @dataclass(frozen=True)
 class ParticipantIdentifiers:
-    """Structured container for participant identifier fields."""
+    """Structured container for participant identifier fields.
+
+    :param worker_id: Worker identifier from MTurk exports.
+    :param case_id: Case identifier from YouGov exports.
+    :param anon_id: Anonymous identifier provided in session logs.
+    :param urlid: URL-based identifier from survey joins.
+    :param session_id: Session identifier from the interaction export.
+    """
 
     worker_id: str = ""
     case_id: str = ""
@@ -65,7 +88,14 @@ class ParticipantIdentifiers:
 
 @dataclass(frozen=True)
 class SessionTiming:
-    """Per-session timing metadata keyed by raw/canonical video ids."""
+    """Per-session timing metadata keyed by raw/canonical video ids.
+
+    :param start: Mapping from video id to start timestamp (ms).
+    :param end: Mapping from video id to end timestamp (ms).
+    :param watch: Mapping from video id to watch duration (ms).
+    :param total: Mapping from video id to total video length (ms).
+    :param delay: Mapping from video id to playback start delay (ms).
+    """
 
     start: Dict[str, Any]
     end: Dict[str, Any]
@@ -76,7 +106,14 @@ class SessionTiming:
 
 @dataclass(frozen=True)
 class SessionInfo:
-    """Normalized identifiers carried across per-session rows."""
+    """Normalized identifiers carried across per-session rows.
+
+    :param session_id: Canonical session identifier.
+    :param anon_id: Anonymous participant token.
+    :param topic: Topic/issue string resolved from surveys.
+    :param urlid: URL identifier used in joining survey data.
+    :param trajectory_json: JSON blob capturing the watch trajectory.
+    """
 
     session_id: str
     anon_id: str
@@ -87,7 +124,15 @@ class SessionInfo:
 
 @dataclass(frozen=True)
 class AllowlistState:
-    """Participant allowlist configuration derived from survey exports."""
+    """Participant allowlist configuration derived from survey exports.
+
+    :param gun_workers: Worker ids permitted for the gun-control study.
+    :param wage_study2_workers: Worker ids permitted for wage Study 2.
+    :param wage_study3_caseids: Case ids permitted for wage Study 3.
+    :param wage_study4_workers: Worker ids permitted for wage Study 4.
+    :param wage_study2_urlids: URL ids permitted for wage Study 2.
+    :param wage_study4_urlids: URL ids permitted for wage Study 4.
+    """
 
     gun_workers: Set[str]
     wage_study2_workers: Set[str]
@@ -329,7 +374,15 @@ def _video_meta(
     fallback_titles: Dict[str, Any],
     tree_issue_map: Dict[str, str],
 ) -> Dict[str, Any]:
-    """Return augmented metadata for a watched video."""
+    """Return augmented metadata for a watched video.
+
+    :param base_id: Canonical video identifier.
+    :param raw_id: Raw video identifier recorded in the session.
+    :param tree_meta: Recommendation tree metadata keyed by canonical id.
+    :param fallback_titles: Mapping from video id to fallback title strings.
+    :param tree_issue_map: Mapping from video id to inferred issue labels.
+    :returns: Dictionary of merged metadata fields.
+    """
 
     info = dict(tree_meta.get(base_id) or {})
     if raw_id and raw_id != base_id:
@@ -350,7 +403,12 @@ def _video_meta(
 
 
 def _resolve_title(meta: Dict[str, Any], fallback_id: str) -> Tuple[str, bool]:
-    """Return a title for the candidate along with a missing flag."""
+    """Return a title for the candidate along with a missing flag.
+
+    :param meta: Metadata dictionary containing optional ``title``.
+    :param fallback_id: Identifier used when a title is absent.
+    :returns: Tuple of ``(title, is_missing)``.
+    """
 
     title = str(meta.get("title") or "").strip()
     if title:
@@ -359,12 +417,69 @@ def _resolve_title(meta: Dict[str, Any], fallback_id: str) -> Tuple[str, bool]:
 
 
 def _resolve_channel(meta: Dict[str, Any]) -> Tuple[str, bool]:
-    """Return the channel title with a missing flag."""
+    """Return the channel title with a missing flag.
+
+    :param meta: Metadata dictionary containing optional channel info.
+    :returns: Tuple of ``(channel_title, is_missing)``.
+    """
 
     channel = str(meta.get("channel_title") or "").strip()
     if channel:
         return channel, False
     return "(channel missing)", True
+
+
+def _apply_timing_fields(
+    entry: Dict[str, Any],
+    raw_vid: str,
+    base_vid: str,
+    timings: SessionTiming,
+) -> None:
+    """Populate timing metrics for the watched entry when present."""
+
+    for field_name, timing_map in (
+        ("start_delay_ms", timings.delay),
+        ("start_ms", timings.start),
+        ("end_ms", timings.end),
+        ("watch_ms", timings.watch),
+        ("total_length_ms", timings.total),
+    ):
+        value = lookup_session_value(timing_map, raw_vid, base_vid)
+        if value is not None:
+            entry[field_name] = value
+
+
+def _build_detail_entry(
+    idx: int,
+    raw_vid: str,
+    base_vid: str,
+    tree_meta: Dict[str, Any],
+    fallback_titles: Dict[str, Any],
+    tree_issue_map: Dict[str, str],
+    timings: SessionTiming,
+) -> Dict[str, Any]:
+    """Return a single watched-detail dictionary with timing fields."""
+
+    meta = _video_meta(base_vid, raw_vid, tree_meta, fallback_titles, tree_issue_map)
+    title_val, title_missing = _resolve_title(meta, base_vid)
+    channel_val, channel_missing = _resolve_channel(meta)
+    entry: Dict[str, Any] = {
+        "id": base_vid,
+        "raw_id": raw_vid,
+        "idx": idx,
+        "title": title_val,
+        "title_missing": title_missing,
+        "channel_title": channel_val,
+        "channel_missing": channel_missing,
+    }
+    if meta.get("channel_id"):
+        entry["channel_id"] = meta["channel_id"]
+    _apply_timing_fields(entry, raw_vid, base_vid, timings)
+
+    recs = meta.get("recs")
+    if isinstance(recs, list):
+        entry["recommendations"] = [dict(rec) for rec in recs if isinstance(rec, dict)]
+    return entry
 
 
 def _build_watched_details(
@@ -376,54 +491,71 @@ def _build_watched_details(
     *,
     timings: SessionTiming,
 ) -> List[Dict[str, Any]]:
-    """Return per-video metadata entries for the watched sequence."""
+    """Return per-video metadata entries for the watched sequence.
 
-    # pylint: disable=too-many-arguments,too-many-locals
+    :param raw_vids: List of raw video identifiers from the session log.
+    :param base_vids: List of canonical video identifiers aligned with ``raw_vids``.
+    :param tree_meta: Recommendation metadata keyed by canonical id.
+    :param fallback_titles: Mapping from video id to fallback title strings.
+    :param tree_issue_map: Mapping from video id to issue labels.
+    :param timings: Structured timing information for the session.
+    :returns: Sequence of dictionaries summarising each watched item.
+    """
 
     details: List[Dict[str, Any]] = []
     for idx, raw_vid in enumerate(raw_vids):
         base = base_vids[idx]
-        meta = _video_meta(base, raw_vid, tree_meta, fallback_titles, tree_issue_map)
-        title_val, title_missing = _resolve_title(meta, base)
-        channel_val, channel_missing = _resolve_channel(meta)
-        entry: Dict[str, Any] = {
-            "id": base,
-            "raw_id": raw_vid,
-            "idx": idx,
-            "title": title_val,
-            "title_missing": title_missing,
-            "channel_title": channel_val,
-            "channel_missing": channel_missing,
-        }
-        if meta.get("channel_id"):
-            entry["channel_id"] = meta["channel_id"]
-        timing_fields = {
-            "start_delay_ms": timings.delay,
-            "start_ms": timings.start,
-            "end_ms": timings.end,
-            "watch_ms": timings.watch,
-            "total_length_ms": timings.total,
-        }
-        for field_name, timing_map in timing_fields.items():
-            value = lookup_session_value(timing_map, raw_vid, base)
-            if value is not None:
-                entry[field_name] = value
-
-        recs = meta.get("recs")
-        if isinstance(recs, list):
-            entry["recommendations"] = [
-                dict(rec) for rec in recs if isinstance(rec, dict)
-            ]
-
-        details.append(entry)
+        details.append(
+            _build_detail_entry(
+                idx,
+                raw_vid,
+                base,
+                tree_meta,
+                fallback_titles,
+                tree_issue_map,
+                timings,
+            )
+        )
 
     return details
 
 
-def normalize_display_orders(  # pylint: disable=too-many-branches
+def _normalize_display_step_index(key: Any) -> Optional[int]:
+    """Return the zero-based step index encoded by the display-order key."""
+
+    if isinstance(key, int):
+        return key if key >= 0 else None
+    if not isinstance(key, str):
+        return None
+    stripped = key.strip()
+    lowered = stripped.lower()
+    if "recs" not in lowered and not stripped.isdigit():
+        return None
+
+    digits: List[str] = []
+    for char in stripped:
+        if char.isdigit():
+            digits.append(char)
+        elif digits:
+            break
+    if not digits:
+        return None
+    raw_idx = int("".join(digits))
+    if "recs" in lowered and raw_idx >= 2:
+        raw_idx -= 2
+    if raw_idx < 0:
+        return None
+    return raw_idx
+
+
+def normalize_display_orders(
     display_orders: Any,
 ) -> Dict[int, List[str]]:
-    """Convert display order mappings into canonical id sequences."""
+    """Convert display order mappings into canonical id sequences.
+
+    :param display_orders: Raw display-order structure from the capsule export.
+    :returns: Mapping from step index to lists of canonical video ids.
+    """
 
     normalized: Dict[int, List[str]] = {}
     if not isinstance(display_orders, dict):
@@ -431,125 +563,176 @@ def normalize_display_orders(  # pylint: disable=too-many-branches
     for key, value in display_orders.items():
         if not isinstance(value, (list, tuple)):
             continue
-
-        step_idx: Optional[int] = None
-        if isinstance(key, int):
-            step_idx = key
-        elif isinstance(key, str):
-            stripped = key.strip()
-            lowered = stripped.lower()
-            if "recs" not in lowered and not stripped.isdigit():
-                continue
-
-            digits = []
-            for char in stripped:
-                if char.isdigit():
-                    digits.append(char)
-                elif digits:
-                    break
-            if not digits:
-                continue
-            raw_idx = int("".join(digits))
-            if "recs" in lowered and raw_idx >= 2:
-                step_idx = raw_idx - 2
-            else:
-                step_idx = raw_idx
-
-        if step_idx is None or step_idx < 0:
+        step_idx = _normalize_display_step_index(key)
+        if step_idx is None:
             continue
 
-        vids: List[str] = []
-        for item in value:
-            if not isinstance(item, str):
-                continue
-            stripped = _strip_session_video_id(item)
-            if stripped:
-                vids.append(stripped)
+        vids = [
+            stripped
+            for item in value
+            if isinstance(item, str)
+            for stripped in [_strip_session_video_id(item)]
+            if stripped
+        ]
         if vids:
             normalized[step_idx] = vids
     return normalized
 
 
-def build_slate_items(  # pylint: disable=too-many-locals,too-many-branches
+@dataclass(frozen=True)
+class _SessionResources:
+    """Reusable datasets needed to build session interaction rows."""
+
+    surveys: Dict[str, Dict[str, List[Dict[str, Any]]]]
+    tree_meta: Dict[str, Dict[str, Any]]
+    tree_issue_map: Dict[str, str]
+    fallback_titles: Dict[str, Any]
+    allowlist: AllowlistState
+
+
+@dataclass
+class _SessionBuildState:
+    """Mutable state tracking rows, counters, and participant ids."""
+
+    rows: List[Dict[str, Any]] = field(default_factory=list)
+    interaction_stats: Counter[str] = field(default_factory=Counter)
+    seen_participant_issue: set[Tuple[str, str]] = field(default_factory=set)
+    fallback_participant_counter: int = 0
+
+
+@dataclass(frozen=True)
+class _SessionContext:
+    """Derived per-session inputs consumed when creating interaction rows."""
+
+    session_payload: Mapping[str, Any]
+    raw_vids: List[str]
+    base_vids: List[str]
+    timings: SessionTiming
+    watched_details: List[Dict[str, Any]]
+    info: SessionInfo
+    canonical_issue: str
+    survey_rows: List[Dict[str, Any]]
+    candidate_entries: List[Tuple[int, str, str, str, str, Dict[str, Any]]]
+    enforce_allowlist: bool
+    display_orders: Dict[int, List[str]]
+    watched_vids_json: List[str]
+    watched_detailed_json: List[Dict[str, Any]]
+
+
+def _gather_slate_candidates(
+    step_index: int,
+    display_orders: Dict[int, List[str]],
+    recommendations: Optional[List[Dict[str, Any]]],
+) -> Tuple[List[Tuple[str, Optional[str]]], str]:
+    """Return ordered ``(base_id, raw_id)`` candidates and their source."""
+
+    order_ids = display_orders.get(step_index, [])
+    if order_ids:
+        pairs: List[Tuple[str, Optional[str]]] = []
+        for vid in order_ids:
+            base_vid = _strip_session_video_id(vid)
+            if not base_vid:
+                continue
+            raw_id = vid if vid != base_vid else None
+            pairs.append((base_vid, raw_id))
+        return pairs, "display_orders"
+
+    candidates: List[Tuple[str, Optional[str]]] = []
+    if not isinstance(recommendations, list):
+        recommendations = []
+    for rec in recommendations:
+        if not isinstance(rec, dict):
+            continue
+        rec_id = rec.get("id") or rec.get("video_id") or rec.get("raw_id")
+        rec_id = _strip_session_video_id(str(rec_id or ""))
+        if not rec_id:
+            continue
+        raw_id = rec.get("raw_id")
+        if raw_id:
+            raw_id = _strip_session_video_id(str(raw_id))
+        candidates.append((rec_id, raw_id if raw_id != rec_id else None))
+    return candidates, "tree_metadata"
+
+
+def _make_slate_item(
+    base_id: str,
+    raw_id: Optional[str],
+    tree_meta: Dict[str, Dict[str, Any]],
+    fallback_titles: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Construct a single slate entry with metadata fallbacks."""
+
+    meta = tree_meta.get(base_id, {})
+    title_candidates = (
+        meta.get("title"),
+        fallback_titles.get(base_id),
+        fallback_titles.get(raw_id) if raw_id else None,
+    )
+    title = next(
+        (
+            str(candidate).strip()
+            for candidate in title_candidates
+            if isinstance(candidate, str) and str(candidate).strip()
+        ),
+        "",
+    )
+    if not title and raw_id:
+        title = raw_id
+    if not title:
+        title = base_id
+    item: Dict[str, Any] = {"id": base_id, "title": title}
+    if raw_id:
+        item["raw_id"] = raw_id
+    if meta.get("channel_title"):
+        item["channel_title"] = meta["channel_title"]
+    if meta.get("channel_id"):
+        item["channel_id"] = meta["channel_id"]
+    for stat_key in (
+        "view_count",
+        "like_count",
+        "dislike_count",
+        "favorite_count",
+        "comment_count",
+    ):
+        stat_value = meta.get(stat_key)
+        if stat_value not in (None, ""):
+            item[stat_key] = stat_value
+    duration_value = meta.get("duration")
+    if duration_value not in (None, ""):
+        item["duration"] = duration_value
+    return item
+
+
+def build_slate_items(
     step_index: int,
     display_orders: Dict[int, List[str]],
     recommendations: Optional[List[Dict[str, Any]]],
     tree_meta: Dict[str, Dict[str, Any]],
     fallback_titles: Dict[str, Any],
 ) -> Tuple[List[Dict[str, Any]], str]:
-    """Derive the slate items for the given interaction step."""
+    """Derive the slate items for the given interaction step.
 
-    candidates: List[Tuple[str, Optional[str]]] = []
-    source = "display_orders"
+    :param step_index: Zero-based interaction index.
+    :param display_orders: Normalized display-order mapping per step.
+    :param recommendations: Raw recommendation records from metadata.
+    :param tree_meta: Recommendation tree metadata keyed by canonical id.
+    :param fallback_titles: Mapping from video id to fallback title strings.
+    :returns: Tuple of ``(slate_items, source)`` describing the slate.
+    """
 
-    order_ids = display_orders.get(step_index, [])
-    if order_ids:
-        for vid in order_ids:
-            base_vid = _strip_session_video_id(vid)
-            if base_vid:
-                raw_id = vid if vid != base_vid else None
-                candidates.append((base_vid, raw_id))
-    else:
-        source = "tree_metadata"
-        if not isinstance(recommendations, list):
-            recommendations = []
-        for rec in recommendations:
-            if not isinstance(rec, dict):
-                continue
-            rec_id = rec.get("id") or rec.get("video_id") or rec.get("raw_id")
-            rec_id = _strip_session_video_id(str(rec_id or ""))
-            if not rec_id:
-                continue
-            raw_id = rec.get("raw_id")
-            if raw_id:
-                raw_id = _strip_session_video_id(str(raw_id))
-            candidates.append((rec_id, raw_id if raw_id != rec_id else None))
+    candidates, source = _gather_slate_candidates(
+        step_index,
+        display_orders,
+        recommendations,
+    )
 
-    seen: set[str] = set()
     items: List[Dict[str, Any]] = []
+    seen: set[str] = set()
     for base_id, raw_id in candidates:
         if base_id in seen:
             continue
         seen.add(base_id)
-        meta = tree_meta.get(base_id, {})
-        title_candidates = (
-            meta.get("title"),
-            fallback_titles.get(base_id),
-            fallback_titles.get(raw_id) if raw_id else None,
-        )
-        title = next(
-            (
-                str(candidate).strip()
-                for candidate in title_candidates
-                if isinstance(candidate, str) and str(candidate).strip()
-            ),
-            "",
-        )
-        if not title and raw_id:
-            title = raw_id
-        if not title:
-            title = base_id
-        item: Dict[str, Any] = {"id": base_id, "title": title}
-        if raw_id:
-            item["raw_id"] = raw_id
-        if meta.get("channel_title"):
-            item["channel_title"] = meta["channel_title"]
-        if meta.get("channel_id"):
-            item["channel_id"] = meta["channel_id"]
-        for stat_key in (
-            "view_count",
-            "like_count",
-            "dislike_count",
-            "favorite_count",
-            "comment_count",
-        ):
-            stat_value = meta.get(stat_key)
-            if stat_value not in (None, ""):
-                item[stat_key] = stat_value
-        duration_value = meta.get("duration")
-        if duration_value not in (None, ""):
-            item["duration"] = duration_value
-        items.append(item)
+        items.append(_make_slate_item(base_id, raw_id, tree_meta, fallback_titles))
     return items, source
 
 
@@ -581,81 +764,129 @@ def _session_info(sess: dict, watched_details: List[Dict[str, Any]]) -> SessionI
     )
 
 
+def _candidate_start_timestamp(candidate_row: Mapping[str, Any]) -> int:
+    """Return the earliest available nanosecond timestamp for the row."""
+
+    for field in ("start_time2", "start_time", "start_time_w2"):
+        start_ns = _parse_timestamp_ns(candidate_row.get(field))
+        if start_ns is not None:
+            return start_ns
+    return int(1e20)
+
+
+def _candidate_identifiers(candidate_row: Mapping[str, Any]) -> Tuple[str, str]:
+    """Extract normalized worker and case identifiers."""
+
+    worker_candidate = _normalize_identifier(
+        candidate_row.get("worker_id")
+        or candidate_row.get("workerid")
+        or candidate_row.get("WorkerID")
+    )
+    case_candidate = _normalize_identifier(
+        candidate_row.get("caseid") or candidate_row.get("CaseID")
+    )
+    return worker_candidate, case_candidate
+
+
+def _classify_candidate_topic(
+    normalized_topic: str,
+    urlid: str,
+    allowlist: AllowlistState,
+    worker_candidate: str,
+    case_candidate: str,
+    candidate_row: Mapping[str, Any],
+) -> Tuple[str, Optional[str], bool]:
+    """Return ``(study_label, participant_token, valid)`` for the row."""
+
+    if normalized_topic == "gun_control" and allowlist.gun_workers:
+        if worker_candidate and worker_candidate in allowlist.gun_workers:
+            return "study1", worker_candidate, True
+        return "unknown", None, False
+    if normalized_topic in {"minimum_wage", "min_wage"}:
+        return allowlist.classify_wage_candidate(
+            urlid,
+            worker_candidate,
+            case_candidate,
+        )
+    return "unknown", None, False
+
+
+def _validate_candidate_entry(
+    study_label: str,
+    candidate_row: Mapping[str, Any],
+) -> bool:
+    """Ensure the candidate row has treatment information and responses."""
+
+    if study_label not in {"study1", "study2", "study3"}:
+        return False
+    treat_val = candidate_row.get("treatment_arm")
+    if _is_missing_value(treat_val):
+        return False
+    if str(treat_val).strip().lower() == "control":
+        return False
+    if _is_missing_value(candidate_row.get("pro")):
+        return False
+    if _is_missing_value(candidate_row.get("anti")):
+        return False
+    return True
+
+
+def _candidate_entry(
+    normalized_topic: str,
+    urlid: str,
+    candidate_row: Mapping[str, Any],
+    allowlist: AllowlistState,
+) -> Optional[Tuple[int, str, str, str, str, Dict[str, Any]]]:
+    """Return a candidate tuple when the survey row is eligible."""
+
+    worker_candidate, case_candidate = _candidate_identifiers(candidate_row)
+    start_ns = _candidate_start_timestamp(candidate_row)
+    study_label, participant_token, valid = _classify_candidate_topic(
+        normalized_topic,
+        urlid,
+        allowlist,
+        worker_candidate,
+        case_candidate,
+        candidate_row,
+    )
+    if valid:
+        valid = _validate_candidate_entry(study_label, candidate_row)
+    if not valid:
+        return None
+    return (
+        start_ns,
+        participant_token or "",
+        worker_candidate,
+        case_candidate,
+        study_label,
+        dict(candidate_row),
+    )
+
+
 def _candidate_entries_for_survey(
     topic: str,
-   urlid: str,
+    urlid: str,
     survey_rows: List[Dict[str, Any]],
     allowlist: AllowlistState,
 ) -> List[Tuple[int, str, str, str, str, Dict[str, Any]]]:
-    """Create candidate tuples ordered by survey timestamp.
+    """Create candidate tuples ordered by survey timestamp."""
 
-    :param topic: Issue/topic label associated with the session.
-    :param urlid: URL identifier for the session.
-    :param survey_rows: Survey rows linked to the participant.
-    :param allowlist: Active allow-list state for filtering participants.
-    :returns: List of tuples containing candidate metadata and validity flags.
-    """
-
-    candidates: List[Tuple[int, str, str, str, str, Dict[str, Any]]] = []
     normalized_topic = topic.lower()
-    for candidate_row in survey_rows:
-        worker_candidate = _normalize_identifier(
-            candidate_row.get("worker_id")
-            or candidate_row.get("workerid")
-            or candidate_row.get("WorkerID")
-        )
-        case_candidate = _normalize_identifier(
-            candidate_row.get("caseid") or candidate_row.get("CaseID")
-        )
-        start_ns = _parse_timestamp_ns(candidate_row.get("start_time2"))
-        if start_ns is None:
-            start_ns = _parse_timestamp_ns(candidate_row.get("start_time"))
-        if start_ns is None:
-            start_ns = _parse_timestamp_ns(candidate_row.get("start_time_w2"))
-        if start_ns is None:
-            start_ns = int(1e20)
-
-        study_label = "unknown"
-        participant_token: Optional[str] = None
-        valid = False
-
-        if normalized_topic == "gun_control" and allowlist.gun_workers:
-            if worker_candidate and worker_candidate in allowlist.gun_workers:
-                study_label = "study1"
-                participant_token = worker_candidate
-                valid = True
-        elif normalized_topic in {"minimum_wage", "min_wage"}:
-            study_label, participant_token, valid = allowlist.classify_wage_candidate(
+    entries = [
+        candidate
+        for candidate_row in survey_rows
+        for candidate in [
+            _candidate_entry(
+                normalized_topic,
                 urlid,
-                worker_candidate,
-                case_candidate,
+                candidate_row,
+                allowlist,
             )
-
-        if valid and study_label in {"study1", "study2", "study3"}:
-            treat_val = candidate_row.get("treatment_arm")
-            if (
-                _is_missing_value(treat_val)
-                or str(treat_val).strip().lower() == "control"
-            ):
-                valid = False
-            if _is_missing_value(candidate_row.get("pro")) or _is_missing_value(
-                candidate_row.get("anti")
-            ):
-                valid = False
-
-        if valid:
-            candidates.append(
-                (
-                    start_ns,
-                    participant_token or "",
-                    worker_candidate,
-                    case_candidate,
-                    study_label,
-                    candidate_row,
-                )
-            )
-    candidates.sort(key=lambda item: (item[0], item[1]))
-    return candidates
+        ]
+        if candidate is not None
+    ]
+    entries.sort(key=lambda item: (item[0], item[1]))
+    return entries
 
 
 

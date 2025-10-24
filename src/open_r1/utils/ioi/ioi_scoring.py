@@ -1,4 +1,29 @@
-"""Structured scoring helpers for IOI problems executed through Piston."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 import asyncio
 from dataclasses import asdict, dataclass, field
@@ -289,10 +314,10 @@ async def score_subtask(
                 for _, test_name in test_batch_to_run
             )
         )
-        for (ti, test_name), test_result in zip(test_batch_to_run, results):
+        for (test_index, test_name), test_result in zip(test_batch_to_run, results):
             if test_case_run_cache is not None:
                 test_case_run_cache[test_name] = test_result
-            subtask_result.test_results[ti] = test_result
+            subtask_result.test_results[test_index] = test_result
 
         # Stop early if it failed
         if any(test_result.score == 0.0 for test_result in results):

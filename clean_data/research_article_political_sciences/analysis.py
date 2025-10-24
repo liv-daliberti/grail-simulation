@@ -1,4 +1,26 @@
-"""Core data wrangling helpers for the political sciences replication."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Core data wrangling helpers for the political sciences replication.
+
+This module prepares cleaned dataset splits for analysis by filtering
+per-study frames, harmonising opinion indices, and computing the heatmap
+counts consumed by the reporting layer. All functionality is distributed
+under the repository's Apache 2.0 license; see LICENSE for the permitted
+uses.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +41,15 @@ from clean_data.helpers import _MISSING_STRINGS
 
 @dataclass(frozen=True)
 class StudySpec:
-    """Configuration describing one study's pre/post opinion columns."""
+    """Configuration describing one study's pre/post opinion columns.
+
+    :param key: Identifier for the study grouping (e.g., ``"study1"``).
+    :param issue: Issue slug used to filter the combined dataframe.
+    :param label: Human-readable study title.
+    :param before_column: Column name holding the pre-treatment score.
+    :param after_column: Column name holding the post-treatment score.
+    :param heatmap_filename: Output filename for the study heatmap.
+    """
 
     key: str
     issue: str
@@ -30,7 +60,11 @@ class StudySpec:
 
 
 def dataframe_from_splits(dataset: DatasetDict) -> pd.DataFrame:
-    """Combine all dataset splits into a single pandas dataframe."""
+    """Combine all dataset splits into a single pandas dataframe.
+
+    :param dataset: Hugging Face ``DatasetDict`` with train/validation/test splits.
+    :returns: Concatenated dataframe or an empty frame when no splits are present.
+    """
 
     frames: List[pd.DataFrame] = []
     for split in dataset.values():
@@ -42,13 +76,22 @@ def dataframe_from_splits(dataset: DatasetDict) -> pd.DataFrame:
 
 
 def to_numeric(series: pd.Series) -> pd.Series:
-    """Convert a pandas series to numeric values, preserving NaNs."""
+    """Convert a pandas series to numeric values, preserving NaNs.
+
+    :param series: Series containing numeric-like strings or numbers.
+    :returns: Series coerced to numeric dtype with invalid entries set to NaN.
+    """
 
     return pd.to_numeric(series, errors="coerce")
 
 
 def prepare_study_frame(frame: pd.DataFrame, spec: StudySpec) -> pd.DataFrame:
-    """Filter the combined dataframe down to the rows matching a study."""
+    """Filter the combined dataframe down to the rows matching a study.
+
+    :param frame: Combined dataframe across all studies/issues.
+    :param spec: Study specification describing the target subset.
+    :returns: Filtered dataframe with numeric pre/post columns.
+    """
 
     if frame.empty:
         return frame.copy()
@@ -67,7 +110,14 @@ def histogram2d_counts(
     after_col: str,
     bins: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Return a 2D histogram of before vs. after opinion indices."""
+    """Return a 2D histogram of before vs. after opinion indices.
+
+    :param data_frame: Dataframe with pre/post opinion columns.
+    :param before_col: Name of the pre-treatment column.
+    :param after_col: Name of the post-treatment column.
+    :param bins: Number of equally spaced bins in both dimensions.
+    :returns: Tuple ``(histogram, bin_edges)``.
+    """
 
     if data_frame.empty:
         bin_edges = np.linspace(0.0, 1.0, bins + 1)
@@ -85,7 +135,13 @@ def summarise_shift(
     before_col: str,
     after_col: str,
 ) -> Dict[str, float]:
-    """Compute summary statistics describing the opinion shift."""
+    """Compute summary statistics describing the opinion shift.
+
+    :param data_frame: Dataframe with pre/post opinion columns.
+    :param before_col: Column for pre-treatment scores.
+    :param after_col: Column for post-treatment scores.
+    :returns: Dictionary with sample size, means, change metrics, and shares.
+    """
 
     if data_frame.empty:
         return {
@@ -120,7 +176,10 @@ def summarise_shift(
 
 
 def assemble_study_specs() -> Iterable[StudySpec]:
-    """Return the static study specifications handled by the report."""
+    """Return the static study specifications handled by the report.
+
+    :returns: Iterable of :class:`StudySpec` describing each study.
+    """
 
     return [
         StudySpec(
@@ -151,20 +210,31 @@ def assemble_study_specs() -> Iterable[StudySpec]:
 
 
 def _capsule_results_dir() -> Optional[Path]:
-    """Return the repository-local path to the capsule intermediate data."""
+    """Return the repository-local path to the capsule intermediate data.
+
+    :returns: Path to the capsule directory or ``None`` if missing.
+    """
 
     base = Path(__file__).resolve().parents[2] / "capsule-5416997" / "results" / "intermediate data"
     return base if base.exists() else None
 
 
 def _normalize_series(series: pd.Series) -> pd.Series:
-    """Return a trimmed string series with missing tokens replaced by blanks."""
+    """Return a trimmed string series with missing tokens replaced by blanks.
+
+    :param series: Series potentially containing null or whitespace values.
+    :returns: Normalized string series safe for downstream filtering.
+    """
 
     return series.fillna("").astype(str).str.strip()
 
 
 def _nonempty_mask(series: pd.Series) -> pd.Series:
-    """Boolean mask selecting entries that are not considered missing or blank."""
+    """Boolean mask selecting entries that are not considered missing or blank.
+
+    :param series: Series to evaluate for missing/blank markers.
+    :returns: Boolean series where ``True`` marks non-missing entries.
+    """
 
     normalized = _normalize_series(series)
     lowered = normalized.str.lower()
@@ -172,7 +242,12 @@ def _nonempty_mask(series: pd.Series) -> pd.Series:
 
 
 def _dedupe_earliest(data_frame: pd.DataFrame, id_column: str) -> pd.DataFrame:
-    """Keep the earliest observation per identifier, mirroring survey filters."""
+    """Keep the earliest observation per identifier, mirroring survey filters.
+
+    :param data_frame: Dataframe potential duplicates per participant.
+    :param id_column: Column containing the identifier to deduplicate on.
+    :returns: Dataframe retaining the earliest observation per id.
+    """
 
     if data_frame.empty or id_column not in data_frame.columns:
         return data_frame
@@ -204,13 +279,22 @@ def _dedupe_earliest(data_frame: pd.DataFrame, id_column: str) -> pd.DataFrame:
 
 
 def _numeric(series: pd.Series) -> pd.Series:
-    """Coerce a series to numeric values with NaNs for unparsable entries."""
+    """Coerce a series to numeric values with NaNs for unparsable entries.
+
+    :param series: Series containing numeric-like entries.
+    :returns: Numeric series with invalid values set to NaN.
+    """
 
     return pd.to_numeric(series, errors="coerce")
 
 
 def _study1_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
-    """Return control/treatment assignments for Study 1 (gun control MTurk)."""
+    """Return control/treatment assignments for Study 1 (gun control MTurk).
+
+    :param base_dir: Root directory containing capsule export CSVs.
+    :param spec: Study specification describing the target columns.
+    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.
+    """
 
     wave1_path = base_dir / "gun control (issue 1)" / "guncontrol_qualtrics_w1_clean.csv"
     follow_path = base_dir / "gun control (issue 1)" / "guncontrol_qualtrics_w123_clean.csv"
@@ -270,7 +354,12 @@ def _study1_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
 
 
 def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
-    """Return control/treatment assignments for Study 2 (minimum wage MTurk)."""
+    """Return control/treatment assignments for Study 2 (minimum wage MTurk).
+
+    :param base_dir: Root directory containing capsule export CSVs.
+    :param spec: Study specification describing the target columns.
+    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.
+    """
 
     dataset_path = base_dir / "minimum wage (issue 2)" / "qualtrics_w12_clean.csv"
     if not dataset_path.exists():
@@ -335,7 +424,12 @@ def _study2_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
 
 
 def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
-    """Return control/treatment assignments for Study 3 (minimum wage YouGov)."""
+    """Return control/treatment assignments for Study 3 (minimum wage YouGov).
+
+    :param base_dir: Root directory containing capsule export CSVs.
+    :param spec: Study specification describing the target columns.
+    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.
+    """
 
     dataset_path = base_dir / "minimum wage (issue 2)" / "yg_w12_clean.csv"
     if not dataset_path.exists():
@@ -397,7 +491,11 @@ def _study3_assignment_frame(base_dir: Path, spec: StudySpec) -> pd.DataFrame:
 
 
 def load_assignment_frame(spec: StudySpec) -> pd.DataFrame:
-    """Load a dataframe containing control/treatment assignments for a study."""
+    """Load a dataframe containing control/treatment assignments for a study.
+
+    :param spec: Study specification determining which assignment loader to use.
+    :returns: Assignment dataframe with pre/post scores or an empty frame on failure.
+    """
 
     base_dir = _capsule_results_dir()
     if base_dir is None:
@@ -413,7 +511,11 @@ def load_assignment_frame(spec: StudySpec) -> pd.DataFrame:
 
 
 def summarise_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
-    """Return summary statistics for each assignment group in a dataframe."""
+    """Return summary statistics for each assignment group in a dataframe.
+
+    :param frame: Assignment dataframe produced by :func:`load_assignment_frame`.
+    :returns: List of dictionaries with per-assignment summary metrics.
+    """
 
     if frame.empty:
         return []
@@ -454,6 +556,10 @@ def compute_treatment_regression(  # pylint: disable=too-many-locals
     The model regresses ``after - before`` on a treatment indicator with
     study fixed-effects (Study 1 as the reference category).  Returns the
     coefficient, standard error, 95% CI, and two-sided p-value.
+
+    :param combined_frame: Combined dataframe with columns ``before``,
+        ``after``, ``assignment``, and ``study_key``.
+    :returns: Dictionary containing coefficient, stderr, CI bounds, and p-value.
     """
 
     if combined_frame.empty:

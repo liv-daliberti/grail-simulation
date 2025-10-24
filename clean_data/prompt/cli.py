@@ -1,9 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Command-line front-end for generating prompt feature statistics.
 
 The CLI loads a cleaned dataset, computes summary metrics, renders plots,
 and writes a Markdown report describing viewer coverage, feature richness,
-and participation statistics.  It is typically invoked by the main
+and participation statistics. It is typically invoked by the main
 cleaning workflow but can be used standalone for exploratory analysis.
+Running this CLI is subject to the repository's Apache 2.0 license; see
+LICENSE for the terms.
 """
 
 from __future__ import annotations
@@ -101,7 +118,14 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
     train_split: str = "train",
     validation_split: str = "validation",
 ) -> None:
-    """Generate exploratory prompt statistics and write plots plus summaries."""
+    """Generate exploratory prompt statistics and write plots plus summaries.
+
+    :param dataset: Hugging Face dataset dictionary produced by :func:`load_dataset_any`.
+    :param output_dir: Directory where figures and Markdown summaries will be written.
+    :param train_split: Name of the split treated as the training set.
+    :param validation_split: Name of the split treated as the validation set.
+    :raises ValueError: If the requested splits are missing from ``dataset``.
+    """
 
     _validate_dataset(dataset, train_split, validation_split)
 
@@ -218,7 +242,10 @@ def generate_prompt_feature_report(  # pylint: disable=too-many-locals
 
 
 def _parse_args() -> argparse.Namespace:
-    """Parse command-line arguments for the prompt statistics CLI."""
+    """Parse command-line arguments for the prompt statistics CLI.
+
+    :returns: Namespace containing the parsed CLI arguments.
+    """
     parser = argparse.ArgumentParser(
         description="Generate prompt feature histograms and statistics.",
     )
@@ -238,7 +265,10 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Entrypoint for the ``prompt-stats`` command line interface."""
+    """Entrypoint for the ``prompt-stats`` command line interface.
+
+    :returns: ``None``.
+    """
     args = _parse_args()
     dataset = load_dataset_any(args.dataset)
     generate_prompt_feature_report(

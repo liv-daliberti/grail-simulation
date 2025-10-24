@@ -1,6 +1,23 @@
-# pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Report generation helpers for the modular KNN pipeline."""
+
 from __future__ import annotations
+
+# pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements
 
 import logging
 import shlex
@@ -687,7 +704,7 @@ def _hyperparameter_opinion_section(
             selection = opinion_selections.get(feature_space, {}).get(study.key)
             ordered = sorted(
                 outcomes,
-                key=lambda item: (item.mae, item.rmse, -item.r2, item.best_k),
+                key=lambda item: (item.mae, item.rmse, -item.r2_score, item.best_k),
             )
             display_limit = max(1, top_n)
             displayed = ordered[:display_limit]
@@ -695,7 +712,7 @@ def _hyperparameter_opinion_section(
                 displayed.append(selection.outcome)
                 displayed = sorted(
                     displayed,
-                    key=lambda item: (item.mae, item.rmse, -item.r2, item.best_k),
+                    key=lambda item: (item.mae, item.rmse, -item.r2_score, item.best_k),
                 )[:display_limit]
 
             for outcome in displayed:
@@ -743,7 +760,7 @@ def _hyperparameter_opinion_section(
                     f"{format_optional_float(summary.mae)} | "
                     f"{format_delta(summary.mae_delta)} | "
                     f"{format_optional_float(summary.rmse)} | "
-                    f"{format_optional_float(summary.r2)} | "
+                    f"{format_optional_float(summary.r2_score)} | "
                     f"{format_count(participants)} |"
                 )
             if len(ordered) > display_limit:
@@ -1672,7 +1689,7 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
     return (
         f"| {label} | {participants_text} | {format_k(summary.best_k)} | "
         f"{format_optional_float(summary.mae)} | {format_delta(summary.mae_delta)} | "
-        f"{format_optional_float(summary.rmse)} | {format_optional_float(summary.r2)} | "
+        f"{format_optional_float(summary.rmse)} | {format_optional_float(summary.r2_score)} | "
         f"{format_optional_float(summary.mae_change)} | "
         f"{format_optional_float(summary.baseline_mae)} |"
     )
@@ -1734,9 +1751,9 @@ def _opinion_takeaways(
         best_delta_value: Optional[float] = None
         best_delta_space: Optional[str] = None
         for feature_space, (summary, _data) in per_study.items():
-            if summary.r2 is not None:
-                if best_r2_value is None or summary.r2 > best_r2_value:
-                    best_r2_value = summary.r2
+            if summary.r2_score is not None:
+                if best_r2_value is None or summary.r2_score > best_r2_value:
+                    best_r2_value = summary.r2_score
                     best_r2_space = feature_space
                     best_r2_k = summary.best_k
             if summary.mae_delta is not None:

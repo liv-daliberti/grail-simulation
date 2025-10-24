@@ -1,4 +1,26 @@
-"""Preregistered stratified analyses mirroring Liu et al. (2025)."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Preregistered stratified analyses mirroring Liu et al. (2025).
+
+This module reconstructs the capsule-delivered statistical analyses,
+loading preregistered configuration files and running the hierarchical
+adjustments used to evaluate opinion shifts across cohorts. All routines
+are provided under the repository's Apache 2.0 license; see LICENSE for the
+full terms.
+"""
 
 from __future__ import annotations
 
@@ -16,7 +38,10 @@ _NORMAL = NormalDist()
 
 
 def _repository_root() -> Path:
-    """Return the repository root to resolve paths to bundled artifacts."""
+    """Return the repository root to resolve paths to bundled artifacts.
+
+    :returns: Absolute path to the repository root.
+    """
 
     return Path(__file__).resolve().parents[2]
 
@@ -38,7 +63,13 @@ def _capsule_results_dir() -> Path:
 
 @dataclass(frozen=True)
 class OutcomeFamily:
-    """Group of outcomes sharing controls for hierarchical adjustments."""
+    """Group of outcomes sharing controls for hierarchical adjustments.
+
+    :param key: Short identifier for the outcome family.
+    :param label: Human-readable label used in tables and plots.
+    :param outcomes: Tuple of outcome column names.
+    :param controls: Tuple of control column names included in regressions.
+    """
 
     key: str
     label: str
@@ -48,7 +79,17 @@ class OutcomeFamily:
 
 @dataclass(frozen=True)
 class StudyConfig:  # pylint: disable=too-many-instance-attributes
-    """Study-specific configuration for the preregistered stratified analyses."""
+    """Study-specific configuration for the preregistered stratified analyses.
+
+    :param key: Identifier for the study.
+    :param label: Human-readable study label.
+    :param data_path: CSV path to the capsule-exported survey data.
+    :param attitude_mapping: Mapping from numeric attitudes to string labels.
+    :param liberal_attitude: Label representing liberal alignment.
+    :param conservative_attitude: Label representing conservative alignment.
+    :param seed_mapping: Mapping from attitude labels to seed categories.
+    :param outcome_families: Tuple of :class:`OutcomeFamily` configurations.
+    """
 
     key: str
     label: str
@@ -604,7 +645,15 @@ def _run_single_regression(  # pylint: disable=too-many-locals
     contrast: Mapping[str, object],
     outcome: str,
 ) -> Dict[str, float]:
-    """Fit a robust OLS contrast between treatment and control terms."""
+    """Fit a robust OLS contrast between treatment and control terms.
+
+    :param frame: Study dataframe containing outcome columns.
+    :param controls: Control matrix aligned with ``frame`` indices.
+    :param design_terms: Design matrix encoding treatment membership.
+    :param contrast: Mapping specifying ``treat`` and ``control`` term names.
+    :param outcome: Outcome column name to regress on the design matrix.
+    :returns: Dictionary with estimate, stderr, p-value, and sample size.
+    """
 
     if outcome not in frame.columns:
         return {
@@ -635,9 +684,9 @@ def _run_single_regression(  # pylint: disable=too-many-locals
             "n": int(working.shape[0]),
         }
 
-    y = working[outcome].to_numpy(dtype=float)
+    response_vector = working[outcome].to_numpy(dtype=float)
     design_matrix = working[non_constant_cols].to_numpy(dtype=float)
-    beta, cov = _fit_robust_ols(design_matrix, y)
+    beta, cov = _fit_robust_ols(design_matrix, response_vector)
     index_map = {name: idx for idx, name in enumerate(non_constant_cols)}
 
     treat_name = str(contrast["treat"])
@@ -766,7 +815,12 @@ def run_study_analysis(  # pylint: disable=too-many-locals
     frame: pd.DataFrame,
     config: StudyConfig,
 ) -> pd.DataFrame:
-    """Compute preregistered contrasts for a single study configuration."""
+    """Compute preregistered contrasts for a single study configuration.
+
+    :param frame: Cleaned dataframe for the study.
+    :param config: Study configuration describing contrasts and controls.
+    :returns: Dataframe with contrast estimates and adjusted p-values.
+    """
 
     records: List[Dict[str, object]] = []
     treatment_terms = _build_treatment_matrix(frame, config)
@@ -823,7 +877,11 @@ def run_study_analysis(  # pylint: disable=too-many-locals
 
 
 def analyze_preregistered_effects(output_dir: Path | str) -> Dict[str, Path]:
-    """Run stratified regressions for all studies and persist CSV outputs."""
+    """Run stratified regressions for all studies and persist CSV outputs.
+
+    :param output_dir: Directory where per-study and combined CSVs are written.
+    :returns: Mapping from study keys to generated CSV paths (includes ``"combined"``).
+    """
 
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)

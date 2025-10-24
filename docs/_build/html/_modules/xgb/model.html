@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,32 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for xgb.model</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;XGBoost training and inference utilities for slate prediction.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
+
+<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
+<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
+<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
+<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
+<span class="sd">It is the public surface that downstream tooling should import when they</span>
+<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
+<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
+<span class="sd">details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -297,7 +324,7 @@
     <span class="n">XGBClassifier</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;xgb.model&quot;</span><span class="p">)</span>
-<span class="n">gpu_training_enabled</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># pylint: disable=invalid-name</span>
+<span class="n">GPU_TRAINING_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_should_retry_on_cpu</span><span class="p">(</span><span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -636,7 +663,7 @@
     <span class="n">booster_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;num_class&quot;</span><span class="p">,</span> <span class="n">unique_labels</span><span class="p">)</span>
 
     <span class="n">requested_method</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">tree_method</span> <span class="ow">or</span> <span class="s2">&quot;hist&quot;</span>
-    <span class="n">use_gpu</span> <span class="o">=</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gpu_training_enabled</span>
+    <span class="n">use_gpu</span> <span class="o">=</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">GPU_TRAINING_ENABLED</span>
     <span class="n">effective_method</span> <span class="o">=</span> <span class="n">requested_method</span> <span class="k">if</span> <span class="n">use_gpu</span> <span class="k">else</span> <span class="p">(</span>
         <span class="s2">&quot;hist&quot;</span> <span class="k">if</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">requested_method</span>
     <span class="p">)</span>
@@ -694,10 +721,10 @@
 <span class="sd">    Invoked after repeated GPU failures to prevent recurring retries.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">global</span> <span class="n">gpu_training_enabled</span>  <span class="c1"># pylint: disable=global-statement</span>
-    <span class="k">if</span> <span class="n">gpu_training_enabled</span><span class="p">:</span>
+    <span class="k">global</span> <span class="n">GPU_TRAINING_ENABLED</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="k">if</span> <span class="n">GPU_TRAINING_ENABLED</span><span class="p">:</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Disabling XGBoost GPU boosters for the remainder of this process.&quot;</span><span class="p">)</span>
-    <span class="n">gpu_training_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">GPU_TRAINING_ENABLED</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_scrub_gpu_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>

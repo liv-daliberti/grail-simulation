@@ -1,4 +1,25 @@
-"""Command-line entry point for the political sciences replication report."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Command-line entry point for the political sciences replication report.
+
+This CLI loads a cleaned dataset, orchestrates the opinion-shift analysis,
+and writes the figures plus Markdown summary replicating the published
+study. Usage of this entry point is covered by the repository's Apache 2.0
+license; consult LICENSE for details.
+"""
 
 from __future__ import annotations
 
@@ -43,7 +64,10 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> Dict[str, Any]:
-    """Entry point used by ``python -m`` to run the replication analysis."""
+    """Entry point used by ``python -m`` to run the replication analysis.
+
+    :returns: Dictionary of report metadata returned by :func:`generate_research_article_report`.
+    """
 
     args = _parse_args()
     dataset = load_dataset_any(args.dataset)

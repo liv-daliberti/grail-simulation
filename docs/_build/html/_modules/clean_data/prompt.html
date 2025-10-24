@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,28 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompt</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Namespace exposing the prompt analytics CLI and programmatic API.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Namespace exposing the prompt analytics CLI and programmatic API.</span>
+
+<span class="sd">This package wires the prompt analytics entry points through a thin wrapper</span>
+<span class="sd">so both ``python -m clean_data.prompt`` and direct imports use the same</span>
+<span class="sd">implementation. Usage of these helpers is governed by the repository&#39;s</span>
+<span class="sd">Apache 2.0 license; refer to LICENSE for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -263,7 +286,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_cli_attribute</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazy-load the CLI module to avoid duplicate imports during ``python -m``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazy-load the CLI module to avoid duplicate imports during ``python -m``.</span>
+
+<span class="sd">    :param name: Attribute name to resolve from :mod:`clean_data.prompt.cli`.</span>
+<span class="sd">    :returns: Requested callable or attribute from the CLI module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">module</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;clean_data.prompt.cli&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
@@ -271,7 +298,12 @@
 <div class="viewcode-block" id="generate_prompt_feature_report">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompt_stats.generate_prompt_feature_report">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_prompt_feature_report</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delegate to :func:`clean_data.prompt.cli.generate_prompt_feature_report`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delegate to :func:`clean_data.prompt.cli.generate_prompt_feature_report`.</span>
+
+<span class="sd">    :param args: Positional arguments forwarded to the CLI implementation.</span>
+<span class="sd">    :param kwargs: Keyword arguments forwarded to the CLI implementation.</span>
+<span class="sd">    :returns: Result of invoking the CLI helper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_resolve_cli_attribute</span><span class="p">(</span><span class="s2">&quot;generate_prompt_feature_report&quot;</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -280,7 +312,12 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompt_stats.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delegate to :func:`clean_data.prompt.cli.main`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delegate to :func:`clean_data.prompt.cli.main`.</span>
+
+<span class="sd">    :param args: Positional arguments forwarded to the CLI entry point.</span>
+<span class="sd">    :param kwargs: Keyword arguments forwarded to the CLI entry point.</span>
+<span class="sd">    :returns: Result of invoking the CLI ``main`` function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_resolve_cli_attribute</span><span class="p">(</span><span class="s2">&quot;main&quot;</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 

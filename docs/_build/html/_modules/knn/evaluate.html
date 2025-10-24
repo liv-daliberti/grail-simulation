@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,10 +254,26 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.evaluate</h1><div class="highlight"><pre>
-<span></span><span class="c1"># pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
 <span class="sd">&quot;&quot;&quot;Evaluation loop and metrics for the KNN baseline.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="c1"># pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -394,7 +412,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_match_issue</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Determine whether a row&#39;s ``issue`` matches the normalised filter set.</span>
+<span class="sd">        Determine whether a row&#39;s ``issue`` matches the normalized filter set.</span>
 
 <span class="sd">        :param row: Dataset example retrieved from ``split_ds``.</span>
 <span class="sd">        :type row: Mapping[str, Any]</span>
@@ -486,7 +504,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return accuracy for ``rows`` using predictions at ``k_val``.</span>
 
-<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyze.</span>
 
 <span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
 
@@ -516,7 +534,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return accuracy for the most frequent baseline over ``rows``.</span>
 
-<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyze.</span>
 
 <span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
 
@@ -554,11 +572,11 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return bootstrap-based uncertainty estimates for accuracy metrics.</span>
 
-<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyze.</span>
 
 <span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
 
-<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+<span class="sd">    :param best_k: Neighborhood size selected as optimal for the evaluation.</span>
 
 <span class="sd">    :type best_k: int</span>
 
@@ -711,7 +729,7 @@
 
 <span class="sd">            The ``k`` value where marginal gains fall below half of the initial slope,</span>
 
-<span class="sd">            or the accuracy-maximising ``k`` when the heuristic cannot be applied.</span>
+<span class="sd">            or the accuracy-maximizing ``k`` when the heuristic cannot be applied.</span>
 
 <span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
 
@@ -721,7 +739,7 @@
 
 <span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
 
-<span class="sd">    :returns: Neighbourhood size that maximises the provided accuracy scores.</span>
+<span class="sd">    :returns: Neighborhood size that maximizes the provided accuracy scores.</span>
 
 <span class="sd">    :rtype: int</span>
 
@@ -834,7 +852,7 @@
 
 <span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
 
-<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+<span class="sd">    :param best_k: Neighborhood size selected as optimal for the evaluation.</span>
 
 <span class="sd">    :type best_k: int</span>
 
@@ -1758,7 +1776,7 @@
 
 <span class="sd">    :type per_k_stats: Dict[int, Dict[str, int]]</span>
 
-<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+<span class="sd">    :param best_k: Neighborhood size selected as optimal for the evaluation.</span>
 
 <span class="sd">    :type best_k: int</span>
 
@@ -1771,7 +1789,7 @@
 <span class="sd">    :rtype: Dict[str, Any]</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">area</span><span class="p">,</span> <span class="n">normalised</span> <span class="o">=</span> <span class="n">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
+    <span class="n">area</span><span class="p">,</span> <span class="n">normalized</span> <span class="o">=</span> <span class="n">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
     <span class="n">sorted_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">})</span>
     <span class="n">accuracy_serialised</span> <span class="o">=</span> <span class="p">{</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
@@ -1790,7 +1808,7 @@
         <span class="s2">&quot;eligible_by_k&quot;</span><span class="p">:</span> <span class="n">eligible_serialised</span><span class="p">,</span>
         <span class="s2">&quot;correct_by_k&quot;</span><span class="p">:</span> <span class="n">correct_serialised</span><span class="p">,</span>
         <span class="s2">&quot;auc_area&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">area</span><span class="p">),</span>
-        <span class="s2">&quot;auc_normalized&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">normalised</span><span class="p">),</span>
+        <span class="s2">&quot;auc_normalized&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">normalized</span><span class="p">),</span>
         <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span>
         <span class="s2">&quot;best_accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
         <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_examples</span><span class="p">),</span>
@@ -1852,7 +1870,7 @@
 
 <span class="sd">        args:</span>
 
-<span class="sd">            Parsed CLI namespace controlling evaluation behaviour.</span>
+<span class="sd">            Parsed CLI namespace controlling evaluation behavior.</span>
 
 <span class="sd">        provenance:</span>
 
@@ -2074,7 +2092,7 @@
 
 <span class="sd">        text:</span>
 
-<span class="sd">            Raw text fragment to normalise.</span>
+<span class="sd">            Raw text fragment to normalize.</span>
 
 <span class="sd">        Returns</span>
 
@@ -2084,11 +2102,11 @@
 
 <span class="sd">            Canonical form suitable for equality comparisons.</span>
 
-<span class="sd">    :param text: Free-form text string that requires normalisation.</span>
+<span class="sd">    :param text: Free-form text string that requires normalization.</span>
 
 <span class="sd">    :type text: str</span>
 
-<span class="sd">    :returns: Canonicalised text normalised for downstream processing.</span>
+<span class="sd">    :returns: Canonicalized text normalized for downstream processing.</span>
 
 <span class="sd">    :rtype: str</span>
 

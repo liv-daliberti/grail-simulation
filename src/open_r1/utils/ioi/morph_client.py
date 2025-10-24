@@ -1,4 +1,5 @@
-"""Async client helpers for executing IOI code on MorphCloud infrastructure."""
+#!/usr/bin/env python
+"""Async client utilities for executing IOI submissions on MorphCloud."""
 
 # pylint: disable=line-too-long
 
@@ -250,8 +251,8 @@ class MorphCloudExecutionClient:  # pylint: disable=too-few-public-methods
 
         try:
             await self._compile_code(instance)
-        except RuntimeError as e:
-            return "0", str(e)
+        except RuntimeError as error:
+            return "0", str(error)
 
         score, feedback = await self._run_tests(instance, data)
         return score, feedback

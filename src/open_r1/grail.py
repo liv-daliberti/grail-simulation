@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-"""
-GRPO training entrypoint with optional discriminator (GAIL-style) shaping.
+"""GRPO training entrypoint with optional discriminator (GAIL-style) shaping.
 
 This variant mirrors the standard GRPO pipeline but can append an auxiliary
-reward derived from a learned discriminator when $GAIL_USE=1. The underlying
-user prompt construction is shared with `open_r1.grpo` through the
-`prompt_builder` utilities.
+reward derived from a learned discriminator when ``$GAIL_USE=1``. The
+underlying user prompt construction is shared with ``open_r1.grpo`` through the
+``prompt_builder`` utilities.
 """
 
 from __future__ import annotations
@@ -29,16 +40,16 @@ from typing import (
 )
 
 import numpy as np
-import torch
-from torch import nn, optim
-from transformers import (
+import torch  # pylint: disable=import-error
+from torch import nn, optim  # pylint: disable=import-error
+from transformers import (  # pylint: disable=import-error
     AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
     set_seed,
 )
-from trl import ModelConfig, get_peft_config
-from trl.trainer.grpo_trainer import GRPOTrainer
+from trl import ModelConfig, get_peft_config  # pylint: disable=import-error
+from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
 
 from prompt_builder import as_list_json
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
@@ -211,15 +222,20 @@ def _prepare_dataset(
 class OnlineDiscriminator:
     """Lightweight text classifier trained on-policy to supply optional GAIL rewards."""
 
-    def __init__(self, model_name: str, device: torch.device, lr: float = 2e-5):
+    def __init__(
+        self,
+        model_name: str,
+        device: torch.device,
+        learning_rate: float = 2e-5,
+    ):
         """Initialise the discriminator with the specified pretrained backbone.
 
         :param model_name: Hugging Face model identifier for the classifier.
         :param device: Torch device where the model should live.
-        :param lr: Learning rate used for the discriminator optimiser.
+        :param learning_rate: Learning rate used for the discriminator optimizer.
         """
         self._model_name = model_name
-        self._lr = lr
+        self._learning_rate = learning_rate
         self.device = device
 
         os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -238,7 +254,7 @@ class OnlineDiscriminator:
             torch.cuda.set_device(self.device)
         self.model.to(self.device).train()
 
-        self.opt = optim.AdamW(self.model.parameters(), lr=lr)
+        self.opt = optim.AdamW(self.model.parameters(), lr=learning_rate)
         self._sanity_check_embeddings()
 
     def _sanity_check_embeddings(self) -> None:
@@ -260,7 +276,7 @@ class OnlineDiscriminator:
         if self.device.type == "cuda":
             torch.cuda.set_device(self.device)
         self.model = model.to(self.device).train()
-        self.opt = optim.AdamW(self.model.parameters(), lr=self._lr)
+        self.opt = optim.AdamW(self.model.parameters(), lr=self._learning_rate)
 
     @torch.no_grad()
     def prob_positive(self, texts: List[str]) -> np.ndarray:
@@ -300,8 +316,8 @@ class OnlineDiscriminator:
         batch = self.tok(
             payload, padding=True, truncation=True, max_length=512, return_tensors="pt"
         ).to(self.device)
-        y = torch.tensor(labels, dtype=torch.long, device=self.device)
-        out = self.model(**batch, labels=y)
+        label_tensor = torch.tensor(labels, dtype=torch.long, device=self.device)
+        out = self.model(**batch, labels=label_tensor)
         loss = out.loss
         self.opt.zero_grad(set_to_none=True)
         loss.backward()
@@ -387,15 +403,15 @@ def _build_reward_contexts(
 ) -> List[RewardContext]:
     """Return reward contexts for all completions in a batch."""
 
-    n = len(completions)
-    if n == 0:
+    num_completions = len(completions)
+    if num_completions == 0:
         return []
 
-    viewer_list = _ensure_list(kwargs.get("viewer_profile") or "", n)
-    state_list = _ensure_list(kwargs.get("state_text") or "", n)
-    items_list = _ensure_list(kwargs.get("slate_items") or [], n)
-    gold_id_list = _ensure_list(kwargs.get("gold_id") or "", n)
-    gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, n)
+    viewer_list = _ensure_list(kwargs.get("viewer_profile") or "", num_completions)
+    state_list = _ensure_list(kwargs.get("state_text") or "", num_completions)
+    items_list = _ensure_list(kwargs.get("slate_items") or [], num_completions)
+    gold_id_list = _ensure_list(kwargs.get("gold_id") or "", num_completions)
+    gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, num_completions)
 
     return [
         _context_from_completion(
@@ -601,6 +617,8 @@ def _build_dataset_and_tokenizer(
         script_args.dataset_train_split,
     )
     return dataset, tokenizer
+
+
 def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
     """Return checkpoint path for the GAIL pipeline, respecting overrides."""
 

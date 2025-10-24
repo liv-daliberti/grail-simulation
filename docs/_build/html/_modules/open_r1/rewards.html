@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,22 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.rewards</h1><div class="highlight"><pre>
-<span></span><span class="c1"># coding=utf-8</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="c1"># coding=utf-8</span>
 <span class="c1"># Copyright 2025 The HuggingFace Team. All rights reserved.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -267,7 +284,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Reward functions for GRPO training.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Reward functions used by the GRPO training pipeline.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
@@ -278,10 +295,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">update_wrapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">latex2sympy2_extended</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">math_verify</span><span class="w"> </span><span class="kn">import</span> <span class="n">LatexExtractionConfig</span><span class="p">,</span> <span class="n">parse</span><span class="p">,</span> <span class="n">verify</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_package_available</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">latex2sympy2_extended</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationConfig</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math_verify</span><span class="w"> </span><span class="kn">import</span> <span class="n">LatexExtractionConfig</span><span class="p">,</span> <span class="n">parse</span><span class="p">,</span> <span class="n">verify</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_package_available</span>  <span class="c1"># pylint: disable=import-error</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.code_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_provider</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.ioi</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -316,12 +333,12 @@
 
 <span class="n">_NUM_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a lowercase alphanumeric representation for fuzzy matching.&quot;&quot;&quot;</span>
 
-    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;’&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="n">normalised</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;’&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">normalised</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">normalised</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">normalised</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_slate_names</span><span class="p">(</span><span class="n">slate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return (names_in_order, index→name). Supports &#39;1. Title&#39;, &#39;1) Title&#39;, or &#39;- Title&#39;.&quot;&quot;&quot;</span>
@@ -331,35 +348,35 @@
         <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(\d+)\s*[\.\)]\s*(.+)$&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>  <span class="c1"># &quot;1. Title&quot; or &quot;1) Title&quot;</span>
-        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; -&quot;</span><span class="p">)</span>
+        <span class="n">ordinal_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(\d+)\s*[\.\)]\s*(.+)$&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>  <span class="c1"># &quot;1. Title&quot; or &quot;1) Title&quot;</span>
+        <span class="k">if</span> <span class="n">ordinal_match</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ordinal_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">ordinal_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot; -&quot;</span><span class="p">)</span>
             <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="n">idxmap</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
             <span class="k">continue</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*-\s*(.+)$&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>               <span class="c1"># &quot;- Title&quot;</span>
-        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">bullet_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*-\s*(.+)$&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>               <span class="c1"># &quot;- Title&quot;</span>
+        <span class="k">if</span> <span class="n">bullet_match</span><span class="p">:</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bullet_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">idxmap</span> <span class="ow">and</span> <span class="n">names</span><span class="p">:</span>
-        <span class="n">idxmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">)}</span>
+        <span class="n">idxmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">option_name</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">option_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">)}</span>
     <span class="k">return</span> <span class="n">names</span><span class="p">,</span> <span class="n">idxmap</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gold_index_from_gold_and_slate</span><span class="p">(</span><span class="n">gold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">slate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return 1-based gold index, or -1 if not resolvable.&quot;&quot;&quot;</span>
     <span class="n">gold</span> <span class="o">=</span> <span class="p">(</span><span class="n">gold</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">_NUM_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+    <span class="n">match_num_only</span> <span class="o">=</span> <span class="n">_NUM_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match_num_only</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match_num_only</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">idxmap</span> <span class="o">=</span> <span class="n">_parse_slate_names</span><span class="p">(</span><span class="n">slate</span><span class="p">)</span>
     <span class="n">gcan</span> <span class="o">=</span> <span class="n">_canon</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">gcan</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">idxmap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">_canon</span><span class="p">(</span><span class="n">nm</span><span class="p">)</span> <span class="o">==</span> <span class="n">gcan</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">k</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">idxmap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">_canon</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="n">gcan</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">key</span>
     <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_completion_text</span><span class="p">(</span><span class="n">comp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -371,9 +388,9 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">comp</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">comp</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">c</span>
+                <span class="n">content_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">content_value</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">content_value</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -621,7 +638,7 @@
         <span class="k">return</span> <span class="n">count</span>
 
     <span class="n">contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">count_tags</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">]</span></div>
+    <span class="k">return</span> <span class="p">[</span><span class="n">count_tags</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">]</span></div>
 
 
 
@@ -797,11 +814,11 @@
     <span class="c1"># ---------- tokenisers for n‑gram split ----------</span>
     <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;en&quot;</span><span class="p">:</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ngram_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Return iterator over n-grams and the token list for English text.&quot;&quot;&quot;</span>
 
             <span class="n">words</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-            <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]),</span> <span class="n">words</span>
+            <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngram_length</span><span class="p">)]),</span> <span class="n">words</span>
 
     <span class="k">elif</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">&quot;zh&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_package_available</span><span class="p">(</span><span class="s2">&quot;jieba&quot;</span><span class="p">):</span>
@@ -809,11 +826,11 @@
 
         <span class="n">jieba_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;jieba&quot;</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">zipngram</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ngram_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Return iterator over n-grams and the token list for Chinese text.&quot;&quot;&quot;</span>
 
             <span class="n">seg_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">jieba_module</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">seg_list</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]),</span> <span class="n">seg_list</span>
+            <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">seg_list</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngram_length</span><span class="p">)]),</span> <span class="n">seg_list</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Language </span><span class="si">{</span><span class="n">language</span><span class="si">!r}</span><span class="s2"> not supported&quot;</span><span class="p">)</span>
@@ -870,8 +887,8 @@
 
             <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">distinct</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">ng</span> <span class="ow">in</span> <span class="n">ngram_iter</span><span class="p">:</span>
-                <span class="n">distinct</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ng</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ngram</span> <span class="ow">in</span> <span class="n">ngram_iter</span><span class="p">:</span>
+                <span class="n">distinct</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ngram</span><span class="p">)</span>
                 <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">scaling</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">distinct</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span>  <span class="c1"># 0‑1, higher → more repetition</span>

@@ -1,17 +1,30 @@
-"""High-level orchestration for the KNN baselines.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-Running :mod:`knn.pipeline` executes the full workflow requested by
-``training/training-knn.sh``:
+"""Top-level orchestration helpers for the ``clean_data`` package.
 
-1. Hyper-parameter sweeps for TF-IDF and Word2Vec feature spaces.
-2. Aggregate-selection of the best configuration per feature space.
-3. Final slate evaluation runs with the selected configurations.
-4. Opinion-regression evaluation using the same feature settings.
-5. Regeneration of all Markdown reports under ``reports/knn/``.
-
-The module reuses the existing :mod:`knn.cli` entry points to avoid code drift
-between the scripted workflow and the public command-line interface.
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
 """
+
 # pylint: disable=line-too-long
 from __future__ import annotations
 

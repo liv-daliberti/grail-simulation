@@ -210,7 +210,13 @@ def test_select_best_configs_prefers_accuracy_then_coverage_then_support(tmp_pat
 def test_select_best_opinion_configs_prefers_mae_then_rmse_then_r2(tmp_path: Path) -> None:
     study = _make_study_spec()
 
-    def make_outcome(order_index: int, mae: float, rmse: float, r2: float, tag: str) -> OpinionSweepOutcome:
+    def make_outcome(
+        order_index: int,
+        mae: float,
+        rmse: float,
+        r_squared: float,
+        tag: str,
+    ) -> OpinionSweepOutcome:
         config = _make_sweep_config(tag)
         return OpinionSweepOutcome(
             order_index=order_index,
@@ -218,9 +224,15 @@ def test_select_best_opinion_configs_prefers_mae_then_rmse_then_r2(tmp_path: Pat
             config=config,
             mae=mae,
             rmse=rmse,
-            r2=r2,
+            r_squared=r_squared,
             metrics_path=tmp_path / f"{tag}.json",
-            metrics={"metrics": {"mae_after": mae, "rmse_after": rmse, "r2_after": r2}},
+            metrics={
+                "metrics": {
+                    "mae_after": mae,
+                    "rmse_after": rmse,
+                    "r2_after": r_squared,
+                }
+            },
         )
 
     outcomes = [
@@ -294,7 +306,7 @@ def test_run_opinion_stage_invokes_matching_studies(
         config=config,
         mae=0.5,
         rmse=0.7,
-        r2=0.2,
+        r_squared=0.2,
         metrics_path=tmp_path / "opinion.json",
         metrics={"metrics": {"mae_after": 0.5, "rmse_after": 0.7, "r2_after": 0.2}},
     )

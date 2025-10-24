@@ -1,9 +1,25 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Analysis utilities replicating the PNAS filter-bubble study findings.
 
 This package builds heatmaps and summary statistics that mirror the
 short-term opinion shifts reported in *Short-term exposure to filter-bubble
 recommendation systems has limited polarization effects: Naturalistic
-experiments on YouTube* (PNAS, 2025).
+experiments on YouTube* (PNAS, 2025). All artifacts are released under the
+repository's Apache 2.0 license; consult LICENSE for more information.
 """
 
 from .report import generate_research_article_report

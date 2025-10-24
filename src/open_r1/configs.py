@@ -1,5 +1,5 @@
-# coding=utf-8
-# Copyright 2025 The HuggingFace Team. All rights reserved.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,37 @@
 
 """Configuration helpers for open_r1 training scripts."""
 
+# coding=utf-8
+# Copyright 2025 The HuggingFace Team. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
-import trl
+try:  # pragma: no cover - optional dependency
+    import trl
+except ImportError:  # pragma: no cover - optional dependency
+    trl = None  # type: ignore[assignment]
 
 
 @dataclass
 class DatasetConfig:
     """Configuration for a dataset in a mixture."""
 
-    id: str
+    id: str  # pylint: disable=invalid-name
     config: Optional[str] = None
     split: str = "train"
     columns: Optional[list[str]] = None
@@ -42,7 +62,7 @@ class DatasetMixtureConfig:
 
 
 @dataclass
-class ScriptArguments(trl.ScriptArguments):
+class ScriptArguments(trl.ScriptArguments if trl is not None else object):
     """
     Extended version of ScriptArguments with support for dataset mixtures.
 
@@ -89,6 +109,15 @@ class ScriptArguments(trl.ScriptArguments):
         converts the mixture dictionary into :class:`DatasetMixtureConfig`, and
         validates column consistency across components.
         """
+
+        if trl is None:  # pragma: no cover - optional dependency guard
+            raise ImportError(
+                "trl must be installed to use ScriptArguments "
+                "(pip install trl)."
+            )
+
+        if hasattr(super(), "__post_init__"):
+            super().__post_init__()  # type: ignore[misc]
 
         if self.dataset_name is None and self.dataset_mixture is None:
             raise ValueError("Either `dataset_name` or `dataset_mixture` must be provided")

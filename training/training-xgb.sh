@@ -19,6 +19,17 @@ elif [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
 else
   ROOT_DIR=$(cd "$(dirname "${SCRIPT_PATH}")/.." && pwd)
 fi
+
+VENV_PATH=${TRAINING_VENV_PATH:-"${ROOT_DIR}/.venv"}
+if [[ -z "${VIRTUAL_ENV:-}" ]]; then
+  if [[ -f "${VENV_PATH}/bin/activate" ]]; then
+    # shellcheck source=/dev/null
+    source "${VENV_PATH}/bin/activate"
+  else
+    echo "[xgb] Warning: expected virtualenv at ${VENV_PATH}/bin/activate; continuing without activation." >&2
+  fi
+fi
+
 PYTHON_BIN=${PYTHON_BIN:-python}
 DEFAULT_LOG_DIR="${ROOT_DIR}/logs/xgb"
 LOG_DIR_CANDIDATE=${LOG_DIR:-${DEFAULT_LOG_DIR}}

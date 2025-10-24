@@ -1,6 +1,5 @@
-
-# coding=utf-8
-# Copyright 2025 The HuggingFace Team. All rights reserved.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Code execution providers for executing and evaluating code snippets."""
+"""Code execution providers for executing and evaluating notebook-style snippets."""
 
 # pylint: disable=invalid-name
 
@@ -68,18 +67,25 @@ def _extract_reward_from_result(result: Any) -> float:
 
 
 if is_e2b_available():
-    from e2b_code_interpreter import AsyncSandbox
-
-    from .routed_sandbox import RoutedSandbox
+    try:  # pragma: no cover - optional dependency
+        from e2b_code_interpreter import AsyncSandbox
+        from .routed_sandbox import RoutedSandbox
+    except ImportError:
+        AsyncSandbox = None
+        RoutedSandbox = None
 else:
     AsyncSandbox = None
     RoutedSandbox = None
 
 if is_morph_available():
-    from morphcloud.api import MorphCloudClient
-    from morphcloud.sandbox import Sandbox
-
-    from .routed_morph import RoutedMorphSandbox
+    try:  # pragma: no cover - optional dependency
+        from morphcloud.api import MorphCloudClient
+        from morphcloud.sandbox import Sandbox
+        from .routed_morph import RoutedMorphSandbox
+    except ImportError:
+        MorphCloudClient = None
+        Sandbox = None
+        RoutedMorphSandbox = None
 else:
     MorphCloudClient = None
     Sandbox = None

@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,29 +254,19 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.utils.routed_sandbox</h1><div class="highlight"><pre>
-<span></span><span class="c1"># coding=utf-8</span>
-<span class="c1"># Copyright 2025 The HuggingFace Team. All rights reserved.</span>
-<span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="c1"># you may not use this file except in compliance with the License.</span>
-<span class="c1"># You may obtain a copy of the License at</span>
-<span class="c1">#</span>
-<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c1">#</span>
-<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c1"># See the License for the specific language governing permissions and</span>
-<span class="c1"># limitations under the License.</span>
-
+<span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;Compatibility layer that routes batch jobs to an E2B sandbox router.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Execution</span><span class="p">,</span> <span class="n">ExecutionError</span><span class="p">,</span> <span class="n">Result</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.router_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_router_payload</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Execution</span><span class="p">,</span> <span class="n">ExecutionError</span><span class="p">,</span> <span class="n">Result</span>
 
 
 <div class="viewcode-block" id="RoutedSandbox">
@@ -302,8 +294,46 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">router_url</span> <span class="o">=</span> <span class="n">router_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">300</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span> <span class="o">=</span> <span class="mi">30</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span> <span class="o">=</span> <span class="mi">30</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_classes</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span>
+            <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Execution&quot;</span><span class="p">],</span>
+            <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;ExecutionError&quot;</span><span class="p">],</span>
+            <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Result&quot;</span><span class="p">],</span>
+        <span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_model_classes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Execution&quot;</span><span class="p">],</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;ExecutionError&quot;</span><span class="p">],</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Result&quot;</span><span class="p">],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Import execution-related models from ``e2b_code_interpreter`` on demand.&quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                <span class="n">Execution</span><span class="p">,</span>
+                <span class="n">ExecutionError</span><span class="p">,</span>
+                <span class="n">Result</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - handled via error propagation</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;e2b-code-interpreter is required to use the routed sandbox. &quot;</span>
+                <span class="s2">&quot;Install it with `pip install e2b-code-interpreter`.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="k">return</span> <span class="n">Execution</span><span class="p">,</span> <span class="n">ExecutionError</span><span class="p">,</span> <span class="n">Result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_model_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Execution&quot;</span><span class="p">],</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;ExecutionError&quot;</span><span class="p">],</span>
+        <span class="n">Type</span><span class="p">[</span><span class="s2">&quot;Result&quot;</span><span class="p">],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return cached model classes, importing them lazily when necessary.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_classes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_model_classes</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_classes</span>
 
 <div class="viewcode-block" id="RoutedSandbox.configure_timeouts">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts">[docs]</a>
@@ -328,7 +358,7 @@
         <span class="n">languages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">request_timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Execution</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;Execution&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Executes a batch of scripts in the sandbox environment.</span>
 
@@ -348,6 +378,8 @@
             <span class="n">request_timeout</span> <span class="k">if</span> <span class="n">request_timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span>
         <span class="p">)</span>
 
+        <span class="n">execution_cls</span><span class="p">,</span> <span class="n">execution_error_cls</span><span class="p">,</span> <span class="n">result_cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_classes</span><span class="p">()</span>
+
         <span class="n">languages</span><span class="p">,</span> <span class="n">payload</span> <span class="o">=</span> <span class="n">build_router_payload</span><span class="p">(</span>
             <span class="n">scripts</span><span class="p">,</span>
             <span class="n">languages</span><span class="p">,</span>
@@ -364,20 +396,20 @@
             <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request to E2B router failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">Execution</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">execution_cls</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">]</span>
 
         <span class="n">results</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
         <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">execution</span> <span class="o">=</span> <span class="n">Execution</span><span class="p">()</span>
+                <span class="n">execution</span> <span class="o">=</span> <span class="n">execution_cls</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">exec_payload</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">]</span>
-                <span class="n">execution</span> <span class="o">=</span> <span class="n">Execution</span><span class="p">(</span>
-                    <span class="n">results</span><span class="o">=</span><span class="p">[</span><span class="n">Result</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]],</span>
+                <span class="n">execution</span> <span class="o">=</span> <span class="n">execution_cls</span><span class="p">(</span>
+                    <span class="n">results</span><span class="o">=</span><span class="p">[</span><span class="n">result_cls</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]],</span>
                     <span class="n">logs</span><span class="o">=</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;logs&quot;</span><span class="p">],</span>
                     <span class="n">error</span><span class="o">=</span><span class="p">(</span>
-                        <span class="n">ExecutionError</span><span class="p">(</span><span class="o">**</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">])</span>
+                        <span class="n">execution_error_cls</span><span class="p">(</span><span class="o">**</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">])</span>
                         <span class="k">if</span> <span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span>
                         <span class="k">else</span> <span class="kc">None</span>
                     <span class="p">),</span>

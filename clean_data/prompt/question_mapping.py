@@ -1,10 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Reference mapping between Qualtrics question IDs and friendly feature names.
 
 This table helps us keep track of where each prompt feature originates in the
-CodeOcean survey exports.  The ``question_ids`` list contains the raw column
-names observed across the intermediate CSVs for Studies 1–4.  When the builder
+CodeOcean survey exports. The ``question_ids`` list contains the raw column
+names observed across the intermediate CSVs for Studies 1–4. When the builder
 renames or aggregates features, refer back here to understand which Qualtrics
-items are involved.
+items are involved. The mapping is provided under the repository's Apache 2.0
+license; see LICENSE for the complete text.
 """
 
 from __future__ import annotations
@@ -13,7 +29,12 @@ from typing import Dict, List, TypedDict
 
 
 class QuestionMapping(TypedDict, total=False):
-    """Structure describing how a friendly feature relates to raw survey IDs."""
+    """Structure describing how a friendly feature relates to raw survey IDs.
+
+    :param question_ids: Raw Qualtrics column names associated with the feature.
+    :param description: Human-readable summary of the feature.
+    :param notes: Additional caveats or provenance notes for the feature.
+    """
 
     question_ids: List[str]
     description: str
@@ -58,7 +79,7 @@ QUESTION_ID_MAPPING: Dict[str, QuestionMapping] = {
     },
     "favorite_channels": {
         "question_ids": ["q8", "fav_channels"],
-        "description": "Open-ended list of favourite YouTube channels.",
+        "description": "Open-ended list of favorite YouTube channels.",
         "notes": "Qualtrics export stores the raw text under q8.",
     },
     "popular_channels_followed": {

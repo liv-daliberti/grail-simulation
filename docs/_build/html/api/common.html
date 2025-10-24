@@ -213,7 +213,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -262,7 +264,15 @@
 <h1>Common Utilities API<a class="headerlink" href="#common-utilities-api" title="Link to this heading">¶</a></h1>
 <p>Shared helpers under <a class="reference internal" href="#module-common" title="common"><code class="xref py py-mod docutils literal notranslate"><span class="pre">common</span></code></a> provide reusable logging, text canonicalisation,
 title resolution, and safe numerical operations used across the baselines.</p>
-<p id="module-common">Shared utilities reused across multiple baselines.</p>
+<p id="module-common">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.OpinionStudySelection">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">OpinionStudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline_utils.html#OpinionStudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.OpinionStudySelection" title="Link to this definition">¶</a></dt>
@@ -658,7 +668,15 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dl>
 </dd></dl>
 
-<p id="module-common.logging_utils">Logging helpers shared across baseline implementations.</p>
+<p id="module-common.logging_utils">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.logging_utils.ensure_directory">
 <span class="sig-prename descclassname"><span class="pre">common.logging_utils.</span></span><span class="sig-name descname"><span class="pre">ensure_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#ensure_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.logging_utils.ensure_directory" title="Link to this definition">¶</a></dt>
@@ -709,7 +727,15 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dl>
 </dd></dl>
 
-<p id="module-common.text">Canonical text helpers reused across baseline implementations.</p>
+<p id="module-common.text">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.text.canon_text">
 <span class="sig-prename descclassname"><span class="pre">common.text.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/text.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.text.canon_text" title="Link to this definition">¶</a></dt>
@@ -778,7 +804,15 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dl>
 </dd></dl>
 
-<p id="module-common.title_index">Shared helpers for resolving slate video ids to human-readable titles.</p>
+<p id="module-common.title_index">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.title_index.TitleResolver">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.title_index.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'title-index'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/title_index.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.title_index.TitleResolver" title="Link to this definition">¶</a></dt>
@@ -878,7 +912,15 @@ title resolution, and safe numerical operations used across the baselines.</p>
 
 </dd></dl>
 
-<p id="module-common.embeddings">Lightweight wrappers around optional embedding backends.</p>
+<p id="module-common.embeddings">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.embeddings.SentenceTransformerConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.embeddings.</span></span><span class="sig-name descname"><span class="pre">SentenceTransformerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sentence-transformers/all-mpnet-base-v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerConfig" title="Link to this definition">¶</a></dt>
@@ -932,7 +974,7 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>) – Runtime configuration controlling inference behaviour.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>) – Runtime configuration controlling inference behavior.</p></li>
 <li><p><strong>_model</strong> (<em>SentenceTransformer</em><em> | </em><em>None</em>) – Lazily initialised SentenceTransformer instance (<code class="docutils literal notranslate"><span class="pre">None</span></code> until used).</p></li>
 </ul>
 </dd>

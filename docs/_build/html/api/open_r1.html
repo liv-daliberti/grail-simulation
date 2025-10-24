@@ -213,7 +213,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -266,7 +268,7 @@ loading, rollout orchestration, and evaluation.  Use the modules below
 to explore the available configuration surfaces and helper tooling.</p>
 <section id="module-open_r1">
 <span id="core-modules"></span><h2>Core Modules<a class="headerlink" href="#module-open_r1" title="Link to this heading">¶</a></h2>
-<p>Reinforcement-learning tooling for the GRAIL simulation project.</p>
+<p>Reinforcement learning utilities for the GRAIL simulation project.</p>
 <p id="module-open_r1.configs">Configuration helpers for open_r1 training scripts.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.configs.DatasetConfig">
@@ -725,19 +727,19 @@ options. Example:</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>distilabel.pipeline.Pipeline</p>
+<dd class="field-even"><p>Pipeline</p>
 </dd>
 </dl>
 </dd></dl>
 
 <p id="module-open_r1.grail">GRPO training entrypoint with optional discriminator (GAIL-style) shaping.</p>
 <p>This variant mirrors the standard GRPO pipeline but can append an auxiliary
-reward derived from a learned discriminator when $GAIL_USE=1. The underlying
-user prompt construction is shared with <cite>open_r1.grpo</cite> through the
-<cite>prompt_builder</cite> utilities.</p>
+reward derived from a learned discriminator when <code class="docutils literal notranslate"><span class="pre">$GAIL_USE=1</span></code>. The
+underlying user prompt construction is shared with <code class="docutils literal notranslate"><span class="pre">open_r1.grpo</span></code> through the
+<code class="docutils literal notranslate"><span class="pre">prompt_builder</span></code> utilities.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.grail.</span></span><span class="sig-name descname"><span class="pre">OnlineDiscriminator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.grail.</span></span><span class="sig-name descname"><span class="pre">OnlineDiscriminator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Lightweight text classifier trained on-policy to supply optional GAIL rewards.</p>
 <dl class="field-list simple">
@@ -745,20 +747,20 @@ user prompt construction is shared with <cite>open_r1.grpo</cite> through the
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>)</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>)</p></li>
-<li><p><strong>lr</strong> (<em>float</em>)</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Initialise the discriminator with the specified pretrained backbone.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>) – Hugging Face model identifier for the classifier.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Torch device where the model should live.</p></li>
-<li><p><strong>lr</strong> (<em>float</em>) – Learning rate used for the discriminator optimiser.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate used for the discriminator optimizer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -903,34 +905,7 @@ user prompt construction is shared with <cite>open_r1.grpo</cite> through the
 </dl>
 </dd></dl>
 
-<p id="module-open_r1.grpo">Standard GRPO training entrypoint for the GRAIL simulation dataset.</p>
-<p>This variant performs vanilla GRPO without any discriminator shaping. It relies
-solely on reward functions specified in the recipe YAML and uses the shared
-prompt-builder utilities to render user messages from dataset columns.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.grpo.get_peft_config">
-<span class="sig-prename descclassname"><span class="pre">open_r1.grpo.</span></span><span class="sig-name descname"><span class="pre">get_peft_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.grpo.get_peft_config" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.grpo.main">
-<span class="sig-prename descclassname"><span class="pre">open_r1.grpo.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grpo.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grpo.main" title="Link to this definition">¶</a></dt>
-<dd><p>Orchestrate dataset preparation, trainer construction, and the training loop.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>GRPOScriptArguments</em></a>)</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>)</p></li>
-<li><p><strong>model_args</strong> (<em>ModelConfig</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<p id="module-open_r1.rewards">Reward functions for GRPO training.</p>
+<p id="module-open_r1.rewards">Reward functions used by the GRPO training pipeline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.rewards.accuracy_reward">
 <span class="sig-prename descclassname"><span class="pre">open_r1.rewards.</span></span><span class="sig-name descname"><span class="pre">accuracy_reward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">completions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/rewards.html#accuracy_reward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.rewards.accuracy_reward" title="Link to this definition">¶</a></dt>
@@ -1212,7 +1187,15 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 </section>
 <section id="module-open_r1.utils">
 <span id="utility-modules"></span><h2>Utility Modules<a class="headerlink" href="#module-open_r1.utils" title="Link to this heading">¶</a></h2>
-<p>Utility helpers shared across the Open-R1 training pipelines.</p>
+<p>Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.get_dataset">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.</span></span><span class="sig-name descname"><span class="pre">get_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/data.html#get_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.get_dataset" title="Link to this definition">¶</a></dt>
@@ -1238,14 +1221,14 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_args</strong> (<em>ModelConfig</em>) – Model configuration taken from the CLI or config file.</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em> | </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>) – Training hyper-parameters that decide caching/quantisation.</p></li>
+<li><p><strong>training_args</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em>, </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a><em>]</em>) – Training hyper-parameters that decide caching/quantisation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Initialised <code class="docutils literal notranslate"><span class="pre">AutoModelForCausalLM</span></code> ready for fine-tuning.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>transformers.AutoModelForCausalLM</p>
+<dd class="field-odd"><p>AutoModelForCausalLM</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1258,14 +1241,14 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_args</strong> (<em>ModelConfig</em>) – Configuration describing the base pretrained checkpoint.</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em> | </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>) – Training hyper-parameters including optional chat template.</p></li>
+<li><p><strong>training_args</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em>, </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a><em>]</em>) – Training hyper-parameters including optional chat template.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Loaded and optionally chat-template enriched tokenizer instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>transformers.PreTrainedTokenizer</p>
+<dd class="field-odd"><p>PreTrainedTokenizer</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1311,15 +1294,18 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback.on_save">
-<span class="sig-name descname"><span class="pre">on_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback.on_save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback.on_save" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">on_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback.on_save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback.on_save" title="Link to this definition">¶</a></dt>
 <dd><p>Push the current checkpoint to the Hub and optionally schedule benchmarks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> (<em>transformers.TrainingArguments</em>)</p></li>
 <li><p><strong>state</strong> (<em>transformers.TrainerState</em>)</p></li>
-<li><p><strong>control</strong> (<em>transformers.TrainerControl</em>)</p></li>
+<li><p><strong>_control</strong> (<em>transformers.TrainerControl</em>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1423,7 +1409,7 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 
 </dd></dl>
 
-<p id="module-open_r1.utils.code_providers">Code execution providers for executing and evaluating code snippets.</p>
+<p id="module-open_r1.utils.code_providers">Code execution providers for executing and evaluating notebook-style snippets.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.code_providers.CodeExecutionProvider">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.code_providers.</span></span><span class="sig-name descname"><span class="pre">CodeExecutionProvider</span></span><a class="reference internal" href="../_modules/open_r1/utils/code_providers.html#CodeExecutionProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="Link to this definition">¶</a></dt>
@@ -1568,7 +1554,7 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </dl>
 </dd></dl>
 
-<p id="module-open_r1.utils.data">Helpers for loading datasets and mixtures used by the training scripts.</p>
+<p id="module-open_r1.utils.data">Dataset loading and mixture utilities for open_r1 training workflows.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.data.get_dataset">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.data.</span></span><span class="sig-name descname"><span class="pre">get_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/data.html#get_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.data.get_dataset" title="Link to this definition">¶</a></dt>
@@ -1586,7 +1572,15 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </dl>
 </dd></dl>
 
-<p id="module-open_r1.utils.evaluation">Evaluation utilities for orchestrating LightEval benchmark runs.</p>
+<p id="module-open_r1.utils.evaluation">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.evaluation.get_lighteval_tasks">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.evaluation.</span></span><span class="sig-name descname"><span class="pre">get_lighteval_tasks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/evaluation.html#get_lighteval_tasks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.evaluation.get_lighteval_tasks" title="Link to this definition">¶</a></dt>
@@ -1666,7 +1660,7 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 <dd><p>Checks if a given Hub revision exists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>training_args</strong> (<em>SFTConfig</em><em> | </em><em>GRPOConfig</em>)</p>
+<dd class="field-odd"><p><strong>training_args</strong> (<em>Any</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1712,7 +1706,7 @@ estimate the parameter count.</p>
 <dd><p>Pushes the model to branch on a Hub repo.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>training_args</strong> (<em>SFTConfig</em><em> | </em><em>GRPOConfig</em>)</p>
+<dd class="field-odd"><p><strong>training_args</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>concurrent.futures.Future</p>
@@ -1743,12 +1737,7 @@ estimate the parameter count.</p>
 </dl>
 </dd></dl>
 
-<p id="module-open_r1.utils.model_utils">Model and tokenizer factory helpers for Open-R1 training scripts.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.model_utils.get_kbit_device_map">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_kbit_device_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.model_utils.get_kbit_device_map" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<p id="module-open_r1.utils.model_utils">Tokenizer and model helpers used by the Open-R1 training pipelines.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.model_utils.get_model">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/model_utils.html#get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.model_utils.get_model" title="Link to this definition">¶</a></dt>
@@ -1757,22 +1746,17 @@ estimate the parameter count.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_args</strong> (<em>ModelConfig</em>) – Model configuration taken from the CLI or config file.</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em> | </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>) – Training hyper-parameters that decide caching/quantisation.</p></li>
+<li><p><strong>training_args</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em>, </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a><em>]</em>) – Training hyper-parameters that decide caching/quantisation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Initialised <code class="docutils literal notranslate"><span class="pre">AutoModelForCausalLM</span></code> ready for fine-tuning.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>transformers.AutoModelForCausalLM</p>
+<dd class="field-odd"><p>AutoModelForCausalLM</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.utils.model_utils.get_quantization_config">
-<span class="sig-prename descclassname"><span class="pre">open_r1.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_quantization_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.utils.model_utils.get_quantization_config" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.model_utils.get_tokenizer">
@@ -1782,14 +1766,14 @@ estimate the parameter count.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_args</strong> (<em>ModelConfig</em>) – Configuration describing the base pretrained checkpoint.</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em> | </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>) – Training hyper-parameters including optional chat template.</p></li>
+<li><p><strong>training_args</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#open_r1.configs.SFTConfig" title="open_r1.configs.SFTConfig"><em>SFTConfig</em></a><em>, </em><a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a><em>]</em>) – Training hyper-parameters including optional chat template.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Loaded and optionally chat-template enriched tokenizer instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>transformers.PreTrainedTokenizer</p>
+<dd class="field-odd"><p>PreTrainedTokenizer</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2299,8 +2283,6 @@ requests.</p>
 <li><a class="reference internal" href="#open_r1.grail.get_peft_config"><code class="docutils literal notranslate"><span class="pre">get_peft_config()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.make_gail_reward_fn"><code class="docutils literal notranslate"><span class="pre">make_gail_reward_fn()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.grpo.get_peft_config"><code class="docutils literal notranslate"><span class="pre">get_peft_config()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.grpo.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.accuracy_reward"><code class="docutils literal notranslate"><span class="pre">accuracy_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.binary_code_reward"><code class="docutils literal notranslate"><span class="pre">binary_code_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.code_reward"><code class="docutils literal notranslate"><span class="pre">code_reward()</span></code></a></li>
@@ -2366,9 +2348,7 @@ requests.</p>
 <li><a class="reference internal" href="#open_r1.utils.hub.push_to_hub_revision"><code class="docutils literal notranslate"><span class="pre">push_to_hub_revision()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.import_utils.is_e2b_available"><code class="docutils literal notranslate"><span class="pre">is_e2b_available()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.import_utils.is_morph_available"><code class="docutils literal notranslate"><span class="pre">is_morph_available()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.model_utils.get_kbit_device_map"><code class="docutils literal notranslate"><span class="pre">get_kbit_device_map()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.model_utils.get_model"><code class="docutils literal notranslate"><span class="pre">get_model()</span></code></a></li>
-<li><a class="reference internal" href="#open_r1.utils.model_utils.get_quantization_config"><code class="docutils literal notranslate"><span class="pre">get_quantization_config()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.model_utils.get_tokenizer"><code class="docutils literal notranslate"><span class="pre">get_tokenizer()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer"><code class="docutils literal notranslate"><span class="pre">ReplayBuffer</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer.__init__"><code class="docutils literal notranslate"><span class="pre">ReplayBuffer.__init__()</span></code></a></li>

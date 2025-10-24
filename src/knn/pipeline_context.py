@@ -1,4 +1,30 @@
-"""Shared data classes for the modular KNN pipeline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
+
 # pylint: disable=line-too-long
 from __future__ import annotations
 
@@ -260,8 +286,8 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     :vartype mae: float
     :ivar rmse: Root-mean-square error achieved on the validation split.
     :vartype rmse: float
-    :ivar r2: Coefficient of determination for the opinion regression.
-    :vartype r2: float
+    :ivar r2_score: Coefficient of determination for the opinion regression.
+    :vartype r2_score: float
     :ivar accuracy: Directional accuracy achieved by the configuration.
     :vartype accuracy: Optional[float]
     :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
@@ -285,7 +311,7 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     feature_space: str
     mae: float
     rmse: float
-    r2: float
+    r2_score: float
     accuracy: Optional[float]
     baseline_accuracy: Optional[float]
     accuracy_delta: Optional[float]
@@ -550,8 +576,8 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     :vartype mae: Optional[float]
     :ivar rmse: Root-mean-square error for the selected configuration.
     :vartype rmse: Optional[float]
-    :ivar r2: Coefficient of determination capturing explained variance.
-    :vartype r2: Optional[float]
+    :ivar r2_score: Coefficient of determination capturing explained variance.
+    :vartype r2_score: Optional[float]
     :ivar mae_change: Normalised change in MAE relative to the baseline.
     :vartype mae_change: Optional[float]
     :ivar baseline_mae: Baseline MAE measured using pre-study opinions.
@@ -577,7 +603,7 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     """
     mae: Optional[float] = None
     rmse: Optional[float] = None
-    r2: Optional[float] = None
+    r2_score: Optional[float] = None
     mae_change: Optional[float] = None
     baseline_mae: Optional[float] = None
     mae_delta: Optional[float] = None

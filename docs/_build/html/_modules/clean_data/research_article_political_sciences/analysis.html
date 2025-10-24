@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,29 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.research_article_political_sciences.analysis</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Core data wrangling helpers for the political sciences replication.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Core data wrangling helpers for the political sciences replication.</span>
+
+<span class="sd">This module prepares cleaned dataset splits for analysis by filtering</span>
+<span class="sd">per-study frames, harmonising opinion indices, and computing the heatmap</span>
+<span class="sd">counts consumed by the reporting layer. All functionality is distributed</span>
+<span class="sd">under the repository&#39;s Apache 2.0 license; see LICENSE for the permitted</span>
+<span class="sd">uses.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -275,7 +299,15 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.StudySpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StudySpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration describing one study&#39;s pre/post opinion columns.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration describing one study&#39;s pre/post opinion columns.</span>
+
+<span class="sd">    :param key: Identifier for the study grouping (e.g., ``&quot;study1&quot;``).</span>
+<span class="sd">    :param issue: Issue slug used to filter the combined dataframe.</span>
+<span class="sd">    :param label: Human-readable study title.</span>
+<span class="sd">    :param before_column: Column name holding the pre-treatment score.</span>
+<span class="sd">    :param after_column: Column name holding the post-treatment score.</span>
+<span class="sd">    :param heatmap_filename: Output filename for the study heatmap.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
@@ -289,7 +321,11 @@
 <div class="viewcode-block" id="dataframe_from_splits">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.dataframe_from_splits">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dataframe_from_splits</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine all dataset splits into a single pandas dataframe.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine all dataset splits into a single pandas dataframe.</span>
+
+<span class="sd">    :param dataset: Hugging Face ``DatasetDict`` with train/validation/test splits.</span>
+<span class="sd">    :returns: Concatenated dataframe or an empty frame when no splits are present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">frames</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -304,7 +340,11 @@
 <div class="viewcode-block" id="to_numeric">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.to_numeric">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a pandas series to numeric values, preserving NaNs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a pandas series to numeric values, preserving NaNs.</span>
+
+<span class="sd">    :param series: Series containing numeric-like strings or numbers.</span>
+<span class="sd">    :returns: Series coerced to numeric dtype with invalid entries set to NaN.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span></div>
 
@@ -313,7 +353,12 @@
 <div class="viewcode-block" id="prepare_study_frame">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.prepare_study_frame">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prepare_study_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter the combined dataframe down to the rows matching a study.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter the combined dataframe down to the rows matching a study.</span>
+
+<span class="sd">    :param frame: Combined dataframe across all studies/issues.</span>
+<span class="sd">    :param spec: Study specification describing the target subset.</span>
+<span class="sd">    :returns: Filtered dataframe with numeric pre/post columns.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">frame</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -335,7 +380,14 @@
     <span class="n">after_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">bins</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a 2D histogram of before vs. after opinion indices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a 2D histogram of before vs. after opinion indices.</span>
+
+<span class="sd">    :param data_frame: Dataframe with pre/post opinion columns.</span>
+<span class="sd">    :param before_col: Name of the pre-treatment column.</span>
+<span class="sd">    :param after_col: Name of the post-treatment column.</span>
+<span class="sd">    :param bins: Number of equally spaced bins in both dimensions.</span>
+<span class="sd">    :returns: Tuple ``(histogram, bin_edges)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -356,7 +408,13 @@
     <span class="n">before_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">after_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute summary statistics describing the opinion shift.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute summary statistics describing the opinion shift.</span>
+
+<span class="sd">    :param data_frame: Dataframe with pre/post opinion columns.</span>
+<span class="sd">    :param before_col: Column for pre-treatment scores.</span>
+<span class="sd">    :param after_col: Column for post-treatment scores.</span>
+<span class="sd">    :returns: Dictionary with sample size, means, change metrics, and shares.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -394,7 +452,10 @@
 <div class="viewcode-block" id="assemble_study_specs">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.assemble_study_specs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_study_specs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the static study specifications handled by the report.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the static study specifications handled by the report.</span>
+
+<span class="sd">    :returns: Iterable of :class:`StudySpec` describing each study.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">StudySpec</span><span class="p">(</span>
@@ -426,20 +487,31 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_capsule_results_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repository-local path to the capsule intermediate data.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repository-local path to the capsule intermediate data.</span>
+
+<span class="sd">    :returns: Path to the capsule directory or ``None`` if missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">&quot;capsule-5416997&quot;</span> <span class="o">/</span> <span class="s2">&quot;results&quot;</span> <span class="o">/</span> <span class="s2">&quot;intermediate data&quot;</span>
     <span class="k">return</span> <span class="n">base</span> <span class="k">if</span> <span class="n">base</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_series</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trimmed string series with missing tokens replaced by blanks.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trimmed string series with missing tokens replaced by blanks.</span>
+
+<span class="sd">    :param series: Series potentially containing null or whitespace values.</span>
+<span class="sd">    :returns: Normalized string series safe for downstream filtering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_nonempty_mask</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Boolean mask selecting entries that are not considered missing or blank.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Boolean mask selecting entries that are not considered missing or blank.</span>
+
+<span class="sd">    :param series: Series to evaluate for missing/blank markers.</span>
+<span class="sd">    :returns: Boolean series where ``True`` marks non-missing entries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">normalized</span> <span class="o">=</span> <span class="n">_normalize_series</span><span class="p">(</span><span class="n">series</span><span class="p">)</span>
     <span class="n">lowered</span> <span class="o">=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -447,7 +519,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dedupe_earliest</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">id_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep the earliest observation per identifier, mirroring survey filters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep the earliest observation per identifier, mirroring survey filters.</span>
+
+<span class="sd">    :param data_frame: Dataframe potential duplicates per participant.</span>
+<span class="sd">    :param id_column: Column containing the identifier to deduplicate on.</span>
+<span class="sd">    :returns: Dataframe retaining the earliest observation per id.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span> <span class="ow">or</span> <span class="n">id_column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data_frame</span>
@@ -479,13 +556,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a series to numeric values with NaNs for unparsable entries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a series to numeric values with NaNs for unparsable entries.</span>
+
+<span class="sd">    :param series: Series containing numeric-like entries.</span>
+<span class="sd">    :returns: Numeric series with invalid values set to NaN.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_study1_assignment_frame</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 1 (gun control MTurk).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 1 (gun control MTurk).</span>
+
+<span class="sd">    :param base_dir: Root directory containing capsule export CSVs.</span>
+<span class="sd">    :param spec: Study specification describing the target columns.</span>
+<span class="sd">    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">wave1_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;gun control (issue 1)&quot;</span> <span class="o">/</span> <span class="s2">&quot;guncontrol_qualtrics_w1_clean.csv&quot;</span>
     <span class="n">follow_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;gun control (issue 1)&quot;</span> <span class="o">/</span> <span class="s2">&quot;guncontrol_qualtrics_w123_clean.csv&quot;</span>
@@ -545,7 +631,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_study2_assignment_frame</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 2 (minimum wage MTurk).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 2 (minimum wage MTurk).</span>
+
+<span class="sd">    :param base_dir: Root directory containing capsule export CSVs.</span>
+<span class="sd">    :param spec: Study specification describing the target columns.</span>
+<span class="sd">    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;minimum wage (issue 2)&quot;</span> <span class="o">/</span> <span class="s2">&quot;qualtrics_w12_clean.csv&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -610,7 +701,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_study3_assignment_frame</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 3 (minimum wage YouGov).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return control/treatment assignments for Study 3 (minimum wage YouGov).</span>
+
+<span class="sd">    :param base_dir: Root directory containing capsule export CSVs.</span>
+<span class="sd">    :param spec: Study specification describing the target columns.</span>
+<span class="sd">    :returns: Dataframe with ``participant_id``, ``before``, ``after``, and ``assignment``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;minimum wage (issue 2)&quot;</span> <span class="o">/</span> <span class="s2">&quot;yg_w12_clean.csv&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -674,7 +770,11 @@
 <div class="viewcode-block" id="load_assignment_frame">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.load_assignment_frame">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_assignment_frame</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a dataframe containing control/treatment assignments for a study.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a dataframe containing control/treatment assignments for a study.</span>
+
+<span class="sd">    :param spec: Study specification determining which assignment loader to use.</span>
+<span class="sd">    :returns: Assignment dataframe with pre/post scores or an empty frame on failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_dir</span> <span class="o">=</span> <span class="n">_capsule_results_dir</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">base_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -693,7 +793,11 @@
 <div class="viewcode-block" id="summarise_assignments">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarise_assignments">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_assignments</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return summary statistics for each assignment group in a dataframe.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return summary statistics for each assignment group in a dataframe.</span>
+
+<span class="sd">    :param frame: Assignment dataframe produced by :func:`load_assignment_frame`.</span>
+<span class="sd">    :returns: List of dictionaries with per-assignment summary metrics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -737,6 +841,10 @@
 <span class="sd">    The model regresses ``after - before`` on a treatment indicator with</span>
 <span class="sd">    study fixed-effects (Study 1 as the reference category).  Returns the</span>
 <span class="sd">    coefficient, standard error, 95% CI, and two-sided p-value.</span>
+
+<span class="sd">    :param combined_frame: Combined dataframe with columns ``before``,</span>
+<span class="sd">        ``after``, ``assignment``, and ``study_key``.</span>
+<span class="sd">    :returns: Dictionary containing coefficient, stderr, CI bounds, and p-value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">combined_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>

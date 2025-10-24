@@ -1,10 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Core prompt construction logic for the cleaned GRAIL dataset.
 
 This module converts the normalized session rows into structured prompt
 examples: resolving slate items, synthesising system/user messages,
 tracking passthrough metadata, and enforcing GRPO column requirements.
 Other modules feed raw data into these helpers when building cleaned
-datasets or inspecting individual examples.
+datasets or inspecting individual examples. These utilities are distributed
+under the repository's Apache 2.0 license; see LICENSE for more details.
 """
 
 from __future__ import annotations
@@ -26,12 +42,20 @@ from clean_data.prompt.constants import (
 
 
 def _clean_str(value: Any) -> str:
-    """Return a trimmed string, converting ``None`` to an empty string."""
+    """Return a trimmed string, converting ``None`` to an empty string.
+
+    :param value: Raw value that may be ``None`` or string-like.
+    :returns: Stripped string representation.
+    """
     return str(value).strip() if value is not None else ""
 
 
 def _truthy_str_flag(value: Any) -> Optional[bool]:
-    """Interpret common string boolean markers."""
+    """Interpret common string boolean markers.
+
+    :param value: Value potentially encoding a boolean flag.
+    :returns: ``True``/``False`` when recognized, otherwise ``None``.
+    """
     if value is None:
         return None
     normalized = str(value).strip().lower()
@@ -43,7 +67,12 @@ def _truthy_str_flag(value: Any) -> Optional[bool]:
 
 
 def _last_index(values: Any, target: Any) -> Optional[int]:
-    """Return the last index of ``target`` inside ``values`` when ``values`` is a list."""
+    """Return the last index of ``target`` inside ``values`` when ``values`` is a list.
+
+    :param values: Candidate list searched for ``target``.
+    :param target: Value to locate.
+    :returns: Zero-based index of the last match or ``None``.
+    """
     if not isinstance(values, list) or target is None:
         return None
     last: Optional[int] = None
@@ -54,7 +83,11 @@ def _last_index(values: Any, target: Any) -> Optional[int]:
 
 
 def load_slate_items(ex: dict) -> List[dict]:
-    """Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys."""
+    """Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys.
+
+    :param ex: Session row dictionary containing slate metadata.
+    :returns: List of dictionaries with normalized ``title`` and ``id`` fields.
+    """
     arr = _as_list_json(ex.get("slate_items_json"))
     out: List[dict] = []
     for raw_item in arr:
@@ -80,7 +113,11 @@ def _secs(value: Any) -> str:
 
 
 def _format_age(age: Any) -> Optional[str]:
-    """Return a formatted age fragment or ``None``."""
+    """Return a formatted age fragment or ``None``.
+
+    :param age: Age field from the dataset (string or numeric).
+    :returns: Age phrase or ``None`` when missing/invalid.
+    """
     try:
         age_i = int(age) if age not in (None, "", "nan") else None
     except (TypeError, ValueError):
@@ -91,7 +128,11 @@ def _format_age(age: Any) -> Optional[str]:
 
 
 def _format_gender(gender: Any) -> Optional[str]:
-    """Return a formatted gender fragment or ``None``."""
+    """Return a formatted gender fragment or ``None``.
+
+    :param gender: Gender descriptor from the dataset.
+    :returns: Normalized gender string or ``None``.
+    """
     normalized = str(gender or "").strip().lower()
     if normalized in {"man", "male"}:
         return "man"
@@ -103,7 +144,12 @@ def _format_gender(gender: Any) -> Optional[str]:
 
 
 def _format_party_affiliation(pid1: Any, ideo1: Any) -> Optional[str]:
-    """Return a formatted party/ideology fragment or ``None``."""
+    """Return a formatted party/ideology fragment or ``None``.
+
+    :param pid1: Raw party affiliation value.
+    :param ideo1: Raw ideology value.
+    :returns: Combined party/ideology string or ``None`` when absent.
+    """
     party = str(pid1 or "").strip()
     ideo = str(ideo1 or "").strip()
     if party and party.lower() != "nan":
@@ -116,7 +162,11 @@ def _format_party_affiliation(pid1: Any, ideo1: Any) -> Optional[str]:
 
 
 def _format_income(income: Any) -> Optional[str]:
-    """Return a formatted income fragment or ``None``."""
+    """Return a formatted income fragment or ``None``.
+
+    :param income: Income field from the dataset.
+    :returns: Normalized income string or ``None``.
+    """
     inc = str(income or "").strip()
     if inc and inc.lower() != "nan":
         return inc
@@ -124,14 +174,22 @@ def _format_income(income: Any) -> Optional[str]:
 
 
 def _format_college(college: Any) -> Optional[str]:
-    """Return a formatted education fragment or ``None``."""
+    """Return a formatted education fragment or ``None``.
+
+    :param college: College attendance indicator.
+    :returns: Education phrase or ``None`` when unspecified.
+    """
     if _truthy_str_flag(college):
         return "college-educated"
     return None
 
 
 def _format_race(race: Any) -> Optional[str]:
-    """Return a formatted race/ethnicity fragment or ``None``."""
+    """Return a formatted race/ethnicity fragment or ``None``.
+
+    :param race: Race or ethnicity entry.
+    :returns: Normalized race string or ``None``.
+    """
     text = _clean_str(race)
     if text and not _is_nanlike(text):
         return text
@@ -139,7 +197,11 @@ def _format_race(race: Any) -> Optional[str]:
 
 
 def _format_youtube_freq(freq: Any) -> Optional[str]:
-    """Return a formatted YouTube frequency fragment or ``None``."""
+    """Return a formatted YouTube frequency fragment or ``None``.
+
+    :param freq: Frequency indicator from the dataset.
+    :returns: Human-readable frequency string or ``None``.
+    """
     freq_key = str(freq or "").strip()
     if freq_key in YOUTUBE_FREQ_MAP:
         return f"watches YouTube {YOUTUBE_FREQ_MAP[freq_key]}"
@@ -171,7 +233,11 @@ def _synthesize_viewer_sentence(ex: dict) -> str:
     return profile_sentence if profile_sentence else "(no profile provided)"
 
 def _viewer_attribute_lines(ex: dict) -> List[str]:
-    """Return per-viewer attribute strings for the prompt."""
+    """Return per-viewer attribute strings for the prompt.
+
+    :param ex: Session row dictionary.
+    :returns: List of attribute strings ready for prompt inclusion.
+    """
 
     details: List[str] = []
     race = _clean_str(ex.get("race") or ex.get("ethnicity") or ex.get("q29"))
@@ -200,7 +266,12 @@ def _viewer_attribute_lines(ex: dict) -> List[str]:
 
 
 def _current_watch_lines(ex: dict, show_ids: bool) -> List[str]:
-    """Return lines describing the currently watched video."""
+    """Return lines describing the currently watched video.
+
+    :param ex: Session row dictionary.
+    :param show_ids: Whether to include the video id in the text.
+    :returns: List of description lines, possibly empty.
+    """
 
     title = (ex.get("current_video_title") or "").strip()
     vid = (ex.get("current_video_id") or "").strip()
@@ -215,7 +286,13 @@ def _current_watch_lines(ex: dict, show_ids: bool) -> List[str]:
 
 
 def _history_lines(ex: dict, show_ids: bool, max_hist: int) -> List[str]:
-    """Generate history lines (most recent first) for the prompt."""
+    """Generate history lines (most recent first) for the prompt.
+
+    :param ex: Session row dictionary.
+    :param show_ids: Whether to embed video ids in the output.
+    :param max_hist: Maximum number of history entries to include.
+    :returns: List of formatted history strings.
+    """
 
     detailed = _as_list_json(ex.get("watched_detailed_json"))
     vids = _as_list_json(ex.get("watched_vids_json"))
@@ -485,7 +562,15 @@ def gold_index_from_items(gold: str, items: List[dict]) -> int:
 
 @dataclass(frozen=True)
 class ExampleComponents:
-    """Intermediate bundle for prompt example creation."""
+    """Intermediate bundle for prompt example creation.
+
+    :param items: Slate item dictionaries present in the example.
+    :param gold_id: Canonical identifier of the gold video.
+    :param gold_index: One-based index of the gold item within ``items``.
+    :param user_message: User text rendered for the prompt.
+    :param system_message: System prompt text.
+    :param slate_text: Human-readable slate listing for logging.
+    """
 
     items: List[dict]
     gold_id: str
@@ -496,13 +581,22 @@ class ExampleComponents:
 
 
 def _resolve_system_prompt(system_prompt: Optional[str]) -> str:
-    """Return the caller-provided system prompt or the default template."""
+    """Return the caller-provided system prompt or the default template.
+
+    :param system_prompt: Optional override for the default prompt string.
+    :returns: Resolved system prompt text.
+    """
 
     return system_prompt or DEFAULT_SYSTEM_PROMPT
 
 
 def _resolve_slate_text(ex: dict, items: List[dict]) -> str:
-    """Return a non-empty slate text representation."""
+    """Return a non-empty slate text representation.
+
+    :param ex: Session row dictionary with optional ``slate_text`` column.
+    :param items: Slate items used when ``slate_text`` is absent.
+    :returns: Slate text ready for downstream reporting.
+    """
 
     existing = ex.get("slate_text")
     if existing:
@@ -519,7 +613,14 @@ def _collect_example_components(
     sol_key: Optional[str],
     max_hist: int,
 ) -> Optional[ExampleComponents]:
-    """Gather the prerequisite values required to build a cleaned example."""
+    """Gather the prerequisite values required to build a cleaned example.
+
+    :param ex: Session row dictionary.
+    :param system_prompt: Optional override for the system prompt text.
+    :param sol_key: Alternate field containing the gold id.
+    :param max_hist: Maximum number of history rows to include in prompts.
+    :returns: Populated :class:`ExampleComponents` or ``None`` if invalid.
+    """
 
     items = load_slate_items(ex)
     if not items:

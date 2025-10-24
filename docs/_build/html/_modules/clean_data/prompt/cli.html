@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,12 +254,29 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompt.cli</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Command-line front-end for generating prompt feature statistics.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Command-line front-end for generating prompt feature statistics.</span>
 
 <span class="sd">The CLI loads a cleaned dataset, computes summary metrics, renders plots,</span>
 <span class="sd">and writes a Markdown report describing viewer coverage, feature richness,</span>
-<span class="sd">and participation statistics.  It is typically invoked by the main</span>
+<span class="sd">and participation statistics. It is typically invoked by the main</span>
 <span class="sd">cleaning workflow but can be used standalone for exploratory analysis.</span>
+<span class="sd">Running this CLI is subject to the repository&#39;s Apache 2.0 license; see</span>
+<span class="sd">LICENSE for the terms.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -357,7 +376,14 @@
     <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span>
     <span class="n">validation_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate exploratory prompt statistics and write plots plus summaries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate exploratory prompt statistics and write plots plus summaries.</span>
+
+<span class="sd">    :param dataset: Hugging Face dataset dictionary produced by :func:`load_dataset_any`.</span>
+<span class="sd">    :param output_dir: Directory where figures and Markdown summaries will be written.</span>
+<span class="sd">    :param train_split: Name of the split treated as the training set.</span>
+<span class="sd">    :param validation_split: Name of the split treated as the validation set.</span>
+<span class="sd">    :raises ValueError: If the requested splits are missing from ``dataset``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_validate_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">train_split</span><span class="p">,</span> <span class="n">validation_split</span><span class="p">)</span>
 
@@ -475,7 +501,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse command-line arguments for the prompt statistics CLI.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse command-line arguments for the prompt statistics CLI.</span>
+
+<span class="sd">    :returns: Namespace containing the parsed CLI arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Generate prompt feature histograms and statistics.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -497,7 +526,10 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.cli.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for the ``prompt-stats`` command line interface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for the ``prompt-stats`` command line interface.</span>
+
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">()</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset_any</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
     <span class="n">generate_prompt_feature_report</span><span class="p">(</span>

@@ -1,4 +1,29 @@
-"""XGBoost training and inference utilities for slate prediction."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 from __future__ import annotations
 
@@ -43,7 +68,7 @@ except ImportError:  # pragma: no cover - optional dependency
     XGBClassifier = None  # type: ignore
 
 LOGGER = logging.getLogger("xgb.model")
-gpu_training_enabled = True  # pylint: disable=invalid-name
+GPU_TRAINING_ENABLED = True
 
 
 def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
@@ -361,7 +386,7 @@ def _train_booster(
     booster_kwargs.setdefault("num_class", unique_labels)
 
     requested_method = params.tree_method or "hist"
-    use_gpu = requested_method.lower().startswith("gpu") and gpu_training_enabled
+    use_gpu = requested_method.lower().startswith("gpu") and GPU_TRAINING_ENABLED
     effective_method = requested_method if use_gpu else (
         "hist" if requested_method.lower().startswith("gpu") else requested_method
     )
@@ -419,10 +444,10 @@ def _disable_gpu_boosters() -> None:
     Invoked after repeated GPU failures to prevent recurring retries.
     """
 
-    global gpu_training_enabled  # pylint: disable=global-statement
-    if gpu_training_enabled:
+    global GPU_TRAINING_ENABLED  # pylint: disable=global-statement
+    if GPU_TRAINING_ENABLED:
         LOGGER.warning("Disabling XGBoost GPU boosters for the remainder of this process.")
-    gpu_training_enabled = False
+    GPU_TRAINING_ENABLED = False
 
 
 def _scrub_gpu_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:

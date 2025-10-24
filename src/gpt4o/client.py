@@ -1,4 +1,5 @@
-"""Azure OpenAI client helpers for GPT-4o evaluation."""
+#!/usr/bin/env python
+"""Client helper for interacting with the Azure-hosted GPT-4o deployment."""
 
 from __future__ import annotations
 
@@ -23,19 +24,24 @@ try:  # pragma: no cover - optional dependency
     from openai import AzureOpenAI as _AzureOpenAI  # type: ignore
 except ImportError as exc:  # pragma: no cover - optional dependency
     _AzureOpenAI = None  # type: ignore[assignment]
-    _azure_openai_import_error = exc
+    _AZURE_OPENAI_IMPORT_ERROR = exc
 else:  # pragma: no cover
-    _azure_openai_import_error = None
+    _AZURE_OPENAI_IMPORT_ERROR = None
 
 
 def _require_openai() -> Any:
-    """Return the Azure OpenAI class, raising an informative error if missing."""
+    """Return the Azure OpenAI class, raising an informative error if missing.
+
+    :returns: Azure OpenAI client class exposed by the ``openai`` package.
+    :rtype: Any
+    :raises ImportError: If the ``openai`` package (with Azure support) is unavailable.
+    """
 
     if _AzureOpenAI is None:
         raise ImportError(
             "The 'openai' package is required to use Azure OpenAI client helpers. "
             "Install it with `pip install openai`."
-        ) from _azure_openai_import_error
+        ) from _AZURE_OPENAI_IMPORT_ERROR
     return _AzureOpenAI
 
 
@@ -43,7 +49,17 @@ def _require_openai() -> Any:
 def _cached_client(
     api_key: str, endpoint: str, api_version: str
 ) -> AzureOpenAIType:
-    """Return a cached Azure OpenAI client instance."""
+    """Return a cached Azure OpenAI client instance.
+
+    :param api_key: Azure OpenAI API key used for authentication.
+    :type api_key: str
+    :param endpoint: Fully-qualified Azure OpenAI endpoint URL.
+    :type endpoint: str
+    :param api_version: API version string negotiated with the Azure service.
+    :type api_version: str
+    :returns: Lazily cached Azure OpenAI client.
+    :rtype: AzureOpenAIType
+    """
 
     client_cls = _require_openai()
     return client_cls(
@@ -54,7 +70,11 @@ def _cached_client(
 
 
 def get_client() -> AzureOpenAIType:
-    """Construct or reuse the singleton Azure OpenAI client."""
+    """Construct or reuse the singleton Azure OpenAI client.
+
+    :returns: Cached client configured with environment or default credentials.
+    :rtype: AzureOpenAIType
+    """
 
     ensure_azure_env()
     api_key = os.environ.get("SANDBOX_API_KEY", SANDBOX_API_KEY)
@@ -69,7 +89,19 @@ def ds_call(
     temperature: float,
     deployment: str | None = None,
 ) -> str:
-    """Execute a chat completion call and return the trimmed text output."""
+    """Execute a chat completion call and return the trimmed text output.
+
+    :param messages: Chat messages formatted for the OpenAI API.
+    :type messages: list[dict[str, str]]
+    :param max_tokens: Maximum number of tokens the model may generate.
+    :type max_tokens: int
+    :param temperature: Sampling temperature forwarded to the model.
+    :type temperature: float
+    :param deployment: Optional Azure deployment override.
+    :type deployment: str | None
+    :returns: Trimmed textual completion returned by the model.
+    :rtype: str
+    """
 
     client = get_client()
     response = client.chat.completions.create(

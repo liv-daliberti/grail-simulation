@@ -213,7 +213,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -264,15 +266,34 @@
 recommendation slates and interacting with the model provider.  The
 modules below expose the main entry points for running evaluations,
 preparing conversations, and rendering leaderboard titles.</p>
-<p id="module-gpt4o">Utilities for evaluating GPT-4o slate baselines.</p>
-<p id="module-gpt4o.cli">Command-line interface for the GPT-4o slate baseline.</p>
+<p id="module-gpt4o">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
+<p id="module-gpt4o.cli">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.cli.build_parser">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.cli.build_parser" title="Link to this definition">¶</a></dt>
 <dd><p>Create the CLI argument parser for the GPT-4o baseline.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>ArgumentParser</em></p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Fully configured argument parser for the GPT-4o CLI.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>argparse.ArgumentParser</p>
 </dd>
 </dl>
 </dd></dl>
@@ -283,7 +304,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dd><p>Parse command-line arguments and execute the evaluation routine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional argument list to parse instead of <code class="docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -291,7 +312,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 </dl>
 </dd></dl>
 
-<p id="module-gpt4o.client">Azure OpenAI client helpers for GPT-4o evaluation.</p>
+<p id="module-gpt4o.client">Client helper for interacting with the Azure-hosted GPT-4o deployment.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.client.ds_call">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">ds_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#ds_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.ds_call" title="Link to this definition">¶</a></dt>
@@ -299,14 +320,17 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>messages</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
-<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
-<li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>messages</strong> (<em>list</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Chat messages formatted for the OpenAI API.</p></li>
+<li><p><strong>max_tokens</strong> (<em>int</em>) – Maximum number of tokens the model may generate.</p></li>
+<li><p><strong>temperature</strong> (<em>float</em>) – Sampling temperature forwarded to the model.</p></li>
+<li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>) – Optional Azure deployment override.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Trimmed textual completion returned by the model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -316,19 +340,30 @@ preparing conversations, and rendering leaderboard titles.</p>
 <span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">get_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#get_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.get_client" title="Link to this definition">¶</a></dt>
 <dd><p>Construct or reuse the singleton Azure OpenAI client.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Any</em></p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Cached client configured with environment or default credentials.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>AzureOpenAIType</p>
 </dd>
 </dl>
 </dd></dl>
 
-<p id="module-gpt4o.config">Shared configuration for the GPT-4o slate baseline.</p>
+<p id="module-gpt4o.config">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.config.ensure_azure_env">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.config.</span></span><span class="sig-name descname"><span class="pre">ensure_azure_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/config.html#ensure_azure_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.config.ensure_azure_env" title="Link to this definition">¶</a></dt>
 <dd><p>Ensure the Azure environment variables are present.</p>
 <p>The sandbox runner historically relied on these being set globally.
-We keep the behaviour but allow shell overrides to win.</p>
+We keep the behavior but allow shell overrides to win.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -336,7 +371,15 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dl>
 </dd></dl>
 
-<p id="module-gpt4o.conversation">Prompt construction and example formatting for GPT-4o evaluation.</p>
+<p id="module-gpt4o.conversation">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.conversation.build_profile_block">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">build_profile_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#build_profile_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.build_profile_block" title="Link to this definition">¶</a></dt>
@@ -466,7 +509,15 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dl>
 </dd></dl>
 
-<p id="module-gpt4o.evaluate">Evaluation loop for the GPT-4o slate baseline.</p>
+<p id="module-gpt4o.evaluate">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.evaluate.run_eval">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">run_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#run_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.run_eval" title="Link to this definition">¶</a></dt>
@@ -481,7 +532,15 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dl>
 </dd></dl>
 
-<p id="module-gpt4o.titles">Utilities for resolving slate video ids to human-readable titles.</p>
+<p id="module-gpt4o.titles">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.titles.TitleResolver">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
@@ -519,7 +578,15 @@ We keep the behaviour but allow shell overrides to win.</p>
 
 </dd></dl>
 
-<p id="module-gpt4o.utils">Shared utility helpers for the GPT-4o slate baseline.</p>
+<p id="module-gpt4o.utils">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.canon_text">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_text" title="Link to this definition">¶</a></dt>
@@ -606,16 +673,15 @@ We keep the behaviour but allow shell overrides to win.</p>
 
 <section id="module-gpt4o.pipeline">
 <span id="pipeline-orchestration"></span><h2>Pipeline Orchestration<a class="headerlink" href="#module-gpt4o.pipeline" title="Link to this heading">¶</a></h2>
-<p>End-to-end orchestration for the GPT-4o slate baseline.</p>
-<p>This module mirrors the structure of the KNN and XGBoost pipelines:</p>
-<ol class="arabic simple">
-<li><p>Hyper-parameter sweeps over temperature / max_token settings.</p></li>
-<li><p>Selection of the best-performing configuration.</p></li>
-<li><p>Final evaluation run with the chosen configuration.</p></li>
-<li><p>Markdown report regeneration under <code class="docutils literal notranslate"><span class="pre">reports/gpt4o</span></code>.</p></li>
-</ol>
-<p>Each sweep delegates to <a class="reference internal" href="#module-gpt4o.cli" title="gpt4o.cli"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gpt4o.cli</span></code></a> to avoid drift between the public CLI
-and the scripted pipeline.</p>
+<p>Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>

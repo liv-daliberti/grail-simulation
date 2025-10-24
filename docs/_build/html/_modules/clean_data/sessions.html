@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,13 +254,29 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Session log parsing and feature engineering for CodeOcean exports.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Session log parsing and feature engineering for CodeOcean exports.</span>
 
 <span class="sd">Here we translate the raw capsule sessions into the intermediate dataframe</span>
 <span class="sd">used by :mod:`clean_data.clean_data`: loading survey allow-lists, merging</span>
 <span class="sd">per-video metadata, enforcing participant filters, and emitting one row per</span>
-<span class="sd">viewer decision.  It is the heaviest module in the package and underpins</span>
-<span class="sd">both the CLI and the high-level build functions.</span>
+<span class="sd">viewer decision. It is the heaviest module in the package and underpins</span>
+<span class="sd">both the CLI and the high-level build functions. All of the routines are</span>
+<span class="sd">covered by the repository&#39;s Apache 2.0 license; see LICENSE for details.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># pylint: disable=too-many-lines</span>
@@ -270,9 +288,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
@@ -310,7 +328,14 @@
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.ParticipantIdentifiers">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParticipantIdentifiers</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured container for participant identifier fields.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured container for participant identifier fields.</span>
+
+<span class="sd">    :param worker_id: Worker identifier from MTurk exports.</span>
+<span class="sd">    :param case_id: Case identifier from YouGov exports.</span>
+<span class="sd">    :param anon_id: Anonymous identifier provided in session logs.</span>
+<span class="sd">    :param urlid: URL-based identifier from survey joins.</span>
+<span class="sd">    :param session_id: Session identifier from the interaction export.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">worker_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="n">case_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -324,7 +349,14 @@
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.SessionTiming">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionTiming</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-session timing metadata keyed by raw/canonical video ids.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-session timing metadata keyed by raw/canonical video ids.</span>
+
+<span class="sd">    :param start: Mapping from video id to start timestamp (ms).</span>
+<span class="sd">    :param end: Mapping from video id to end timestamp (ms).</span>
+<span class="sd">    :param watch: Mapping from video id to watch duration (ms).</span>
+<span class="sd">    :param total: Mapping from video id to total video length (ms).</span>
+<span class="sd">    :param delay: Mapping from video id to playback start delay (ms).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">start</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="n">end</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
@@ -338,7 +370,14 @@
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.SessionInfo">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionInfo</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalized identifiers carried across per-session rows.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalized identifiers carried across per-session rows.</span>
+
+<span class="sd">    :param session_id: Canonical session identifier.</span>
+<span class="sd">    :param anon_id: Anonymous participant token.</span>
+<span class="sd">    :param topic: Topic/issue string resolved from surveys.</span>
+<span class="sd">    :param urlid: URL identifier used in joining survey data.</span>
+<span class="sd">    :param trajectory_json: JSON blob capturing the watch trajectory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">anon_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -352,7 +391,15 @@
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.AllowlistState">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AllowlistState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Participant allowlist configuration derived from survey exports.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Participant allowlist configuration derived from survey exports.</span>
+
+<span class="sd">    :param gun_workers: Worker ids permitted for the gun-control study.</span>
+<span class="sd">    :param wage_study2_workers: Worker ids permitted for wage Study 2.</span>
+<span class="sd">    :param wage_study3_caseids: Case ids permitted for wage Study 3.</span>
+<span class="sd">    :param wage_study4_workers: Worker ids permitted for wage Study 4.</span>
+<span class="sd">    :param wage_study2_urlids: URL ids permitted for wage Study 2.</span>
+<span class="sd">    :param wage_study4_urlids: URL ids permitted for wage Study 4.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">gun_workers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">wage_study2_workers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -607,7 +654,15 @@
     <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">tree_issue_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return augmented metadata for a watched video.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return augmented metadata for a watched video.</span>
+
+<span class="sd">    :param base_id: Canonical video identifier.</span>
+<span class="sd">    :param raw_id: Raw video identifier recorded in the session.</span>
+<span class="sd">    :param tree_meta: Recommendation tree metadata keyed by canonical id.</span>
+<span class="sd">    :param fallback_titles: Mapping from video id to fallback title strings.</span>
+<span class="sd">    :param tree_issue_map: Mapping from video id to inferred issue labels.</span>
+<span class="sd">    :returns: Dictionary of merged metadata fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="k">if</span> <span class="n">raw_id</span> <span class="ow">and</span> <span class="n">raw_id</span> <span class="o">!=</span> <span class="n">base_id</span><span class="p">:</span>
@@ -628,7 +683,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a title for the candidate along with a missing flag.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a title for the candidate along with a missing flag.</span>
+
+<span class="sd">    :param meta: Metadata dictionary containing optional ``title``.</span>
+<span class="sd">    :param fallback_id: Identifier used when a title is absent.</span>
+<span class="sd">    :returns: Tuple of ``(title, is_missing)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
@@ -637,12 +697,69 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_channel</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the channel title with a missing flag.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the channel title with a missing flag.</span>
+
+<span class="sd">    :param meta: Metadata dictionary containing optional channel info.</span>
+<span class="sd">    :returns: Tuple of ``(channel_title, is_missing)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">channel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">channel</span><span class="p">,</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="s2">&quot;(channel missing)&quot;</span><span class="p">,</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_timing_fields</span><span class="p">(</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">raw_vid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">base_vid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Populate timing metrics for the watched entry when present.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">timing_map</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;start_delay_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">delay</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;start_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">start</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;end_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">end</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;watch_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">watch</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;total_length_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">total</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">lookup_session_value</span><span class="p">(</span><span class="n">timing_map</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">base_vid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">entry</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_detail_entry</span><span class="p">(</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_vid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">base_vid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">tree_issue_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single watched-detail dictionary with timing fields.&quot;&quot;&quot;</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">_video_meta</span><span class="p">(</span><span class="n">base_vid</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">tree_meta</span><span class="p">,</span> <span class="n">fallback_titles</span><span class="p">,</span> <span class="n">tree_issue_map</span><span class="p">)</span>
+    <span class="n">title_val</span><span class="p">,</span> <span class="n">title_missing</span> <span class="o">=</span> <span class="n">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">base_vid</span><span class="p">)</span>
+    <span class="n">channel_val</span><span class="p">,</span> <span class="n">channel_missing</span> <span class="o">=</span> <span class="n">_resolve_channel</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">base_vid</span><span class="p">,</span>
+        <span class="s2">&quot;raw_id&quot;</span><span class="p">:</span> <span class="n">raw_vid</span><span class="p">,</span>
+        <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title_val</span><span class="p">,</span>
+        <span class="s2">&quot;title_missing&quot;</span><span class="p">:</span> <span class="n">title_missing</span><span class="p">,</span>
+        <span class="s2">&quot;channel_title&quot;</span><span class="p">:</span> <span class="n">channel_val</span><span class="p">,</span>
+        <span class="s2">&quot;channel_missing&quot;</span><span class="p">:</span> <span class="n">channel_missing</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_id&quot;</span><span class="p">):</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span>
+    <span class="n">_apply_timing_fields</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">base_vid</span><span class="p">,</span> <span class="n">timings</span><span class="p">)</span>
+
+    <span class="n">recs</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;recs&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;recommendations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">recs</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">entry</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_watched_details</span><span class="p">(</span>
@@ -654,56 +771,73 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-video metadata entries for the watched sequence.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-video metadata entries for the watched sequence.</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-locals</span>
+<span class="sd">    :param raw_vids: List of raw video identifiers from the session log.</span>
+<span class="sd">    :param base_vids: List of canonical video identifiers aligned with ``raw_vids``.</span>
+<span class="sd">    :param tree_meta: Recommendation metadata keyed by canonical id.</span>
+<span class="sd">    :param fallback_titles: Mapping from video id to fallback title strings.</span>
+<span class="sd">    :param tree_issue_map: Mapping from video id to issue labels.</span>
+<span class="sd">    :param timings: Structured timing information for the session.</span>
+<span class="sd">    :returns: Sequence of dictionaries summarising each watched item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">raw_vid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_vids</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">base_vids</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-        <span class="n">meta</span> <span class="o">=</span> <span class="n">_video_meta</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">tree_meta</span><span class="p">,</span> <span class="n">fallback_titles</span><span class="p">,</span> <span class="n">tree_issue_map</span><span class="p">)</span>
-        <span class="n">title_val</span><span class="p">,</span> <span class="n">title_missing</span> <span class="o">=</span> <span class="n">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
-        <span class="n">channel_val</span><span class="p">,</span> <span class="n">channel_missing</span> <span class="o">=</span> <span class="n">_resolve_channel</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
-        <span class="n">entry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">base</span><span class="p">,</span>
-            <span class="s2">&quot;raw_id&quot;</span><span class="p">:</span> <span class="n">raw_vid</span><span class="p">,</span>
-            <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
-            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title_val</span><span class="p">,</span>
-            <span class="s2">&quot;title_missing&quot;</span><span class="p">:</span> <span class="n">title_missing</span><span class="p">,</span>
-            <span class="s2">&quot;channel_title&quot;</span><span class="p">:</span> <span class="n">channel_val</span><span class="p">,</span>
-            <span class="s2">&quot;channel_missing&quot;</span><span class="p">:</span> <span class="n">channel_missing</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_id&quot;</span><span class="p">):</span>
-            <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span>
-        <span class="n">timing_fields</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;start_delay_ms&quot;</span><span class="p">:</span> <span class="n">timings</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span>
-            <span class="s2">&quot;start_ms&quot;</span><span class="p">:</span> <span class="n">timings</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
-            <span class="s2">&quot;end_ms&quot;</span><span class="p">:</span> <span class="n">timings</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
-            <span class="s2">&quot;watch_ms&quot;</span><span class="p">:</span> <span class="n">timings</span><span class="o">.</span><span class="n">watch</span><span class="p">,</span>
-            <span class="s2">&quot;total_length_ms&quot;</span><span class="p">:</span> <span class="n">timings</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">timing_map</span> <span class="ow">in</span> <span class="n">timing_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">lookup_session_value</span><span class="p">(</span><span class="n">timing_map</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">entry</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-        <span class="n">recs</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;recs&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;recommendations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="nb">dict</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">recs</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-            <span class="p">]</span>
-
-        <span class="n">details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="n">details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_build_detail_entry</span><span class="p">(</span>
+                <span class="n">idx</span><span class="p">,</span>
+                <span class="n">raw_vid</span><span class="p">,</span>
+                <span class="n">base</span><span class="p">,</span>
+                <span class="n">tree_meta</span><span class="p">,</span>
+                <span class="n">fallback_titles</span><span class="p">,</span>
+                <span class="n">tree_issue_map</span><span class="p">,</span>
+                <span class="n">timings</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">details</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_display_step_index</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the zero-based step index encoded by the display-order key.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="k">if</span> <span class="n">key</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">stripped</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">lowered</span> <span class="o">=</span> <span class="n">stripped</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;recs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stripped</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">digits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">stripped</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+            <span class="n">digits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">digits</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">digits</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">raw_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">digits</span><span class="p">))</span>
+    <span class="k">if</span> <span class="s2">&quot;recs&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="n">raw_idx</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">raw_idx</span> <span class="o">-=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">raw_idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">raw_idx</span>
+
+
 <div class="viewcode-block" id="normalize_display_orders">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.normalize_display_orders">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">normalize_display_orders</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-branches</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_display_orders</span><span class="p">(</span>
     <span class="n">display_orders</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert display order mappings into canonical id sequences.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert display order mappings into canonical id sequences.</span>
+
+<span class="sd">    :param display_orders: Raw display-order structure from the capsule export.</span>
+<span class="sd">    :returns: Mapping from step index to lists of canonical video ids.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">normalized</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">display_orders</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -711,128 +845,179 @@
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">display_orders</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="k">continue</span>
-
-        <span class="n">step_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="n">step_idx</span> <span class="o">=</span> <span class="n">key</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">stripped</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">lowered</span> <span class="o">=</span> <span class="n">stripped</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">&quot;recs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stripped</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                <span class="k">continue</span>
-
-            <span class="n">digits</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">stripped</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                    <span class="n">digits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">digits</span><span class="p">:</span>
-                    <span class="k">break</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">digits</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">raw_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">digits</span><span class="p">))</span>
-            <span class="k">if</span> <span class="s2">&quot;recs&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="n">raw_idx</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">step_idx</span> <span class="o">=</span> <span class="n">raw_idx</span> <span class="o">-</span> <span class="mi">2</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">step_idx</span> <span class="o">=</span> <span class="n">raw_idx</span>
-
-        <span class="k">if</span> <span class="n">step_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">step_idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">step_idx</span> <span class="o">=</span> <span class="n">_normalize_display_step_index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">step_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="n">vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="k">continue</span>
-            <span class="n">stripped</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">stripped</span><span class="p">:</span>
-                <span class="n">vids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
+        <span class="n">vids</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">stripped</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">stripped</span> <span class="ow">in</span> <span class="p">[</span><span class="n">_strip_session_video_id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">stripped</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="n">vids</span><span class="p">:</span>
             <span class="n">normalized</span><span class="p">[</span><span class="n">step_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">vids</span>
     <span class="k">return</span> <span class="n">normalized</span></div>
 
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SessionResources</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reusable datasets needed to build session interaction rows.&quot;&quot;&quot;</span>
+
+    <span class="n">surveys</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]</span>
+    <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">tree_issue_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SessionBuildState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable state tracking rows, counters, and participant ids.&quot;&quot;&quot;</span>
+
+    <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">interaction_stats</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">seen_participant_issue</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+    <span class="n">fallback_participant_counter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SessionContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derived per-session inputs consumed when creating interaction rows.&quot;&quot;&quot;</span>
+
+    <span class="n">session_payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">raw_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">base_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span>
+    <span class="n">watched_details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">SessionInfo</span>
+    <span class="n">canonical_issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">survey_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">candidate_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
+    <span class="n">enforce_allowlist</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">display_orders</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="n">watched_vids_json</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">watched_detailed_json</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gather_slate_candidates</span><span class="p">(</span>
+    <span class="n">step_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">display_orders</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">recommendations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ordered ``(base_id, raw_id)`` candidates and their source.&quot;&quot;&quot;</span>
+
+    <span class="n">order_ids</span> <span class="o">=</span> <span class="n">display_orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">step_index</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">order_ids</span><span class="p">:</span>
+        <span class="n">pairs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">order_ids</span><span class="p">:</span>
+            <span class="n">base_vid</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="n">vid</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">base_vid</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">raw_id</span> <span class="o">=</span> <span class="n">vid</span> <span class="k">if</span> <span class="n">vid</span> <span class="o">!=</span> <span class="n">base_vid</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">pairs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">base_vid</span><span class="p">,</span> <span class="n">raw_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pairs</span><span class="p">,</span> <span class="s2">&quot;display_orders&quot;</span>
+
+    <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommendations</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">recommendations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">recommendations</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">rec_id</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span>
+        <span class="n">rec_id</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rec_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_id</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">raw_id</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw_id</span><span class="p">:</span>
+            <span class="n">raw_id</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw_id</span><span class="p">))</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rec_id</span><span class="p">,</span> <span class="n">raw_id</span> <span class="k">if</span> <span class="n">raw_id</span> <span class="o">!=</span> <span class="n">rec_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="s2">&quot;tree_metadata&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_slate_item</span><span class="p">(</span>
+    <span class="n">base_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">raw_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a single slate entry with metadata fallbacks.&quot;&quot;&quot;</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">title_candidates</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">),</span>
+        <span class="n">fallback_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">),</span>
+        <span class="n">fallback_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">raw_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">raw_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">title_candidates</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">raw_id</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">raw_id</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">base_id</span>
+    <span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">base_id</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">raw_id</span><span class="p">:</span>
+        <span class="n">item</span><span class="p">[</span><span class="s2">&quot;raw_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_id</span>
+    <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">):</span>
+        <span class="n">item</span><span class="p">[</span><span class="s2">&quot;channel_title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_title&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_id&quot;</span><span class="p">):</span>
+        <span class="n">item</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">stat_key</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="s2">&quot;view_count&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;like_count&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dislike_count&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;favorite_count&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;comment_count&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">stat_value</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stat_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stat_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+            <span class="n">item</span><span class="p">[</span><span class="n">stat_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat_value</span>
+    <span class="n">duration_value</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">duration_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">item</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">duration_value</span>
+    <span class="k">return</span> <span class="n">item</span>
+
+
 <div class="viewcode-block" id="build_slate_items">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.codeocean.build_slate_items">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_slate_items</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals,too-many-branches</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_slate_items</span><span class="p">(</span>
     <span class="n">step_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">display_orders</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
     <span class="n">recommendations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
     <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the slate items for the given interaction step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the slate items for the given interaction step.</span>
 
-    <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;display_orders&quot;</span>
+<span class="sd">    :param step_index: Zero-based interaction index.</span>
+<span class="sd">    :param display_orders: Normalized display-order mapping per step.</span>
+<span class="sd">    :param recommendations: Raw recommendation records from metadata.</span>
+<span class="sd">    :param tree_meta: Recommendation tree metadata keyed by canonical id.</span>
+<span class="sd">    :param fallback_titles: Mapping from video id to fallback title strings.</span>
+<span class="sd">    :returns: Tuple of ``(slate_items, source)`` describing the slate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">order_ids</span> <span class="o">=</span> <span class="n">display_orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">step_index</span><span class="p">,</span> <span class="p">[])</span>
-    <span class="k">if</span> <span class="n">order_ids</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">order_ids</span><span class="p">:</span>
-            <span class="n">base_vid</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="n">vid</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">base_vid</span><span class="p">:</span>
-                <span class="n">raw_id</span> <span class="o">=</span> <span class="n">vid</span> <span class="k">if</span> <span class="n">vid</span> <span class="o">!=</span> <span class="n">base_vid</span> <span class="k">else</span> <span class="kc">None</span>
-                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">base_vid</span><span class="p">,</span> <span class="n">raw_id</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;tree_metadata&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommendations</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">recommendations</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">recommendations</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="k">continue</span>
-            <span class="n">rec_id</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span>
-            <span class="n">rec_id</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rec_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_id</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">raw_id</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">raw_id</span><span class="p">:</span>
-                <span class="n">raw_id</span> <span class="o">=</span> <span class="n">_strip_session_video_id</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw_id</span><span class="p">))</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rec_id</span><span class="p">,</span> <span class="n">raw_id</span> <span class="k">if</span> <span class="n">raw_id</span> <span class="o">!=</span> <span class="n">rec_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">_gather_slate_candidates</span><span class="p">(</span>
+        <span class="n">step_index</span><span class="p">,</span>
+        <span class="n">display_orders</span><span class="p">,</span>
+        <span class="n">recommendations</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">base_id</span><span class="p">,</span> <span class="n">raw_id</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">base_id</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">base_id</span><span class="p">)</span>
-        <span class="n">meta</span> <span class="o">=</span> <span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">title_candidates</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">),</span>
-            <span class="n">fallback_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">),</span>
-            <span class="n">fallback_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">raw_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">raw_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">title_candidates</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="p">),</span>
-            <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">raw_id</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="n">raw_id</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="n">base_id</span>
-        <span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">base_id</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">}</span>
-        <span class="k">if</span> <span class="n">raw_id</span><span class="p">:</span>
-            <span class="n">item</span><span class="p">[</span><span class="s2">&quot;raw_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_id</span>
-        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">):</span>
-            <span class="n">item</span><span class="p">[</span><span class="s2">&quot;channel_title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_title&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_id&quot;</span><span class="p">):</span>
-            <span class="n">item</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;channel_id&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">stat_key</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="s2">&quot;view_count&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;like_count&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;dislike_count&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;favorite_count&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;comment_count&quot;</span><span class="p">,</span>
-        <span class="p">):</span>
-            <span class="n">stat_value</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stat_key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">stat_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
-                <span class="n">item</span><span class="p">[</span><span class="n">stat_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat_value</span>
-        <span class="n">duration_value</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">duration_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
-            <span class="n">item</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">duration_value</span>
-        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_make_slate_item</span><span class="p">(</span><span class="n">base_id</span><span class="p">,</span> <span class="n">raw_id</span><span class="p">,</span> <span class="n">tree_meta</span><span class="p">,</span> <span class="n">fallback_titles</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">items</span><span class="p">,</span> <span class="n">source</span></div>
 
 
@@ -865,81 +1050,129 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidate_start_timestamp</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the earliest available nanosecond timestamp for the row.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;start_time2&quot;</span><span class="p">,</span> <span class="s2">&quot;start_time&quot;</span><span class="p">,</span> <span class="s2">&quot;start_time_w2&quot;</span><span class="p">):</span>
+        <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_parse_timestamp_ns</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">start_ns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">start_ns</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e20</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidate_identifiers</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract normalized worker and case identifiers.&quot;&quot;&quot;</span>
+
+    <span class="n">worker_candidate</span> <span class="o">=</span> <span class="n">_normalize_identifier</span><span class="p">(</span>
+        <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;worker_id&quot;</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workerid&quot;</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;WorkerID&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">case_candidate</span> <span class="o">=</span> <span class="n">_normalize_identifier</span><span class="p">(</span>
+        <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;caseid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CaseID&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">worker_candidate</span><span class="p">,</span> <span class="n">case_candidate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_classify_candidate_topic</span><span class="p">(</span>
+    <span class="n">normalized_topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">urlid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span><span class="p">,</span>
+    <span class="n">worker_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">case_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``(study_label, participant_token, valid)`` for the row.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">normalized_topic</span> <span class="o">==</span> <span class="s2">&quot;gun_control&quot;</span> <span class="ow">and</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">worker_candidate</span> <span class="ow">and</span> <span class="n">worker_candidate</span> <span class="ow">in</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="n">worker_candidate</span><span class="p">,</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">normalized_topic</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span> <span class="s2">&quot;min_wage&quot;</span><span class="p">}:</span>
+        <span class="k">return</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">classify_wage_candidate</span><span class="p">(</span>
+            <span class="n">urlid</span><span class="p">,</span>
+            <span class="n">worker_candidate</span><span class="p">,</span>
+            <span class="n">case_candidate</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_candidate_entry</span><span class="p">(</span>
+    <span class="n">study_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the candidate row has treatment information and responses.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">study_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="s2">&quot;study2&quot;</span><span class="p">,</span> <span class="s2">&quot;study3&quot;</span><span class="p">}:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">treat_val</span> <span class="o">=</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;treatment_arm&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_is_missing_value</span><span class="p">(</span><span class="n">treat_val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">treat_val</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">_is_missing_value</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pro&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">_is_missing_value</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;anti&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidate_entry</span><span class="p">(</span>
+    <span class="n">normalized_topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">urlid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a candidate tuple when the survey row is eligible.&quot;&quot;&quot;</span>
+
+    <span class="n">worker_candidate</span><span class="p">,</span> <span class="n">case_candidate</span> <span class="o">=</span> <span class="n">_candidate_identifiers</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">)</span>
+    <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_candidate_start_timestamp</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">)</span>
+    <span class="n">study_label</span><span class="p">,</span> <span class="n">participant_token</span><span class="p">,</span> <span class="n">valid</span> <span class="o">=</span> <span class="n">_classify_candidate_topic</span><span class="p">(</span>
+        <span class="n">normalized_topic</span><span class="p">,</span>
+        <span class="n">urlid</span><span class="p">,</span>
+        <span class="n">allowlist</span><span class="p">,</span>
+        <span class="n">worker_candidate</span><span class="p">,</span>
+        <span class="n">case_candidate</span><span class="p">,</span>
+        <span class="n">candidate_row</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">valid</span><span class="p">:</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">_validate_candidate_entry</span><span class="p">(</span><span class="n">study_label</span><span class="p">,</span> <span class="n">candidate_row</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">start_ns</span><span class="p">,</span>
+        <span class="n">participant_token</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">worker_candidate</span><span class="p">,</span>
+        <span class="n">case_candidate</span><span class="p">,</span>
+        <span class="n">study_label</span><span class="p">,</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_entries_for_survey</span><span class="p">(</span>
     <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-   <span class="n">urlid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">urlid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">survey_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create candidate tuples ordered by survey timestamp.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create candidate tuples ordered by survey timestamp.&quot;&quot;&quot;</span>
 
-<span class="sd">    :param topic: Issue/topic label associated with the session.</span>
-<span class="sd">    :param urlid: URL identifier for the session.</span>
-<span class="sd">    :param survey_rows: Survey rows linked to the participant.</span>
-<span class="sd">    :param allowlist: Active allow-list state for filtering participants.</span>
-<span class="sd">    :returns: List of tuples containing candidate metadata and validity flags.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">normalized_topic</span> <span class="o">=</span> <span class="n">topic</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">candidate_row</span> <span class="ow">in</span> <span class="n">survey_rows</span><span class="p">:</span>
-        <span class="n">worker_candidate</span> <span class="o">=</span> <span class="n">_normalize_identifier</span><span class="p">(</span>
-            <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;worker_id&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workerid&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;WorkerID&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">case_candidate</span> <span class="o">=</span> <span class="n">_normalize_identifier</span><span class="p">(</span>
-            <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;caseid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CaseID&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_parse_timestamp_ns</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_time2&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">start_ns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_parse_timestamp_ns</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_time&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">start_ns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_parse_timestamp_ns</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_time_w2&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">start_ns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">start_ns</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e20</span><span class="p">)</span>
-
-        <span class="n">study_label</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
-        <span class="n">participant_token</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="k">if</span> <span class="n">normalized_topic</span> <span class="o">==</span> <span class="s2">&quot;gun_control&quot;</span> <span class="ow">and</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">worker_candidate</span> <span class="ow">and</span> <span class="n">worker_candidate</span> <span class="ow">in</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
-                <span class="n">study_label</span> <span class="o">=</span> <span class="s2">&quot;study1&quot;</span>
-                <span class="n">participant_token</span> <span class="o">=</span> <span class="n">worker_candidate</span>
-                <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">elif</span> <span class="n">normalized_topic</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span> <span class="s2">&quot;min_wage&quot;</span><span class="p">}:</span>
-            <span class="n">study_label</span><span class="p">,</span> <span class="n">participant_token</span><span class="p">,</span> <span class="n">valid</span> <span class="o">=</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">classify_wage_candidate</span><span class="p">(</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">candidate</span>
+        <span class="k">for</span> <span class="n">candidate_row</span> <span class="ow">in</span> <span class="n">survey_rows</span>
+        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">_candidate_entry</span><span class="p">(</span>
+                <span class="n">normalized_topic</span><span class="p">,</span>
                 <span class="n">urlid</span><span class="p">,</span>
-                <span class="n">worker_candidate</span><span class="p">,</span>
-                <span class="n">case_candidate</span><span class="p">,</span>
+                <span class="n">candidate_row</span><span class="p">,</span>
+                <span class="n">allowlist</span><span class="p">,</span>
             <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">valid</span> <span class="ow">and</span> <span class="n">study_label</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="s2">&quot;study2&quot;</span><span class="p">,</span> <span class="s2">&quot;study3&quot;</span><span class="p">}:</span>
-            <span class="n">treat_val</span> <span class="o">=</span> <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;treatment_arm&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">_is_missing_value</span><span class="p">(</span><span class="n">treat_val</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">treat_val</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span>
-            <span class="p">):</span>
-                <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">if</span> <span class="n">_is_missing_value</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pro&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">_is_missing_value</span><span class="p">(</span>
-                <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;anti&quot;</span><span class="p">)</span>
-            <span class="p">):</span>
-                <span class="n">valid</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="k">if</span> <span class="n">valid</span><span class="p">:</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">start_ns</span><span class="p">,</span>
-                    <span class="n">participant_token</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                    <span class="n">worker_candidate</span><span class="p">,</span>
-                    <span class="n">case_candidate</span><span class="p">,</span>
-                    <span class="n">study_label</span><span class="p">,</span>
-                    <span class="n">candidate_row</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-    <span class="n">candidates</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">candidates</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="n">entries</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">entries</span>
 
 
 

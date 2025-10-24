@@ -1,4 +1,24 @@
-"""Plotting helpers for the political sciences replication report."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Plotting helpers for the political sciences replication report.
+
+These functions generate the heatmaps and opinion-shift bar charts used to
+replicate the published study's figures. The visualisation utilities are
+licensed under the repository's Apache 2.0 terms; see LICENSE for details.
+"""
 
 from __future__ import annotations
 
@@ -25,7 +45,13 @@ def plot_mean_change(  # pylint: disable=too-many-locals
     labels: Iterable[str],
     output_path: Path,
 ) -> None:
-    """Render mean opinion shifts with 95% CI-style bars (σ/√n)."""
+    """Render mean opinion shifts with 95% CI-style bars (σ/√n).
+
+    :param summaries: Iterable of summary dictionaries with ``mean_change``,
+        ``std_change``, and ``n`` keys.
+    :param labels: Iterable of x-axis labels aligned with ``summaries``.
+    :param output_path: Destination path where the plot image is written.
+    """
 
     output_path = Path(output_path)
     _ensure_output_dir(output_path)
@@ -115,7 +141,13 @@ def plot_heatmap(
     title: str,
     output_path: Path,
 ) -> None:
-    """Render a heatmap from a 2D histogram of pre/post opinion indices."""
+    """Render a heatmap from a 2D histogram of pre/post opinion indices.
+
+    :param hist: 2D histogram counts (before x after).
+    :param bin_edges: Bin edges used along both axes.
+    :param title: Plot title describing the study context.
+    :param output_path: Destination path where the heatmap is saved.
+    """
 
     output_path = Path(output_path)
     _ensure_output_dir(output_path)
@@ -166,7 +198,12 @@ def plot_assignment_panels(  # pylint: disable=too-many-locals,too-many-statemen
     regression: Mapping[str, float],
     output_path: Path,
 ) -> None:
-    """Render control/treatment mean-change panels with a regression summary."""
+    """Render control/treatment mean-change panels with a regression summary.
+
+    :param study_panels: Iterable pairing panel titles with per-assignment summaries.
+    :param regression: Dictionary containing pooled regression metrics.
+    :param output_path: Destination path where the composite figure is saved.
+    """
 
     output_path = Path(output_path)
     _ensure_output_dir(output_path)

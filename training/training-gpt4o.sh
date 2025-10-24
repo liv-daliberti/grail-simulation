@@ -10,6 +10,16 @@ CACHE_DIR="${CACHE_DIR:-$ROOT_DIR/.cache/huggingface/gpt4o}"
 REPORTS_DIR="${REPORTS_DIR:-$ROOT_DIR/reports/gpt4o}"
 SWEEP_DIR="${GPT4O_SWEEP_DIR:-$OUT_DIR/sweeps}"
 
+VENV_PATH=${TRAINING_VENV_PATH:-"${ROOT_DIR}/.venv"}
+if [[ -z "${VIRTUAL_ENV:-}" ]]; then
+  if [[ -f "${VENV_PATH}/bin/activate" ]]; then
+    # shellcheck source=/dev/null
+    source "${VENV_PATH}/bin/activate"
+  else
+    echo "[gpt4o] Warning: expected virtualenv at ${VENV_PATH}/bin/activate; continuing without activation." >&2
+  fi
+fi
+
 mkdir -p "$OUT_DIR" "$CACHE_DIR" "$REPORTS_DIR" "$SWEEP_DIR"
 
 export PYTHONPATH="${PYTHONPATH:-}:$ROOT_DIR/src"
@@ -44,4 +54,3 @@ if [[ "${OVERWRITE:-0}" != "0" ]]; then
 fi
 
 python -m gpt4o.pipeline "${ARGS[@]}" "$@"
-

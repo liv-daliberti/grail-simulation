@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,13 +254,30 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.filters</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Row-level filters and quick aggregate reporting utilities.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Row-level filters and quick aggregate reporting utilities.</span>
 
 <span class="sd">This module contains the lightweight predicates used to discard unusable</span>
 <span class="sd">interaction rows before prompt construction as well as diagnostic helpers</span>
-<span class="sd">that summarise the issue distribution across splits.  These functions are</span>
+<span class="sd">that summarise the issue distribution across splits. These functions are</span>
 <span class="sd">intended to be composed by :mod:`clean_data.clean_data` and higher-level</span>
-<span class="sd">entry points rather than imported by downstream consumers directly.</span>
+<span class="sd">entry points rather than imported by downstream consumers directly. The</span>
+<span class="sd">suite is provided under the repository&#39;s Apache 2.0 license; refer to the</span>
+<span class="sd">LICENSE file for the obligations and permissions.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -297,7 +316,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ok</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``example`` has a valid slate and gold target.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``example`` has a valid slate and gold target.</span>
+
+<span class="sd">        :param example: Row under evaluation from the dataset.</span>
+<span class="sd">        :returns: ``True`` when the slate items and gold choice are present and valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">items</span> <span class="o">=</span> <span class="n">load_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
@@ -312,7 +335,14 @@
 
     <span class="n">filtered</span> <span class="o">=</span> <span class="n">DatasetDict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ok</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="n">num_proc</span><span class="p">)</span>
+        <span class="n">filter_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">num_proc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filter_kwargs</span><span class="p">[</span><span class="s2">&quot;num_proc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_proc</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">filtered_split</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ok</span><span class="p">,</span> <span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">filtered_split</span> <span class="o">=</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_ok</span><span class="p">)</span>
+        <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">filtered_split</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Counts after prompt filter: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">filtered</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
     <span class="k">return</span> <span class="n">filtered</span></div>
 

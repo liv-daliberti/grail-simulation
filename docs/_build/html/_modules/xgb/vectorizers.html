@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,32 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for xgb.vectorizers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Text vectoriser abstractions for the XGBoost baseline.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
+
+<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
+<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
+<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
+<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
+<span class="sd">It is the public surface that downstream tooling should import when they</span>
+<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
+<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
+<span class="sd">details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -285,7 +312,11 @@
 <div class="viewcode-block" id="BaseTextVectorizer">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.BaseTextVectorizer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseTextVectorizer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface for text vectorisers used by the XGBoost slate model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interface for text vectorisers used by the XGBoost slate model.</span>
+
+<span class="sd">    :cvar kind: String identifier describing the vectoriser subtype.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
 
@@ -380,7 +411,11 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.TfidfConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TfidfConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration parameters for TF-IDF vectorisation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration parameters for TF-IDF vectorisation.</span>
+
+<span class="sd">    :ivar max_features: Maximum number of features retained after fitting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">200_000</span></div>
 
@@ -389,7 +424,11 @@
 <div class="viewcode-block" id="TfidfVectorizerWrapper">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.TfidfVectorizerWrapper">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TfidfVectorizerWrapper</span><span class="p">(</span><span class="n">BaseTextVectorizer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper around scikit-learn&#39;s TF-IDF vectoriser.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper around scikit-learn&#39;s TF-IDF vectoriser.</span>
+
+<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;tfidf&quot;</span>
 
@@ -504,7 +543,17 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.Word2VecVectorizerConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecVectorizerConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Word2Vec-based embeddings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration for Word2Vec-based embeddings.</span>
+
+<span class="sd">    :ivar vector_size: Dimensionality of the generated embeddings.</span>
+<span class="sd">    :ivar window: Context window size for Word2Vec training.</span>
+<span class="sd">    :ivar min_count: Minimum token frequency required for inclusion.</span>
+<span class="sd">    :ivar epochs: Number of training epochs for the Word2Vec model.</span>
+<span class="sd">    :ivar workers: Number of worker threads used during training.</span>
+<span class="sd">    :ivar seed: Random seed for reproducibility.</span>
+<span class="sd">    :ivar model_dir: Directory containing persisted Word2Vec artefacts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">vector_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span>
     <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
@@ -519,7 +568,11 @@
 <div class="viewcode-block" id="Word2VecVectorizer">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.Word2VecVectorizer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecVectorizer</span><span class="p">(</span><span class="n">BaseTextVectorizer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectoriser that averages Word2Vec embeddings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vectoriser that averages Word2Vec embeddings.</span>
+
+<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;word2vec&quot;</span>
 
@@ -648,7 +701,14 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.SentenceTransformerVectorizerConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SentenceTransformerVectorizerConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration bundle for SentenceTransformer vectorisation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration bundle for SentenceTransformer vectorisation.</span>
+
+<span class="sd">    :ivar model_name: Hugging Face model identifier used for encoding.</span>
+<span class="sd">    :ivar device: Computation device override (e.g. ``&quot;cuda&quot;`` or ``&quot;cpu&quot;``).</span>
+<span class="sd">    :ivar batch_size: Batch size used during encoding.</span>
+<span class="sd">    :ivar normalize: Flag controlling embedding normalisation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>
     <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -660,7 +720,11 @@
 <div class="viewcode-block" id="SentenceTransformerVectorizer">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.SentenceTransformerVectorizer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SentenceTransformerVectorizer</span><span class="p">(</span><span class="n">BaseTextVectorizer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectoriser using pre-trained sentence-transformer encoders.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vectoriser using pre-trained sentence-transformer encoders.</span>
+
+<span class="sd">    :cvar kind: Identifier used when serialising the vectoriser.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;sentence_transformer&quot;</span>
 

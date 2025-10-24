@@ -1,4 +1,29 @@
-"""Text vectoriser abstractions for the XGBoost baseline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 from __future__ import annotations
 
@@ -29,7 +54,11 @@ VECTORISER_META = "vectorizer.json"
 
 
 class BaseTextVectorizer:
-    """Interface for text vectorisers used by the XGBoost slate model."""
+    """
+    Interface for text vectorisers used by the XGBoost slate model.
+
+    :cvar kind: String identifier describing the vectoriser subtype.
+    """
 
     kind: str
 
@@ -103,13 +132,21 @@ class BaseTextVectorizer:
 
 @dataclass
 class TfidfConfig:
-    """Configuration parameters for TF-IDF vectorisation."""
+    """
+    Configuration parameters for TF-IDF vectorisation.
+
+    :ivar max_features: Maximum number of features retained after fitting.
+    """
 
     max_features: int | None = 200_000
 
 
 class TfidfVectorizerWrapper(BaseTextVectorizer):
-    """Wrapper around scikit-learn's TF-IDF vectoriser."""
+    """
+    Wrapper around scikit-learn's TF-IDF vectoriser.
+
+    :cvar kind: Identifier used when serialising the vectoriser.
+    """
 
     kind = "tfidf"
 
@@ -203,7 +240,17 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
 
 @dataclass
 class Word2VecVectorizerConfig:
-    """Configuration for Word2Vec-based embeddings."""
+    """
+    Configuration for Word2Vec-based embeddings.
+
+    :ivar vector_size: Dimensionality of the generated embeddings.
+    :ivar window: Context window size for Word2Vec training.
+    :ivar min_count: Minimum token frequency required for inclusion.
+    :ivar epochs: Number of training epochs for the Word2Vec model.
+    :ivar workers: Number of worker threads used during training.
+    :ivar seed: Random seed for reproducibility.
+    :ivar model_dir: Directory containing persisted Word2Vec artefacts.
+    """
 
     vector_size: int = 256
     window: int = 5
@@ -215,7 +262,11 @@ class Word2VecVectorizerConfig:
 
 
 class Word2VecVectorizer(BaseTextVectorizer):
-    """Vectoriser that averages Word2Vec embeddings."""
+    """
+    Vectoriser that averages Word2Vec embeddings.
+
+    :cvar kind: Identifier used when serialising the vectoriser.
+    """
 
     kind = "word2vec"
 
@@ -323,7 +374,14 @@ class Word2VecVectorizer(BaseTextVectorizer):
 
 @dataclass
 class SentenceTransformerVectorizerConfig:
-    """Configuration bundle for SentenceTransformer vectorisation."""
+    """
+    Configuration bundle for SentenceTransformer vectorisation.
+
+    :ivar model_name: Hugging Face model identifier used for encoding.
+    :ivar device: Computation device override (e.g. ``"cuda"`` or ``"cpu"``).
+    :ivar batch_size: Batch size used during encoding.
+    :ivar normalize: Flag controlling embedding normalisation.
+    """
 
     model_name: str = "sentence-transformers/all-mpnet-base-v2"
     device: str | None = None
@@ -332,7 +390,11 @@ class SentenceTransformerVectorizerConfig:
 
 
 class SentenceTransformerVectorizer(BaseTextVectorizer):
-    """Vectoriser using pre-trained sentence-transformer encoders."""
+    """
+    Vectoriser using pre-trained sentence-transformer encoders.
+
+    :cvar kind: Identifier used when serialising the vectoriser.
+    """
 
     kind = "sentence_transformer"
 

@@ -1,4 +1,30 @@
-"""Utility helpers shared across the KNN pipeline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -179,21 +205,16 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     :rtype: OpinionSummary
     """
     best_metrics = data.get("best_metrics", {})
-    baseline = data.get("baseline", {})
+    baseline_metrics = data.get("baseline", {})
     mae_after = safe_float(best_metrics.get("mae_after"))
-    baseline_mae = safe_float(baseline.get("mae_using_before"))
-    mae_delta = (
-        mae_after - baseline_mae if mae_after is not None and baseline_mae is not None else None
-    )
+    baseline_mae = safe_float(baseline_metrics.get("mae_using_before"))
     mae_change = safe_float(best_metrics.get("mae_change"))
     rmse_after = safe_float(best_metrics.get("rmse_after"))
     r2_after = safe_float(best_metrics.get("r2_after"))
     participants = safe_int(data.get("n_participants"))
-    dataset = data.get("dataset")
-    split = data.get("split")
     best_k = safe_int(data.get("best_k"))
     accuracy = safe_float(best_metrics.get("direction_accuracy"))
-    baseline_accuracy = safe_float(baseline.get("direction_accuracy"))
+    baseline_accuracy = safe_float(baseline_metrics.get("direction_accuracy"))
     accuracy_delta = (
         accuracy - baseline_accuracy
         if accuracy is not None and baseline_accuracy is not None
@@ -212,18 +233,22 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     return OpinionSummary(
         mae=mae_after,
         rmse=rmse_after,
-        r2=r2_after,
+        r2_score=r2_after,
         mae_change=mae_change,
         baseline_mae=baseline_mae,
-        mae_delta=mae_delta,
+        mae_delta=(
+            mae_after - baseline_mae
+            if mae_after is not None and baseline_mae is not None
+            else None
+        ),
         accuracy=accuracy,
         baseline_accuracy=baseline_accuracy,
         accuracy_delta=accuracy_delta,
         best_k=best_k,
         participants=participants,
         eligible=eligible,
-        dataset=str(dataset) if dataset else None,
-        split=str(split) if split else None,
+        dataset=str(data.get("dataset")) if data.get("dataset") else None,
+        split=str(data.get("split")) if data.get("split") else None,
     )
 
 __all__ = [

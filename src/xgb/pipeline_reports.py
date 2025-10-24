@@ -1,4 +1,30 @@
-"""Report generation helpers for the XGBoost pipeline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
+
 # pylint: disable=line-too-long,duplicate-code,too-many-lines
 
 from __future__ import annotations
@@ -44,7 +70,16 @@ except ImportError:  # pragma: no cover - optional dependency
 
 @dataclass
 class _PortfolioAccumulator:
-    """Accumulate portfolio-level statistics across studies."""
+    """
+    Accumulate portfolio-level statistics across studies.
+
+    :ivar total_correct: Sum of correctly ranked slates across studies.
+    :ivar total_evaluated: Total number of evaluated slates with accuracy metrics.
+    :ivar total_known_hits: Sum of known-candidate hits across all studies.
+    :ivar total_known_total: Total known candidates encountered in evaluations.
+    :ivar accuracy_entries: Per-study accuracy values paired with study labels.
+    :ivar probability_values: Recorded mean probabilities for known candidates.
+    """
 
     total_correct: int = 0
     total_evaluated: int = 0
@@ -54,14 +89,26 @@ class _PortfolioAccumulator:
     probability_values: List[float] = field(default_factory=list)
 
     def record(self, summary: "NextVideoMetricSummary", label: str) -> None:
-        """Update aggregates using the supplied study summary."""
+        """
+        Update aggregates using the supplied study summary.
+
+        :param summary: Metrics describing accuracy, coverage, and probabilities.
+        :type summary: NextVideoMetricSummary
+        :param label: Human-readable identifier for the study.
+        :type label: str
+        """
         self._record_accuracy(summary)
         self._record_known(summary)
         self._record_accuracy_entry(summary, label)
         self._record_probability(summary)
 
     def to_lines(self) -> List[str]:
-        """Render the accumulated statistics as markdown bullet points."""
+        """
+        Render the accumulated statistics as Markdown bullet points.
+
+        :returns: Markdown lines capturing portfolio-level observations.
+        :rtype: List[str]
+        """
         if not self.total_evaluated and not self.accuracy_entries:
             return []
         lines: List[str] = ["## Portfolio Summary", ""]
@@ -114,50 +161,108 @@ class _PortfolioAccumulator:
         return lines
 
     def _record_accuracy(self, summary: "NextVideoMetricSummary") -> None:
+        """
+        Track counts needed for weighted accuracy calculations.
+
+        :param summary: Metrics describing slate-level accuracy outcomes.
+        :type summary: NextVideoMetricSummary
+        """
         if summary.correct is None or summary.evaluated is None:
             return
         self.total_correct += summary.correct
         self.total_evaluated += summary.evaluated
 
     def _record_known(self, summary: "NextVideoMetricSummary") -> None:
+        """
+        Track counts needed for known-candidate coverage calculations.
+
+        :param summary: Metrics describing known-candidate hits and totals.
+        :type summary: NextVideoMetricSummary
+        """
         if summary.known_hits is None or summary.known_total is None:
             return
         self.total_known_hits += summary.known_hits
         self.total_known_total += summary.known_total
 
     def _record_accuracy_entry(self, summary: "NextVideoMetricSummary", label: str) -> None:
+        """
+        Store accuracy values for per-study best/worst reporting.
+
+        :param summary: Metrics describing slate-level accuracy outcomes.
+        :type summary: NextVideoMetricSummary
+        :param label: Human-readable identifier for the study.
+        :type label: str
+        """
         if summary.accuracy is None:
             return
         self.accuracy_entries.append((summary.accuracy, label))
 
     def _record_probability(self, summary: "NextVideoMetricSummary") -> None:
+        """
+        Collect mean probabilities for known-candidate analysis.
+
+        :param summary: Metrics describing mean probabilities per study.
+        :type summary: NextVideoMetricSummary
+        """
         if summary.avg_probability is None:
             return
         self.probability_values.append(summary.avg_probability)
 
     def _weighted_accuracy(self) -> Optional[float]:
+        """
+        Compute the weighted accuracy over all recorded studies.
+
+        :returns: Weighted accuracy or ``None`` when insufficient data is available.
+        :rtype: Optional[float]
+        """
         if not self.total_evaluated:
             return None
         return self.total_correct / self.total_evaluated
 
     def _weighted_coverage(self) -> Optional[float]:
+        """
+        Compute the weighted known-candidate coverage across studies.
+
+        :returns: Weighted coverage or ``None`` when insufficient data is available.
+        :rtype: Optional[float]
+        """
         if not self.total_known_total:
             return None
         return self.total_known_hits / self.total_known_total
 
     def _weighted_availability(self) -> Optional[float]:
+        """
+        Compute the availability of known candidates relative to evaluated slates.
+
+        :returns: Weighted availability or ``None`` when insufficient data is available.
+        :rtype: Optional[float]
+        """
         if not self.total_evaluated:
             return None
         return self.total_known_total / self.total_evaluated
 
     def _mean_probability(self) -> Optional[float]:
+        """
+        Compute the mean predicted probability for known candidates.
+
+        :returns: Mean probability or ``None`` when no values were recorded.
+        :rtype: Optional[float]
+        """
         if not self.probability_values:
             return None
         return sum(self.probability_values) / len(self.probability_values)
 
 @dataclass
 class _OpinionPortfolioAccumulator:
-    """Aggregate opinion-regression metrics across studies."""
+    """
+    Aggregate opinion-regression metrics across studies.
+
+    :ivar total_weight: Sum of participant counts used for weighting.
+    :ivar weighted_mae_sum: Accumulated MAE multiplied by participant weights.
+    :ivar weighted_baseline_sum: Accumulated baseline MAE weighted by participants.
+    :ivar mae_entries: Recorded MAE values paired with study labels.
+    :ivar delta_entries: Recorded MAE delta values paired with study labels.
+    """
 
     total_weight: float = 0.0
     weighted_mae_sum: float = 0.0
@@ -166,7 +271,14 @@ class _OpinionPortfolioAccumulator:
     delta_entries: List[Tuple[float, str]] = field(default_factory=list)
 
     def record(self, summary: OpinionSummary, label: str) -> None:
-        """Track metrics for a single study/selection."""
+        """
+        Track metrics for a single study or selection.
+
+        :param summary: Opinion regression metrics captured for the study.
+        :type summary: OpinionSummary
+        :param label: Human-readable identifier for the study.
+        :type label: str
+        """
         participants = float(summary.participants or 0)
         mae_value = summary.mae_after
         baseline_value = summary.baseline_mae
@@ -184,7 +296,14 @@ class _OpinionPortfolioAccumulator:
             self.delta_entries.append((delta_value, label))
 
     def to_lines(self, heading_level: str = "####") -> List[str]:
-        """Render the aggregated metrics as Markdown bullet points."""
+        """
+        Render the aggregated metrics as Markdown bullet points.
+
+        :param heading_level: Markdown heading prefix (e.g. ``"###"``) for the section.
+        :type heading_level: str
+        :returns: Markdown lines summarising weighted MAE and deltas.
+        :rtype: List[str]
+        """
         if not self.mae_entries:
             return []
 
@@ -809,6 +928,14 @@ def _write_hyperparameter_report(
             lines.append("")
 
             def _study_label(study_key: str) -> str:
+                """
+                Resolve the display label for next-video sweep tables.
+
+                :param study_key: Key identifying the participant study.
+                :type study_key: str
+                :returns: Human-readable study label.
+                :rtype: str
+                """
                 selection = selections.get(study_key)
                 if selection is not None:
                     return selection.study.label
@@ -940,6 +1067,14 @@ def _opinion_hyperparameter_section(
         return lines
 
     def _study_label(study_key: str) -> str:
+        """
+        Resolve the display label for opinion sweep tables.
+
+        :param study_key: Key identifying the participant study.
+        :type study_key: str
+        :returns: Human-readable study label.
+        :rtype: str
+        """
         selection = selections.get(study_key)
         if selection is not None:
             return selection.study.label
@@ -965,7 +1100,7 @@ def _opinion_hyperparameter_section(
         )
         ordered = sorted(
             study_outcomes,
-            key=lambda item: (item.mae, item.rmse, -item.r2, item.order_index),
+            key=lambda item: (item.mae, item.rmse, -item.r_squared, item.order_index),
         )
         display_limit = max(1, HYPERPARAM_TABLE_TOP_N)
         displayed = ordered[:display_limit]
@@ -973,7 +1108,7 @@ def _opinion_hyperparameter_section(
         if selected is not None and selected not in displayed:
             displayed.append(selected)
             displayed.sort(
-                key=lambda item: (item.mae, item.rmse, -item.r2, item.order_index),
+                key=lambda item: (item.mae, item.rmse, -item.r_squared, item.order_index),
             )
             displayed = displayed[:display_limit]
         for outcome in displayed:
@@ -1020,7 +1155,14 @@ def _opinion_hyperparameter_section(
 def _opinion_cross_study_diagnostics(
     metrics: Mapping[str, Mapping[str, object]],
 ) -> List[str]:
-    """Summarise cross-study statistics for opinion metrics."""
+    """
+    Summarise cross-study statistics for opinion metrics.
+
+    :param metrics: Mapping from study key to metrics dictionaries.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :returns: Markdown lines containing cross-study observations.
+    :rtype: List[str]
+    """
     if not metrics:
         return []
     portfolio = _OpinionPortfolioAccumulator()
@@ -1057,12 +1199,26 @@ def _opinion_cross_study_diagnostics(
 
 # pylint: disable=too-many-return-statements
 def _format_shell_command(bits: Sequence[str]) -> str:
-    """Join CLI arguments into a shell-friendly command."""
+    """
+    Join CLI arguments into a shell-friendly command.
+
+    :param bits: Individual command-line arguments to join.
+    :type bits: Sequence[str]
+    :returns: Shell-escaped command string.
+    :rtype: str
+    """
     return " ".join(shlex.quote(str(bit)) for bit in bits if str(bit))
 
 
 def _xgb_next_video_command(selection: Optional[StudySelection]) -> Optional[str]:
-    """Build a reproduction command for a next-video sweep selection."""
+    """
+    Build a reproduction command for a next-video sweep selection.
+
+    :param selection: Selected sweep outcome containing configuration metadata.
+    :type selection: Optional[StudySelection]
+    :returns: Shell command capable of reproducing the sweep, or ``None`` if unavailable.
+    :rtype: Optional[str]
+    """
     if selection is None:
         return None
     metrics = selection.outcome.metrics
@@ -1100,7 +1256,14 @@ def _xgb_next_video_command(selection: Optional[StudySelection]) -> Optional[str
 
 
 def _xgb_opinion_command(selection: Optional[OpinionStudySelection]) -> Optional[str]:
-    """Build a reproduction command for an opinion sweep selection."""
+    """
+    Build a reproduction command for an opinion sweep selection.
+
+    :param selection: Selected opinion sweep outcome with configuration metadata.
+    :type selection: Optional[OpinionStudySelection]
+    :returns: Shell command capable of reproducing the opinion pipeline, or ``None``.
+    :rtype: Optional[str]
+    """
     if selection is None:
         return None
     outcome = selection.outcome

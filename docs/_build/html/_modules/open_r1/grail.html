@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,15 +255,26 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.grail</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">GRPO training entrypoint with optional discriminator (GAIL-style) shaping.</span>
+<span class="sd">&quot;&quot;&quot;GRPO training entrypoint with optional discriminator (GAIL-style) shaping.</span>
 
 <span class="sd">This variant mirrors the standard GRPO pipeline but can append an auxiliary</span>
-<span class="sd">reward derived from a learned discriminator when $GAIL_USE=1. The underlying</span>
-<span class="sd">user prompt construction is shared with `open_r1.grpo` through the</span>
-<span class="sd">`prompt_builder` utilities.</span>
+<span class="sd">reward derived from a learned discriminator when ``$GAIL_USE=1``. The</span>
+<span class="sd">underlying user prompt construction is shared with ``open_r1.grpo`` through the</span>
+<span class="sd">``prompt_builder`` utilities.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -283,16 +296,16 @@
 <span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># pylint: disable=import-error</span>
     <span class="n">AutoConfig</span><span class="p">,</span>
     <span class="n">AutoModelForSequenceClassification</span><span class="p">,</span>
     <span class="n">AutoTokenizer</span><span class="p">,</span>
     <span class="n">set_seed</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">get_peft_config</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">get_peft_config</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>  <span class="c1"># pylint: disable=import-error</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_list_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
@@ -469,15 +482,20 @@
 
 <div class="viewcode-block" id="OnlineDiscriminator.__init__">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.OnlineDiscriminator.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-5</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-5</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the discriminator with the specified pretrained backbone.</span>
 
 <span class="sd">        :param model_name: Hugging Face model identifier for the classifier.</span>
 <span class="sd">        :param device: Torch device where the model should live.</span>
-<span class="sd">        :param lr: Learning rate used for the discriminator optimiser.</span>
+<span class="sd">        :param learning_rate: Learning rate used for the discriminator optimizer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span> <span class="o">=</span> <span class="n">model_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lr</span> <span class="o">=</span> <span class="n">lr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;TOKENIZERS_PARALLELISM&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span>
@@ -496,7 +514,7 @@
             <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sanity_check_embeddings</span><span class="p">()</span></div>
 
 
@@ -519,7 +537,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span><span class="p">)</span>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">prob_positive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -561,8 +579,8 @@
         <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tok</span><span class="p">(</span>
             <span class="n">payload</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">truncation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span>
         <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">label_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">label_tensor</span><span class="p">)</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">loss</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
@@ -653,15 +671,15 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">RewardContext</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return reward contexts for all completions in a batch.&quot;&quot;&quot;</span>
 
-    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">num_completions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">num_completions</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="n">viewer_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-    <span class="n">state_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state_text&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-    <span class="n">items_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">n</span><span class="p">)</span>
-    <span class="n">gold_id_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-    <span class="n">gold_idx_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">viewer_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
+    <span class="n">state_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state_text&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
+    <span class="n">items_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">num_completions</span><span class="p">)</span>
+    <span class="n">gold_id_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
+    <span class="n">gold_idx_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">_context_from_completion</span><span class="p">(</span>
@@ -870,6 +888,8 @@
         <span class="n">script_args</span><span class="o">.</span><span class="n">dataset_train_split</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">tokenizer</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return checkpoint path for the GAIL pipeline, respecting overrides.&quot;&quot;&quot;</span>
 

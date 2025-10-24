@@ -1,8 +1,25 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Generate the human-readable Markdown report for prompt analytics results.
 
 The functions here translate the structured summaries computed by the
 prompt CLI into narrative sections, tables, and figure references so the
-cleaning workflow can emit a ready-to-publish README alongside plots.
+cleaning workflow can emit a ready-to-publish README alongside plots. This
+reporting module is distributed under the repository's Apache 2.0 license;
+consult LICENSE for the governing terms.
 """
 
 from __future__ import annotations
@@ -14,7 +31,12 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class ReportFigures:
-    """Paths to rendered summary figures."""
+    """Paths to rendered summary figures.
+
+    :param prior_history: Location of the prior-history distribution plot.
+    :param n_options: Location of the slate-size distribution plot.
+    :param demographic: Location of the demographic coverage plot.
+    """
 
     prior_history: Path
     n_options: Path
@@ -23,7 +45,14 @@ class ReportFigures:
 
 @dataclass
 class ReportCounts:
-    """Aggregated count metrics used in the report."""
+    """Aggregated count metrics used in the report.
+
+    :param prior_history: Tallies of prior-history counts per split.
+    :param n_options: Slate-size count distributions per split.
+    :param demographic_missing: Mapping of demographic completeness metrics.
+    :param unique_content: Coverage counts of unique videos and slates.
+    :param participant: Participant totals and breakdowns by split.
+    """
 
     prior_history: Dict[str, Dict[int, int]]
     n_options: Dict[str, Dict[int, int]]
@@ -34,7 +63,14 @@ class ReportCounts:
 
 @dataclass
 class ReportSummaries:
-    """Feature-level summaries used to render the Markdown report."""
+    """Feature-level summaries used to render the Markdown report.
+
+    :param feature: Aggregated feature statistics per split.
+    :param profile: Profile coverage metrics per split.
+    :param counts: Structured count bundle for the report.
+    :param coverage: Dataset coverage summaries by split.
+    :param skipped_features: Features omitted from reporting.
+    """
 
     feature: Dict[str, Dict[str, Dict[str, float | int]]]
     profile: Dict[str, Dict[str, float]]
@@ -45,7 +81,13 @@ class ReportSummaries:
 
 @dataclass
 class ReportContext:
-    """Full context bundle required to build the prompt report."""
+    """Full context bundle required to build the prompt report.
+
+    :param output_dir: Destination directory for generated Markdown files.
+    :param figures_dir: Directory containing rendered plots.
+    :param summaries: Aggregated summaries describing the dataset.
+    :param figures: Paths to figures referenced in the report.
+    """
 
     output_dir: Path
     figures_dir: Path
@@ -54,7 +96,12 @@ class ReportContext:
 
 
 def _relative_path(path: Path, base: Path) -> str:
-    """Return ``path`` relative to ``base`` when possible for cleaner Markdown links."""
+    """Return ``path`` relative to ``base`` when possible for cleaner Markdown links.
+
+    :param path: Path that should be relativised.
+    :param base: Base directory used for relative calculations.
+    :returns: Relative path string when possible, otherwise the absolute path.
+    """
 
     try:
         return str(path.relative_to(base))
@@ -311,7 +358,11 @@ def _skipped_features_section(skipped_features: List[str]) -> List[str]:
 def _shortfall_lines(  # pylint: disable=too-many-locals
     overall_counts: Dict[str, Any]
 ) -> List[str]:
-    """Summaries comparing expected and cleaned participant totals."""
+    """Summaries comparing expected and cleaned participant totals.
+
+    :param overall_counts: Participant counts broken down by issue and study.
+    :returns: Explanatory Markdown lines describing participant gaps.
+    """
 
     overall_by_issue = overall_counts.get("by_issue", {})
     issue_labels = {
@@ -462,7 +513,11 @@ def _coverage_section(context: ReportContext) -> List[str]:
 
 
 def build_markdown_report(context: ReportContext) -> List[str]:
-    """Return rendered Markdown lines summarizing the prompt statistics."""
+    """Return rendered Markdown lines summarizing the prompt statistics.
+
+    :param context: Full set of summary statistics, counts, and plots.
+    :returns: Markdown lines suitable for writing to a README.
+    """
 
     lines: List[str] = [
         "# Prompt feature report",

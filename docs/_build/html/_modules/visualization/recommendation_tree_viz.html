@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,12 +254,22 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for visualization.recommendation_tree_viz</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Utilities for visualising Guns and GRAIL recommendation data with Graphviz.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
 
-<span class="sd">The helpers in this module transform recommender exports and cleaned session datasets</span>
-<span class="sd">into annotated Graphviz diagrams that illustrate decision paths, node metadata, and</span>
-<span class="sd">viewer engagement metrics.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Visualization helpers for rendering Grail recommendation tree diagrams.&quot;&quot;&quot;</span>
 
 <span class="c1"># pylint: disable=too-many-lines</span>
 
@@ -275,7 +287,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">graphviz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Digraph</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">graphviz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Digraph</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">Digraph</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_graphviz</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;Digraph&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the graphviz ``Digraph`` class when the dependency is available.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">Digraph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;graphviz must be installed to use the recommendation tree visualisations &quot;</span>
+            <span class="s2">&quot;(pip install graphviz).&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Digraph</span>
 
 
 <div class="viewcode-block" id="TreeEdge">
@@ -814,7 +840,8 @@
     <span class="n">depths</span> <span class="o">=</span> <span class="n">compute_depths</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
     <span class="n">highlight_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">highlight_path</span><span class="p">)</span>
     <span class="n">highlight_edges</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">highlight_path</span><span class="p">,</span> <span class="n">highlight_path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">Digraph</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
+    <span class="n">graph_cls</span> <span class="o">=</span> <span class="n">_require_graphviz</span><span class="p">()</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">graph_cls</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">rankdir</span><span class="o">=</span><span class="n">rankdir</span><span class="p">)</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span>
         <span class="s2">&quot;node&quot;</span><span class="p">,</span>
@@ -1041,7 +1068,8 @@
 <span class="sd">    :rtype: graphviz.Digraph</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">Digraph</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Viewer session&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;png&quot;</span><span class="p">)</span>
+    <span class="n">graph_cls</span> <span class="o">=</span> <span class="n">_require_graphviz</span><span class="p">()</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">graph_cls</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Viewer session&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;png&quot;</span><span class="p">)</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">rankdir</span><span class="o">=</span><span class="n">rankdir</span><span class="p">)</span>
     <span class="n">highlight_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">vid</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">highlight_path</span> <span class="k">if</span> <span class="n">vid</span><span class="o">.</span><span class="n">strip</span><span class="p">()}</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>

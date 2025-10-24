@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,13 +254,29 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompting</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Core prompt construction logic for the cleaned GRAIL dataset.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Core prompt construction logic for the cleaned GRAIL dataset.</span>
 
 <span class="sd">This module converts the normalized session rows into structured prompt</span>
 <span class="sd">examples: resolving slate items, synthesising system/user messages,</span>
 <span class="sd">tracking passthrough metadata, and enforcing GRPO column requirements.</span>
 <span class="sd">Other modules feed raw data into these helpers when building cleaned</span>
-<span class="sd">datasets or inspecting individual examples.</span>
+<span class="sd">datasets or inspecting individual examples. These utilities are distributed</span>
+<span class="sd">under the repository&#39;s Apache 2.0 license; see LICENSE for more details.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -280,12 +298,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clean_str</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trimmed string, converting ``None`` to an empty string.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trimmed string, converting ``None`` to an empty string.</span>
+
+<span class="sd">    :param value: Raw value that may be ``None`` or string-like.</span>
+<span class="sd">    :returns: Stripped string representation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_truthy_str_flag</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpret common string boolean markers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpret common string boolean markers.</span>
+
+<span class="sd">    :param value: Value potentially encoding a boolean flag.</span>
+<span class="sd">    :returns: ``True``/``False`` when recognized, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -297,7 +323,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_last_index</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the last index of ``target`` inside ``values`` when ``values`` is a list.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the last index of ``target`` inside ``values`` when ``values`` is a list.</span>
+
+<span class="sd">    :param values: Candidate list searched for ``target``.</span>
+<span class="sd">    :param target: Value to locate.</span>
+<span class="sd">    :returns: Zero-based index of the last match or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">last</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -310,7 +341,11 @@
 <div class="viewcode-block" id="load_slate_items">
 <a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompting.load_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys.</span>
+
+<span class="sd">    :param ex: Session row dictionary containing slate metadata.</span>
+<span class="sd">    :returns: List of dictionaries with normalized ``title`` and ``id`` fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arr</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
     <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">raw_item</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">:</span>
@@ -337,7 +372,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_age</span><span class="p">(</span><span class="n">age</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted age fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted age fragment or ``None``.</span>
+
+<span class="sd">    :param age: Age field from the dataset (string or numeric).</span>
+<span class="sd">    :returns: Age phrase or ``None`` when missing/invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">age_i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="k">if</span> <span class="n">age</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
@@ -348,7 +387,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_gender</span><span class="p">(</span><span class="n">gender</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted gender fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted gender fragment or ``None``.</span>
+
+<span class="sd">    :param gender: Gender descriptor from the dataset.</span>
+<span class="sd">    :returns: Normalized gender string or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">gender</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">normalized</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;man&quot;</span><span class="p">,</span> <span class="s2">&quot;male&quot;</span><span class="p">}:</span>
         <span class="k">return</span> <span class="s2">&quot;man&quot;</span>
@@ -360,7 +403,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_party_affiliation</span><span class="p">(</span><span class="n">pid1</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ideo1</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted party/ideology fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted party/ideology fragment or ``None``.</span>
+
+<span class="sd">    :param pid1: Raw party affiliation value.</span>
+<span class="sd">    :param ideo1: Raw ideology value.</span>
+<span class="sd">    :returns: Combined party/ideology string or ``None`` when absent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">party</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pid1</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="n">ideo</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ideo1</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">party</span> <span class="ow">and</span> <span class="n">party</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
@@ -373,7 +421,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_income</span><span class="p">(</span><span class="n">income</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted income fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted income fragment or ``None``.</span>
+
+<span class="sd">    :param income: Income field from the dataset.</span>
+<span class="sd">    :returns: Normalized income string or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">inc</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">income</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">inc</span> <span class="ow">and</span> <span class="n">inc</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">inc</span>
@@ -381,14 +433,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_college</span><span class="p">(</span><span class="n">college</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted education fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted education fragment or ``None``.</span>
+
+<span class="sd">    :param college: College attendance indicator.</span>
+<span class="sd">    :returns: Education phrase or ``None`` when unspecified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">_truthy_str_flag</span><span class="p">(</span><span class="n">college</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;college-educated&quot;</span>
     <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_race</span><span class="p">(</span><span class="n">race</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted race/ethnicity fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted race/ethnicity fragment or ``None``.</span>
+
+<span class="sd">    :param race: Race or ethnicity entry.</span>
+<span class="sd">    :returns: Normalized race string or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">text</span> <span class="o">=</span> <span class="n">_clean_str</span><span class="p">(</span><span class="n">race</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">text</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_nanlike</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">text</span>
@@ -396,7 +456,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_youtube_freq</span><span class="p">(</span><span class="n">freq</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted YouTube frequency fragment or ``None``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted YouTube frequency fragment or ``None``.</span>
+
+<span class="sd">    :param freq: Frequency indicator from the dataset.</span>
+<span class="sd">    :returns: Human-readable frequency string or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">freq_key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">freq</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">freq_key</span> <span class="ow">in</span> <span class="n">YOUTUBE_FREQ_MAP</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;watches YouTube </span><span class="si">{</span><span class="n">YOUTUBE_FREQ_MAP</span><span class="p">[</span><span class="n">freq_key</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -428,7 +492,11 @@
     <span class="k">return</span> <span class="n">profile_sentence</span> <span class="k">if</span> <span class="n">profile_sentence</span> <span class="k">else</span> <span class="s2">&quot;(no profile provided)&quot;</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_viewer_attribute_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-viewer attribute strings for the prompt.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-viewer attribute strings for the prompt.</span>
+
+<span class="sd">    :param ex: Session row dictionary.</span>
+<span class="sd">    :returns: List of attribute strings ready for prompt inclusion.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">race</span> <span class="o">=</span> <span class="n">_clean_str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;race&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ethnicity&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;q29&quot;</span><span class="p">))</span>
@@ -457,7 +525,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_current_watch_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return lines describing the currently watched video.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return lines describing the currently watched video.</span>
+
+<span class="sd">    :param ex: Session row dictionary.</span>
+<span class="sd">    :param show_ids: Whether to include the video id in the text.</span>
+<span class="sd">    :returns: List of description lines, possibly empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="n">vid</span> <span class="o">=</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -472,7 +545,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_history_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate history lines (most recent first) for the prompt.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate history lines (most recent first) for the prompt.</span>
+
+<span class="sd">    :param ex: Session row dictionary.</span>
+<span class="sd">    :param show_ids: Whether to embed video ids in the output.</span>
+<span class="sd">    :param max_hist: Maximum number of history entries to include.</span>
+<span class="sd">    :returns: List of formatted history strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">detailed</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">))</span>
     <span class="n">vids</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
@@ -748,7 +827,15 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExampleComponents</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Intermediate bundle for prompt example creation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Intermediate bundle for prompt example creation.</span>
+
+<span class="sd">    :param items: Slate item dictionaries present in the example.</span>
+<span class="sd">    :param gold_id: Canonical identifier of the gold video.</span>
+<span class="sd">    :param gold_index: One-based index of the gold item within ``items``.</span>
+<span class="sd">    :param user_message: User text rendered for the prompt.</span>
+<span class="sd">    :param system_message: System prompt text.</span>
+<span class="sd">    :param slate_text: Human-readable slate listing for logging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>
     <span class="n">gold_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -759,13 +846,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_system_prompt</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the caller-provided system prompt or the default template.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the caller-provided system prompt or the default template.</span>
+
+<span class="sd">    :param system_prompt: Optional override for the default prompt string.</span>
+<span class="sd">    :returns: Resolved system prompt text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">system_prompt</span> <span class="ow">or</span> <span class="n">DEFAULT_SYSTEM_PROMPT</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_slate_text</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a non-empty slate text representation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a non-empty slate text representation.</span>
+
+<span class="sd">    :param ex: Session row dictionary with optional ``slate_text`` column.</span>
+<span class="sd">    :param items: Slate items used when ``slate_text`` is absent.</span>
+<span class="sd">    :returns: Slate text ready for downstream reporting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">existing</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_text&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
@@ -782,7 +878,14 @@
     <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExampleComponents</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gather the prerequisite values required to build a cleaned example.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gather the prerequisite values required to build a cleaned example.</span>
+
+<span class="sd">    :param ex: Session row dictionary.</span>
+<span class="sd">    :param system_prompt: Optional override for the system prompt text.</span>
+<span class="sd">    :param sol_key: Alternate field containing the gold id.</span>
+<span class="sd">    :param max_hist: Maximum number of history rows to include in prompts.</span>
+<span class="sd">    :returns: Populated :class:`ExampleComponents` or ``None`` if invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">items</span> <span class="o">=</span> <span class="n">load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>

@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,9 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.utils.code_providers</h1><div class="highlight"><pre>
-<span></span>
-<span class="c1"># coding=utf-8</span>
-<span class="c1"># Copyright 2025 The HuggingFace Team. All rights reserved.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -268,7 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Code execution providers for executing and evaluating code snippets.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Code execution providers for executing and evaluating notebook-style snippets.&quot;&quot;&quot;</span>
 
 <span class="c1"># pylint: disable=invalid-name</span>
 
@@ -322,18 +323,25 @@
 
 
 <span class="k">if</span> <span class="n">is_e2b_available</span><span class="p">():</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSandbox</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.routed_sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedSandbox</span>
+    <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSandbox</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.routed_sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedSandbox</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">AsyncSandbox</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">RoutedSandbox</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">AsyncSandbox</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">RoutedSandbox</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="k">if</span> <span class="n">is_morph_available</span><span class="p">():</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">morphcloud.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MorphCloudClient</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">morphcloud.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sandbox</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.routed_morph</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedMorphSandbox</span>
+    <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">morphcloud.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MorphCloudClient</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">morphcloud.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sandbox</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.routed_morph</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedMorphSandbox</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">MorphCloudClient</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Sandbox</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">RoutedMorphSandbox</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">MorphCloudClient</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">Sandbox</span> <span class="o">=</span> <span class="kc">None</span>

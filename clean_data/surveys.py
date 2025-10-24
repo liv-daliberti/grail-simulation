@@ -1,10 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Survey wrangling utilities and participant allow-list reconstruction.
 
 These helpers read the various Qualtrics/YouGov exports distributed with
 the capsule, build indices keyed by URL id, infer study labels, and
 recreate the exact allow-lists used by the original preprocessing script.
 The resulting mappings are consumed by :mod:`clean_data.sessions` when
-filtering session logs.
+filtering session logs. These functions are provided under the project's
+Apache 2.0 license; check LICENSE for obligations and permissions.
 """
 
 from __future__ import annotations

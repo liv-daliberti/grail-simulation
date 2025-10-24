@@ -1,8 +1,24 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Utility functions and data structures shared by prompt analytics code.
 
 This module abstracts dataset loading, Series manipulations, and summary
 helpers that are reused by the plotting, Markdown, and CLI components of
-the prompt reporting pipeline.
+the prompt reporting pipeline. All helpers are offered under the
+repository's Apache 2.0 license; consult LICENSE for the complete details.
 """
 
 from __future__ import annotations
@@ -48,7 +64,13 @@ CORE_ISSUES_LOWER = {value.lower() for value in CORE_PROMPT_ISSUES}
 
 @dataclass
 class SeriesPair:
-    """Bundle training/validation series alongside their originating dataframes."""
+    """Bundle training/validation series alongside their originating dataframes.
+
+    :param train_series: Training values aligned to ``train_df`` rows.
+    :param val_series: Validation values aligned to ``val_df`` rows.
+    :param train_df: Dataframe backing the training split.
+    :param val_df: Dataframe backing the validation split.
+    """
 
     train_series: pd.Series
     val_series: pd.Series
@@ -56,11 +78,17 @@ class SeriesPair:
     val_df: pd.DataFrame
 
     def has_issue(self) -> bool:
-        """Return True when both dataframes expose an 'issue' column."""
+        """Return True when both dataframes expose an 'issue' column.
+
+        :returns: ``True`` when both frames contain an ``issue`` column.
+        """
         return "issue" in self.train_df.columns and "issue" in self.val_df.columns
 
     def issue_names(self) -> List[str]:
-        """Collect normalized issue names available in the pair."""
+        """Collect normalized issue names available in the pair.
+
+        :returns: Sorted list of unique issue names after normalization.
+        """
         if not self.has_issue():
             return []
         issue_candidates = pd.concat(
@@ -77,7 +105,11 @@ class SeriesPair:
         self,
         cleaner: Callable[[pd.Series], pd.Series],
     ) -> List[Tuple[str, pd.Series, pd.Series]]:
-        """Return per-issue subsets using the provided cleaning function."""
+        """Return per-issue subsets using the provided cleaning function.
+
+        :param cleaner: Function applied to slice-specific series before returning.
+        :returns: List of tuples ``(issue, train_series, val_series)``.
+        """
         if not self.has_issue():
             return []
 
@@ -96,7 +128,11 @@ class SeriesPair:
 
 
 def core_prompt_mask(data_frame: pd.DataFrame) -> pd.Series:
-    """Return a boolean mask selecting rows from core studies and issues."""
+    """Return a boolean mask selecting rows from core studies and issues.
+
+    :param data_frame: Dataframe with optional ``participant_study``/``issue`` columns.
+    :returns: Boolean series aligned to ``data_frame`` indicating retained rows.
+    """
 
     if data_frame.empty:
         return pd.Series([], dtype=bool)
@@ -115,7 +151,11 @@ def core_prompt_mask(data_frame: pd.DataFrame) -> pd.Series:
 
 
 def filter_core_prompt_rows(data_frame: pd.DataFrame) -> pd.DataFrame:
-    """Filter a dataframe down to the core studies/issues used in reporting."""
+    """Filter a dataframe down to the core studies/issues used in reporting.
+
+    :param data_frame: Dataset containing prompt metadata columns.
+    :returns: Copy of ``data_frame`` retaining only the core rows.
+    """
     if data_frame.empty:
         return data_frame.copy()
     mask = core_prompt_mask(data_frame)
@@ -123,7 +163,11 @@ def filter_core_prompt_rows(data_frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def canonical_slate_items(value: Any) -> Optional[Tuple[str, ...]]:
-    """Normalize a slate representation to a tuple of video ids."""
+    """Normalize a slate representation to a tuple of video ids.
+
+    :param value: Slate field that may be JSON, numpy arrays, or dicts.
+    :returns: Tuple of video identifiers or ``None`` if extraction fails.
+    """
 
     if value is None or (isinstance(value, float) and np.isnan(value)):
         return None
@@ -153,12 +197,19 @@ def canonical_slate_items(value: Any) -> Optional[Tuple[str, ...]]:
 
 
 def ensure_dir(path: Path) -> None:
-    """Create the directory hierarchy when it does not already exist."""
+    """Create the directory hierarchy when it does not already exist.
+
+    :param path: Target directory path to create.
+    """
     path.mkdir(parents=True, exist_ok=True)
 
 
 def load_dataset_any(path_or_name: str) -> DatasetDict:
-    """Load a dataset from disk or from the Hugging Face hub."""
+    """Load a dataset from disk or from the Hugging Face hub.
+
+    :param path_or_name: Filesystem path or datasets hub identifier.
+    :returns: Loaded ``DatasetDict`` containing train/validation splits.
+    """
     path = Path(path_or_name)
     if path.exists():
         return load_from_disk(str(path))
@@ -166,7 +217,11 @@ def load_dataset_any(path_or_name: str) -> DatasetDict:
 
 
 def is_nanlike(value: Any) -> bool:
-    """Return True when the value should be treated as missing."""
+    """Return True when the value should be treated as missing.
+
+    :param value: Candidate object possibly representing a missing value.
+    :returns: ``True`` when the value should be considered NaN-like.
+    """
     if value is None:
         return True
     if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
@@ -178,7 +233,12 @@ def is_nanlike(value: Any) -> bool:
 
 
 def first_present(row: pd.Series, columns: Sequence[str]) -> Optional[object]:
-    """Return the first non-missing value from the provided columns."""
+    """Return the first non-missing value from the provided columns.
+
+    :param row: Series representing a single dataframe row.
+    :param columns: Ordered column names to probe.
+    :returns: First non-missing value or ``None`` when all values are missing.
+    """
     for col in columns:
         if col not in row:
             continue
@@ -190,7 +250,12 @@ def first_present(row: pd.Series, columns: Sequence[str]) -> Optional[object]:
 
 
 def series_from_columns(data_frame: pd.DataFrame, columns: Sequence[str]) -> pd.Series:
-    """Collapse multiple candidate columns into a single best-effort series."""
+    """Collapse multiple candidate columns into a single best-effort series.
+
+    :param data_frame: Source dataframe containing the requested columns.
+    :param columns: Ordered fallback columns to combine.
+    :returns: Series with the first-present values for each row.
+    """
     existing = [c for c in columns if c in data_frame.columns]
     if not existing:
         return pd.Series([None] * len(data_frame), index=data_frame.index, dtype="object")
@@ -200,7 +265,11 @@ def series_from_columns(data_frame: pd.DataFrame, columns: Sequence[str]) -> pd.
 
 
 def convert_numeric(series: pd.Series) -> Optional[pd.Series]:
-    """Coerce a series to numeric values, ignoring unconvertible entries."""
+    """Coerce a series to numeric values, ignoring unconvertible entries.
+
+    :param series: Series to coerce to numeric.
+    :returns: Converted numeric series or ``None`` when conversion fails.
+    """
     if series.dropna().empty:
         return None
     converted = pd.to_numeric(series.dropna().astype(str), errors="coerce")
@@ -210,7 +279,11 @@ def convert_numeric(series: pd.Series) -> Optional[pd.Series]:
 
 
 def non_missing(series: pd.Series) -> pd.Series:
-    """Filter a series to entries that are not NaN-like."""
+    """Filter a series to entries that are not NaN-like.
+
+    :param series: Series to filter.
+    :returns: Subset of ``series`` with NaN-like values removed.
+    """
     if series.empty:
         return series
     mask = series.map(lambda value: not is_nanlike(value))
@@ -218,7 +291,11 @@ def non_missing(series: pd.Series) -> pd.Series:
 
 
 def numeric_summary(series: pd.Series) -> Dict[str, float]:
-    """Compute count, mean, and std for a numeric series."""
+    """Compute count, mean, and std for a numeric series.
+
+    :param series: Numeric-like series to summarize.
+    :returns: Dictionary containing ``count``, ``mean``, and ``std`` values.
+    """
     cleaned = series.dropna()
     if cleaned.empty:
         return {"count": 0.0, "mean": float("nan"), "std": float("nan")}
@@ -230,19 +307,31 @@ def numeric_summary(series: pd.Series) -> Dict[str, float]:
 
 
 def categorical_summary(series: pd.Series) -> Dict[str, int]:
-    """Return counts for each categorical value in the series."""
+    """Return counts for each categorical value in the series.
+
+    :param series: Categorical series to summarize.
+    :returns: Mapping of value strings to their integer counts.
+    """
     if series.empty:
         return {}
     return {k: int(v) for k, v in series.astype(str).value_counts().to_dict().items()}
 
 
 def clean_viewer_profile(series: pd.Series) -> pd.Series:
-    """Normalize viewer profile sentences by stripping NaN-like values."""
+    """Normalize viewer profile sentences by stripping NaN-like values.
+
+    :param series: Raw viewer profile text series.
+    :returns: Cleaned string series with whitespace-trimmed entries.
+    """
     return series.fillna("").astype(str).str.strip()
 
 
 def count_prior_history(row: pd.Series) -> int:
-    """Count the number of prior videos available in the interaction history."""
+    """Count the number of prior videos available in the interaction history.
+
+    :param row: Series containing current video identifiers and history fields.
+    :returns: Count of prior history items preceding the current video.
+    """
 
     def _last_index(items: Iterable, target: Optional[str]) -> Optional[int]:
         """Return the last index of ``target`` inside ``items``.
@@ -307,14 +396,22 @@ def count_prior_history(row: pd.Series) -> int:
 
 
 def feature_label(feature_name: str) -> str:
-    """Return a human-readable label for the feature name."""
+    """Return a human-readable label for the feature name.
+
+    :param feature_name: Raw feature identifier from the dataset.
+    :returns: Display-ready label for charts and tables.
+    """
     if feature_name in FEATURE_LABELS:
         return FEATURE_LABELS[feature_name]
     return feature_name.replace("_", " ").title()
 
 
 def participant_ids(data_frame: pd.DataFrame) -> pd.Series:
-    """Return a best-effort participant identifier for each row."""
+    """Return a best-effort participant identifier for each row.
+
+    :param data_frame: Dataframe containing participant metadata columns.
+    :returns: Series of participant identifiers aligned with ``data_frame`` rows.
+    """
     if data_frame.empty:
         return pd.Series([], dtype=str)
     participant_id_series = data_frame.get("participant_id")
@@ -350,7 +447,11 @@ def participant_ids(data_frame: pd.DataFrame) -> pd.Series:
 
 
 def dedupe_participants(data_frame: pd.DataFrame) -> pd.DataFrame:
-    """Deduplicate rows so each participant/issue pair appears once."""
+    """Deduplicate rows so each participant/issue pair appears once.
+
+    :param data_frame: Dataframe that may contain repeated participant entries.
+    :returns: Deduplicated copy of ``data_frame``.
+    """
     if data_frame.empty:
         return data_frame
     ids = participant_ids(data_frame)
@@ -383,7 +484,11 @@ def dedupe_participants(data_frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def participant_stats(data_frame: pd.DataFrame) -> Dict[str, Any]:
-    """Compute participant counts overall, by issue, and by study."""
+    """Compute participant counts overall, by issue, and by study.
+
+    :param data_frame: Dataset containing at least participant, issue, and study columns.
+    :returns: Dictionary with aggregate participant statistics.
+    """
     if data_frame.empty:
         return {
             "overall": 0,

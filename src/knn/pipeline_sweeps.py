@@ -1,10 +1,37 @@
-"""Sweep orchestration helpers for the modular KNN pipeline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
+
 # pylint: disable=line-too-long
 from __future__ import annotations
 
 import json
 import logging
 import os
+from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
@@ -231,6 +258,46 @@ def prepare_sweep_tasks(
             pending_tasks.append(task)
     return pending_tasks, cached_outcomes
 
+
+def _build_opinion_task(
+    *,
+    index: int,
+    config: SweepConfig,
+    study: StudySpec,
+    context: SweepTaskContext,
+) -> Tuple[OpinionSweepTask, Path]:
+    run_root = (
+        context.sweep_dir
+        / "opinion"
+        / config.feature_space
+        / study.study_slug
+        / config.label()
+    )
+    metrics_path = (
+        run_root
+        / "opinion"
+        / config.feature_space
+        / study.key
+        / f"opinion_knn_{study.key}_validation_metrics.json"
+    )
+    word2vec_model_dir = None
+    if config.feature_space == "word2vec":
+        word2vec_model_dir = (
+            context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
+        )
+    task = OpinionSweepTask(
+        index=index,
+        study=study,
+        config=config,
+        base_cli=tuple(context.base_cli),
+        extra_cli=tuple(context.extra_cli),
+        run_root=run_root,
+        word2vec_model_dir=word2vec_model_dir,
+        metrics_path=metrics_path,
+    )
+    return task, metrics_path
+
+
 def prepare_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
@@ -261,59 +328,35 @@ def prepare_opinion_sweep_tasks(
     :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
 
     """
-    # pylint: disable=too-many-branches,too-many-locals
+    # pylint: disable=too-many-branches
     pending_tasks: List[OpinionSweepTask] = []
     cached_outcomes: List[OpinionSweepOutcome] = []
-    base_cli_tuple = tuple(context.base_cli)
-    extra_cli_tuple = tuple(context.extra_cli)
 
-    task_index = 0
-    for config in configs:
-        for study in studies:
-            run_root = (
-                context.sweep_dir / "opinion" / config.feature_space / study.study_slug / config.label()
-            )
-            metrics_path = (
-                run_root
-                / "opinion"
-                / config.feature_space
-                / study.key
-                / f"opinion_knn_{study.key}_validation_metrics.json"
-            )
-            word2vec_model_dir = None
-            if config.feature_space == "word2vec":
-                word2vec_model_dir = (
-                    context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
+    for task_index, (config, study) in enumerate(product(configs, studies)):
+        task, metrics_path = _build_opinion_task(
+            index=task_index,
+            config=config,
+            study=study,
+            context=context,
+        )
+        if reuse_existing and metrics_path.exists():
+            try:
+                with open(metrics_path, "r", encoding="utf-8") as handle:
+                    metrics = json.load(handle)
+            except FileNotFoundError:
+                LOGGER.debug("Expected cached opinion metrics at %s but none found.", metrics_path)
+            else:
+                LOGGER.info(
+                    "[OPINION][SKIP] feature=%s study=%s label=%s (metrics cached).",
+                    config.feature_space,
+                    study.key,
+                    config.label(),
                 )
-            task = OpinionSweepTask(
-                index=task_index,
-                study=study,
-                config=config,
-                base_cli=base_cli_tuple,
-                extra_cli=extra_cli_tuple,
-                run_root=run_root,
-                word2vec_model_dir=word2vec_model_dir,
-                metrics_path=metrics_path,
-            )
-            task_index += 1
-            if reuse_existing and metrics_path.exists():
-                try:
-                    with open(metrics_path, "r", encoding="utf-8") as handle:
-                        metrics = json.load(handle)
-                except FileNotFoundError:
-                    LOGGER.debug("Expected cached opinion metrics at %s but none found.", metrics_path)
-                else:
-                    LOGGER.info(
-                        "[OPINION][SKIP] feature=%s study=%s label=%s (metrics cached).",
-                        config.feature_space,
-                        study.key,
-                        config.label(),
-                    )
-                    cached_outcomes.append(
-                        opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
-                    )
-                    continue
-            pending_tasks.append(task)
+                cached_outcomes.append(
+                    opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
+                )
+                continue
+        pending_tasks.append(task)
     return pending_tasks, cached_outcomes
 
 def sweep_outcome_from_metrics(
@@ -383,32 +426,34 @@ def opinion_sweep_outcome_from_metrics(
 
     """
     summary = extract_opinion_summary(metrics)
+    best_metrics = metrics.get("best_metrics", {})
     mae = summary.mae if summary.mae is not None else float(metrics.get("best_mae", float("inf")))
-    rmse = summary.rmse if summary.rmse is not None else float(
-        metrics.get("best_metrics", {}).get("rmse_after", 0.0)
-    )
-    r2 = summary.r2 if summary.r2 is not None else float(
-        metrics.get("best_metrics", {}).get("r2_after", 0.0)
-    )
+    rmse = summary.rmse if summary.rmse is not None else float(best_metrics.get("rmse_after", 0.0))
+    r2_score = summary.r2_score
+    if r2_score is None:
+        r2_score = best_metrics.get("r2_after", 0.0)
+        r2_score = float(r2_score) if r2_score is not None else 0.0
     participants = summary.participants if summary.participants is not None else int(
         metrics.get("n_participants", 0)
     )
     best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
     accuracy = summary.accuracy
     if accuracy is None:
-        accuracy_raw = metrics.get("best_metrics", {}).get("direction_accuracy")
-        accuracy = float(accuracy_raw) if accuracy_raw is not None else None
+        accuracy = best_metrics.get("direction_accuracy")
+        accuracy = float(accuracy) if accuracy is not None else None
     baseline_accuracy = summary.baseline_accuracy
     if baseline_accuracy is None:
-        baseline_raw = metrics.get("baseline", {}).get("direction_accuracy")
-        baseline_accuracy = float(baseline_raw) if baseline_raw is not None else None
+        baseline_accuracy = metrics.get("baseline", {}).get("direction_accuracy")
+        baseline_accuracy = (
+            float(baseline_accuracy) if baseline_accuracy is not None else None
+        )
     accuracy_delta = summary.accuracy_delta
     if accuracy_delta is None and accuracy is not None and baseline_accuracy is not None:
         accuracy_delta = accuracy - baseline_accuracy
     eligible = summary.eligible
     if eligible is None:
-        eligible_raw = metrics.get("eligible")
-        eligible = int(eligible_raw) if isinstance(eligible_raw, (int, float)) else None
+        eligible = metrics.get("eligible")
+        eligible = int(eligible) if isinstance(eligible, (int, float)) else None
     if eligible is None:
         eligible = participants
     return OpinionSweepOutcome(
@@ -418,7 +463,7 @@ def opinion_sweep_outcome_from_metrics(
         feature_space=task.config.feature_space,
         mae=float(mae),
         rmse=float(rmse),
-        r2=float(r2),
+        r2_score=float(r2_score),
         accuracy=accuracy,
         baseline_accuracy=baseline_accuracy,
         accuracy_delta=accuracy_delta,

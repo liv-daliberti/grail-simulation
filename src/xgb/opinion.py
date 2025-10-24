@@ -1,4 +1,29 @@
-"""Opinion-index regression using XGBoost."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +31,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -265,7 +290,16 @@ def _train_regressor(
 
 
 def _direction_labels(delta: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
-    """Return categorical labels capturing the direction of opinion change."""
+    """
+    Return categorical labels capturing the direction of opinion change.
+
+    :param delta: Opinion deltas computed as post-study minus pre-study indices.
+    :type delta: numpy.ndarray
+    :param tolerance: Magnitude threshold for treating changes as neutral.
+    :type tolerance: float
+    :returns: Array containing ``-1`` for decreases, ``0`` for neutral, ``1`` for increases.
+    :rtype: numpy.ndarray
+    """
 
     labels = np.zeros(delta.shape, dtype=np.int8)
     labels[delta > tolerance] = 1
@@ -291,14 +325,18 @@ def _baseline_metrics(
 
     mae = float(mean_absolute_error(after, before))
     rmse = float(math.sqrt(mean_squared_error(after, before)))
-    r2 = float(r2_score(after, before))
+    r_squared = float(r2_score(after, before))
     change_truth = after - before
     direction_truth = _direction_labels(change_truth)
-    direction_accuracy = float(np.mean(direction_truth == 0)) if direction_truth.size else float("nan")
+    direction_accuracy = (
+        float(np.mean(direction_truth == 0))
+        if direction_truth.size
+        else float("nan")
+    )
     return {
         "mae_before": mae,
         "rmse_before": rmse,
-        "r2_before": r2,
+        "r2_before": r_squared,
         "direction_accuracy": direction_accuracy,
     }
 
@@ -324,17 +362,21 @@ def _model_metrics(
 
     mae = float(mean_absolute_error(after, predictions))
     rmse = float(math.sqrt(mean_squared_error(after, predictions)))
-    r2 = float(r2_score(after, predictions))
+    r_squared = float(r2_score(after, predictions))
     change_truth = after - before
     change_pred = predictions - before
     direction_truth = _direction_labels(change_truth)
     direction_pred = _direction_labels(change_pred)
-    direction_accuracy = float(np.mean(direction_truth == direction_pred)) if direction_truth.size else float("nan")
+    direction_accuracy = (
+        float(np.mean(direction_truth == direction_pred))
+        if direction_truth.size
+        else float("nan")
+    )
     eligible = int(direction_truth.size)
     return {
         "mae_after": mae,
         "rmse_after": rmse,
-        "r2_after": r2,
+        "r2_after": r_squared,
         "direction_accuracy": direction_accuracy,
         "eligible": eligible,
     }
@@ -366,6 +408,47 @@ def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
                 f"Unknown opinion study '{token}'. Expected one of {sorted(valid)}."
             ) from exc
     return resolved
+
+
+def _curve_metrics_from_history(eval_history: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Build per-round metric curves from the evaluation history, if available.
+
+    :param eval_history: Training history captured by XGBoost.
+    :type eval_history: Mapping[str, Any]
+    :returns: Nested metric structure compatible with downstream reporting.
+    :rtype: Optional[Dict[str, Any]]
+    """
+
+    if not eval_history:
+        return None
+    curve_metrics: Dict[str, Any] = {"metric": "mae"}
+    dataset_map = {"validation_0": "train", "validation_1": "validation"}
+    for history_key, label in dataset_map.items():
+        history = eval_history.get(history_key, {})
+        mae_sequence = history.get("mae", [])
+        rmse_sequence = history.get("rmse", [])
+        if not mae_sequence and not rmse_sequence:
+            continue
+        series_bundle: Dict[str, Dict[str, float]] = {}
+        if mae_sequence:
+            series_bundle["mae_by_round"] = {
+                str(idx + 1): float(value) for idx, value in enumerate(mae_sequence)
+            }
+        if rmse_sequence:
+            series_bundle["rmse_by_round"] = {
+                str(idx + 1): float(value) for idx, value in enumerate(rmse_sequence)
+            }
+        curve_metrics[label] = series_bundle
+    eval_mae_sequence = eval_history.get("validation_1", {}).get("mae", [])
+    if eval_mae_sequence:
+        best_round = min(
+            range(len(eval_mae_sequence)),
+            key=lambda idx: eval_mae_sequence[idx],
+        )
+        curve_metrics["best_round"] = int(best_round + 1)
+        curve_metrics["best_mae"] = float(eval_mae_sequence[best_round])
+    return curve_metrics
 
 
 # pylint: disable=too-many-locals
@@ -450,31 +533,7 @@ def _evaluate_spec(
         )
     study_dir.mkdir(parents=True, exist_ok=True)
 
-    curve_metrics: Optional[Dict[str, Any]] = None
-    if eval_history:
-        curve_metrics = {"metric": "mae"}
-        dataset_map = {"validation_0": "train", "validation_1": "validation"}
-        for history_key, label in dataset_map.items():
-            history = eval_history.get(history_key, {})
-            mae_sequence = history.get("mae", [])
-            rmse_sequence = history.get("rmse", [])
-            if not mae_sequence and not rmse_sequence:
-                continue
-            series_bundle: Dict[str, Dict[str, float]] = {}
-            if mae_sequence:
-                series_bundle["mae_by_round"] = {
-                    str(idx + 1): float(value) for idx, value in enumerate(mae_sequence)
-                }
-            if rmse_sequence:
-                series_bundle["rmse_by_round"] = {
-                    str(idx + 1): float(value) for idx, value in enumerate(rmse_sequence)
-                }
-            curve_metrics[label] = series_bundle
-        eval_mae_sequence = eval_history.get("validation_1", {}).get("mae", [])
-        if eval_mae_sequence:
-            best_round = min(range(len(eval_mae_sequence)), key=lambda idx: eval_mae_sequence[idx])
-            curve_metrics["best_round"] = int(best_round + 1)
-            curve_metrics["best_mae"] = float(eval_mae_sequence[best_round])
+    curve_metrics = _curve_metrics_from_history(eval_history)
 
     payload: Dict[str, Any] = {
         "model": "xgb_opinion",

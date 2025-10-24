@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.utils.callbacks</h1><div class="highlight"><pre>
-<span></span><span class="c1"># open_r1/utils/callbacks.py</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;Trainer callbacks that integrate Open-R1 runs with auxiliary services.</span>
 
 <span class="sd">The callbacks defined here extend Hugging Face ``Trainer`` runs with behaviour</span>
@@ -269,9 +271,33 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerCallback</span><span class="p">,</span> <span class="n">TrainerControl</span><span class="p">,</span> <span class="n">TrainerState</span><span class="p">,</span> <span class="n">TrainingArguments</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils.replay_buffer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReplayBuffer</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">TrainerCallback</span><span class="p">,</span>
+        <span class="n">TrainerControl</span><span class="p">,</span>
+        <span class="n">TrainerState</span><span class="p">,</span>
+        <span class="n">TrainingArguments</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerCallback</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback that surfaces a helpful error when Transformers is missing.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;transformers is required to use Open-R1 Trainer callbacks. &quot;</span>
+                <span class="s2">&quot;Install it with `pip install transformers`.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerControl</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers control placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerState</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers state placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainingArguments</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers arguments placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1">#  SLURM helper --------------------------------------------------------------</span>
@@ -310,8 +336,13 @@
 
 <div class="viewcode-block" id="PushToHubRevisionCallback.on_save">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback.on_save">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainingArguments</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrainerState</span><span class="p">,</span>
-                <span class="n">control</span><span class="p">:</span> <span class="n">TrainerControl</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_save</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # signature must match TrainerCallback</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">args</span><span class="p">:</span> <span class="n">TrainingArguments</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">TrainerState</span><span class="p">,</span>
+        <span class="n">_control</span><span class="p">:</span> <span class="n">TrainerControl</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Push the current checkpoint to the Hub and optionally schedule benchmarks.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">is_world_process_zero</span><span class="p">:</span>
             <span class="k">return</span>
@@ -350,7 +381,7 @@
 
 <div class="viewcode-block" id="SuccessCachingCallback">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SuccessCachingCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SuccessCachingCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Scrape ``trainer._textual_logs`` after each log step and push any prompt whose</span>
 <span class="sd">    accuracy meets or exceeds ``acc_threshold`` into the attached ``ReplayBuffer``.</span>
@@ -359,6 +390,7 @@
 <span class="sd">        Transformers never passes the trainer instance via ``**kwargs``; call</span>
 <span class="sd">        :meth:`set_trainer` during setup to register it.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="SuccessCachingCallback.__init__">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replay_buffer</span><span class="p">:</span> <span class="n">ReplayBuffer</span><span class="p">,</span> <span class="n">acc_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.999</span><span class="p">):</span>
@@ -430,8 +462,9 @@
 
 <div class="viewcode-block" id="ReplayBufferCallback">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ReplayBufferCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplayBufferCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Callback that logs batches directly into the replay buffer.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="ReplayBufferCallback.__init__">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>

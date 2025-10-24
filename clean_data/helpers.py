@@ -1,10 +1,26 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Common low-level helpers reused across the cleaning pipeline.
 
 This module holds normalization routines, regex utilities, and shared
 constants that power session parsing, prompt construction, and survey
-processing.  Anything that manipulates identifiers, serialised JSON, or
+processing. Anything that manipulates identifiers, serialised JSON, or
 core feature definitions typically lives here to avoid circular imports
-between the higher-level modules.
+between the higher-level modules. All routines are made available under the
+repository's Apache 2.0 license; review the LICENSE file for full terms.
 """
 
 from __future__ import annotations
@@ -156,7 +172,11 @@ def _strip_session_video_id(vid: str) -> str:
 
 
 def _normalize_urlid(value: Any) -> str:
-    """Standardize URL identifiers for dictionary lookups."""
+    """Standardize URL identifiers for dictionary lookups.
+
+    :param value: Incoming identifier that may be numeric, string-like, or ``None``.
+    :returns: Normalized identifier string suitable for dict keys.
+    """
     if value is None:
         return ""
     text = str(value).strip()
@@ -176,7 +196,11 @@ def _normalize_urlid(value: Any) -> str:
 
 
 def _normalize_identifier(value: Any) -> str:
-    """Normalize worker/case identifiers by trimming whitespace and dropping null tokens."""
+    """Normalize worker/case identifiers by trimming whitespace and dropping null tokens.
+
+    :param value: Identifier value from the raw dataset.
+    :returns: Sanitized identifier string or ``""`` when the value is missing.
+    """
     text = str(value or "").strip()
     if text and text.lower() not in {"nan", "none", "null"}:
         return text
@@ -184,31 +208,41 @@ def _normalize_identifier(value: Any) -> str:
 
 
 def _coerce_session_value(value: Any) -> Any:
-    """Convert session log values to numeric scalars when possible."""
-    # pylint: disable=too-many-return-statements
+    """Convert session log values to numeric scalars when possible.
+
+    :param value: Raw value from the session logs.
+    :returns: An ``int``/``float`` when conversion succeeds, the stripped string, or
+        the original value for unhandled types.
+    """
     if isinstance(value, (int, float)):
         return value
+
+    result: Any = value
     if isinstance(value, str):
         value_str = value.strip()
         if not value_str:
-            return None
-        try:
-            if "." in value_str:
-                num = float(value_str)
-                if num.is_integer():
-                    return int(num)
-                return num
-            return int(value_str)
-        except ValueError:
-            return value_str
-    return value
+            result = None
+        else:
+            try:
+                if "." in value_str:
+                    num = float(value_str)
+                    result = int(num) if num.is_integer() else num
+                else:
+                    result = int(value_str)
+            except ValueError:
+                result = value_str
+    return result
 
 
 _MISSING_STRINGS = {"", "na", "nan", "none", "null", "n/a"}
 
 
 def _is_missing_value(value: Any) -> bool:
-    """Return ``True`` when ``value`` should be treated as a missing entry."""
+    """Return ``True`` when ``value`` should be treated as a missing entry.
+
+    :param value: Value pulled from the dataset.
+    :returns: ``True`` when the value is blank, null-like, or ``NaN``.
+    """
     if value is None:
         return True
     if isinstance(value, float) and math.isnan(value):
@@ -220,27 +254,32 @@ def _is_missing_value(value: Any) -> bool:
 
 
 def _parse_timestamp_ns(value: Any) -> Optional[int]:
-    """Parse mixed-format timestamps into UTC nanoseconds."""
-    # pylint: disable=too-many-return-statements
+    """Parse mixed-format timestamps into UTC nanoseconds.
+
+    :param value: Timestamp encoded as number, string, or ``None``.
+    :returns: Integer nanoseconds since epoch or ``None`` when parsing fails.
+    """
     if value is None:
         return None
-    if isinstance(value, (int, float)):
-        if isinstance(value, float) and math.isnan(value):
-            return None
+
+    result: Optional[int] = None
+    is_nan_float = isinstance(value, float) and math.isnan(value)
+    if isinstance(value, (int, float)) and not is_nan_float:
         ts_from_num = pd.to_datetime(value, unit="ms", errors="coerce", utc=True)
         if pd.notna(ts_from_num):
-            return int(ts_from_num.value)
+            result = int(ts_from_num.value)
     text = str(value).strip()
-    if not text or text.lower() in _MISSING_STRINGS:
-        return None
-    parsed = pd.to_datetime(text, errors="coerce", utc=True)
-    if pd.notna(parsed):
-        return int(parsed.value)
-    try:
-        num = float(text)
-    except ValueError:
-        return None
-    ts_from_num = pd.to_datetime(num, unit="ms", errors="coerce", utc=True)
-    if pd.notna(ts_from_num):
-        return int(ts_from_num.value)
-    return None
+    if result is None and text and text.lower() not in _MISSING_STRINGS:
+        parsed = pd.to_datetime(text, errors="coerce", utc=True)
+        if pd.notna(parsed):
+            result = int(parsed.value)
+        else:
+            try:
+                num = float(text)
+            except ValueError:
+                num = None
+            if num is not None:
+                ts_from_num = pd.to_datetime(num, unit="ms", errors="coerce", utc=True)
+                if pd.notna(ts_from_num):
+                    result = int(ts_from_num.value)
+    return result

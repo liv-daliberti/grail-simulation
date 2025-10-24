@@ -1,11 +1,42 @@
-"""Markdown rendering utilities for the political sciences replication."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Markdown rendering utilities for the political sciences replication.
+
+These helpers convert the computed statistics into narrative text, tables,
+and figure callouts that mirror the published study's presentation. All
+renderers are provided under the repository's Apache 2.0 license; see
+LICENSE for the detailed terms.
+"""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Mapping, Optional
 
 import math
+
+
+@dataclass(frozen=True)
+class MarkdownArtifacts:
+    """Optional collections required for extended report sections."""
+
+    assignment_rows: Iterable[Mapping[str, object]] = ()
+    regression_summary: Optional[Mapping[str, float]] = None
+    policy_rows: Iterable[Mapping[str, object]] = ()
 
 
 def _is_nan(value: object) -> bool:
@@ -66,17 +97,119 @@ def _format_interval(center: float, lower: float, upper: float, precision: int =
     return f"{center:+.{precision}f} [{lower:+.{precision}f}, {upper:+.{precision}f}]"
 
 
-def build_markdown(  # pylint: disable=too-many-arguments
+def _opinion_summary_lines(study_rows: Iterable[Mapping[str, object]]) -> List[str]:
+    """Render Markdown rows describing opinion shift summaries."""
+
+    lines: List[str] = []
+    for row in study_rows:
+        summary = row["summary"]
+        lines.append(
+            "| "
+            f"{row['label']} | "
+            f"{summary['n']:.0f} | "
+            f"{_format_float(summary['mean_before'])} | "
+            f"{_format_float(summary['mean_after'])} | "
+            f"{_format_float(summary['mean_change'])} | "
+            f"{_format_float(summary['median_change'])} | "
+            f"{_format_percent(summary['share_increase'])} | "
+            f"{_format_percent(summary['share_decrease'])} | "
+            f"{_format_percent(summary['share_small_change'])} |"
+        )
+    return lines
+
+
+def _heatmap_section(heatmap_paths: Iterable[Path], output_dir: Path) -> List[str]:
+    """Build Markdown image blocks for the heatmap paths."""
+
+    blocks: List[str] = []
+    for heatmap_path in heatmap_paths:
+        rel_path = Path(heatmap_path).relative_to(output_dir)
+        title = rel_path.stem.replace("_", " ").title()
+        blocks.extend(
+            [
+                f"![{title}]({rel_path.as_posix()})",
+                "",
+            ]
+        )
+    return blocks
+
+
+def _assignment_section(rows: Iterable[Mapping[str, object]]) -> List[str]:
+    """Render the control vs. treatment summary table when data is available."""
+
+    material = list(rows)
+    if not material:
+        return []
+
+    lines: List[str] = [
+        "",
+        "### Control vs. treatment summary",
+        "",
+        "| Study | Control Δ | Treatment Δ |",
+        "| ------ | ---------- | ------------ |",
+    ]
+    for row in material:
+        lines.append(
+            "| "
+            f"{row['label']} | "
+            f"{_format_float(row['control_mean_change'])} | "
+            f"{_format_float(row['treatment_mean_change'])} |"
+        )
+    lines.append("")
+    return lines
+
+
+def _policy_section(rows: Iterable[Mapping[str, object]]) -> List[str]:
+    """Render the preregistered stratified contrast table when present."""
+
+    material = list(rows)
+    if not material:
+        return []
+
+    lines: List[str] = [
+        "### Preregistered stratified contrasts",
+        "",
+        "| Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |",
+        "| ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |",
+    ]
+    for row in material:
+        lines.append(
+            "| "
+            f"{row['study_label']} | "
+            f"{row['contrast_label']} | "
+            f"{row['outcome_label']} | "
+            f"{_format_interval(row['estimate'], row['ci_low'], row['ci_high'])} | "
+            f"{_format_float(row['mde'])} | "
+            f"{_format_float(row['p_adjusted'])} | "
+            f"{int(row.get('n', 0))} |"
+        )
+    lines.append(
+        "q-values reflect the paper's hierarchical FDR correction applied "
+        "within each outcome family."
+    )
+    return lines
+
+
+def build_markdown(
     output_dir: Path,
     study_rows: Iterable[Mapping[str, object]],
     heatmap_paths: Iterable[Path],
     mean_change_path: Path,
-    *,
-    assignment_rows: Iterable[Mapping[str, object]] = (),
-    regression_summary: Optional[Mapping[str, float]] = None,
-    policy_rows: Iterable[Mapping[str, object]] = (),
+    artifacts: Optional[MarkdownArtifacts] = None,
 ) -> List[str]:
-    """Render Markdown lines describing the replication results."""
+    """Render Markdown lines describing the replication results.
+
+    :param output_dir: Directory where referenced assets are written.
+    :param study_rows: Iterable of per-study summary dictionaries.
+    :param heatmap_paths: Paths to generated heatmap image files.
+    :param mean_change_path: Path to the combined mean-change figure.
+    :param artifacts: Optional container with supplemental report inputs.
+    :returns: List of Markdown lines ready to be written to disk.
+    """
+
+    artifacts = artifacts or MarkdownArtifacts()
+    assignment_rows = list(artifacts.assignment_rows)
+    policy_rows = list(artifacts.policy_rows)
 
     output_dir = Path(output_dir)
     header_cells = [
@@ -118,19 +251,7 @@ def build_markdown(  # pylint: disable=too-many-arguments
         f"| {' | '.join(separator_cells)} |",
     ]
 
-    for row in study_rows:
-        lines.append(
-            "| "
-            f"{row['label']} | "
-            f"{row['summary']['n']:.0f} | "
-            f"{_format_float(row['summary']['mean_before'])} | "
-            f"{_format_float(row['summary']['mean_after'])} | "
-            f"{_format_float(row['summary']['mean_change'])} | "
-            f"{_format_float(row['summary']['median_change'])} | "
-            f"{_format_percent(row['summary']['share_increase'])} | "
-            f"{_format_percent(row['summary']['share_decrease'])} | "
-            f"{_format_percent(row['summary']['share_small_change'])} |"
-        )
+    lines.extend(_opinion_summary_lines(study_rows))
 
     lines.extend(
         [
@@ -145,15 +266,7 @@ def build_markdown(  # pylint: disable=too-many-arguments
         ]
     )
 
-    for heatmap_path in heatmap_paths:
-        rel_path = Path(heatmap_path).relative_to(output_dir)
-        title = rel_path.stem.replace("_", " ").title()
-        lines.extend(
-            [
-                f"![{title}]({rel_path.as_posix()})",
-                "",
-            ]
-        )
+    lines.extend(_heatmap_section(heatmap_paths, output_dir))
 
     rel_mean_change_path = Path(mean_change_path).relative_to(output_dir)
     lines.extend(
@@ -177,60 +290,18 @@ def build_markdown(  # pylint: disable=too-many-arguments
         "heatmap and summary."
     )
 
-    assignment_rows = list(assignment_rows)
-    if assignment_rows:
-        lines.extend(
-            [
-                "",
-                "### Control vs. treatment summary",
-                "",
-                "| Study | Control Δ | Treatment Δ |",
-                "| ------ | ---------- | ------------ |",
-            ]
-        )
-        for row in assignment_rows:
-            lines.append(
-                "| "
-                f"{row['label']} | "
-                f"{_format_float(row['control_mean_change'])} | "
-                f"{_format_float(row['treatment_mean_change'])} |"
-            )
-        lines.append("")
+    lines.extend(_assignment_section(assignment_rows))
 
-    if regression_summary:
+    if artifacts.regression_summary:
         lines.extend(
             [
                 "Pooled regression (control-adjusted) β̂ ≈ "
-                f"{_format_float(regression_summary.get('coefficient', float('nan')))} "
-                f"with p ≈ {regression_summary.get('p_value', float('nan')):.2e}.",
+                f"{_format_float(artifacts.regression_summary.get('coefficient', float('nan')))} "
+                f"with p ≈ {artifacts.regression_summary.get('p_value', float('nan')):.2e}.",
                 "",
             ]
         )
 
-    policy_rows = list(policy_rows)
-    if policy_rows:
-        lines.extend(
-            [
-                "### Preregistered stratified contrasts",
-                "",
-                "| Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |",
-                "| ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |",
-            ]
-        )
-        for row in policy_rows:
-            lines.append(
-                "| "
-                f"{row['study_label']} | "
-                f"{row['contrast_label']} | "
-                f"{row['outcome_label']} | "
-                f"{_format_interval(row['estimate'], row['ci_low'], row['ci_high'])} | "
-                f"{_format_float(row['mde'])} | "
-                f"{_format_float(row['p_adjusted'])} | "
-                f"{int(row.get('n', 0))} |"
-            )
-        lines.append(
-            "q-values reflect the paper's hierarchical FDR correction applied "
-            "within each outcome family."
-        )
+    lines.extend(_policy_section(policy_rows))
 
     return lines

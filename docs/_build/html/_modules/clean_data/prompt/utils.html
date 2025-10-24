@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,11 +254,27 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompt.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Utility functions and data structures shared by prompt analytics code.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Utility functions and data structures shared by prompt analytics code.</span>
 
 <span class="sd">This module abstracts dataset loading, Series manipulations, and summary</span>
 <span class="sd">helpers that are reused by the plotting, Markdown, and CLI components of</span>
-<span class="sd">the prompt reporting pipeline.</span>
+<span class="sd">the prompt reporting pipeline. All helpers are offered under the</span>
+<span class="sd">repository&#39;s Apache 2.0 license; consult LICENSE for the complete details.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -304,7 +322,13 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.SeriesPair">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SeriesPair</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bundle training/validation series alongside their originating dataframes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bundle training/validation series alongside their originating dataframes.</span>
+
+<span class="sd">    :param train_series: Training values aligned to ``train_df`` rows.</span>
+<span class="sd">    :param val_series: Validation values aligned to ``val_df`` rows.</span>
+<span class="sd">    :param train_df: Dataframe backing the training split.</span>
+<span class="sd">    :param val_df: Dataframe backing the validation split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">train_series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
     <span class="n">val_series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
@@ -314,14 +338,20 @@
 <div class="viewcode-block" id="SeriesPair.has_issue">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.SeriesPair.has_issue">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_issue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True when both dataframes expose an &#39;issue&#39; column.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True when both dataframes expose an &#39;issue&#39; column.</span>
+
+<span class="sd">        :returns: ``True`` when both frames contain an ``issue`` column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_df</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_df</span><span class="o">.</span><span class="n">columns</span></div>
 
 
 <div class="viewcode-block" id="SeriesPair.issue_names">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.SeriesPair.issue_names">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">issue_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect normalized issue names available in the pair.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect normalized issue names available in the pair.</span>
+
+<span class="sd">        :returns: Sorted list of unique issue names after normalization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_issue</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">issue_candidates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
@@ -341,7 +371,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cleaner</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return per-issue subsets using the provided cleaning function.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return per-issue subsets using the provided cleaning function.</span>
+
+<span class="sd">        :param cleaner: Function applied to slice-specific series before returning.</span>
+<span class="sd">        :returns: List of tuples ``(issue, train_series, val_series)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_issue</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
 
@@ -364,7 +398,11 @@
 <div class="viewcode-block" id="core_prompt_mask">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.core_prompt_mask">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">core_prompt_mask</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean mask selecting rows from core studies and issues.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean mask selecting rows from core studies and issues.</span>
+
+<span class="sd">    :param data_frame: Dataframe with optional ``participant_study``/``issue`` columns.</span>
+<span class="sd">    :returns: Boolean series aligned to ``data_frame`` indicating retained rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
@@ -386,7 +424,11 @@
 <div class="viewcode-block" id="filter_core_prompt_rows">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.filter_core_prompt_rows">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_core_prompt_rows</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a dataframe down to the core studies/issues used in reporting.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a dataframe down to the core studies/issues used in reporting.</span>
+
+<span class="sd">    :param data_frame: Dataset containing prompt metadata columns.</span>
+<span class="sd">    :returns: Copy of ``data_frame`` retaining only the core rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">core_prompt_mask</span><span class="p">(</span><span class="n">data_frame</span><span class="p">)</span>
@@ -397,7 +439,11 @@
 <div class="viewcode-block" id="canonical_slate_items">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.canonical_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canonical_slate_items</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a slate representation to a tuple of video ids.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a slate representation to a tuple of video ids.</span>
+
+<span class="sd">    :param value: Slate field that may be JSON, numpy arrays, or dicts.</span>
+<span class="sd">    :returns: Tuple of video identifiers or ``None`` if extraction fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -430,7 +476,10 @@
 <div class="viewcode-block" id="ensure_dir">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.ensure_dir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_dir</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the directory hierarchy when it does not already exist.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the directory hierarchy when it does not already exist.</span>
+
+<span class="sd">    :param path: Target directory path to create.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
@@ -438,7 +487,11 @@
 <div class="viewcode-block" id="load_dataset_any">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.load_dataset_any">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_dataset_any</span><span class="p">(</span><span class="n">path_or_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a dataset from disk or from the Hugging Face hub.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a dataset from disk or from the Hugging Face hub.</span>
+
+<span class="sd">    :param path_or_name: Filesystem path or datasets hub identifier.</span>
+<span class="sd">    :returns: Loaded ``DatasetDict`` containing train/validation splits.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_or_name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">load_from_disk</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
@@ -449,7 +502,11 @@
 <div class="viewcode-block" id="is_nanlike">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.is_nanlike">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the value should be treated as missing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the value should be treated as missing.</span>
+
+<span class="sd">    :param value: Candidate object possibly representing a missing value.</span>
+<span class="sd">    :returns: ``True`` when the value should be considered NaN-like.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
@@ -464,7 +521,12 @@
 <div class="viewcode-block" id="first_present">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.first_present">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">first_present</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first non-missing value from the provided columns.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first non-missing value from the provided columns.</span>
+
+<span class="sd">    :param row: Series representing a single dataframe row.</span>
+<span class="sd">    :param columns: Ordered column names to probe.</span>
+<span class="sd">    :returns: First non-missing value or ``None`` when all values are missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -479,7 +541,12 @@
 <div class="viewcode-block" id="series_from_columns">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.series_from_columns">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">series_from_columns</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse multiple candidate columns into a single best-effort series.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse multiple candidate columns into a single best-effort series.</span>
+
+<span class="sd">    :param data_frame: Source dataframe containing the requested columns.</span>
+<span class="sd">    :param columns: Ordered fallback columns to combine.</span>
+<span class="sd">    :returns: Series with the first-present values for each row.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_frame</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">data_frame</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="p">)</span>
@@ -492,7 +559,11 @@
 <div class="viewcode-block" id="convert_numeric">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.convert_numeric">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a series to numeric values, ignoring unconvertible entries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce a series to numeric values, ignoring unconvertible entries.</span>
+
+<span class="sd">    :param series: Series to coerce to numeric.</span>
+<span class="sd">    :returns: Converted numeric series or ``None`` when conversion fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">converted</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
@@ -505,7 +576,11 @@
 <div class="viewcode-block" id="non_missing">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.non_missing">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">non_missing</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a series to entries that are not NaN-like.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a series to entries that are not NaN-like.</span>
+
+<span class="sd">    :param series: Series to filter.</span>
+<span class="sd">    :returns: Subset of ``series`` with NaN-like values removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">series</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="ow">not</span> <span class="n">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
@@ -516,7 +591,11 @@
 <div class="viewcode-block" id="numeric_summary">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.numeric_summary">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">numeric_summary</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute count, mean, and std for a numeric series.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute count, mean, and std for a numeric series.</span>
+
+<span class="sd">    :param series: Numeric-like series to summarize.</span>
+<span class="sd">    :returns: Dictionary containing ``count``, ``mean``, and ``std`` values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cleaned</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)}</span>
@@ -531,7 +610,11 @@
 <div class="viewcode-block" id="categorical_summary">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.categorical_summary">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">categorical_summary</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return counts for each categorical value in the series.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return counts for each categorical value in the series.</span>
+
+<span class="sd">    :param series: Categorical series to summarize.</span>
+<span class="sd">    :returns: Mapping of value strings to their integer counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
@@ -541,7 +624,11 @@
 <div class="viewcode-block" id="clean_viewer_profile">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.clean_viewer_profile">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clean_viewer_profile</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize viewer profile sentences by stripping NaN-like values.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize viewer profile sentences by stripping NaN-like values.</span>
+
+<span class="sd">    :param series: Raw viewer profile text series.</span>
+<span class="sd">    :returns: Cleaned string series with whitespace-trimmed entries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
 
 
@@ -549,7 +636,11 @@
 <div class="viewcode-block" id="count_prior_history">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.count_prior_history">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">count_prior_history</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the number of prior videos available in the interaction history.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the number of prior videos available in the interaction history.</span>
+
+<span class="sd">    :param row: Series containing current video identifiers and history fields.</span>
+<span class="sd">    :returns: Count of prior history items preceding the current video.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_last_index</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the last index of ``target`` inside ``items``.</span>
@@ -617,7 +708,11 @@
 <div class="viewcode-block" id="feature_label">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.feature_label">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">feature_label</span><span class="p">(</span><span class="n">feature_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable label for the feature name.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable label for the feature name.</span>
+
+<span class="sd">    :param feature_name: Raw feature identifier from the dataset.</span>
+<span class="sd">    :returns: Display-ready label for charts and tables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">feature_name</span> <span class="ow">in</span> <span class="n">FEATURE_LABELS</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">FEATURE_LABELS</span><span class="p">[</span><span class="n">feature_name</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">feature_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span></div>
@@ -627,7 +722,11 @@
 <div class="viewcode-block" id="participant_ids">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.participant_ids">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">participant_ids</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a best-effort participant identifier for each row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a best-effort participant identifier for each row.</span>
+
+<span class="sd">    :param data_frame: Dataframe containing participant metadata columns.</span>
+<span class="sd">    :returns: Series of participant identifiers aligned with ``data_frame`` rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">participant_id_series</span> <span class="o">=</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_id&quot;</span><span class="p">)</span>
@@ -666,7 +765,11 @@
 <div class="viewcode-block" id="dedupe_participants">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.dedupe_participants">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dedupe_participants</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deduplicate rows so each participant/issue pair appears once.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deduplicate rows so each participant/issue pair appears once.</span>
+
+<span class="sd">    :param data_frame: Dataframe that may contain repeated participant entries.</span>
+<span class="sd">    :returns: Deduplicated copy of ``data_frame``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data_frame</span>
     <span class="n">ids</span> <span class="o">=</span> <span class="n">participant_ids</span><span class="p">(</span><span class="n">data_frame</span><span class="p">)</span>
@@ -702,7 +805,11 @@
 <div class="viewcode-block" id="participant_stats">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.utils.participant_stats">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">participant_stats</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute participant counts overall, by issue, and by study.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute participant counts overall, by issue, and by study.</span>
+
+<span class="sd">    :param data_frame: Dataset containing at least participant, issue, and study columns.</span>
+<span class="sd">    :returns: Dictionary with aggregate participant statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;overall&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>

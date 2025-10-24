@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,11 +254,28 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompt.markdown</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Generate the human-readable Markdown report for prompt analytics results.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Generate the human-readable Markdown report for prompt analytics results.</span>
 
 <span class="sd">The functions here translate the structured summaries computed by the</span>
 <span class="sd">prompt CLI into narrative sections, tables, and figure references so the</span>
-<span class="sd">cleaning workflow can emit a ready-to-publish README alongside plots.</span>
+<span class="sd">cleaning workflow can emit a ready-to-publish README alongside plots. This</span>
+<span class="sd">reporting module is distributed under the repository&#39;s Apache 2.0 license;</span>
+<span class="sd">consult LICENSE for the governing terms.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -270,7 +289,12 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportFigures">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReportFigures</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Paths to rendered summary figures.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Paths to rendered summary figures.</span>
+
+<span class="sd">    :param prior_history: Location of the prior-history distribution plot.</span>
+<span class="sd">    :param n_options: Location of the slate-size distribution plot.</span>
+<span class="sd">    :param demographic: Location of the demographic coverage plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">prior_history</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">n_options</span><span class="p">:</span> <span class="n">Path</span>
@@ -282,7 +306,14 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportCounts">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReportCounts</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated count metrics used in the report.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated count metrics used in the report.</span>
+
+<span class="sd">    :param prior_history: Tallies of prior-history counts per split.</span>
+<span class="sd">    :param n_options: Slate-size count distributions per split.</span>
+<span class="sd">    :param demographic_missing: Mapping of demographic completeness metrics.</span>
+<span class="sd">    :param unique_content: Coverage counts of unique videos and slates.</span>
+<span class="sd">    :param participant: Participant totals and breakdowns by split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">prior_history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
     <span class="n">n_options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
@@ -296,7 +327,14 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportSummaries">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReportSummaries</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Feature-level summaries used to render the Markdown report.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Feature-level summaries used to render the Markdown report.</span>
+
+<span class="sd">    :param feature: Aggregated feature statistics per split.</span>
+<span class="sd">    :param profile: Profile coverage metrics per split.</span>
+<span class="sd">    :param counts: Structured count bundle for the report.</span>
+<span class="sd">    :param coverage: Dataset coverage summaries by split.</span>
+<span class="sd">    :param skipped_features: Features omitted from reporting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">feature</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]]</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
@@ -310,7 +348,13 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.ReportContext">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReportContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full context bundle required to build the prompt report.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full context bundle required to build the prompt report.</span>
+
+<span class="sd">    :param output_dir: Destination directory for generated Markdown files.</span>
+<span class="sd">    :param figures_dir: Directory containing rendered plots.</span>
+<span class="sd">    :param summaries: Aggregated summaries describing the dataset.</span>
+<span class="sd">    :param figures: Paths to figures referenced in the report.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span>
@@ -320,7 +364,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_relative_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``path`` relative to ``base`` when possible for cleaner Markdown links.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``path`` relative to ``base`` when possible for cleaner Markdown links.</span>
+
+<span class="sd">    :param path: Path that should be relativised.</span>
+<span class="sd">    :param base: Base directory used for relative calculations.</span>
+<span class="sd">    :returns: Relative path string when possible, otherwise the absolute path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base</span><span class="p">))</span>
@@ -577,7 +626,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_shortfall_lines</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="n">overall_counts</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summaries comparing expected and cleaned participant totals.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summaries comparing expected and cleaned participant totals.</span>
+
+<span class="sd">    :param overall_counts: Participant counts broken down by issue and study.</span>
+<span class="sd">    :returns: Explanatory Markdown lines describing participant gaps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">overall_by_issue</span> <span class="o">=</span> <span class="n">overall_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by_issue&quot;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">issue_labels</span> <span class="o">=</span> <span class="p">{</span>
@@ -730,7 +783,11 @@
 <div class="viewcode-block" id="build_markdown_report">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompt.markdown.build_markdown_report">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_markdown_report</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ReportContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return rendered Markdown lines summarizing the prompt statistics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return rendered Markdown lines summarizing the prompt statistics.</span>
+
+<span class="sd">    :param context: Full set of summary statistics, counts, and plots.</span>
+<span class="sd">    :returns: Markdown lines suitable for writing to a README.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;# Prompt feature report&quot;</span><span class="p">,</span>

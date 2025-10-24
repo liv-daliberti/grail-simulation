@@ -1,10 +1,35 @@
-"""Sweep orchestration helpers for the XGBoost pipeline."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_io import load_metrics_json
@@ -303,31 +328,49 @@ def _opinion_sweep_outcome_from_metrics(
 
     metrics_block = metrics.get("metrics", {})
     baseline_block = metrics.get("baseline", {})
-    mae = _safe_float(metrics_block.get("mae_after"))
-    rmse = _safe_float(metrics_block.get("rmse_after"))
-    r2 = _safe_float(metrics_block.get("r2_after"))
-    accuracy = metrics_block.get("direction_accuracy")
-    accuracy_value = float(accuracy) if isinstance(accuracy, (int, float)) else None
-    baseline_accuracy = baseline_block.get("direction_accuracy")
-    baseline_value = float(baseline_accuracy) if isinstance(baseline_accuracy, (int, float)) else None
+
+    def _optional_float(value: object) -> Optional[float]:
+        """
+        Convert numeric-like values into ``float`` instances when possible.
+
+        :param value: Candidate value extracted from the metrics payload.
+        :type value: object
+        :returns: Floating-point value or ``None`` when conversion is unsupported.
+        :rtype: Optional[float]
+        """
+        if isinstance(value, (int, float)):
+            return float(value)
+        return None
+
+    accuracy_value = _optional_float(metrics_block.get("direction_accuracy"))
+    baseline_value = _optional_float(baseline_block.get("direction_accuracy"))
     accuracy_delta = None
     if accuracy_value is not None and baseline_value is not None:
         accuracy_delta = accuracy_value - baseline_value
-    eligible_raw = metrics.get("eligible")
-    if not isinstance(eligible_raw, (int, float)):
-        eligible_raw = metrics_block.get("eligible")
-    eligible_value: Optional[int]
-    if isinstance(eligible_raw, (int, float)):
-        eligible_value = int(eligible_raw)
-    else:
-        eligible_value = None
+
+    def _optional_int(value: object) -> Optional[int]:
+        """
+        Convert numeric-like values into ``int`` instances when possible.
+
+        :param value: Candidate value extracted from the metrics payload.
+        :type value: object
+        :returns: Integer value or ``None`` when conversion is unsupported.
+        :rtype: Optional[int]
+        """
+        if isinstance(value, (int, float)):
+            return int(value)
+        return None
+
+    eligible_value = _optional_int(metrics.get("eligible"))
+    if eligible_value is None:
+        eligible_value = _optional_int(metrics_block.get("eligible"))
     return OpinionSweepOutcome(
         order_index=task.index,
         study=task.study,
         config=task.config,
-        mae=mae,
-        rmse=rmse,
-        r2=r2,
+        mae=_safe_float(metrics_block.get("mae_after")),
+        rmse=_safe_float(metrics_block.get("rmse_after")),
+        r_squared=_safe_float(metrics_block.get("r2_after")),
         accuracy=accuracy_value,
         baseline_accuracy=baseline_value,
         accuracy_delta=accuracy_delta,
@@ -828,7 +871,10 @@ def _select_best_opinion_configs(
                     study=outcome.study,
                     outcome=outcome,
                 )
-            elif abs(outcome.rmse - incumbent.rmse) <= 1e-9 and outcome.r2 > incumbent.r2 + 1e-9:
+            elif (
+                abs(outcome.rmse - incumbent.rmse) <= 1e-9
+                and outcome.r_squared > incumbent.r_squared + 1e-9
+            ):
                 selections[outcome.study.key] = OpinionStudySelection(
                     study=outcome.study,
                     outcome=outcome,

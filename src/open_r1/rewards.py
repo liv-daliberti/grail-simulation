@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # coding=utf-8
 # Copyright 2025 The HuggingFace Team. All rights reserved.
 #
@@ -13,7 +28,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Reward functions for GRPO training."""
+"""Reward functions used by the GRPO training pipeline."""
 
 import asyncio
 import importlib
@@ -24,10 +39,10 @@ import re
 from functools import partial, update_wrapper
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from latex2sympy2_extended import NormalizationConfig
-from math_verify import LatexExtractionConfig, parse, verify
-import transformers
-from transformers.utils.import_utils import _is_package_available
+from latex2sympy2_extended import NormalizationConfig  # pylint: disable=import-error
+from math_verify import LatexExtractionConfig, parse, verify  # pylint: disable=import-error
+import transformers  # pylint: disable=import-error
+from transformers.utils.import_utils import _is_package_available  # pylint: disable=import-error
 
 from .utils.code_providers import get_provider
 from .utils.ioi import (
@@ -62,12 +77,12 @@ DEFAULT_EXTRACTION_CONFIG = [LatexExtractionConfig()]
 
 _NUM_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$", re.I)
 
-def _canon(s: str) -> str:
+def _canon(text: str) -> str:
     """Return a lowercase alphanumeric representation for fuzzy matching."""
 
-    s = s.replace("’", "'").strip().lower()
-    s = re.sub(r"\s+", " ", s)
-    return re.sub(r"[^a-z0-9]+", "", s)
+    normalised = text.replace("’", "'").strip().lower()
+    normalised = re.sub(r"\s+", " ", normalised)
+    return re.sub(r"[^a-z0-9]+", "", normalised)
 
 def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
     """Return (names_in_order, index→name). Supports '1. Title', '1) Title', or '- Title'."""
@@ -77,35 +92,35 @@ def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
         line = line.strip()
         if not line:
             continue
-        m = re.match(r"^\s*(\d+)\s*[\.\)]\s*(.+)$", line)  # "1. Title" or "1) Title"
-        if m:
-            k = int(m.group(1))
-            name = m.group(2).strip(" -")
+        ordinal_match = re.match(r"^\s*(\d+)\s*[\.\)]\s*(.+)$", line)  # "1. Title" or "1) Title"
+        if ordinal_match:
+            k = int(ordinal_match.group(1))
+            name = ordinal_match.group(2).strip(" -")
             names.append(name)
             idxmap[k] = name
             continue
-        m = re.match(r"^\s*-\s*(.+)$", line)               # "- Title"
-        if m:
-            names.append(m.group(1).strip())
+        bullet_match = re.match(r"^\s*-\s*(.+)$", line)               # "- Title"
+        if bullet_match:
+            names.append(bullet_match.group(1).strip())
     if not idxmap and names:
-        idxmap = {i + 1: n for i, n in enumerate(names)}
+        idxmap = {i + 1: option_name for i, option_name in enumerate(names)}
     return names, idxmap
 
 def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
     """Return 1-based gold index, or -1 if not resolvable."""
     gold = (gold or "").strip()
-    m = _NUM_ONLY.match(gold)
-    if m:
+    match_num_only = _NUM_ONLY.match(gold)
+    if match_num_only:
         try:
-            return int(m.group(1))
+            return int(match_num_only.group(1))
         except ValueError:
             return -1
     _, idxmap = _parse_slate_names(slate)
     gcan = _canon(gold)
     if gcan:
-        for k, nm in idxmap.items():
-            if _canon(nm) == gcan:
-                return k
+        for key, name in idxmap.items():
+            if _canon(name) == gcan:
+                return key
     return -1
 
 def _completion_text(comp: Any) -> str:
@@ -117,9 +132,9 @@ def _completion_text(comp: Any) -> str:
     if isinstance(comp, list) and comp:
         for msg in reversed(comp):
             if isinstance(msg, dict) and "content" in msg:
-                c = str(msg.get("content", "")).strip()
-                if c:
-                    return c
+                content_value = str(msg.get("content", "")).strip()
+                if content_value:
+                    return content_value
         try:
             return " ".join(
                 str(message.get("content", "")).strip()
@@ -353,7 +368,7 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
         return count
 
     contents = [completion[0]["content"] for completion in completions]
-    return [count_tags(c) for c in contents]
+    return [count_tags(text) for text in contents]
 
 
 def _compute_length_correctness(contents: List[str], solution: List[str]) -> List[bool]:
@@ -520,11 +535,11 @@ def get_repetition_penalty_reward(
     # ---------- tokenisers for n‑gram split ----------
     if language == "en":
 
-        def zipngram(text: str, n: int):
+        def zipngram(text: str, ngram_length: int):
             """Return iterator over n-grams and the token list for English text."""
 
             words = text.lower().split()
-            return zip(*[words[i:] for i in range(n)]), words
+            return zip(*[words[i:] for i in range(ngram_length)]), words
 
     elif language == "zh":
         if not _is_package_available("jieba"):
@@ -532,11 +547,11 @@ def get_repetition_penalty_reward(
 
         jieba_module = importlib.import_module("jieba")
 
-        def zipngram(text: str, n: int):
+        def zipngram(text: str, ngram_length: int):
             """Return iterator over n-grams and the token list for Chinese text."""
 
             seg_list = list(jieba_module.cut(text))
-            return zip(*[seg_list[i:] for i in range(n)]), seg_list
+            return zip(*[seg_list[i:] for i in range(ngram_length)]), seg_list
 
     else:
         raise ValueError(f"Language {language!r} not supported")
@@ -593,8 +608,8 @@ def get_repetition_penalty_reward(
 
             total = 0
             distinct = set()
-            for ng in ngram_iter:
-                distinct.add(ng)
+            for ngram in ngram_iter:
+                distinct.add(ngram)
                 total += 1
 
             scaling = 1.0 - len(distinct) / total  # 0‑1, higher → more repetition

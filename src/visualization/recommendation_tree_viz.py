@@ -1,9 +1,19 @@
-"""Utilities for visualising Guns and GRAIL recommendation data with Graphviz.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-The helpers in this module transform recommender exports and cleaned session datasets
-into annotated Graphviz diagrams that illustrate decision paths, node metadata, and
-viewer engagement metrics.
-"""
+"""Visualization helpers for rendering Grail recommendation tree diagrams."""
 
 # pylint: disable=too-many-lines
 
@@ -21,7 +31,21 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import pandas as pd
-from graphviz import Digraph
+try:  # pragma: no cover - optional dependency
+    from graphviz import Digraph
+except ImportError:  # pragma: no cover - optional dependency
+    Digraph = None  # type: ignore[assignment]
+
+
+def _require_graphviz() -> "Digraph":  # type: ignore[override]
+    """Return the graphviz ``Digraph`` class when the dependency is available."""
+
+    if Digraph is None:  # pragma: no cover - optional dependency guard
+        raise ImportError(
+            "graphviz must be installed to use the recommendation tree visualisations "
+            "(pip install graphviz)."
+        )
+    return Digraph
 
 
 @dataclass
@@ -528,7 +552,8 @@ def build_graph(
     depths = compute_depths(tree)
     highlight_nodes = set(highlight_path)
     highlight_edges = set(zip(highlight_path, highlight_path[1:]))
-    graph = Digraph(engine=engine)
+    graph_cls = _require_graphviz()
+    graph = graph_cls(engine=engine)
     graph.attr(rankdir=rankdir)
     graph.attr(
         "node",
@@ -752,7 +777,8 @@ def build_session_graph(
     :rtype: graphviz.Digraph
     """
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
-    graph = Digraph(comment="Viewer session", engine=engine, format="png")
+    graph_cls = _require_graphviz()
+    graph = graph_cls(comment="Viewer session", engine=engine, format="png")
     graph.attr(rankdir=rankdir)
     highlight_set = {vid.strip() for vid in highlight_path if vid.strip()}
     metadata: Dict[str, Mapping[str, object]] = {}

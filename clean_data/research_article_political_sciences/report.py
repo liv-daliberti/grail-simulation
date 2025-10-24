@@ -1,4 +1,25 @@
-"""Top-level orchestration for the political sciences replication report."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration for the political sciences replication report.
+
+This module stitches together dataset loading, statistical summaries,
+figure generation, and Markdown rendering to reproduce the published
+political sciences findings. The orchestration logic is licensed under the
+repository's Apache 2.0 terms; see LICENSE for the precise allowances.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +45,7 @@ from .analysis import (
     summarise_assignments,
     summarise_shift,
 )
-from .markdown import build_markdown
+from .markdown import MarkdownArtifacts, build_markdown
 from .plotting import plot_heatmap, plot_assignment_panels
 from .stratified import analyze_preregistered_effects
 
@@ -76,7 +97,13 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
     *,
     heatmap_bins: int = 10,
 ) -> Dict[str, object]:
-    """Generate heatmaps and Markdown summarising opinion shifts per study."""
+    """Generate heatmaps and Markdown summarising opinion shifts per study.
+
+    :param dataset: Hugging Face ``DatasetDict`` containing cleaned sessions.
+    :param output_dir: Directory where plots and the Markdown report are written.
+    :param heatmap_bins: Number of bins to use along each dimension of the heatmaps.
+    :returns: Dictionary describing generated assets and summary data.
+    """
 
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -177,9 +204,11 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
         ],
         heatmap_paths=heatmap_paths,
         mean_change_path=mean_change_plot,
-        assignment_rows=table_rows,
-        regression_summary=regression_stats,
-        policy_rows=stratified_rows,
+        artifacts=MarkdownArtifacts(
+            assignment_rows=table_rows,
+            regression_summary=regression_stats,
+            policy_rows=stratified_rows,
+        ),
     )
     (output_path / "README.md").write_text(
         "\n".join(markdown_lines) + "\n",

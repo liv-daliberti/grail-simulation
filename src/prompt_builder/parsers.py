@@ -1,4 +1,19 @@
-"""Parsing and normalisation helpers for prompt construction."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Parsing helpers shared by the prompt_builder package."""
 
 from __future__ import annotations
 
@@ -19,69 +34,69 @@ except ImportError:  # pragma: no cover - optional dependency
     pd = None  # type: ignore
 
 
-def as_list_json(x: Any, default: str = "[]") -> List[Any]:
+def as_list_json(source: Any, default: str = "[]") -> List[Any]:
     """
-    Convert ``x`` into a Python list, accepting JSON strings and Arrow arrays.
+    Convert ``source`` into a Python list, accepting JSON strings and Arrow arrays.
 
-    :param x: Source value that may already be a list or serialised representation.
-    :type x: Any
-    :param default: Fallback JSON array used when ``x`` is empty.
+    :param source: Value that may already be a list or serialised representation.
+    :type source: Any
+    :param default: Fallback JSON array used when ``source`` is empty.
     :type default: str
     :returns: Parsed list representation, or an empty list when conversion fails.
     :rtype: List[Any]
     """
 
-    if isinstance(x, list):
-        return x
-    if isinstance(x, str):
+    if isinstance(source, list):
+        return source
+    if isinstance(source, str):
         try:
-            value = json.loads(x or default)
+            value = json.loads(source or default)
         except (TypeError, ValueError, json.JSONDecodeError):  # pragma: no cover - malformed JSON
             return []
         return value if isinstance(value, list) else []
-    if pa is not None and isinstance(x, pa.Array):  # pragma: no cover
-        return x.to_pylist()
+    if pa is not None and isinstance(source, pa.Array):  # pragma: no cover
+        return source.to_pylist()
     return []
 
 
-def secs(x: Any) -> str:
+def secs(value: Any) -> str:
     """
-    Format ``x`` as an integer number of seconds.
+    Format ``value`` as an integer number of seconds.
 
-    :param x: Duration-like value (numeric or string).
-    :type x: Any
+    :param value: Duration-like value (numeric or string).
+    :type value: Any
     :returns: Seconds expressed as ``"<int>s"`` or ``"?"`` when parsing fails.
     :rtype: str
     """
 
     try:
-        return f"{int(round(float(x)))}s"
+        return f"{int(round(float(value)))}s"
     except (TypeError, ValueError):
         return "?"
 
 
-def _is_nanlike(x: Any) -> bool:
+def _is_nanlike(candidate: Any) -> bool:
     """
-    Evaluate whether ``x`` should be treated as a NaN-equivalent sentinel.
+    Evaluate whether ``candidate`` should be treated as a NaN-equivalent sentinel.
 
-    :param x: Value of arbitrary type to test for NaN-like semantics.
-    :type x: Any
-    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a
+    :param candidate: Value of arbitrary type to test for NaN-like semantics.
+    :type candidate: Any
+    :returns: ``True`` when ``candidate`` is ``None``, a floating NaN, a pandas NA, or a
         canonical missing-text token.
     :rtype: bool
     """
-    if x is None:
+    if candidate is None:
         return True
-    if isinstance(x, float) and math.isnan(x):
+    if isinstance(candidate, float) and math.isnan(candidate):
         return True
     if pd is not None:
         try:
-            if pd.isna(x):  # type: ignore[union-attr]
+            if pd.isna(candidate):  # type: ignore[union-attr]
                 return True
         except (TypeError, ValueError):  # pd.isna on complex objects may raise
             pass
-    s = str(x).strip().lower()
-    return s in {"", "nan", "none", "null", "n/a", "na"}
+    text = str(candidate).strip().lower()
+    return text in {"", "nan", "none", "null", "n/a", "na"}
 
 
 def is_nanlike(value: Any) -> bool:

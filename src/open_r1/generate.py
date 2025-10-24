@@ -1,4 +1,5 @@
-# Copyright 2025 The HuggingFace Team. All rights reserved.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +15,25 @@
 
 """Utilities for constructing distilabel pipelines for data generation."""
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from distilabel.llms import OpenAILLM
-from distilabel.pipeline import Pipeline
-from distilabel.steps import StepResources
-from distilabel.steps.tasks import TextGeneration
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from distilabel.pipeline import Pipeline
+
+
+def _load_distilabel_components():
+    """Return distilabel classes, raising an informative error when unavailable."""
+    try:  # pragma: no cover - optional dependency
+        from distilabel.llms import OpenAILLM
+        from distilabel.pipeline import Pipeline
+        from distilabel.steps import StepResources
+        from distilabel.steps.tasks import TextGeneration
+    except ImportError as exc:
+        raise ImportError(
+            "distilabel is required to build generation pipelines. "
+            "Install it with `pip install distilabel`."
+        ) from exc
+    return Pipeline, OpenAILLM, StepResources, TextGeneration
 
 
 def build_distilabel_pipeline(  # pylint: disable=too-many-arguments
@@ -36,8 +50,12 @@ def build_distilabel_pipeline(  # pylint: disable=too-many-arguments
     client_replicas: int = 1,
     timeout: int = 900,
     retries: int = 0,
-) -> Pipeline:
+) -> "Pipeline":
     """Construct a distilabel pipeline configured for OpenAI-compatible endpoints."""
+
+    pipeline_cls, openai_llm_cls, step_resources_cls, text_generation_cls = (
+        _load_distilabel_components()
+    )
 
     generation_kwargs = {"max_new_tokens": max_new_tokens}
 
@@ -47,10 +65,10 @@ def build_distilabel_pipeline(  # pylint: disable=too-many-arguments
     if top_p is not None:
         generation_kwargs["top_p"] = top_p
 
-    with Pipeline().ray() as pipeline_obj:
+    with pipeline_cls().ray() as pipeline_obj:
         input_mapping = {"instruction": prompt_column} if prompt_column is not None else {}
-        TextGeneration(
-            llm=OpenAILLM(
+        text_generation_cls(
+            llm=openai_llm_cls(
                 base_url=base_url,
                 api_key="something",
                 model=model,
@@ -63,7 +81,7 @@ def build_distilabel_pipeline(  # pylint: disable=too-many-arguments
             input_batch_size=input_batch_size,
             num_generations=num_generations,
             group_generations=True,
-            resources=StepResources(replicas=client_replicas),
+            resources=step_resources_cls(replicas=client_replicas),
         )
 
     return pipeline_obj

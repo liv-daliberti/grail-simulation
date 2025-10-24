@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Top-level orchestration helpers for the ``clean_data`` package.
 
 This module stitches together the key pieces of the cleaning pipeline:
@@ -5,7 +20,9 @@ loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
 converting interactions into prompt-ready examples, validating schema
 requirements, saving artifacts, and dispatching prompt statistics reports.
 It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets.
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
 """
 
 from __future__ import annotations
@@ -23,6 +40,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
+from clean_data.filters import compute_issue_counts, filter_prompt_ready
+from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
+from clean_data.prompting import row_to_example
+
 try:
     import datasets
     from datasets import Dataset, DatasetDict, Features, Sequence as HFSequence, Value
@@ -36,29 +57,38 @@ except ImportError:  # pragma: no cover - optional dependency for linting
     Value = Any  # type: ignore
 
     class DatasetGenerationCastError(Exception):  # type: ignore
-        """Fallback stub when datasets is unavailable."""
+        """Fallback stub for :class:`datasets.builder.DatasetGenerationCastError`.
+
+        :meta private:
+        """
 
 
 def _ensure_datasets_imported() -> None:
-    """Ensure the optional datasets dependency (or its stub) is available."""
+    """Ensure the optional datasets dependency (or its stub) is available.
 
-    global datasets, Dataset, DatasetDict, Features, HFSequence, Value, DatasetGenerationCastError  # noqa: PLW0603
+    :raises ModuleNotFoundError: If the optional ``datasets`` package cannot be imported.
+    """
 
     if datasets is not None and Features is not Any:
         return
 
     module = importlib.import_module("datasets")
-    datasets = module
-    Dataset = getattr(module, "Dataset", Dataset)
-    DatasetDict = getattr(module, "DatasetDict", DatasetDict)
-    Features = getattr(module, "Features", Features)
-    HFSequence = getattr(module, "Sequence", HFSequence)
-    Value = getattr(module, "Value", Value)
+    module_globals = globals()
+    module_globals["datasets"] = module
+    module_globals["Dataset"] = getattr(module, "Dataset", Dataset)
+    module_globals["DatasetDict"] = getattr(module, "DatasetDict", DatasetDict)
+    module_globals["Features"] = getattr(module, "Features", Features)
+    module_globals["HFSequence"] = getattr(module, "Sequence", HFSequence)
+    module_globals["Value"] = getattr(module, "Value", Value)
     try:
-        from datasets.builder import DatasetGenerationCastError as cast_error  # type: ignore
-    except (ImportError, AttributeError):  # pragma: no cover - optional dependency
+        builder_module = importlib.import_module("datasets.builder")
+    except ModuleNotFoundError:  # pragma: no cover - optional dependency
         return
-    DatasetGenerationCastError = cast_error
+    module_globals["DatasetGenerationCastError"] = getattr(
+        builder_module,
+        "DatasetGenerationCastError",
+        DatasetGenerationCastError,
+    )
 
 try:
     import pandas as pd
@@ -70,38 +100,40 @@ try:
 except ImportError:  # pragma: no cover - optional dependency for linting
     url_to_fs = None  # type: ignore
 
-from clean_data.filters import compute_issue_counts, filter_prompt_ready
-from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
-from clean_data.prompting import row_to_example
-
 log = logging.getLogger("clean_grail")
 
 
 @lru_cache(maxsize=1)
 def _load_prompt_feature_report_builder() -> Optional[Callable[..., None]]:
-    """Return the optional prompt statistics report builder."""
+    """Return the optional prompt statistics report builder.
 
+    :returns: Callable used to generate prompt feature reports, or ``None`` when unavailable.
+    """
+
+    target_attr = "generate_prompt_feature_report"
     try:
-        from clean_data.prompt.cli import (  # type: ignore  # pylint: disable=import-outside-toplevel
-            generate_prompt_feature_report as builder,
-        )
-        return builder
+        module = importlib.import_module("clean_data.prompt.cli")
     except ModuleNotFoundError:  # pragma: no cover
         try:
-            from prompt_stats import generate_prompt_feature_report as builder  # type: ignore  # pylint: disable=import-outside-toplevel
-            return builder
-        except ModuleNotFoundError:  # pragma: no cover
+            module = importlib.import_module("prompt_stats")
+        except ModuleNotFoundError:
             return None
+    return getattr(module, target_attr, None)
 
 
 def _try_load_codeocean_dataset(
     capsule_path: Path,
     validation_ratio: float,
 ) -> Optional[DatasetDict]:
-    """Attempt to rebuild a dataset from the CodeOcean capsule layout."""
+    """Attempt to rebuild a dataset from the CodeOcean capsule layout.
+
+    :param capsule_path: Path to the CodeOcean capsule directory on disk.
+    :param validation_ratio: Fraction of the capsule data reserved for validation.
+    :returns: Reconstructed dataset when the capsule utilities are present, otherwise ``None``.
+    """
 
     try:
-        from clean_data import codeocean as codeocean_module  # type: ignore  # pylint: disable=import-outside-toplevel
+        codeocean_module = importlib.import_module("clean_data.codeocean")
     except ModuleNotFoundError:  # pragma: no cover
         return None
 
@@ -116,7 +148,16 @@ def _try_load_codeocean_dataset(
 
 @dataclass(frozen=True)
 class BuildOptions:
-    """Configuration used when building cleaned prompt datasets."""
+    """Configuration used when building cleaned prompt datasets.
+
+    :param validation_ratio: Share of examples reserved for the validation split.
+    :param train_split: Name of the split treated as training data when present.
+    :param validation_split: Name of the split treated as validation data when present.
+    :param system_prompt: Optional override applied to the prompt ``system`` role.
+    :param sol_key: Alternate column containing the gold answer identifier.
+    :param max_history: Number of historical interactions preserved in ``state_text``.
+    :param num_proc: Optional worker count forwarded to Hugging Face dataset utilities.
+    """
 
     validation_ratio: float = 0.1
     train_split: str = "train"
@@ -178,7 +219,12 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
 
 @dataclass(frozen=True)
 class _ReadAttempt:
-    """Capture a single pandas CSV parsing attempt configuration."""
+    """Capture a single pandas CSV parsing attempt configuration.
+
+    :param engine: Pandas CSV engine identifier (``"c"`` or ``"python"``).
+    :param sep: Delimiter candidate evaluated for the CSV payload.
+    :param on_bad_lines: Policy forwarded to pandas for malformed rows.
+    """
 
     engine: str
     sep: Optional[str]
@@ -222,7 +268,12 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
 
 
 def _normalise_split_mappings(data_files: Dict[str, Any]) -> Dict[str, list[str]]:
-    """Coerce the builder ``data_files`` mapping into ``split -> [files]`` form."""
+    """Coerce the builder ``data_files`` mapping into ``split -> [files]`` form.
+
+    :param data_files: Mapping extracted from ``datasets.Builder`` configuration.
+    :returns: Normalised mapping where every value is a list of file references.
+    :raises RuntimeError: If a mapping value cannot be interpreted as str or sequence.
+    """
 
     split_files: Dict[str, list[str]] = {}
     for split_name, files in data_files.items():
@@ -239,28 +290,43 @@ def _normalise_split_mappings(data_files: Dict[str, Any]) -> Dict[str, list[str]
 
 @dataclass
 class _ColumnUnionLoader:
-    """Helper that recreates CSV datasets while unioning distinct column sets."""
+    """Helper that recreates CSV datasets while unioning distinct column sets.
+
+    :param dataset_name: Hugging Face dataset identifier being reconstructed.
+    :param builder: Dataset builder instance supplying data files and filesystem.
+    :param features: Optional feature schema used to cast the reconstructed frames.
+    :ivar expected_columns: Columns inferred from the declared feature schema.
+    :ivar filesystem: Filesystem handle used to read the dataset shards.
+    """
 
     dataset_name: str
     builder: Any
     features: Optional[Features]
     expected_columns: set[str] = field(init=False)
-    fs: Any = field(init=False)
+    filesystem: Any = field(init=False)
 
     def __post_init__(self) -> None:
+        """Populate derived filesystem metadata for dataset reconstruction.
+
+        :raises RuntimeError: If the dataset builder does not expose a filesystem handle.
+        """
         if isinstance(self.features, Features):
             self.expected_columns = set(self.features.keys())
         else:
             self.expected_columns = set()
-        filesystem = getattr(self.builder, "_fs", None)
-        if filesystem is None:  # pragma: no cover - defensive branch
+        filesystem_handle = getattr(self.builder, "_fs", None)
+        if filesystem_handle is None:  # pragma: no cover - defensive branch
             raise RuntimeError(
                 f"Dataset builder for '{self.dataset_name}' does not expose a filesystem handle"
             )
-        self.fs = filesystem
+        self.filesystem = filesystem_handle
 
     def build(self, split_files: Dict[str, list[str]]) -> Dict[str, Dataset]:
-        """Union column schemas for every split and return the reconstructed datasets."""
+        """Union column schemas for every split and return the reconstructed datasets.
+
+        :param split_files: Mapping of split name to the list of backing data files.
+        :returns: Dictionary of split names to rehydrated ``Dataset`` objects.
+        """
         unioned: Dict[str, Dataset] = {}
         for split_name, file_refs in split_files.items():
             dataset = self._build_split(split_name, file_refs)
@@ -269,6 +335,12 @@ class _ColumnUnionLoader:
         return unioned
 
     def _build_split(self, split_name: str, file_refs: list[str]) -> Optional[Dataset]:
+        """Reconstruct a single split by unioning column schemas across files.
+
+        :param split_name: Identifier of the split being reconstructed.
+        :param file_refs: Iterable of file references associated with the split.
+        :returns: Hugging Face ``Dataset`` instance when any rows are loaded, otherwise ``None``.
+        """
         frames: list[pd.DataFrame] = []
         for file_ref in file_refs:
             filesystem, path = self._resolve_file_ref(file_ref)
@@ -285,6 +357,13 @@ class _ColumnUnionLoader:
         return Dataset.from_pandas(combined, preserve_index=False)
 
     def _resolve_file_ref(self, file_ref: Any) -> Tuple[Any, Any]:
+        """Resolve a file reference to an ``fsspec`` filesystem and path.
+
+        :param file_ref: Local or remote identifier describing a dataset shard.
+        :returns: Tuple of filesystem handle and path within that filesystem.
+        :raises RuntimeError: If remote references are encountered without ``fsspec``.
+        :raises FileNotFoundError: If the resolved file cannot be opened.
+        """
         if isinstance(file_ref, str) and "://" in file_ref:
             if url_to_fs is None:
                 raise RuntimeError(
@@ -294,14 +373,21 @@ class _ColumnUnionLoader:
             return url_to_fs(file_ref)
 
         try:
-            with self.fs.open(file_ref, "rb"):
-                return self.fs, file_ref
+            with self.filesystem.open(file_ref, "rb"):
+                return self.filesystem, file_ref
         except FileNotFoundError:
             if url_to_fs is not None and isinstance(file_ref, str):
                 return url_to_fs(file_ref)
             raise
 
     def _read_csv_frame(self, filesystem: Any, path: Any) -> pd.DataFrame:
+        """Read and normalise a CSV shard into a pandas DataFrame.
+
+        :param filesystem: Filesystem handle capable of opening the shard.
+        :param path: Path or identifier of the shard within ``filesystem``.
+        :returns: DataFrame containing the parsed rows.
+        :raises RuntimeError: If none of the decoding strategies succeed.
+        """
         with filesystem.open(path, "rb") as raw_handle:
             raw_bytes = raw_handle.read()
 
@@ -322,6 +408,12 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _decompress_payload(payload: bytes, path: Any) -> bytes:
+        """Expand compressed payloads emitted by common archival formats.
+
+        :param payload: Raw bytes read from the filesystem.
+        :param path: Identifier of the current shard, used for diagnostics.
+        :returns: Decompressed bytes when compression is detected, otherwise the original payload.
+        """
         try:
             if payload.startswith(b"\x1f\x8b\x08"):
                 return gzip.decompress(payload)
@@ -349,6 +441,13 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _decode_sample_texts(sample_bytes: bytes) -> list[tuple[str, str]]:
+        """Decode sample bytes using several fallback encodings.
+
+        :param sample_bytes: Initial slice of the CSV payload used for detection heuristics.
+        :returns: List of ``(encoding, text)`` tuples in evaluation order.
+        :raises UnicodeDecodeError: If no encoding successfully decodes the bytes.
+        :raises LookupError: If no recognised encoding can be used during detection.
+        """
         decoded: list[tuple[str, str]] = []
         last_decode_err: Optional[UnicodeDecodeError] = None
         last_lookup_err: Optional[LookupError] = None
@@ -370,6 +469,11 @@ class _ColumnUnionLoader:
         raise UnicodeDecodeError("unicodeescape", b"", 0, 1, "no valid encoding candidates found")
 
     def _build_attempts(self, sample_text: str) -> list[_ReadAttempt]:
+        """Construct CSV parsing attempts from the sample payload.
+
+        :param sample_text: Text decoded from the beginning of the CSV payload.
+        :returns: Ordered list of parsing attempts to evaluate.
+        """
         delimiters = self._candidate_delimiters(sample_text)
         attempts: list[_ReadAttempt] = []
         seen: set[tuple[str, Optional[str], Optional[str]]] = set()
@@ -391,6 +495,11 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _candidate_delimiters(sample_text: str) -> list[str]:
+        """Infer potential delimiter characters from sample CSV text.
+
+        :param sample_text: Text snippet used to identify likely delimiters.
+        :returns: List of delimiter characters ranked by confidence.
+        """
         try:
             sniffed = csv.Sniffer().sniff(
                 sample_text,
@@ -404,6 +513,13 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _read_with_attempt(data_bytes: bytes, encoding: str, attempt: _ReadAttempt) -> pd.DataFrame:
+        """Evaluate a single pandas CSV read attempt.
+
+        :param data_bytes: Raw CSV payload (optionally decompressed).
+        :param encoding: Text encoding used for decoding the payload.
+        :param attempt: Candidate configuration describing the CSV read.
+        :returns: DataFrame produced by ``pandas.read_csv`` when successful.
+        """
         kwargs: Dict[str, Any] = {
             "encoding": encoding,
             "low_memory": False,
@@ -416,6 +532,11 @@ class _ColumnUnionLoader:
         return pd.read_csv(io.BytesIO(data_bytes), **kwargs)
 
     def _postprocess_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
+        """Rename and prune columns so they align with the expected schema.
+
+        :param frame: DataFrame produced by pandas for an individual shard.
+        :returns: Normalised DataFrame ready for unioning.
+        """
         frame = frame.drop(columns=["Unnamed: 0"], errors="ignore")
         frame_columns = set(frame.columns)
         rename_map = {}
@@ -428,6 +549,12 @@ class _ColumnUnionLoader:
         return frame
 
     def _maybe_canonical_name(self, column: str, frame_columns: set[str]) -> str:
+        """Return a canonical column name when possible.
+
+        :param column: Column name emitted by the CSV file.
+        :param frame_columns: All columns currently present in the frame.
+        :returns: Either the canonical column name or the original value when no change is needed.
+        """
         if "_pre" not in column:
             return column
 
@@ -445,6 +572,11 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _candidate_column_names(column: str) -> list[str]:
+        """Generate canonical column name candidates for ``_pre`` variants.
+
+        :param column: Column name sourced from the CSV shard.
+        :returns: Candidate column names stripped of ``_pre`` suffixes.
+        """
         candidates: list[str] = []
         if column.endswith("_pre"):
             candidates.append(column[:-4])
@@ -456,11 +588,21 @@ class _ColumnUnionLoader:
 
     @staticmethod
     def _combine_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
+        """Align columns across frames and concatenate them.
+
+        :param frames: Collection of DataFrames produced from dataset shards.
+        :returns: DataFrame containing the union of the provided columns.
+        """
         all_columns = sorted({col for frame in frames for col in frame.columns})
         aligned = [frame.reindex(columns=all_columns, fill_value=pd.NA) for frame in frames]
         return pd.concat(aligned, ignore_index=True)
 
     def _apply_feature_casts(self, frame: pd.DataFrame) -> pd.DataFrame:
+        """Cast string-like columns so they align with the dataset feature schema.
+
+        :param frame: DataFrame produced by combining all shard outputs.
+        :returns: DataFrame with corrected pandas dtypes.
+        """
         if frame.empty:
             return frame
 
@@ -629,9 +771,12 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
     """Drop duplicate rows sharing the same participant and issue.
 
     The cleaning pipeline now retains every interaction row long enough to
-    run prompt diagnostics (e.g., prior-history coverage).  Downstream
+    run prompt diagnostics (e.g., prior-history coverage). Downstream
     consumers that require the historical one-row-per-participant-and-issue
-    view can apply this helper to recover the previous behaviour.
+    view can apply this helper to recover the previous behavior.
+
+    :param dataset: Dataset containing potential participant/issue duplicates.
+    :returns: Dataset with duplicates removed within each split.
     """
 
     _ensure_datasets_imported()

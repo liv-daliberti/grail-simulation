@@ -1,4 +1,29 @@
-"""Shared prompt document assembly helpers used across baselines."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Top-level orchestration helpers for the ``clean_data`` package.
+
+This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository's Apache 2.0 license; see LICENSE for
+details.
+"""
 
 from __future__ import annotations
 
@@ -61,7 +86,7 @@ EXTRA_FIELD_LABELS: Dict[str, str] = {
 EXTRA_FIELD_LABELS.update(prompt_constants.MIN_WAGE_FIELD_LABELS)
 EXTRA_FIELD_LABELS.update(prompt_constants.GUN_FIELD_LABELS)
 
-_default_title_resolver_cache: Optional[TitleResolver] = None
+_DEFAULT_TITLE_RESOLVER_CACHE: Optional[TitleResolver] = None
 
 
 def default_title_resolver() -> TitleResolver:
@@ -77,11 +102,10 @@ def default_title_resolver() -> TitleResolver:
 
     """
 
-
-    global _default_title_resolver_cache  # pylint: disable=global-statement
-    if _default_title_resolver_cache is None:
-        _default_title_resolver_cache = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
-    return _default_title_resolver_cache
+    global _DEFAULT_TITLE_RESOLVER_CACHE  # pylint: disable=global-statement
+    if _DEFAULT_TITLE_RESOLVER_CACHE is None:
+        _DEFAULT_TITLE_RESOLVER_CACHE = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
+    return _DEFAULT_TITLE_RESOLVER_CACHE
 
 
 def create_prompt_document_builder(
@@ -306,13 +330,25 @@ def _extract_now_watching(
 
 @dataclass
 class _SlateCollector:
-    """Accumulate cleaned slate entries while minimising local state."""
+    """Accumulate cleaned slate entries while minimising local state.
+
+    :param title_lookup: Optional callback used to hydrate missing titles.
+    :type title_lookup: TitleLookup | None
+    :param items: Mutable list of ``(title, video_id)`` pairs collected so far.
+    :type items: list[tuple[str, str]]
+    """
 
     title_lookup: TitleLookup | None
     items: List[Tuple[str, str]] = field(default_factory=list)
 
     def add(self, title: object, video_id: object) -> None:
-        """Append a cleaned ``(title, video_id)`` pair to ``items`` when viable."""
+        """Append a cleaned ``(title, video_id)`` pair to ``items`` when viable.
+
+        :param title: Candidate slate title recovered from the source data.
+        :type title: object
+        :param video_id: Candidate video identifier to normalise.
+        :type video_id: object
+        """
         cleaned_id = _normalise_video_id(video_id)
         cleaned_title = _normalise_title(title)
         if not cleaned_id and isinstance(title, str):
@@ -327,12 +363,24 @@ class _SlateCollector:
 
 
 def _normalise_title(value: object) -> str:
-    """Return a stripped title when ``value`` is a string."""
+    """Return a stripped title when ``value`` is a string.
+
+    :param value: Raw value that may contain title text.
+    :type value: object
+    :returns: Cleaned title string or an empty string when unavailable.
+    :rtype: str
+    """
     return value.strip() if isinstance(value, str) else ""
 
 
 def _normalise_video_id(value: object) -> str:
-    """Return an 11-character YouTube id when ``value`` resembles one."""
+    """Return an 11-character YouTube id when ``value`` resembles one.
+
+    :param value: Raw identifier value extracted from the dataset.
+    :type value: object
+    :returns: Canonical YouTube video id or an empty string if cleaning fails.
+    :rtype: str
+    """
     if not value:
         return ""
     candidate = canon_video_id(str(value))
@@ -340,7 +388,13 @@ def _normalise_video_id(value: object) -> str:
 
 
 def _structured_slate_candidates(raw: object) -> List[Tuple[object, object]]:
-    """Extract raw ``(title, id)`` pairs from structured slate metadata."""
+    """Extract raw ``(title, id)`` pairs from structured slate metadata.
+
+    :param raw: Structured slate metadata, typically a list of dictionaries.
+    :type raw: object
+    :returns: Sequence of un-normalised ``(title, video_id)`` tuples.
+    :rtype: list[tuple[object, object]]
+    """
     if not isinstance(raw, list):
         return []
     pairs: List[Tuple[object, object]] = []
@@ -370,7 +424,15 @@ def _structured_slate_candidates(raw: object) -> List[Tuple[object, object]]:
 
 
 def _collect_structured_items(collector: _SlateCollector, example: Mapping[str, object]) -> bool:
-    """Attempt to populate ``collector`` using structured slate arrays."""
+    """Attempt to populate ``collector`` using structured slate arrays.
+
+    :param collector: Aggregator used to store cleaned slate entries.
+    :type collector: _SlateCollector
+    :param example: Source example containing potential slate metadata.
+    :type example: Mapping[str, object]
+    :returns: ``True`` when any structured slate entries were ingested.
+    :rtype: bool
+    """
     for key in ("slate_items", "options", "slate_items_with_meta"):
         candidates = _structured_slate_candidates(example.get(key))
         if not candidates:
@@ -382,7 +444,15 @@ def _collect_structured_items(collector: _SlateCollector, example: Mapping[str, 
 
 
 def _collect_text_items(collector: _SlateCollector, slate_text: object) -> bool:
-    """Parse textual slate descriptions and append any recovered pairs."""
+    """Parse textual slate descriptions and append any recovered pairs.
+
+    :param collector: Aggregator used to store cleaned slate entries.
+    :type collector: _SlateCollector
+    :param slate_text: Raw textual description of slate candidates.
+    :type slate_text: object
+    :returns: ``True`` if one or more entries were appended to the collector.
+    :rtype: bool
+    """
     if not isinstance(slate_text, str) or not slate_text.strip():
         return False
     for line in slate_text.splitlines():
@@ -397,7 +467,13 @@ def _collect_text_items(collector: _SlateCollector, slate_text: object) -> bool:
 
 
 def _collect_trajectory_items(collector: _SlateCollector, trajectory_json: object) -> None:
-    """Fallback that scans trajectory entries when slate metadata is absent."""
+    """Fallback that scans trajectory entries when slate metadata is absent.
+
+    :param collector: Aggregator used to store cleaned slate entries.
+    :type collector: _SlateCollector
+    :param trajectory_json: Raw trajectory payload that may contain slate hints.
+    :type trajectory_json: object
+    """
     for entry in load_trajectory_entries(trajectory_json):
         raw_id = _pick_ci(
             entry,
@@ -420,7 +496,13 @@ def _collect_trajectory_items(collector: _SlateCollector, trajectory_json: objec
 
 
 def _deduplicate_slate_items(items: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:
-    """Remove duplicate slate entries while preserving order."""
+    """Remove duplicate slate entries while preserving order.
+
+    :param items: Slate entries emitted by the collector.
+    :type items: Sequence[tuple[str, str]]
+    :returns: Ordered list with duplicate titles or ids removed.
+    :rtype: list[tuple[str, str]]
+    """
     seen: set[str] = set()
     deduped: List[Tuple[str, str]] = []
     for title, video_id in items:
@@ -437,7 +519,15 @@ def _extract_slate_items(
     example: Mapping[str, object],
     title_lookup: TitleLookup | None,
 ) -> List[Tuple[str, str]]:
-    """Return a list of ``(title, video_id)`` tuples extracted from ``example``."""
+    """Return a list of ``(title, video_id)`` tuples extracted from ``example``.
+
+    :param example: Source record containing slate information in various forms.
+    :type example: Mapping[str, object]
+    :param title_lookup: Optional callback used to hydrate missing titles.
+    :type title_lookup: TitleLookup | None
+    :returns: Normalised ``(title, video_id)`` tuples ready for downstream use.
+    :rtype: list[tuple[str, str]]
+    """
 
     collector = _SlateCollector(title_lookup)
     if _collect_structured_items(collector, example):

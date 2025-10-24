@@ -211,7 +211,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -366,6 +368,8 @@
         <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.assemble_study_specs">assemble_study_specs() (in module clean_data.research_article_political_sciences.analysis)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.io.assign_if_missing">assign_if_missing() (in module clean_data.io)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts.assignment_rows">assignment_rows (clean_data.research_article_political_sciences.markdown.MarkdownArtifacts attribute)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.io.augment_metadata_from_supplemental">augment_metadata_from_supplemental() (in module clean_data.io)</a>
 </li>
@@ -1240,8 +1244,6 @@
 </li>
         <li><a href="api/open_r1.html#open_r1.utils.replay_buffer.ReplayBuffer.get_group">get_group() (open_r1.utils.replay_buffer.ReplayBuffer method)</a>
 </li>
-        <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_kbit_device_map">get_kbit_device_map() (in module open_r1.utils.model_utils)</a>
-</li>
         <li><a href="api/open_r1.html#open_r1.utils.evaluation.get_lighteval_tasks">get_lighteval_tasks() (in module open_r1.utils.evaluation)</a>
 </li>
         <li><a href="api/common.html#common.get_logger">get_logger() (in module common)</a>
@@ -1261,23 +1263,17 @@
         <li><a href="api/open_r1.html#open_r1.utils.hub.get_param_count_from_repo_id">get_param_count_from_repo_id() (in module open_r1.utils.hub)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.grail.get_peft_config">get_peft_config() (in module open_r1.grail)</a>
-
-        <ul>
-          <li><a href="api/open_r1.html#open_r1.grpo.get_peft_config">(in module open_r1.grpo)</a>
 </li>
-        </ul></li>
         <li><a href="api/open_r1.html#open_r1.utils.code_providers.get_provider">get_provider() (in module open_r1.utils.code_providers)</a>
-</li>
-        <li><a href="api/open_r1.html#open_r1.utils.model_utils.get_quantization_config">get_quantization_config() (in module open_r1.utils.model_utils)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.rewards.get_repetition_penalty_reward">get_repetition_penalty_reward() (in module open_r1.rewards)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.rewards.get_reward_funcs">get_reward_funcs() (in module open_r1.rewards)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.rewards.get_soft_overlong_punishment">get_soft_overlong_punishment() (in module open_r1.rewards)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.utils.get_tokenizer">get_tokenizer() (in module open_r1.utils)</a>
 
         <ul>
@@ -1704,8 +1700,6 @@
 </li>
           <li><a href="api/open_r1.html#open_r1.grail.main">(in module open_r1.grail)</a>
 </li>
-          <li><a href="api/open_r1.html#open_r1.grpo.main">(in module open_r1.grpo)</a>
-</li>
           <li><a href="api/prompt_builder.html#prompt_builder.samples.main">(in module prompt_builder.samples)</a>
 </li>
           <li><a href="api/visualization.html#visualization.recommendation_tree_viz.main">(in module visualization.recommendation_tree_viz)</a>
@@ -1720,6 +1714,8 @@
         <li><a href="api/open_r1.html#open_r1.grail.make_gail_reward_fn">make_gail_reward_fn() (in module open_r1.grail)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.clean_data.map_rows_to_examples">map_rows_to_examples() (in module clean_data.clean_data)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts">MarkdownArtifacts (class in clean_data.research_article_political_sciences.markdown)</a>
 </li>
         <li><a href="api/open_r1.html#open_r1.configs.GRPOScriptArguments.max_completion_len">max_completion_len (open_r1.configs.GRPOScriptArguments attribute)</a>
 </li>
@@ -1909,8 +1905,6 @@
 </li>
           <li><a href="api/open_r1.html#module-open_r1.grail">open_r1.grail</a>
 </li>
-          <li><a href="api/open_r1.html#module-open_r1.grpo">open_r1.grpo</a>
-</li>
           <li><a href="api/open_r1.html#module-open_r1.rewards">open_r1.rewards</a>
 </li>
           <li><a href="api/open_r1.html#module-open_r1.utils">open_r1.utils</a>
@@ -2083,13 +2077,6 @@
 </li>
         </ul></li>
         <li>
-    open_r1.grpo
-
-        <ul>
-          <li><a href="api/open_r1.html#module-open_r1.grpo">module</a>
-</li>
-        </ul></li>
-        <li>
     open_r1.rewards
 
         <ul>
@@ -2145,8 +2132,6 @@
           <li><a href="api/open_r1.html#module-open_r1.utils.import_utils">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     open_r1.utils.model_utils
 
@@ -2154,6 +2139,8 @@
           <li><a href="api/open_r1.html#module-open_r1.utils.model_utils">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     open_r1.utils.replay_buffer
 
@@ -2313,6 +2300,8 @@
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_numeric_hist_by_issue">plot_numeric_hist_by_issue() (in module clean_data.prompt.plotting)</a>
 </li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts.policy_rows">policy_rows (clean_data.research_article_political_sciences.markdown.MarkdownArtifacts attribute)</a>
+</li>
         <li><a href="api/open_r1.html#open_r1.grail.RewardContext.policy_text">policy_text (open_r1.grail.RewardContext attribute)</a>
 </li>
         <li><a href="api/xgb.html#xgb.model.predict_among_slate">predict_among_slate() (in module xgb.model)</a>
@@ -2439,9 +2428,9 @@
   <h2>R</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.r2">r2 (xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
-</li>
         <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.r2_after">r2_after (xgb.pipeline_context.OpinionSummary attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.r_squared">r_squared (xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
 </li>
         <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge.rank">rank (visualization.recommendation_tree_viz.TreeEdge attribute)</a>
 </li>
@@ -2464,6 +2453,8 @@
 </li>
         </ul></li>
         <li><a href="api/open_r1.html#open_r1.utils.evaluation.register_lighteval_task">register_lighteval_task() (in module open_r1.utils.evaluation)</a>
+</li>
+        <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts.regression_summary">regression_summary (clean_data.research_article_political_sciences.markdown.MarkdownArtifacts attribute)</a>
 </li>
         <li><a href="api/visualization.html#visualization.recommendation_tree_viz.render_graph">render_graph() (in module visualization.recommendation_tree_viz)</a>
 </li>

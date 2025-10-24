@@ -1,4 +1,5 @@
-"""Client abstractions for interacting with Piston execution sandboxes."""
+#!/usr/bin/env python
+"""Asynchronous load-balanced client for IOI Piston execution workers."""
 
 # pylint: disable=line-too-long
 
@@ -254,17 +255,20 @@ class PistonClient:
                         raise PistonError(f"Piston overloaded: {res_json['run']['stderr']}")
                     return res_json
 
-            except (PistonError, asyncio.TimeoutError, aiohttp.ClientConnectionError, RuntimeError) as e:
+            except (PistonError, asyncio.TimeoutError, aiohttp.ClientConnectionError, RuntimeError) as error:
                 # Only retry if we haven't reached max retries yet
                 if attempt < max_retries:
                     # Calculate backoff with jitter
                     delay = min(base_delay * (2**attempt), 10)  # Exponential backoff, capped at 10 seconds
                     jitter = delay * 0.2 * (2 * asyncio.get_event_loop().time() % 1 - 0.5)  # Add ±10% jitter
                     retry_delay = delay + jitter
-                    print(f"Retrying in {retry_delay:.2f} seconds [{self.endpoint_ids[endpoint]}] {endpoint} - {e}")
+                    print(
+                        f"Retrying in {retry_delay:.2f} seconds [{self.endpoint_ids[endpoint]}] "
+                        f"{endpoint} - {error}"
+                    )
 
                     # special case: worker died
-                    if isinstance(e, aiohttp.ClientConnectionError) and "Connect call failed" in str(e):
+                    if isinstance(error, aiohttp.ClientConnectionError) and "Connect call failed" in str(error):
                         await self._check_failed_endpoint(endpoint)
                     else:
                         # hopefully we won't get this one again

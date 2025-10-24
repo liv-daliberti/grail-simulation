@@ -1,4 +1,4 @@
-# open_r1/utils/callbacks.py
+#!/usr/bin/env python
 """Trainer callbacks that integrate Open-R1 runs with auxiliary services.
 
 The callbacks defined here extend Hugging Face ``Trainer`` runs with behaviour
@@ -15,9 +15,33 @@ from concurrent.futures import Future
 from types import SimpleNamespace
 from typing import Dict, Mapping, Optional, Sequence
 
-from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
-
 from open_r1.utils.replay_buffer import ReplayBuffer
+
+try:  # pragma: no cover - optional dependency
+    from transformers import (
+        TrainerCallback,
+        TrainerControl,
+        TrainerState,
+        TrainingArguments,
+    )
+except ImportError as exc:  # pragma: no cover
+    class TrainerCallback:  # type: ignore[too-few-public-methods]
+        """Fallback that surfaces a helpful error when Transformers is missing."""
+
+        def __init__(self, *_args, **_kwargs) -> None:
+            raise ImportError(
+                "transformers is required to use Open-R1 Trainer callbacks. "
+                "Install it with `pip install transformers`."
+            ) from exc
+
+    class TrainerControl:  # type: ignore[too-few-public-methods]
+        """Transformers control placeholder used when the package is unavailable."""
+
+    class TrainerState:  # type: ignore[too-few-public-methods]
+        """Transformers state placeholder used when the package is unavailable."""
+
+    class TrainingArguments:  # type: ignore[too-few-public-methods]
+        """Transformers arguments placeholder used when the package is unavailable."""
 
 # ---------------------------------------------------------------------------
 #  SLURM helper --------------------------------------------------------------
@@ -49,8 +73,13 @@ class PushToHubRevisionCallback(TrainerCallback):
         self.model_cfg = model_cfg
         self.log = logging.getLogger("PushToHub")
 
-    def on_save(self, args: TrainingArguments, state: TrainerState,
-                control: TrainerControl, **kwargs):
+    def on_save(  # type: ignore[override]  # signature must match TrainerCallback
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        _control: TrainerControl,
+        **_kwargs,
+    ) -> None:
         """Push the current checkpoint to the Hub and optionally schedule benchmarks."""
         if not state.is_world_process_zero:
             return
@@ -85,7 +114,7 @@ class PushToHubRevisionCallback(TrainerCallback):
 #  Success-caching callback (text-log scraper) -------------------------------
 # ---------------------------------------------------------------------------
 
-class SuccessCachingCallback(TrainerCallback):
+class SuccessCachingCallback(TrainerCallback):  # pylint: disable=too-few-public-methods
     """
     Scrape ``trainer._textual_logs`` after each log step and push any prompt whose
     accuracy meets or exceeds ``acc_threshold`` into the attached ``ReplayBuffer``.
@@ -94,6 +123,7 @@ class SuccessCachingCallback(TrainerCallback):
         Transformers never passes the trainer instance via ``**kwargs``; call
         :meth:`set_trainer` during setup to register it.
     """
+
     def __init__(self, replay_buffer: ReplayBuffer, acc_threshold: float = 0.999):
         """Initialise the callback with a replay buffer and accuracy threshold."""
         self.buf = replay_buffer
@@ -153,8 +183,9 @@ class SuccessCachingCallback(TrainerCallback):
 #  Replay-buffer callback (fast path – uses training_step outputs) ----------
 # ---------------------------------------------------------------------------
 
-class ReplayBufferCallback(TrainerCallback):
+class ReplayBufferCallback(TrainerCallback):  # pylint: disable=too-few-public-methods
     """Callback that logs batches directly into the replay buffer."""
+
     def __init__(
         self,
         replay_buffer: ReplayBuffer,

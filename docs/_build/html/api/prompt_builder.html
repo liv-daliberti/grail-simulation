@@ -213,7 +213,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -264,10 +266,15 @@
 viewer profiles and assembling user prompts from the cleaned GRAIL
 dataset rows. The following pages document the public interfaces exposed
 by each module.</p>
-<p id="module-prompt_builder">Public API for the prompt_builder package.</p>
-<p>This package exposes the same entry points that callers previously
-imported from the single <code class="docutils literal notranslate"><span class="pre">src/prompt_builder.py</span></code> module while
-organising the implementation across smaller, testable modules.</p>
+<p id="module-prompt_builder">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="prompt_builder.PromptSample">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.PromptSample" title="Link to this definition">¶</a></dt>
@@ -322,13 +329,13 @@ organising the implementation across smaller, testable modules.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.as_list_json">
-<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.as_list_json" title="Link to this definition">¶</a></dt>
-<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">x</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.as_list_json" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">source</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Any</em>) – Source value that may already be a list or serialised representation.</p></li>
-<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">x</span></code> is empty.</p></li>
+<li><p><strong>source</strong> (<em>Any</em>) – Value that may already be a list or serialised representation.</p></li>
+<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">source</span></code> is empty.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -438,11 +445,11 @@ organising the implementation across smaller, testable modules.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.secs">
-<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.secs" title="Link to this definition">¶</a></dt>
-<dd><p>Format <code class="docutils literal notranslate"><span class="pre">x</span></code> as an integer number of seconds.</p>
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.secs" title="Link to this definition">¶</a></dt>
+<dd><p>Format <code class="docutils literal notranslate"><span class="pre">value</span></code> as an integer number of seconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Seconds expressed as <code class="docutils literal notranslate"><span class="pre">&quot;&lt;int&gt;s&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> when parsing fails.</p>
@@ -507,17 +514,25 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.constants">Shared constant maps used by the prompt builder.</p>
-<p id="module-prompt_builder.parsers">Parsing and normalisation helpers for prompt construction.</p>
+<p id="module-prompt_builder.constants">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
+<p id="module-prompt_builder.parsers">Parsing helpers shared by the prompt_builder package.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.parsers.as_list_json">
-<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.as_list_json" title="Link to this definition">¶</a></dt>
-<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">x</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.as_list_json" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">source</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Any</em>) – Source value that may already be a list or serialised representation.</p></li>
-<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">x</span></code> is empty.</p></li>
+<li><p><strong>source</strong> (<em>Any</em>) – Value that may already be a list or serialised representation.</p></li>
+<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">source</span></code> is empty.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -603,11 +618,11 @@ organising the implementation across smaller, testable modules.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.parsers.secs">
-<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.secs" title="Link to this definition">¶</a></dt>
-<dd><p>Format <code class="docutils literal notranslate"><span class="pre">x</span></code> as an integer number of seconds.</p>
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.secs" title="Link to this definition">¶</a></dt>
+<dd><p>Format <code class="docutils literal notranslate"><span class="pre">value</span></code> as an integer number of seconds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Seconds expressed as <code class="docutils literal notranslate"><span class="pre">&quot;&lt;int&gt;s&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> when parsing fails.</p>
@@ -635,7 +650,15 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.formatters">Text-formatting utilities used by the prompt builder.</p>
+<p id="module-prompt_builder.formatters">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.formatters.clean_text">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">clean_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#clean_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.clean_text" title="Link to this definition">¶</a></dt>
@@ -761,7 +784,15 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.profiles">Profile rendering helpers for prompt construction.</p>
+<p id="module-prompt_builder.profiles">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="prompt_builder.profiles.ProfileRender">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.profiles.</span></span><span class="sig-name descname"><span class="pre">ProfileRender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sentences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewer_placeholder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles.html#ProfileRender"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.profiles.ProfileRender" title="Link to this definition">¶</a></dt>
@@ -827,7 +858,7 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.prompt">Top-level prompt construction entry points.</p>
+<p id="module-prompt_builder.prompt">Prompt rendering helpers for the Grail recommendation tasks.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.prompt.build_user_prompt">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">build_user_prompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/prompt.html#build_user_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.build_user_prompt" title="Link to this definition">¶</a></dt>
@@ -865,7 +896,7 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.samples">Utilities for generating sample prompts for documentation and reports.</p>
+<p id="module-prompt_builder.samples">Prompt sampling helpers for the Grail recommendation datasets.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="prompt_builder.samples.PromptSample">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.PromptSample" title="Link to this definition">¶</a></dt>
@@ -977,7 +1008,15 @@ organising the implementation across smaller, testable modules.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.video_stats">Lazy loader for precomputed video engagement statistics.</p>
+<p id="module-prompt_builder.video_stats">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
+<p>This module stitches together the key pieces of the cleaning pipeline:
+loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
+converting interactions into prompt-ready examples, validating schema
+requirements, saving artifacts, and dispatching prompt statistics reports.
+It is the public surface that downstream tooling should import when they
+need to build or persist cleaned prompt datasets. All functionality here is
+distributed under the repository’s Apache 2.0 license; see LICENSE for
+details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.video_stats.get_video_stats">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.video_stats.</span></span><span class="sig-name descname"><span class="pre">get_video_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#get_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.video_stats.get_video_stats" title="Link to this definition">¶</a></dt>

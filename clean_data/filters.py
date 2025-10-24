@@ -1,10 +1,27 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Row-level filters and quick aggregate reporting utilities.
 
 This module contains the lightweight predicates used to discard unusable
 interaction rows before prompt construction as well as diagnostic helpers
-that summarise the issue distribution across splits.  These functions are
+that summarise the issue distribution across splits. These functions are
 intended to be composed by :mod:`clean_data.clean_data` and higher-level
-entry points rather than imported by downstream consumers directly.
+entry points rather than imported by downstream consumers directly. The
+suite is provided under the repository's Apache 2.0 license; refer to the
+LICENSE file for the obligations and permissions.
 """
 
 from __future__ import annotations
@@ -41,7 +58,11 @@ def filter_prompt_ready(
     """
 
     def _ok(example: dict) -> bool:
-        """Return ``True`` when ``example`` has a valid slate and gold target."""
+        """Return ``True`` when ``example`` has a valid slate and gold target.
+
+        :param example: Row under evaluation from the dataset.
+        :returns: ``True`` when the slate items and gold choice are present and valid.
+        """
 
         items = load_slate_items(example)
         if not items:

@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +254,22 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for prompt_builder.parsers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Parsing and normalisation helpers for prompt construction.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Parsing helpers shared by the prompt_builder package.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -275,73 +292,73 @@
 
 <div class="viewcode-block" id="as_list_json">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.as_list_json">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">as_list_json</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;[]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_list_json</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;[]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert ``x`` into a Python list, accepting JSON strings and Arrow arrays.</span>
+<span class="sd">    Convert ``source`` into a Python list, accepting JSON strings and Arrow arrays.</span>
 
-<span class="sd">    :param x: Source value that may already be a list or serialised representation.</span>
-<span class="sd">    :type x: Any</span>
-<span class="sd">    :param default: Fallback JSON array used when ``x`` is empty.</span>
+<span class="sd">    :param source: Value that may already be a list or serialised representation.</span>
+<span class="sd">    :type source: Any</span>
+<span class="sd">    :param default: Fallback JSON array used when ``source`` is empty.</span>
 <span class="sd">    :type default: str</span>
 <span class="sd">    :returns: Parsed list representation, or an empty list when conversion fails.</span>
 <span class="sd">    :rtype: List[Any]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">x</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">source</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">x</span> <span class="ow">or</span> <span class="n">default</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">source</span> <span class="ow">or</span> <span class="n">default</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">):</span>  <span class="c1"># pragma: no cover - malformed JSON</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="n">pa</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">to_pylist</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pa</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">return</span> <span class="n">source</span><span class="o">.</span><span class="n">to_pylist</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">[]</span></div>
 
 
 
 <div class="viewcode-block" id="secs">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.secs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">secs</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">secs</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Format ``x`` as an integer number of seconds.</span>
+<span class="sd">    Format ``value`` as an integer number of seconds.</span>
 
-<span class="sd">    :param x: Duration-like value (numeric or string).</span>
-<span class="sd">    :type x: Any</span>
+<span class="sd">    :param value: Duration-like value (numeric or string).</span>
+<span class="sd">    :type value: Any</span>
 <span class="sd">    :returns: Seconds expressed as ``&quot;&lt;int&gt;s&quot;`` or ``&quot;?&quot;`` when parsing fails.</span>
 <span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span><span class="si">}</span><span class="s2">s&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span><span class="si">}</span><span class="s2">s&quot;</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;?&quot;</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_nanlike</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_nanlike</span><span class="p">(</span><span class="n">candidate</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Evaluate whether ``x`` should be treated as a NaN-equivalent sentinel.</span>
+<span class="sd">    Evaluate whether ``candidate`` should be treated as a NaN-equivalent sentinel.</span>
 
-<span class="sd">    :param x: Value of arbitrary type to test for NaN-like semantics.</span>
-<span class="sd">    :type x: Any</span>
-<span class="sd">    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a</span>
+<span class="sd">    :param candidate: Value of arbitrary type to test for NaN-like semantics.</span>
+<span class="sd">    :type candidate: Any</span>
+<span class="sd">    :returns: ``True`` when ``candidate`` is ``None``, a floating NaN, a pandas NA, or a</span>
 <span class="sd">        canonical missing-text token.</span>
 <span class="sd">    :rtype: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">candidate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>  <span class="c1"># type: ignore[union-attr]</span>
                 <span class="k">return</span> <span class="kc">True</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>  <span class="c1"># pd.isna on complex objects may raise</span>
             <span class="k">pass</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;n/a&quot;</span><span class="p">,</span> <span class="s2">&quot;na&quot;</span><span class="p">}</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">text</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span> <span class="s2">&quot;n/a&quot;</span><span class="p">,</span> <span class="s2">&quot;na&quot;</span><span class="p">}</span>
 
 
 <div class="viewcode-block" id="is_nanlike">

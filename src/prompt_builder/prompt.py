@@ -1,4 +1,19 @@
-"""Top-level prompt construction entry points."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Prompt rendering helpers for the Grail recommendation tasks."""
 
 # pylint: disable=too-many-lines
 
@@ -16,23 +31,23 @@ from .value_maps import format_field_value
 from .video_stats import lookup_video_stats
 
 
-def _last_index(xs: Any, val: Any) -> Optional[int]:
-    """Return the last index of ``val`` within ``xs`` when ``xs`` is a list.
+def _last_index(values: Any, needle: Any) -> Optional[int]:
+    """Return the last index of ``needle`` within ``values`` when ``values`` is a list.
 
-    :param xs: Sequence potentially containing ``val``.
-    :type xs: Any
-    :param val: Value to locate.
-    :type val: Any
+    :param values: Sequence potentially containing ``needle``.
+    :type values: Any
+    :param needle: Value to locate.
+    :type needle: Any
     :returns: Zero-based index or ``None`` when not found.
     :rtype: Optional[int]
     """
-    if not isinstance(xs, list) or val is None:
+    if not isinstance(values, list) or needle is None:
         return None
-    idx = None
-    for i, v in enumerate(xs):
-        if v == val:
-            idx = i
-    return idx
+    last_index_found = None
+    for index, candidate in enumerate(values):
+        if candidate == needle:
+            last_index_found = index
+    return last_index_found
 
 
 def _selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
@@ -364,21 +379,25 @@ def _minimum_wage_viewpoint(
     :rtype: str
     """
 
-    def yes_no_phrase(keys: Sequence[str], yes: str, no: str) -> Optional[str]:
+    def yes_no_phrase(
+        keys: Sequence[str],
+        yes_phrase: str,
+        no_phrase: str,
+    ) -> Optional[str]:
         """
         Map yes/no style responses across ``keys`` to canned phrases.
 
         :param keys: Ordered field names examined for boolean responses.
         :type keys: Sequence[str]
-        :param yes: Phrase returned when a ``\"yes\"`` response is found.
-        :type yes: str
-        :param no: Phrase returned when a ``\"no\"`` response is found.
-        :type no: str
+        :param yes_phrase: Phrase returned when a ``\"yes\"`` response is found.
+        :type yes_phrase: str
+        :param no_phrase: Phrase returned when a ``\"no\"`` response is found.
+        :type no_phrase: str
         :returns: Matching phrase or ``None`` when no definitive response exists.
         :rtype: Optional[str]
         """
         verdict = _first_yes_no(ex, selected, keys)
-        return {"yes": yes, "no": no}.get(verdict or "")
+        return {"yes": yes_phrase, "no": no_phrase}.get(verdict or "")
 
     def first_formatted(keys: Sequence[str], template: str) -> Optional[str]:
         """

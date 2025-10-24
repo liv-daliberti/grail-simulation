@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,14 +254,48 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.research_article_political_sciences.markdown</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Markdown rendering utilities for the political sciences replication.&quot;&quot;&quot;</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Markdown rendering utilities for the political sciences replication.</span>
+
+<span class="sd">These helpers convert the computed statistics into narrative text, tables,</span>
+<span class="sd">and figure callouts that mirror the published study&#39;s presentation. All</span>
+<span class="sd">renderers are provided under the repository&#39;s Apache 2.0 license; see</span>
+<span class="sd">LICENSE for the detailed terms.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+
+<div class="viewcode-block" id="MarkdownArtifacts">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MarkdownArtifacts</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional collections required for extended report sections.&quot;&quot;&quot;</span>
+
+    <span class="n">assignment_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">regression_summary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">policy_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">()</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_nan</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -320,19 +356,121 @@
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">lower</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">upper</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">]&quot;</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_summary_lines</span><span class="p">(</span><span class="n">study_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render Markdown rows describing opinion shift summaries.&quot;&quot;&quot;</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">study_rows</span><span class="p">:</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;summary&quot;</span><span class="p">]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;| &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;mean_before&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;mean_after&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;median_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;share_increase&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;share_decrease&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;share_small_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> |&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_heatmap_section</span><span class="p">(</span><span class="n">heatmap_paths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build Markdown image blocks for the heatmap paths.&quot;&quot;&quot;</span>
+
+    <span class="n">blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">heatmap_path</span> <span class="ow">in</span> <span class="n">heatmap_paths</span><span class="p">:</span>
+        <span class="n">rel_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">heatmap_path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+        <span class="n">blocks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;![</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">rel_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">blocks</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assignment_section</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the control vs. treatment summary table when data is available.&quot;&quot;&quot;</span>
+
+    <span class="n">material</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">material</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;### Control vs. treatment summary&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;| Study | Control Δ | Treatment Δ |&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;| ------ | ---------- | ------------ |&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">material</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;| &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;control_mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;treatment_mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> |&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_policy_section</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the preregistered stratified contrast table when present.&quot;&quot;&quot;</span>
+
+    <span class="n">material</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">material</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;### Preregistered stratified contrasts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;| Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;| ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">material</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;| &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;study_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;contrast_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;outcome_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_interval</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;estimate&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ci_low&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ci_high&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;mde&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;p_adjusted&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">}</span><span class="s2"> |&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="s2">&quot;q-values reflect the paper&#39;s hierarchical FDR correction applied &quot;</span>
+        <span class="s2">&quot;within each outcome family.&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
 <div class="viewcode-block" id="build_markdown">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.markdown.build_markdown">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_markdown</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_markdown</span><span class="p">(</span>
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">study_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
     <span class="n">heatmap_paths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
     <span class="n">mean_change_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">assignment_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(),</span>
-    <span class="n">regression_summary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">policy_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">artifacts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MarkdownArtifacts</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render Markdown lines describing the replication results.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render Markdown lines describing the replication results.</span>
+
+<span class="sd">    :param output_dir: Directory where referenced assets are written.</span>
+<span class="sd">    :param study_rows: Iterable of per-study summary dictionaries.</span>
+<span class="sd">    :param heatmap_paths: Paths to generated heatmap image files.</span>
+<span class="sd">    :param mean_change_path: Path to the combined mean-change figure.</span>
+<span class="sd">    :param artifacts: Optional container with supplemental report inputs.</span>
+<span class="sd">    :returns: List of Markdown lines ready to be written to disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">artifacts</span> <span class="o">=</span> <span class="n">artifacts</span> <span class="ow">or</span> <span class="n">MarkdownArtifacts</span><span class="p">()</span>
+    <span class="n">assignment_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">artifacts</span><span class="o">.</span><span class="n">assignment_rows</span><span class="p">)</span>
+    <span class="n">policy_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">artifacts</span><span class="o">.</span><span class="n">policy_rows</span><span class="p">)</span>
 
     <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
     <span class="n">header_cells</span> <span class="o">=</span> <span class="p">[</span>
@@ -374,19 +512,7 @@
         <span class="sa">f</span><span class="s2">&quot;| </span><span class="si">{</span><span class="s1">&#39; | &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">separator_cells</span><span class="p">)</span><span class="si">}</span><span class="s2"> |&quot;</span><span class="p">,</span>
     <span class="p">]</span>
 
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">study_rows</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="s2">&quot;| &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;n&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;mean_before&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;mean_after&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;median_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;share_increase&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;share_decrease&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_percent</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">][</span><span class="s1">&#39;share_small_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> |&quot;</span>
-        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_opinion_summary_lines</span><span class="p">(</span><span class="n">study_rows</span><span class="p">))</span>
 
     <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="p">[</span>
@@ -401,15 +527,7 @@
         <span class="p">]</span>
     <span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">heatmap_path</span> <span class="ow">in</span> <span class="n">heatmap_paths</span><span class="p">:</span>
-        <span class="n">rel_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">heatmap_path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="n">rel_path</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="sa">f</span><span class="s2">&quot;![</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">rel_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;&quot;</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_heatmap_section</span><span class="p">(</span><span class="n">heatmap_paths</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">))</span>
 
     <span class="n">rel_mean_change_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mean_change_path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
@@ -433,61 +551,19 @@
         <span class="s2">&quot;heatmap and summary.&quot;</span>
     <span class="p">)</span>
 
-    <span class="n">assignment_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">assignment_rows</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">assignment_rows</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;### Control vs. treatment summary&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;| Study | Control Δ | Treatment Δ |&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;| ------ | ---------- | ------------ |&quot;</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">assignment_rows</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;| &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;control_mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;treatment_mean_change&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> |&quot;</span>
-            <span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_assignment_section</span><span class="p">(</span><span class="n">assignment_rows</span><span class="p">))</span>
 
-    <span class="k">if</span> <span class="n">regression_summary</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">artifacts</span><span class="o">.</span><span class="n">regression_summary</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="s2">&quot;Pooled regression (control-adjusted) β̂ ≈ &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">regression_summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;coefficient&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)))</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with p ≈ </span><span class="si">{</span><span class="n">regression_summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;p_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">))</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">artifacts</span><span class="o">.</span><span class="n">regression_summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;coefficient&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)))</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;with p ≈ </span><span class="si">{</span><span class="n">artifacts</span><span class="o">.</span><span class="n">regression_summary</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;p_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">))</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
-    <span class="n">policy_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">policy_rows</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">policy_rows</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="s2">&quot;### Preregistered stratified contrasts&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;| Study | Cell | Outcome | Effect (95% CI) | MDE (80% power) | q-value | N |&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;| ------ | ---- | ------- | ---------------- | ---------------- | ------- | --- |&quot;</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">policy_rows</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;| &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;study_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;contrast_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;outcome_label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_interval</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;estimate&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ci_low&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ci_high&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;mde&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;p_adjusted&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> | &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">}</span><span class="s2"> |&quot;</span>
-            <span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="s2">&quot;q-values reflect the paper&#39;s hierarchical FDR correction applied &quot;</span>
-            <span class="s2">&quot;within each outcome family.&quot;</span>
-        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_policy_section</span><span class="p">(</span><span class="n">policy_rows</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">lines</span></div>
 

@@ -1,4 +1,19 @@
-"""Utilities for generating sample prompts for documentation and reports."""
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Prompt sampling helpers for the Grail recommendation datasets."""
 
 from __future__ import annotations
 
@@ -54,15 +69,15 @@ def _ensure_dataset() -> None:
         )
 
 
-def _iter_splits(ds: DatasetDict) -> Iterable[tuple[str, any]]:
+def _iter_splits(dataset_dict: DatasetDict) -> Iterable[tuple[str, any]]:
     """Yield non-empty dataset splits and their names.
 
-    :param ds: Dataset dictionary containing splits.
-    :type ds: DatasetDict
+    :param dataset_dict: Dataset dictionary containing splits.
+    :type dataset_dict: DatasetDict
     :returns: Iterator of ``(split_name, split_dataset)`` tuples.
     :rtype: Iterable[tuple[str, any]]
     """
-    for split_name, split in ds.items():
+    for split_name, split in dataset_dict.items():
         if split is None or len(split) == 0:
             continue
         yield split_name, split
@@ -90,15 +105,15 @@ def generate_prompt_samples(
     """
 
     _ensure_dataset()
-    ds = load_from_disk(dataset_path)
-    if not isinstance(ds, DatasetDict):
+    dataset_dict = load_from_disk(dataset_path)
+    if not isinstance(dataset_dict, DatasetDict):
         raise ValueError(f"Dataset at {dataset_path!r} is not a DatasetDict")
 
     samples: List[PromptSample] = []
     for issue in issues:
         selected: List[PromptSample] = []
         fallbacks: List[PromptSample] = []
-        for split_name, split in _iter_splits(ds):
+        for split_name, split in _iter_splits(dataset_dict):
             for row in split:
                 if str(row.get("issue") or "").strip() != issue:
                     continue

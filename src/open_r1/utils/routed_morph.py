@@ -1,5 +1,5 @@
-# coding=utf-8
-# Copyright 2025 The HuggingFace Team. All rights reserved.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

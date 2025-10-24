@@ -1,4 +1,5 @@
-# Copyright 2025 The HuggingFace Team. All rights reserved.
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Reinforcement-learning tooling for the GRAIL simulation project."""
+"""Reinforcement learning utilities for the GRAIL simulation project."""

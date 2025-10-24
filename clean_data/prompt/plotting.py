@@ -1,8 +1,25 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Matplotlib-based visualisations for the prompt analytics workflow.
 
 These helpers generate the numeric and categorical histograms that populate
 the prompt feature report, both at the global level and broken down by
-issue, enabling quick inspection of the cleaned dataset.
+issue, enabling quick inspection of the cleaned dataset. The plotting
+utilities are provided under the repository's Apache 2.0 license; consult
+LICENSE for the allowed uses.
 """
 
 from __future__ import annotations
@@ -18,7 +35,11 @@ from .utils import SeriesPair, convert_numeric
 
 
 def _prettify_category(value: str) -> str:
-    """Format a categorical value for axis tick labels."""
+    """Format a categorical value for axis tick labels.
+
+    :param value: Raw categorical value from the dataset.
+    :returns: Display-friendly label for the category.
+    """
     if value is None:
         return ""
     text = str(value)
@@ -36,7 +57,14 @@ def plot_numeric_hist(
     title: str,
     output_path: Path,
 ) -> None:
-    """Plot side-by-side numeric histograms for train and validation splits."""
+    """Plot side-by-side numeric histograms for train and validation splits.
+
+    :param train_vals: Numeric values from the training split.
+    :param val_vals: Numeric values from the validation split.
+    :param title: Plot title describing the feature.
+    :param output_path: Destination path for the rendered figure.
+    :returns: ``None``.
+    """
     train_vals = train_vals.dropna()
     val_vals = val_vals.dropna()
     all_vals = pd.concat([train_vals, val_vals])
@@ -67,7 +95,13 @@ def plot_numeric_hist_by_issue(  # pylint: disable=too-many-locals
     title: str,
     output_path: Path,
 ) -> None:
-    """Render per-issue numeric histograms, falling back to global plots."""
+    """Render per-issue numeric histograms, falling back to global plots.
+
+    :param pair: Pair of train/validation series with optional issue annotations.
+    :param title: Plot title describing the feature.
+    :param output_path: Destination path for the rendered figure.
+    :returns: ``None``.
+    """
 
     def _clean_numeric(values: pd.Series) -> pd.Series:
         """Return numeric series with invalid entries removed.
@@ -138,7 +172,14 @@ def plot_categorical_hist(  # pylint: disable=too-many-locals
     title: str,
     output_path: Path,
 ) -> None:
-    """Plot side-by-side categorical histograms for train and validation splits."""
+    """Plot side-by-side categorical histograms for train and validation splits.
+
+    :param train_vals: Categorical values from the training split.
+    :param val_vals: Categorical values from the validation split.
+    :param title: Plot title describing the feature.
+    :param output_path: Destination path for the rendered figure.
+    :returns: ``None``.
+    """
     cleaned_train = (
         train_vals.dropna().astype(str).str.strip().replace("", np.nan).dropna()
     )
@@ -189,7 +230,13 @@ def plot_categorical_hist_by_issue(  # pylint: disable=too-many-locals,cell-var-
     title: str,
     output_path: Path,
 ) -> None:
-    """Render per-issue categorical histograms, falling back to global plots."""
+    """Render per-issue categorical histograms, falling back to global plots.
+
+    :param pair: Pair of train/validation series with optional issue annotations.
+    :param title: Plot title describing the feature.
+    :param output_path: Destination path for the rendered figure.
+    :returns: ``None``.
+    """
 
     def _clean(series: pd.Series) -> pd.Series:
         """Return trimmed categorical series with missing entries removed.

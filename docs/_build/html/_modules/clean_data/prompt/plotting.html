@@ -212,7 +212,9 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,11 +254,28 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.prompt.plotting</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Matplotlib-based visualisations for the prompt analytics workflow.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Matplotlib-based visualisations for the prompt analytics workflow.</span>
 
 <span class="sd">These helpers generate the numeric and categorical histograms that populate</span>
 <span class="sd">the prompt feature report, both at the global level and broken down by</span>
-<span class="sd">issue, enabling quick inspection of the cleaned dataset.</span>
+<span class="sd">issue, enabling quick inspection of the cleaned dataset. The plotting</span>
+<span class="sd">utilities are provided under the repository&#39;s Apache 2.0 license; consult</span>
+<span class="sd">LICENSE for the allowed uses.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -272,7 +291,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prettify_category</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a categorical value for axis tick labels.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a categorical value for axis tick labels.</span>
+
+<span class="sd">    :param value: Raw categorical value from the dataset.</span>
+<span class="sd">    :returns: Display-friendly label for the category.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
     <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -292,7 +315,14 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot side-by-side numeric histograms for train and validation splits.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot side-by-side numeric histograms for train and validation splits.</span>
+
+<span class="sd">    :param train_vals: Numeric values from the training split.</span>
+<span class="sd">    :param val_vals: Numeric values from the validation split.</span>
+<span class="sd">    :param title: Plot title describing the feature.</span>
+<span class="sd">    :param output_path: Destination path for the rendered figure.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">train_vals</span> <span class="o">=</span> <span class="n">train_vals</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
     <span class="n">val_vals</span> <span class="o">=</span> <span class="n">val_vals</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
     <span class="n">all_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">train_vals</span><span class="p">,</span> <span class="n">val_vals</span><span class="p">])</span>
@@ -326,7 +356,13 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue numeric histograms, falling back to global plots.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue numeric histograms, falling back to global plots.</span>
+
+<span class="sd">    :param pair: Pair of train/validation series with optional issue annotations.</span>
+<span class="sd">    :param title: Plot title describing the feature.</span>
+<span class="sd">    :param output_path: Destination path for the rendered figure.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_numeric</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return numeric series with invalid entries removed.</span>
@@ -400,7 +436,14 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot side-by-side categorical histograms for train and validation splits.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot side-by-side categorical histograms for train and validation splits.</span>
+
+<span class="sd">    :param train_vals: Categorical values from the training split.</span>
+<span class="sd">    :param val_vals: Categorical values from the validation split.</span>
+<span class="sd">    :param title: Plot title describing the feature.</span>
+<span class="sd">    :param output_path: Destination path for the rendered figure.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cleaned_train</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">train_vals</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
     <span class="p">)</span>
@@ -454,7 +497,13 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue categorical histograms, falling back to global plots.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-issue categorical histograms, falling back to global plots.</span>
+
+<span class="sd">    :param pair: Pair of train/validation series with optional issue annotations.</span>
+<span class="sd">    :param title: Plot title describing the feature.</span>
+<span class="sd">    :param output_path: Destination path for the rendered figure.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return trimmed categorical series with missing entries removed.</span>

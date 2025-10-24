@@ -17,8 +17,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
 from common.pipeline_io import write_markdown_lines
@@ -27,6 +28,19 @@ from common.report_utils import start_markdown_report
 from ..pipeline_context import OpinionSweepOutcome, ReportBundle, SweepOutcome
 
 _DEFAULT_FIELD_SET = tuple(DEFAULT_EXTRA_TEXT_FIELDS)
+
+
+@dataclass(frozen=True)
+class _PipelineSection:
+    heading: str
+    include: bool
+    sweep_headers: Sequence[str]
+    final_headers: Sequence[str]
+    disabled_message: str
+    no_sweep_message: str
+    no_final_message: str
+    sweep_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
+    final_collector: Callable[[ReportBundle], tuple[list[Sequence[str]], set[str]]]
 
 
 def _normalise_fields(values: Iterable[object] | None) -> tuple[str, ...]:
@@ -79,6 +93,51 @@ def _render_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> list
     return lines
 
 
+def _append_table(
+    lines: list[str],
+    title: str,
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    empty_message: str,
+) -> None:
+    """Append a table or fallback message to the report."""
+    lines.append(title)
+    lines.append("")
+    if rows:
+        lines.extend(_render_table(headers, rows))
+    else:
+        lines.append(empty_message)
+        lines.append("")
+
+
+def _append_section(lines: list[str], bundle: ReportBundle, spec: _PipelineSection) -> set[str]:
+    """Append a pipeline section and return any newly observed fields."""
+    lines.append(f"## {spec.heading}")
+    lines.append("")
+    if not spec.include:
+        lines.append(spec.disabled_message)
+        lines.append("")
+        return set()
+
+    sweep_rows, sweep_fields = spec.sweep_collector(bundle)
+    final_rows, final_fields = spec.final_collector(bundle)
+    _append_table(
+        lines,
+        "### Sweep Configurations",
+        spec.sweep_headers,
+        sweep_rows,
+        spec.no_sweep_message,
+    )
+    _append_table(
+        lines,
+        "### Final Evaluations",
+        spec.final_headers,
+        final_rows,
+        spec.no_final_message,
+    )
+    return set(sweep_fields) | set(final_fields)
+
+
 def _collect_next_video_sweeps(outcomes: Sequence[SweepOutcome]) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and the unique field set for KNN next-video sweeps."""
     rows: list[Sequence[str]] = []
@@ -87,7 +146,12 @@ def _collect_next_video_sweeps(outcomes: Sequence[SweepOutcome]) -> tuple[list[S
     for outcome in outcomes:
         fields = _normalise_fields(outcome.config.text_fields)
         unique.update(fields)
-        key = (outcome.feature_space, outcome.study.label, outcome.config.label(), fields)
+        key = (
+            outcome.feature_space,
+            outcome.study.label,
+            outcome.config.label(),
+            fields,
+        )
         if key in seen:
             continue
         seen.add(key)
@@ -134,7 +198,12 @@ def _collect_opinion_sweeps(outcomes: Sequence[OpinionSweepOutcome]) -> tuple[li
     for outcome in outcomes:
         fields = _normalise_fields(outcome.config.text_fields)
         unique.update(fields)
-        key = (outcome.feature_space, outcome.study.label, outcome.config.label(), fields)
+        key = (
+            outcome.feature_space,
+            outcome.study.label,
+            outcome.config.label(),
+            fields,
+        )
         if key in seen:
             continue
         seen.add(key)
@@ -186,67 +255,33 @@ def build_feature_report(repo_root: Path, bundle: ReportBundle) -> None:
 
     observed: set[str] = set(_DEFAULT_FIELD_SET)
 
-    if bundle.include_next_video:
-        sweep_rows, sweep_fields = _collect_next_video_sweeps(bundle.sweep_outcomes)
-        final_rows, final_fields = _collect_next_video_final(bundle)
-        lines.append("## Next-Video Pipeline")
-        lines.append("")
-        if sweep_rows:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.extend(_render_table(("Feature space", "Study", "Configuration", "Extra text fields"), sweep_rows))
-        else:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.append("No sweep metrics were supplied.")
-            lines.append("")
-        if final_rows:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.extend(_render_table(("Feature space", "Study", "Extra text fields"), final_rows))
-        else:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.append("No final evaluation metrics were supplied.")
-            lines.append("")
-        observed.update(sweep_fields)
-        observed.update(final_fields)
-    else:
-        lines.append("## Next-Video Pipeline")
-        lines.append("")
-        lines.append("Next-video stages were disabled for this run.")
-        lines.append("")
+    sections = [
+        _PipelineSection(
+            heading="Next-Video Pipeline",
+            include=bundle.include_next_video,
+            sweep_headers=("Feature space", "Study", "Configuration", "Extra text fields"),
+            final_headers=("Feature space", "Study", "Extra text fields"),
+            disabled_message="Next-video stages were disabled for this run.",
+            no_sweep_message="No sweep metrics were supplied.",
+            no_final_message="No final evaluation metrics were supplied.",
+            sweep_collector=lambda data: _collect_next_video_sweeps(data.sweep_outcomes),
+            final_collector=_collect_next_video_final,
+        ),
+        _PipelineSection(
+            heading="Opinion Regression",
+            include=bundle.include_opinion,
+            sweep_headers=("Feature space", "Study", "Configuration", "Extra text fields"),
+            final_headers=("Feature space", "Study", "Extra text fields"),
+            disabled_message="Opinion regression stages were disabled for this run.",
+            no_sweep_message="No opinion sweep metrics were supplied.",
+            no_final_message="No opinion metrics were recorded.",
+            sweep_collector=lambda data: _collect_opinion_sweeps(data.opinion_sweep_outcomes),
+            final_collector=_collect_opinion_final,
+        ),
+    ]
 
-    if bundle.include_opinion:
-        sweep_rows, sweep_fields = _collect_opinion_sweeps(bundle.opinion_sweep_outcomes)
-        final_rows, final_fields = _collect_opinion_final(bundle)
-        lines.append("## Opinion Regression")
-        lines.append("")
-        if sweep_rows:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.extend(_render_table(("Feature space", "Study", "Configuration", "Extra text fields"), sweep_rows))
-        else:
-            lines.append("### Sweep Configurations")
-            lines.append("")
-            lines.append("No opinion sweep metrics were supplied.")
-            lines.append("")
-        if final_rows:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.extend(_render_table(("Feature space", "Study", "Extra text fields"), final_rows))
-        else:
-            lines.append("### Final Evaluations")
-            lines.append("")
-            lines.append("No opinion metrics were recorded.")
-            lines.append("")
-        observed.update(sweep_fields)
-        observed.update(final_fields)
-    else:
-        lines.append("## Opinion Regression")
-        lines.append("")
-        lines.append("Opinion regression stages were disabled for this run.")
-        lines.append("")
+    for section in sections:
+        observed.update(_append_section(lines, bundle, section))
 
     additional = sorted(field for field in observed if field not in _DEFAULT_FIELD_SET)
     lines.append("## Summary")

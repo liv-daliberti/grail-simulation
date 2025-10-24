@@ -94,15 +94,15 @@ def merge_default_extra_fields(extra_fields: Sequence[str] | None) -> Tuple[str,
     ordered: List[str] = []
     seen: set[str] = set()
 
-    for field in DEFAULT_EXTRA_TEXT_FIELDS:
-        token = field.strip()
+    for default_field in DEFAULT_EXTRA_TEXT_FIELDS:
+        token = default_field.strip()
         if token and token not in seen:
             ordered.append(token)
             seen.add(token)
 
     if extra_fields:
-        for field in extra_fields:
-            token = str(field or "").strip()
+        for extra_field_name in extra_fields:
+            token = str(extra_field_name or "").strip()
             if token and token not in seen:
                 ordered.append(token)
                 seen.add(token)

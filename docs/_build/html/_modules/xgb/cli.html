@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,12 +253,16 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for xgb.cli</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Command-line interface for the XGBoost slate baseline.&quot;&quot;&quot;</span>
+<span class="c1"># pylint: disable=duplicate-code</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli_args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span><span class="p">,</span> <span class="n">add_sentence_transformer_normalise_flags</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli_options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_log_level_argument</span><span class="p">,</span> <span class="n">add_overwrite_argument</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 
@@ -362,7 +366,10 @@
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--sentence_transformer_model&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SentenceTransformer model identifier used when --text_vectorizer=sentence_transformer.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;SentenceTransformer model identifier used when &quot;</span>
+            <span class="s2">&quot;--text_vectorizer=sentence_transformer.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--sentence_transformer_device&quot;</span><span class="p">,</span>
@@ -375,19 +382,14 @@
         <span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Batch size applied during sentence-transformer encoding.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">,</span>
+    <span class="n">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;L2-normalise sentence-transformer embeddings (default).&quot;</span><span class="p">,</span>
+        <span class="n">enable_flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">,),</span>
+        <span class="n">disable_flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">,),</span>
+        <span class="n">enable_help</span><span class="o">=</span><span class="s2">&quot;L2-normalise sentence-transformer embeddings (default).&quot;</span><span class="p">,</span>
+        <span class="n">disable_help</span><span class="o">=</span><span class="s2">&quot;Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_false&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">sentence_transformer_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--xgb_learning_rate&quot;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
@@ -445,12 +447,11 @@
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of issues to evaluate (defaults to all).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--participant-studies&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--participant_studies&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--participant-studies&quot;</span><span class="p">,</span> <span class="s2">&quot;--participant_studies&quot;</span><span class="p">),</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated participant study keys to evaluate (defaults to all).&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Comma-separated participant study keys to evaluate (defaults to all).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>
@@ -462,16 +463,8 @@
         <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;models&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;xgb&quot;</span><span class="p">),</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for predictions, metrics, and saved models.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--overwrite&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Allow overwriting metrics/prediction files in --out_dir.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--log_level&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Logging level (DEBUG, INFO, WARNING, ERROR).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">add_overwrite_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+    <span class="n">add_log_level_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">parser</span></div>
 
 

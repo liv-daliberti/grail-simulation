@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -274,20 +274,58 @@
     <span class="n">order_key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
     <span class="n">on_replace</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge cached and freshly executed results preserving order indices.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    cached:</span>
-<span class="sd">        Previously materialised results (e.g., metrics read from disk).</span>
-<span class="sd">    executed:</span>
-<span class="sd">        Newly computed results from the current run.</span>
-<span class="sd">    order_key:</span>
-<span class="sd">        Callable returning a deterministic integer position for each result.</span>
-<span class="sd">    on_replace:</span>
-<span class="sd">        Optional callback invoked when an executed item replaces a cached one</span>
-<span class="sd">        at the same index.</span>
+<span class="sd">    Merge cached and freshly executed results preserving order indices.</span>
+
+
+
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        cached:</span>
+
+<span class="sd">            Previously materialised results (e.g., metrics read from disk).</span>
+
+<span class="sd">        executed:</span>
+
+<span class="sd">            Newly computed results from the current run.</span>
+
+<span class="sd">        order_key:</span>
+
+<span class="sd">            Callable returning a deterministic integer position for each result.</span>
+
+<span class="sd">        on_replace:</span>
+
+<span class="sd">            Optional callback invoked when an executed item replaces a cached one</span>
+
+<span class="sd">            at the same index.</span>
+
+
+
+<span class="sd">    :param cached: Value provided for ``cached``.</span>
+
+<span class="sd">    :type cached: Sequence[T]</span>
+
+<span class="sd">    :param executed: Value provided for ``executed``.</span>
+
+<span class="sd">    :type executed: Sequence[T]</span>
+
+<span class="sd">    :param order_key: Value provided for ``order_key``.</span>
+
+<span class="sd">    :type order_key: Callable[[T], int]</span>
+
+<span class="sd">    :param on_replace: Value provided for ``on_replace``.</span>
+
+<span class="sd">    :type on_replace: Callable[[T, T], None] | None</span>
+
+<span class="sd">    :returns: Result produced by ``merge_ordered``.</span>
+
+<span class="sd">    :rtype: List[T]</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">by_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">order_key</span><span class="p">(</span><span class="n">item</span><span class="p">):</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">cached</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">executed</span><span class="p">:</span>
@@ -303,14 +341,40 @@
 <a class="viewcode-back" href="../../api/common.html#common.OpinionStudySelection">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionStudySelection</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">StudyT</span><span class="p">,</span> <span class="n">OutcomeT</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base selection container shared between opinion pipelines.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Base selection container shared between opinion pipelines.</span>
+
+
+
+<span class="sd">    :ivar study: Attribute ``study``.</span>
+
+<span class="sd">    :vartype study: StudyT</span>
+
+<span class="sd">    :ivar outcome: Attribute ``outcome``.</span>
+
+<span class="sd">    :vartype outcome: OutcomeT</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">study</span><span class="p">:</span> <span class="n">StudyT</span>
     <span class="n">outcome</span><span class="p">:</span> <span class="n">OutcomeT</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the configuration promoting this study outcome.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Return the configuration promoting this study outcome.</span>
+
+
+
+<span class="sd">        :returns: Result produced by ``config``.</span>
+
+<span class="sd">        :rtype: Any</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span></div>
 

@@ -210,8 +210,8 @@
 <li class="toctree-l2"><a class="reference internal" href="reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -310,7 +310,17 @@
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.NextVideoMetricSummary.accuracy">(xgb.pipeline_context.NextVideoMetricSummary attribute)</a>
 </li>
+          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.accuracy">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
+</li>
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepOutcome.accuracy">(xgb.pipeline_context.SweepOutcome attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.accuracy_after">accuracy_after (xgb.pipeline_context.OpinionSummary attribute)</a>
+</li>
+        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.accuracy_delta">accuracy_delta (xgb.pipeline_context.OpinionSummary attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.accuracy_delta">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
 </li>
         </ul></li>
         <li><a href="api/open_r1.html#open_r1.rewards.accuracy_reward">accuracy_reward() (in module open_r1.rewards)</a>
@@ -329,10 +339,10 @@
           <li><a href="api/knn.html#knn.opinion.OpinionSpec.after_column">(knn.opinion.OpinionSpec attribute)</a>
 </li>
         </ul></li>
-        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts">aggregate_counts() (in module visualization.recommendation_tree_viz)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts">aggregate_counts() (in module visualization.recommendation_tree_viz)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.sessions.AllowlistState">AllowlistState (class in clean_data.sessions)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.sessions.ParticipantIdentifiers.anon_id">anon_id (clean_data.sessions.ParticipantIdentifiers attribute)</a>
@@ -389,6 +399,12 @@
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionStageConfig.base_out_dir">(xgb.pipeline_context.OpinionStageConfig attribute)</a>
 </li>
         </ul></li>
+        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.baseline_accuracy">baseline_accuracy (xgb.pipeline_context.OpinionSummary attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.baseline_accuracy">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
+</li>
+        </ul></li>
         <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.baseline_mae">baseline_mae (xgb.pipeline_context.OpinionSummary attribute)</a>
 </li>
         <li><a href="api/xgb.html#xgb.vectorizers.BaseTextVectorizer">BaseTextVectorizer (class in xgb.vectorizers)</a>
@@ -423,10 +439,10 @@
           <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.booster">(xgb.model.XGBoostTrainConfig attribute)</a>
 </li>
         </ul></li>
-        <li><a href="api/xgb.html#xgb.pipeline_context.SweepConfig.booster_params">booster_params() (xgb.pipeline_context.SweepConfig method)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/xgb.html#xgb.pipeline_context.SweepConfig.booster_params">booster_params() (xgb.pipeline_context.SweepConfig method)</a>
+</li>
         <li><a href="api/knn.html#knn.evaluate.bucket_from_pos">bucket_from_pos() (in module knn.evaluate)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.clean_data.build_clean_dataset">build_clean_dataset() (in module clean_data.clean_data)</a>
@@ -483,9 +499,11 @@
   <h2>C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="api/xgb.html#xgb.pipeline.OpinionStageConfig.cache_dir">cache_dir (xgb.pipeline.OpinionStageConfig attribute)</a>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths.cache_dir">cache_dir (gpt4o.pipeline.PipelinePaths attribute)</a>
 
         <ul>
+          <li><a href="api/xgb.html#xgb.pipeline.OpinionStageConfig.cache_dir">(xgb.pipeline.OpinionStageConfig attribute)</a>
+</li>
           <li><a href="api/xgb.html#xgb.pipeline.OpinionSweepRunContext.cache_dir">(xgb.pipeline.OpinionSweepRunContext attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionStageConfig.cache_dir">(xgb.pipeline_context.OpinionStageConfig attribute)</a>
@@ -506,11 +524,15 @@
         <ul>
           <li><a href="api/common.html#common.text.canon_text">(in module common.text)</a>
 </li>
+          <li><a href="api/gpt4o.html#gpt4o.utils.canon_text">(in module gpt4o.utils)</a>
+</li>
         </ul></li>
         <li><a href="api/common.html#common.canon_video_id">canon_video_id() (in module common)</a>
 
         <ul>
           <li><a href="api/common.html#common.text.canon_video_id">(in module common.text)</a>
+</li>
+          <li><a href="api/gpt4o.html#gpt4o.utils.canon_video_id">(in module gpt4o.utils)</a>
 </li>
           <li><a href="api/xgb.html#xgb.utils.canon_video_id">(in module xgb.utils)</a>
 </li>
@@ -805,17 +827,19 @@
 </li>
           <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.config">(open_r1.configs.DatasetConfig attribute)</a>
 </li>
-          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionStudySelection.config">(xgb.pipeline_context.OpinionStudySelection property)</a>
-</li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.config">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepTask.config">(xgb.pipeline_context.OpinionSweepTask attribute)</a>
 </li>
-          <li><a href="api/xgb.html#xgb.pipeline_context.StudySelection.config">(xgb.pipeline_context.StudySelection property)</a>
-</li>
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepOutcome.config">(xgb.pipeline_context.SweepOutcome attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepTask.config">(xgb.pipeline_context.SweepTask attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/open_r1.html#open_r1.utils.routed_morph.RoutedMorphSandbox.configure_timeouts">configure_timeouts() (open_r1.utils.routed_morph.RoutedMorphSandbox method)</a>
+
+        <ul>
+          <li><a href="api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts">(open_r1.utils.routed_sandbox.RoutedSandbox method)</a>
 </li>
         </ul></li>
         <li><a href="api/clean_data.html#clean_data.prompt.utils.convert_numeric">convert_numeric() (in module clean_data.prompt.utils)</a>
@@ -954,6 +978,12 @@
 </li>
         <li><a href="api/visualization.html#visualization.recommendation_tree_viz.TreeData.edges">edges (visualization.recommendation_tree_viz.TreeData attribute)</a>
 </li>
+        <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSummary.eligible">eligible (xgb.pipeline_context.OpinionSummary attribute)</a>
+
+        <ul>
+          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.eligible">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
+</li>
+        </ul></li>
         <li><a href="api/common.html#common.embeddings.SentenceTransformerEncoder.embedding_dimension">embedding_dimension() (common.embeddings.SentenceTransformerEncoder method)</a>
 </li>
         <li><a href="api/common.html#common.embeddings.SentenceTransformerEncoder.encode">encode() (common.embeddings.SentenceTransformerEncoder method)</a>
@@ -1002,16 +1032,14 @@
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepOutcome.evaluated">(xgb.pipeline_context.SweepOutcome attribute)</a>
 </li>
         </ul></li>
-        <li><a href="api/xgb.html#xgb.pipeline_context.StudySelection.evaluation_slug">evaluation_slug (xgb.pipeline_context.StudySelection property)</a>
-
-        <ul>
-          <li><a href="api/xgb.html#xgb.pipeline_context.StudySpec.evaluation_slug">(xgb.pipeline_context.StudySpec property)</a>
+        <li><a href="api/xgb.html#xgb.pipeline_context.StudySpec.evaluation_slug">evaluation_slug (xgb.pipeline_context.StudySpec property)</a>
 </li>
-        </ul></li>
         <li><a href="api/xgb.html#xgb.evaluate.EvaluationConfig">EvaluationConfig (class in xgb.evaluate)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/xgb.html#xgb.pipeline_sweeps.execute_opinion_sweep_tasks">execute_opinion_sweep_tasks() (in module xgb.pipeline_sweeps)</a>
+</li>
         <li><a href="api/open_r1.html#open_r1.utils.code_providers.CodeExecutionProvider.execute_scripts">execute_scripts() (open_r1.utils.code_providers.CodeExecutionProvider method)</a>
 
         <ul>
@@ -1124,6 +1152,8 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths.final_out_dir">final_out_dir (gpt4o.pipeline.PipelinePaths attribute)</a>
+</li>
         <li><a href="api/xgb.html#xgb.pipeline_context.FinalEvalContext">FinalEvalContext (class in xgb.pipeline_context)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.utils.first_present">first_present() (in module clean_data.prompt.utils)</a>
@@ -2145,6 +2175,8 @@
           <li><a href="api/open_r1.html#module-open_r1.utils.routed_sandbox">module</a>
 </li>
         </ul></li>
+        <li><a href="api/common.html#common.opinion_example_kwargs">opinion_example_kwargs() (in module common)</a>
+</li>
         <li><a href="api/knn.html#knn.opinion.OpinionSpec">OpinionSpec (class in knn.opinion)</a>
 </li>
         <li><a href="api/xgb.html#xgb.pipeline.OpinionStageConfig">OpinionStageConfig (class in xgb.pipeline)</a>
@@ -2177,16 +2209,14 @@
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepOutcome.order_index">(xgb.pipeline_context.SweepOutcome attribute)</a>
 </li>
         </ul></li>
-        <li><a href="api/xgb.html#xgb.pipeline_context.FinalEvalContext.out_dir">out_dir (xgb.pipeline_context.FinalEvalContext attribute)</a>
-</li>
-        <li><a href="api/common.html#common.OpinionStudySelection.outcome">outcome (common.OpinionStudySelection attribute)</a>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths.out_dir">out_dir (gpt4o.pipeline.PipelinePaths attribute)</a>
 
         <ul>
-          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionStudySelection.outcome">(xgb.pipeline_context.OpinionStudySelection attribute)</a>
-</li>
-          <li><a href="api/xgb.html#xgb.pipeline_context.StudySelection.outcome">(xgb.pipeline_context.StudySelection attribute)</a>
+          <li><a href="api/xgb.html#xgb.pipeline_context.FinalEvalContext.out_dir">(xgb.pipeline_context.FinalEvalContext attribute)</a>
 </li>
         </ul></li>
+        <li><a href="api/common.html#common.OpinionStudySelection.outcome">outcome (common.OpinionStudySelection attribute)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportContext.output_dir">output_dir (clean_data.prompt.markdown.ReportContext attribute)</a>
 </li>
         <li><a href="api/xgb.html#xgb.pipeline.OpinionStageConfig.overwrite">overwrite (xgb.pipeline.OpinionStageConfig attribute)</a>
@@ -2265,6 +2295,8 @@
 </li>
         <li><a href="api/gpt4o.html#gpt4o.conversation.pick_case_insensitive">pick_case_insensitive() (in module gpt4o.conversation)</a>
 </li>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths">PipelinePaths (class in gpt4o.pipeline)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.plotting.plot_assignment_panels">plot_assignment_panels() (in module clean_data.research_article_political_sciences.plotting)</a>
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.plotting.plot_categorical_hist">plot_categorical_hist() (in module clean_data.prompt.plotting)</a>
@@ -2289,14 +2321,14 @@
 </li>
         <li><a href="api/clean_data.html#clean_data.research_article_political_sciences.analysis.prepare_study_frame">prepare_study_frame() (in module clean_data.research_article_political_sciences.analysis)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/knn.html#knn.features.prepare_training_documents">prepare_training_documents() (in module knn.features)</a>
 
         <ul>
           <li><a href="api/xgb.html#xgb.features.prepare_training_documents">(in module xgb.features)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportCounts.prior_history">prior_history (clean_data.prompt.markdown.ReportCounts attribute)</a>
 
         <ul>
@@ -2455,6 +2487,8 @@
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportFigures">ReportFigures (class in clean_data.prompt.markdown)</a>
 </li>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths.reports_dir">reports_dir (gpt4o.pipeline.PipelinePaths attribute)</a>
+</li>
         <li><a href="api/clean_data.html#clean_data.prompt.markdown.ReportSummaries">ReportSummaries (class in clean_data.prompt.markdown)</a>
 </li>
         <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepTask.request_args">request_args (xgb.pipeline_context.OpinionSweepTask attribute)</a>
@@ -2481,6 +2515,8 @@
 
         <ul>
           <li><a href="api/common.html#common.text.resolve_paths_from_env">(in module common.text)</a>
+</li>
+          <li><a href="api/gpt4o.html#gpt4o.utils.resolve_paths_from_env">(in module gpt4o.utils)</a>
 </li>
         </ul></li>
         <li><a href="api/knn.html#knn.evaluate.resolve_reports_dir">resolve_reports_dir() (in module knn.evaluate)</a>
@@ -2682,6 +2718,8 @@
         <ul>
           <li><a href="api/common.html#common.text.split_env_list">(in module common.text)</a>
 </li>
+          <li><a href="api/gpt4o.html#gpt4o.utils.split_env_list">(in module gpt4o.utils)</a>
+</li>
         </ul></li>
         <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.start">start (clean_data.sessions.SessionTiming attribute)</a>
 </li>
@@ -2696,13 +2734,9 @@
         <li><a href="api/common.html#common.OpinionStudySelection.study">study (common.OpinionStudySelection attribute)</a>
 
         <ul>
-          <li><a href="api/xgb.html#xgb.pipeline_context.OpinionStudySelection.study">(xgb.pipeline_context.OpinionStudySelection attribute)</a>
-</li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepOutcome.study">(xgb.pipeline_context.OpinionSweepOutcome attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepTask.study">(xgb.pipeline_context.OpinionSweepTask attribute)</a>
-</li>
-          <li><a href="api/xgb.html#xgb.pipeline_context.StudySelection.study">(xgb.pipeline_context.StudySelection attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.SweepOutcome.study">(xgb.pipeline_context.SweepOutcome attribute)</a>
 </li>
@@ -2739,9 +2773,11 @@
 </li>
         <li><a href="api/clean_data.html#clean_data.prompt.summary.summarize_features">summarize_features() (in module clean_data.prompt.summary)</a>
 </li>
-        <li><a href="api/xgb.html#xgb.pipeline.OpinionSweepRunContext.sweep_dir">sweep_dir (xgb.pipeline.OpinionSweepRunContext attribute)</a>
+        <li><a href="api/gpt4o.html#gpt4o.pipeline.PipelinePaths.sweep_dir">sweep_dir (gpt4o.pipeline.PipelinePaths attribute)</a>
 
         <ul>
+          <li><a href="api/xgb.html#xgb.pipeline.OpinionSweepRunContext.sweep_dir">(xgb.pipeline.OpinionSweepRunContext attribute)</a>
+</li>
           <li><a href="api/xgb.html#xgb.pipeline.SweepRunContext.sweep_dir">(xgb.pipeline.SweepRunContext attribute)</a>
 </li>
           <li><a href="api/xgb.html#xgb.pipeline_context.OpinionSweepRunContext.sweep_dir">(xgb.pipeline_context.OpinionSweepRunContext attribute)</a>
@@ -3015,16 +3051,18 @@
         </ul></li>
         <li><a href="api/clean_data.html#clean_data.sessions.SessionTiming.watch">watch (clean_data.sessions.SessionTiming attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/open_r1.html#open_r1.configs.DatasetConfig.weight">weight (open_r1.configs.DatasetConfig attribute)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="api/knn.html#knn.features.Word2VecConfig.window">window (knn.features.Word2VecConfig attribute)</a>
 
         <ul>
           <li><a href="api/xgb.html#xgb.model.Word2VecVectorizerConfig.window">(xgb.model.Word2VecVectorizerConfig attribute)</a>
 </li>
         </ul></li>
+        <li><a href="api/gpt4o.html#gpt4o.titles.TitleResolver.with_directories">with_directories() (gpt4o.titles.TitleResolver class method)</a>
+</li>
         <li><a href="api/prompt_builder.html#prompt_builder.formatters.with_indefinite_article">with_indefinite_article() (in module prompt_builder.formatters)</a>
 </li>
         <li><a href="api/xgb.html#xgb.model.XGBoostTrainConfig.word2vec">word2vec (xgb.model.XGBoostTrainConfig attribute)</a>

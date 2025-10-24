@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -258,7 +258,13 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OpinionStudySelection</span> <span class="k">as</span> <span class="n">BaseOpinionStudySelection</span><span class="p">,</span>
+    <span class="n">StudySelection</span> <span class="k">as</span> <span class="n">BaseStudySelection</span><span class="p">,</span>
+    <span class="n">StudySpec</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBoostBoosterParams</span>
 
@@ -268,7 +274,30 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepConfig">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyper-parameter configuration evaluated during sweeps.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Hyper-parameter configuration evaluated during XGBoost sweeps.</span>
+
+<span class="sd">    :ivar text_vectorizer: Vectoriser identifier (e.g. ``tfidf``).</span>
+<span class="sd">    :vartype text_vectorizer: str</span>
+<span class="sd">    :ivar vectorizer_tag: Short tag used in directory and report labels.</span>
+<span class="sd">    :vartype vectorizer_tag: str</span>
+<span class="sd">    :ivar learning_rate: Booster learning rate.</span>
+<span class="sd">    :vartype learning_rate: float</span>
+<span class="sd">    :ivar max_depth: Tree depth explored during sweeps.</span>
+<span class="sd">    :vartype max_depth: int</span>
+<span class="sd">    :ivar n_estimators: Number of boosting rounds.</span>
+<span class="sd">    :vartype n_estimators: int</span>
+<span class="sd">    :ivar subsample: Row subsampling ratio.</span>
+<span class="sd">    :vartype subsample: float</span>
+<span class="sd">    :ivar colsample_bytree: Column subsampling ratio per tree.</span>
+<span class="sd">    :vartype colsample_bytree: float</span>
+<span class="sd">    :ivar reg_lambda: L2 regularisation weight.</span>
+<span class="sd">    :vartype reg_lambda: float</span>
+<span class="sd">    :ivar reg_alpha: L1 regularisation weight.</span>
+<span class="sd">    :vartype reg_alpha: float</span>
+<span class="sd">    :ivar vectorizer_cli: Extra CLI arguments associated with the vectoriser.</span>
+<span class="sd">    :vartype vectorizer_cli: Tuple[str, ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">text_vectorizer</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">vectorizer_tag</span><span class="p">:</span> <span class="nb">str</span>
@@ -284,7 +313,12 @@
 <div class="viewcode-block" id="SweepConfig.label">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepConfig.label">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filesystem-friendly label.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Produce a filesystem- and report-friendly identifier.</span>
+
+<span class="sd">        :returns: Composite label encoding vectoriser and booster parameters.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vectorizer_tag</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_vectorizer</span>
         <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
@@ -298,7 +332,14 @@
 <div class="viewcode-block" id="SweepConfig.booster_params">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepConfig.booster_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">booster_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XGBoostBoosterParams</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the sweep config into :class:`XGBoostBoosterParams`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the sweep configuration into :class:`XGBoostBoosterParams`.</span>
+
+<span class="sd">        :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">        :type tree_method: str</span>
+<span class="sd">        :returns: Booster parameter bundle mirroring this configuration.</span>
+<span class="sd">        :rtype: XGBoostBoosterParams</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="n">XGBoostBoosterParams</span><span class="p">(</span>
             <span class="n">learning_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
@@ -315,7 +356,14 @@
 <div class="viewcode-block" id="SweepConfig.cli_args">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepConfig.cli_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cli_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return CLI overrides encoding this configuration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Serialise the configuration into CLI arguments for :mod:`xgb.cli`.</span>
+
+<span class="sd">        :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">        :type tree_method: str</span>
+<span class="sd">        :returns: List of CLI flags encoding the configuration.</span>
+<span class="sd">        :rtype: List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="s2">&quot;--text_vectorizer&quot;</span><span class="p">,</span>
@@ -341,42 +389,32 @@
 
 
 
-<div class="viewcode-block" id="StudySpec">
-<a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.StudySpec">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">StudySpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptor for a participant study and its associated issue.&quot;&quot;&quot;</span>
-
-    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">study_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filesystem-safe slug for the study key.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">issue_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filesystem-safe slug for the associated issue.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the slug used for evaluation artefacts.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">study_slug</span><span class="si">}</span><span class="s2">&quot;</span></div>
-
-
 
 <span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <div class="viewcode-block" id="SweepOutcome">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepOutcome</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics captured for a (study, config) combination.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Metrics captured for a (study, configuration) sweep evaluation.</span>
+
+<span class="sd">    :ivar order_index: Deterministic ordering index assigned to the task.</span>
+<span class="sd">    :vartype order_index: int</span>
+<span class="sd">    :ivar study: Study metadata associated with the sweep.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar config: Evaluated sweep configuration.</span>
+<span class="sd">    :vartype config: SweepConfig</span>
+<span class="sd">    :ivar accuracy: Validation accuracy achieved by the configuration.</span>
+<span class="sd">    :vartype accuracy: float</span>
+<span class="sd">    :ivar coverage: Validation coverage achieved by the configuration.</span>
+<span class="sd">    :vartype coverage: float</span>
+<span class="sd">    :ivar evaluated: Number of evaluation rows.</span>
+<span class="sd">    :vartype evaluated: int</span>
+<span class="sd">    :ivar metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    :ivar metrics: Raw metrics payload loaded from disk.</span>
+<span class="sd">    :vartype metrics: Mapping[str, object]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
@@ -394,7 +432,26 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepTask">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepTask</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing a single sweep execution request.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container describing a single sweep execution request.</span>
+
+<span class="sd">    :ivar index: Stable index used for ordering and scheduling.</span>
+<span class="sd">    :vartype index: int</span>
+<span class="sd">    :ivar study: Study metadata being evaluated.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar config: Sweep configuration executed for the study.</span>
+<span class="sd">    :vartype config: SweepConfig</span>
+<span class="sd">    :ivar base_cli: Baseline CLI arguments shared across tasks.</span>
+<span class="sd">    :vartype base_cli: Tuple[str, ...]</span>
+<span class="sd">    :ivar extra_cli: Additional passthrough CLI arguments.</span>
+<span class="sd">    :vartype extra_cli: Tuple[str, ...]</span>
+<span class="sd">    :ivar run_root: Directory under which sweep artefacts are stored.</span>
+<span class="sd">    :vartype run_root: Path</span>
+<span class="sd">    :ivar tree_method: Tree construction algorithm supplied to XGBoost.</span>
+<span class="sd">    :vartype tree_method: str</span>
+<span class="sd">    :ivar metrics_path: Target path for the ``metrics.json`` artefact.</span>
+<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
@@ -410,23 +467,15 @@
 <div class="viewcode-block" id="StudySelection">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.StudySelection">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">StudySelection</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selected configuration for the final evaluation of a participant study.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StudySelection</span><span class="p">(</span><span class="n">BaseStudySelection</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selected configuration for the final evaluation of a participant study.</span>
 
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">outcome</span><span class="p">:</span> <span class="n">SweepOutcome</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the selected sweep configuration for this study.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the evaluation slug used for artefact directories.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">evaluation_slug</span></div>
+<span class="sd">    :ivar study: Study metadata chosen for final evaluation.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar outcome: Winning sweep outcome leveraged for reporting.</span>
+<span class="sd">    :vartype outcome: SweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 
@@ -434,7 +483,20 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepRunContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepRunContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CLI arguments shared across sweep invocations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CLI arguments shared across sweep invocations.</span>
+
+<span class="sd">    :ivar base_cli: Baseline CLI arguments applied to every sweep run.</span>
+<span class="sd">    :vartype base_cli: Sequence[str]</span>
+<span class="sd">    :ivar extra_cli: Additional CLI flags appended for each invocation.</span>
+<span class="sd">    :vartype extra_cli: Sequence[str]</span>
+<span class="sd">    :ivar sweep_dir: Root directory where sweep artefacts are written.</span>
+<span class="sd">    :vartype sweep_dir: Path</span>
+<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :vartype tree_method: str</span>
+<span class="sd">    :ivar jobs: Parallel worker count for sweep execution.</span>
+<span class="sd">    :vartype jobs: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">extra_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -448,7 +510,22 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.FinalEvalContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FinalEvalContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Runtime configuration for final slate evaluations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runtime configuration for final slate evaluations.</span>
+
+<span class="sd">    :ivar base_cli: Baseline CLI arguments for :mod:`xgb.cli`.</span>
+<span class="sd">    :vartype base_cli: Sequence[str]</span>
+<span class="sd">    :ivar extra_cli: Additional CLI arguments forwarded to each invocation.</span>
+<span class="sd">    :vartype extra_cli: Sequence[str]</span>
+<span class="sd">    :ivar out_dir: Target directory for final evaluation artefacts.</span>
+<span class="sd">    :vartype out_dir: Path</span>
+<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :vartype tree_method: str</span>
+<span class="sd">    :ivar save_model_dir: Optional directory for persisted models.</span>
+<span class="sd">    :vartype save_model_dir: Optional[Path]</span>
+<span class="sd">    :ivar reuse_existing: Flag controlling reuse of cached metrics.</span>
+<span class="sd">    :vartype reuse_existing: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">extra_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -464,7 +541,32 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionStageConfig">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionStageConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Inputs required to launch the opinion regression stage.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inputs required to launch the opinion regression stage.</span>
+
+<span class="sd">    :ivar dataset: Dataset identifier passed to the opinion stage.</span>
+<span class="sd">    :vartype dataset: str</span>
+<span class="sd">    :ivar cache_dir: Cache directory for dataset loading.</span>
+<span class="sd">    :vartype cache_dir: str</span>
+<span class="sd">    :ivar base_out_dir: Base output directory for opinion artefacts.</span>
+<span class="sd">    :vartype base_out_dir: Path</span>
+<span class="sd">    :ivar extra_fields: Additional prompt columns appended to documents.</span>
+<span class="sd">    :vartype extra_fields: Sequence[str]</span>
+<span class="sd">    :ivar studies: Opinion study keys to evaluate.</span>
+<span class="sd">    :vartype studies: Sequence[str]</span>
+<span class="sd">    :ivar max_participants: Optional cap on participants per study.</span>
+<span class="sd">    :vartype max_participants: int</span>
+<span class="sd">    :ivar seed: Random seed for subsampling.</span>
+<span class="sd">    :vartype seed: int</span>
+<span class="sd">    :ivar max_features: Maximum TF-IDF features (``None`` keeps all).</span>
+<span class="sd">    :vartype max_features: Optional[int]</span>
+<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :vartype tree_method: str</span>
+<span class="sd">    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
+<span class="sd">    :vartype overwrite: bool</span>
+<span class="sd">    :ivar reuse_existing: Flag enabling reuse of cached results.</span>
+<span class="sd">    :vartype reuse_existing: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span>
@@ -485,7 +587,34 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSweepOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepOutcome</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics captured for a (study, config) combination during opinion sweeps.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Metrics captured for a (study, configuration) combination during opinion sweeps.</span>
+
+<span class="sd">    :ivar order_index: Deterministic ordering index assigned to the task.</span>
+<span class="sd">    :vartype order_index: int</span>
+<span class="sd">    :ivar study: Study metadata associated with the sweep.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar config: Evaluated sweep configuration.</span>
+<span class="sd">    :vartype config: SweepConfig</span>
+<span class="sd">    :ivar mae: Mean absolute error achieved by the configuration.</span>
+<span class="sd">    :vartype mae: float</span>
+<span class="sd">    :ivar rmse: Root mean squared error achieved by the configuration.</span>
+<span class="sd">    :vartype rmse: float</span>
+<span class="sd">    :ivar r2: Coefficient of determination achieved by the configuration.</span>
+<span class="sd">    :vartype r2: float</span>
+<span class="sd">    :ivar accuracy: Directional accuracy achieved by the configuration.</span>
+<span class="sd">    :vartype accuracy: Optional[float]</span>
+<span class="sd">    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.</span>
+<span class="sd">    :vartype baseline_accuracy: Optional[float]</span>
+<span class="sd">    :ivar accuracy_delta: Improvement in accuracy over the baseline.</span>
+<span class="sd">    :vartype accuracy_delta: Optional[float]</span>
+<span class="sd">    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.</span>
+<span class="sd">    :vartype eligible: Optional[int]</span>
+<span class="sd">    :ivar metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    :ivar metrics: Raw metrics payload loaded from disk.</span>
+<span class="sd">    :vartype metrics: Mapping[str, object]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
@@ -493,6 +622,10 @@
     <span class="n">mae</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">rmse</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">r2</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">accuracy_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
     <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span></div>
 
@@ -502,7 +635,20 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSweepTask">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepTask</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing a single opinion sweep execution request.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container describing a single opinion sweep execution request.</span>
+
+<span class="sd">    :ivar index: Stable index used for ordering and scheduling.</span>
+<span class="sd">    :vartype index: int</span>
+<span class="sd">    :ivar study: Study metadata being evaluated.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar config: Sweep configuration executed for the opinion task.</span>
+<span class="sd">    :vartype config: SweepConfig</span>
+<span class="sd">    :ivar request_args: Keyword arguments passed to :func:`run_opinion_eval`.</span>
+<span class="sd">    :vartype request_args: Mapping[str, object]</span>
+<span class="sd">    :ivar metrics_path: Target path for the ``metrics.json`` artefact.</span>
+<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
@@ -511,21 +657,26 @@
     <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span></div>
 
 
+<span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="c1"># Avoid triggering runtime generic parameter validation while still exposing</span>
+<span class="c1"># the specialised type to static analyzers.</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="n">OpinionSelectionBase</span> <span class="o">=</span> <span class="n">BaseOpinionStudySelection</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">OpinionSelectionBase</span> <span class="o">=</span> <span class="n">BaseOpinionStudySelection</span>
+
 
 <div class="viewcode-block" id="OpinionStudySelection">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionStudySelection">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionStudySelection</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selected configuration for the final opinion regression evaluation.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionStudySelection</span><span class="p">(</span><span class="n">OpinionSelectionBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selected configuration for the final opinion regression evaluation.</span>
 
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">outcome</span><span class="p">:</span> <span class="n">OpinionSweepOutcome</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the selected sweep configuration for this study.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span></div>
+<span class="sd">    :ivar study: Study metadata chosen for final evaluation.</span>
+<span class="sd">    :vartype study: StudySpec</span>
+<span class="sd">    :ivar outcome: Winning opinion sweep outcome leveraged for reporting.</span>
+<span class="sd">    :vartype outcome: OpinionSweepOutcome</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 
@@ -534,7 +685,28 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSweepRunContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepRunContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration shared across opinion sweep evaluations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration shared across opinion sweep evaluations.</span>
+
+<span class="sd">    :ivar dataset: Dataset identifier passed to opinion sweeps.</span>
+<span class="sd">    :vartype dataset: str</span>
+<span class="sd">    :ivar cache_dir: Cache directory leveraged by dataset loading.</span>
+<span class="sd">    :vartype cache_dir: str</span>
+<span class="sd">    :ivar sweep_dir: Root directory where opinion sweep artefacts are stored.</span>
+<span class="sd">    :vartype sweep_dir: Path</span>
+<span class="sd">    :ivar extra_fields: Additional prompt columns appended to documents.</span>
+<span class="sd">    :vartype extra_fields: Sequence[str]</span>
+<span class="sd">    :ivar max_participants: Optional cap on participants per study.</span>
+<span class="sd">    :vartype max_participants: int</span>
+<span class="sd">    :ivar seed: Random seed for subsampling.</span>
+<span class="sd">    :vartype seed: int</span>
+<span class="sd">    :ivar max_features: Maximum TF-IDF features (``None`` allows all).</span>
+<span class="sd">    :vartype max_features: Optional[int]</span>
+<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :vartype tree_method: str</span>
+<span class="sd">    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
+<span class="sd">    :vartype overwrite: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span>
@@ -553,7 +725,34 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.NextVideoMetricSummary">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NextVideoMetricSummary</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalised view of slate metrics emitted by the XGBoost evaluations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalised view of slate metrics emitted by the XGBoost evaluations.</span>
+
+<span class="sd">    :ivar accuracy: Validation accuracy (``None`` when unavailable).</span>
+<span class="sd">    :vartype accuracy: Optional[float]</span>
+<span class="sd">    :ivar coverage: Validation coverage capturing known candidate recall.</span>
+<span class="sd">    :vartype coverage: Optional[float]</span>
+<span class="sd">    :ivar evaluated: Number of evaluation rows.</span>
+<span class="sd">    :vartype evaluated: Optional[int]</span>
+<span class="sd">    :ivar correct: Number of correct predictions.</span>
+<span class="sd">    :vartype correct: Optional[int]</span>
+<span class="sd">    :ivar known_hits: Correct predictions among known candidates.</span>
+<span class="sd">    :vartype known_hits: Optional[int]</span>
+<span class="sd">    :ivar known_total: Evaluations featuring at least one known candidate.</span>
+<span class="sd">    :vartype known_total: Optional[int]</span>
+<span class="sd">    :ivar known_availability: Fraction of evaluations containing a known candidate.</span>
+<span class="sd">    :vartype known_availability: Optional[float]</span>
+<span class="sd">    :ivar avg_probability: Mean probability recorded for known predictions.</span>
+<span class="sd">    :vartype avg_probability: Optional[float]</span>
+<span class="sd">    :ivar dataset: Dataset identifier.</span>
+<span class="sd">    :vartype dataset: Optional[str]</span>
+<span class="sd">    :ivar issue: Issue key under evaluation.</span>
+<span class="sd">    :vartype issue: Optional[str]</span>
+<span class="sd">    :ivar issue_label: Human-readable issue label.</span>
+<span class="sd">    :vartype issue_label: Optional[str]</span>
+<span class="sd">    :ivar study_label: Human-readable study label.</span>
+<span class="sd">    :vartype study_label: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">coverage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -575,14 +774,47 @@
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSummary">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionSummary</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalised view of opinion-regression metrics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalised view of opinion-regression metrics.</span>
+
+<span class="sd">    :ivar mae_after: Mean absolute error achieved by the regressor.</span>
+<span class="sd">    :vartype mae_after: Optional[float]</span>
+<span class="sd">    :ivar rmse_after: Root mean squared error achieved by the regressor.</span>
+<span class="sd">    :vartype rmse_after: Optional[float]</span>
+<span class="sd">    :ivar r2_after: Coefficient of determination achieved by the regressor.</span>
+<span class="sd">    :vartype r2_after: Optional[float]</span>
+<span class="sd">    :ivar baseline_mae: Baseline MAE using the no-change predictor.</span>
+<span class="sd">    :vartype baseline_mae: Optional[float]</span>
+<span class="sd">    :ivar mae_delta: Absolute MAE improvement over the baseline.</span>
+<span class="sd">    :vartype mae_delta: Optional[float]</span>
+<span class="sd">    :ivar accuracy_after: Directional accuracy achieved by the regressor.</span>
+<span class="sd">    :vartype accuracy_after: Optional[float]</span>
+<span class="sd">    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.</span>
+<span class="sd">    :vartype baseline_accuracy: Optional[float]</span>
+<span class="sd">    :ivar accuracy_delta: Improvement in directional accuracy over the baseline.</span>
+<span class="sd">    :vartype accuracy_delta: Optional[float]</span>
+<span class="sd">    :ivar participants: Number of participants in the evaluation split.</span>
+<span class="sd">    :vartype participants: Optional[int]</span>
+<span class="sd">    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.</span>
+<span class="sd">    :vartype eligible: Optional[int]</span>
+<span class="sd">    :ivar dataset: Dataset identifier.</span>
+<span class="sd">    :vartype dataset: Optional[str]</span>
+<span class="sd">    :ivar split: Evaluation split name.</span>
+<span class="sd">    :vartype split: Optional[str]</span>
+<span class="sd">    :ivar label: Human-readable study label.</span>
+<span class="sd">    :vartype label: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mae_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">rmse_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">r2_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">baseline_mae</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">mae_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accuracy_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accuracy_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">participants</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>

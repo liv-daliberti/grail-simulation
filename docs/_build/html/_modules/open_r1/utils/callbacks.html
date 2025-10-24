@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -266,9 +266,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerCallback</span><span class="p">,</span> <span class="n">TrainerControl</span><span class="p">,</span> <span class="n">TrainerState</span><span class="p">,</span> <span class="n">TrainingArguments</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils.replay_buffer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReplayBuffer</span>
@@ -295,18 +295,6 @@
 <span class="c1">#  Push-to-hub callback ------------------------------------------------------</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">_DummyCfg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight attribute container used for hub/benchmark helpers.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>  <span class="c1"># convenience holder for hub + benchmark helpers</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate the namespace with arbitrary keyword attributes.</span>
-
-<span class="sd">        :param kw: Keyword arguments to expose as attributes.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-
 <div class="viewcode-block" id="PushToHubRevisionCallback">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PushToHubRevisionCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>
@@ -329,15 +317,16 @@
             <span class="k">return</span>
 
         <span class="n">step_tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;step-</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">global_step</span><span class="si">:</span><span class="s2">09d</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">dummy</span> <span class="o">=</span> <span class="n">_DummyCfg</span><span class="p">(</span>
-            <span class="n">hub_model_id</span>    <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">hub_model_id</span><span class="p">,</span>
-            <span class="n">hub_model_revision</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">hub_model_revision</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">step_tag</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">output_dir</span>      <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/checkpoint-</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">global_step</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">system_prompt</span>   <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
+        <span class="n">dummy</span> <span class="o">=</span> <span class="n">SimpleNamespace</span><span class="p">(</span>
+            <span class="n">benchmarks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">hub_model_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">hub_model_id</span><span class="p">,</span>
+            <span class="n">hub_model_revision</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">hub_model_revision</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">step_tag</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/checkpoint-</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">global_step</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">system_prompt</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># lazy import – avoids circular deps if huggingface_hub absent</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_to_hub_revision</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_to_hub_revision</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
         <span class="n">fut</span><span class="p">:</span> <span class="n">Future</span> <span class="o">=</span> <span class="n">push_to_hub_revision</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="n">extra_ignore_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.pt&quot;</span><span class="p">])</span>
 
         <span class="c1"># (optional) spawn benchmark job when the upload finishes</span>
@@ -347,7 +336,7 @@
 
 <span class="sd">                :param _: Completed future returned by the upload helper.</span>
 <span class="sd">                &quot;&quot;&quot;</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_benchmark_jobs</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_benchmark_jobs</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Upload done – submitting benchmark job.&quot;</span><span class="p">)</span>
                 <span class="n">dummy</span><span class="o">.</span><span class="n">benchmarks</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">benchmarks</span>
                 <span class="n">run_benchmark_jobs</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_cfg</span><span class="p">)</span>
@@ -393,27 +382,43 @@
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.on_log">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_log</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="n">TrainingArguments</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">TrainerState</span><span class="p">,</span>
-        <span class="n">control</span><span class="p">:</span> <span class="n">TrainerControl</span><span class="p">,</span>
-        <span class="n">logs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="n">_args</span><span class="p">:</span> <span class="n">TrainingArguments</span><span class="p">,</span>
+        <span class="n">_state</span><span class="p">:</span> <span class="n">TrainerState</span><span class="p">,</span>
+        <span class="n">_control</span><span class="p">:</span> <span class="n">TrainerControl</span><span class="p">,</span>
+        <span class="n">_logs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Scrape textual logs and add high-accuracy prompts to the buffer.&quot;&quot;&quot;</span>
-        <span class="c1"># nothing to do if trainer not yet registered or no textual logs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span><span class="p">,</span> <span class="s2">&quot;_textual_logs&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">txt_logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span><span class="o">.</span><span class="n">_textual_logs</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">txt_logs</span><span class="p">[</span><span class="s2">&quot;prompt&quot;</span><span class="p">]:</span>                  <span class="c1"># empty until first eval step</span>
+        <span class="n">txt_logs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span><span class="p">,</span> <span class="s2">&quot;_textual_logs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">txt_logs</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">prompts</span> <span class="o">=</span> <span class="n">txt_logs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prompt&quot;</span><span class="p">)</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">txt_logs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rewards&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">rewards</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="n">prompts</span>
+        <span class="p">):</span>
             <span class="k">return</span>
 
         <span class="c1"># pick the accuracy reward head (name may differ in your config)</span>
-        <span class="n">acc_key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">txt_logs</span><span class="p">[</span><span class="s2">&quot;rewards&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;accuracy&quot;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">acc_key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">rewards</span> <span class="k">if</span> <span class="s2">&quot;accuracy&quot;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">acc_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">for</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">txt_logs</span><span class="p">[</span><span class="s2">&quot;prompt&quot;</span><span class="p">],</span> <span class="n">txt_logs</span><span class="p">[</span><span class="s2">&quot;rewards&quot;</span><span class="p">][</span><span class="n">acc_key</span><span class="p">]):</span>
+        <span class="n">accuracy_series</span> <span class="o">=</span> <span class="n">rewards</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">acc_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">accuracy_series</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">accuracy_series</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">accuracy_series</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">acc</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thr</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span></div>
 </div>
@@ -448,39 +453,49 @@
     <span class="c1"># It always receives both `inputs` and `outputs`.</span>
 <div class="viewcode-block" id="ReplayBufferCallback.on_train_batch_end">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="n">_control</span><span class="p">,</span> <span class="o">**</span><span class="n">batch_kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Inspect training outputs and enqueue prompts crossing the threshold.&quot;&quot;&quot;</span>
-        <span class="n">outs</span>    <span class="o">=</span> <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span>             <span class="c1"># dict from training_step</span>
-        <span class="n">inputs</span>  <span class="o">=</span> <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>              <span class="c1"># the batch fed forward</span>
-
-        <span class="n">rewards</span> <span class="o">=</span> <span class="n">outs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rewards&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">batch_kwargs</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span>             <span class="c1"># dict from training_step</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rewards&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rewards</span><span class="p">:</span>
-            <span class="k">return</span>                           <span class="c1"># key mismatch → nothing to do</span>
+            <span class="k">return</span>
 
-        <span class="n">acc_vec</span> <span class="o">=</span> <span class="n">rewards</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>   <span class="c1"># tensor (B,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;accuracy vector&quot;</span><span class="p">,</span> <span class="n">acc_vec</span><span class="p">)</span>
-        <span class="n">ids_vec</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>                 <span class="c1"># tensor (B, seq)</span>
-        <span class="n">is_rep</span>  <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_replay&quot;</span><span class="p">)</span>             <span class="c1"># tensor (B,) or None</span>
+        <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">batch_kwargs</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">batch_inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>
+        <span class="n">accuracies</span> <span class="o">=</span> <span class="n">rewards</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-        <span class="n">added</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">acc</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">acc_vec</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">ids_vec</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">acc</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thr</span><span class="p">:</span>
-                <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tok</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-                <span class="n">added</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">added</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_store_prompt</span><span class="p">(</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">token_ids</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">accuracy</span><span class="p">,</span> <span class="n">token_ids</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">accuracies</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">)</span>
+        <span class="p">)</span>
 
-        <span class="c1"># diagnostics</span>
-        <span class="n">rank</span>      <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">local_rank</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">local_rank</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">buf_size</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">)</span>
-        <span class="n">num_rep</span>   <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">is_rep</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="n">is_rep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">batch_sz</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids_vec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_batch_stats</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">batch_inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_replay&quot;</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">input_ids</span><span class="p">),</span>
+            <span class="n">added</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_store_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">token_ids</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode and store prompts meeting the accuracy threshold.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">accuracy</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thr</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tok</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_batch_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">replay_flags</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">added</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log replay buffer statistics for debugging.&quot;&quot;&quot;</span>
+        <span class="n">local_rank</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;local_rank&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="n">local_rank</span> <span class="k">if</span> <span class="n">local_rank</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">replay_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">replay_flags</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="n">replay_flags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
 
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;[ReplayBufferCallback][rank</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">] added </span><span class="si">{</span><span class="n">added</span><span class="si">}</span><span class="s2"> new • &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_rep</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">batch_sz</span><span class="si">}</span><span class="s2"> replay • buffer = </span><span class="si">{</span><span class="n">buf_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">replay_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> replay • buffer = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span></div>
-</div>
 
 </pre></div>
         </article>

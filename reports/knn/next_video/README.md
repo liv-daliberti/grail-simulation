@@ -110,3 +110,4 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.440 across 2,4
 | Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.027 | -0.513 | 0.540 | 2 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.313 | -0.055 | 0.368 | 3 | 671 |

@@ -529,6 +529,15 @@ def predict_post_indices(
         "per_k_change_predictions": per_k_change_predictions,
     }
 
+def _direction_labels(delta: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
+    """Return categorical labels capturing the direction of opinion change."""
+
+    labels = np.zeros(delta.shape, dtype=np.int8)
+    labels[delta > tolerance] = 1
+    labels[delta < -tolerance] = -1
+    return labels
+
+
 def _metric_bundle(
     *,
     truth_after: np.ndarray,
@@ -543,11 +552,17 @@ def _metric_bundle(
     rmse = float(math.sqrt(mean_squared_error(truth_after, preds_arr)))
     r_squared = float(r2_score(truth_after, preds_arr))
     change_mae = float(mean_absolute_error(change_truth, change_pred))
+    direction_truth = _direction_labels(change_truth)
+    direction_pred = _direction_labels(change_pred)
+    accuracy = float(np.mean(direction_truth == direction_pred)) if direction_truth.size else float("nan")
+    eligible = int(direction_truth.size)
     return {
         "mae_after": mae,
         "rmse_after": rmse,
         "r2_after": r_squared,
         "mae_change": change_mae,
+        "direction_accuracy": accuracy,
+        "eligible": eligible,
     }
 
 
@@ -764,6 +779,8 @@ def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, floa
     mae_no_change = float(mean_absolute_error(truth_after, truth_before))
     change_zero = np.zeros_like(change_truth)
     mae_change_zero = float(mean_absolute_error(change_truth, change_zero))
+    direction_truth = _direction_labels(change_truth)
+    baseline_direction_accuracy = float(np.mean(direction_truth == 0)) if direction_truth.size else float("nan")
 
     return {
         "mae_global_mean_after": mae_mean,
@@ -771,6 +788,7 @@ def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, floa
         "mae_using_before": mae_no_change,
         "mae_change_zero": mae_change_zero,
         "global_mean_after": baseline_mean,
+        "direction_accuracy": baseline_direction_accuracy,
     }
 
 def _plot_metric(
@@ -966,15 +984,21 @@ def _compose_metrics_record(
 ) -> Dict[str, Any]:
     """Build the metrics payload persisted alongside predictions."""
 
-    metrics_by_k = {
-        str(k): {
+    metrics_by_k = {}
+    for k, values in payload.metrics_by_k.items():
+        bundle = {
             "mae_after": float(values["mae_after"]),
             "rmse_after": float(values["rmse_after"]),
             "r2_after": float(values["r2_after"]),
             "mae_change": float(values["mae_change"]),
         }
-        for k, values in payload.metrics_by_k.items()
-    }
+        direction_accuracy = values.get("direction_accuracy")
+        if direction_accuracy is not None:
+            bundle["direction_accuracy"] = float(direction_accuracy)
+        eligible_value = values.get("eligible")
+        if eligible_value is not None:
+            bundle["eligible"] = int(eligible_value)
+        metrics_by_k[str(k)] = bundle
     record: Dict[str, Any] = {
         "model": "knn_opinion",
         "feature_space": context.index.feature_space,
@@ -996,6 +1020,13 @@ def _compose_metrics_record(
     }
     if payload.curve_metrics:
         record["curve_metrics"] = payload.curve_metrics
+    best_metrics = record["best_metrics"]
+    best_direction_accuracy = best_metrics.get("direction_accuracy")
+    if best_direction_accuracy is not None:
+        record["best_direction_accuracy"] = float(best_direction_accuracy)
+    eligible_best = best_metrics.get("eligible")
+    if eligible_best is not None:
+        record["eligible"] = int(eligible_best)
     return record
 
 

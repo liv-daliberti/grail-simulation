@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -285,7 +285,26 @@
 <a class="viewcode-back" href="../../api/common.html#common.TitleResolverEnvConfig">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TitleResolverEnvConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Environment variable names used when sourcing title CSVs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Environment variable names used when sourcing title CSVs.</span>
+
+
+
+<span class="sd">    :ivar csv_var: Attribute ``csv_var``.</span>
+
+<span class="sd">    :vartype csv_var: str</span>
+
+<span class="sd">    :ivar dirs_var: Attribute ``dirs_var``.</span>
+
+<span class="sd">    :vartype dirs_var: str</span>
+
+<span class="sd">    :ivar glob_var: Attribute ``glob_var``.</span>
+
+<span class="sd">    :vartype glob_var: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">csv_var</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DEFAULT_ENV_CSVS</span>
     <span class="n">dirs_var</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DEFAULT_ENV_DIRS</span>
@@ -294,7 +313,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_guess_cols</span><span class="p">(</span><span class="n">header</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Guess the id/title column names within a CSV file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Guess the id/title column names within a CSV file.</span>
+
+
+
+<span class="sd">    :param header: Value provided for ``header``.</span>
+
+<span class="sd">    :type header: Iterable[str]</span>
+
+<span class="sd">    :returns: Result produced by ``_guess_cols``.</span>
+
+<span class="sd">    :rtype: Tuple[Optional[str], Optional[str]]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">lower</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">header</span><span class="p">}</span>
     <span class="n">id_col</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">lower</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">_CANDIDATE_IDS</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">lower</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
@@ -308,7 +342,23 @@
 <div class="viewcode-block" id="TitleResolver">
 <a class="viewcode-back" href="../../api/common.html#common.TitleResolver">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TitleResolver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve YouTube ids to titles by scanning configured CSV sources.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolve YouTube ids to titles by scanning configured CSV sources.</span>
+
+<span class="sd">    :ivar _default_dirs: Fallback directories searched for metadata CSV files.</span>
+<span class="sd">    :vartype _default_dirs: List[str]</span>
+<span class="sd">    :ivar _env_csv_var: Environment variable that lists explicit CSV paths.</span>
+<span class="sd">    :vartype _env_csv_var: str</span>
+<span class="sd">    :ivar _env_dirs_var: Environment variable enumerating directories to search.</span>
+<span class="sd">    :vartype _env_dirs_var: str</span>
+<span class="sd">    :ivar _env_glob_var: Environment variable providing glob patterns.</span>
+<span class="sd">    :vartype _env_glob_var: str</span>
+<span class="sd">    :ivar _index: Cached mapping of video ids to titles once loaded.</span>
+<span class="sd">    :vartype _index: Dict[str, str] | None</span>
+<span class="sd">    :ivar _logger: Logger instance used for diagnostic output.</span>
+<span class="sd">    :vartype _logger: logging.Logger</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
 <div class="viewcode-block" id="TitleResolver.__init__">
 <a class="viewcode-back" href="../../api/common.html#common.TitleResolver.__init__">[docs]</a>
@@ -336,7 +386,18 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_iter_candidate_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enumerate all CSV files that might contain title metadata.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Enumerate all CSV files that might contain title metadata.</span>
+
+
+
+<span class="sd">        :returns: Result produced by ``_iter_candidate_paths``.</span>
+
+<span class="sd">        :rtype: list[str]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
 
         <span class="c1"># pylint: disable=too-many-branches</span>
         <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -402,7 +463,22 @@
 <div class="viewcode-block" id="TitleResolver.resolve">
 <a class="viewcode-back" href="../../api/common.html#common.TitleResolver.resolve">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a title for the provided video id when available.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Return a title for the provided video id when available.</span>
+
+
+
+<span class="sd">        :param video_id: Value provided for ``video_id``.</span>
+
+<span class="sd">        :type video_id: str | None</span>
+
+<span class="sd">        :returns: Result produced by ``resolve``.</span>
+
+<span class="sd">        :rtype: Optional[str]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">video_id</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -412,7 +488,22 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Proxy to :meth:`resolve` allowing instances to be callable.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Proxy to :meth:`resolve` allowing instances to be callable.</span>
+
+
+
+<span class="sd">        :param video_id: Value provided for ``video_id``.</span>
+
+<span class="sd">        :type video_id: str | None</span>
+
+<span class="sd">        :returns: Result produced by ``__call__``.</span>
+
+<span class="sd">        :rtype: Optional[str]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span></div>
 

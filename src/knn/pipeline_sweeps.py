@@ -394,6 +394,23 @@ def opinion_sweep_outcome_from_metrics(
         metrics.get("n_participants", 0)
     )
     best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
+    accuracy = summary.accuracy
+    if accuracy is None:
+        accuracy_raw = metrics.get("best_metrics", {}).get("direction_accuracy")
+        accuracy = float(accuracy_raw) if accuracy_raw is not None else None
+    baseline_accuracy = summary.baseline_accuracy
+    if baseline_accuracy is None:
+        baseline_raw = metrics.get("baseline", {}).get("direction_accuracy")
+        baseline_accuracy = float(baseline_raw) if baseline_raw is not None else None
+    accuracy_delta = summary.accuracy_delta
+    if accuracy_delta is None and accuracy is not None and baseline_accuracy is not None:
+        accuracy_delta = accuracy - baseline_accuracy
+    eligible = summary.eligible
+    if eligible is None:
+        eligible_raw = metrics.get("eligible")
+        eligible = int(eligible_raw) if isinstance(eligible_raw, (int, float)) else None
+    if eligible is None:
+        eligible = participants
     return OpinionSweepOutcome(
         order_index=task.index,
         study=task.study,
@@ -402,8 +419,12 @@ def opinion_sweep_outcome_from_metrics(
         mae=float(mae),
         rmse=float(rmse),
         r2=float(r2),
+        accuracy=accuracy,
+        baseline_accuracy=baseline_accuracy,
+        accuracy_delta=accuracy_delta,
         best_k=best_k,
         participants=participants,
+        eligible=eligible,
         metrics_path=metrics_path,
         metrics=metrics,
     )

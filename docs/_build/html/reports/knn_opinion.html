@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Hyperparameter Tuning Notes" href="knn_hyperparameter_tuning.html"><link rel="prev" title="KNN Next-Video Baseline" href="knn_next_video.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="KNN Hyperparameter Tuning" href="knn_hyperparameter_tuning.html"><link rel="prev" title="KNN Next-Video Baseline" href="knn_next_video.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>KNN Opinion Shift Study - GRAIL Simulation documentation</title>
+        <title>KNN Opinion Regression - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -178,7 +178,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,184 +253,13 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="knn-opinion-shift-study">
-<h1>KNN Opinion Shift Study<a class="headerlink" href="#knn-opinion-shift-study" title="Link to this heading">¶</a></h1>
-<p>This study evaluates a second KNN baseline that predicts each participant’s post-study opinion index.</p>
-<ul class="simple">
-<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
-<li><p>Split: validation</p></li>
-<li><p>Metrics: MAE / RMSE / R² on the predicted post index, compared against a no-change baseline.</p></li>
-</ul>
-<section id="tf-idf-feature-space">
-<h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper colwidths-auto docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Study</p></th>
-<th class="head text-right"><p>Participants</p></th>
-<th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>MAE ↓</p></th>
-<th class="head text-right"><p>Δ vs baseline ↓</p></th>
-<th class="head text-right"><p>RMSE ↓</p></th>
-<th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>MAE (change) ↓</p></th>
-<th class="head text-right"><p>Baseline MAE ↓</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>150</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.037</p></td>
-<td class="text-right"><p>0.983</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>0.037</p></td>
-</tr>
-<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td class="text-right"><p>165</p></td>
-<td class="text-right"><p>20</p></td>
-<td class="text-right"><p>0.092</p></td>
-<td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.127</p></td>
-<td class="text-right"><p>0.790</p></td>
-<td class="text-right"><p>0.092</p></td>
-<td class="text-right"><p>0.096</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td class="text-right"><p>257</p></td>
-<td class="text-right"><p>150</p></td>
-<td class="text-right"><p>0.087</p></td>
-<td class="text-right"><p>-0.003</p></td>
-<td class="text-right"><p>0.125</p></td>
-<td class="text-right"><p>0.772</p></td>
-<td class="text-right"><p>0.087</p></td>
-<td class="text-right"><p>0.084</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="word2vec-feature-space">
-<h2>Word2Vec Feature Space<a class="headerlink" href="#word2vec-feature-space" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper colwidths-auto docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Study</p></th>
-<th class="head text-right"><p>Participants</p></th>
-<th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>MAE ↓</p></th>
-<th class="head text-right"><p>Δ vs baseline ↓</p></th>
-<th class="head text-right"><p>RMSE ↓</p></th>
-<th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>MAE (change) ↓</p></th>
-<th class="head text-right"><p>Baseline MAE ↓</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>150</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.037</p></td>
-<td class="text-right"><p>0.983</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>0.037</p></td>
-</tr>
-<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td class="text-right"><p>165</p></td>
-<td class="text-right"><p>20</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.122</p></td>
-<td class="text-right"><p>0.805</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>0.096</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td class="text-right"><p>257</p></td>
-<td class="text-right"><p>100</p></td>
-<td class="text-right"><p>0.088</p></td>
-<td class="text-right"><p>-0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.768</p></td>
-<td class="text-right"><p>0.088</p></td>
-<td class="text-right"><p>0.084</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="sentence-transformer-feature-space">
-<h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
-<div class="table-wrapper colwidths-auto docutils container">
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Study</p></th>
-<th class="head text-right"><p>Participants</p></th>
-<th class="head text-right"><p>Best k</p></th>
-<th class="head text-right"><p>MAE ↓</p></th>
-<th class="head text-right"><p>Δ vs baseline ↓</p></th>
-<th class="head text-right"><p>RMSE ↓</p></th>
-<th class="head text-right"><p>R² ↑</p></th>
-<th class="head text-right"><p>MAE (change) ↓</p></th>
-<th class="head text-right"><p>Baseline MAE ↓</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>100</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.037</p></td>
-<td class="text-right"><p>0.983</p></td>
-<td class="text-right"><p>0.030</p></td>
-<td class="text-right"><p>0.037</p></td>
-</tr>
-<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td class="text-right"><p>165</p></td>
-<td class="text-right"><p>125</p></td>
-<td class="text-right"><p>0.088</p></td>
-<td class="text-right"><p>+0.008</p></td>
-<td class="text-right"><p>0.124</p></td>
-<td class="text-right"><p>0.801</p></td>
-<td class="text-right"><p>0.088</p></td>
-<td class="text-right"><p>0.096</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td class="text-right"><p>257</p></td>
-<td class="text-right"><p>75</p></td>
-<td class="text-right"><p>0.086</p></td>
-<td class="text-right"><p>-0.002</p></td>
-<td class="text-right"><p>0.124</p></td>
-<td class="text-right"><p>0.773</p></td>
-<td class="text-right"><p>0.086</p></td>
-<td class="text-right"><p>0.084</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<section id="opinion-change-heatmaps">
-<h3>Opinion Change Heatmaps<a class="headerlink" href="#opinion-change-heatmaps" title="Link to this heading">¶</a></h3>
-<p>Plots are refreshed under <code class="docutils literal notranslate"><span class="pre">reports/knn/opinion/&lt;feature-space&gt;/</span></code> for MAE, R², and change heatmaps.</p>
-</section>
-</section>
-<section id="takeaways">
-<h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>Study 1 – Gun Control (MTurk): best R² 0.983 with SENTENCE_TRANSFORMER (k=100); largest MAE reduction +0.007 via SENTENCE_TRANSFORMER.</p></li>
-<li><p>Study 2 – Minimum Wage (MTurk): best R² 0.805 with WORD2VEC (k=20); largest MAE reduction +0.008 via SENTENCE_TRANSFORMER.</p></li>
-<li><p>Study 3 – Minimum Wage (YouGov): best R² 0.773 with SENTENCE_TRANSFORMER (k=75); largest MAE reduction -0.002 via SENTENCE_TRANSFORMER.</p></li>
-</ul>
-</section>
+          <section id="knn-opinion-regression">
+<h1>KNN Opinion Regression<a class="headerlink" href="#knn-opinion-regression" title="Link to this heading">¶</a></h1>
 </section>
 
         </article>
@@ -443,7 +272,7 @@
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">KNN Hyperparameter Tuning Notes</div>
+                <div class="title">KNN Hyperparameter Tuning</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -476,33 +305,8 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            On this page
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">KNN Opinion Shift Study</a><ul>
-<li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
-<li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
-<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a><ul>
-<li><a class="reference internal" href="#opinion-change-heatmaps">Opinion Change Heatmaps</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#takeaways">Takeaways</a></li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>

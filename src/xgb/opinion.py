@@ -264,6 +264,15 @@ def _train_regressor(
     return regressor, history
 
 
+def _direction_labels(delta: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
+    """Return categorical labels capturing the direction of opinion change."""
+
+    labels = np.zeros(delta.shape, dtype=np.int8)
+    labels[delta > tolerance] = 1
+    labels[delta < -tolerance] = -1
+    return labels
+
+
 def _baseline_metrics(
     *,
     before: np.ndarray,
@@ -283,10 +292,14 @@ def _baseline_metrics(
     mae = float(mean_absolute_error(after, before))
     rmse = float(math.sqrt(mean_squared_error(after, before)))
     r2 = float(r2_score(after, before))
+    change_truth = after - before
+    direction_truth = _direction_labels(change_truth)
+    direction_accuracy = float(np.mean(direction_truth == 0)) if direction_truth.size else float("nan")
     return {
         "mae_before": mae,
         "rmse_before": rmse,
         "r2_before": r2,
+        "direction_accuracy": direction_accuracy,
     }
 
 
@@ -294,6 +307,7 @@ def _model_metrics(
     *,
     predictions: np.ndarray,
     after: np.ndarray,
+    before: np.ndarray,
 ) -> Dict[str, float]:
     """
     Compute evaluation metrics comparing model predictions to ground truth.
@@ -302,6 +316,8 @@ def _model_metrics(
     :type predictions: numpy.ndarray
     :param after: Actual post-study opinion indices.
     :type after: numpy.ndarray
+    :param before: Pre-study opinion indices (baseline values).
+    :type before: numpy.ndarray
     :returns: Dictionary containing MAE, RMSE, and R² metrics.
     :rtype: Dict[str, float]
     """
@@ -309,10 +325,18 @@ def _model_metrics(
     mae = float(mean_absolute_error(after, predictions))
     rmse = float(math.sqrt(mean_squared_error(after, predictions)))
     r2 = float(r2_score(after, predictions))
+    change_truth = after - before
+    change_pred = predictions - before
+    direction_truth = _direction_labels(change_truth)
+    direction_pred = _direction_labels(change_pred)
+    direction_accuracy = float(np.mean(direction_truth == direction_pred)) if direction_truth.size else float("nan")
+    eligible = int(direction_truth.size)
     return {
         "mae_after": mae,
         "rmse_after": rmse,
         "r2_after": r2,
+        "direction_accuracy": direction_accuracy,
+        "eligible": eligible,
     }
 
 
@@ -403,6 +427,7 @@ def _evaluate_spec(
 
     train_targets = np.array([ex.after for ex in train_examples], dtype=float)
     eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
+    eval_before = np.array([ex.before for ex in eval_examples], dtype=float)
     regressor, eval_history = _train_regressor(
         features=train_features,
         targets=train_targets,
@@ -412,9 +437,9 @@ def _evaluate_spec(
     )
 
     predictions = regressor.predict(eval_features)
-    metrics = _model_metrics(predictions=predictions, after=eval_targets)
+    metrics = _model_metrics(predictions=predictions, after=eval_targets, before=eval_before)
     baseline = _baseline_metrics(
-        before=np.array([ex.before for ex in eval_examples], dtype=float),
+        before=eval_before,
         after=eval_targets,
     )
 
@@ -478,6 +503,9 @@ def _evaluate_spec(
     }
     if curve_metrics:
         payload["curve_metrics"] = curve_metrics
+    eligible = metrics.get("eligible")
+    if eligible is not None:
+        payload["eligible"] = int(eligible)
 
     metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
     with open(metrics_path, "w", encoding="utf-8") as handle:

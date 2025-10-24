@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -274,17 +274,21 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">e2b_code_interpreter.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Execution</span><span class="p">,</span> <span class="n">ExecutionError</span><span class="p">,</span> <span class="n">Result</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.router_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_router_payload</span>
+
 
 <div class="viewcode-block" id="RoutedSandbox">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RoutedSandbox</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A sandbox environment that routes code execution requests to the E2B Router.</span>
-<span class="sd">    This class is designed for batched execution of scripts, primarily for Python code.</span>
-<span class="sd">    It mimics the usage of &#39;Sandbox&#39; from &#39;e2b_code_interpreter&#39;, but adds support for batch processing.</span>
+<span class="sd">    This class is designed for batched execution of scripts, primarily for Python</span>
+<span class="sd">    code. It mimics the usage of ``Sandbox`` from ``e2b_code_interpreter`` but</span>
+<span class="sd">    adds support for batch processing.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        router_url (str): The URL of the E2B Router to which code execution requests are sent.</span>
+<span class="sd">        router_url (str): The URL of the E2B Router receiving code execution</span>
+<span class="sd">            requests.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="RoutedSandbox.__init__">
@@ -296,18 +300,35 @@
 <span class="sd">        :param router_url: URL of the E2B Router.</span>
 <span class="sd">        :type router_url: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">router_url</span> <span class="o">=</span> <span class="n">router_url</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">router_url</span> <span class="o">=</span> <span class="n">router_url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">300</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span> <span class="o">=</span> <span class="mi">30</span></div>
+
+
+<div class="viewcode-block" id="RoutedSandbox.configure_timeouts">
+<a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure_timeouts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">request_timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update default execution or request timeouts.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="k">if</span> <span class="n">request_timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span> <span class="o">=</span> <span class="n">request_timeout</span></div>
 
 
 <div class="viewcode-block" id="RoutedSandbox.run_code">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.routed_sandbox.RoutedSandbox.run_code">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_code</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">scripts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">scripts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">languages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">request_timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Execution</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Execution</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Executes a batch of scripts in the sandbox environment.</span>
 
@@ -322,45 +343,45 @@
 <span class="sd">        :return: Execution objects containing results, logs, and errors (if any) per script.</span>
 <span class="sd">        :rtype: list[Execution]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Set default values for timeouts if not provided</span>
-        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">timeout</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># Default to 5 minutes</span>
-        <span class="k">if</span> <span class="n">request_timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">request_timeout</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># Default to 30 seconds</span>
-
-        <span class="c1"># Default to Python for all scripts if languages is not provided</span>
-        <span class="k">if</span> <span class="n">languages</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">languages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">scripts</span><span class="p">)</span>
-
-        <span class="c1"># Prepare the payload for the HTTP POST request</span>
-        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;scripts&quot;</span><span class="p">:</span> <span class="n">scripts</span><span class="p">,</span>
-            <span class="s2">&quot;languages&quot;</span><span class="p">:</span> <span class="n">languages</span><span class="p">,</span>
-            <span class="s2">&quot;timeout&quot;</span><span class="p">:</span> <span class="n">timeout</span><span class="p">,</span>
-            <span class="s2">&quot;request_timeout&quot;</span><span class="p">:</span> <span class="n">request_timeout</span><span class="p">,</span>
-        <span class="p">}</span>
-
-        <span class="c1"># Send the request to the E2B Router</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">router_url</span><span class="si">}</span><span class="s2">/execute_batch&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">request_timeout</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="n">request_timeout</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">request_timeout</span> <span class="k">if</span> <span class="n">request_timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_timeout</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request failed with status code: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Parse the response and construct Execution objects</span>
+        <span class="n">languages</span><span class="p">,</span> <span class="n">payload</span> <span class="o">=</span> <span class="n">build_router_payload</span><span class="p">(</span>
+            <span class="n">scripts</span><span class="p">,</span>
+            <span class="n">languages</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="n">request_timeout</span><span class="o">=</span><span class="n">request_timeout</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;http://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">router_url</span><span class="si">}</span><span class="s2">/execute_batch&quot;</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">request_timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request to E2B router failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Execution</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">]</span>
+
         <span class="n">results</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
         <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># If execution is None, create an empty Execution object</span>
-                <span class="c1"># This can happen when a script times out or fails to execute</span>
                 <span class="n">execution</span> <span class="o">=</span> <span class="n">Execution</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">exec_payload</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">]</span>
                 <span class="n">execution</span> <span class="o">=</span> <span class="n">Execution</span><span class="p">(</span>
-                    <span class="n">results</span><span class="o">=</span><span class="p">[</span><span class="n">Result</span><span class="p">(</span><span class="o">**</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;results&quot;</span><span class="p">]],</span>
-                    <span class="n">logs</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;logs&quot;</span><span class="p">],</span>
-                    <span class="n">error</span><span class="o">=</span><span class="p">(</span><span class="n">ExecutionError</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;error&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
-                    <span class="n">execution_count</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;execution_count&quot;</span><span class="p">],</span>
+                    <span class="n">results</span><span class="o">=</span><span class="p">[</span><span class="n">Result</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]],</span>
+                    <span class="n">logs</span><span class="o">=</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;logs&quot;</span><span class="p">],</span>
+                    <span class="n">error</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">ExecutionError</span><span class="p">(</span><span class="o">**</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span>
+                        <span class="k">else</span> <span class="kc">None</span>
+                    <span class="p">),</span>
+                    <span class="n">execution_count</span><span class="o">=</span><span class="n">exec_payload</span><span class="p">[</span><span class="s2">&quot;execution_count&quot;</span><span class="p">],</span>
                 <span class="p">)</span>
             <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">execution</span><span class="p">)</span>
 

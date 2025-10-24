@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>common.eval_utils - GRAIL Simulation documentation</title>
+        <title>common.opinion - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -251,222 +251,220 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for common.eval_utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shared evaluation utilities reused across baseline implementations.&quot;&quot;&quot;</span>
+          <h1>Source code for common.opinion</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared opinion pipeline data structures and helpers.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 
-<span class="n">_Dataset</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_Dataset&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="safe_div">
-<a class="viewcode-back" href="../../api/xgb.html#common.safe_div">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="OpinionSpec">
+<a class="viewcode-back" href="../../api/knn.html#common.OpinionSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-
-
-<span class="sd">        Return the division result guarding against a zero denominator.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        numerator:</span>
-
-<span class="sd">            Value forming the numerator.</span>
-
-<span class="sd">        denominator:</span>
-
-<span class="sd">            Value forming the denominator.</span>
-
-<span class="sd">        default:</span>
-
-<span class="sd">            Fallback value returned when ``denominator`` is zero.</span>
+<span class="sd">    Configuration describing one study&#39;s opinion index columns.</span>
 
 
 
-<span class="sd">    :param numerator: Value provided for ``numerator``.</span>
+<span class="sd">    :ivar key: Attribute ``key``.</span>
 
-<span class="sd">    :type numerator: float</span>
+<span class="sd">    :vartype key: str</span>
 
-<span class="sd">    :param denominator: Value provided for ``denominator``.</span>
+<span class="sd">    :ivar issue: Attribute ``issue``.</span>
 
-<span class="sd">    :type denominator: float</span>
+<span class="sd">    :vartype issue: str</span>
 
-<span class="sd">    :param default: Value provided for ``default``.</span>
+<span class="sd">    :ivar label: Attribute ``label``.</span>
 
-<span class="sd">    :type default: float</span>
+<span class="sd">    :vartype label: str</span>
 
-<span class="sd">    :returns: Result produced by ``safe_div``.</span>
+<span class="sd">    :ivar before_column: Attribute ``before_column``.</span>
 
-<span class="sd">    :rtype: float</span>
+<span class="sd">    :vartype before_column: str</span>
+
+<span class="sd">    :ivar after_column: Attribute ``after_column``.</span>
+
+<span class="sd">    :vartype after_column: str</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">denominator</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span>
-    <span class="k">return</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span></div>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">before_column</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">after_column</span><span class="p">:</span> <span class="nb">str</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionExample</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">    Ensure Hugging Face cache directories default to ``cache_dir``.</span>
+<span class="sd">    Collapsed participant-level prompt and opinion values.</span>
 
 
 
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
+<span class="sd">    :ivar participant_id: Attribute ``participant_id``.</span>
 
-<span class="sd">    :type cache_dir: str</span>
+<span class="sd">    :vartype participant_id: str</span>
 
-<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    :ivar participant_study: Attribute ``participant_study``.</span>
 
-<span class="sd">    :rtype: None</span>
+<span class="sd">    :vartype participant_study: str</span>
+
+<span class="sd">    :ivar issue: Attribute ``issue``.</span>
+
+<span class="sd">    :vartype issue: str</span>
+
+<span class="sd">    :ivar document: Attribute ``document``.</span>
+
+<span class="sd">    :vartype document: str</span>
+
+<span class="sd">    :ivar before: Attribute ``before``.</span>
+
+<span class="sd">    :vartype before: float</span>
+
+<span class="sd">    :ivar after: Attribute ``after``.</span>
+
+<span class="sd">    :vartype after: float</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
 
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
+    <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">participant_study</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">document</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">before</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">after</span><span class="p">:</span> <span class="nb">float</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">prepare_dataset</span><span class="p">(</span>
+<span class="n">DEFAULT_SPECS</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OpinionSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">OpinionSpec</span><span class="p">(</span>
+        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span>
+        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;gun_control&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 1 – Gun Control (MTurk)&quot;</span><span class="p">,</span>
+        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;gun_index&quot;</span><span class="p">,</span>
+        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;gun_index_2&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">OpinionSpec</span><span class="p">(</span>
+        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study2&quot;</span><span class="p">,</span>
+        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 2 – Minimum Wage (MTurk)&quot;</span><span class="p">,</span>
+        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w1&quot;</span><span class="p">,</span>
+        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">OpinionSpec</span><span class="p">(</span>
+        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study3&quot;</span><span class="p">,</span>
+        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 3 – Minimum Wage (YouGov)&quot;</span><span class="p">,</span>
+        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w1&quot;</span><span class="p">,</span>
+        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">float_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Return ``value`` converted to ``float`` or ``None`` when invalid.</span>
+
+
+
+<span class="sd">    :param value: Value provided for ``value``.</span>
+
+<span class="sd">    :type value: Any</span>
+
+<span class="sd">    :returns: Result produced by ``float_or_none``.</span>
+
+<span class="sd">    :rtype: Optional[float]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">number</span>
+
+
+<div class="viewcode-block" id="opinion_example_kwargs">
+<a class="viewcode-back" href="../../api/common.html#common.opinion_example_kwargs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">opinion_example_kwargs</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">default_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">loader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">_Dataset</span><span class="p">],</span>
-    <span class="n">issue_lookup</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_Dataset</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">participant_study</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">document</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">before</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">after</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-
-
-<span class="sd">        Configure the HF cache, load the dataset, and list available issues.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        dataset:</span>
-
-<span class="sd">            Dataset identifier supplied via CLI (``None`` uses ``default_source``).</span>
-
-<span class="sd">        default_source:</span>
-
-<span class="sd">            Default dataset identifier when ``dataset`` is not provided.</span>
-
-<span class="sd">        cache_dir:</span>
-
-<span class="sd">            Directory used for Hugging Face caching.</span>
-
-<span class="sd">        loader:</span>
-
-<span class="sd">            Callable that loads the dataset for ``dataset_source``.</span>
-
-<span class="sd">        issue_lookup:</span>
-
-<span class="sd">            Callable returning the available issue labels for ``loader``&#39;s output.</span>
+<span class="sd">    Return keyword arguments common to opinion example dataclasses.</span>
 
 
 
-<span class="sd">        Returns</span>
+<span class="sd">    :param participant_id: Value provided for ``participant_id``.</span>
 
-<span class="sd">        -------</span>
+<span class="sd">    :type participant_id: str</span>
 
-<span class="sd">        tuple[str, Any, Sequence[str]]</span>
+<span class="sd">    :param participant_study: Value provided for ``participant_study``.</span>
 
-<span class="sd">            The dataset source string, loaded dataset object, and issue labels.</span>
-
-
-
-<span class="sd">    :param dataset: Value provided for ``dataset``.</span>
-
-<span class="sd">    :type dataset: Optional[str]</span>
-
-<span class="sd">    :param default_source: Value provided for ``default_source``.</span>
-
-<span class="sd">    :type default_source: str</span>
-
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
-
-<span class="sd">    :type cache_dir: str</span>
-
-<span class="sd">    :param loader: Value provided for ``loader``.</span>
-
-<span class="sd">    :type loader: Callable[[str, str], _Dataset]</span>
-
-<span class="sd">    :param issue_lookup: Value provided for ``issue_lookup``.</span>
-
-<span class="sd">    :type issue_lookup: Callable[[_Dataset], Sequence[str]]</span>
-
-<span class="sd">    :returns: Result produced by ``prepare_dataset``.</span>
-
-<span class="sd">    :rtype: Tuple[str, _Dataset, Sequence[str]]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
-    <span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">dataset_source</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">default_source</span>
-    <span class="n">base_ds</span> <span class="o">=</span> <span class="n">loader</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">available_issues</span> <span class="o">=</span> <span class="n">issue_lookup</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">dataset_source</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">available_issues</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">compose_issue_slug</span><span class="p">(</span><span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">study_tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-
-
-<span class="sd">        Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.</span>
-
-
-
-<span class="sd">        Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.</span>
-
-
+<span class="sd">    :type participant_study: str</span>
 
 <span class="sd">    :param issue: Value provided for ``issue``.</span>
 
 <span class="sd">    :type issue: str</span>
 
-<span class="sd">    :param study_tokens: Value provided for ``study_tokens``.</span>
+<span class="sd">    :param document: Value provided for ``document``.</span>
 
-<span class="sd">    :type study_tokens: Sequence[str]</span>
+<span class="sd">    :type document: str</span>
 
-<span class="sd">    :returns: Result produced by ``compose_issue_slug``.</span>
+<span class="sd">    :param before: Value provided for ``before``.</span>
 
-<span class="sd">    :rtype: str</span>
+<span class="sd">    :type before: float</span>
+
+<span class="sd">    :param after: Value provided for ``after``.</span>
+
+<span class="sd">    :type after: float</span>
+
+<span class="sd">    :returns: Result produced by ``opinion_example_kwargs``.</span>
+
+<span class="sd">    :rtype: dict[str, object]</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
 
-    <span class="n">base_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span> <span class="ow">and</span> <span class="n">issue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;all&quot;</span>
-    <span class="n">suffix_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">seen_suffix</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">study_tokens</span><span class="p">:</span>
-        <span class="n">slug</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">slug</span> <span class="ow">and</span> <span class="n">slug</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span> <span class="ow">and</span> <span class="n">slug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_suffix</span><span class="p">:</span>
-            <span class="n">suffix_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-            <span class="n">seen_suffix</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">suffix_parts</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">suffix_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="n">base_slug</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;participant_id&quot;</span><span class="p">:</span> <span class="n">participant_id</span><span class="p">,</span>
+        <span class="s2">&quot;participant_study&quot;</span><span class="p">:</span> <span class="n">participant_study</span><span class="p">,</span>
+        <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">issue</span><span class="p">,</span>
+        <span class="s2">&quot;document&quot;</span><span class="p">:</span> <span class="n">document</span><span class="p">,</span>
+        <span class="s2">&quot;before&quot;</span><span class="p">:</span> <span class="n">before</span><span class="p">,</span>
+        <span class="s2">&quot;after&quot;</span><span class="p">:</span> <span class="n">after</span><span class="p">,</span>
+    <span class="p">}</span></div>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span> <span class="s2">&quot;ensure_hf_cache&quot;</span><span class="p">,</span> <span class="s2">&quot;prepare_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;safe_div&quot;</span><span class="p">]</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;DEFAULT_SPECS&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OpinionExample&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OpinionSpec&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;float_or_none&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;opinion_example_kwargs&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 </pre></div>
         </article>
       </div>

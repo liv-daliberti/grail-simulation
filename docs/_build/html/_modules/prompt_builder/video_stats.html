@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -263,12 +263,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
 
+<span class="n">_VALID_STAT_KEYS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;view_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;like_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dislike_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;favorite_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;comment_count&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;share_count&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
 
 <span class="n">VideoStats</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_paths</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield potential filesystem locations for the stats bundle.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield potential filesystem locations for the stats bundle.</span>
+
+<span class="sd">    :returns: Iterator of candidate paths searched in order.</span>
+<span class="sd">    :rtype: Iterable[Path]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GRAIL_VIDEO_STATS_PATH&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">override</span><span class="p">:</span>
@@ -288,6 +302,9 @@
 <span class="sd">    The function searches a small set of candidate locations and caches the first</span>
 <span class="sd">    successful load for the duration of the process. Missing files yield an empty</span>
 <span class="sd">    mapping.</span>
+
+<span class="sd">    :returns: Mapping from video id to engagement metric dictionary.</span>
+<span class="sd">    :rtype: Dict[str, VideoStats]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">_candidate_paths</span><span class="p">():</span>
@@ -306,7 +323,7 @@
             <span class="n">stats</span><span class="p">[</span><span class="n">vid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">key</span><span class="p">:</span> <span class="n">_coerce_int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;view_count&quot;</span><span class="p">,</span> <span class="s2">&quot;like_count&quot;</span><span class="p">,</span> <span class="s2">&quot;dislike_count&quot;</span><span class="p">,</span> <span class="s2">&quot;favorite_count&quot;</span><span class="p">,</span> <span class="s2">&quot;comment_count&quot;</span><span class="p">,</span> <span class="s2">&quot;share_count&quot;</span><span class="p">}</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_VALID_STAT_KEYS</span>
             <span class="p">}</span>
         <span class="k">if</span> <span class="n">stats</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">stats</span>
@@ -317,7 +334,14 @@
 <div class="viewcode-block" id="lookup_video_stats">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.video_stats.lookup_video_stats">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lookup_video_stats</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VideoStats</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return engagement metrics for ``video_id`` when available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return engagement metrics for ``video_id`` when available.</span>
+
+<span class="sd">    :param video_id: YouTube video identifier.</span>
+<span class="sd">    :type video_id: str</span>
+<span class="sd">    :returns: Engagement metrics dictionary or an empty mapping.</span>
+<span class="sd">    :rtype: VideoStats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">video_id</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
@@ -326,7 +350,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert ``value`` into an integer when reasonable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert ``value`` into an integer when reasonable.</span>
+
+<span class="sd">    :param value: Raw value that may encode a numeric quantity.</span>
+<span class="sd">    :type value: object</span>
+<span class="sd">    :returns: Integer representation or ``None`` when conversion is unsafe.</span>
+<span class="sd">    :rtype: Optional[int]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>

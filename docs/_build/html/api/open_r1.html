@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -446,7 +446,8 @@ to explore the available configuration surfaces and helper tooling.</p>
 <li><p><strong>cosine_max_len</strong> (<em>int</em>) – Maximum length for cosine scaling.</p></li>
 <li><p><strong>code_language</strong> (<em>str</em>) – Language for the code format reward.</p></li>
 <li><p><strong>max_completion_len</strong> (<em>int</em>) – Maximum number of tokens in a completion.</p></li>
-<li><p><strong>soft_punish_cache</strong> (<em>int</em>) – Minimum number of tokens in a completion before the hard penalty applies.</p></li>
+<li><p><strong>soft_punish_cache</strong> (<em>int</em>) – Minimum number of tokens in a completion before the
+hard penalty applies.</p></li>
 <li><p><strong>dataset_name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>dataset_mixture</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>repetition_n_grams</strong> (<em>int</em>)</p></li>
@@ -1356,7 +1357,7 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end">
-<span class="sig-name descname"><span class="pre">on_train_batch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback.on_train_batch_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">on_train_batch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_control</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">batch_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback.on_train_batch_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end" title="Link to this definition">¶</a></dt>
 <dd><p>Inspect training outputs and enqueue prompts crossing the threshold.</p>
 </dd></dl>
 
@@ -1397,15 +1398,15 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.SuccessCachingCallback.on_log">
-<span class="sig-name descname"><span class="pre">on_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback.on_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback.on_log" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">on_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback.on_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback.on_log" title="Link to this definition">¶</a></dt>
 <dd><p>Scrape textual logs and add high-accuracy prompts to the buffer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<em>transformers.TrainingArguments</em>)</p></li>
-<li><p><strong>state</strong> (<em>transformers.TrainerState</em>)</p></li>
-<li><p><strong>control</strong> (<em>transformers.TrainerControl</em>)</p></li>
-<li><p><strong>logs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>_args</strong> (<em>transformers.TrainingArguments</em>)</p></li>
+<li><p><strong>_state</strong> (<em>transformers.TrainerState</em>)</p></li>
+<li><p><strong>_control</strong> (<em>transformers.TrainerControl</em>)</p></li>
+<li><p><strong>_logs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2026,6 +2027,23 @@ in a single request for improved efficiency.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.routed_morph.RoutedMorphSandbox.configure_timeouts">
+<span class="sig-name descname"><span class="pre">configure_timeouts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/routed_morph.html#RoutedMorphSandbox.configure_timeouts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.configure_timeouts" title="Link to this definition">¶</a></dt>
+<dd><p>Update default execution or request timeouts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timeout</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>request_timeout</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.routed_morph.RoutedMorphSandbox.run_code">
 <span class="sig-name descname"><span class="pre">run_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scripts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/routed_morph.html#RoutedMorphSandbox.run_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.run_code" title="Link to this definition">¶</a></dt>
 <dd><p>Execute multiple scripts using MorphCloud via the router.</p>
@@ -2055,8 +2073,9 @@ in a single request for improved efficiency.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.routed_sandbox.</span></span><span class="sig-name descname"><span class="pre">RoutedSandbox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router_url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/routed_sandbox.html#RoutedSandbox"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.routed_sandbox.RoutedSandbox" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A sandbox environment that routes code execution requests to the E2B Router.
-This class is designed for batched execution of scripts, primarily for Python code.
-It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds support for batch processing.</p>
+This class is designed for batched execution of scripts, primarily for Python
+code. It mimics the usage of <code class="docutils literal notranslate"><span class="pre">Sandbox</span></code> from <code class="docutils literal notranslate"><span class="pre">e2b_code_interpreter</span></code> but
+adds support for batch processing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>router_url</strong> (<em>str</em>)</p>
@@ -2065,7 +2084,8 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <dl class="py attribute">
 <dt class="sig sig-object py" id="open_r1.utils.routed_sandbox.RoutedSandbox.router_url">
 <span class="sig-name descname"><span class="pre">router_url</span></span><a class="headerlink" href="#open_r1.utils.routed_sandbox.RoutedSandbox.router_url" title="Link to this definition">¶</a></dt>
-<dd><p>The URL of the E2B Router to which code execution requests are sent.</p>
+<dd><p>The URL of the E2B Router receiving code execution
+requests.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -2080,6 +2100,23 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>router_url</strong> (<em>str</em>) – URL of the E2B Router.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts">
+<span class="sig-name descname"><span class="pre">configure_timeouts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/routed_sandbox.html#RoutedSandbox.configure_timeouts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts" title="Link to this definition">¶</a></dt>
+<dd><p>Update default execution or request timeouts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timeout</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>request_timeout</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2351,12 +2388,14 @@ It mimics the usage of ‘Sandbox’ from ‘e2b_code_interpreter’, but adds s
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.timeout"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.timeout</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.request_timeout"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.request_timeout</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.__init__"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.configure_timeouts"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.configure_timeouts()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_morph.RoutedMorphSandbox.run_code"><code class="docutils literal notranslate"><span class="pre">RoutedMorphSandbox.run_code()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox.router_url"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox.router_url</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox.__init__"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox.configure_timeouts"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox.configure_timeouts()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.utils.routed_sandbox.RoutedSandbox.run_code"><code class="docutils literal notranslate"><span class="pre">RoutedSandbox.run_code()</span></code></a></li>
 </ul>
 </li>

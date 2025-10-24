@@ -192,6 +192,22 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     dataset = data.get("dataset")
     split = data.get("split")
     best_k = safe_int(data.get("best_k"))
+    accuracy = safe_float(best_metrics.get("direction_accuracy"))
+    baseline_accuracy = safe_float(baseline.get("direction_accuracy"))
+    accuracy_delta = (
+        accuracy - baseline_accuracy
+        if accuracy is not None and baseline_accuracy is not None
+        else None
+    )
+    eligible = safe_int(
+        best_metrics.get("eligible")
+        if isinstance(best_metrics, Mapping)
+        else None
+    )
+    if eligible is None:
+        eligible = safe_int(data.get("eligible"))
+    if eligible is None:
+        eligible = participants
 
     return OpinionSummary(
         mae=mae_after,
@@ -200,8 +216,12 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         mae_change=mae_change,
         baseline_mae=baseline_mae,
         mae_delta=mae_delta,
+        accuracy=accuracy,
+        baseline_accuracy=baseline_accuracy,
+        accuracy_delta=accuracy_delta,
         best_k=best_k,
         participants=participants,
+        eligible=eligible,
         dataset=str(dataset) if dataset else None,
         split=str(split) if split else None,
     )

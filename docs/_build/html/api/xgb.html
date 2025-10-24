@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -277,34 +277,40 @@ normalisation.</p>
 <p id="module-xgb.data">Dataset helpers reused by the XGBoost baseline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.data.filter_dataset_for_issue">
-<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
-<dd><p>Return a dataset filtered down to a specific issue label.</p>
+<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
+<dd><p>Filter a dataset down to a specific issue label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing the <code class="docutils literal notranslate"><span class="pre">issue</span></code> column.</p></li>
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label to retain (<code class="docutils literal notranslate"><span class="pre">all</span></code> preserves every row).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary restricted to rows matching <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.data.filter_dataset_for_participant_studies">
-<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_dataset_for_participant_studies" title="Link to this definition">¶</a></dt>
-<dd><p>Return a dataset filtered to rows whose <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> matches <code class="docutils literal notranslate"><span class="pre">studies</span></code>.</p>
+<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_dataset_for_participant_studies" title="Link to this definition">¶</a></dt>
+<dd><p>Filter the dataset to rows whose <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> matches <code class="docutils literal notranslate"><span class="pre">studies</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p></li>
-<li><p><strong>studies</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing the <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> column.</p></li>
+<li><p><strong>studies</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Study identifiers to retain.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary filtered to the requested studies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -312,24 +318,36 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.data.filter_split_for_participant_studies">
 <span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">filter_split_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_split_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.filter_split_for_participant_studies" title="Link to this definition">¶</a></dt>
-<dd><p>Filter a HF dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
+<dd><p>Filter a dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>split_ds</strong> (<em>datasets.Dataset</em>) – Dataset split supporting <code class="xref py py-meth docutils literal notranslate"><span class="pre">filter()</span></code>.</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Study identifiers to retain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered dataset split covering only the requested studies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.Dataset</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.data.issues_in_dataset">
-<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">issues_in_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#issues_in_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.issues_in_dataset" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xgb.data.</span></span><span class="sig-name descname"><span class="pre">issues_in_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#issues_in_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.data.issues_in_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Return the list of issue labels present in the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing at least one split.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sorted list of issue identifiers or <code class="docutils literal notranslate"><span class="pre">['all']</span></code> when absent.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -341,12 +359,21 @@ normalisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em>)</p></li>
-<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>source</strong> (<em>str</em>) – Local directory path or Hugging Face dataset identifier.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">datasets.load_dataset()</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary containing train and validation splits.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – If <code class="xref py py-mod docutils literal notranslate"><span class="pre">datasets</span></code> is unavailable.</p></li>
+<li><p><strong>ValueError</strong> – When <code class="docutils literal notranslate"><span class="pre">source</span></code> does not yield a <code class="xref py py-class docutils literal notranslate"><span class="pre">datasets.DatasetDict</span></code>.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -355,16 +382,19 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.assemble_document">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#assemble_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.assemble_document" title="Link to this definition">¶</a></dt>
-<dd><p>Return concatenated text used to featurise <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dd><p>Concatenate prompt components into a single document for featurisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>example</strong> (<em>dict</em>)</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>example</strong> (<em>dict</em>) – Dataset row describing the prompt and slate context.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional additional column names appended to the document.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Combined prompt text passed to vectorisers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -372,13 +402,16 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.extract_now_watching">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_now_watching" title="Link to this definition">¶</a></dt>
-<dd><p>Return the currently watched title/id, if known.</p>
+<dd><p>Retrieve the currently watched item for an interaction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example describing viewer activity.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[str, str] | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> when the “now watching” context exists.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[Tuple[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -386,13 +419,16 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.extract_slate_items">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#extract_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.extract_slate_items" title="Link to this definition">¶</a></dt>
-<dd><p>Return the slate as <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> pairs.</p>
+<dd><p>Extract the slate of candidate items from an interaction example.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing slate metadata.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ordered list of <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> tuples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tuple[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -404,13 +440,18 @@ normalisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
-<li><p><strong>seed</strong> (<em>int</em>)</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>train_ds</strong> (<em>datasets.Dataset</em><em> | </em><em>Sequence</em><em>[</em><em>dict</em><em>]</em>) – Dataset split providing training rows.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>) – Optional cap on the number of training rows retained (0 keeps all).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed used when subsampling <code class="docutils literal notranslate"><span class="pre">train_ds</span></code>.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Additional columns appended to the prompt document.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[list[str], list[str], list[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(documents,</span> <span class="pre">label_ids,</span> <span class="pre">participant_ids)</span></code> mirroring
+<a class="reference internal" href="#xgb.features.prepare_training_documents" title="xgb.features.prepare_training_documents"><code class="xref py py-func docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[list[str], list[str], list[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -418,17 +459,21 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.prepare_training_documents">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#prepare_training_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
-<dd><p>Return TF-IDF training documents and associated labels.</p>
+<dd><p>Prepare prompt documents, labels, and metadata for TF-IDF training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
-<li><p><strong>seed</strong> (<em>int</em>)</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>train_ds</strong> (<em>datasets.Dataset</em><em> | </em><em>Sequence</em><em>[</em><em>dict</em><em>]</em>) – Dataset split providing training rows.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>) – Optional cap on the number of training rows retained (0 keeps all).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed used when subsampling <code class="docutils literal notranslate"><span class="pre">train_ds</span></code>.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Additional columns appended to the prompt document.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[list[str], list[str], list[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(documents,</span> <span class="pre">label_ids,</span> <span class="pre">participant_ids)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[list[str], list[str], list[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -436,13 +481,16 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.prompt_from_builder">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#prompt_from_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
-<dd><p>Return the prompt text for <code class="docutils literal notranslate"><span class="pre">example</span></code> using the shared builder.</p>
+<dd><p>Assemble the full prompt text for a dataset example.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example containing prompt components.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Prompt text used for feature extraction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -450,13 +498,16 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.title_for">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.title_for" title="Link to this definition">¶</a></dt>
-<dd><p>Return a human-readable title for a YouTube id if available.</p>
+<dd><p>Look up a human-readable title for a given YouTube identifier.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – Candidate YouTube video identifier to resolve.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Title associated with <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when present in the cache.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -464,13 +515,16 @@ normalisation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.features.viewer_profile_sentence">
 <span class="sig-prename descclassname"><span class="pre">xgb.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/features.html#viewer_profile_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
-<dd><p>Return the viewer profile sentence for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dd><p>Compose the viewer profile sentence associated with a dataset row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example containing viewer profile fields.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Natural-language sentence describing the participant profile.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -930,8 +984,11 @@ per-video probabilities.</p>
 <span class="sig-name descname"><span class="pre">metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#BaseTextVectorizer.metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.BaseTextVectorizer.metadata" title="Link to this definition">¶</a></dt>
 <dd><p>Return serialisable metadata describing the vectoriser.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary describing the vectoriser kind and dimension.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, Any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -956,7 +1013,7 @@ per-video probabilities.</p>
 <dd><p>Encode <code class="docutils literal notranslate"><span class="pre">documents</span></code> using the fitted vectoriser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Inputs to transform with the learned representation.</p>
+<dd class="field-odd"><p><strong>documents</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Inputs transformed with the learned representation.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Feature matrix aligned with the fitted model state.</p>
@@ -975,8 +1032,16 @@ per-video probabilities.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration controlling SentenceTransformer inference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">model_name</span></code>.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">device</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>.</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">normalize</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>)</p></li>
 <li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
@@ -1022,7 +1087,8 @@ per-video probabilities.</p>
 <dd><p>Create a vectoriser backed by a sentence-transformer model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a>) – Encoder settings forwarded to <a class="reference internal" href="common.html#common.embeddings.SentenceTransformerEncoder" title="common.embeddings.SentenceTransformerEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.embeddings.SentenceTransformerEncoder</span></code></a>.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a>) – Encoder settings forwarded to
+<a class="reference internal" href="common.html#common.embeddings.SentenceTransformerEncoder" title="common.embeddings.SentenceTransformerEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.embeddings.SentenceTransformerEncoder</span></code></a>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -1339,18 +1405,24 @@ per-video probabilities.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.vectorizers.create_vectorizer">
 <span class="sig-prename descclassname"><span class="pre">xgb.vectorizers.</span></span><span class="sig-name descname"><span class="pre">create_vectorizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tfidf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/vectorizers.html#create_vectorizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.vectorizers.create_vectorizer" title="Link to this definition">¶</a></dt>
-<dd><p>Return a vectoriser instance for <code class="docutils literal notranslate"><span class="pre">kind</span></code>.</p>
+<dd><p>Instantiate a text vectoriser matching <code class="docutils literal notranslate"><span class="pre">kind</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>str</em>)</p></li>
-<li><p><strong>tfidf</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>word2vec</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>sentence_transformer</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>kind</strong> (<em>str</em>) – Vectoriser identifier (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p></li>
+<li><p><strong>tfidf</strong> (<a class="reference internal" href="#xgb.model.TfidfConfig" title="xgb.vectorizers.TfidfConfig"><em>TfidfConfig</em></a><em> | </em><em>None</em>) – Optional TF-IDF configuration.</p></li>
+<li><p><strong>word2vec</strong> (<a class="reference internal" href="#xgb.model.Word2VecVectorizerConfig" title="xgb.vectorizers.Word2VecVectorizerConfig"><em>Word2VecVectorizerConfig</em></a><em> | </em><em>None</em>) – Optional Word2Vec configuration.</p></li>
+<li><p><strong>sentence_transformer</strong> (<a class="reference internal" href="#xgb.model.SentenceTransformerVectorizerConfig" title="xgb.vectorizers.SentenceTransformerVectorizerConfig"><em>SentenceTransformerVectorizerConfig</em></a><em> | </em><em>None</em>) – Optional sentence-transformer configuration.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><em>BaseTextVectorizer</em></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Concrete vectoriser instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer">BaseTextVectorizer</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the vectoriser kind is unsupported.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1361,10 +1433,16 @@ per-video probabilities.</p>
 <dd><p>Load a vectoriser saved via <a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer.save" title="xgb.vectorizers.BaseTextVectorizer.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseTextVectorizer.save()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Directory containing the serialized vectoriser.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer"><em>BaseTextVectorizer</em></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Restored vectoriser instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.vectorizers.BaseTextVectorizer" title="xgb.vectorizers.BaseTextVectorizer">BaseTextVectorizer</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the persisted vectoriser kind is unsupported.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1557,17 +1635,35 @@ per-video probabilities.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.evaluate.safe_div">
 <span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">safe_div</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">numerator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">denominator</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/eval_utils.html#safe_div"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.safe_div" title="Link to this definition">¶</a></dt>
-<dd><p>Return the division result guarding against a zero denominator.</p>
+<dd><blockquote>
+<div><p>Return the division result guarding against a zero denominator.</p>
+<p>Parameters</p>
+<p>numerator:</p>
+<blockquote>
+<div><p>Value forming the numerator.</p>
+</div></blockquote>
+<p>denominator:</p>
+<blockquote>
+<div><p>Value forming the denominator.</p>
+</div></blockquote>
+<p>default:</p>
+<blockquote>
+<div><p>Fallback value returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>numerator</strong> (<em>float</em>) – Value forming the numerator.</p></li>
-<li><p><strong>denominator</strong> (<em>float</em>) – Value forming the denominator.</p></li>
-<li><p><strong>default</strong> (<em>float</em>) – Fallback value returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p></li>
+<li><p><strong>numerator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">numerator</span></code>.</p></li>
+<li><p><strong>denominator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">denominator</span></code>.</p></li>
+<li><p><strong>default</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">default</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">safe_div</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1608,10 +1704,13 @@ per-video probabilities.</p>
 <dd><p>Normalise a YouTube id when present in <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">canon_video_id</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1619,13 +1718,23 @@ per-video probabilities.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.utils.ensure_directory">
 <span class="sig-prename descclassname"><span class="pre">xgb.utils.</span></span><span class="sig-name descname"><span class="pre">ensure_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#ensure_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.utils.ensure_directory" title="Link to this definition">¶</a></dt>
-<dd><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<dd><blockquote>
+<div><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<p>Parameters</p>
+<p>path:</p>
+<blockquote>
+<div><p>Target directory to ensure.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Target directory to ensure.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1633,20 +1742,25 @@ per-video probabilities.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.utils.get_logger">
 <span class="sig-prename descclassname"><span class="pre">xgb.utils.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.utils.get_logger" title="Link to this definition">¶</a></dt>
-<dd><p>Return a memoised logger configured with a simple stream handler.</p>
-<p>The helper mirrors the historical behaviour from the individual
-baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler
-when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a
-caller-provided override).</p>
+<dd><blockquote>
+<div><p>Return a memoised logger configured with a simple stream handler.</p>
+<p>The helper mirrors the historical behaviour from the individual</p>
+<p>baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler</p>
+<p>when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a</p>
+<p>caller-provided override).</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>)</p></li>
-<li><p><strong>level</strong> (<em>int</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">level</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Logger</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">get_logger</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1673,8 +1787,23 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Inputs required to launch the opinion regression stage.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>) – Dataset identifier passed to the opinion stage.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory for dataset loading.</p></li>
+<li><p><strong>base_out_dir</strong> (<em>Path</em>) – Base output directory for opinion artefacts.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional prompt columns appended to documents.</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Opinion study keys to evaluate.</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>) – Optional cap on participants per study.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
+<li><p><strong>max_features</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Maximum TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> keeps all).</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Flag controlling whether existing artefacts may be overwritten.</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>) – Flag enabling reuse of cached results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>str</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
 <li><p><strong>base_out_dir</strong> (<em>Path</em>)</p></li>
@@ -1752,8 +1881,21 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration shared across opinion sweep evaluations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>) – Dataset identifier passed to opinion sweeps.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory leveraged by dataset loading.</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>) – Root directory where opinion sweep artefacts are stored.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional prompt columns appended to documents.</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>) – Optional cap on participants per study.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
+<li><p><strong>max_features</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Maximum TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> allows all).</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Flag controlling whether existing artefacts may be overwritten.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>str</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
 <li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
@@ -1819,8 +1961,17 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>CLI arguments shared across sweep invocations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Baseline CLI arguments applied to every sweep run.</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional CLI flags appended for each invocation.</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>) – Root directory where sweep artefacts are written.</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>) – Parallel worker count for sweep execution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
@@ -1862,7 +2013,8 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Entry point orchestrating the full XGBoost workflow.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional override for command-line arguments
+(defaults to <code class="docutils literal notranslate"><span class="pre">sys.argv[1:]</span></code>).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -1878,8 +2030,18 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Runtime configuration for final slate evaluations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Baseline CLI arguments for <a class="reference internal" href="#module-xgb.cli" title="xgb.cli"><code class="xref py py-mod docutils literal notranslate"><span class="pre">xgb.cli</span></code></a>.</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional CLI arguments forwarded to each invocation.</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>) – Target directory for final evaluation artefacts.</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>save_model_dir</strong> (<em>Optional</em><em>[</em><em>Path</em><em>]</em>) – Optional directory for persisted models.</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>) – Flag controlling reuse of cached metrics.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
@@ -1927,8 +2089,24 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Normalised view of slate metrics emitted by the XGBoost evaluations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>accuracy</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Validation accuracy (<code class="docutils literal notranslate"><span class="pre">None</span></code> when unavailable).</p></li>
+<li><p><strong>coverage</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Validation coverage capturing known candidate recall.</p></li>
+<li><p><strong>evaluated</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of evaluation rows.</p></li>
+<li><p><strong>correct</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of correct predictions.</p></li>
+<li><p><strong>known_hits</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Correct predictions among known candidates.</p></li>
+<li><p><strong>known_total</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Evaluations featuring at least one known candidate.</p></li>
+<li><p><strong>known_availability</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Fraction of evaluations containing a known candidate.</p></li>
+<li><p><strong>avg_probability</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Mean probability recorded for known predictions.</p></li>
+<li><p><strong>dataset</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Dataset identifier.</p></li>
+<li><p><strong>issue</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Issue key under evaluation.</p></li>
+<li><p><strong>issue_label</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Human-readable issue label.</p></li>
+<li><p><strong>study_label</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Human-readable study label.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>coverage</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>evaluated</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
@@ -2012,8 +2190,23 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Inputs required to launch the opinion regression stage.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>) – Dataset identifier passed to the opinion stage.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory for dataset loading.</p></li>
+<li><p><strong>base_out_dir</strong> (<em>Path</em>) – Base output directory for opinion artefacts.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional prompt columns appended to documents.</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Opinion study keys to evaluate.</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>) – Optional cap on participants per study.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
+<li><p><strong>max_features</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Maximum TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> keeps all).</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Flag controlling whether existing artefacts may be overwritten.</p></li>
+<li><p><strong>reuse_existing</strong> (<em>bool</em>) – Flag enabling reuse of cached results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>str</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
 <li><p><strong>base_out_dir</strong> (<em>Path</em>)</p></li>
@@ -2088,54 +2281,80 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionStudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionStudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></p>
 <p>Selected configuration for the final opinion regression evaluation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
-<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><em>OpinionSweepOutcome</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata chosen for final evaluation.</p></li>
+<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><em>OpinionSweepOutcome</em></a>) – Winning opinion sweep outcome leveraged for reporting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>outcome</strong> (<em>OutcomeT</em>)</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.config">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.config" title="Link to this definition">¶</a></dt>
-<dd><p>Return the selected sweep configuration for this study.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.outcome">
-<span class="sig-name descname"><span class="pre">outcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><span class="pre">OpinionSweepOutcome</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.outcome" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.study" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSummary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mae_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_mae</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participants</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSummary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSummary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mae_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_mae</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_accuracy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participants</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSummary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Normalised view of opinion-regression metrics.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>mae_after</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Mean absolute error achieved by the regressor.</p></li>
+<li><p><strong>rmse_after</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Root mean squared error achieved by the regressor.</p></li>
+<li><p><strong>r2_after</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Coefficient of determination achieved by the regressor.</p></li>
+<li><p><strong>baseline_mae</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Baseline MAE using the no-change predictor.</p></li>
+<li><p><strong>mae_delta</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Absolute MAE improvement over the baseline.</p></li>
+<li><p><strong>accuracy_after</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Directional accuracy achieved by the regressor.</p></li>
+<li><p><strong>baseline_accuracy</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Directional accuracy achieved by the baseline.</p></li>
+<li><p><strong>accuracy_delta</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Improvement in directional accuracy over the baseline.</p></li>
+<li><p><strong>participants</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of participants in the evaluation split.</p></li>
+<li><p><strong>eligible</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of evaluation examples contributing to accuracy metrics.</p></li>
+<li><p><strong>dataset</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Dataset identifier.</p></li>
+<li><p><strong>split</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Evaluation split name.</p></li>
+<li><p><strong>label</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Human-readable study label.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>mae_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>rmse_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>r2_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>baseline_mae</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>mae_delta</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>accuracy_after</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>baseline_accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>accuracy_delta</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>participants</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>eligible</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>dataset</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.accuracy_after">
+<span class="sig-name descname"><span class="pre">accuracy_after</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.accuracy_after" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.accuracy_delta">
+<span class="sig-name descname"><span class="pre">accuracy_delta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.accuracy_delta" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.baseline_accuracy">
+<span class="sig-name descname"><span class="pre">baseline_accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.baseline_accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.baseline_mae">
 <span class="sig-name descname"><span class="pre">baseline_mae</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.baseline_mae" title="Link to this definition">¶</a></dt>
@@ -2144,6 +2363,11 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.dataset">
 <span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.dataset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSummary.eligible">
+<span class="sig-name descname"><span class="pre">eligible</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSummary.eligible" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2185,26 +2409,66 @@ explaining that the section was intentionally skipped.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mae</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmse</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#OpinionSweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Metrics captured for a (study, config) combination during opinion sweeps.</p>
+<p>Metrics captured for a (study, configuration) combination during opinion sweeps.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>order_index</strong> (<em>int</em>) – Deterministic ordering index assigned to the task.</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata associated with the sweep.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>) – Evaluated sweep configuration.</p></li>
+<li><p><strong>mae</strong> (<em>float</em>) – Mean absolute error achieved by the configuration.</p></li>
+<li><p><strong>rmse</strong> (<em>float</em>) – Root mean squared error achieved by the configuration.</p></li>
+<li><p><strong>r2</strong> (<em>float</em>) – Coefficient of determination achieved by the configuration.</p></li>
+<li><p><strong>accuracy</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Directional accuracy achieved by the configuration.</p></li>
+<li><p><strong>baseline_accuracy</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Directional accuracy achieved by the baseline.</p></li>
+<li><p><strong>accuracy_delta</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Improvement in accuracy over the baseline.</p></li>
+<li><p><strong>eligible</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of evaluation examples contributing to accuracy metrics.</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>) – Filesystem path to the metrics artefact.</p></li>
+<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>) – Raw metrics payload loaded from disk.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
 <li><p><strong>mae</strong> (<em>float</em>)</p></li>
 <li><p><strong>rmse</strong> (<em>float</em>)</p></li>
 <li><p><strong>r2</strong> (<em>float</em>)</p></li>
+<li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>baseline_accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>accuracy_delta</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>eligible</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.accuracy">
+<span class="sig-name descname"><span class="pre">accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.accuracy_delta">
+<span class="sig-name descname"><span class="pre">accuracy_delta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.accuracy_delta" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.baseline_accuracy">
+<span class="sig-name descname"><span class="pre">baseline_accuracy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.baseline_accuracy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.config">
 <span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.eligible">
+<span class="sig-name descname"><span class="pre">eligible</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.eligible" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2239,7 +2503,7 @@ explaining that the section was intentionally skipped.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepOutcome.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.study" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepOutcome.study" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2250,8 +2514,21 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration shared across opinion sweep evaluations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>str</em>) – Dataset identifier passed to opinion sweeps.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory leveraged by dataset loading.</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>) – Root directory where opinion sweep artefacts are stored.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional prompt columns appended to documents.</p></li>
+<li><p><strong>max_participants</strong> (<em>int</em>) – Optional cap on participants per study.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for subsampling.</p></li>
+<li><p><strong>max_features</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Maximum TF-IDF features (<code class="docutils literal notranslate"><span class="pre">None</span></code> allows all).</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Flag controlling whether existing artefacts may be overwritten.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>str</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
 <li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
@@ -2317,10 +2594,19 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container describing a single opinion sweep execution request.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>) – Stable index used for ordering and scheduling.</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata being evaluated.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>) – Sweep configuration executed for the opinion task.</p></li>
+<li><p><strong>request_args</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>) – Keyword arguments passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">run_opinion_eval()</span></code>.</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>) – Target path for the <code class="docutils literal notranslate"><span class="pre">metrics.json</span></code> artefact.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
 <li><p><strong>request_args</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
@@ -2349,7 +2635,7 @@ explaining that the section was intentionally skipped.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionSweepTask.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.study" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionSweepTask.study" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2357,48 +2643,39 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">StudySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#StudySelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.StudySelection" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">StudySelection</span></code>[<a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">SweepOutcome</span></code></a>]</p>
 <p>Selected configuration for the final evaluation of a participant study.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
-<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><em>SweepOutcome</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata chosen for final evaluation.</p></li>
+<li><p><strong>outcome</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><em>SweepOutcome</em></a>) – Winning sweep outcome leveraged for reporting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>outcome</strong> (<em>OutcomeT</em>)</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.config">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.config" title="Link to this definition">¶</a></dt>
-<dd><p>Return the selected sweep configuration for this study.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.evaluation_slug">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.evaluation_slug" title="Link to this definition">¶</a></dt>
-<dd><p>Return the evaluation slug used for artefact directories.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.outcome">
-<span class="sig-name descname"><span class="pre">outcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><span class="pre">SweepOutcome</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.outcome" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xgb.pipeline_context.StudySelection.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.StudySelection.study" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">StudySpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#StudySpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.StudySpec" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">StudySpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline_models.html#StudySpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.StudySpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Descriptor for a participant study and its associated issue.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p></li>
+<li><p><strong>issue</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">label</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>key</strong> (<em>str</em>)</p></li>
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>label</strong> (<em>str</em>)</p></li>
@@ -2409,6 +2686,14 @@ explaining that the section was intentionally skipped.</p>
 <dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.evaluation_slug">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.evaluation_slug" title="Link to this definition">¶</a></dt>
 <dd><p>Return the slug used for evaluation artefacts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">evaluation_slug</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2420,6 +2705,14 @@ explaining that the section was intentionally skipped.</p>
 <dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.issue_slug">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">issue_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.issue_slug" title="Link to this definition">¶</a></dt>
 <dd><p>Return a filesystem-safe slug for the associated issue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">issue_slug</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2436,6 +2729,14 @@ explaining that the section was intentionally skipped.</p>
 <dt class="sig sig-object py" id="xgb.pipeline_context.StudySpec.study_slug">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">study_slug</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.pipeline_context.StudySpec.study_slug" title="Link to this definition">¶</a></dt>
 <dd><p>Return a filesystem-safe slug for the study key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">study_slug</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -2444,10 +2745,24 @@ explaining that the section was intentionally skipped.</p>
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_vectorizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorizer_tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subsample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colsample_bytree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_lambda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorizer_cli=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Hyper-parameter configuration evaluated during sweeps.</p>
+<p>Hyper-parameter configuration evaluated during XGBoost sweeps.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>text_vectorizer</strong> (<em>str</em>) – Vectoriser identifier (e.g. <code class="docutils literal notranslate"><span class="pre">tfidf</span></code>).</p></li>
+<li><p><strong>vectorizer_tag</strong> (<em>str</em>) – Short tag used in directory and report labels.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – Booster learning rate.</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em>) – Tree depth explored during sweeps.</p></li>
+<li><p><strong>n_estimators</strong> (<em>int</em>) – Number of boosting rounds.</p></li>
+<li><p><strong>subsample</strong> (<em>float</em>) – Row subsampling ratio.</p></li>
+<li><p><strong>colsample_bytree</strong> (<em>float</em>) – Column subsampling ratio per tree.</p></li>
+<li><p><strong>reg_lambda</strong> (<em>float</em>) – L2 regularisation weight.</p></li>
+<li><p><strong>reg_alpha</strong> (<em>float</em>) – L1 regularisation weight.</p></li>
+<li><p><strong>vectorizer_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Extra CLI arguments associated with the vectoriser.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>text_vectorizer</strong> (<em>str</em>)</p></li>
 <li><p><strong>vectorizer_tag</strong> (<em>str</em>)</p></li>
 <li><p><strong>learning_rate</strong> (<em>float</em>)</p></li>
@@ -2464,13 +2779,16 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.booster_params">
 <span class="sig-name descname"><span class="pre">booster_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.booster_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.booster_params" title="Link to this definition">¶</a></dt>
-<dd><p>Convert the sweep config into <code class="xref py py-class docutils literal notranslate"><span class="pre">XGBoostBoosterParams</span></code>.</p>
+<dd><p>Convert the sweep configuration into <code class="xref py py-class docutils literal notranslate"><span class="pre">XGBoostBoosterParams</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams"><em>XGBoostBoosterParams</em></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Booster parameter bundle mirroring this configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#xgb.model.XGBoostBoosterParams" title="xgb.model.XGBoostBoosterParams">XGBoostBoosterParams</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2478,13 +2796,16 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.cli_args">
 <span class="sig-name descname"><span class="pre">cli_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.cli_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.cli_args" title="Link to this definition">¶</a></dt>
-<dd><p>Return CLI overrides encoding this configuration.</p>
+<dd><p>Serialise the configuration into CLI arguments for <a class="reference internal" href="#module-xgb.cli" title="xgb.cli"><code class="xref py py-mod docutils literal notranslate"><span class="pre">xgb.cli</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of CLI flags encoding the configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2497,10 +2818,13 @@ explaining that the section was intentionally skipped.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepConfig.label">
 <span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepConfig.label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepConfig.label" title="Link to this definition">¶</a></dt>
-<dd><p>Filesystem-friendly label.</p>
+<dd><p>Produce a filesystem- and report-friendly identifier.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Composite label encoding vectoriser and booster parameters.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2556,12 +2880,24 @@ explaining that the section was intentionally skipped.</p>
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_context.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Metrics captured for a (study, config) combination.</p>
+<p>Metrics captured for a (study, configuration) sweep evaluation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>order_index</strong> (<em>int</em>) – Deterministic ordering index assigned to the task.</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata associated with the sweep.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>) – Evaluated sweep configuration.</p></li>
+<li><p><strong>accuracy</strong> (<em>float</em>) – Validation accuracy achieved by the configuration.</p></li>
+<li><p><strong>coverage</strong> (<em>float</em>) – Validation coverage achieved by the configuration.</p></li>
+<li><p><strong>evaluated</strong> (<em>int</em>) – Number of evaluation rows.</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>) – Filesystem path to the metrics artefact.</p></li>
+<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>) – Raw metrics payload loaded from disk.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
 <li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
 <li><p><strong>coverage</strong> (<em>float</em>)</p></li>
@@ -2608,7 +2944,7 @@ explaining that the section was intentionally skipped.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepOutcome.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.study" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepOutcome.study" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2619,8 +2955,17 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>CLI arguments shared across sweep invocations.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Baseline CLI arguments applied to every sweep run.</p></li>
+<li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional CLI flags appended for each invocation.</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>) – Root directory where sweep artefacts are written.</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm passed to XGBoost.</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>) – Parallel worker count for sweep execution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
@@ -2662,10 +3007,22 @@ explaining that the section was intentionally skipped.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container describing a single sweep execution request.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>) – Stable index used for ordering and scheduling.</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>) – Study metadata being evaluated.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>) – Sweep configuration executed for the study.</p></li>
+<li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Baseline CLI arguments shared across tasks.</p></li>
+<li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Additional passthrough CLI arguments.</p></li>
+<li><p><strong>run_root</strong> (<em>Path</em>) – Directory under which sweep artefacts are stored.</p></li>
+<li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm supplied to XGBoost.</p></li>
+<li><p><strong>metrics_path</strong> (<em>Path</em>) – Target path for the <code class="docutils literal notranslate"><span class="pre">metrics.json</span></code> artefact.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><em>StudySpec</em></a>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><em>StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline_context.SweepConfig" title="xgb.pipeline_context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
 <li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
@@ -2707,7 +3064,7 @@ explaining that the section was intentionally skipped.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.SweepTask.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="xgb.pipeline_context.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.study" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.StudySpec" title="common.pipeline_models.StudySpec"><span class="pre">StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.SweepTask.study" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2720,6 +3077,26 @@ explaining that the section was intentionally skipped.</p>
 <p id="module-xgb.pipeline_evaluate">Finalize-stage helpers for the XGBoost pipeline.</p>
 <p id="module-xgb.pipeline_reports">Report generation helpers for the XGBoost pipeline.</p>
 <p id="module-xgb.pipeline_sweeps">Sweep orchestration helpers for the XGBoost pipeline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="xgb.pipeline_sweeps.execute_opinion_sweep_tasks">
+<span class="sig-prename descclassname"><span class="pre">xgb.pipeline_sweeps.</span></span><span class="sig-name descname"><span class="pre">execute_opinion_sweep_tasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xgb.pipeline_sweeps.execute_opinion_sweep_tasks" title="Link to this definition">¶</a></dt>
+<dd><p>Execute opinion sweep tasks, optionally in parallel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tasks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask" title="xgb.pipeline_context.OpinionSweepTask"><em>OpinionSweepTask</em></a><em>]</em>) – Opinion sweep tasks to execute.</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>) – Maximum number of parallel workers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ordered list of opinion sweep outcomes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome">OpinionSweepOutcome</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -3006,15 +3383,14 @@ explaining that the section was intentionally skipped.</p>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionStageConfig.tree_method"><code class="docutils literal notranslate"><span class="pre">OpinionStageConfig.tree_method</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></a><ul>
-<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.config"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.config</span></code></a></li>
-<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.outcome"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.outcome</span></code></a></li>
-<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection.study"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection.study</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary"><code class="docutils literal notranslate"><span class="pre">OpinionSummary</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.accuracy_after"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.accuracy_after</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.accuracy_delta"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.accuracy_delta</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.baseline_accuracy"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.baseline_accuracy</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.baseline_mae"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.baseline_mae</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.dataset"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.dataset</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.eligible"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.eligible</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.label"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.label</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.mae_after"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.mae_after</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSummary.mae_delta"><code class="docutils literal notranslate"><span class="pre">OpinionSummary.mae_delta</span></code></a></li>
@@ -3025,7 +3401,11 @@ explaining that the section was intentionally skipped.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.accuracy"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.accuracy</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.accuracy_delta"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.accuracy_delta</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.baseline_accuracy"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.baseline_accuracy</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.config"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.config</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.eligible"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.eligible</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.mae"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.mae</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.metrics</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome.metrics_path"><code class="docutils literal notranslate"><span class="pre">OpinionSweepOutcome.metrics_path</span></code></a></li>
@@ -3055,13 +3435,7 @@ explaining that the section was intentionally skipped.</p>
 <li><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask.study"><code class="docutils literal notranslate"><span class="pre">OpinionSweepTask.study</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection"><code class="docutils literal notranslate"><span class="pre">StudySelection</span></code></a><ul>
-<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.config"><code class="docutils literal notranslate"><span class="pre">StudySelection.config</span></code></a></li>
-<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.evaluation_slug"><code class="docutils literal notranslate"><span class="pre">StudySelection.evaluation_slug</span></code></a></li>
-<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.outcome"><code class="docutils literal notranslate"><span class="pre">StudySelection.outcome</span></code></a></li>
-<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection.study"><code class="docutils literal notranslate"><span class="pre">StudySelection.study</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#xgb.pipeline_context.StudySelection"><code class="docutils literal notranslate"><span class="pre">StudySelection</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.StudySpec"><code class="docutils literal notranslate"><span class="pre">StudySpec</span></code></a><ul>
 <li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.evaluation_slug"><code class="docutils literal notranslate"><span class="pre">StudySpec.evaluation_slug</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_context.StudySpec.issue"><code class="docutils literal notranslate"><span class="pre">StudySpec.issue</span></code></a></li>
@@ -3117,6 +3491,7 @@ explaining that the section was intentionally skipped.</p>
 <li><a class="reference internal" href="#xgb.pipeline_context.SweepTask.tree_method"><code class="docutils literal notranslate"><span class="pre">SweepTask.tree_method</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#xgb.pipeline_sweeps.execute_opinion_sweep_tasks"><code class="docutils literal notranslate"><span class="pre">execute_opinion_sweep_tasks()</span></code></a></li>
 </ul>
 </li>
 </ul>

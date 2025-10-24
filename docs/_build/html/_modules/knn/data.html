@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,7 +253,6 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.data</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Dataset loading and issue filtering utilities for the KNN baseline.&quot;&quot;&quot;</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -278,12 +277,21 @@
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;KNN_PROMPT_MAX_HISTORY&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GRAIL_MAX_HISTORY&quot;</span><span class="p">,</span> <span class="s2">&quot;12&quot;</span><span class="p">))</span>
 <span class="p">)</span>
 
-
 <div class="viewcode-block" id="load_dataset_source">
 <a class="viewcode-back" href="../../api/xgb.html#knn.data.load_dataset_source">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_dataset_source</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a cleaned dataset from disk or from the Hugging Face Hub.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a cleaned dataset from disk or from the Hugging Face Hub.</span>
 
+<span class="sd">    :param source: Local directory path or Hugging Face dataset identifier.</span>
+<span class="sd">    :type source: str</span>
+<span class="sd">    :param cache_dir: Cache directory passed to :func:`datasets.load_dataset`.</span>
+<span class="sd">    :type cache_dir: str</span>
+<span class="sd">    :returns: Dataset dictionary containing train and validation splits.</span>
+<span class="sd">    :rtype: datasets.DatasetDict</span>
+<span class="sd">    :raises ImportError: If :mod:`datasets` is unavailable.</span>
+<span class="sd">    :raises ValueError: When ``source`` does not yield a :class:`datasets.DatasetDict`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">load_dataset</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">load_from_disk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;datasets must be installed to load the GRAIL dataset&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
@@ -294,39 +302,54 @@
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset </span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s2"> did not return splits in a DatasetDict&quot;</span><span class="p">)</span></div>
 
 
-
 <div class="viewcode-block" id="issues_in_dataset">
 <a class="viewcode-back" href="../../api/xgb.html#knn.data.issues_in_dataset">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">issues_in_dataset</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the list of issue labels present in the dataset.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">issues_in_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the list of issue labels present in the dataset.</span>
 
-    <span class="n">train_split</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TRAIN_SPLIT</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+<span class="sd">    :param dataset: Dataset dictionary containing at least one split.</span>
+<span class="sd">    :type dataset: datasets.DatasetDict</span>
+<span class="sd">    :returns: Sorted list of issue identifiers or ``[&#39;all&#39;]`` when absent.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">train_split</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TRAIN_SPLIT</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
     <span class="k">if</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">train_split</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span>
     <span class="n">issues</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">train_split</span><span class="p">[</span><span class="s2">&quot;issue&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()})</span>
     <span class="k">return</span> <span class="n">issues</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span></div>
 
 
-
 <div class="viewcode-block" id="filter_dataset_for_issue">
 <a class="viewcode-back" href="../../api/xgb.html#knn.data.filter_dataset_for_issue">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_issue</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a dataset filtered down to a specific issue label.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_issue</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a dataset down to a specific issue label.</span>
 
-    <span class="k">if</span> <span class="n">issue</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ds</span>
+<span class="sd">    :param dataset: Dataset dictionary containing the ``issue`` column.</span>
+<span class="sd">    :type dataset: datasets.DatasetDict</span>
+<span class="sd">    :param issue: Issue label to retain (``all`` preserves every row).</span>
+<span class="sd">    :type issue: str</span>
+<span class="sd">    :returns: Dataset dictionary restricted to rows matching ``issue``.</span>
+<span class="sd">    :rtype: datasets.DatasetDict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">issue</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">]</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataset</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_match_issue</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the row&#39;s issue matches the requested label.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine whether the row&#39;s issue matches the requested label.</span>
 
 <span class="sd">        :param row: Dataset example containing an ``issue`` column.</span>
-<span class="sd">        :returns: Whether the row belongs to the requested issue slice.</span>
+<span class="sd">        :type row: Dict[str, Any]</span>
+<span class="sd">        :returns: ``True`` when the row belongs to the requested issue slice.</span>
+<span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">issue</span>
 
     <span class="n">filtered</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="s2">&quot;issue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
             <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span>
         <span class="k">else</span><span class="p">:</span>
@@ -334,10 +357,15 @@
     <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span></div>
 
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_study_tokens</span><span class="p">(</span><span class="n">studies</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a normalised set of study tokens.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalise raw participant-study tokens.</span>
 
+<span class="sd">    :param studies: Iterable of study identifiers provided by the user.</span>
+<span class="sd">    :type studies: Iterable[str]</span>
+<span class="sd">    :returns: Lower-cased, de-duplicated set excluding ``all`` markers.</span>
+<span class="sd">    :rtype: set[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalised</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">studies</span><span class="p">:</span>
         <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -346,12 +374,19 @@
         <span class="n">normalised</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">normalised</span>
 
-
 <div class="viewcode-block" id="filter_split_for_participant_studies">
 <a class="viewcode-back" href="../../api/xgb.html#knn.data.filter_split_for_participant_studies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_split_for_participant_studies</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a HF dataset split to the requested ``participant_study`` tokens.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter a dataset split to the requested ``participant_study`` tokens.</span>
 
+<span class="sd">    :param split_ds: Dataset split supporting :meth:`filter`.</span>
+<span class="sd">    :type split_ds: datasets.Dataset</span>
+<span class="sd">    :param studies: Study identifiers to retain.</span>
+<span class="sd">    :type studies: Sequence[str]</span>
+<span class="sd">    :returns: Filtered dataset split covering only the requested studies.</span>
+<span class="sd">    :rtype: datasets.Dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="n">_normalise_study_tokens</span><span class="p">(</span><span class="n">studies</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">split_ds</span>
@@ -359,26 +394,42 @@
         <span class="k">return</span> <span class="n">split_ds</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_match_study</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the row&#39;s ``participant_study`` matches the filter.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine whether the row&#39;s ``participant_study`` matches the filter.</span>
 
+<span class="sd">        :param row: Dataset example retrieved from ``split_ds``.</span>
+<span class="sd">        :type row: Dict[str, Any]</span>
+<span class="sd">        :returns: ``True`` when the row should be retained.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_study&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">normalized</span>
 
     <span class="k">return</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_match_study</span><span class="p">)</span></div>
 
 
-
 <div class="viewcode-block" id="filter_dataset_for_participant_studies">
 <a class="viewcode-back" href="../../api/xgb.html#knn.data.filter_dataset_for_participant_studies">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_participant_studies</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">studies</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a dataset filtered to rows whose ``participant_study`` matches ``studies``.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_participant_studies</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
+    <span class="n">studies</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter the dataset to rows whose ``participant_study`` matches ``studies``.</span>
 
+<span class="sd">    :param dataset: Dataset dictionary containing the ``participant_study`` column.</span>
+<span class="sd">    :type dataset: datasets.DatasetDict</span>
+<span class="sd">    :param studies: Study identifiers to retain.</span>
+<span class="sd">    :type studies: Iterable[str]</span>
+<span class="sd">    :returns: Dataset dictionary filtered to the requested studies.</span>
+<span class="sd">    :rtype: datasets.DatasetDict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="n">_normalise_study_tokens</span><span class="p">(</span><span class="n">studies</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ds</span>
+        <span class="k">return</span> <span class="n">dataset</span>
 
     <span class="n">filtered</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="s2">&quot;participant_study&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
             <span class="n">filtered</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_ds</span>
         <span class="k">else</span><span class="p">:</span>
@@ -387,7 +438,6 @@
                 <span class="ow">in</span> <span class="n">norm</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span></div>
-
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>

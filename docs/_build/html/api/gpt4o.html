@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -317,7 +317,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dd><p>Construct or reuse the singleton Azure OpenAI client.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>openai.AzureOpenAI</p>
+<dd class="field-odd"><p><em>Any</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -503,9 +503,51 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.titles.TitleResolver.with_directories">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">with_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">directories</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver.with_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver.with_directories" title="Link to this definition">¶</a></dt>
+<dd><p>Return a resolver overriding the default search directories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directories</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver"><em>TitleResolver</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <p id="module-gpt4o.utils">Shared utility helpers for the GPT-4o slate baseline.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.canon_text">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_text" title="Link to this definition">¶</a></dt>
+<dd><p>Normalise <code class="docutils literal notranslate"><span class="pre">value</span></code> using the shared canonical text helper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.canon_video_id">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_video_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_video_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_video_id" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a canonical YouTube id from <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.is_nan_like">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">is_nan_like</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#is_nan_like"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.is_nan_like" title="Link to this definition">¶</a></dt>
@@ -516,6 +558,34 @@ We keep the behaviour but allow shell overrides to win.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.resolve_paths_from_env">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_paths_from_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env_vars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#resolve_paths_from_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.resolve_paths_from_env" title="Link to this definition">¶</a></dt>
+<dd><p>Return resolved filesystem paths aggregated from <code class="docutils literal notranslate"><span class="pre">env_vars</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>env_vars</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.split_env_list">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">split_env_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#split_env_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.split_env_list" title="Link to this definition">¶</a></dt>
+<dd><p>Split <code class="docutils literal notranslate"><span class="pre">raw</span></code> using the separators understood by the common helper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -546,6 +616,49 @@ We keep the behaviour but allow shell overrides to win.</p>
 </ol>
 <p>Each sweep delegates to <a class="reference internal" href="#module-gpt4o.cli" title="gpt4o.cli"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gpt4o.cli</span></code></a> to avoid drift between the public CLI
 and the scripted pipeline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Convenience container aggregating resolved output directories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>final_out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>reports_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.cache_dir">
+<span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.cache_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.final_out_dir">
+<span class="sig-name descname"><span class="pre">final_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.final_out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.out_dir">
+<span class="sig-name descname"><span class="pre">out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.reports_dir">
+<span class="sig-name descname"><span class="pre">reports_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.reports_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.sweep_dir">
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
@@ -732,11 +845,24 @@ and the scripted pipeline.</p>
 <li><a class="reference internal" href="#gpt4o.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver.__init__"><code class="docutils literal notranslate"><span class="pre">TitleResolver.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.titles.TitleResolver.with_directories"><code class="docutils literal notranslate"><span class="pre">TitleResolver.with_directories()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gpt4o.utils.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.is_nan_like"><code class="docutils literal notranslate"><span class="pre">is_nan_like()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
 <li><a class="reference internal" href="#module-gpt4o.pipeline">Pipeline Orchestration</a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths"><code class="docutils literal notranslate"><span class="pre">PipelinePaths</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.cache_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.final_out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.final_out_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.out_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.reports_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.reports_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.sweep_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.sweep_dir</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig"><code class="docutils literal notranslate"><span class="pre">SweepConfig</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.cli_args"><code class="docutils literal notranslate"><span class="pre">SweepConfig.cli_args()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.label"><code class="docutils literal notranslate"><span class="pre">SweepConfig.label()</span></code></a></li>

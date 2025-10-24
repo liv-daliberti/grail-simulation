@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -254,17 +254,18 @@
           <h1>Source code for prompt_builder.prompt</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Top-level prompt construction entry points.&quot;&quot;&quot;</span>
 
+<span class="c1"># pylint: disable=too-many-lines</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.formatters</span><span class="w"> </span><span class="kn">import</span> <span class="n">clean_text</span><span class="p">,</span> <span class="n">human_join</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_list_json</span><span class="p">,</span> <span class="n">format_count</span><span class="p">,</span> <span class="n">format_yes_no</span><span class="p">,</span> <span class="n">is_nanlike</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.profiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProfileRender</span><span class="p">,</span> <span class="n">render_profile</span><span class="p">,</span> <span class="n">synthesize_viewer_sentence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">first_non_nan_value</span><span class="p">,</span> <span class="n">load_selected_survey_row</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.value_maps</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_field_value</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.video_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">lookup_video_stats</span>
 
@@ -273,8 +274,11 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the last index of ``val`` within ``xs`` when ``xs`` is a list.</span>
 
 <span class="sd">    :param xs: Sequence potentially containing ``val``.</span>
+<span class="sd">    :type xs: Any</span>
 <span class="sd">    :param val: Value to locate.</span>
+<span class="sd">    :type val: Any</span>
 <span class="sd">    :returns: Zero-based index or ``None`` when not found.</span>
+<span class="sd">    :rtype: Optional[int]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -286,45 +290,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_selected_row</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``selected_survey_row`` mapping, if present.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the ``selected_survey_row`` mapping from ``ex`` when available.</span>
 
-    <span class="n">raw</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selected_survey_row&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">parsed</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{}</span>
-        <span class="k">return</span> <span class="n">parsed</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
-    <span class="n">as_py</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">&quot;as_py&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">as_py</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="n">as_py</span><span class="p">()</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">candidate</span>
-    <span class="k">return</span> <span class="p">{}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_first_value</span><span class="p">(</span>
-    <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first non-null value matched across example and selected row.&quot;&quot;&quot;</span>
-
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ex</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">value</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="kc">None</span>
+<span class="sd">    :param ex: Dataset example potentially containing inline or serialised survey metadata.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :returns: Normalised dictionary representation of the selected survey row.</span>
+<span class="sd">    :rtype: Dict[str, Any]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">load_selected_survey_row</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="build_user_prompt">
@@ -398,7 +372,19 @@
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileRender</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a condensed single-line viewer description.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a compact viewer descriptor suitable for the ``VIEWER`` heading.</span>
+
+<span class="sd">    :param ex: Primary dataset row with viewer and survey metadata.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param selected: Normalised ``selected_survey_row`` mapping extracted from ``ex``.</span>
+<span class="sd">    :type selected: Dict[str, Any]</span>
+<span class="sd">    :param profile: Full profile rendering returned by</span>
+<span class="sd">        :func:`prompt_builder.profiles.render_profile`.</span>
+<span class="sd">    :type profile: ProfileRender</span>
+<span class="sd">    :returns: Single sentence summarising identity and location, or an empty string.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">merged</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span>
     <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
@@ -430,7 +416,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fragments_from_profile</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">ProfileRender</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fallback viewer fragments derived from existing profile sentences.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Derive fallback fragments from an existing :class:`ProfileRender`.</span>
+
+<span class="sd">    :param profile: Rendered profile containing ordered sentences.</span>
+<span class="sd">    :type profile: ProfileRender</span>
+<span class="sd">    :returns: List containing the first sentence stripped of punctuation, or empty</span>
+<span class="sd">        when unavailable.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">sentences</span><span class="p">:</span>
         <span class="n">cleaned</span> <span class="o">=</span> <span class="n">sentence</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -440,7 +434,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_viewer_fragments</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the synthesised viewer sentence into semicolon-ready fragments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split a synthesised viewer sentence into semicolon-ready fragments.</span>
+
+<span class="sd">    :param raw: Raw viewer sentence produced by :func:`synthesize_viewer_sentence`.</span>
+<span class="sd">    :type raw: str</span>
+<span class="sd">    :returns: Ordered list of descriptive fragments prioritising identity elements.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">text</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;,</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
@@ -479,7 +480,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_looks_like_gender_fragment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the fragment appears to describe gender.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Heuristically determine whether ``text`` refers to gender.</span>
+
+<span class="sd">    :param text: Fragment extracted from a viewer sentence.</span>
+<span class="sd">    :type text: str</span>
+<span class="sd">    :returns: ``True`` when gender-related keywords are detected.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">lowered</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">gender_keywords</span> <span class="o">=</span> <span class="p">[</span>
@@ -495,7 +503,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_looks_like_race_fragment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the fragment appears to describe race/ethnicity.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Heuristically determine whether ``text`` refers to race or ethnicity.</span>
+
+<span class="sd">    :param text: Fragment extracted from a viewer sentence.</span>
+<span class="sd">    :type text: str</span>
+<span class="sd">    :returns: ``True`` when race-related keywords are detected.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">lowered</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">race_keywords</span> <span class="o">=</span> <span class="p">[</span>
@@ -518,7 +533,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_location_fragment</span><span class="p">(</span><span class="n">profile</span><span class="p">:</span> <span class="n">ProfileRender</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract a location fragment from profile sentences when available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract a location fragment from profile sentences when available.</span>
+
+<span class="sd">    :param profile: Rendered profile containing viewer sentences.</span>
+<span class="sd">    :type profile: ProfileRender</span>
+<span class="sd">    :returns: Fragment such as ``\&quot;lives in Seattle, Washington\&quot;`` or ``\&quot;\&quot;`` if none found.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">sentences</span><span class="p">:</span>
         <span class="n">stripped</span> <span class="o">=</span> <span class="n">sentence</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -536,9 +558,18 @@
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a concise description of the viewer&#39;s initial stance on the issue.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a concise description of the viewer&#39;s initial stance on the active issue.</span>
 
-    <span class="n">issue_raw</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;issue&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;topic&quot;</span><span class="p">)</span>
+<span class="sd">    :param ex: Dataset example containing issue identifier and survey responses.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param selected: Normalised ``selected_survey_row`` mapping.</span>
+<span class="sd">    :type selected: Dict[str, Any]</span>
+<span class="sd">    :returns: Natural-language stance description, or an empty string when the issue is unknown.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">issue_raw</span> <span class="o">=</span> <span class="n">first_non_nan_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">&quot;issue&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;topic&quot;</span><span class="p">)</span>
     <span class="n">issue</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">issue_raw</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">issue</span> <span class="o">==</span> <span class="s2">&quot;minimum_wage&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_minimum_wage_viewpoint</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
@@ -552,10 +583,21 @@
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first yes/no text resolved across ``keys``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the first yes/no style response across ``keys``.</span>
+
+<span class="sd">    :param ex: Dataset example consulted before fallback values.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param selected: Normalised ``selected_survey_row`` mapping.</span>
+<span class="sd">    :type selected: Dict[str, Any]</span>
+<span class="sd">    :param keys: Ordered field names searched for boolean responses.</span>
+<span class="sd">    :type keys: Sequence[str]</span>
+<span class="sd">    :returns: Lowercase ``\&quot;yes\&quot;`` or ``\&quot;no\&quot;`` when found, otherwise ``None``.</span>
+<span class="sd">    :rtype: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">first_non_nan_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">verdict</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -568,31 +610,76 @@
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single-sentence summary of minimum wage attitudes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarise the viewer&#39;s stance on minimum wage policy.</span>
 
-    <span class="n">yes_no</span> <span class="o">=</span> <span class="n">_first_yes_no</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;minwage15_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage15_w1&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">yes_no</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Supports a $15 minimum wage&quot;</span>
-    <span class="k">if</span> <span class="n">yes_no</span> <span class="o">==</span> <span class="s2">&quot;no&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Opposes a $15 minimum wage&quot;</span>
+<span class="sd">    :param ex: Dataset example with minimum wage survey responses.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param selected: Normalised ``selected_survey_row`` mapping.</span>
+<span class="sd">    :type selected: Dict[str, Any]</span>
+<span class="sd">    :returns: Sentence describing support level or preferred wage, or ``\&quot;\&quot;`` if indeterminate.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">yes_no</span> <span class="o">=</span> <span class="n">_first_yes_no</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;mw_support_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;mw_support_w1&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">yes_no</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Supports raising the minimum wage&quot;</span>
-    <span class="k">if</span> <span class="n">yes_no</span> <span class="o">==</span> <span class="s2">&quot;no&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Opposes raising the minimum wage&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">yes_no_phrase</span><span class="p">(</span><span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">yes</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">no</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Map yes/no style responses across ``keys`` to canned phrases.</span>
 
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;minwage_text_r_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_r_w1&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_w1&quot;</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-        <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Preferred minimum wage is about </span><span class="si">{</span><span class="n">formatted</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="sd">        :param keys: Ordered field names examined for boolean responses.</span>
+<span class="sd">        :type keys: Sequence[str]</span>
+<span class="sd">        :param yes: Phrase returned when a ``\&quot;yes\&quot;`` response is found.</span>
+<span class="sd">        :type yes: str</span>
+<span class="sd">        :param no: Phrase returned when a ``\&quot;no\&quot;`` response is found.</span>
+<span class="sd">        :type no: str</span>
+<span class="sd">        :returns: Matching phrase or ``None`` when no definitive response exists.</span>
+<span class="sd">        :rtype: Optional[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verdict</span> <span class="o">=</span> <span class="n">_first_yes_no</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;yes&quot;</span><span class="p">:</span> <span class="n">yes</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">:</span> <span class="n">no</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">verdict</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;mw_index_w1&quot;</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-        <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Minimum wage support score is </span><span class="si">{</span><span class="n">formatted</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">first_formatted</span><span class="p">(</span><span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">template</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Format the first non-missing value across ``keys`` using ``template``.</span>
+
+<span class="sd">        :param keys: Candidate field names to inspect.</span>
+<span class="sd">        :type keys: Sequence[str]</span>
+<span class="sd">        :param template: ``str.format`` template that receives the formatted value.</span>
+<span class="sd">        :type template: str</span>
+<span class="sd">        :returns: Rendered string or ``None`` when no values are available.</span>
+<span class="sd">        :rtype: Optional[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">first_non_nan_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">formatted</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">yes_no_phrase</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;minwage15_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage15_w1&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;Supports a $15 minimum wage&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Opposes a $15 minimum wage&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">yes_no_phrase</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;mw_support_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;mw_support_w1&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;Supports raising the minimum wage&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Opposes raising the minimum wage&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">first_formatted</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;minwage_text_r_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_r_w1&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;minwage_text_w1&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;Preferred minimum wage is about </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">first_formatted</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span> <span class="s2">&quot;mw_index_w1&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;Minimum wage support score is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">candidate</span>
     <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
 
@@ -600,13 +687,28 @@
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single-sentence summary of gun policy attitudes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarise the viewer&#39;s stance on gun control policy.</span>
+
+<span class="sd">    :param ex: Dataset example with gun policy responses.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param selected: Normalised ``selected_survey_row`` mapping.</span>
+<span class="sd">    :type selected: Dict[str, Any]</span>
+<span class="sd">    :returns: Sentence describing support level for specific gun policies, or ``\&quot;\&quot;`` if unknown.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">yes_phrase</span><span class="p">,</span> <span class="n">no_phrase</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="p">(</span><span class="s2">&quot;stricter_laws&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Supports stricter gun laws&quot;</span><span class="p">,</span> <span class="s2">&quot;Opposes stricter gun laws&quot;</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">&quot;handgun_ban&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Supports a handgun ban&quot;</span><span class="p">,</span> <span class="s2">&quot;Opposes a handgun ban&quot;</span><span class="p">)),</span>
-        <span class="p">(</span><span class="s2">&quot;assault_ban&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Supports an assault weapons ban&quot;</span><span class="p">,</span> <span class="s2">&quot;Opposes an assault weapons ban&quot;</span><span class="p">)),</span>
-        <span class="p">(</span><span class="s2">&quot;concealed_safe&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;Believes concealed carry is safe&quot;</span><span class="p">,</span> <span class="s2">&quot;Believes concealed carry is unsafe&quot;</span><span class="p">)),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;assault_ban&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">&quot;Supports an assault weapons ban&quot;</span><span class="p">,</span> <span class="s2">&quot;Opposes an assault weapons ban&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;concealed_safe&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">&quot;Believes concealed carry is safe&quot;</span><span class="p">,</span> <span class="s2">&quot;Believes concealed carry is unsafe&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
     <span class="p">):</span>
         <span class="n">verdict</span> <span class="o">=</span> <span class="n">_first_yes_no</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,))</span>
         <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
@@ -615,7 +717,7 @@
             <span class="k">return</span> <span class="n">no_phrase</span>
 
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;gun_policy&quot;</span><span class="p">,</span> <span class="s2">&quot;gun_identity&quot;</span><span class="p">,</span> <span class="s2">&quot;gun_priority&quot;</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">first_non_nan_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">formatted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">formatted</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">formatted</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
@@ -626,7 +728,7 @@
         <span class="p">(</span><span class="s2">&quot;gun_index_2&quot;</span><span class="p">,</span> <span class="s2">&quot;Gun regulation support score (alt) is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">&quot;gun_enthusiasm&quot;</span><span class="p">,</span> <span class="s2">&quot;Gun enthusiasm is </span><span class="si">{value}</span><span class="s2">&quot;</span><span class="p">),</span>
     <span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">_first_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">first_non_nan_value</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="n">formatted</span> <span class="o">=</span> <span class="n">format_field_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="n">formatted</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">formatted</span><span class="p">)</span>
@@ -634,7 +736,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_current_video_line</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single-line description of the currently playing video.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarise the current video being watched.</span>
+
+<span class="sd">    :param ex: Dataset example containing ``current_video_*`` fields.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether to include the YouTube video id in the output.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :returns: Readable description of the active video or ``\&quot;\&quot;`` if no data exists.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_title&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">160</span><span class="p">)</span>
     <span class="n">current_id</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">))</span>
@@ -652,7 +763,18 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_history_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return lines summarising prior session history.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format prior watch history as numbered lines.</span>
+
+<span class="sd">    :param ex: Dataset example containing ``watch_history`` details.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether to append YouTube ids to each entry.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :param max_hist: Maximum number of history entries to include.</span>
+<span class="sd">    :type max_hist: int</span>
+<span class="sd">    :returns: Ordered list of numbered history lines, newest last.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">prior_entries</span> <span class="o">=</span> <span class="n">_prior_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">prior_entries</span><span class="p">:</span>
@@ -672,7 +794,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_survey_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return formatted survey highlight lines.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Produce sentence fragments highlighting survey responses.</span>
+
+<span class="sd">    :param ex: Dataset example potentially containing ``survey_highlights`` metadata.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :returns: List containing a single formatted survey highlight sentence, or</span>
+<span class="sd">        empty when unavailable.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">sentence</span> <span class="o">=</span> <span class="n">_survey_highlights</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">sentence</span><span class="p">:</span>
@@ -684,7 +814,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_options_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return lines describing the recommendation slate options.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render recommendation options as numbered lines.</span>
+
+<span class="sd">    :param ex: Dataset example containing ``slate_items_json`` data.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether to display YouTube ids alongside titles.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :returns: List of formatted option strings ready for inclusion in the prompt.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">items</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
@@ -765,34 +904,49 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_int_to_words</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert ``number`` (0-999) into its hyphenated English representation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert ``number`` (0–999) into a hyphenated English phrase.</span>
+
+<span class="sd">    :param number: Integer value to verbalise.</span>
+<span class="sd">    :type number: int</span>
+<span class="sd">    :returns: Lowercase English words or ``None`` when the number is outside the supported range.</span>
+<span class="sd">    :rtype: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="mi">999</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UNDER_TWENTY</span><span class="p">[</span><span class="n">number</span><span class="p">]</span>
+
+    <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
         <span class="n">tens</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">_TENS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tens</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">base</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">remainder</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">_UNDER_TWENTY</span><span class="p">[</span><span class="n">remainder</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="n">base</span>
-    <span class="n">hundreds</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">hundreds</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_UNDER_TWENTY</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">words</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_UNDER_TWENTY</span><span class="p">[</span><span class="n">hundreds</span><span class="p">]</span><span class="si">}</span><span class="s2"> hundred&quot;</span>
-    <span class="k">if</span> <span class="n">remainder</span><span class="p">:</span>
-        <span class="n">tail</span> <span class="o">=</span> <span class="n">_int_to_words</span><span class="p">(</span><span class="n">remainder</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">tail</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">base</span> <span class="k">if</span> <span class="n">remainder</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">_UNDER_TWENTY</span><span class="p">[</span><span class="n">remainder</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">hundreds</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hundreds</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_UNDER_TWENTY</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">words</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="n">words</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_UNDER_TWENTY</span><span class="p">[</span><span class="n">hundreds</span><span class="p">]</span><span class="si">}</span><span class="s2"> hundred&quot;</span>
+        <span class="k">if</span> <span class="n">remainder</span><span class="p">:</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="n">_int_to_words</span><span class="p">(</span><span class="n">remainder</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tail</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">result</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_percentage_to_words</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a percentage string into an approximate verbal description.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a percentage string into an approximate verbal description.</span>
+
+<span class="sd">    :param value: Percentage text such as ``\&quot;65%\&quot;``.</span>
+<span class="sd">    :type value: str</span>
+<span class="sd">    :returns: Phrase like ``\&quot;about sixty-five percent\&quot;`` or ``None`` if parsing fails.</span>
+<span class="sd">    :rtype: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">text</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">):</span>
@@ -813,7 +967,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_highlight_value</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable survey highlight value for ``field``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert ``raw_value`` into a highlight-ready description for ``field``.</span>
+
+<span class="sd">    :param field: Dataset field name associated with the highlight.</span>
+<span class="sd">    :type field: str</span>
+<span class="sd">    :param raw_value: Original value retrieved from the interaction row.</span>
+<span class="sd">    :type raw_value: Any</span>
+<span class="sd">    :returns: Readable summary string or ``\&quot;\&quot;`` if the field should be skipped.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;gun_enthusiasm&quot;</span><span class="p">:</span>
         <span class="n">verdict</span> <span class="o">=</span> <span class="n">format_yes_no</span><span class="p">(</span><span class="n">raw_value</span><span class="p">,</span> <span class="n">yes</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">no</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">)</span>
@@ -832,7 +995,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_survey_highlights</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sentence summarising key survey features.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a sentence summarising the most relevant survey highlights.</span>
+
+<span class="sd">    :param ex: Dataset example containing highlight candidate fields.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
+<span class="sd">    :returns: Sentence prefixed with ``\&quot;Survey highlights:\&quot;`` or ``\&quot;\&quot;`` if nothing applies.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">highlights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">template</span> <span class="ow">in</span> <span class="n">SURVEY_HIGHLIGHT_SPECS</span><span class="p">:</span>
@@ -861,7 +1031,18 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_option_line</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable line for a specific slate option.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render a single entry in the recommendation slate.</span>
+
+<span class="sd">    :param position: One-based index of the recommendation.</span>
+<span class="sd">    :type position: int</span>
+<span class="sd">    :param item: Slate item metadata including title, id, and channel.</span>
+<span class="sd">    :type item: Dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether to append the YouTube id when present.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :returns: Fully formatted option line ready for inclusion in the prompt.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">160</span><span class="p">)</span>
     <span class="n">option_id</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">))</span>
@@ -892,10 +1073,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prior_entries</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return watch-history entries preceding the current video.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return watch-history entries that precede the current video.</span>
 
-<span class="sd">    :param ex: Interaction row containing history payloads.</span>
+<span class="sd">    :param ex: Interaction row containing watch history payloads.</span>
+<span class="sd">    :type ex: Dict[str, Any]</span>
 <span class="sd">    :returns: List of entry dictionaries ordered chronologically.</span>
+<span class="sd">    :rtype: List[dict]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">vids</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
     <span class="n">detailed</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">))</span>
@@ -917,11 +1101,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_watched_descriptor</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted descriptor summarising a watched video.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Produce a narrative description of a previously watched video.</span>
 
 <span class="sd">    :param record: Dictionary containing watch metadata.</span>
+<span class="sd">    :type record: Dict[str, Any]</span>
 <span class="sd">    :param show_ids: Whether to include identifiers in the descriptor.</span>
+<span class="sd">    :type show_ids: bool</span>
 <span class="sd">    :returns: Descriptor string describing watch progress and metadata.</span>
+<span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
         <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_title&quot;</span><span class="p">),</span>
@@ -972,9 +1160,18 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_duration_seconds</span><span class="p">(</span>
     <span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+   <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first positive duration found in ``record`` for ``keys``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the first positive duration from ``record`` across ``keys``.</span>
+
+<span class="sd">    :param record: Mapping containing raw duration values.</span>
+<span class="sd">    :type record: Dict[str, Any]</span>
+<span class="sd">    :param keys: Candidate field names inspected in order.</span>
+<span class="sd">    :type keys: Sequence[str]</span>
+<span class="sd">    :returns: Duration in seconds when a positive value is found, otherwise ``None``.</span>
+<span class="sd">    :rtype: Optional[float]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">record</span><span class="p">:</span>
@@ -995,10 +1192,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_duration</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a formatted duration string for a slate item.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert raw duration metadata into a seconds string.</span>
 
 <span class="sd">    :param item: Dictionary containing duration metadata.</span>
-<span class="sd">    :returns: Seconds string (e.g. ``\&quot;120s\&quot;``) or empty string when unavailable.</span>
+<span class="sd">    :type item: Dict[str, Any]</span>
+<span class="sd">    :returns: Seconds string such as ``&quot;120s&quot;`` or an empty string when unavailable.</span>
+<span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">duration_raw</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;length_seconds&quot;</span><span class="p">)</span>
@@ -1017,10 +1217,30 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_option_engagement_summary</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">stats</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a summary line covering likes, comments, and shares.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarise engagement metrics for a recommendation option.</span>
+
+<span class="sd">    :param item: Slate item metadata containing inline engagement counts.</span>
+<span class="sd">    :type item: Dict[str, Any]</span>
+<span class="sd">    :param stats: Lookup statistics sourced from</span>
+<span class="sd">        :func:`prompt_builder.video_stats.lookup_video_stats`.</span>
+<span class="sd">    :type stats: Dict[str, Any]</span>
+<span class="sd">    :returns: Comma-separated phrase describing views, likes, comments, and share</span>
+<span class="sd">        counts when available.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">first_present</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the first non-missing value from ``source`` matching ``keys``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the first non-missing value from ``source`` matching ``keys``.</span>
+
+<span class="sd">        :param source: Mapping containing potential metric values.</span>
+<span class="sd">        :type source: Dict[str, Any]</span>
+<span class="sd">        :param keys: Field names to probe in order.</span>
+<span class="sd">        :type keys: Sequence[str]</span>
+<span class="sd">        :returns: Raw value when found, otherwise ``None``.</span>
+<span class="sd">        :rtype: Any</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>

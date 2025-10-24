@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -275,7 +275,20 @@
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.PromptSample">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PromptSample</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container capturing a rendered prompt with minimal metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container capturing a rendered prompt with associated metadata.</span>
+
+<span class="sd">    :ivar issue: Issue label that the prompt pertains to.</span>
+<span class="sd">    :vartype issue: str</span>
+<span class="sd">    :ivar participant_study: Study identifier when available.</span>
+<span class="sd">    :vartype participant_study: str | None</span>
+<span class="sd">    :ivar participant_id: Participant identifier or ``None`` when omitted.</span>
+<span class="sd">    :vartype participant_id: str | None</span>
+<span class="sd">    :ivar split: Dataset split name (e.g. ``&quot;train&quot;``).</span>
+<span class="sd">    :vartype split: str</span>
+<span class="sd">    :ivar prompt: Rendered prompt text.</span>
+<span class="sd">    :vartype prompt: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">participant_study</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
@@ -286,7 +299,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_dataset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that the optional ``datasets`` dependency is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate that the optional ``datasets`` dependency is available.</span>
+
+<span class="sd">    :raises ImportError: If :mod:`datasets` is not installed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">load_from_disk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
             <span class="s2">&quot;datasets must be installed to generate prompt samples &quot;</span>
@@ -298,7 +315,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield non-empty dataset splits and their names.</span>
 
 <span class="sd">    :param ds: Dataset dictionary containing splits.</span>
+<span class="sd">    :type ds: DatasetDict</span>
 <span class="sd">    :returns: Iterator of ``(split_name, split_dataset)`` tuples.</span>
+<span class="sd">    :rtype: Iterable[tuple[str, any]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">split</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -318,10 +337,15 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load prompts for the requested ``issues`` from ``dataset_path``.</span>
 
 <span class="sd">    :param dataset_path: Location of the cleaned dataset (Hugging Face format).</span>
+<span class="sd">    :type dataset_path: str</span>
 <span class="sd">    :param issues: Iterable of issue labels to sample.</span>
+<span class="sd">    :type issues: Sequence[str]</span>
 <span class="sd">    :param max_per_issue: Number of prompts to collect per issue.</span>
+<span class="sd">    :type max_per_issue: int</span>
 <span class="sd">    :param max_history: History length passed to :func:`prompt_builder.prompt.build_user_prompt`.</span>
+<span class="sd">    :type max_history: int</span>
 <span class="sd">    :returns: List of :class:`PromptSample` instances.</span>
+<span class="sd">    :rtype: List[PromptSample]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_ensure_dataset</span><span class="p">()</span>
@@ -367,7 +391,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a validated Markdown output path, creating parent directories.</span>
 
 <span class="sd">    :param path: Destination filepath provided via CLI.</span>
+<span class="sd">    :type path: str</span>
 <span class="sd">    :returns: Path object pointing to a Markdown file.</span>
+<span class="sd">    :rtype: Path</span>
 <span class="sd">    :raises ValueError: If the path is not Markdown.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -378,7 +404,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_sample_heading</span><span class="p">(</span><span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">PromptSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Markdown heading summarising sample metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a Markdown heading summarising prompt metadata.</span>
+
+<span class="sd">    :param idx: One-based sample index.</span>
+<span class="sd">    :type idx: int</span>
+<span class="sd">    :param sample: Sample container with prompt details.</span>
+<span class="sd">    :type sample: PromptSample</span>
+<span class="sd">    :returns: Markdown heading string.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">meta_parts</span> <span class="o">=</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s2">&quot;Issue: </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">&quot;Split: </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -391,7 +426,16 @@
 <div class="viewcode-block" id="write_samples_markdown">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.write_samples_markdown">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_samples_markdown</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PromptSample</span><span class="p">],</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write ``samples`` to ``output_path`` in a readable Markdown layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write ``samples`` to ``output_path`` in a readable Markdown layout.</span>
+
+<span class="sd">    :param samples: Iterable of prompt samples to render.</span>
+<span class="sd">    :type samples: Sequence[PromptSample]</span>
+<span class="sd">    :param output_path: Destination Markdown file.</span>
+<span class="sd">    :type output_path: str</span>
+<span class="sd">    :returns: Path to the written Markdown file.</span>
+<span class="sd">    :rtype: Path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">destination</span> <span class="o">=</span> <span class="n">_normalise_output_path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
     <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
@@ -414,14 +458,25 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_issue_list</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated issue list into normalised tokens.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a comma-separated issue list into normalised tokens.</span>
+
+<span class="sd">    :param raw: Raw issue string supplied via CLI or ``None``.</span>
+<span class="sd">    :type raw: str | None</span>
+<span class="sd">    :returns: List of individual issue identifiers.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_cli</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the CLI argument parser for the sample generator.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the CLI argument parser for the sample generator.</span>
+
+<span class="sd">    :returns: Argument parser configured for the sample generator CLI.</span>
+<span class="sd">    :rtype: argparse.ArgumentParser</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Generate sample prompts for documentation.&quot;</span>
     <span class="p">)</span>
@@ -465,7 +520,13 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the prompt-sample CLI.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Entry point for the prompt-sample CLI.</span>
+
+<span class="sd">    :param argv: Optional list of CLI arguments; defaults to :data:`sys.argv`.</span>
+<span class="sd">    :type argv: Sequence[str] | None</span>
+<span class="sd">    :raises ValueError: If no issues are provided via ``--issues``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">_build_cli</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">issues</span> <span class="o">=</span> <span class="n">_parse_issue_list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">)</span>

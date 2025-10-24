@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,7 +253,6 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.index</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;TF-IDF index construction and slate-level prediction helpers.&quot;&quot;&quot;</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -265,9 +264,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sparse</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span><span class="p">,</span> <span class="n">SentenceTransformerEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_tfidf_vectorizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">assemble_document</span><span class="p">,</span>
@@ -278,38 +277,83 @@
     <span class="n">title_for</span><span class="p">,</span>
 <span class="p">)</span>
 
-
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SlateQueryConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration controlling slate scoring behaviour.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration controlling slate scoring behaviour.</span>
 
+<span class="sd">    :ivar text_fields: Dataset fields whose text is appended to the viewer prompt.</span>
+<span class="sd">    :vartype text_fields: Sequence[str]</span>
+<span class="sd">    :ivar lowercase: Whether viewer prompts should be normalised to lowercase.</span>
+<span class="sd">    :vartype lowercase: bool</span>
+<span class="sd">    :ivar metric: Distance metric (``cosine`` or ``l2``) applied when comparing embeddings.</span>
+<span class="sd">    :vartype metric: str | None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">text_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">lowercase</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
-
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SlateIndexData</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed index artifacts used during slate scoring.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pre-computed index artifacts used during slate scoring.</span>
 
+<span class="sd">    :ivar feature_space: Feature space used to build the index (tfidf, word2vec, etc.).</span>
+<span class="sd">    :vartype feature_space: str</span>
+<span class="sd">    :ivar vectorizer: Tokeniser or embedding model used to transform documents.</span>
+<span class="sd">    :vartype vectorizer: Any</span>
+<span class="sd">    :ivar matrix: Encoded document matrix used for nearest-neighbour lookup.</span>
+<span class="sd">    :vartype matrix: Any</span>
+<span class="sd">    :ivar label_id_canon: Canonicalised video identifiers aligned with matrix rows.</span>
+<span class="sd">    :vartype label_id_canon: np.ndarray</span>
+<span class="sd">    :ivar label_title_canon: Canonicalised video titles aligned with matrix rows.</span>
+<span class="sd">    :vartype label_title_canon: np.ndarray</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">vectorizer</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">matrix</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">label_id_canon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">label_title_canon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
 
-
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CandidateScorer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Callable helper for scoring slate candidates.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Callable helper for scoring slate candidates.</span>
 
+<span class="sd">    :ivar index_data: Pre-computed index artefacts required to score candidates.</span>
+<span class="sd">    :vartype index_data: SlateIndexData</span>
+<span class="sd">    :ivar base_parts: Normalised components of the viewer prompt shared across candidates.</span>
+<span class="sd">    :vartype base_parts: Sequence[str]</span>
+<span class="sd">    :ivar config: Query configuration detailing how prompts are assembled and compared.</span>
+<span class="sd">    :vartype config: SlateQueryConfig</span>
+<span class="sd">    :ivar unique_k: Unique set of neighbour counts to report in the score output.</span>
+<span class="sd">    :vartype unique_k: Sequence[int]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span>
     <span class="n">base_parts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span>
     <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return per-``k`` scores for the given slate candidate.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return per-``k`` scores for the given slate candidate.</span>
+
+<span class="sd">        :param title: Human-readable title associated with the candidate slate item.</span>
+
+<span class="sd">        :type title: str</span>
+
+<span class="sd">        :param video_id: Identifier of the candidate video being scored.</span>
+
+<span class="sd">        :type video_id: str</span>
+
+<span class="sd">        :returns: per-``k`` scores for the given slate candidate</span>
+
+<span class="sd">        :rtype: Dict[int, float]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query</span><span class="p">,</span> <span class="n">sims</span> <span class="o">=</span> <span class="n">_candidate_query</span><span class="p">(</span>
             <span class="n">index_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">,</span>
             <span class="n">base_parts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_parts</span><span class="p">,</span>
@@ -335,7 +379,6 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">_aggregate_scores</span><span class="p">(</span><span class="n">score_vector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_k</span><span class="p">)</span>
 
-
 <div class="viewcode-block" id="build_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.build_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_tfidf_index</span><span class="p">(</span>
@@ -356,7 +399,6 @@
 <span class="sd">    :returns: Dictionary containing the fitted vectoriser, sparse matrix, and</span>
 <span class="sd">        label metadata.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
         <span class="n">max_train</span><span class="o">=</span><span class="n">max_train</span><span class="p">,</span>
@@ -364,15 +406,7 @@
         <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span>
-        <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">strip_accents</span><span class="o">=</span><span class="s2">&quot;unicode&quot;</span><span class="p">,</span>
-        <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="n">min_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">stop_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">token_pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;(?u)\b[\w\-]{2,}\b&quot;</span><span class="p">,</span>
-        <span class="n">max_features</span><span class="o">=</span><span class="n">max_features</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_tfidf_vectorizer</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="n">max_features</span><span class="p">)</span>
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
@@ -382,7 +416,6 @@
         <span class="s2">&quot;labels_id&quot;</span><span class="p">:</span> <span class="n">labels_id</span><span class="p">,</span>
         <span class="s2">&quot;labels_title&quot;</span><span class="p">:</span> <span class="n">labels_title</span><span class="p">,</span>
     <span class="p">}</span></div>
-
 
 
 <div class="viewcode-block" id="build_word2vec_index">
@@ -405,7 +438,6 @@
 <span class="sd">    :returns: Dictionary containing the trained Word2Vec model and embeddings.</span>
 <span class="sd">    :raises ImportError: If gensim is unavailable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
         <span class="n">max_train</span><span class="o">=</span><span class="n">max_train</span><span class="p">,</span>
@@ -433,7 +465,6 @@
     <span class="p">}</span></div>
 
 
-
 <div class="viewcode-block" id="build_sentence_transformer_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.build_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_sentence_transformer_index</span><span class="p">(</span>
@@ -454,7 +485,6 @@
 <span class="sd">    :returns: Dictionary containing the encoder, dense matrix, and label metadata.</span>
 <span class="sd">    :raises ImportError: If ``sentence_transformers`` is unavailable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">labels_title</span> <span class="o">=</span> <span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
         <span class="n">max_train</span><span class="o">=</span><span class="n">max_train</span><span class="p">,</span>
@@ -476,7 +506,6 @@
     <span class="p">}</span></div>
 
 
-
 <div class="viewcode-block" id="save_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_tfidf_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -485,7 +514,6 @@
 <span class="sd">    :param index: Dictionary returned by :func:`build_tfidf_index`.</span>
 <span class="sd">    :param out_dir: Target directory where artifacts will be written.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s2">&quot;vectorizer&quot;</span><span class="p">],</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
@@ -509,7 +537,6 @@
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
 
 
-
 <div class="viewcode-block" id="load_tfidf_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_tfidf_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -518,7 +545,6 @@
 <span class="sd">    :param in_dir: Directory containing the persisted TF-IDF artifacts.</span>
 <span class="sd">    :returns: Dictionary with the loaded vectoriser, matrix, and labels.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
     <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;vectorizer.joblib&quot;</span><span class="p">)</span>
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">load_npz</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;X.npz&quot;</span><span class="p">)</span>
@@ -533,7 +559,6 @@
     <span class="p">}</span></div>
 
 
-
 <div class="viewcode-block" id="save_word2vec_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_word2vec_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -542,7 +567,6 @@
 <span class="sd">    :param index: Dictionary returned by :func:`build_word2vec_index`.</span>
 <span class="sd">    :param out_dir: Target directory where embeddings and metadata are stored.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -584,12 +608,25 @@
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
 
 
-
 <div class="viewcode-block" id="save_sentence_transformer_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.save_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_sentence_transformer_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the sentence-transformer index to ``out_dir`` for later reuse.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Persist the sentence-transformer index to ``out_dir`` for later reuse.</span>
 
+<span class="sd">    :param index: KNN index object or registry being manipulated.</span>
+
+<span class="sd">    :type index: Dict[str, Any]</span>
+
+<span class="sd">    :param out_dir: Output directory receiving generated metrics and reports.</span>
+
+<span class="sd">    :type out_dir: str</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -606,7 +643,9 @@
         <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">config_obj</span><span class="p">:</span> <span class="n">SentenceTransformerConfig</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sentence_transformer_config&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span>
+    <span class="n">config_obj</span><span class="p">:</span> <span class="n">SentenceTransformerConfig</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sentence_transformer_config&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span>
+    <span class="p">)</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">,</span>
         <span class="s2">&quot;n_docs&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
@@ -622,7 +661,6 @@
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
 
 
-
 <div class="viewcode-block" id="load_word2vec_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_word2vec_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -631,7 +669,6 @@
 <span class="sd">    :param in_dir: Directory containing the persisted Word2Vec artifacts.</span>
 <span class="sd">    :returns: Dictionary with the restored Word2Vec model, embeddings, and labels.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
 
     <span class="n">meta_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;meta.json&quot;</span>
@@ -667,12 +704,21 @@
     <span class="p">}</span></div>
 
 
-
 <div class="viewcode-block" id="load_sentence_transformer_index">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.load_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_sentence_transformer_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`.</span>
 
+<span class="sd">    :param in_dir: Directory containing previously persisted artefacts to load from disk.</span>
+
+<span class="sd">    :type in_dir: str</span>
+
+<span class="sd">    :returns: Tuple of the loaded sentence-transformer index and associated metadata.</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">in_dir</span><span class="p">)</span>
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;X.npy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">labels_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;labels_id.npy&quot;</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -697,7 +743,6 @@
     <span class="p">}</span></div>
 
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_safe_str</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lowercase</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a normalised string representation of ``value``.</span>
 
@@ -705,14 +750,12 @@
 <span class="sd">    :param lowercase: Whether the result should be lowercased.</span>
 <span class="sd">    :returns: Stripped string representation safe for tokenisation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">try</span><span class="p">:</span>
         <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>  <span class="c1"># pragma: no cover - defensive</span>
         <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">lowercase</span> <span class="k">else</span> <span class="n">text</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_base_parts</span><span class="p">(</span>
     <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
@@ -740,7 +783,6 @@
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surfaces</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">parts</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_surface_text</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the most human-friendly representation for a candidate surface.</span>
 
@@ -751,7 +793,6 @@
     <span class="k">if</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">title</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">title</span> <span class="o">!=</span> <span class="s2">&quot;(untitled)&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">title</span>
     <span class="k">return</span> <span class="n">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span> <span class="ow">or</span> <span class="n">video_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_score_candidates</span><span class="p">(</span>
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span><span class="p">,</span>
@@ -776,7 +817,6 @@
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">candidate_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">scores_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">scores_by_k</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_query</span><span class="p">(</span>
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span><span class="p">,</span>
@@ -809,7 +849,6 @@
     <span class="n">query</span> <span class="o">=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">query_text</span><span class="p">])</span>
     <span class="n">sims</span> <span class="o">=</span> <span class="p">(</span><span class="n">query</span> <span class="o">@</span> <span class="n">index_data</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">query</span><span class="p">,</span> <span class="n">sims</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_score_vector_from_similarity</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -858,7 +897,6 @@
         <span class="k">return</span> <span class="o">-</span><span class="n">dists</span>
     <span class="k">return</span> <span class="n">sims_masked</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_scores</span><span class="p">(</span><span class="n">score_vector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate neighbour scores for each ``k`` value.</span>
 
@@ -872,7 +910,6 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cumulative</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">sorted_scores</span><span class="o">.</span><span class="n">size</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span>
     <span class="p">}</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_mask</span><span class="p">(</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -895,7 +932,6 @@
         <span class="n">mask</span> <span class="o">|=</span> <span class="n">index_data</span><span class="o">.</span><span class="n">label_title_canon</span> <span class="o">==</span> <span class="n">title_canon</span>
     <span class="k">return</span> <span class="n">mask</span>
 
-
 <div class="viewcode-block" id="knn_predict_among_slate_multi">
 <a class="viewcode-back" href="../../api/knn.html#knn.index.knn_predict_among_slate_multi">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">knn_predict_among_slate_multi</span><span class="p">(</span>
@@ -914,7 +950,6 @@
 <span class="sd">    :returns: Mapping from ``k`` to the predicted 1-based option index. ``None``</span>
 <span class="sd">        indicates that a prediction could not be produced for that ``k``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">SlateQueryConfig</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;l2&quot;</span><span class="p">,</span> <span class="s2">&quot;cosine&quot;</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported metric &#39;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">metric</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
@@ -950,14 +985,12 @@
     <span class="k">return</span> <span class="n">predictions</span></div>
 
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_index_data</span><span class="p">(</span><span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SlateIndexData</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct :class:`SlateIndexData` from a raw index dictionary.</span>
 
 <span class="sd">    :param knn_index: Dictionary describing the fitted index artifacts.</span>
 <span class="sd">    :returns: :class:`SlateIndexData` instance or ``None`` when the index is invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="n">knn_index</span> <span class="ow">or</span> <span class="s2">&quot;vectorizer&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">knn_index</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">labels_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">knn_index</span><span class="p">[</span><span class="s2">&quot;labels_id&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
@@ -971,16 +1004,13 @@
         <span class="n">label_title_canon</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">_canon</span><span class="p">(</span><span class="n">label</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels_title</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
     <span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a canonicalised alphanumeric string.</span>
 
 <span class="sd">    :param text: Input string to canonicalise.</span>
 <span class="sd">    :returns: Lowercased string with non-alphanumeric characters removed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canon_vid</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the canonical 11-character YouTube video identifier.</span>
@@ -988,12 +1018,10 @@
 <span class="sd">    :param value: Raw candidate identifier.</span>
 <span class="sd">    :returns: Canonical video id or the stripped input when no match is found.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z0-9_-]</span><span class="si">{11}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">match</span> <span class="k">else</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;build_tfidf_index&quot;</span><span class="p">,</span>

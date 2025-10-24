@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -272,10 +272,19 @@ organising the implementation across smaller, testable modules.</p>
 <dt class="sig sig-object py" id="prompt_builder.PromptSample">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.PromptSample" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Container capturing a rendered prompt with minimal metadata.</p>
+<p>Container capturing a rendered prompt with associated metadata.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label that the prompt pertains to.</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>) – Study identifier when available.</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>) – Participant identifier or <code class="docutils literal notranslate"><span class="pre">None</span></code> when omitted.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Dataset split name (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;train&quot;</span></code>).</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>) – Rendered prompt text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
@@ -388,7 +397,7 @@ organising the implementation across smaller, testable modules.</p>
 <dd class="field-even"><p>List of <a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptSample</span></code></a> instances.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a>]</p>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample">PromptSample</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -485,12 +494,15 @@ organising the implementation across smaller, testable modules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a><em>]</em>)</p></li>
-<li><p><strong>output_path</strong> (<em>str</em>)</p></li>
+<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample"><em>PromptSample</em></a><em>]</em>) – Iterable of prompt samples to render.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Destination Markdown file.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Path</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the written Markdown file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -858,10 +870,19 @@ organising the implementation across smaller, testable modules.</p>
 <dt class="sig sig-object py" id="prompt_builder.samples.PromptSample">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.PromptSample" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Container capturing a rendered prompt with minimal metadata.</p>
+<p>Container capturing a rendered prompt with associated metadata.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label that the prompt pertains to.</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>) – Study identifier when available.</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>) – Participant identifier or <code class="docutils literal notranslate"><span class="pre">None</span></code> when omitted.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Dataset split name (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;train&quot;</span></code>).</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>) – Rendered prompt text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
@@ -914,7 +935,7 @@ organising the implementation across smaller, testable modules.</p>
 <dd class="field-even"><p>List of <a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptSample</span></code></a> instances.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a>]</p>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample">PromptSample</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -925,10 +946,13 @@ organising the implementation across smaller, testable modules.</p>
 <dd><p>Entry point for the prompt-sample CLI.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list of CLI arguments; defaults to <code class="xref py py-data docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no issues are provided via <code class="docutils literal notranslate"><span class="pre">--issues</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -940,12 +964,15 @@ organising the implementation across smaller, testable modules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a><em>]</em>)</p></li>
-<li><p><strong>output_path</strong> (<em>str</em>)</p></li>
+<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a><em>]</em>) – Iterable of prompt samples to render.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Destination Markdown file.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Path</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the written Markdown file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -959,8 +986,11 @@ organising the implementation across smaller, testable modules.</p>
 successful load for the duration of the process. Missing files yield an empty
 mapping.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, int | None]]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from video id to engagement metric dictionary.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, VideoStats]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -971,10 +1001,13 @@ mapping.</p>
 <dd><p>Return engagement metrics for <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – YouTube video identifier.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, int | None]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Engagement metrics dictionary or an empty mapping.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VideoStats</p>
 </dd>
 </dl>
 </dd></dl>

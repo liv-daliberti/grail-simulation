@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -260,6 +260,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_sweep_execution</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FinalEvalContext</span><span class="p">,</span>
@@ -311,8 +313,15 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point orchestrating the full XGBoost workflow.&quot;&quot;&quot;</span>
-    <span class="c1"># pylint: disable=too-many-locals,too-many-branches,too-many-return-statements,too-many-statements</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Entry point orchestrating the full XGBoost workflow.</span>
+
+<span class="sd">    :param argv: Optional override for command-line arguments</span>
+<span class="sd">        (defaults to ``sys.argv[1:]``).</span>
+<span class="sd">    :type argv: Sequence[str] | None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-locals,too-many-branches</span>
+    <span class="c1"># pylint: disable=too-many-return-statements,too-many-statements</span>
 
     <span class="n">args</span><span class="p">,</span> <span class="n">extra_cli</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
@@ -461,13 +470,13 @@
         <span class="n">summary_bits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
             <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;next-video sweeps=</span><span class="si">%d</span><span class="s2"> (cached=</span><span class="si">%d</span><span class="s2">)&quot;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">))</span>
+                <span class="sa">f</span><span class="s2">&quot;next-video sweeps=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
             <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;opinion sweeps=</span><span class="si">%d</span><span class="s2"> (cached=</span><span class="si">%d</span><span class="s2">)&quot;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">))</span>
+                <span class="sa">f</span><span class="s2">&quot;opinion sweeps=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Planned sweep tasks: </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">summary_bits</span><span class="p">))</span>
         <span class="n">_emit_combined_sweep_plan</span><span class="p">(</span>
@@ -480,13 +489,13 @@
         <span class="n">summary_bits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
             <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;next-video pending=</span><span class="si">%d</span><span class="s2"> cached=</span><span class="si">%d</span><span class="s2">&quot;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">))</span>
+                <span class="sa">f</span><span class="s2">&quot;next-video pending=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
             <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="s2">&quot;opinion pending=</span><span class="si">%d</span><span class="s2"> cached=</span><span class="si">%d</span><span class="s2">&quot;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">))</span>
+                <span class="sa">f</span><span class="s2">&quot;opinion pending=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Dry-run mode. </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
@@ -496,32 +505,14 @@
 
     <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">:</span>
         <span class="n">total_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">total_tasks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No sweep tasks pending; existing metrics cover the grid.&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
-        <span class="n">task_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_task_id</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">prepare_sweep_execution</span><span class="p">(</span>
+            <span class="n">total_tasks</span><span class="o">=</span><span class="n">total_tasks</span><span class="p">,</span>
+            <span class="n">cli_task_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_task_id</span><span class="p">,</span>
+            <span class="n">cli_task_count</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_task_count</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">task_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">env_value</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SLURM_ARRAY_TASK_ID&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">env_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">&quot;Sweep stage requires --sweep-task-id or SLURM_ARRAY_TASK_ID to be set.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">task_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">env_value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Invalid SLURM_ARRAY_TASK_ID &#39;</span><span class="si">{</span><span class="n">env_value</span><span class="si">}</span><span class="s2">&#39;; expected an integer.&quot;</span>
-                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_task_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_task_count</span> <span class="o">!=</span> <span class="n">total_tasks</span><span class="p">:</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Sweep task count mismatch: expected=</span><span class="si">%d</span><span class="s2"> provided=</span><span class="si">%d</span><span class="s2">.&quot;</span><span class="p">,</span>
-                <span class="n">total_tasks</span><span class="p">,</span>
-                <span class="n">args</span><span class="o">.</span><span class="n">sweep_task_count</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">task_id</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">task_id</span> <span class="o">&gt;=</span> <span class="n">total_tasks</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Sweep task index </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> outside valid range 0..</span><span class="si">{</span><span class="n">total_tasks</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
-            <span class="p">)</span>
+            <span class="k">return</span>
         <span class="k">if</span> <span class="n">task_id</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">):</span>
             <span class="n">task</span> <span class="o">=</span> <span class="n">planned_slate_tasks</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -590,7 +581,7 @@
         <span class="p">)</span>
         <span class="n">more</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending_slate_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-            <span class="n">more</span> <span class="o">=</span> <span class="s2">&quot;, ... (</span><span class="si">%d</span><span class="s2"> total)&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending_slate_tasks</span><span class="p">)</span>
+            <span class="n">more</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, ... (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pending_slate_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> total)&quot;</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;Sweep metrics missing for the following tasks: &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">missing</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">. Run --stage=sweeps to populate them.&quot;</span>
@@ -606,7 +597,7 @@
         <span class="p">)</span>
         <span class="n">more</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending_opinion_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-            <span class="n">more</span> <span class="o">=</span> <span class="s2">&quot;, ... (</span><span class="si">%d</span><span class="s2"> total)&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending_opinion_tasks</span><span class="p">)</span>
+            <span class="n">more</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, ... (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pending_opinion_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> total)&quot;</span>
         <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;Opinion sweep metrics missing for the following tasks: &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">missing</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">. Run --stage=sweeps to populate them.&quot;</span>
@@ -654,7 +645,10 @@
                 <span class="p">)</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">warning</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No opinion sweep outcomes available; ensure opinion sweeps have completed.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;No opinion sweep outcomes available; ensure opinion &quot;</span>
+                    <span class="s2">&quot;sweeps have completed.&quot;</span>
+                <span class="p">)</span>
 
     <span class="n">selections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StudySelection</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
@@ -722,7 +716,10 @@
                     <span class="s2">&quot;Run --stage=finalize before generating reports.&quot;</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">allow_incomplete</span><span class="p">:</span>
-                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> Continuing because allow-incomplete mode is enabled.&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> Continuing because allow-incomplete mode is enabled.&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="n">opinion_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -740,6 +737,8 @@
             <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
             <span class="n">include_next_video</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
             <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
+            <span class="n">opinion_outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
+            <span class="n">opinion_selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
@@ -779,6 +778,8 @@
         <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
         <span class="n">include_next_video</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
         <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
+        <span class="n">opinion_outcomes</span><span class="o">=</span><span class="n">opinion_sweep_outcomes</span><span class="p">,</span>
+        <span class="n">opinion_selections</span><span class="o">=</span><span class="n">opinion_selections</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

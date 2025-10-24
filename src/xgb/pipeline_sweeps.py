@@ -302,9 +302,25 @@ def _opinion_sweep_outcome_from_metrics(
             return default
 
     metrics_block = metrics.get("metrics", {})
+    baseline_block = metrics.get("baseline", {})
     mae = _safe_float(metrics_block.get("mae_after"))
     rmse = _safe_float(metrics_block.get("rmse_after"))
     r2 = _safe_float(metrics_block.get("r2_after"))
+    accuracy = metrics_block.get("direction_accuracy")
+    accuracy_value = float(accuracy) if isinstance(accuracy, (int, float)) else None
+    baseline_accuracy = baseline_block.get("direction_accuracy")
+    baseline_value = float(baseline_accuracy) if isinstance(baseline_accuracy, (int, float)) else None
+    accuracy_delta = None
+    if accuracy_value is not None and baseline_value is not None:
+        accuracy_delta = accuracy_value - baseline_value
+    eligible_raw = metrics.get("eligible")
+    if not isinstance(eligible_raw, (int, float)):
+        eligible_raw = metrics_block.get("eligible")
+    eligible_value: Optional[int]
+    if isinstance(eligible_raw, (int, float)):
+        eligible_value = int(eligible_raw)
+    else:
+        eligible_value = None
     return OpinionSweepOutcome(
         order_index=task.index,
         study=task.study,
@@ -312,6 +328,10 @@ def _opinion_sweep_outcome_from_metrics(
         mae=mae,
         rmse=rmse,
         r2=r2,
+        accuracy=accuracy_value,
+        baseline_accuracy=baseline_value,
+        accuracy_delta=accuracy_delta,
+        eligible=eligible_value,
         metrics_path=metrics_path,
         metrics=metrics,
     )

@@ -56,7 +56,14 @@ def filter_prompt_ready(
 
     filtered = DatasetDict()
     for split_name, split_ds in dataset.items():
-        filtered[split_name] = split_ds.filter(_ok, num_proc=num_proc)
+        filter_kwargs: Dict[str, int] = {}
+        if num_proc is not None:
+            filter_kwargs["num_proc"] = num_proc
+        try:
+            filtered_split = split_ds.filter(_ok, **filter_kwargs)
+        except TypeError:
+            filtered_split = split_ds.filter(_ok)
+        filtered[split_name] = filtered_split
     log.info("Counts after prompt filter: %s", {k: len(v) for k, v in filtered.items()})
     return filtered
 

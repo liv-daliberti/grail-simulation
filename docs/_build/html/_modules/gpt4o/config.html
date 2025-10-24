@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -299,9 +299,12 @@
 <span class="n">SOLUTION_COLUMN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_SOLUTION_COLUMN&quot;</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">)</span>
 
 <span class="c1"># Defaults for locating auxiliary title metadata</span>
+<span class="n">_DEFAULT_TITLE_ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
+    <span class="s2">&quot;/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees&quot;</span>
+<span class="p">)</span>
 <span class="n">DEFAULT_TITLE_DIRS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_gun&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/n/fs/similarity/trees/data/results/capsule-5416997-data/recommendation trees/trees_wage&quot;</span><span class="p">,</span>
+    <span class="nb">str</span><span class="p">(</span><span class="n">_DEFAULT_TITLE_ROOT</span> <span class="o">/</span> <span class="s2">&quot;trees_gun&quot;</span><span class="p">),</span>
+    <span class="nb">str</span><span class="p">(</span><span class="n">_DEFAULT_TITLE_ROOT</span> <span class="o">/</span> <span class="s2">&quot;trees_wage&quot;</span><span class="p">),</span>
 <span class="p">]</span>
 
 
@@ -322,10 +325,12 @@
 
 <span class="s2">Output format (STRICT):</span>
 <span class="s2">  • First output your hidden reasoning in &lt;think&gt;…&lt;/think&gt;.</span>
-<span class="s2">    – In your thinking, reference candidates by their numbers and names (or ids) to justify the choice.</span>
+<span class="s2">    – In your thinking, reference candidates by their numbers and names (or ids)</span>
+<span class="s2">      to justify the choice.</span>
 <span class="s2">  • Then output ONLY the chosen option’s NUMBER inside &lt;answer&gt;…&lt;/answer&gt;.</span>
 <span class="s2">    – Do NOT output the name, id, or any extra text—ONLY the number.</span>
-<span class="s2">    – Do NOT include punctuation, quotes, or a period after the number.</span>
+<span class="s2">    – Do NOT include punctuation, quotes,</span>
+<span class="s2">      or a period after the number.</span>
 
 <span class="s2">Examples of valid &lt;answer&gt;:</span>
 <span class="s2">  &lt;answer&gt;</span>

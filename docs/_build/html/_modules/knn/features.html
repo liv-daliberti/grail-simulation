@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,7 +253,6 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.features</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Feature extraction helpers for the refactored KNN baselines.&quot;&quot;&quot;</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -267,12 +266,10 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">Word2Vec</span> <span class="o">=</span> <span class="kc">None</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_TITLE_DIRS</span> <span class="k">as</span> <span class="n">_DEFAULT_TITLE_DIRS</span><span class="p">,</span>
     <span class="n">EXTRA_FIELD_LABELS</span> <span class="k">as</span> <span class="n">_COMMON_EXTRA_FIELD_LABELS</span><span class="p">,</span>
-    <span class="n">PromptDocumentBuilder</span><span class="p">,</span>
-    <span class="n">default_title_resolver</span><span class="p">,</span>
+    <span class="n">create_prompt_document_builder</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">PROMPT_COLUMN</span><span class="p">,</span> <span class="n">PROMPT_MAX_HISTORY</span><span class="p">,</span> <span class="n">SOLUTION_COLUMN</span>
@@ -280,68 +277,98 @@
 <span class="n">DEFAULT_TITLE_DIRS</span> <span class="o">=</span> <span class="n">_DEFAULT_TITLE_DIRS</span>
 <span class="n">EXTRA_FIELD_LABELS</span> <span class="o">=</span> <span class="n">_COMMON_EXTRA_FIELD_LABELS</span>
 
-<span class="n">_PROMPT_DOC_BUILDER</span> <span class="o">=</span> <span class="n">PromptDocumentBuilder</span><span class="p">(</span>
+<span class="n">_PROMPT_DOC_BUILDER</span> <span class="o">=</span> <span class="n">create_prompt_document_builder</span><span class="p">(</span>
     <span class="n">prompt_column</span><span class="o">=</span><span class="n">PROMPT_COLUMN</span><span class="p">,</span>
     <span class="n">solution_column</span><span class="o">=</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span>
     <span class="n">max_history</span><span class="o">=</span><span class="n">PROMPT_MAX_HISTORY</span><span class="p">,</span>
-    <span class="n">title_lookup</span><span class="o">=</span><span class="n">default_title_resolver</span><span class="p">(),</span>
     <span class="n">log_prefix</span><span class="o">=</span><span class="s2">&quot;[KNN]&quot;</span><span class="p">,</span>
-    <span class="n">logger</span><span class="o">=</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;knn.features&quot;</span><span class="p">),</span>
+    <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;knn.features&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-
 
 <div class="viewcode-block" id="title_for">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.title_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable title for a YouTube id if available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Look up a human-readable title for a given YouTube identifier.</span>
 
+<span class="sd">    :param video_id: Candidate YouTube video identifier to resolve.</span>
+<span class="sd">    :type video_id: str</span>
+<span class="sd">    :returns: Title associated with ``video_id`` when present in the cache.</span>
+<span class="sd">    :rtype: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="viewer_profile_sentence">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.viewer_profile_sentence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">viewer_profile_sentence</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the viewer profile sentence for ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compose the viewer profile sentence associated with a dataset row.</span>
 
+<span class="sd">    :param example: Interaction example containing viewer profile fields.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Natural-language sentence describing the participant profile.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">viewer_profile_sentence</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="prompt_from_builder">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.prompt_from_builder">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the prompt text for ``example`` using the shared builder.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble the full prompt text for a dataset example.</span>
 
+<span class="sd">    :param example: Interaction example containing prompt components.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Prompt text used for feature extraction.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="extract_now_watching">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.extract_now_watching">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the currently watched title/id, if known.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the currently watched item for an interaction.</span>
 
+<span class="sd">    :param example: Interaction example describing viewer activity.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Tuple of ``(title, video_id)`` when the &quot;now watching&quot; context exists.</span>
+<span class="sd">    :rtype: Optional[Tuple[str, str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="extract_slate_items">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.extract_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the slate as ``(title, video_id)`` pairs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the slate of candidate items from an interaction example.</span>
 
+<span class="sd">    :param example: Dataset row containing slate metadata.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Ordered list of ``(title, video_id)`` tuples.</span>
+<span class="sd">    :rtype: List[Tuple[str, str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="assemble_document">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.assemble_document">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return concatenated text used to featurise ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Concatenate prompt components into a single document for featurisation.</span>
 
+<span class="sd">    :param example: Dataset row describing the prompt and slate context.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :param extra_fields: Optional additional column names appended to the document.</span>
+<span class="sd">    :type extra_fields: Sequence[str] | None</span>
+<span class="sd">    :returns: Combined prompt text passed to vectorisers.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="prepare_training_documents">
@@ -352,8 +379,20 @@
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return TF-IDF training documents and associated labels.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepare prompt documents, labels, and metadata for TF-IDF training.</span>
 
+<span class="sd">    :param train_ds: Dataset split providing training rows.</span>
+<span class="sd">    :type train_ds: datasets.Dataset | Sequence[dict]</span>
+<span class="sd">    :param max_train: Optional cap on the number of training rows retained (0 keeps all).</span>
+<span class="sd">    :type max_train: int</span>
+<span class="sd">    :param seed: Random seed used when subsampling ``train_ds``.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param extra_fields: Additional columns appended to the prompt document.</span>
+<span class="sd">    :type extra_fields: Sequence[str] | None</span>
+<span class="sd">    :returns: Tuple of ``(documents, label_ids, participant_ids)``.</span>
+<span class="sd">    :rtype: Tuple[list[str], list[str], list[str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
         <span class="n">max_train</span><span class="p">,</span>
@@ -362,18 +401,32 @@
     <span class="p">)</span></div>
 
 
-
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># TF-IDF + Word2Vec interfaces</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
-
 
 <div class="viewcode-block" id="Word2VecConfig">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration options for Word2Vec embeddings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration options for Word2Vec embeddings.</span>
 
+<span class="sd">    :ivar vector_size: Dimensionality of the learned embedding vectors.</span>
+<span class="sd">    :vartype vector_size: int</span>
+<span class="sd">    :ivar window: Context window size used during training.</span>
+<span class="sd">    :vartype window: int</span>
+<span class="sd">    :ivar min_count: Minimum token frequency retained in the vocabulary.</span>
+<span class="sd">    :vartype min_count: int</span>
+<span class="sd">    :ivar epochs: Number of Word2Vec training epochs.</span>
+<span class="sd">    :vartype epochs: int</span>
+<span class="sd">    :ivar model_dir: Directory where trained embeddings are persisted.</span>
+<span class="sd">    :vartype model_dir: Path</span>
+<span class="sd">    :ivar seed: Random seed for Word2Vec initialisation.</span>
+<span class="sd">    :vartype seed: int</span>
+<span class="sd">    :ivar workers: Number of worker threads allocated to training.</span>
+<span class="sd">    :vartype workers: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">vector_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span>
     <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
@@ -383,18 +436,25 @@
     <span class="n">workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></div>
 
 
-
 <div class="viewcode-block" id="Word2VecFeatureBuilder">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecFeatureBuilder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create Word2Vec embeddings from viewer prompts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create Word2Vec embeddings from viewer prompts.</span>
 
+<span class="sd">    :ivar config: Configuration bundle controlling Word2Vec training/inference.</span>
+<span class="sd">    :vartype config: Word2VecConfig</span>
+<span class="sd">    :ivar _model: Loaded gensim :class:`~gensim.models.Word2Vec` instance.</span>
+<span class="sd">    :vartype _model: gensim.models.Word2Vec | None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 <div class="viewcode-block" id="Word2VecFeatureBuilder.__init__">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the builder with optional configuration overrides.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialise the builder with optional configuration overrides.</span>
 
-<span class="sd">        :param config: Optional :class:`Word2VecConfig` instance.</span>
+<span class="sd">        :param config: Optional configuration bundle to override defaults.</span>
+<span class="sd">        :type config: Word2VecConfig | None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">Word2VecConfig</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -402,18 +462,26 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tokenise input text into whitespace-delimited lower-case tokens.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tokenise input text into whitespace-delimited lower-case tokens.</span>
 
-<span class="sd">        :param text: Text to split.</span>
-<span class="sd">        :returns: List of tokens.</span>
+<span class="sd">        :param text: Text to split into tokens.</span>
+<span class="sd">        :type text: str</span>
+<span class="sd">        :returns: List of lower-cased tokens extracted from ``text``.</span>
+<span class="sd">        :rtype: List[str]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.train">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.train">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train a Word2Vec model using the provided corpus.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Train a Word2Vec model using the provided corpus.</span>
 
+<span class="sd">        :param corpus: Iterable of documents used to fit the embeddings.</span>
+<span class="sd">        :type corpus: Iterable[str]</span>
+<span class="sd">        :raises ImportError: If :mod:`gensim` is unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">Word2Vec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install gensim to enable Word2Vec embeddings&quot;</span><span class="p">)</span>
         <span class="n">sentences</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">corpus</span><span class="p">]</span>
@@ -433,8 +501,13 @@
 <div class="viewcode-block" id="Word2VecFeatureBuilder.load">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load a previously trained Word2Vec model from disk.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a previously trained Word2Vec model from disk.</span>
 
+<span class="sd">        :param directory: Directory containing the saved Word2Vec model.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :raises ImportError: If :mod:`gensim` is unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">Word2Vec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install gensim to enable Word2Vec embeddings&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;word2vec.model&quot;</span><span class="p">))</span></div>
@@ -443,8 +516,13 @@
 <div class="viewcode-block" id="Word2VecFeatureBuilder.save">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist the trained model to ``directory``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Persist the trained model to ``directory``.</span>
 
+<span class="sd">        :param directory: Destination directory receiving the model artefact.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :raises RuntimeError: If the model has not been trained or loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Word2Vec model must be trained before saving&quot;</span><span class="p">)</span>
         <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -454,16 +532,27 @@
 <div class="viewcode-block" id="Word2VecFeatureBuilder.is_trained">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.is_trained">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_trained</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True when the underlying Word2Vec model is ready for inference.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Indicate whether the underlying Word2Vec model is ready for inference.</span>
 
+<span class="sd">        :returns: ``True`` when a trained model is loaded.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.encode">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.encode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the averaged embedding vector for ``text``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the averaged embedding vector for ``text``.</span>
 
+<span class="sd">        :param text: Document to encode using the fitted embeddings.</span>
+<span class="sd">        :type text: str</span>
+<span class="sd">        :returns: Averaged embedding vector representing ``text``.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+<span class="sd">        :raises RuntimeError: If the model has not been trained or loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Word2Vec model has not been trained/loaded&quot;</span><span class="p">)</span>
         <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">wv</span><span class="p">]</span>
@@ -475,8 +564,15 @@
 <div class="viewcode-block" id="Word2VecFeatureBuilder.transform">
 <a class="viewcode-back" href="../../api/knn.html#knn.features.Word2VecFeatureBuilder.transform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return stacked embeddings for ``corpus``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return stacked embeddings for ``corpus``.</span>
 
+<span class="sd">        :param corpus: Sequence of documents to transform.</span>
+<span class="sd">        :type corpus: Sequence[str]</span>
+<span class="sd">        :returns: Matrix of shape ``(len(corpus), vector_size)``.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+<span class="sd">        :raises RuntimeError: If the model has not been trained or loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Word2Vec model has not been trained/loaded&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">corpus</span><span class="p">:</span>
@@ -484,7 +580,6 @@
         <span class="n">vectors</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">corpus</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span></div>
 </div>
-
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>

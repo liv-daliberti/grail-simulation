@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -254,7 +254,7 @@
           <h1>Source code for gpt4o.evaluate</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Evaluation loop for the GPT-4o slate baseline.&quot;&quot;&quot;</span>
 
-<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught</span>
+<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -766,11 +766,16 @@
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-    <span class="n">summary</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;[DONE] dataset=</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> split=</span><span class="si">{</span><span class="n">eval_split</span><span class="si">}</span><span class="s2">  n=</span><span class="si">{</span><span class="n">total_seen</span><span class="si">}</span><span class="s2">  eligible=</span><span class="si">{</span><span class="n">eligible_overall</span><span class="si">}</span><span class="s2"> &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;accuracy=</span><span class="si">{</span><span class="n">overall_accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  parsed_ok=</span><span class="si">{</span><span class="n">parsed_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;format_rate=</span><span class="si">{</span><span class="n">format_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
+    <span class="n">summary_bits</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;[DONE] dataset=</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;split=</span><span class="si">{</span><span class="n">eval_split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="n">total_seen</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;eligible=</span><span class="si">{</span><span class="n">eligible_overall</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;accuracy=</span><span class="si">{</span><span class="n">overall_accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;parsed_ok=</span><span class="si">{</span><span class="n">parsed_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;format_rate=</span><span class="si">{</span><span class="n">format_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">summary_bits</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WROTE] per-example: </span><span class="si">{</span><span class="n">out_jsonl</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WROTE] metrics:     </span><span class="si">{</span><span class="n">metrics_json</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>

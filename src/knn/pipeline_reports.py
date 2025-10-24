@@ -675,10 +675,10 @@ def _hyperparameter_opinion_section(
         lines.append(_feature_space_heading(feature_space))
         lines.append("")
         lines.append(
-            "| Study | Metric | Text fields | Model | Vec size | Window | Min count | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |"
+            "| Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |"
         )
         lines.append(
-            "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+            "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
         )
         for study in studies:
             outcomes = study_outcomes.get(study.key, [])
@@ -732,9 +732,14 @@ def _hyperparameter_opinion_section(
                     if summary.participants is not None
                     else outcome.participants
                 )
+                accuracy_text = format_optional_float(summary.accuracy)
+                baseline_text = format_optional_float(summary.baseline_accuracy)
+                accuracy_delta = format_delta(summary.accuracy_delta)
+                eligible = summary.eligible if summary.eligible is not None else participants
                 lines.append(
                     f"| {study_cell} | {config.metric} | {text_label} | {model} | "
-                    f"{size} | {window} | {min_count} | {format_k(best_k)} | "
+                    f"{size} | {window} | {min_count} | {accuracy_text} | {baseline_text} | {accuracy_delta} | "
+                    f"{format_k(best_k)} | {format_count(eligible)} | "
                     f"{format_optional_float(summary.mae)} | "
                     f"{format_delta(summary.mae_delta)} | "
                     f"{format_optional_float(summary.rmse)} | "

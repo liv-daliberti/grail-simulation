@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -258,31 +258,35 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_TITLE_DIRS</span> <span class="k">as</span> <span class="n">_DEFAULT_TITLE_DIRS</span><span class="p">,</span>
-    <span class="n">PromptDocumentBuilder</span><span class="p">,</span>
-    <span class="n">default_title_resolver</span><span class="p">,</span>
+    <span class="n">create_prompt_document_builder</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">PROMPT_COLUMN</span><span class="p">,</span> <span class="n">PROMPT_MAX_HISTORY</span><span class="p">,</span> <span class="n">SOLUTION_COLUMN</span>
 
 <span class="n">DEFAULT_TITLE_DIRS</span> <span class="o">=</span> <span class="n">_DEFAULT_TITLE_DIRS</span>
 
-<span class="n">_PROMPT_DOC_BUILDER</span> <span class="o">=</span> <span class="n">PromptDocumentBuilder</span><span class="p">(</span>
+<span class="n">_PROMPT_DOC_BUILDER</span> <span class="o">=</span> <span class="n">create_prompt_document_builder</span><span class="p">(</span>
     <span class="n">prompt_column</span><span class="o">=</span><span class="n">PROMPT_COLUMN</span><span class="p">,</span>
     <span class="n">solution_column</span><span class="o">=</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span>
     <span class="n">max_history</span><span class="o">=</span><span class="n">PROMPT_MAX_HISTORY</span><span class="p">,</span>
-    <span class="n">title_lookup</span><span class="o">=</span><span class="n">default_title_resolver</span><span class="p">(),</span>
     <span class="n">log_prefix</span><span class="o">=</span><span class="s2">&quot;[prompts]&quot;</span><span class="p">,</span>
-    <span class="n">logger</span><span class="o">=</span><span class="n">get_logger</span><span class="p">(</span><span class="s2">&quot;xgb.features&quot;</span><span class="p">),</span>
+    <span class="n">logger_name</span><span class="o">=</span><span class="s2">&quot;xgb.features&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
 
 <div class="viewcode-block" id="title_for">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.title_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a human-readable title for a YouTube id if available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Look up a human-readable title for a given YouTube identifier.</span>
+
+<span class="sd">    :param video_id: Candidate YouTube video identifier to resolve.</span>
+<span class="sd">    :type video_id: str</span>
+<span class="sd">    :returns: Title associated with ``video_id`` when present in the cache.</span>
+<span class="sd">    :rtype: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span></div>
 
@@ -291,7 +295,14 @@
 <div class="viewcode-block" id="viewer_profile_sentence">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.viewer_profile_sentence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">viewer_profile_sentence</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the viewer profile sentence for ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compose the viewer profile sentence associated with a dataset row.</span>
+
+<span class="sd">    :param example: Interaction example containing viewer profile fields.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Natural-language sentence describing the participant profile.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">viewer_profile_sentence</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -300,7 +311,14 @@
 <div class="viewcode-block" id="prompt_from_builder">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.prompt_from_builder">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the prompt text for ``example`` using the shared builder.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble the full prompt text for a dataset example.</span>
+
+<span class="sd">    :param example: Interaction example containing prompt components.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Prompt text used for feature extraction.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -309,7 +327,14 @@
 <div class="viewcode-block" id="extract_now_watching">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.extract_now_watching">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the currently watched title/id, if known.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the currently watched item for an interaction.</span>
+
+<span class="sd">    :param example: Interaction example describing viewer activity.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Tuple of ``(title, video_id)`` when the &quot;now watching&quot; context exists.</span>
+<span class="sd">    :rtype: Optional[Tuple[str, str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -318,7 +343,14 @@
 <div class="viewcode-block" id="extract_slate_items">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.extract_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the slate as ``(title, video_id)`` pairs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the slate of candidate items from an interaction example.</span>
+
+<span class="sd">    :param example: Dataset row containing slate metadata.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :returns: Ordered list of ``(title, video_id)`` tuples.</span>
+<span class="sd">    :rtype: List[Tuple[str, str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span></div>
 
@@ -327,7 +359,16 @@
 <div class="viewcode-block" id="assemble_document">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.features.assemble_document">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return concatenated text used to featurise ``example``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Concatenate prompt components into a single document for featurisation.</span>
+
+<span class="sd">    :param example: Dataset row describing the prompt and slate context.</span>
+<span class="sd">    :type example: dict</span>
+<span class="sd">    :param extra_fields: Optional additional column names appended to the document.</span>
+<span class="sd">    :type extra_fields: Sequence[str] | None</span>
+<span class="sd">    :returns: Combined prompt text passed to vectorisers.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span></div>
 
@@ -341,7 +382,20 @@
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return TF-IDF training documents and associated labels.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepare prompt documents, labels, and metadata for TF-IDF training.</span>
+
+<span class="sd">    :param train_ds: Dataset split providing training rows.</span>
+<span class="sd">    :type train_ds: datasets.Dataset | Sequence[dict]</span>
+<span class="sd">    :param max_train: Optional cap on the number of training rows retained (0 keeps all).</span>
+<span class="sd">    :type max_train: int</span>
+<span class="sd">    :param seed: Random seed used when subsampling ``train_ds``.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param extra_fields: Additional columns appended to the prompt document.</span>
+<span class="sd">    :type extra_fields: Sequence[str] | None</span>
+<span class="sd">    :returns: Tuple of ``(documents, label_ids, participant_ids)``.</span>
+<span class="sd">    :rtype: Tuple[list[str], list[str], list[str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prepare_training_documents</span><span class="p">(</span>
         <span class="n">train_ds</span><span class="p">,</span>
@@ -362,6 +416,18 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convenience wrapper around :func:`prepare_training_documents`.</span>
+
+<span class="sd">    :param train_ds: Dataset split providing training rows.</span>
+<span class="sd">    :type train_ds: datasets.Dataset | Sequence[dict]</span>
+<span class="sd">    :param max_train: Optional cap on the number of training rows retained (0 keeps all).</span>
+<span class="sd">    :type max_train: int</span>
+<span class="sd">    :param seed: Random seed used when subsampling ``train_ds``.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param extra_fields: Additional columns appended to the prompt document.</span>
+<span class="sd">    :type extra_fields: Sequence[str] | None</span>
+<span class="sd">    :returns: Tuple of ``(documents, label_ids, participant_ids)`` mirroring</span>
+<span class="sd">        :func:`prepare_training_documents`.</span>
+<span class="sd">    :rtype: Tuple[list[str], list[str], list[str]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">prepare_training_documents</span><span class="p">(</span>

@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -258,9 +258,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureOpenAI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span>
@@ -270,14 +268,39 @@
     <span class="n">ensure_azure_env</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureOpenAI</span> <span class="k">as</span> <span class="n">AzureOpenAIType</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">AzureOpenAIType</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureOpenAI</span> <span class="k">as</span> <span class="n">_AzureOpenAI</span>  <span class="c1"># type: ignore</span>
+<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">_AzureOpenAI</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">_azure_openai_import_error</span> <span class="o">=</span> <span class="n">exc</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">_azure_openai_import_error</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_openai</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Azure OpenAI class, raising an informative error if missing.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">_AzureOpenAI</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;The &#39;openai&#39; package is required to use Azure OpenAI client helpers. &quot;</span>
+            <span class="s2">&quot;Install it with `pip install openai`.&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">_azure_openai_import_error</span>
+    <span class="k">return</span> <span class="n">_AzureOpenAI</span>
+
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_cached_client</span><span class="p">(</span>
     <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">api_version</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AzureOpenAI</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AzureOpenAIType</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a cached Azure OpenAI client instance.&quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="n">AzureOpenAI</span><span class="p">(</span>
+    <span class="n">client_cls</span> <span class="o">=</span> <span class="n">_require_openai</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">client_cls</span><span class="p">(</span>
         <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">,</span>
         <span class="n">azure_endpoint</span><span class="o">=</span><span class="n">endpoint</span><span class="p">,</span>
         <span class="n">api_version</span><span class="o">=</span><span class="n">api_version</span><span class="p">,</span>
@@ -286,7 +309,7 @@
 
 <div class="viewcode-block" id="get_client">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.client.get_client">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_client</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AzureOpenAI</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_client</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">AzureOpenAIType</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct or reuse the singleton Azure OpenAI client.&quot;&quot;&quot;</span>
 
     <span class="n">ensure_azure_env</span><span class="p">()</span>

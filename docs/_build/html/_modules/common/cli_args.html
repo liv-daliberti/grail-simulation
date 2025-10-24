@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -256,13 +256,28 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_flags</span><span class="p">(</span><span class="n">flags</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``flags`` as a tuple while accepting single-string inputs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Return ``flags`` as a tuple while accepting single-string inputs.</span>
+
+
+
+<span class="sd">    :param flags: Value provided for ``flags``.</span>
+
+<span class="sd">    :type flags: Sequence[str] | str</span>
+
+<span class="sd">    :returns: Result produced by ``_normalise_flags``.</span>
+
+<span class="sd">    :rtype: Sequence[str]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">flags</span><span class="p">,)</span>
@@ -279,11 +294,44 @@
     <span class="n">help_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register an argument that captures comma-separated values.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">    The helper keeps flag combinations consistent across CLIs that surface the</span>
-<span class="sd">    same semantics (e.g., study filters).</span>
+<span class="sd">    Register an argument that captures comma-separated values.</span>
+
+
+
+<span class="sd">        The helper keeps flag combinations consistent across CLIs that surface the</span>
+
+<span class="sd">        same semantics (e.g., study filters).</span>
+
+
+
+<span class="sd">    :param parser: Value provided for ``parser``.</span>
+
+<span class="sd">    :type parser: argparse.ArgumentParser</span>
+
+<span class="sd">    :param flags: Value provided for ``flags``.</span>
+
+<span class="sd">    :type flags: Sequence[str] | str</span>
+
+<span class="sd">    :param dest: Value provided for ``dest``.</span>
+
+<span class="sd">    :type dest: str</span>
+
+<span class="sd">    :param help_text: Value provided for ``help_text``.</span>
+
+<span class="sd">    :type help_text: str</span>
+
+<span class="sd">    :param default: Value provided for ``default``.</span>
+
+<span class="sd">    :type default: str</span>
+
+<span class="sd">    :returns: ``None``.</span>
+
+<span class="sd">    :rtype: None</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="o">*</span><span class="n">_normalise_flags</span><span class="p">(</span><span class="n">flags</span><span class="p">),</span>
@@ -296,7 +344,7 @@
 
 <div class="viewcode-block" id="add_sentence_transformer_normalise_flags">
 <a class="viewcode-back" href="../../api/common.html#common.add_sentence_transformer_normalise_flags">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalise_flags</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
     <span class="n">parser</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
@@ -306,7 +354,46 @@
     <span class="n">enable_help</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Enable L2-normalisation for sentence-transformer embeddings (default).&quot;</span><span class="p">,</span>
     <span class="n">disable_help</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add paired boolean flags controlling sentence-transformer normalisation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Add paired boolean flags controlling sentence-transformer normalisation.</span>
+
+
+
+<span class="sd">    :param parser: Value provided for ``parser``.</span>
+
+<span class="sd">    :type parser: argparse.ArgumentParser</span>
+
+<span class="sd">    :param dest: Value provided for ``dest``.</span>
+
+<span class="sd">    :type dest: str</span>
+
+<span class="sd">    :param default: Value provided for ``default``.</span>
+
+<span class="sd">    :type default: bool</span>
+
+<span class="sd">    :param enable_flags: Value provided for ``enable_flags``.</span>
+
+<span class="sd">    :type enable_flags: Sequence[str] | str</span>
+
+<span class="sd">    :param disable_flags: Value provided for ``disable_flags``.</span>
+
+<span class="sd">    :type disable_flags: Sequence[str] | str</span>
+
+<span class="sd">    :param enable_help: Value provided for ``enable_help``.</span>
+
+<span class="sd">    :type enable_help: str</span>
+
+<span class="sd">    :param disable_help: Value provided for ``disable_help``.</span>
+
+<span class="sd">    :type disable_help: str</span>
+
+<span class="sd">    :returns: ``None``.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
 
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="o">*</span><span class="n">_normalise_flags</span><span class="p">(</span><span class="n">enable_flags</span><span class="p">),</span>

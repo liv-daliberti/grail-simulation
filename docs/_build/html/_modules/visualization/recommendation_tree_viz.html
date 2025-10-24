@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,7 +252,12 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for visualization.recommendation_tree_viz</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Render Guns and GRAIL recommendation trees as Graphviz diagrams.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Utilities for visualising Guns and GRAIL recommendation data with Graphviz.</span>
+
+<span class="sd">The helpers in this module transform recommender exports and cleaned session datasets</span>
+<span class="sd">into annotated Graphviz diagrams that illustrate decision paths, node metadata, and</span>
+<span class="sd">viewer engagement metrics.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># pylint: disable=too-many-lines</span>
 
@@ -277,7 +282,15 @@
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.TreeEdge">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TreeEdge</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Directed edge connecting two nodes in the recommendation tree.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Directed edge connecting two nodes in the recommendation tree.</span>
+
+<span class="sd">    :param parent: Identifier of the upstream node that produced the recommendation.</span>
+<span class="sd">    :type parent: str</span>
+<span class="sd">    :param child: Identifier of the downstream node that was recommended.</span>
+<span class="sd">    :type child: str</span>
+<span class="sd">    :param rank: One-based recommendation rank assigned by the model, when available.</span>
+<span class="sd">    :type rank: int | None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">child</span><span class="p">:</span> <span class="nb">str</span>
@@ -289,7 +302,15 @@
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.TreeData">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TreeData</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container holding recommendation tree nodes and edges.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container holding recommendation tree nodes and edges.</span>
+
+<span class="sd">    :param root: Identifier of the tree root, typically the entry video.</span>
+<span class="sd">    :type root: str</span>
+<span class="sd">    :param nodes: Mapping from node identifiers to their underlying row data.</span>
+<span class="sd">    :type nodes: dict[str, Mapping[str, object]]</span>
+<span class="sd">    :param edges: List of directed edges describing parent-child relationships.</span>
+<span class="sd">    :type edges: list[TreeEdge]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span>
@@ -300,19 +321,34 @@
 <div class="viewcode-block" id="SafeDict">
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.SafeDict">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SafeDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dictionary that returns an empty string for missing keys.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dictionary that returns placeholder values for missing template keys.</span>
+
+<span class="sd">    Instances behave like a regular ``dict`` but ensure format strings never raise a</span>
+<span class="sd">    :class:`KeyError` by substituting empty strings for absent fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an empty string for missing ``key`` to ease template formatting.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an empty string when ``key`` is absent during template formatting.</span>
+
+<span class="sd">        :param key: Lookup key requested by :meth:`str.format_map`.</span>
+<span class="sd">        :type key: str</span>
+<span class="sd">        :returns: Empty string to keep format operations resilient.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_natural_sort_key</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple suitable for natural sorting of strings with numeric suffixes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple suitable for natural sorting of identifiers with numerics.</span>
 
-<span class="sd">    :param value: String containing optional numeric segments.</span>
-<span class="sd">    :returns: Tuple sorting by numeric portion, alphabetic prefix, and original text.</span>
+<span class="sd">    The returned tuple allows call sites to sort values such as ``rec1`` and ``rec10`` in</span>
+<span class="sd">    numerical order rather than purely lexicographical order.</span>
+
+<span class="sd">    :param value: String that may contain interleaved alphabetic and numeric segments.</span>
+<span class="sd">    :type value: str</span>
+<span class="sd">    :returns: Comparison tuple of ``(numeric_suffix, alphabetic_prefix, original_value)``.</span>
+<span class="sd">    :rtype: tuple[int, str, str]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
     <span class="n">digits</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
@@ -322,9 +358,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap ``text`` to the specified ``width`` using newline separators.</span>
 
-<span class="sd">    :param text: Original text to wrap.</span>
-<span class="sd">    :param width: Maximum line length; no wrapping when ``None`` or ``&lt;= 0``.</span>
-<span class="sd">    :returns: Wrapped text with newline separators.</span>
+<span class="sd">    :param text: Original text block that should be wrapped for readability.</span>
+<span class="sd">    :type text: str</span>
+<span class="sd">    :param width: Maximum line length; disables wrapping when ``None`` or ``&lt;= 0``.</span>
+<span class="sd">    :type width: int | None</span>
+<span class="sd">    :returns: Wrapped text with newline separators inserted at breakpoints.</span>
+<span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">width</span> <span class="ow">or</span> <span class="n">width</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">text</span>
@@ -334,7 +373,16 @@
 <div class="viewcode-block" id="parse_issue_counts">
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.parse_issue_counts">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_issue_counts</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse comma-separated issue=count specifications.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse comma-separated ``issue=count`` specifications into a mapping.</span>
+
+<span class="sd">    The helper is primarily used to interpret ``--batch-issues`` CLI payloads.</span>
+
+<span class="sd">    :param spec: Comma-separated string such as ``&quot;minimum_wage=2,gun_control=1&quot;``.</span>
+<span class="sd">    :type spec: str</span>
+<span class="sd">    :returns: Normalised mapping from issue identifiers to positive integer counts.</span>
+<span class="sd">    :rtype: dict[str, int]</span>
+<span class="sd">    :raises ValueError: If the input string does not follow the ``issue=count`` format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">result</span>
@@ -373,11 +421,20 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeData</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a recommendation tree from a CSV export.</span>
 
+<span class="sd">    The CSV is expected to contain a unique identifier column as well as several columns</span>
+<span class="sd">    whose names share a prefix (for example ``rec1`` ... ``rec5``). Each prefixed column</span>
+<span class="sd">    is interpreted as a ranked recommendation edge.</span>
+
 <span class="sd">    :param csv_path: Path to the CSV file generated by the recommender pipeline.</span>
-<span class="sd">    :param id_column: Column name that stores the node identifier.</span>
-<span class="sd">    :param child_prefixes: Column prefixes that denote recommendation targets.</span>
-<span class="sd">    :returns: Populated :class:`TreeData` describing the tree.</span>
-<span class="sd">    :raises ValueError: If the recommendation columns cannot be inferred.</span>
+<span class="sd">    :type csv_path: Path</span>
+<span class="sd">    :param id_column: Column name that stores the node identifier; automatically detected</span>
+<span class="sd">        in a case-insensitive fashion when not present verbatim.</span>
+<span class="sd">    :type id_column: str</span>
+<span class="sd">    :param child_prefixes: One or more column prefixes that denote recommendation targets.</span>
+<span class="sd">    :type child_prefixes: Sequence[str]</span>
+<span class="sd">    :returns: Populated :class:`TreeData` describing the recommendations and root node.</span>
+<span class="sd">    :rtype: TreeData</span>
+<span class="sd">    :raises ValueError: If no recommendation columns can be inferred from the provided CSV.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
@@ -435,10 +492,16 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load per-node metadata to enrich node labels.</span>
 
-<span class="sd">    :param metadata_path: CSV, JSON, or JSONL file with metadata rows.</span>
-<span class="sd">    :param id_column: Column containing the node identifier.</span>
-<span class="sd">    :returns: Mapping from node identifier to metadata dictionaries.</span>
-<span class="sd">    :raises ValueError: If the identifier column is missing in a CSV file.</span>
+<span class="sd">    Metadata files may be authored in CSV, JSON, or JSONL formats. The loader produces a</span>
+<span class="sd">    dictionary keyed by node identifier, which is merged into the label template context.</span>
+
+<span class="sd">    :param metadata_path: Path to the metadata file, or ``None`` to skip enrichment.</span>
+<span class="sd">    :type metadata_path: Path | None</span>
+<span class="sd">    :param id_column: Column containing the node identifier within the metadata file.</span>
+<span class="sd">    :type id_column: str</span>
+<span class="sd">    :returns: Mapping from node identifiers to metadata dictionaries.</span>
+<span class="sd">    :rtype: dict[str, Mapping[str, object]]</span>
+<span class="sd">    :raises ValueError: If the identifier column is missing in a CSV metadata file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-branches</span>
     <span class="k">if</span> <span class="n">metadata_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -489,12 +552,22 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a node label based on the configured template.</span>
 
+<span class="sd">    Labels are constructed from both the raw tree row and any auxiliary metadata. Missing</span>
+<span class="sd">    template keys are tolerated thanks to :class:`SafeDict`. When the formatted template</span>
+<span class="sd">    results in an empty string, the function falls back to common title fields.</span>
+
 <span class="sd">    :param node_id: Identifier of the node being rendered.</span>
-<span class="sd">    :param node_data: Raw data associated with the node.</span>
+<span class="sd">    :type node_id: str</span>
+<span class="sd">    :param node_data: Raw data associated with the node sourced from the tree CSV.</span>
+<span class="sd">    :type node_data: Mapping[str, object]</span>
 <span class="sd">    :param metadata: Supplemental metadata keyed by node identifier.</span>
-<span class="sd">    :param template: Python format string used for the label.</span>
-<span class="sd">    :param wrap_width: Optional character width used to wrap the label.</span>
-<span class="sd">    :returns: Formatted label string, including the node id when requested.</span>
+<span class="sd">    :type metadata: Mapping[str, Mapping[str, object]]</span>
+<span class="sd">    :param template: Python format string used for the label body.</span>
+<span class="sd">    :type template: str</span>
+<span class="sd">    :param wrap_width: Optional character width used to wrap the label text.</span>
+<span class="sd">    :type wrap_width: int | None</span>
+<span class="sd">    :returns: Formatted label string with reasonable fallbacks and ``wrap_width`` applied.</span>
+<span class="sd">    :rtype: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">context</span> <span class="o">=</span> <span class="n">SafeDict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">node_id</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">node_data</span><span class="p">})</span>
     <span class="k">try</span><span class="p">:</span>
@@ -513,8 +586,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_sequences_from_object</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract sequences of identifiers from a heterogeneous object.</span>
 
+<span class="sd">    The helper accepts the diverse payloads encountered in real trajectory dumps. Lists,</span>
+<span class="sd">    tuples, dictionaries, and delimited strings are normalised into lists of string</span>
+<span class="sd">    identifiers.</span>
+
 <span class="sd">    :param obj: Candidate object containing sequence information.</span>
-<span class="sd">    :returns: Collection of sequences found within ``obj``.</span>
+<span class="sd">    :type obj: object</span>
+<span class="sd">    :returns: Collection of identifier sequences discovered within ``obj``.</span>
+<span class="sd">    :rtype: list[list[str]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
@@ -543,9 +622,15 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load viewer trajectories from text, CSV, or JSON representations.</span>
 
-<span class="sd">    :param path: Path to the trajectory file, or ``None`` to skip loading.</span>
-<span class="sd">    :param delimiter: Delimiter used when parsing plain-text files.</span>
+<span class="sd">    The loader gracefully handles repeated identifiers, blank entries, and numeric values,</span>
+<span class="sd">    returning deduplicated and stringified sequences suitable for downstream aggregation.</span>
+
+<span class="sd">    :param path: Path to the trajectory file, or ``None`` to skip loading trajectories.</span>
+<span class="sd">    :type path: Path | None</span>
+<span class="sd">    :param delimiter: Delimiter used when parsing free-form text files.</span>
+<span class="sd">    :type delimiter: str</span>
 <span class="sd">    :returns: Normalised viewer trajectories as lists of identifiers.</span>
+<span class="sd">    :rtype: list[list[str]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-branches,too-many-locals</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -609,10 +694,15 @@
 <div class="viewcode-block" id="compute_depths">
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.compute_depths">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_depths</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the depth (distance from the root) for every node.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the depth (distance from the root) for every node in ``tree``.</span>
 
-<span class="sd">    :param tree: Recommendation tree.</span>
-<span class="sd">    :returns: Mapping of node identifiers to zero-based depth.</span>
+<span class="sd">    A breadth-first traversal considers every parent-child relation once and produces a</span>
+<span class="sd">    zero-based depth for each reachable node.</span>
+
+<span class="sd">    :param tree: Recommendation tree structure.</span>
+<span class="sd">    :type tree: TreeData</span>
+<span class="sd">    :returns: Mapping from node identifiers to zero-based depth.</span>
+<span class="sd">    :rtype: dict[str, int]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">adjacency</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
@@ -634,8 +724,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_counts</span><span class="p">(</span><span class="n">sequences</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Counter</span><span class="p">,</span> <span class="n">Counter</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate node and edge visitation counts from viewer trajectories.</span>
 
-<span class="sd">    :param sequences: Iterable of node identifier sequences.</span>
-<span class="sd">    :returns: Tuple of ``(node_counts, edge_counts)``.</span>
+<span class="sd">    :param sequences: Iterable of node identifier sequences, each representing a viewer.</span>
+<span class="sd">    :type sequences: Iterable[Sequence[str]]</span>
+<span class="sd">    :returns: Tuple of ``(node_counts, edge_counts)`` counters with visit frequencies.</span>
+<span class="sd">    :rtype: tuple[Counter, Counter]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">node_counts</span><span class="p">:</span> <span class="n">Counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
     <span class="n">edge_counts</span><span class="p">:</span> <span class="n">Counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
@@ -656,7 +748,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Group dataset rows by session identifier and sort within each session.</span>
 
 <span class="sd">    :param rows: Iterable of dataset rows emitted by the cleaned dataset.</span>
-<span class="sd">    :returns: Mapping from session identifier to chronological rows.</span>
+<span class="sd">    :type rows: Sequence[Mapping[str, object]]</span>
+<span class="sd">    :returns: Mapping from session identifiers to chronologically sorted rows.</span>
+<span class="sd">    :rtype: dict[str, list[Mapping[str, object]]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sessions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
@@ -687,18 +781,34 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a recommendation tree as a Graphviz graph.</span>
 
+<span class="sd">    The resulting diagram supports optional highlighting of a user journey, overlays visit</span>
+<span class="sd">    counts, and displays recommendation rank labels. Layout is controlled entirely through</span>
+<span class="sd">    Graphviz attributes.</span>
+
 <span class="sd">    :param tree: Tree structure to render.</span>
-<span class="sd">    :param metadata: Supplemental metadata per node.</span>
+<span class="sd">    :type tree: TreeData</span>
+<span class="sd">    :param metadata: Supplemental metadata per node used by :func:`format_node_label`.</span>
+<span class="sd">    :type metadata: Mapping[str, Mapping[str, object]]</span>
 <span class="sd">    :param label_template: Template used to render each node label.</span>
-<span class="sd">    :param wrap_width: Optional wrapping width for labels.</span>
-<span class="sd">    :param highlight_path: Sequence of nodes to emphasise.</span>
-<span class="sd">    :param node_counts: Aggregated node view counts.</span>
-<span class="sd">    :param edge_counts: Aggregated edge traversal counts.</span>
-<span class="sd">    :param max_depth: Optional depth limit for rendered nodes.</span>
-<span class="sd">    :param rankdir: Graphviz rank direction (e.g. ``&quot;LR&quot;``).</span>
-<span class="sd">    :param engine: Graphviz layout engine.</span>
-<span class="sd">    :param show_rank_labels: Whether to annotate edges with recommendation rank.</span>
-<span class="sd">    :returns: Configured :class:`graphviz.Digraph` instance.</span>
+<span class="sd">    :type label_template: str</span>
+<span class="sd">    :param wrap_width: Optional wrapping width for labels; ``None`` disables wrapping.</span>
+<span class="sd">    :type wrap_width: int | None</span>
+<span class="sd">    :param highlight_path: Sequence of nodes to emphasise visually.</span>
+<span class="sd">    :type highlight_path: Sequence[str]</span>
+<span class="sd">    :param node_counts: Aggregated node view counts sourced from viewer trajectories.</span>
+<span class="sd">    :type node_counts: Counter</span>
+<span class="sd">    :param edge_counts: Aggregated edge traversal counts from viewer trajectories.</span>
+<span class="sd">    :type edge_counts: Counter</span>
+<span class="sd">    :param max_depth: Optional depth limit controlling which nodes are rendered.</span>
+<span class="sd">    :type max_depth: int | None</span>
+<span class="sd">    :param rankdir: Graphviz rank direction (for example ``&quot;LR&quot;`` or ``&quot;TB&quot;``).</span>
+<span class="sd">    :type rankdir: str</span>
+<span class="sd">    :param engine: Graphviz layout engine name.</span>
+<span class="sd">    :type engine: str</span>
+<span class="sd">    :param show_rank_labels: Whether to annotate edges with their recommendation rank.</span>
+<span class="sd">    :type show_rank_labels: bool</span>
+<span class="sd">    :returns: Configured :class:`graphviz.Digraph` instance ready for rendering.</span>
+<span class="sd">    :rtype: graphviz.Digraph</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-branches</span>
     <span class="n">depths</span> <span class="o">=</span> <span class="n">compute_depths</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
@@ -772,8 +882,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_cleaned_dataset</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a HuggingFace dataset exported by ``clean_data.py``.</span>
 
+<span class="sd">    The function supports both saved-to-disk datasets as well as flat JSON/CSV exports,</span>
+<span class="sd">    deferring heavy imports until runtime so command-line usage remains lightweight.</span>
+
 <span class="sd">    :param path: Path to the dataset folder or file.</span>
-<span class="sd">    :returns: Dataset object compatible with the HuggingFace datasets API.</span>
+<span class="sd">    :type path: Path</span>
+<span class="sd">    :returns: Dataset object compatible with the HuggingFace ``datasets`` API.</span>
+<span class="sd">    :rtype: datasets.Dataset | datasets.DatasetDict</span>
+<span class="sd">    :raises ImportError: If the optional ``datasets`` dependency is not installed.</span>
 <span class="sd">    :raises ValueError: If the file extension is not supported.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=import-outside-toplevel</span>
@@ -800,12 +916,16 @@
     <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">issue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect dataset rows, optionally filtering by split and issue.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect dataset rows, optionally filtering by split name and issue.</span>
 
 <span class="sd">    :param dataset: Dataset object or mapping of split names to datasets.</span>
-<span class="sd">    :param split: Optional split name (e.g. ``&quot;train&quot;`` or ``&quot;validation&quot;``).</span>
+<span class="sd">    :type dataset: datasets.Dataset | datasets.DatasetDict | Mapping[str, object]</span>
+<span class="sd">    :param split: Optional split name (for example ``&quot;train&quot;`` or ``&quot;validation&quot;``).</span>
+<span class="sd">    :type split: str | None</span>
 <span class="sd">    :param issue: Optional issue identifier to filter rows.</span>
-<span class="sd">    :returns: List of dictionaries representing dataset rows.</span>
+<span class="sd">    :type issue: str | None</span>
+<span class="sd">    :returns: Rows materialised as standard dictionaries to simplify downstream use.</span>
+<span class="sd">    :rtype: list[dict[str, object]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">dataset_items</span> <span class="o">=</span> <span class="kc">None</span>
@@ -836,12 +956,18 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the rows that correspond to a target viewer session.</span>
 
 <span class="sd">    :param dataset: HuggingFace dataset or mapping of splits.</span>
-<span class="sd">    :param session_id: Specific session identifier to fetch, defaults to first available.</span>
+<span class="sd">    :type dataset: datasets.Dataset | datasets.DatasetDict | Mapping[str, object]</span>
+<span class="sd">    :param session_id: Specific session identifier to fetch; defaults to the first available.</span>
+<span class="sd">    :type session_id: str | None</span>
 <span class="sd">    :param split: Optional split name for filtering.</span>
+<span class="sd">    :type split: str | None</span>
 <span class="sd">    :param issue: Optional issue identifier filter.</span>
-<span class="sd">    :param max_steps: Optional maximum number of steps to include.</span>
-<span class="sd">    :returns: Selected session identifier and its chronologically ordered rows.</span>
-<span class="sd">    :raises ValueError: If the session cannot be located.</span>
+<span class="sd">    :type issue: str | None</span>
+<span class="sd">    :param max_steps: Optional maximum number of recommendation steps to include.</span>
+<span class="sd">    :type max_steps: int | None</span>
+<span class="sd">    :returns: Tuple of the resolved session identifier and its chronologically ordered rows.</span>
+<span class="sd">    :rtype: tuple[str, list[dict[str, object]]]</span>
+<span class="sd">    :raises ValueError: If no matching session can be located with the provided filters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">_collect_rows</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span> <span class="n">issue</span><span class="o">=</span><span class="n">issue</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
@@ -866,9 +992,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_find_watch_details</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the watch metadata for a given video inside a session row.</span>
 
-<span class="sd">    :param row: Session row with watch details embedded.</span>
+<span class="sd">    :param row: Session row with watch details embedded in ``watched_detailed_json``.</span>
+<span class="sd">    :type row: Mapping[str, object]</span>
 <span class="sd">    :param video_id: Identifier of the video to search for.</span>
-<span class="sd">    :returns: Matching watch information, or an empty mapping.</span>
+<span class="sd">    :type video_id: str</span>
+<span class="sd">    :returns: Matching watch information, or an empty mapping when not present.</span>
+<span class="sd">    :rtype: Mapping[str, object]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -893,13 +1022,23 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualise a single viewer session as a Graphviz graph.</span>
 
+<span class="sd">    Nodes represent the current video and available recommendations at every step, while</span>
+<span class="sd">    edges track both recommendation rank and the option ultimately selected by the viewer.</span>
+
 <span class="sd">    :param rows: Chronologically ordered session rows.</span>
+<span class="sd">    :type rows: Sequence[Mapping[str, object]]</span>
 <span class="sd">    :param label_template: Template used to render node labels.</span>
-<span class="sd">    :param wrap_width: Optional wrapping width for labels.</span>
-<span class="sd">    :param rankdir: Graph orientation (Graphviz ``rankdir`` attribute).</span>
+<span class="sd">    :type label_template: str</span>
+<span class="sd">    :param wrap_width: Optional wrapping width for labels; ``None`` and ``0`` disable wrapping.</span>
+<span class="sd">    :type wrap_width: int | None</span>
+<span class="sd">    :param rankdir: Graph orientation encoded using Graphviz&#39;s ``rankdir`` attribute.</span>
+<span class="sd">    :type rankdir: str</span>
 <span class="sd">    :param engine: Graphviz layout engine to use.</span>
-<span class="sd">    :param highlight_path: Sequence of video identifiers to highlight.</span>
-<span class="sd">    :returns: Configured :class:`graphviz.Digraph` instance.</span>
+<span class="sd">    :type engine: str</span>
+<span class="sd">    :param highlight_path: Sequence of video identifiers to highlight visually.</span>
+<span class="sd">    :type highlight_path: Sequence[str]</span>
+<span class="sd">    :returns: Configured :class:`graphviz.Digraph` instance describing the session.</span>
+<span class="sd">    :rtype: graphviz.Digraph</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">Digraph</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Viewer session&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;png&quot;</span><span class="p">)</span>
@@ -1019,10 +1158,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">render_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Graphviz graph to disk, normalising the output path.</span>
 
+<span class="sd">    The helper mimics Graphviz CLI behaviour by inferring the format from the filename,</span>
+<span class="sd">    setting :attr:`Digraph.format`, and renaming the intermediate output produced by</span>
+<span class="sd">    :meth:`graphviz.Digraph.render`.</span>
+
 <span class="sd">    :param graph: Graphviz graph to render.</span>
+<span class="sd">    :type graph: graphviz.Digraph</span>
 <span class="sd">    :param output_path: Target output file path.</span>
+<span class="sd">    :type output_path: Path</span>
 <span class="sd">    :param output_format: Optional format override (otherwise inferred from ``output_path``).</span>
-<span class="sd">    :returns: Path to the rendered output file.</span>
+<span class="sd">    :type output_format: str | None</span>
+<span class="sd">    :returns: Path to the rendered output file on disk.</span>
+<span class="sd">    :rtype: Path</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">format_to_use</span> <span class="o">=</span> <span class="n">output_format</span> <span class="ow">or</span> <span class="n">output_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">format_to_use</span><span class="p">:</span>
@@ -1045,9 +1192,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments for the recommendation visualiser.</span>
 
-<span class="sd">    :param argv: Optional explicit argument vector.</span>
-<span class="sd">    :returns: Parsed arguments namespace.</span>
-<span class="sd">    :raises SystemExit: If required arguments are missing.</span>
+<span class="sd">    The parser supports both recommendation-tree mode and session-visualisation mode,</span>
+<span class="sd">    validating that the correct combination of flags is supplied before returning.</span>
+
+<span class="sd">    :param argv: Optional explicit argument vector for testing.</span>
+<span class="sd">    :type argv: Sequence[str] | None</span>
+<span class="sd">    :returns: Parsed arguments namespace ready for downstream consumption.</span>
+<span class="sd">    :rtype: argparse.Namespace</span>
+<span class="sd">    :raises SystemExit: If required arguments are missing or incompatible.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--tree&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a tree CSV file.&quot;</span><span class="p">)</span>
@@ -1195,8 +1347,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the recommendation tree visualiser.</span>
 
-<span class="sd">    :param argv: Optional list of CLI arguments.</span>
-<span class="sd">    :raises SystemExit: When the command arguments are inconsistent.</span>
+<span class="sd">    Depending on the provided arguments the command renders either recommendation trees</span>
+<span class="sd">    from CSV exports or viewer sessions sourced from cleaned datasets. Errors are</span>
+<span class="sd">    communicated via :class:`SystemExit` to match typical CLI semantics.</span>
+
+<span class="sd">    :param argv: Optional list of CLI arguments mirroring :data:`sys.argv[1:]`.</span>
+<span class="sd">    :type argv: Sequence[str] | None</span>
+<span class="sd">    :raises SystemExit: When the command arguments are inconsistent or data is invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>

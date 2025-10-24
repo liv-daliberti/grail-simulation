@@ -285,13 +285,25 @@ def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     mae_delta = None
     if mae_after is not None and baseline_mae is not None:
         mae_delta = baseline_mae - mae_after
+    accuracy_after = _safe_float(metrics_block.get("direction_accuracy"))
+    baseline_accuracy = _safe_float(baseline.get("direction_accuracy"))
+    accuracy_delta = None
+    if accuracy_after is not None and baseline_accuracy is not None:
+        accuracy_delta = accuracy_after - baseline_accuracy
+    eligible = _safe_int(data.get("eligible"))
+    if eligible is None:
+        eligible = _safe_int(metrics_block.get("eligible"))
     return OpinionSummary(
         mae_after=mae_after,
         rmse_after=_safe_float(metrics_block.get("rmse_after")),
         r2_after=_safe_float(metrics_block.get("r2_after")),
         baseline_mae=baseline_mae,
         mae_delta=mae_delta,
+        accuracy_after=accuracy_after,
+        baseline_accuracy=baseline_accuracy,
+        accuracy_delta=accuracy_delta,
         participants=_safe_int(data.get("n_participants")),
+        eligible=eligible,
         dataset=str(data.get("dataset")) if data.get("dataset") else None,
         split=str(data.get("split")) if data.get("split") else None,
         label=str(data.get("label")) if data.get("label") else None,
@@ -946,9 +958,11 @@ def _opinion_hyperparameter_section(
         lines.append(f"*Issue:* {issue_label}")
         lines.append("")
         lines.append(
-            "| Config | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |"
+            "| Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |"
         )
-        lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
+        lines.append(
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+        )
         ordered = sorted(
             study_outcomes,
             key=lambda item: (item.mae, item.rmse, -item.r2, item.order_index),
@@ -970,12 +984,17 @@ def _opinion_hyperparameter_section(
                 config_cell = f"**{config_label}**<br>{config_summary}"
             else:
                 config_cell = f"{config_label}<br>{config_summary}"
+            accuracy_text = _format_optional_float(summary.accuracy_after)
+            baseline_text = _format_optional_float(summary.baseline_accuracy)
+            accuracy_delta = _format_delta(summary.accuracy_delta)
+            eligible_value = summary.eligible if summary.eligible is not None else summary.participants
+            eligible_text = _format_count(eligible_value)
             lines.append(
-                f"| {config_cell} | {_format_optional_float(summary.mae_after)} | "
+                f"| {config_cell} | {accuracy_text} | {baseline_text} | {accuracy_delta} | "
+                f"— | {eligible_text} | {_format_optional_float(summary.mae_after)} | "
                 f"{_format_delta(summary.mae_delta)} | "
                 f"{_format_optional_float(summary.rmse_after)} | "
-                f"{_format_optional_float(summary.r2_after)} | "
-                f"{_format_count(summary.participants)} |"
+                f"{_format_optional_float(summary.r2_after)} |"
             )
         if len(ordered) > display_limit:
             lines.append(

@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -252,21 +252,19 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.evaluate</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Evaluation loop and metrics for the KNN baseline.&quot;&quot;&quot;</span>
-
-<span class="c1"># pylint: disable=too-many-lines</span>
+<span></span><span class="c1"># pylint: disable=line-too-long,too-many-arguments,too-many-branches,too-many-lines,too-many-locals,too-many-statements</span>
+<span class="sd">&quot;&quot;&quot;Evaluation loop and metrics for the KNN baseline.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
@@ -305,27 +303,46 @@
     <span class="n">save_word2vec_index</span><span class="p">,</span>
 <span class="p">)</span>
 
-
 <span class="n">BUCKET_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a list of comma-separated tokens with whitespace trimmed.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of comma-separated tokens with whitespace trimmed.</span>
 
+<span class="sd">    :param raw: Raw comma-separated string or ``None`` when no tokens are supplied.</span>
+
+<span class="sd">    :type raw: Optional[str]</span>
+
+<span class="sd">    :returns: a list of comma-separated tokens with whitespace trimmed</span>
+
+<span class="sd">    :rtype: List[str]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
-
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_collect_repo_state</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return git provenance for the current repository.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return git provenance for the current repository.</span>
 
+<span class="sd">    :returns: git provenance for the current repository</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_git</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run ``git`` with ``args`` and return stdout when successful.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute ``git`` with ``args`` and capture standard output.</span>
 
+<span class="sd">        :param args: Sequence of command-line arguments passed to ``git``.</span>
+<span class="sd">        :type args: Sequence[str]</span>
+<span class="sd">        :returns: Stripped stdout when the command succeeds, otherwise ``None``.</span>
+<span class="sd">        :rtype: Optional[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
                 <span class="p">[</span><span class="s2">&quot;git&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">],</span>
@@ -352,10 +369,23 @@
         <span class="s2">&quot;git_status&quot;</span><span class="p">:</span> <span class="n">status</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_filter_split_for_issues</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="n">issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``split_ds`` filtered to the requested issue tokens.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return ``split_ds`` filtered to the requested issue tokens.</span>
 
+<span class="sd">    :param split_ds: Dataset split object being filtered or transformed.</span>
+
+<span class="sd">    :type split_ds: Any</span>
+
+<span class="sd">    :param issues: Iterable of issue identifiers used to filter the dataset.</span>
+
+<span class="sd">    :type issues: Sequence[str]</span>
+
+<span class="sd">    :returns: ``split_ds`` filtered to the requested issue tokens</span>
+
+<span class="sd">    :rtype: Any</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="p">{</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">issues</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">split_ds</span>
@@ -363,17 +393,32 @@
         <span class="k">return</span> <span class="n">split_ds</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_match_issue</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the row&#39;s issue matches the normalized filter set.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine whether a row&#39;s ``issue`` matches the normalised filter set.</span>
 
+<span class="sd">        :param row: Dataset example retrieved from ``split_ds``.</span>
+<span class="sd">        :type row: Mapping[str, Any]</span>
+<span class="sd">        :returns: ``True`` when the row belongs to the requested issue slice.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">normalized</span>
 
     <span class="k">return</span> <span class="n">split_ds</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_match_issue</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_dataset_split_provenance</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return provenance metadata for a single HF dataset split.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return provenance metadata for a single HF dataset split.</span>
 
+<span class="sd">    :param split_ds: Dataset split object being filtered or transformed.</span>
+
+<span class="sd">    :type split_ds: Any</span>
+
+<span class="sd">    :returns: provenance metadata for a single HF dataset split</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;num_rows&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)),</span>
         <span class="s2">&quot;fingerprint&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="s2">&quot;_fingerprint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -384,13 +429,22 @@
         <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;dataset_revision&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">revision</span>
     <span class="k">return</span> <span class="n">provenance</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_dataset_provenance</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return provenance metadata for all splits contained in ``dataset``.</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_collect_dataset_provenance</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return provenance metadata for all splits contained in ``ds``.&quot;&quot;&quot;</span>
+<span class="sd">    :param dataset: Dataset object containing the splits required for evaluation.</span>
 
+<span class="sd">    :type dataset: Mapping[str, Any]</span>
+
+<span class="sd">    :returns: provenance metadata for all splits contained in ``dataset``</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">revision</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">split_info</span> <span class="o">=</span> <span class="n">_dataset_split_provenance</span><span class="p">(</span><span class="n">split_ds</span><span class="p">)</span>
         <span class="n">splits</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_info</span>
         <span class="k">if</span> <span class="n">revision</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">split_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dataset_revision&quot;</span><span class="p">):</span>
@@ -400,10 +454,23 @@
         <span class="s2">&quot;splits&quot;</span><span class="p">:</span> <span class="n">splits</span><span class="p">,</span>
     <span class="p">}</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a stable grouping key used for bootstrap resampling.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a stable grouping key used for bootstrap resampling.</span>
 
+<span class="sd">    :param example: Single dataset example under inspection.</span>
+
+<span class="sd">    :type example: Mapping[str, Any]</span>
+
+<span class="sd">    :param fallback_index: Secondary index consulted when the primary lookup fails.</span>
+
+<span class="sd">    :type fallback_index: int</span>
+
+<span class="sd">    :returns: a stable grouping key used for bootstrap resampling</span>
+
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">urlid</span> <span class="ow">and</span> <span class="n">urlid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;urlid::</span><span class="si">{</span><span class="n">urlid</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -415,10 +482,23 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;session::</span><span class="si">{</span><span class="n">session</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;row::</span><span class="si">{</span><span class="n">fallback_index</span><span class="si">}</span><span class="s2">&quot;</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_accuracy_for_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">k_val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return accuracy for ``rows`` using predictions at ``k_val``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return accuracy for ``rows`` using predictions at ``k_val``.</span>
 
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+
+<span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
+
+<span class="sd">    :param k_val: Specific ``k`` value under evaluation.</span>
+
+<span class="sd">    :type k_val: int</span>
+
+<span class="sd">    :returns: accuracy for ``rows`` using predictions at ``k_val``</span>
+
+<span class="sd">    :rtype: float</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.0</span>
     <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
@@ -432,10 +512,23 @@
             <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">baseline_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return accuracy for the most frequent baseline over ``rows``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return accuracy for the most frequent baseline over ``rows``.</span>
 
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+
+<span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
+
+<span class="sd">    :param baseline_index: Precomputed index that produces baseline recommendations.</span>
+
+<span class="sd">    :type baseline_index: Optional[int]</span>
+
+<span class="sd">    :returns: accuracy for the most frequent baseline over ``rows``</span>
+
+<span class="sd">    :rtype: float</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.0</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
@@ -450,7 +543,6 @@
             <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_bootstrap_uncertainty</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
@@ -459,8 +551,34 @@
     <span class="n">replicates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return bootstrap-based uncertainty estimates for accuracy metrics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return bootstrap-based uncertainty estimates for accuracy metrics.</span>
 
+<span class="sd">    :param rows: Iterable of evaluation rows or metrics to analyse.</span>
+
+<span class="sd">    :type rows: Sequence[Mapping[str, Any]]</span>
+
+<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+
+<span class="sd">    :type best_k: int</span>
+
+<span class="sd">    :param baseline_index: Precomputed index that produces baseline recommendations.</span>
+
+<span class="sd">    :type baseline_index: Optional[int]</span>
+
+<span class="sd">    :param replicates: Number of bootstrap replicates to sample.</span>
+
+<span class="sd">    :type replicates: int</span>
+
+<span class="sd">    :param seed: Seed used to initialise pseudo-random operations.</span>
+
+<span class="sd">    :type seed: int</span>
+
+<span class="sd">    :returns: bootstrap-based uncertainty estimates for accuracy metrics</span>
+
+<span class="sd">    :rtype: Optional[Dict[str, Any]]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">replicates</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">eligible_rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">)]</span>
@@ -513,12 +631,47 @@
         <span class="p">}</span>
     <span class="k">return</span> <span class="n">result</span>
 
-
 <div class="viewcode-block" id="parse_k_values">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.parse_k_values">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_k_values</span><span class="p">(</span><span class="n">k_default</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sweep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the sorted list of k values derived from CLI configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Derive the sorted set of ``k`` values requested for evaluation.</span>
 
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        k_default:</span>
+
+<span class="sd">            The baseline ``k`` value supplied via the CLI (used when the sweep is empty).</span>
+
+<span class="sd">        sweep:</span>
+
+<span class="sd">            Comma-delimited string of additional ``k`` candidates provided by the user.</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        list[int]</span>
+
+<span class="sd">            Strictly positive ``k`` values in ascending order. Falls back to ``k_default``</span>
+
+<span class="sd">            (or ``25`` when unset) if the sweep does not contain any valid integers.</span>
+
+<span class="sd">    :param k_default: Fallback ``k`` value applied when no sweep result is available.</span>
+
+<span class="sd">    :type k_default: int</span>
+
+<span class="sd">    :param sweep: Sweep configuration or CLI payload under inspection.</span>
+
+<span class="sd">    :type sweep: str</span>
+
+<span class="sd">    :returns: Sorted list of unique ``k`` values parsed from the sweep specification.</span>
+
+<span class="sd">    :rtype: List[int]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k_default</span><span class="p">)}</span> <span class="k">if</span> <span class="n">k_default</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">sweep</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
         <span class="n">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -532,12 +685,47 @@
     <span class="k">return</span> <span class="n">k_vals</span> <span class="ow">or</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k_default</span><span class="p">)</span> <span class="k">if</span> <span class="n">k_default</span> <span class="k">else</span> <span class="mi">25</span><span class="p">]</span></div>
 
 
-
 <div class="viewcode-block" id="select_best_k">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.select_best_k">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_best_k</span><span class="p">(</span><span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the elbow-selected ``k`` from accuracy measurements.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Choose an appropriate ``k`` by applying a simple elbow heuristic.</span>
 
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        k_values:</span>
+
+<span class="sd">            Sorted sequence of evaluated ``k`` values.</span>
+
+<span class="sd">        accuracy_by_k:</span>
+
+<span class="sd">            Observed accuracy for each ``k`` on the validation split.</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        int</span>
+
+<span class="sd">            The ``k`` value where marginal gains fall below half of the initial slope,</span>
+
+<span class="sd">            or the accuracy-maximising ``k`` when the heuristic cannot be applied.</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.</span>
+
+<span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
+
+<span class="sd">    :returns: Neighbourhood size that maximises the provided accuracy scores.</span>
+
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">k_values</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
     <span class="n">accuracies</span> <span class="o">=</span> <span class="p">[</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">]</span>
@@ -556,12 +744,37 @@
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span></div>
 
 
-
 <div class="viewcode-block" id="resolve_reports_dir">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.resolve_reports_dir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_reports_dir</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the reports directory associated with ``out_dir``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve the canonical reports directory corresponding to ``out_dir``.</span>
 
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        out_dir:</span>
+
+<span class="sd">            Directory containing pipeline artefacts (typically under ``models/knn``).</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        pathlib.Path</span>
+
+<span class="sd">            Path pointing at the root ``reports`` directory for the repository.</span>
+
+<span class="sd">    :param out_dir: Output directory receiving generated metrics and reports.</span>
+
+<span class="sd">    :type out_dir: Path</span>
+
+<span class="sd">    :returns: Directory path where the generated report files will be stored.</span>
+
+<span class="sd">    :rtype: Path</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">parents</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parents</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;knn&quot;</span><span class="p">:</span>
@@ -576,7 +789,6 @@
     <span class="k">return</span> <span class="n">root_dir</span> <span class="o">/</span> <span class="s2">&quot;reports&quot;</span></div>
 
 
-
 <div class="viewcode-block" id="plot_elbow">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.plot_elbow">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_elbow</span><span class="p">(</span>
@@ -587,15 +799,58 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">data_split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an error-rate vs ``k`` plot for diagnostic purposes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate an error-rate plot to visualise the KNN elbow heuristic.</span>
 
-<span class="sd">    :param k_values: Iterable of evaluated ``k`` values.</span>
-<span class="sd">    :param accuracy_by_k: Mapping from ``k`` to accuracy on the requested split.</span>
-<span class="sd">    :param best_k: Selected ``k`` value for reporting.</span>
-<span class="sd">    :param output_path: Destination path for the generated figure.</span>
-<span class="sd">    :param data_split: Human-readable label describing the data split used.</span>
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        k_values:</span>
+
+<span class="sd">            Iterable of evaluated ``k`` values.</span>
+
+<span class="sd">        accuracy_by_k:</span>
+
+<span class="sd">            Mapping from ``k`` to accuracy on the selected split.</span>
+
+<span class="sd">        best_k:</span>
+
+<span class="sd">            The configuration chosen for downstream reporting.</span>
+
+<span class="sd">        output_path:</span>
+
+<span class="sd">            Destination filename for the generated PNG.</span>
+
+<span class="sd">        data_split:</span>
+
+<span class="sd">            Human-readable label describing the evaluation split (defaults to ``validation``).</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.</span>
+
+<span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
+
+<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+
+<span class="sd">    :type best_k: int</span>
+
+<span class="sd">    :param output_path: Filesystem path for the generated report or figure.</span>
+
+<span class="sd">    :type output_path: Path</span>
+
+<span class="sd">    :param data_split: Name of the dataset split from which metrics were derived.</span>
+
+<span class="sd">    :type data_split: str</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="n">plt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[KNN] Skipping elbow plot (matplotlib not installed)&quot;</span><span class="p">)</span>
         <span class="k">return</span>
@@ -633,29 +888,57 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 
-
 <div class="viewcode-block" id="compute_auc_from_curve">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.compute_auc_from_curve">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return raw and normalised area under the accuracy vs k curve.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the area under the accuracy-vs-``k`` curve.</span>
 
-<span class="sd">    :param k_values: Iterable of ``k`` values considered during evaluation.</span>
-<span class="sd">    :param accuracy_by_k: Mapping from ``k`` to observed accuracy.</span>
-<span class="sd">    :returns: Tuple of ``(auc_area, auc_normalized)`` where ``auc_area`` is the</span>
-<span class="sd">        trapezoidal integral and ``auc_normalized`` divides by the span of ``k``.</span>
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        k_values:</span>
+
+<span class="sd">            Iterable of evaluated ``k`` values.</span>
+
+<span class="sd">        accuracy_by_k:</span>
+
+<span class="sd">            Mapping from ``k`` to measured accuracy.</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        tuple[float, float]</span>
+
+<span class="sd">            ``(auc_area, auc_normalized)`` where ``auc_area`` is the trapezoidal</span>
+
+<span class="sd">            integral and ``auc_normalized`` scales the area by the extent of ``k``.</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.</span>
+
+<span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
+
+<span class="sd">    :returns: Area-under-curve value computed from the accuracy trajectory.</span>
+
+<span class="sd">    :rtype: tuple[float, float]</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="n">k_values</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
     <span class="n">sorted_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">})</span>
-    <span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span><span class="p">]</span>
+    <span class="n">accuracy_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_k</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_k</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">accuracy_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">value</span>
-    <span class="n">area</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">sorted_k</span><span class="p">))</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">accuracy_values</span><span class="p">,</span> <span class="n">sorted_k</span><span class="p">))</span>
     <span class="n">span</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sorted_k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sorted_k</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="mf">1.0</span>
     <span class="k">return</span> <span class="n">area</span><span class="p">,</span> <span class="n">area</span> <span class="o">/</span> <span class="n">span</span></div>
-
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalise_feature_space</span><span class="p">(</span><span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -665,12 +948,10 @@
 <span class="sd">    :returns: Lowercase feature-space token (``tfidf`` or ``word2vec``).</span>
 <span class="sd">    :raises ValueError: If an unsupported feature space is supplied.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature_space</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">}:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">value</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_word2vec_config_from_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Word2VecConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Word2Vec configuration derived from CLI arguments.</span>
@@ -679,7 +960,6 @@
 <span class="sd">    :param issue_slug: Current issue being processed (used to namespace models).</span>
 <span class="sd">    :returns: Populated :class:`~knn.features.Word2VecConfig` instance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">Word2VecConfig</span><span class="p">()</span>
     <span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span> <span class="k">else</span> <span class="n">default_cfg</span><span class="o">.</span><span class="n">model_dir</span>
     <span class="k">return</span> <span class="n">Word2VecConfig</span><span class="p">(</span>
@@ -692,10 +972,19 @@
         <span class="n">workers</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;word2vec_workers&quot;</span><span class="p">,</span> <span class="n">default_cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">)),</span>
     <span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_sentence_transformer_config_from_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SentenceTransformerConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the SentenceTransformer configuration derived from CLI arguments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the SentenceTransformer configuration derived from CLI arguments.</span>
 
+<span class="sd">    :param args: Namespace object containing parsed command-line arguments.</span>
+
+<span class="sd">    :type args: Any</span>
+
+<span class="sd">    :returns: the SentenceTransformer configuration derived from CLI arguments</span>
+
+<span class="sd">    :rtype: SentenceTransformerConfig</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">device_raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_device&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">device</span> <span class="o">=</span> <span class="n">device_raw</span> <span class="k">if</span> <span class="n">device_raw</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">SentenceTransformerConfig</span><span class="p">(</span>
@@ -704,7 +993,6 @@
         <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_batch_size&quot;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
         <span class="n">normalize</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
     <span class="p">)</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fit_index_for_issue</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -724,7 +1012,6 @@
 <span class="sd">    :returns: Dictionary describing the fitted index artifacts.</span>
 <span class="sd">    :raises ValueError: If the requested feature space is unsupported.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Building TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">build_tfidf_index</span><span class="p">(</span>
@@ -768,7 +1055,6 @@
 
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_index_for_issue</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -783,7 +1069,6 @@
 <span class="sd">    :returns: Dictionary with the loaded index artifacts.</span>
 <span class="sd">    :raises ValueError: If the feature space is not recognised.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">load_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">load_index</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span>
     <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Loading TF-IDF index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
@@ -795,7 +1080,6 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[KNN] Loading SentenceTransformer index for issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">load_sentence_transformer_index</span><span class="p">(</span><span class="n">load_path</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_or_load_index</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -813,7 +1097,6 @@
 <span class="sd">    :returns: Dictionary describing the fitted or loaded KNN index.</span>
 <span class="sd">    :raises ValueError: When neither ``--fit-index`` nor ``--load-index`` is used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">feature_space</span> <span class="o">=</span> <span class="n">_normalise_feature_space</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;feature_space&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">fit_index</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_fit_index_for_issue</span><span class="p">(</span>
@@ -831,13 +1114,30 @@
         <span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Set either --fit_index or --load_index to obtain a KNN index&quot;</span><span class="p">)</span>
 
-
 <div class="viewcode-block" id="run_eval">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.run_eval">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the KNN baseline across the requested issues.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the KNN baseline across the issues specified on the CLI.</span>
 
-<span class="sd">    :param args: Parsed CLI namespace returned by :func:`knn.cli.build_parser`.</span>
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        args:</span>
+
+<span class="sd">            Namespace returned by :func:`knn.cli.build_parser`, including dataset,</span>
+
+<span class="sd">            feature-space, and sweep configuration.</span>
+
+<span class="sd">    :param args: Namespace object containing parsed command-line arguments.</span>
+
+<span class="sd">    :type args: Any</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dataset_source</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">available_issues</span> <span class="o">=</span> <span class="n">prepare_dataset</span><span class="p">(</span>
         <span class="n">dataset</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -850,8 +1150,16 @@
     <span class="n">issue_lookup</span> <span class="o">=</span> <span class="p">{</span><span class="n">issue</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">issue</span> <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">available_issues</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_issue_list</span><span class="p">(</span><span class="n">tokens</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fallback</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalise user-provided issue tokens against available issues.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalise user-provided issue tokens against available issues.</span>
 
+<span class="sd">        :param tokens: Raw issue tokens supplied via CLI flags.</span>
+<span class="sd">        :type tokens: List[str]</span>
+<span class="sd">        :param fallback: Issues to fall back to when the token list is empty.</span>
+<span class="sd">        :type fallback: Sequence[str]</span>
+<span class="sd">        :returns: List of resolved issue identifiers ready for evaluation.</span>
+<span class="sd">        :rtype: List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
@@ -980,9 +1288,7 @@
         <span class="p">)</span></div>
 
 
-
 <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_issue_outputs</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -1020,7 +1326,6 @@
 <span class="sd">    :param extra_fields: Extra text fields contributing to the query document.</span>
 <span class="sd">    :param curve_metrics: Serialised evaluation/train curve diagnostics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">best_accuracy</span> <span class="o">=</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="n">eligible_overall</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">per_k_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
@@ -1237,7 +1542,6 @@
 <span class="sd">    :param query_config: Configuration controlling query generation.</span>
 <span class="sd">    :returns: Serialised per-example record including predictions for each ``k``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
     <span class="n">n_options</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)</span>
     <span class="n">n_bucket</span> <span class="o">=</span> <span class="n">bin_nopts</span><span class="p">(</span><span class="n">n_options</span><span class="p">)</span>
@@ -1301,7 +1605,6 @@
         <span class="s2">&quot;group_key&quot;</span><span class="p">:</span> <span class="n">group_key</span><span class="p">,</span>
     <span class="p">}</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_dataset_split</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dataset</span><span class="p">,</span>
@@ -1327,7 +1630,6 @@
 <span class="sd">    :param log_k: Optional ``k`` to report accuracy for in progress logs.</span>
 <span class="sd">    :returns: Dictionary containing rows, aggregate stats, and counts.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">capture_rows</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">bucket_stats</span> <span class="o">=</span> <span class="p">{</span>
@@ -1407,7 +1709,6 @@
         <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">),</span>
     <span class="p">}</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_update_correct_counts</span><span class="p">(</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1421,7 +1722,6 @@
 <span class="sd">    :param bucket_stats: Mutable dictionary storing per-bucket correctness.</span>
 <span class="sd">    :param single_multi_stats: Mutable dictionary tracking single vs multi counts.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]:</span>
             <span class="k">continue</span>
@@ -1435,7 +1735,6 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">single_multi_stats</span><span class="p">[</span><span class="s2">&quot;corr_multi&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_curve_summary</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -1444,8 +1743,34 @@
     <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">n_examples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a serialisable summary for accuracy-vs-k curves.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a serialisable summary for accuracy-vs-k curves.</span>
 
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param accuracy_by_k: Mapping from each ``k`` to its measured validation accuracy.</span>
+
+<span class="sd">    :type accuracy_by_k: Dict[int, float]</span>
+
+<span class="sd">    :param per_k_stats: Detailed per-``k`` statistics derived from the evaluation curve.</span>
+
+<span class="sd">    :type per_k_stats: Dict[int, Dict[str, int]]</span>
+
+<span class="sd">    :param best_k: Neighbourhood size selected as optimal for the evaluation.</span>
+
+<span class="sd">    :type best_k: int</span>
+
+<span class="sd">    :param n_examples: Total number of evaluation examples summarised in the bundle.</span>
+
+<span class="sd">    :type n_examples: int</span>
+
+<span class="sd">    :returns: a serialisable summary for accuracy-vs-k curves</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">area</span><span class="p">,</span> <span class="n">normalised</span> <span class="o">=</span> <span class="n">compute_auc_from_curve</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">accuracy_by_k</span><span class="p">)</span>
     <span class="n">sorted_k</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">})</span>
     <span class="n">accuracy_serialised</span> <span class="o">=</span> <span class="p">{</span>
@@ -1471,7 +1796,6 @@
         <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_examples</span><span class="p">),</span>
     <span class="p">}</span>
 
-
 <div class="viewcode-block" id="evaluate_issue">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.evaluate_issue">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_issue</span><span class="p">(</span>
@@ -1487,19 +1811,98 @@
     <span class="n">args</span><span class="p">,</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate a single issue split and write metrics/predictions.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate a single issue slice and persist metrics, curves, and predictions.</span>
 
-<span class="sd">    :param issue_slug: Normalised issue identifier.</span>
-<span class="sd">    :param dataset_source: Name or path of the dataset originated from.</span>
-<span class="sd">    :param train_ds: Training split dataset for optional curve diagnostics.</span>
-<span class="sd">    :param eval_ds: Evaluation split dataset.</span>
-<span class="sd">    :param k_values: Sequence of ``k`` values to assess.</span>
-<span class="sd">    :param knn_index: Prepared KNN index artifacts.</span>
-<span class="sd">    :param extra_fields: Extra text fields appended to queries.</span>
-<span class="sd">    :param feature_space: Active feature space (``tfidf`` or ``word2vec``).</span>
-<span class="sd">    :param args: CLI namespace controlling evaluation options.</span>
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        issue_slug:</span>
+
+<span class="sd">            Normalised identifier for the issue under evaluation (used in paths).</span>
+
+<span class="sd">        dataset_source:</span>
+
+<span class="sd">            Name or path of the dataset backing the current run.</span>
+
+<span class="sd">        train_ds:</span>
+
+<span class="sd">            Training split (may be ``None``) used for optional curve diagnostics.</span>
+
+<span class="sd">        eval_ds:</span>
+
+<span class="sd">            Evaluation split containing the rows scored for reporting.</span>
+
+<span class="sd">        k_values:</span>
+
+<span class="sd">            Sequence of ``k`` values to consider when computing accuracy.</span>
+
+<span class="sd">        knn_index:</span>
+
+<span class="sd">            Prepared KNN index artefacts for the active feature space.</span>
+
+<span class="sd">        extra_fields:</span>
+
+<span class="sd">            Additional text fields concatenated into the query document.</span>
+
+<span class="sd">        feature_space:</span>
+
+<span class="sd">            Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).</span>
+
+<span class="sd">        args:</span>
+
+<span class="sd">            Parsed CLI namespace controlling evaluation behaviour.</span>
+
+<span class="sd">        provenance:</span>
+
+<span class="sd">            Mapping of provenance metadata recorded alongside the metrics.</span>
+
+<span class="sd">    :param issue_slug: Slugified identifier representing the study/issue on disk.</span>
+
+<span class="sd">    :type issue_slug: str</span>
+
+<span class="sd">    :param dataset_source: Identifier describing where the dataset was loaded from.</span>
+
+<span class="sd">    :type dataset_source: str</span>
+
+<span class="sd">    :param train_ds: Training dataset split used to build the index.</span>
+
+<span class="sd">    :type train_ds: Any</span>
+
+<span class="sd">    :param eval_ds: Evaluation dataset split passed to the scorer.</span>
+
+<span class="sd">    :type eval_ds: Any</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param knn_index: Fitted KNN index used to score neighbours.</span>
+
+<span class="sd">    :type knn_index: Dict[str, Any]</span>
+
+<span class="sd">    :param extra_fields: Additional dataset columns included when building prompts or outputs.</span>
+
+<span class="sd">    :type extra_fields: Sequence[str]</span>
+
+<span class="sd">    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.</span>
+
+<span class="sd">    :type feature_space: str</span>
+
+<span class="sd">    :param args: Namespace object containing parsed command-line arguments.</span>
+
+<span class="sd">    :type args: Any</span>
+
+<span class="sd">    :param provenance: Metadata describing how the evaluation artefacts were produced.</span>
+
+<span class="sd">    :type provenance: Mapping[str, Any]</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">k_values_int</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
     <span class="n">eval_max</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">eval_summary</span> <span class="o">=</span> <span class="n">_evaluate_dataset_split</span><span class="p">(</span>
@@ -1602,26 +2005,50 @@
 
 <div class="viewcode-block" id="bin_nopts">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.bin_nopts">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">bin_nopts</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bucket the number of options into the reporting categories.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bin_nopts</span><span class="p">(</span><span class="n">option_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bucket the number of slate options into reporting-friendly categories.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">option_count</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;1&quot;</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">option_count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;2&quot;</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">option_count</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;3&quot;</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">option_count</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;4&quot;</span>
     <span class="k">return</span> <span class="s2">&quot;5+&quot;</span></div>
-
 
 
 <div class="viewcode-block" id="bucket_from_pos">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.bucket_from_pos">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">bucket_from_pos</span><span class="p">(</span><span class="n">pos_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bucket the original position index (0-based) into reporting bins.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bucket a 0-based position index into the standard reporting bins.</span>
 
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        pos_idx:</span>
+
+<span class="sd">            Zero-based position of the correct item within the retrieved slate.</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        str</span>
+
+<span class="sd">            One of ``{&quot;unknown&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5+&quot;}`` describing the bucket.</span>
+
+<span class="sd">    :param pos_idx: Position index being transformed into a categorical bucket.</span>
+
+<span class="sd">    :type pos_idx: int</span>
+
+<span class="sd">    :returns: Named bucket representing the supplied positional index.</span>
+
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">pos_idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
     <span class="k">if</span> <span class="n">pos_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1635,14 +2062,38 @@
     <span class="k">return</span> <span class="s2">&quot;5+&quot;</span></div>
 
 
-
 <div class="viewcode-block" id="canon">
 <a class="viewcode-back" href="../../api/knn.html#knn.evaluate.canon">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canon</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Canonicalise a text fragment for comparisons.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Canonicalise a text fragment by lowercasing and removing punctuation.</span>
 
+<span class="sd">        Parameters</span>
+
+<span class="sd">        ----------</span>
+
+<span class="sd">        text:</span>
+
+<span class="sd">            Raw text fragment to normalise.</span>
+
+<span class="sd">        Returns</span>
+
+<span class="sd">        -------</span>
+
+<span class="sd">        str</span>
+
+<span class="sd">            Canonical form suitable for equality comparisons.</span>
+
+<span class="sd">    :param text: Free-form text string that requires normalisation.</span>
+
+<span class="sd">    :type text: str</span>
+
+<span class="sd">    :returns: Canonicalised text normalised for downstream processing.</span>
+
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span></div>
-
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>

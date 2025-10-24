@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,7 +269,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">NamedTuple</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -280,19 +291,27 @@
     <span class="n">AutoTokenizer</span><span class="p">,</span>
     <span class="n">set_seed</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.trainer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalStrategy</span><span class="p">,</span> <span class="n">get_last_checkpoint</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">TrlParser</span><span class="p">,</span> <span class="n">get_peft_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">get_peft_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">as_list_json</span><span class="p">,</span>
-    <span class="n">build_user_prompt</span><span class="p">,</span>
-    <span class="n">clean_text</span><span class="p">,</span>
-    <span class="n">is_nanlike</span><span class="p">,</span>
-    <span class="n">synthesize_viewer_sentence</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_list_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.dataset_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">drop_marked_rows</span><span class="p">,</span> <span class="n">slate_has_gold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.example_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_gold_next_id</span><span class="p">,</span>
+    <span class="n">gold_index_from_items</span><span class="p">,</span>
+    <span class="n">load_slate_items</span><span class="p">,</span>
+    <span class="n">row_to_training_example</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.rewards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_reward_funcs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
+    <span class="n">collect_passthrough_fields</span><span class="p">,</span>
+    <span class="n">configure_eval</span> <span class="k">as</span> <span class="n">shared_configure_eval</span><span class="p">,</span>
+    <span class="n">parse_and_run</span><span class="p">,</span>
+    <span class="n">prepare_eval_dataset</span> <span class="k">as</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">,</span>
+    <span class="n">resolve_checkpoint</span> <span class="k">as</span> <span class="n">shared_resolve_checkpoint</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_tokenizer</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only</span>
@@ -304,50 +323,7 @@
 
 <span class="n">ANS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">IDX_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
-<span class="n">PASSTHROUGH_FIELDS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;issue&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;session_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;step_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_order_key&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;issue_source&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;issue_detail&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_source&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_title&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_channel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_video_channel_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;urlid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;topic_id&quot;</span><span class="p">,</span>
-<span class="p">}</span>
-<span class="n">TRAIN_KEEP_COLUMNS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;prompt&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;answer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gold_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;n_options&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;viewer_profile&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;state_text&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_items&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_text&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;slate_items_with_meta&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;current_video_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;current_video_title&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;task&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;is_replay&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mix_group_id&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="n">DEFAULT_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;You are choosing EXACTLY ONE item from a short slate for a specific viewer.</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Think briefly in &lt;think&gt;…&lt;/think&gt;, then output ONLY the option NUMBER &quot;</span>
-    <span class="s2">&quot;(1..N) inside &lt;answer&gt;…&lt;/answer&gt;.</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Format (STRICT): &lt;think&gt;…&lt;/think&gt;&lt;answer&gt;3&lt;/answer&gt;&quot;</span>
-<span class="p">)</span>
+<span class="n">TRAIN_KEEP_COLUMNS</span> <span class="o">=</span> <span class="n">BASE_TRAIN_KEEP_COLUMNS</span> <span class="o">|</span> <span class="p">{</span><span class="s2">&quot;slate_items_with_meta&quot;</span><span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_completion_text</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -385,188 +361,28 @@
         <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lowercase and strip punctuation so ids/titles can be matched loosely.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^a-z0-9]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect a normalized slate list for reward functions and the discriminator.&quot;&quot;&quot;</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
-    <span class="n">keep_keys</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;title&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;raw_id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;video_id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;video_title&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;channel&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;channel_title&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;channel_name&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;channel_id&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;length_seconds&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;duration_seconds&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;duration&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;watch_seconds&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;score&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;rank&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;position&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;reason&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;source&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">cleaned</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">it</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keep_keys</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nanlike</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                <span class="n">cleaned</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
-            <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">),</span>
-            <span class="n">limit</span><span class="o">=</span><span class="mi">160</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">vid</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
-            <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">channel</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span>
-            <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_name&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">),</span>
-            <span class="n">limit</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
-        <span class="k">if</span> <span class="n">vid</span><span class="p">:</span>
-            <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vid</span>
-        <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
-            <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;channel_title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span>
-        <span class="k">if</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">):</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cleaned</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_gold_index_from_items</span><span class="p">(</span><span class="n">gold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the gold selection index using ids or titles as a fallback.&quot;&quot;&quot;</span>
-    <span class="n">gold</span> <span class="o">=</span> <span class="p">(</span><span class="n">gold</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">gold</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">gold</span> <span class="o">==</span> <span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">idx</span>
-    <span class="n">canon</span> <span class="o">=</span> <span class="n">_canon</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">canon</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">canon</span> <span class="o">==</span> <span class="n">_canon</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)):</span>
-                <span class="k">return</span> <span class="n">idx</span>
-    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_derive_next_from_history</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Infer the next click from watch history when the dataset lacks an explicit label.&quot;&quot;&quot;</span>
-    <span class="n">vids</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vids</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vids</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">i</span> <span class="o">=</span> <span class="n">vids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">current_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">vids</span><span class="p">):</span>
-                <span class="n">nxt</span> <span class="o">=</span> <span class="n">vids</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nxt</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nxt</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                    <span class="k">return</span> <span class="n">nxt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">pass</span>
-    <span class="n">det</span> <span class="o">=</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">det</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">det</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">det</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">current_id</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">det</span><span class="p">):</span>
-                    <span class="n">nxt</span> <span class="o">=</span> <span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">nxt</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="n">nxt</span>
-                <span class="k">break</span>
-    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_gold_next_id</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the best available gold id from preferred columns or sensible fallbacks.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">sol_key</span> <span class="ow">and</span> <span class="n">sol_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;current_id&quot;</span><span class="p">}:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sol_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;clicked_id&quot;</span><span class="p">,</span> <span class="s2">&quot;video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;answer&quot;</span><span class="p">]:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">current</span> <span class="o">=</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">_derive_next_from_history</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_has_valid_slate</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">solution_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``example`` contains a slate with the gold option.&quot;&quot;&quot;</span>
-
-    <span class="n">items</span> <span class="o">=</span> <span class="n">_load_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="n">gold</span> <span class="o">=</span> <span class="n">_get_gold_next_id</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">solution_key</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">gold</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="n">_gold_index_from_items</span><span class="p">(</span><span class="n">gold</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_row_to_example</span><span class="p">(</span>
     <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Transform a raw dataset row into a GRPO-ready sample with prompt, answer, and metadata.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the shared GRPO training payload for ``ex`` or ``None`` when invalid.&quot;&quot;&quot;</span>
 
-<span class="sd">    Returns None when a slate is missing or the gold choice cannot be aligned to it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">items</span> <span class="o">=</span> <span class="n">_load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">gold_id</span> <span class="o">=</span> <span class="n">_get_gold_next_id</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">sol_key</span><span class="p">)</span>
-    <span class="n">gold_idx</span> <span class="o">=</span> <span class="n">_gold_index_from_items</span><span class="p">(</span><span class="n">gold_id</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gold_idx</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extras</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">_</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;slate_items_with_meta&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">)),</span>
+            <span class="o">**</span><span class="n">collect_passthrough_fields</span><span class="p">(</span><span class="n">example</span><span class="p">),</span>
+        <span class="p">}</span>
 
-    <span class="n">user_msg</span> <span class="o">=</span> <span class="n">build_user_prompt</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">max_hist</span><span class="o">=</span><span class="n">max_hist</span><span class="p">)</span>
-    <span class="n">sys_msg</span> <span class="o">=</span> <span class="n">system_prompt</span> <span class="ow">or</span> <span class="n">DEFAULT_SYSTEM_PROMPT</span>
-    <span class="n">slate_text</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;(untitled)&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">row_to_training_example</span><span class="p">(</span>
+        <span class="n">ex</span><span class="p">,</span>
+        <span class="n">system_prompt</span><span class="o">=</span><span class="n">system_prompt</span><span class="p">,</span>
+        <span class="n">solution_key</span><span class="o">=</span><span class="n">sol_key</span><span class="p">,</span>
+        <span class="n">max_history</span><span class="o">=</span><span class="n">max_hist</span><span class="p">,</span>
+        <span class="n">passthrough_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">example</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="n">extra_fields_fn</span><span class="o">=</span><span class="n">_extras</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="n">example</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">sys_msg</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">user_msg</span><span class="p">},</span>
-        <span class="p">],</span>
-        <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">gold_idx</span><span class="p">),</span>
-        <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_idx</span><span class="p">,</span>
-        <span class="s2">&quot;gold_id&quot;</span><span class="p">:</span> <span class="n">gold_id</span><span class="p">,</span>
-        <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="s2">&quot;viewer_profile&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">synthesize_viewer_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">)),</span>
-        <span class="s2">&quot;state_text&quot;</span><span class="p">:</span> <span class="n">user_msg</span><span class="p">,</span>
-        <span class="s2">&quot;slate_items&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
-        <span class="s2">&quot;slate_text&quot;</span><span class="p">:</span> <span class="n">slate_text</span><span class="p">,</span>
-        <span class="s2">&quot;slate_items_with_meta&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">:</span> <span class="n">as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;current_video_id&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;current_video_title&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="s2">&quot;GRAIL&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;is_replay&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="s2">&quot;mix_group_id&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-        <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="n">passthrough_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">PASSTHROUGH_FIELDS</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ex</span><span class="p">}</span>
-    <span class="n">example</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">passthrough_data</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">example</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_disc_text</span><span class="p">(</span>
@@ -623,14 +439,16 @@
 
         <span class="k">return</span> <span class="n">_row_to_example</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">system_prompt</span><span class="p">,</span> <span class="n">solution_key</span><span class="p">,</span> <span class="n">max_hist</span><span class="o">=</span><span class="n">max_hist</span><span class="p">)</span>
 
-    <span class="n">filtered</span> <span class="o">=</span> <span class="n">raw_dataset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ex</span><span class="p">:</span> <span class="n">_has_valid_slate</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">solution_key</span><span class="p">))</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">slate_has_gold</span><span class="p">,</span>
+        <span class="n">load_slate_items</span><span class="o">=</span><span class="n">load_slate_items</span><span class="p">,</span>
+        <span class="n">lookup_gold_id</span><span class="o">=</span><span class="n">get_gold_next_id</span><span class="p">,</span>
+        <span class="n">resolve_gold_index</span><span class="o">=</span><span class="n">gold_index_from_items</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">raw_dataset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">validator</span><span class="p">,</span> <span class="n">fn_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;solution_key&quot;</span><span class="p">:</span> <span class="n">solution_key</span><span class="p">})</span>
     <span class="n">formatted</span> <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_format_example</span><span class="p">,</span> <span class="n">load_from_cache_file</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="s2">&quot;__drop__&quot;</span> <span class="ow">in</span> <span class="n">formatted</span><span class="p">[</span><span class="n">train_split</span><span class="p">]</span><span class="o">.</span><span class="n">column_names</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">formatted</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="ow">not</span> <span class="n">flag</span> <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">formatted</span><span class="p">[</span><span class="n">split</span><span class="p">][</span><span class="s2">&quot;__drop__&quot;</span><span class="p">]]</span>
-            <span class="n">keep_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">keep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">keep</span><span class="p">]</span>
-            <span class="n">formatted</span><span class="p">[</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">formatted</span><span class="p">[</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">keep_indices</span><span class="p">)</span>
+    <span class="n">drop_marked_rows</span><span class="p">(</span><span class="n">formatted</span><span class="p">,</span> <span class="n">train_split</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">formatted</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">drop_cols</span> <span class="o">=</span> <span class="p">[</span>
@@ -787,7 +605,7 @@
         <span class="k">return</span> <span class="n">default</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_context_from_completion</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_context_from_completion</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
     <span class="n">completion</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">viewer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1052,57 +870,10 @@
         <span class="n">script_args</span><span class="o">.</span><span class="n">dataset_train_split</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">tokenizer</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_eval_dataset</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
-    <span class="n">script_args</span><span class="p">:</span> <span class="n">GRPOScriptArguments</span><span class="p">,</span>
-    <span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the evaluation dataset subset for the GAIL pipeline.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">test_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_test_split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">test_split</span> <span class="ow">and</span> <span class="n">test_split</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;[grail] do_eval enabled but test split &#39;</span><span class="si">%s</span><span class="s2">&#39; missing; disabling eval&quot;</span><span class="p">,</span>
-            <span class="n">test_split</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">training_args</span><span class="o">.</span><span class="n">do_eval</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">test_split</span><span class="p">]</span>
-    <span class="n">max_eval</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;max_eval_samples&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_eval</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">max_eval</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">eval_ds</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">training_args</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_eval</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">eval_ds</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust evaluation scheduling for the GAIL GRPO trainer.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;evaluation_strategy&quot;</span><span class="p">,</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[grail] forcing evaluation_strategy=&#39;steps&#39; because do_eval is enabled&quot;</span><span class="p">)</span>
-        <span class="n">training_args</span><span class="o">.</span><span class="n">evaluation_strategy</span> <span class="o">=</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">STEPS</span>
-    <span class="n">eval_steps</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;eval_steps&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">eval_steps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">eval_steps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;eval_steps must be &gt; 0 when do_eval is enabled. Set a positive value in the config.&quot;</span>
-        <span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return checkpoint path for the GAIL pipeline, respecting overrides.&quot;&quot;&quot;</span>
 
-    <span class="n">resume</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;resume_from_checkpoint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">resume</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">resume</span>
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_last_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">shared_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="main">
@@ -1132,8 +903,14 @@
     <span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">return_dict_in_generate</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">train_split</span> <span class="o">=</span> <span class="n">script_args</span><span class="o">.</span><span class="n">dataset_train_split</span>
-    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">_prepare_eval_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">script_args</span><span class="p">,</span> <span class="n">training_args</span><span class="p">)</span>
-    <span class="n">_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">)</span>
+    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">script_args</span><span class="p">,</span>
+        <span class="n">training_args</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grail&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">shared_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grail&quot;</span><span class="p">)</span>
 
     <span class="n">trainer</span> <span class="o">=</span> <span class="n">GRPOTrainer</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -1167,9 +944,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">TrlParser</span><span class="p">((</span><span class="n">GRPOScriptArguments</span><span class="p">,</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">))</span>
-    <span class="n">parsed_script_args</span><span class="p">,</span> <span class="n">parsed_training_args</span><span class="p">,</span> <span class="n">parsed_model_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args_and_config</span><span class="p">()</span>
-    <span class="n">main</span><span class="p">(</span><span class="n">parsed_script_args</span><span class="p">,</span> <span class="n">parsed_training_args</span><span class="p">,</span> <span class="n">parsed_model_args</span><span class="p">)</span>
+    <span class="n">parse_and_run</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="p">(</span><span class="n">GRPOScriptArguments</span><span class="p">,</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">ModelConfig</span><span class="p">))</span>
 </pre></div>
         </article>
       </div>

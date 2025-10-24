@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,16 +253,16 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.opinion</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Post-study opinion index evaluation for the KNN baselines.&quot;&quot;&quot;</span>
-
+<span class="c1"># pylint: disable=too-many-lines</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
@@ -271,6 +271,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">NearestNeighbors</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span><span class="p">,</span> <span class="n">SentenceTransformerEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_SPECS</span><span class="p">,</span>
+    <span class="n">OpinionExample</span> <span class="k">as</span> <span class="n">BaseOpinionExample</span><span class="p">,</span>
+    <span class="n">OpinionSpec</span><span class="p">,</span>
+    <span class="n">float_or_none</span><span class="p">,</span>
+    <span class="n">opinion_example_kwargs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_tfidf_vectorizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
@@ -289,41 +297,46 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">plt</span> <span class="o">=</span> <span class="kc">None</span>
 
-
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;knn.opinion&quot;</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="OpinionSpec">
-<a class="viewcode-back" href="../../api/knn.html#knn.opinion.OpinionSpec">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration describing one study&#39;s opinion index columns.&quot;&quot;&quot;</span>
-
-    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">before_column</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">after_column</span><span class="p">:</span> <span class="nb">str</span></div>
-
-
-
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionExample</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapsed participant-level prompt and opinion values.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionExample</span><span class="p">(</span><span class="n">BaseOpinionExample</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collapsed participant-level prompt and opinion values with session context.</span>
 
-    <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">participant_study</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">document</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">before</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">after</span><span class="p">:</span> <span class="nb">float</span>
+<span class="sd">    :ivar step_index: Interaction step index retained from the raw dataset.</span>
+<span class="sd">    :vartype step_index: int</span>
+<span class="sd">    :ivar session_id: Session identifier associated with the participant example.</span>
+<span class="sd">    :vartype session_id: Optional[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">step_index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 
-
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionIndex</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectorised training corpus and associated metadata.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionIndex</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vectorised training corpus, cached targets, and fitted neighbour index.</span>
+
+<span class="sd">    :ivar feature_space: Feature space identifier (tfidf, word2vec, sentence_transformer).</span>
+<span class="sd">    :vartype feature_space: str</span>
+<span class="sd">    :ivar metric: Distance metric used by the KNN index.</span>
+<span class="sd">    :vartype metric: str</span>
+<span class="sd">    :ivar matrix: Document-term matrix or embedding matrix backing the index.</span>
+<span class="sd">    :vartype matrix: Any</span>
+<span class="sd">    :ivar vectorizer: Trained vectoriser or embedding builder.</span>
+<span class="sd">    :vartype vectorizer: Any</span>
+<span class="sd">    :ivar embeds: Optional Word2Vec feature builder used for inference.</span>
+<span class="sd">    :vartype embeds: Optional[Any]</span>
+<span class="sd">    :ivar targets_after: Post-study opinion targets aligned with the corpus.</span>
+<span class="sd">    :vartype targets_after: numpy.ndarray</span>
+<span class="sd">    :ivar targets_before: Pre-study opinion targets aligned with the corpus.</span>
+<span class="sd">    :vartype targets_before: numpy.ndarray</span>
+<span class="sd">    :ivar participant_keys: Participant/study identifiers aligned with targets.</span>
+<span class="sd">    :vartype participant_keys: List[Tuple[str, str]]</span>
+<span class="sd">    :ivar neighbors: Fitted :class:`sklearn.neighbors.NearestNeighbors` index.</span>
+<span class="sd">    :vartype neighbors: NearestNeighbors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span>
@@ -335,55 +348,27 @@
     <span class="n">participant_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
     <span class="n">neighbors</span><span class="p">:</span> <span class="n">NearestNeighbors</span>
 
-
-<span class="n">DEFAULT_SPECS</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OpinionSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">OpinionSpec</span><span class="p">(</span>
-        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span>
-        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;gun_control&quot;</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 1 – Gun Control (MTurk)&quot;</span><span class="p">,</span>
-        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;gun_index&quot;</span><span class="p">,</span>
-        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;gun_index_2&quot;</span><span class="p">,</span>
-    <span class="p">),</span>
-    <span class="n">OpinionSpec</span><span class="p">(</span>
-        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study2&quot;</span><span class="p">,</span>
-        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 2 – Minimum Wage (MTurk)&quot;</span><span class="p">,</span>
-        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w1&quot;</span><span class="p">,</span>
-        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span>
-    <span class="p">),</span>
-    <span class="n">OpinionSpec</span><span class="p">(</span>
-        <span class="n">key</span><span class="o">=</span><span class="s2">&quot;study3&quot;</span><span class="p">,</span>
-        <span class="n">issue</span><span class="o">=</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Study 3 – Minimum Wage (YouGov)&quot;</span><span class="p">,</span>
-        <span class="n">before_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w1&quot;</span><span class="p">,</span>
-        <span class="n">after_column</span><span class="o">=</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,</span>
-    <span class="p">),</span>
-<span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">find_spec</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the :class:`OpinionSpec` matching ``key``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the :class:`OpinionSpec` matching ``key``.</span>
 
+<span class="sd">    :param key: Dictionary key identifying the current record.</span>
+
+<span class="sd">    :type key: str</span>
+
+<span class="sd">    :returns: the :class:`OpinionSpec` matching ``key``</span>
+
+<span class="sd">    :rtype: OpinionSpec</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalised</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">DEFAULT_SPECS</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">normalised</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">spec</span>
-    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown opinion study &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;. Expected one of </span><span class="si">{</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">DEFAULT_SPECS</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">float_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``value`` converted to ``float`` or ``None`` when invalid.&quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">number</span>
-
+    <span class="n">expected_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">DEFAULT_SPECS</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Unknown opinion study &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;. Expected one of </span><span class="si">{</span><span class="n">expected_keys</span><span class="si">!r}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">collect_examples</span><span class="p">(</span>
     <span class="n">dataset</span><span class="p">,</span>
@@ -393,7 +378,23 @@
     <span class="n">max_examples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse a split down to participant-level opinion rows.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collapse the dataset split into participant-level opinion rows.</span>
+
+<span class="sd">    :param dataset: Dataset split providing raw participant interactions.</span>
+<span class="sd">    :type dataset: datasets.Dataset | Sequence[Mapping[str, Any]]</span>
+<span class="sd">    :param spec: Opinion study specification describing the target columns.</span>
+<span class="sd">    :type spec: OpinionSpec</span>
+<span class="sd">    :param extra_fields: Additional prompt columns appended to each document.</span>
+<span class="sd">    :type extra_fields: Sequence[str]</span>
+<span class="sd">    :param max_examples: Optional cap on participants retained from the split.</span>
+<span class="sd">    :type max_examples: int | None</span>
+<span class="sd">    :param seed: Random seed applied when subsampling participants.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :returns: Participant-level examples combining prompts and opinion values.</span>
+<span class="sd">    :rtype: List[OpinionExample]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-locals</span>
 
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;[OPINION] Collapsing dataset split for study=</span><span class="si">%s</span><span class="s2"> issue=</span><span class="si">%s</span><span class="s2"> rows=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -422,13 +423,16 @@
         <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">participant_id</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="n">existing</span> <span class="o">=</span> <span class="n">per_participant</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">session_id</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span>
-        <span class="n">candidate</span> <span class="o">=</span> <span class="n">OpinionExample</span><span class="p">(</span>
+        <span class="n">base_kwargs</span> <span class="o">=</span> <span class="n">opinion_example_kwargs</span><span class="p">(</span>
             <span class="n">participant_id</span><span class="o">=</span><span class="n">participant_id</span><span class="p">,</span>
             <span class="n">participant_study</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
             <span class="n">issue</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
             <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
             <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
             <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">OpinionExample</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">base_kwargs</span><span class="p">,</span>
             <span class="n">step_index</span><span class="o">=</span><span class="n">step_index</span><span class="p">,</span>
             <span class="n">session_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">session_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
@@ -450,22 +454,22 @@
 
     <span class="k">return</span> <span class="n">collapsed</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_tfidf_matrix</span><span class="p">(</span><span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TfidfVectorizer</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit a TF-IDF vectoriser using the supplied documents.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fit a TF-IDF vectoriser using the supplied documents.</span>
 
-    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span>
-        <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">strip_accents</span><span class="o">=</span><span class="s2">&quot;unicode&quot;</span><span class="p">,</span>
-        <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="n">min_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">stop_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">token_pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;(?u)\b[\w\-]{2,}\b&quot;</span><span class="p">,</span>
-        <span class="n">max_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span>
+<span class="sd">    :param documents: Iterable of vectorisable documents consumed by the index.</span>
+
+<span class="sd">    :type documents: Sequence[str]</span>
+
+<span class="sd">    :returns: Fitted TF-IDF vectoriser and sparse matrix for the provided documents.</span>
+
+<span class="sd">    :rtype: Tuple[TfidfVectorizer, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_tfidf_vectorizer</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">vectorizer</span><span class="p">,</span> <span class="n">matrix</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_index</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -477,8 +481,43 @@
     <span class="n">word2vec_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sentence_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SentenceTransformerConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionIndex</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectorise ``examples`` and construct a neighbour index.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vectorise ``examples`` and construct a neighbour index.</span>
 
+<span class="sd">    :param examples: Collection of dataset rows used in the evaluation.</span>
+
+<span class="sd">    :type examples: Sequence[OpinionExample]</span>
+
+<span class="sd">    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.</span>
+
+<span class="sd">    :type feature_space: str</span>
+
+<span class="sd">    :param spec: Opinion study specification containing issue metadata.</span>
+
+<span class="sd">    :type spec: OpinionSpec</span>
+
+<span class="sd">    :param seed: Seed used to initialise pseudo-random operations.</span>
+
+<span class="sd">    :type seed: int</span>
+
+<span class="sd">    :param metric: Name of the evaluation metric being inspected.</span>
+
+<span class="sd">    :type metric: str</span>
+
+<span class="sd">    :param word2vec_config: Configuration object carrying Word2Vec hyper-parameters.</span>
+
+<span class="sd">    :type word2vec_config: Optional[Word2VecConfig]</span>
+
+<span class="sd">    :param sentence_config: Sentence-transformer configuration describing encoding details.</span>
+
+<span class="sd">    :type sentence_config: Optional[SentenceTransformerConfig]</span>
+
+<span class="sd">    :returns: Tuple containing the fitted index and any feature-space-specific metadata.</span>
+
+<span class="sd">    :rtype: OpinionIndex</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,unused-argument</span>
     <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">document</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">examples</span><span class="p">]</span>
     <span class="n">feature_space</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature_space</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
@@ -536,14 +575,27 @@
         <span class="n">neighbors</span><span class="o">=</span><span class="n">neighbors</span><span class="p">,</span>
     <span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_transform_documents</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">index</span><span class="p">:</span> <span class="n">OpinionIndex</span><span class="p">,</span>
     <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform ``documents`` into the feature space of ``index``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform ``documents`` into the feature space of ``index``.</span>
 
+<span class="sd">    :param index: KNN index object or registry being manipulated.</span>
+
+<span class="sd">    :type index: OpinionIndex</span>
+
+<span class="sd">    :param documents: Iterable of vectorisable documents consumed by the index.</span>
+
+<span class="sd">    :type documents: Sequence[str]</span>
+
+<span class="sd">    :returns: Matrix of transformed document vectors ready for nearest-neighbour search.</span>
+
+<span class="sd">    :rtype: Any</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">vectorizer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;TF-IDF vectoriser missing from index.&quot;</span><span class="p">)</span>
@@ -555,10 +607,23 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">transformed</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported feature space &#39;</span><span class="si">{</span><span class="n">index</span><span class="o">.</span><span class="n">feature_space</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_similarity_from_distances</span><span class="p">(</span><span class="n">distances</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert neighbour distances into similarity weights.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert neighbour distances into similarity weights.</span>
 
+<span class="sd">    :param distances: Array of neighbour distances returned by the index.</span>
+
+<span class="sd">    :type distances: np.ndarray</span>
+
+<span class="sd">    :param metric: Name of the evaluation metric being inspected.</span>
+
+<span class="sd">    :type metric: str</span>
+
+<span class="sd">    :returns: Similarity scores derived from the provided distance array.</span>
+
+<span class="sd">    :rtype: np.ndarray</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">metric_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">metric</span> <span class="ow">or</span> <span class="s2">&quot;cosine&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">metric_norm</span> <span class="o">==</span> <span class="s2">&quot;cosine&quot;</span><span class="p">:</span>
@@ -567,15 +632,27 @@
     <span class="n">weights</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">distances</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_weighted_mean</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the weighted mean of ``values`` with fallback for zero weights.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the weighted mean of ``values`` with fallback for zero weights.</span>
 
+<span class="sd">    :param values: Sequence of numeric values contributing to an aggregate statistic.</span>
+
+<span class="sd">    :type values: np.ndarray</span>
+
+<span class="sd">    :param weights: Optional weight values aligned with the provided observations.</span>
+
+<span class="sd">    :type weights: np.ndarray</span>
+
+<span class="sd">    :returns: the weighted mean of ``values`` with fallback for zero weights</span>
+
+<span class="sd">    :rtype: float</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">total</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">predict_post_indices</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -584,8 +661,31 @@
     <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">exclude_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return predictions and aggregate metrics for ``eval_examples``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return predictions and aggregate metrics for ``eval_examples``.</span>
 
+<span class="sd">    :param index: KNN index object or registry being manipulated.</span>
+
+<span class="sd">    :type index: OpinionIndex</span>
+
+<span class="sd">    :param eval_examples: Iterable of evaluation examples to score with the index.</span>
+
+<span class="sd">    :type eval_examples: Sequence[OpinionExample]</span>
+
+<span class="sd">    :param k_values: Iterable of ``k`` values to evaluate or report.</span>
+
+<span class="sd">    :type k_values: Sequence[int]</span>
+
+<span class="sd">    :param exclude_self: Whether to drop the query point when collecting nearest neighbours.</span>
+
+<span class="sd">    :type exclude_self: bool</span>
+
+<span class="sd">    :returns: predictions and aggregate metrics for ``eval_examples``</span>
+
+<span class="sd">    :rtype: Dict[str, Any]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_examples</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="p">[],</span>
@@ -683,34 +783,187 @@
         <span class="s2">&quot;per_k_change_predictions&quot;</span><span class="p">:</span> <span class="n">per_k_change_predictions</span><span class="p">,</span>
     <span class="p">}</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_direction_labels</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return categorical labels capturing the direction of opinion change.&quot;&quot;&quot;</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">delta</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+    <span class="n">labels</span><span class="p">[</span><span class="n">delta</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">labels</span><span class="p">[</span><span class="n">delta</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tolerance</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">labels</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_bundle</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">truth_after</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">truth_before</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">preds_arr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute evaluation metrics for the supplied predictions.&quot;&quot;&quot;</span>
+
+    <span class="n">change_truth</span> <span class="o">=</span> <span class="n">truth_after</span> <span class="o">-</span> <span class="n">truth_before</span>
+    <span class="n">change_pred</span> <span class="o">=</span> <span class="n">preds_arr</span> <span class="o">-</span> <span class="n">truth_before</span>
+    <span class="n">mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">))</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">)))</span>
+    <span class="n">r_squared</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">))</span>
+    <span class="n">change_mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">change_truth</span><span class="p">,</span> <span class="n">change_pred</span><span class="p">))</span>
+    <span class="n">direction_truth</span> <span class="o">=</span> <span class="n">_direction_labels</span><span class="p">(</span><span class="n">change_truth</span><span class="p">)</span>
+    <span class="n">direction_pred</span> <span class="o">=</span> <span class="n">_direction_labels</span><span class="p">(</span><span class="n">change_pred</span><span class="p">)</span>
+    <span class="n">accuracy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">direction_truth</span> <span class="o">==</span> <span class="n">direction_pred</span><span class="p">))</span> <span class="k">if</span> <span class="n">direction_truth</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+    <span class="n">eligible</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">direction_truth</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;mae_after&quot;</span><span class="p">:</span> <span class="n">mae</span><span class="p">,</span>
+        <span class="s2">&quot;rmse_after&quot;</span><span class="p">:</span> <span class="n">rmse</span><span class="p">,</span>
+        <span class="s2">&quot;r2_after&quot;</span><span class="p">:</span> <span class="n">r_squared</span><span class="p">,</span>
+        <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="n">change_mae</span><span class="p">,</span>
+        <span class="s2">&quot;direction_accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span>
+        <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="n">eligible</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row_prediction_values</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract per-row prediction/ground-truth triples for a given ``k``.&quot;&quot;&quot;</span>
+
+    <span class="n">actual_after</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">actual_before</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pred_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">key_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">predictions_by_k</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">pred_val</span> <span class="o">=</span> <span class="n">predictions_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pred_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pred_val</span> <span class="o">=</span> <span class="n">predictions_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pred_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">after_raw</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;after_index&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;after&quot;</span><span class="p">))</span>
+        <span class="n">before_raw</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;before_index&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;before&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">after_raw</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">before_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">after_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">after_raw</span><span class="p">)</span>
+        <span class="n">before_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">before_raw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">after_val</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">before_val</span><span class="p">)):</span>
+            <span class="k">continue</span>
+        <span class="n">pred_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pred_val</span><span class="p">))</span>
+        <span class="n">actual_after</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">after_val</span><span class="p">)</span>
+        <span class="n">actual_before</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">before_val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">actual_after</span><span class="p">,</span> <span class="n">actual_before</span><span class="p">,</span> <span class="n">pred_values</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metrics_from_rows</span><span class="p">(</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return metrics computed from row-level prediction payloads.&quot;&quot;&quot;</span>
+
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span> <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">keys</span><span class="p">()}):</span>
+        <span class="n">actual_after</span><span class="p">,</span> <span class="n">actual_before</span><span class="p">,</span> <span class="n">pred_values</span> <span class="o">=</span> <span class="n">_row_prediction_values</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pred_values</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">bundle</span> <span class="o">=</span> <span class="n">_metric_bundle</span><span class="p">(</span>
+            <span class="n">truth_after</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">actual_after</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">truth_before</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">actual_before</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">preds_arr</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pred_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">metrics</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">bundle</span>
+    <span class="k">return</span> <span class="n">metrics</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metrics_from_eval_examples</span><span class="p">(</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">eval_examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return metrics computed over the full evaluation dataset.&quot;&quot;&quot;</span>
+
+    <span class="n">truth_after</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">after</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">truth_before</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">before</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">preds</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">preds_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preds_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">preds_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">truth_after</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">metrics</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">_metric_bundle</span><span class="p">(</span>
+            <span class="n">truth_after</span><span class="o">=</span><span class="n">truth_after</span><span class="p">,</span>
+            <span class="n">truth_before</span><span class="o">=</span><span class="n">truth_before</span><span class="p">,</span>
+            <span class="n">preds_arr</span><span class="o">=</span><span class="n">preds_arr</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_summary_metrics</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">predictions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
     <span class="n">eval_examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">],</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return MAE, RMSE, and R^2 metrics for each ``k``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return MAE, RMSE, and R^2 metrics for each ``k``.</span>
 
-    <span class="n">truth_after</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">after</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-    <span class="n">truth_before</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">before</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-    <span class="n">change_truth</span> <span class="o">=</span> <span class="n">truth_after</span> <span class="o">-</span> <span class="n">truth_before</span>
+<span class="sd">    :param predictions: Sequence of KNN prediction records emitted during evaluation.</span>
 
-    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">preds</span> <span class="ow">in</span> <span class="n">predictions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">preds_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="n">change_pred</span> <span class="o">=</span> <span class="n">preds_arr</span> <span class="o">-</span> <span class="n">truth_before</span>
-        <span class="n">mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">))</span>
-        <span class="n">rmse</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">)))</span>
-        <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">preds_arr</span><span class="p">))</span>
-        <span class="n">change_mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">change_truth</span><span class="p">,</span> <span class="n">change_pred</span><span class="p">))</span>
+<span class="sd">    :type predictions: Dict[int, List[float]]</span>
 
-        <span class="n">metrics</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;mae_after&quot;</span><span class="p">:</span> <span class="n">mae</span><span class="p">,</span>
-            <span class="s2">&quot;rmse_after&quot;</span><span class="p">:</span> <span class="n">rmse</span><span class="p">,</span>
-            <span class="s2">&quot;r2_after&quot;</span><span class="p">:</span> <span class="n">r2</span><span class="p">,</span>
-            <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="n">change_mae</span><span class="p">,</span>
-        <span class="p">}</span>
-    <span class="k">return</span> <span class="n">metrics</span>
+<span class="sd">    :param eval_examples: Iterable of evaluation examples to score with the index.</span>
+
+<span class="sd">    :type eval_examples: Sequence[OpinionExample]</span>
+
+<span class="sd">    :param rows: Optional iterable of per-example prediction rows. When provided,</span>
+<span class="sd">        metrics are computed only over examples that produced predictions for the</span>
+<span class="sd">        given ``k``.</span>
+
+<span class="sd">    :type rows: Optional[Sequence[Dict[str, Any]]]</span>
+
+<span class="sd">    :returns: MAE, RMSE, and R^2 metrics for each ``k``</span>
+
+<span class="sd">    :rtype: Dict[int, Dict[str, float]]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-locals</span>
+    <span class="k">if</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">_metrics_from_rows</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">metrics</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">metrics</span>
+    <span class="k">return</span> <span class="n">_metrics_from_eval_examples</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">eval_examples</span><span class="p">)</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_CurveAccumulator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulate per-k metrics and track the best-performing configuration.&quot;&quot;&quot;</span>
+
+    <span class="n">mae_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">r2_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">_best</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record metrics for a specific ``k`` and update best trackers.&quot;&quot;&quot;</span>
+        <span class="n">raw_mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
+        <span class="n">raw_r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
+        <span class="n">mae_value</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="n">r2_value</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mae_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r2_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_preferred</span><span class="p">(</span><span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_best</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">best_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fallback_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the best-performing ``k`` and associated metrics (or fallback).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fallback_k</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">best_k</span><span class="p">,</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_best</span>
+        <span class="n">best_mae</span> <span class="o">=</span> <span class="n">mae_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mae_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">best_r2</span> <span class="o">=</span> <span class="n">r2_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">r2_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">best_k</span><span class="p">,</span> <span class="n">best_mae</span><span class="p">,</span> <span class="n">best_r2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_preferred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mae_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">best_mae</span><span class="p">,</span> <span class="n">best_r2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_best</span>
+        <span class="k">if</span> <span class="n">mae_value</span> <span class="o">&lt;</span> <span class="n">best_mae</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">mae_value</span> <span class="o">&lt;=</span> <span class="n">best_mae</span> <span class="o">+</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="n">r2_value</span> <span class="o">&gt;</span> <span class="n">best_r2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_curve_payload</span><span class="p">(</span>
@@ -718,61 +971,70 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">n_examples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert ``metrics_by_k`` into a serialisable curve bundle.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert ``metrics_by_k`` into a serialisable curve bundle.</span>
 
+<span class="sd">    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.</span>
+
+<span class="sd">    :type metrics_by_k: Dict[int, Dict[str, float]]</span>
+
+<span class="sd">    :param n_examples: Total number of evaluation examples summarised in the bundle.</span>
+
+<span class="sd">    :type n_examples: int</span>
+
+<span class="sd">    :returns: Dictionary summarising the evaluation curve, including AUC and per-k metrics.</span>
+
+<span class="sd">    :rtype: Optional[Dict[str, Any]]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">metrics_by_k</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">sorted_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-    <span class="n">mae_by_k</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">r2_by_k</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">best_entry</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accumulator</span> <span class="o">=</span> <span class="n">_CurveAccumulator</span><span class="p">()</span>
+    <span class="n">sorted_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">:</span>
-        <span class="n">raw_mae</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
-        <span class="n">raw_r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)))</span>
-        <span class="n">mae_value</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
-        <span class="n">r2_value</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
-        <span class="n">mae_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_mae</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_mae</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">r2_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="n">raw_r2</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw_r2</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">best_entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">mae_value</span> <span class="o">&lt;</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">:</span>
-                <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">mae_value</span> <span class="o">-</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="n">r2_value</span> <span class="o">&gt;</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
-                <span class="n">best_entry</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">mae_value</span><span class="p">,</span> <span class="n">r2_value</span><span class="p">)</span>
+        <span class="n">accumulator</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
 
-    <span class="n">best_k</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="n">sorted_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">best_mae_value</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
-    <span class="n">best_mae</span> <span class="o">=</span> <span class="n">best_mae_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">best_mae_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">best_r2_value</span> <span class="o">=</span> <span class="n">best_entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">best_entry</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
-    <span class="n">best_r2</span> <span class="o">=</span> <span class="n">best_r2_value</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">best_r2_value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">fallback_k</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">best_k</span><span class="p">,</span> <span class="n">best_mae</span><span class="p">,</span> <span class="n">best_r2</span> <span class="o">=</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">best_summary</span><span class="p">(</span><span class="n">fallback_k</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="s2">&quot;mae_after&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mae_by_k&quot;</span><span class="p">:</span> <span class="n">mae_by_k</span><span class="p">,</span>
-        <span class="s2">&quot;r2_by_k&quot;</span><span class="p">:</span> <span class="n">r2_by_k</span><span class="p">,</span>
+        <span class="s2">&quot;mae_by_k&quot;</span><span class="p">:</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">mae_by_k</span><span class="p">,</span>
+        <span class="s2">&quot;r2_by_k&quot;</span><span class="p">:</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">r2_by_k</span><span class="p">,</span>
         <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span>
         <span class="s2">&quot;best_mae&quot;</span><span class="p">:</span> <span class="n">best_mae</span><span class="p">,</span>
         <span class="s2">&quot;best_r2&quot;</span><span class="p">:</span> <span class="n">best_r2</span><span class="p">,</span>
         <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_examples</span><span class="p">),</span>
     <span class="p">}</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_baseline_metrics</span><span class="p">(</span><span class="n">eval_examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return baseline error metrics for opinion prediction.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return baseline error metrics for opinion prediction.</span>
 
+<span class="sd">    :param eval_examples: Iterable of evaluation examples to score with the index.</span>
+
+<span class="sd">    :type eval_examples: Sequence[OpinionExample]</span>
+
+<span class="sd">    :returns: baseline error metrics for opinion prediction</span>
+
+<span class="sd">    :rtype: Dict[str, float]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">truth_after</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">after</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="n">truth_before</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">example</span><span class="o">.</span><span class="n">before</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">eval_examples</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="n">change_truth</span> <span class="o">=</span> <span class="n">truth_after</span> <span class="o">-</span> <span class="n">truth_before</span>
 
     <span class="n">baseline_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">truth_after</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="k">if</span> <span class="n">truth_after</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
-    <span class="n">mae_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">baseline_mean</span><span class="p">)))</span>
-    <span class="n">rmse_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">baseline_mean</span><span class="p">))))</span>
+    <span class="n">baseline_predictions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">baseline_mean</span><span class="p">)</span>
+    <span class="n">mae_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">baseline_predictions</span><span class="p">))</span>
+    <span class="n">rmse_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">baseline_predictions</span><span class="p">)))</span>
 
     <span class="n">mae_no_change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">truth_after</span><span class="p">,</span> <span class="n">truth_before</span><span class="p">))</span>
     <span class="n">change_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">change_truth</span><span class="p">)</span>
     <span class="n">mae_change_zero</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">change_truth</span><span class="p">,</span> <span class="n">change_zero</span><span class="p">))</span>
+    <span class="n">direction_truth</span> <span class="o">=</span> <span class="n">_direction_labels</span><span class="p">(</span><span class="n">change_truth</span><span class="p">)</span>
+    <span class="n">baseline_direction_accuracy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">direction_truth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="n">direction_truth</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;mae_global_mean_after&quot;</span><span class="p">:</span> <span class="n">mae_mean</span><span class="p">,</span>
@@ -780,8 +1042,8 @@
         <span class="s2">&quot;mae_using_before&quot;</span><span class="p">:</span> <span class="n">mae_no_change</span><span class="p">,</span>
         <span class="s2">&quot;mae_change_zero&quot;</span><span class="p">:</span> <span class="n">mae_change_zero</span><span class="p">,</span>
         <span class="s2">&quot;global_mean_after&quot;</span><span class="p">:</span> <span class="n">baseline_mean</span><span class="p">,</span>
+        <span class="s2">&quot;direction_accuracy&quot;</span><span class="p">:</span> <span class="n">baseline_direction_accuracy</span><span class="p">,</span>
     <span class="p">}</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_plot_metric</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -789,8 +1051,27 @@
     <span class="n">metric_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save a line plot of ``metric_key`` vs. ``k`` if matplotlib is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save a line plot of ``metric_key`` vs. ``k`` if matplotlib is available.</span>
 
+<span class="sd">    :param metrics_by_k: Mapping from each ``k`` to its associated opinion metrics.</span>
+
+<span class="sd">    :type metrics_by_k: Dict[int, Dict[str, float]]</span>
+
+<span class="sd">    :param metric_key: Dictionary key pointing to a metric within the payload.</span>
+
+<span class="sd">    :type metric_key: str</span>
+
+<span class="sd">    :param output_path: Filesystem path for the generated report or figure.</span>
+
+<span class="sd">    :type output_path: Path</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=too-many-arguments,too-many-locals</span>
     <span class="k">if</span> <span class="n">plt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[OPINION] Skipping </span><span class="si">%s</span><span class="s2"> plot (matplotlib not installed).&quot;</span><span class="p">,</span> <span class="n">metric_key</span><span class="p">)</span>
         <span class="k">return</span>
@@ -800,12 +1081,12 @@
         <span class="k">return</span>
 
     <span class="n">sorted_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-    <span class="n">ks</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">]</span>
+    <span class="n">k_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">]</span>
     <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">metric_key</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">]</span>
 
     <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric_key</span><span class="si">}</span><span class="s2"> vs k&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;k&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="n">metric_key</span><span class="p">)</span>
@@ -814,15 +1095,32 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_plot_change_heatmap</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">actual_changes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
     <span class="n">predicted_changes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a 2D histogram comparing actual vs. predicted opinion shifts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render a 2D histogram comparing actual vs. predicted opinion shifts.</span>
 
+<span class="sd">    :param actual_changes: Sequence of observed opinion deltas for participants.</span>
+
+<span class="sd">    :type actual_changes: Sequence[float]</span>
+
+<span class="sd">    :param predicted_changes: Predicted opinion deltas returned by the model.</span>
+
+<span class="sd">    :type predicted_changes: Sequence[float]</span>
+
+<span class="sd">    :param output_path: Filesystem path for the generated report or figure.</span>
+
+<span class="sd">    :type output_path: Path</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">plt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[OPINION] Skipping opinion-change heatmap (matplotlib not installed).&quot;</span><span class="p">)</span>
         <span class="k">return</span>
@@ -874,40 +1172,53 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_OutputContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight wrapper for output-related runtime state.&quot;&quot;&quot;</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_write_outputs</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">args</span><span class="p">,</span>
-    <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span><span class="p">,</span>
-    <span class="n">index</span><span class="p">:</span> <span class="n">OpinionIndex</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span>
+    <span class="n">index</span><span class="p">:</span> <span class="n">OpinionIndex</span>
+    <span class="n">outputs_root</span><span class="p">:</span> <span class="n">Path</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_OutputPayload</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container bundling metrics and per-example predictions for export.&quot;&quot;&quot;</span>
+
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">metrics_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="n">baseline</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_change_series</span><span class="p">(</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
-    <span class="n">metrics_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-    <span class="n">baseline</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">best_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">outputs_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">curve_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist per-example predictions, metrics, and plots.&quot;&quot;&quot;</span>
-
-    <span class="n">feature_space</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">feature_space</span>
-    <span class="n">study_dir</span> <span class="o">=</span> <span class="n">outputs_root</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span>
-    <span class="n">study_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return paired lists of actual and predicted opinion changes.&quot;&quot;&quot;</span>
 
     <span class="n">actual_changes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">predicted_changes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predictions_by_k&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prediction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">before</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;before_index&quot;</span><span class="p">])</span>
         <span class="n">actual_changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;after_index&quot;</span><span class="p">])</span> <span class="o">-</span> <span class="n">before</span><span class="p">)</span>
-        <span class="n">predicted_change</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predicted_change_by_k&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
+        <span class="n">change_lookup</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predicted_change_by_k&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">predicted_change</span> <span class="o">=</span> <span class="n">change_lookup</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">predicted_change</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">predicted_change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span> <span class="o">-</span> <span class="n">before</span>
         <span class="n">predicted_changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">predicted_change</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">actual_changes</span><span class="p">,</span> <span class="n">predicted_changes</span>
 
-    <span class="n">predictions_path</span> <span class="o">=</span> <span class="n">study_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.jsonl&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">predictions_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_prediction_rows</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialise per-row predictions to ``path`` in JSONL format.&quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
             <span class="n">change_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predicted_change_by_k&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -919,49 +1230,111 @@
             <span class="p">}</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">serializable</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">reports_dir</span> <span class="o">=</span> <span class="n">resolve_reports_dir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">))</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span> <span class="o">/</span> <span class="n">feature_space</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compose_metrics_record</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">_OutputContext</span><span class="p">,</span>
+    <span class="n">payload</span><span class="p">:</span> <span class="n">_OutputPayload</span><span class="p">,</span>
+    <span class="n">plots</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the metrics payload persisted alongside predictions.&quot;&quot;&quot;</span>
+
+    <span class="n">metrics_by_k</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">bundle</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mae_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mae_after&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;rmse_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;rmse_after&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;r2_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;r2_after&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mae_change&quot;</span><span class="p">]),</span>
+        <span class="p">}</span>
+        <span class="n">direction_accuracy</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direction_accuracy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bundle</span><span class="p">[</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">direction_accuracy</span><span class="p">)</span>
+        <span class="n">eligible_value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eligible_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bundle</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_value</span><span class="p">)</span>
+        <span class="n">metrics_by_k</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">bundle</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn_opinion&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
+        <span class="s2">&quot;study&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+        <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+        <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+        <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">EVAL_SPLIT</span><span class="p">,</span>
+        <span class="s2">&quot;n_participants&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">rows</span><span class="p">),</span>
+        <span class="s2">&quot;metrics_by_k&quot;</span><span class="p">:</span> <span class="n">metrics_by_k</span><span class="p">,</span>
+        <span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">baseline</span><span class="p">,</span>
+        <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">best_k</span><span class="p">),</span>
+        <span class="s2">&quot;best_metrics&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">best_k</span><span class="p">),</span> <span class="p">{}),</span>
+        <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;mae_vs_k&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="s2">&quot;mae&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;r2_vs_k&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="s2">&quot;r2&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;change_heatmap&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="s2">&quot;heatmap&quot;</span><span class="p">]),</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">curve_metrics</span><span class="p">:</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;curve_metrics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">curve_metrics</span>
+    <span class="n">best_metrics</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;best_metrics&quot;</span><span class="p">]</span>
+    <span class="n">best_direction_accuracy</span> <span class="o">=</span> <span class="n">best_metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_direction_accuracy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;best_direction_accuracy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">best_direction_accuracy</span><span class="p">)</span>
+    <span class="n">eligible_best</span> <span class="o">=</span> <span class="n">best_metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eligible&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eligible_best</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;eligible&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_best</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">record</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_outputs</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">_OutputContext</span><span class="p">,</span>
+    <span class="n">payload</span><span class="p">:</span> <span class="n">_OutputPayload</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Persist per-example predictions, metrics, and plots.</span>
+
+<span class="sd">    :param context: Runtime configuration referencing CLI args and output roots.</span>
+
+<span class="sd">    :type context: _OutputContext</span>
+
+<span class="sd">    :param payload: Metrics, predictions, and derived artefacts to persist.</span>
+
+<span class="sd">    :type payload: _OutputPayload</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">feature_space</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">feature_space</span>
+    <span class="n">study_dir</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">outputs_root</span> <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span>
+    <span class="n">study_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">actual_changes</span><span class="p">,</span> <span class="n">predicted_changes</span> <span class="o">=</span> <span class="n">_opinion_change_series</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">payload</span><span class="o">.</span><span class="n">best_k</span><span class="p">)</span>
+
+    <span class="n">predictions_path</span> <span class="o">=</span> <span class="n">study_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">.jsonl&quot;</span>
+    <span class="n">_write_prediction_rows</span><span class="p">(</span><span class="n">predictions_path</span><span class="p">,</span> <span class="n">payload</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span>
+
+    <span class="n">reports_dir</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resolve_reports_dir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">))</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span> <span class="o">/</span> <span class="n">feature_space</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span>
+    <span class="p">)</span>
     <span class="n">reports_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">mae_plot</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;mae_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
-    <span class="n">r2_plot</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;r2_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
-    <span class="n">_plot_metric</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">=</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">metric_key</span><span class="o">=</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">mae_plot</span><span class="p">)</span>
-    <span class="n">_plot_metric</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">=</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">metric_key</span><span class="o">=</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">r2_plot</span><span class="p">)</span>
-    <span class="n">heatmap_path</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;change_heatmap_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="n">mae_plot</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;mae_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="n">r2_plot</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;r2_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="n">_plot_metric</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">metric_key</span><span class="o">=</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">mae_plot</span><span class="p">)</span>
+    <span class="n">_plot_metric</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">metric_key</span><span class="o">=</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">r2_plot</span><span class="p">)</span>
+    <span class="n">heatmap_path</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;change_heatmap_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
     <span class="n">_plot_change_heatmap</span><span class="p">(</span>
         <span class="n">actual_changes</span><span class="o">=</span><span class="n">actual_changes</span><span class="p">,</span>
         <span class="n">predicted_changes</span><span class="o">=</span><span class="n">predicted_changes</span><span class="p">,</span>
         <span class="n">output_path</span><span class="o">=</span><span class="n">heatmap_path</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">study_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">_metrics.json&quot;</span>
-    <span class="n">serializable_metrics</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;knn_opinion&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;feature_space&quot;</span><span class="p">:</span> <span class="n">feature_space</span><span class="p">,</span>
-        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>
-        <span class="s2">&quot;study&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-        <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
-        <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-        <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">EVAL_SPLIT</span><span class="p">,</span>
-        <span class="s2">&quot;n_participants&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
-        <span class="s2">&quot;metrics_by_k&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="p">{</span>
-                <span class="s2">&quot;mae_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mae_after&quot;</span><span class="p">]),</span>
-                <span class="s2">&quot;rmse_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;rmse_after&quot;</span><span class="p">]),</span>
-                <span class="s2">&quot;r2_after&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;r2_after&quot;</span><span class="p">]),</span>
-                <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;mae_change&quot;</span><span class="p">]),</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metrics_by_k</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">baseline</span><span class="p">,</span>
-        <span class="s2">&quot;best_k&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span>
-        <span class="s2">&quot;best_metrics&quot;</span><span class="p">:</span> <span class="n">metrics_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">best_k</span><span class="p">),</span> <span class="p">{}),</span>
-        <span class="s2">&quot;plots&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;mae_vs_k&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">mae_plot</span><span class="p">),</span>
-            <span class="s2">&quot;r2_vs_k&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">r2_plot</span><span class="p">),</span>
-            <span class="s2">&quot;change_heatmap&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">heatmap_path</span><span class="p">),</span>
-        <span class="p">},</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="n">curve_metrics</span><span class="p">:</span>
-        <span class="n">serializable_metrics</span><span class="p">[</span><span class="s2">&quot;curve_metrics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve_metrics</span>
+    <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">study_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">EVAL_SPLIT</span><span class="si">}</span><span class="s2">_metrics.json&quot;</span>
+    <span class="n">serializable_metrics</span> <span class="o">=</span> <span class="n">_compose_metrics_record</span><span class="p">(</span>
+        <span class="n">context</span><span class="p">,</span>
+        <span class="n">payload</span><span class="p">,</span>
+        <span class="p">{</span><span class="s2">&quot;mae&quot;</span><span class="p">:</span> <span class="n">mae_plot</span><span class="p">,</span> <span class="s2">&quot;r2&quot;</span><span class="p">:</span> <span class="n">r2_plot</span><span class="p">,</span> <span class="s2">&quot;heatmap&quot;</span><span class="p">:</span> <span class="n">heatmap_path</span><span class="p">},</span>
+    <span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">serializable_metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
@@ -971,12 +1344,22 @@
         <span class="n">metrics_path</span><span class="p">,</span>
     <span class="p">)</span>
 
-
+<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements</span>
 <div class="viewcode-block" id="run_opinion_eval">
 <a class="viewcode-back" href="../../api/knn.html#knn.opinion.run_opinion_eval">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">run_opinion_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the post-study opinion index evaluation.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_opinion_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute the post-study opinion index evaluation.</span>
 
+<span class="sd">    :param args: Namespace object containing parsed command-line arguments.</span>
+
+<span class="sd">    :type args: Any</span>
+
+<span class="sd">    :returns: None.</span>
+
+<span class="sd">    :rtype: None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">os_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
     <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
     <span class="n">os_env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
@@ -1018,7 +1401,11 @@
     <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">:</span>
         <span class="n">device_raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_device&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="n">sentence_cfg</span> <span class="o">=</span> <span class="n">SentenceTransformerConfig</span><span class="p">(</span>
-            <span class="n">model_name</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_model&quot;</span><span class="p">,</span> <span class="n">SentenceTransformerConfig</span><span class="p">()</span><span class="o">.</span><span class="n">model_name</span><span class="p">),</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="s2">&quot;sentence_transformer_model&quot;</span><span class="p">,</span>
+                <span class="n">SentenceTransformerConfig</span><span class="p">()</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device_raw</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_batch_size&quot;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
             <span class="n">normalize</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
@@ -1069,9 +1456,11 @@
                 <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
                 <span class="n">exclude_self</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">train_rows</span> <span class="o">=</span> <span class="n">train_predictions_bundle</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]</span>
             <span class="n">train_metrics_by_k</span> <span class="o">=</span> <span class="n">_summary_metrics</span><span class="p">(</span>
                 <span class="n">predictions</span><span class="o">=</span><span class="n">train_predictions_bundle</span><span class="p">[</span><span class="s2">&quot;per_k_predictions&quot;</span><span class="p">],</span>
                 <span class="n">eval_examples</span><span class="o">=</span><span class="n">train_examples</span><span class="p">,</span>
+                <span class="n">rows</span><span class="o">=</span><span class="n">train_rows</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_payload</span><span class="p">(</span>
                 <span class="n">train_metrics_by_k</span><span class="p">,</span>
@@ -1089,6 +1478,7 @@
         <span class="n">metrics_by_k</span> <span class="o">=</span> <span class="n">_summary_metrics</span><span class="p">(</span>
             <span class="n">predictions</span><span class="o">=</span><span class="n">predictions_bundle</span><span class="p">[</span><span class="s2">&quot;per_k_predictions&quot;</span><span class="p">],</span>
             <span class="n">eval_examples</span><span class="o">=</span><span class="n">eval_examples</span><span class="p">,</span>
+            <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">metrics_by_k</span><span class="p">:</span>
@@ -1110,17 +1500,20 @@
             <span class="n">curve_bundle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">train_curve_metrics</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">curve_bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;metric&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mae_after&quot;</span>
-        <span class="n">_write_outputs</span><span class="p">(</span>
+        <span class="n">output_context</span> <span class="o">=</span> <span class="n">_OutputContext</span><span class="p">(</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">output_payload</span> <span class="o">=</span> <span class="n">_OutputPayload</span><span class="p">(</span>
             <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span>
             <span class="n">metrics_by_k</span><span class="o">=</span><span class="n">metrics_by_k</span><span class="p">,</span>
             <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
             <span class="n">best_k</span><span class="o">=</span><span class="n">best_k</span><span class="p">,</span>
-            <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
             <span class="n">curve_metrics</span><span class="o">=</span><span class="n">curve_bundle</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">_write_outputs</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">output_context</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">output_payload</span><span class="p">)</span>
 
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;[OPINION][DONE] study=</span><span class="si">%s</span><span class="s2"> participants=</span><span class="si">%d</span><span class="s2"> best_k=</span><span class="si">%d</span><span class="s2"> r2=</span><span class="si">%.4f</span><span class="s2"> mae=</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -1130,7 +1523,6 @@
             <span class="nb">float</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;r2_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))),</span>
             <span class="nb">float</span><span class="p">(</span><span class="n">metrics_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best_k</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))),</span>
         <span class="p">)</span></div>
-
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;run_opinion_eval&quot;</span><span class="p">,</span> <span class="s2">&quot;OpinionSpec&quot;</span><span class="p">,</span> <span class="s2">&quot;DEFAULT_SPECS&quot;</span><span class="p">]</span>

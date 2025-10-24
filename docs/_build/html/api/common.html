@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,8 +269,14 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">StudyT</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">OutcomeT</span></code>]</p>
 <p>Base selection container shared between opinion pipelines.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>study</strong> (<em>StudyT</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">study</span></code>.</p></li>
+<li><p><strong>outcome</strong> (<em>OutcomeT</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">outcome</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>study</strong> (<em>StudyT</em>)</p></li>
 <li><p><strong>outcome</strong> (<em>OutcomeT</em>)</p></li>
 </ul>
@@ -280,6 +286,14 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dt class="sig sig-object py" id="common.OpinionStudySelection.config">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#common.OpinionStudySelection.config" title="Link to this definition">¶</a></dt>
 <dd><p>Return the configuration promoting this study outcome.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">config</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -300,8 +314,18 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolve YouTube ids to titles by scanning configured CSV sources.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>_default_dirs</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Fallback directories searched for metadata CSV files.</p></li>
+<li><p><strong>_env_csv_var</strong> (<em>str</em>) – Environment variable that lists explicit CSV paths.</p></li>
+<li><p><strong>_env_dirs_var</strong> (<em>str</em>) – Environment variable enumerating directories to search.</p></li>
+<li><p><strong>_env_glob_var</strong> (<em>str</em>) – Environment variable providing glob patterns.</p></li>
+<li><p><strong>_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Cached mapping of video ids to titles once loaded.</p></li>
+<li><p><strong>_logger</strong> (<em>logging.Logger</em>) – Logger instance used for diagnostic output.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>)</p></li>
@@ -332,10 +356,13 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dd><p>Return a title for the provided video id when available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">video_id</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">resolve</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -346,20 +373,25 @@ title resolution, and safe numerical operations used across the baselines.</p>
 <dt class="sig sig-object py" id="common.add_comma_separated_argument">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">add_comma_separated_argument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/cli_args.html#add_comma_separated_argument"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.add_comma_separated_argument" title="Link to this definition">¶</a></dt>
 <dd><p>Register an argument that captures comma-separated values.</p>
-<p>The helper keeps flag combinations consistent across CLIs that surface the
-same semantics (e.g., study filters).</p>
+<blockquote>
+<div><p>The helper keeps flag combinations consistent across CLIs that surface the</p>
+<p>same semantics (e.g., study filters).</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parser</strong> (<em>ArgumentParser</em>)</p></li>
-<li><p><strong>flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
-<li><p><strong>dest</strong> (<em>str</em>)</p></li>
-<li><p><strong>help_text</strong> (<em>str</em>)</p></li>
-<li><p><strong>default</strong> (<em>str</em>)</p></li>
+<li><p><strong>parser</strong> (<em>argparse.ArgumentParser</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">parser</span></code>.</p></li>
+<li><p><strong>flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">flags</span></code>.</p></li>
+<li><p><strong>dest</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">dest</span></code>.</p></li>
+<li><p><strong>help_text</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">help_text</span></code>.</p></li>
+<li><p><strong>default</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">default</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -371,17 +403,20 @@ same semantics (e.g., study filters).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parser</strong> (<em>ArgumentParser</em>)</p></li>
-<li><p><strong>dest</strong> (<em>str</em>)</p></li>
-<li><p><strong>default</strong> (<em>bool</em>)</p></li>
-<li><p><strong>enable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
-<li><p><strong>disable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>)</p></li>
-<li><p><strong>enable_help</strong> (<em>str</em>)</p></li>
-<li><p><strong>disable_help</strong> (<em>str</em>)</p></li>
+<li><p><strong>parser</strong> (<em>argparse.ArgumentParser</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">parser</span></code>.</p></li>
+<li><p><strong>dest</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">dest</span></code>.</p></li>
+<li><p><strong>default</strong> (<em>bool</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">default</span></code>.</p></li>
+<li><p><strong>enable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">enable_flags</span></code>.</p></li>
+<li><p><strong>disable_flags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">disable_flags</span></code>.</p></li>
+<li><p><strong>enable_help</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">enable_help</span></code>.</p></li>
+<li><p><strong>disable_help</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">disable_help</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -392,10 +427,13 @@ same semantics (e.g., study filters).</p>
 <dd><p>Return a lowercased alphanumeric canonical representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">canon_text</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -406,10 +444,13 @@ same semantics (e.g., study filters).</p>
 <dd><p>Normalise a YouTube id when present in <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">canon_video_id</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -420,10 +461,13 @@ same semantics (e.g., study filters).</p>
 <dd><p>Return a TF-IDF vectoriser with the shared configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>max_features</strong> (<em>int</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>max_features</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">max_features</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>sklearn.feature_extraction.text.TfidfVectorizer</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">create_tfidf_vectorizer</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TfidfVectorizer</p>
 </dd>
 </dl>
 </dd></dl>
@@ -431,13 +475,23 @@ same semantics (e.g., study filters).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.ensure_directory">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">ensure_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#ensure_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.ensure_directory" title="Link to this definition">¶</a></dt>
-<dd><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<dd><blockquote>
+<div><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<p>Parameters</p>
+<p>path:</p>
+<blockquote>
+<div><p>Target directory to ensure.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Target directory to ensure.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -445,20 +499,25 @@ same semantics (e.g., study filters).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.get_logger">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.get_logger" title="Link to this definition">¶</a></dt>
-<dd><p>Return a memoised logger configured with a simple stream handler.</p>
-<p>The helper mirrors the historical behaviour from the individual
-baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler
-when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a
-caller-provided override).</p>
+<dd><blockquote>
+<div><p>Return a memoised logger configured with a simple stream handler.</p>
+<p>The helper mirrors the historical behaviour from the individual</p>
+<p>baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler</p>
+<p>when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a</p>
+<p>caller-provided override).</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>)</p></li>
-<li><p><strong>level</strong> (<em>int</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">level</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Logger</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">get_logger</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
 </dd>
 </dl>
 </dd></dl>
@@ -467,18 +526,64 @@ caller-provided override).</p>
 <dt class="sig sig-object py" id="common.merge_ordered">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">merge_ordered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cached</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executed</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline_utils.html#merge_ordered"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.merge_ordered" title="Link to this definition">¶</a></dt>
 <dd><p>Merge cached and freshly executed results preserving order indices.</p>
+<blockquote>
+<div><p>Parameters</p>
+<p>cached:</p>
+<blockquote>
+<div><p>Previously materialised results (e.g., metrics read from disk).</p>
+</div></blockquote>
+<p>executed:</p>
+<blockquote>
+<div><p>Newly computed results from the current run.</p>
+</div></blockquote>
+<p>order_key:</p>
+<blockquote>
+<div><p>Callable returning a deterministic integer position for each result.</p>
+</div></blockquote>
+<p>on_replace:</p>
+<blockquote>
+<div><p>Optional callback invoked when an executed item replaces a cached one</p>
+<p>at the same index.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cached</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Previously materialised results (e.g., metrics read from disk).</p></li>
-<li><p><strong>executed</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Newly computed results from the current run.</p></li>
-<li><p><strong>order_key</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>]</em><em>, </em><em>int</em><em>]</em>) – Callable returning a deterministic integer position for each result.</p></li>
-<li><p><strong>on_replace</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>, </em><em>T</em><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Optional callback invoked when an executed item replaces a cached one
-at the same index.</p></li>
+<li><p><strong>cached</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">cached</span></code>.</p></li>
+<li><p><strong>executed</strong> (<em>Sequence</em><em>[</em><em>T</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">executed</span></code>.</p></li>
+<li><p><strong>order_key</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>]</em><em>, </em><em>int</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">order_key</span></code>.</p></li>
+<li><p><strong>on_replace</strong> (<em>Callable</em><em>[</em><em>[</em><em>T</em><em>, </em><em>T</em><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">on_replace</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>T</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">merge_ordered</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[T]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.opinion_example_kwargs">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">opinion_example_kwargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#opinion_example_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.opinion_example_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Return keyword arguments common to opinion example dataclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>participant_id</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">participant_id</span></code>.</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">participant_study</span></code>.</p></li>
+<li><p><strong>issue</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p></li>
+<li><p><strong>document</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">document</span></code>.</p></li>
+<li><p><strong>before</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">before</span></code>.</p></li>
+<li><p><strong>after</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">after</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">opinion_example_kwargs</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, object]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -489,10 +594,13 @@ at the same index.</p></li>
 <dd><p>Collect file or directory paths from a set of environment variables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>variable_names</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>variable_names</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">variable_names</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -500,17 +608,35 @@ at the same index.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.safe_div">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">safe_div</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">numerator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">denominator</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/eval_utils.html#safe_div"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.safe_div" title="Link to this definition">¶</a></dt>
-<dd><p>Return the division result guarding against a zero denominator.</p>
+<dd><blockquote>
+<div><p>Return the division result guarding against a zero denominator.</p>
+<p>Parameters</p>
+<p>numerator:</p>
+<blockquote>
+<div><p>Value forming the numerator.</p>
+</div></blockquote>
+<p>denominator:</p>
+<blockquote>
+<div><p>Value forming the denominator.</p>
+</div></blockquote>
+<p>default:</p>
+<blockquote>
+<div><p>Fallback value returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>numerator</strong> (<em>float</em>) – Value forming the numerator.</p></li>
-<li><p><strong>denominator</strong> (<em>float</em>) – Value forming the denominator.</p></li>
-<li><p><strong>default</strong> (<em>float</em>) – Fallback value returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p></li>
+<li><p><strong>numerator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">numerator</span></code>.</p></li>
+<li><p><strong>denominator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">denominator</span></code>.</p></li>
+<li><p><strong>default</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">default</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">safe_div</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -521,10 +647,13 @@ at the same index.</p></li>
 <dd><p>Parse a colon/comma/space separated list from an environment string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">split_env_list</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -533,13 +662,23 @@ at the same index.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.logging_utils.ensure_directory">
 <span class="sig-prename descclassname"><span class="pre">common.logging_utils.</span></span><span class="sig-name descname"><span class="pre">ensure_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#ensure_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.logging_utils.ensure_directory" title="Link to this definition">¶</a></dt>
-<dd><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<dd><blockquote>
+<div><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
+<p>Parameters</p>
+<p>path:</p>
+<blockquote>
+<div><p>Target directory to ensure.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Target directory to ensure.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -547,20 +686,25 @@ at the same index.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="common.logging_utils.get_logger">
 <span class="sig-prename descclassname"><span class="pre">common.logging_utils.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.logging_utils.get_logger" title="Link to this definition">¶</a></dt>
-<dd><p>Return a memoised logger configured with a simple stream handler.</p>
-<p>The helper mirrors the historical behaviour from the individual
-baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler
-when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a
-caller-provided override).</p>
+<dd><blockquote>
+<div><p>Return a memoised logger configured with a simple stream handler.</p>
+<p>The helper mirrors the historical behaviour from the individual</p>
+<p>baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler</p>
+<p>when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a</p>
+<p>caller-provided override).</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>)</p></li>
-<li><p><strong>level</strong> (<em>int</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">level</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Logger</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">get_logger</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
 </dd>
 </dl>
 </dd></dl>
@@ -572,10 +716,13 @@ caller-provided override).</p>
 <dd><p>Return a lowercased alphanumeric canonical representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">canon_text</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -586,10 +733,13 @@ caller-provided override).</p>
 <dd><p>Normalise a YouTube id when present in <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">canon_video_id</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -600,10 +750,13 @@ caller-provided override).</p>
 <dd><p>Collect file or directory paths from a set of environment variables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>variable_names</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>variable_names</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">variable_names</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -614,10 +767,13 @@ caller-provided override).</p>
 <dd><p>Parse a colon/comma/space separated list from an environment string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">split_env_list</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -629,8 +785,18 @@ caller-provided override).</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolve YouTube ids to titles by scanning configured CSV sources.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>_default_dirs</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Fallback directories searched for metadata CSV files.</p></li>
+<li><p><strong>_env_csv_var</strong> (<em>str</em>) – Environment variable that lists explicit CSV paths.</p></li>
+<li><p><strong>_env_dirs_var</strong> (<em>str</em>) – Environment variable enumerating directories to search.</p></li>
+<li><p><strong>_env_glob_var</strong> (<em>str</em>) – Environment variable providing glob patterns.</p></li>
+<li><p><strong>_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Cached mapping of video ids to titles once loaded.</p></li>
+<li><p><strong>_logger</strong> (<em>logging.Logger</em>) – Logger instance used for diagnostic output.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>default_dirs</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>env</strong> (<a class="reference internal" href="#common.title_index.TitleResolverEnvConfig" title="common.title_index.TitleResolverEnvConfig"><em>TitleResolverEnvConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>logger_name</strong> (<em>str</em>)</p></li>
@@ -661,10 +827,13 @@ caller-provided override).</p>
 <dd><p>Return a title for the provided video id when available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em><em> | </em><em>None</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">video_id</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">resolve</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -677,8 +846,15 @@ caller-provided override).</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Environment variable names used when sourcing title CSVs.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_var</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">csv_var</span></code>.</p></li>
+<li><p><strong>dirs_var</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">dirs_var</span></code>.</p></li>
+<li><p><strong>glob_var</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">glob_var</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>csv_var</strong> (<em>str</em>)</p></li>
 <li><p><strong>dirs_var</strong> (<em>str</em>)</p></li>
 <li><p><strong>glob_var</strong> (<em>str</em>)</p></li>
@@ -709,8 +885,16 @@ caller-provided override).</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration controlling SentenceTransformer inference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">model_name</span></code>.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">device</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>.</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">normalize</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>)</p></li>
 <li><p><strong>device</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
@@ -746,8 +930,14 @@ caller-provided override).</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Thin wrapper over <code class="docutils literal notranslate"><span class="pre">sentence_transformers</span></code> with lazy loading.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>)</p>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>) – Runtime configuration controlling inference behaviour.</p></li>
+<li><p><strong>_model</strong> (<em>SentenceTransformer</em><em> | </em><em>None</em>) – Lazily initialised SentenceTransformer instance (<code class="docutils literal notranslate"><span class="pre">None</span></code> until used).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>config</strong> (<a class="reference internal" href="#common.embeddings.SentenceTransformerConfig" title="common.embeddings.SentenceTransformerConfig"><em>SentenceTransformerConfig</em></a>)</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -769,8 +959,11 @@ caller-provided override).</p>
 <span class="sig-name descname"><span class="pre">embedding_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.embedding_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.embedding_dimension" title="Link to this definition">¶</a></dt>
 <dd><p>Return the dimensionality of the produced embeddings.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of features emitted by the underlying encoder.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -778,13 +971,16 @@ caller-provided override).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="common.embeddings.SentenceTransformerEncoder.encode">
 <span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/embeddings.html#SentenceTransformerEncoder.encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.embeddings.SentenceTransformerEncoder.encode" title="Link to this definition">¶</a></dt>
-<dd><p>Return embeddings for <code class="docutils literal notranslate"><span class="pre">texts</span></code>.</p>
+<dd><p>Encode a batch of texts into dense embeddings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>texts</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>texts</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Sequence of documents to embed.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matrix of shape <code class="docutils literal notranslate"><span class="pre">(len(texts),</span> <span class="pre">embedding_dimension)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -795,10 +991,13 @@ caller-provided override).</p>
 <dd><p>Encode an iterable of texts by materialising it once.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>texts</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>texts</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Iterable of documents to embed.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matrix of embeddings corresponding to <code class="docutils literal notranslate"><span class="pre">texts</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -882,6 +1081,7 @@ caller-provided override).</p>
 <li><a class="reference internal" href="#common.ensure_directory"><code class="docutils literal notranslate"><span class="pre">ensure_directory()</span></code></a></li>
 <li><a class="reference internal" href="#common.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
 <li><a class="reference internal" href="#common.merge_ordered"><code class="docutils literal notranslate"><span class="pre">merge_ordered()</span></code></a></li>
+<li><a class="reference internal" href="#common.opinion_example_kwargs"><code class="docutils literal notranslate"><span class="pre">opinion_example_kwargs()</span></code></a></li>
 <li><a class="reference internal" href="#common.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li><a class="reference internal" href="#common.safe_div"><code class="docutils literal notranslate"><span class="pre">safe_div()</span></code></a></li>
 <li><a class="reference internal" href="#common.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>

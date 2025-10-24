@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -267,6 +267,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">bz2</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">lzma</span>
@@ -290,6 +291,28 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">DatasetGenerationCastError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback stub when datasets is unavailable.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_datasets_imported</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the optional datasets dependency (or its stub) is available.&quot;&quot;&quot;</span>
+
+    <span class="k">global</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">Features</span><span class="p">,</span> <span class="n">HFSequence</span><span class="p">,</span> <span class="n">Value</span><span class="p">,</span> <span class="n">DatasetGenerationCastError</span>  <span class="c1"># noqa: PLW0603</span>
+
+    <span class="k">if</span> <span class="n">datasets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;datasets&quot;</span><span class="p">)</span>
+    <span class="n">datasets</span> <span class="o">=</span> <span class="n">module</span>
+    <span class="n">Dataset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">)</span>
+    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;DatasetDict&quot;</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">)</span>
+    <span class="n">Features</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Features&quot;</span><span class="p">,</span> <span class="n">Features</span><span class="p">)</span>
+    <span class="n">HFSequence</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Sequence&quot;</span><span class="p">,</span> <span class="n">HFSequence</span><span class="p">)</span>
+    <span class="n">Value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span> <span class="n">Value</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">datasets.builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetGenerationCastError</span> <span class="k">as</span> <span class="n">cast_error</span>  <span class="c1"># type: ignore</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+        <span class="k">return</span>
+    <span class="n">DatasetGenerationCastError</span> <span class="o">=</span> <span class="n">cast_error</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -373,6 +396,8 @@
 <span class="sd">    :raises ValueError: If the provided file path has an unsupported extension.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
+
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
@@ -433,6 +458,8 @@
 <span class="sd">    :raises RuntimeError: If :mod:`pandas` is unavailable or no data files were</span>
 <span class="sd">        discovered for the dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - environment guard</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -767,6 +794,8 @@
 <span class="sd">    :returns: New mapping with each split cast to the union of all features.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
+
     <span class="n">all_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">feature_template</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Value</span> <span class="o">|</span> <span class="n">HFSequence</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">datasets_map</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -835,6 +864,8 @@
 
     <span class="n">opts</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="n">BuildOptions</span><span class="p">()</span>
 
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
+
     <span class="n">raw</span> <span class="o">=</span> <span class="n">load_raw</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">validation_ratio</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">validation_ratio</span><span class="p">)</span>
 
     <span class="n">filtered</span> <span class="o">=</span> <span class="n">filter_prompt_ready</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">sol_key</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">sol_key</span><span class="p">,</span> <span class="n">num_proc</span><span class="o">=</span><span class="n">opts</span><span class="o">.</span><span class="n">num_proc</span><span class="p">)</span>
@@ -876,6 +907,8 @@
 <span class="sd">    consumers that require the historical one-row-per-participant-and-issue</span>
 <span class="sd">    view can apply this helper to recover the previous behaviour.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
 
     <span class="n">deduped_splits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">split_ds</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -999,6 +1032,8 @@
 <span class="sd">    :param push_to_hub: When ``True``, push each subset to its configured repository.</span>
 <span class="sd">    :param hub_token: Authentication token used for Hugging Face uploads.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">issue_repo_map</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">push_to_hub</span><span class="p">:</span>
         <span class="k">return</span>

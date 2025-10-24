@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -253,13 +253,17 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for knn.cli</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Command-line interface for the refactored KNN baseline.&quot;&quot;&quot;</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli_args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli_options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_overwrite_argument</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cli_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalize_flags</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">Word2VecConfig</span>
 
@@ -271,21 +275,28 @@
     <span class="s2">&quot;gun_identity&quot;</span>
 <span class="p">)</span>
 
-
 <div class="viewcode-block" id="build_parser">
 <a class="viewcode-back" href="../../api/knn.html#knn.cli.build_parser">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the argument parser for the KNN baseline CLI.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the command-line parser that drives the refactored KNN workflows.</span>
 
-<span class="sd">    :returns: Configured :class:`argparse.ArgumentParser` instance with all KNN options.</span>
+<span class="sd">    The parser exposes switches for both slate (next-video) and opinion</span>
+<span class="sd">    prediction flows, including feature-space selection, pre-computed index</span>
+<span class="sd">    reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.</span>
+
+<span class="sd">    :returns: Parser pre-populated with all supported CLI arguments for the KNN baseline.</span>
+<span class="sd">    :rtype: argparse.ArgumentParser</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;KNN baselines for GRAIL (TF-IDF / Word2Vec)&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--task&quot;</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;slate&quot;</span><span class="p">,</span> <span class="s2">&quot;opinion&quot;</span><span class="p">],</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;slate&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Select evaluation target: &#39;slate&#39; for next-video recommendation or &#39;opinion&#39; for post-study indices.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Select evaluation target: &#39;slate&#39; for next-video recommendation or &quot;</span>
+            <span class="s2">&quot;&#39;opinion&#39; for post-study indices.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--feature-space&quot;</span><span class="p">,</span>
@@ -415,7 +426,10 @@
         <span class="s2">&quot;--sentence_transformer_model&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_model&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SentenceTransformer model identifier when using the sentence_transformer feature space.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;SentenceTransformer model identifier when using the &quot;</span>
+            <span class="s2">&quot;sentence_transformer feature space.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--sentence-transformer-device&quot;</span><span class="p">,</span>
@@ -432,21 +446,7 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_batch_size&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Batch size applied during sentence-transformer encoding.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable L2-normalisation for sentence-transformer embeddings (default).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_false&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">sentence_transformer_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">add_sentence_transformer_normalize_flags</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">legacy_aliases</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--train-curve-max&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--train_curve_max&quot;</span><span class="p">,</span>
@@ -462,11 +462,7 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;out_dir&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for predictions, metrics, and saved indices.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--overwrite&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Allow overwriting metrics/prediction files in --out_dir.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">add_overwrite_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--cache-dir&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>
@@ -487,7 +483,10 @@
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;bootstrap_replicates&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of bootstrap replicates used to compute uncertainty intervals (0 disables bootstrap).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Number of bootstrap replicates used to compute uncertainty intervals &quot;</span>
+            <span class="s2">&quot;(0 disables bootstrap).&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--bootstrap-seed&quot;</span><span class="p">,</span>
@@ -514,21 +513,26 @@
         <span class="s2">&quot;--train_issues&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;train_issues&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional comma-separated list of issues used to TRAIN the KNN index. Defaults to --issues when unset.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional comma-separated list of issues used to TRAIN the KNN index. &quot;</span>
+            <span class="s2">&quot;Defaults to --issues when unset.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--eval-issues&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--eval_issues&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;eval_issues&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional comma-separated list of issues used for EVALUATION. Defaults to --issues when unset.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--participant-studies&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--participant_studies&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional comma-separated list of issues used for EVALUATION. &quot;</span>
+            <span class="s2">&quot;Defaults to --issues when unset.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--participant-studies&quot;</span><span class="p">,</span> <span class="s2">&quot;--participant_studies&quot;</span><span class="p">),</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;Comma-separated list of participant study keys (e.g. study1,study2). &quot;</span>
             <span class="s2">&quot;When supplied, next-video evaluation filters to those studies.&quot;</span>
         <span class="p">),</span>
@@ -539,8 +543,8 @@
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;train_participant_studies&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Optional comma-separated list of participant study keys to use when FITTING the index. &quot;</span>
-            <span class="s2">&quot;Defaults to --participant-studies when unset.&quot;</span>
+            <span class="s2">&quot;Optional comma-separated list of participant study keys used when &quot;</span>
+            <span class="s2">&quot;FITTING the index. Defaults to --participant-studies when unset.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -549,8 +553,8 @@
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;eval_participant_studies&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Optional comma-separated list of participant study keys to use for EVALUATION. &quot;</span>
-            <span class="s2">&quot;Defaults to --participant-studies when unset.&quot;</span>
+            <span class="s2">&quot;Optional comma-separated list of participant study keys used for &quot;</span>
+            <span class="s2">&quot;EVALUATION. Defaults to --participant-studies when unset.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -563,16 +567,19 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/knn.html#knn.cli.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments and execute the evaluation routine.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dispatch execution for the CLI by parsing arguments and invoking the correct runner.</span>
 
-<span class="sd">    :param argv: Optional list of command-line arguments. When ``None`` the values</span>
-<span class="sd">        are read from :data:`sys.argv`.</span>
+<span class="sd">    :param argv: Optional argument vector supplied for testing. When ``None``,</span>
+<span class="sd">        :data:`sys.argv` is used verbatim.</span>
+<span class="sd">    :type argv: list[str] | None</span>
+<span class="sd">    :returns: ``None``. The function delegates work to the slate or opinion pipeline.</span>
+<span class="sd">    :rtype: None</span>
+<span class="sd">    :raises ValueError: If ``--task`` is neither ``slate`` nor ``opinion``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">parser</span> <span class="o">=</span> <span class="n">build_parser</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -581,13 +588,12 @@
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="s2">&quot;opinion&quot;</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_opinion_eval</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_opinion_eval</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
 
         <span class="n">run_opinion_eval</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported task &#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
-
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>

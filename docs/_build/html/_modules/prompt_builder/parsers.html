@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -321,10 +321,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_nanlike</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``x`` matches a NaN-like sentinel.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluate whether ``x`` should be treated as a NaN-equivalent sentinel.</span>
 
-<span class="sd">    :param x: Value to evaluate for NaN-like characteristics.</span>
-<span class="sd">    :returns: Whether the value should be considered missing.</span>
+<span class="sd">    :param x: Value of arbitrary type to test for NaN-like semantics.</span>
+<span class="sd">    :type x: Any</span>
+<span class="sd">    :returns: ``True`` when ``x`` is ``None``, a floating NaN, a pandas NA, or a</span>
+<span class="sd">        canonical missing-text token.</span>
+<span class="sd">    :rtype: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -356,6 +360,56 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_truthy_from_number</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpret numeric values that conventionally encode boolean states.</span>
+
+<span class="sd">    :param value: Numeric marker expected to be ``1``/``0`` or close equivalents.</span>
+<span class="sd">    :type value: float</span>
+<span class="sd">    :returns: ``True`` for one-like values, ``False`` for zero-like values, otherwise ``None``.</span>
+<span class="sd">    :rtype: Optional[bool]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_truthy_from_text</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpret textual encodings of boolean information.</span>
+
+<span class="sd">    :param value: Raw value that may contain a boolean label or numeric text.</span>
+<span class="sd">    :type value: Any</span>
+<span class="sd">    :returns: ``True`` or ``False`` when a known token or numeric literal is</span>
+<span class="sd">        detected; ``None`` otherwise.</span>
+<span class="sd">    :rtype: Optional[bool]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">TRUE_STRINGS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">FALSE_STRINGS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
 <div class="viewcode-block" id="truthy">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.truthy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">truthy</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
@@ -372,30 +426,11 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
-    <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">TRUE_STRINGS</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">FALSE_STRINGS</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                    <span class="n">number</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="k">if</span> <span class="n">number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
-                        <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">elif</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
-                        <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="n">result</span></div>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="n">_truthy_from_number</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">numeric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">numeric</span>
+    <span class="k">return</span> <span class="n">_truthy_from_text</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
 
 

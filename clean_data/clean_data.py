@@ -13,6 +13,7 @@ from __future__ import annotations
 import bz2
 import csv
 import gzip
+import importlib
 import io
 import logging
 import lzma
@@ -36,6 +37,28 @@ except ImportError:  # pragma: no cover - optional dependency for linting
 
     class DatasetGenerationCastError(Exception):  # type: ignore
         """Fallback stub when datasets is unavailable."""
+
+
+def _ensure_datasets_imported() -> None:
+    """Ensure the optional datasets dependency (or its stub) is available."""
+
+    global datasets, Dataset, DatasetDict, Features, HFSequence, Value, DatasetGenerationCastError  # noqa: PLW0603
+
+    if datasets is not None and Features is not Any:
+        return
+
+    module = importlib.import_module("datasets")
+    datasets = module
+    Dataset = getattr(module, "Dataset", Dataset)
+    DatasetDict = getattr(module, "DatasetDict", DatasetDict)
+    Features = getattr(module, "Features", Features)
+    HFSequence = getattr(module, "Sequence", HFSequence)
+    Value = getattr(module, "Value", Value)
+    try:
+        from datasets.builder import DatasetGenerationCastError as cast_error  # type: ignore
+    except (ImportError, AttributeError):  # pragma: no cover - optional dependency
+        return
+    DatasetGenerationCastError = cast_error
 
 try:
     import pandas as pd
@@ -114,6 +137,8 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
     :raises ValueError: If the provided file path has an unsupported extension.
     """
 
+    _ensure_datasets_imported()
+
     path = Path(dataset_name).expanduser()
     if path.exists():
         if path.is_dir():
@@ -173,6 +198,8 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     :raises RuntimeError: If :mod:`pandas` is unavailable or no data files were
         discovered for the dataset.
     """
+
+    _ensure_datasets_imported()
 
     if pd is None:  # pragma: no cover - environment guard
         raise RuntimeError(
@@ -502,6 +529,8 @@ def ensure_shared_schema(datasets_map: Dict[str, datasets.Dataset]) -> Dict[str,
     :returns: New mapping with each split cast to the union of all features.
     """
 
+    _ensure_datasets_imported()
+
     all_columns: set[str] = set()
     feature_template: Dict[str, Value | HFSequence] = {}
     for split_ds in datasets_map.values():
@@ -564,6 +593,8 @@ def build_clean_dataset(
 
     opts = options or BuildOptions()
 
+    _ensure_datasets_imported()
+
     raw = load_raw(dataset_name, validation_ratio=opts.validation_ratio)
 
     filtered = filter_prompt_ready(raw, sol_key=opts.sol_key, num_proc=opts.num_proc)
@@ -602,6 +633,8 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
     consumers that require the historical one-row-per-participant-and-issue
     view can apply this helper to recover the previous behaviour.
     """
+
+    _ensure_datasets_imported()
 
     deduped_splits: Dict[str, datasets.Dataset] = {}
     for split_name, split_ds in dataset.items():
@@ -716,6 +749,8 @@ def export_issue_datasets(
     :param push_to_hub: When ``True``, push each subset to its configured repository.
     :param hub_token: Authentication token used for Hugging Face uploads.
     """
+
+    _ensure_datasets_imported()
 
     if not issue_repo_map and not push_to_hub:
         return

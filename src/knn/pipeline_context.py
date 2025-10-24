@@ -262,10 +262,18 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     :vartype rmse: float
     :ivar r2: Coefficient of determination for the opinion regression.
     :vartype r2: float
+    :ivar accuracy: Directional accuracy achieved by the configuration.
+    :vartype accuracy: Optional[float]
+    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
+    :vartype baseline_accuracy: Optional[float]
+    :ivar accuracy_delta: Improvement in accuracy over the baseline.
+    :vartype accuracy_delta: Optional[float]
     :ivar best_k: Optimal neighbour count determined for the study.
     :vartype best_k: int
     :ivar participants: Number of participants contributing to the metrics.
     :vartype participants: int
+    :ivar eligible: Count of evaluation examples used for accuracy metrics.
+    :vartype eligible: Optional[int]
     :ivar metrics_path: Filesystem path to the metrics JSON artefact.
     :vartype metrics_path: Path
     :ivar metrics: Raw metrics payload loaded from :attr:`metrics_path`.
@@ -278,8 +286,12 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     mae: float
     rmse: float
     r2: float
+    accuracy: Optional[float]
+    baseline_accuracy: Optional[float]
+    accuracy_delta: Optional[float]
     best_k: int
     participants: int
+    eligible: Optional[int]
     metrics_path: Path
     metrics: Mapping[str, object]
 
@@ -546,10 +558,18 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     :vartype baseline_mae: Optional[float]
     :ivar mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
     :vartype mae_delta: Optional[float]
+    :ivar accuracy: Directional accuracy comparing predicted opinion shifts.
+    :vartype accuracy: Optional[float]
+    :ivar baseline_accuracy: Directional accuracy achieved by the no-change baseline.
+    :vartype baseline_accuracy: Optional[float]
+    :ivar accuracy_delta: Improvement in directional accuracy over the baseline.
+    :vartype accuracy_delta: Optional[float]
     :ivar best_k: Neighbourhood size delivering the final metrics.
     :vartype best_k: Optional[int]
     :ivar participants: Number of participants included in the evaluation split.
     :vartype participants: Optional[int]
+    :ivar eligible: Count of evaluation examples used to compute accuracy metrics.
+    :vartype eligible: Optional[int]
     :ivar dataset: Name of the dataset used to compute the metrics.
     :vartype dataset: Optional[str]
     :ivar split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
@@ -561,8 +581,12 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     mae_change: Optional[float] = None
     baseline_mae: Optional[float] = None
     mae_delta: Optional[float] = None
+    accuracy: Optional[float] = None
+    baseline_accuracy: Optional[float] = None
+    accuracy_delta: Optional[float] = None
     best_k: Optional[int] = None
     participants: Optional[int] = None
+    eligible: Optional[int] = None
     dataset: Optional[str] = None
     split: Optional[str] = None
 

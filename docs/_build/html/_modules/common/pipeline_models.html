@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>common.eval_utils - GRAIL Simulation documentation</title>
+        <title>common.pipeline_models - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -251,222 +251,94 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for common.eval_utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shared evaluation utilities reused across baseline implementations.&quot;&quot;&quot;</span>
+          <h1>Source code for common.pipeline_models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared dataclasses used across KNN and XGBoost pipelines.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
 
-<span class="n">_Dataset</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_Dataset&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="safe_div">
-<a class="viewcode-back" href="../../api/xgb.html#common.safe_div">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="StudySpec">
+<a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline_context.StudySpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StudySpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-
-
-<span class="sd">        Return the division result guarding against a zero denominator.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        numerator:</span>
-
-<span class="sd">            Value forming the numerator.</span>
-
-<span class="sd">        denominator:</span>
-
-<span class="sd">            Value forming the denominator.</span>
-
-<span class="sd">        default:</span>
-
-<span class="sd">            Fallback value returned when ``denominator`` is zero.</span>
+<span class="sd">    Descriptor for a participant study and its associated issue.</span>
 
 
 
-<span class="sd">    :param numerator: Value provided for ``numerator``.</span>
+<span class="sd">    :ivar key: Attribute ``key``.</span>
 
-<span class="sd">    :type numerator: float</span>
+<span class="sd">    :vartype key: str</span>
 
-<span class="sd">    :param denominator: Value provided for ``denominator``.</span>
+<span class="sd">    :ivar issue: Attribute ``issue``.</span>
 
-<span class="sd">    :type denominator: float</span>
+<span class="sd">    :vartype issue: str</span>
 
-<span class="sd">    :param default: Value provided for ``default``.</span>
+<span class="sd">    :ivar label: Attribute ``label``.</span>
 
-<span class="sd">    :type default: float</span>
-
-<span class="sd">    :returns: Result produced by ``safe_div``.</span>
-
-<span class="sd">    :rtype: float</span>
+<span class="sd">    :vartype label: str</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">denominator</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span>
-    <span class="k">return</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span></div>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">study_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
+<span class="sd">        Return a filesystem-safe slug for the study key.</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">    Ensure Hugging Face cache directories default to ``cache_dir``.</span>
 
+<span class="sd">        :returns: Result produced by ``study_slug``.</span>
 
+<span class="sd">        :rtype: str</span>
 
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
-<span class="sd">    :type cache_dir: str</span>
 
-<span class="sd">    :returns: ``None``.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
 
-<span class="sd">    :rtype: None</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">issue_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Return a filesystem-safe slug for the associated issue.</span>
 
 
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
 
+<span class="sd">        :returns: Result produced by ``issue_slug``.</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">prepare_dataset</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">default_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">loader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">_Dataset</span><span class="p">],</span>
-    <span class="n">issue_lookup</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_Dataset</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :rtype: str</span>
 
+<span class="sd">        &quot;&quot;&quot;</span>
 
 
-<span class="sd">        Configure the HF cache, load the dataset, and list available issues.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
+<span class="sd">        Return the slug used for evaluation artefacts.</span>
 
-<span class="sd">        Parameters</span>
 
-<span class="sd">        ----------</span>
 
-<span class="sd">        dataset:</span>
+<span class="sd">        :returns: Result produced by ``evaluation_slug``.</span>
 
-<span class="sd">            Dataset identifier supplied via CLI (``None`` uses ``default_source``).</span>
+<span class="sd">        :rtype: str</span>
 
-<span class="sd">        default_source:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
-<span class="sd">            Default dataset identifier when ``dataset`` is not provided.</span>
 
-<span class="sd">        cache_dir:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">study_slug</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
-<span class="sd">            Directory used for Hugging Face caching.</span>
-
-<span class="sd">        loader:</span>
-
-<span class="sd">            Callable that loads the dataset for ``dataset_source``.</span>
-
-<span class="sd">        issue_lookup:</span>
-
-<span class="sd">            Callable returning the available issue labels for ``loader``&#39;s output.</span>
-
-
-
-<span class="sd">        Returns</span>
-
-<span class="sd">        -------</span>
-
-<span class="sd">        tuple[str, Any, Sequence[str]]</span>
-
-<span class="sd">            The dataset source string, loaded dataset object, and issue labels.</span>
-
-
-
-<span class="sd">    :param dataset: Value provided for ``dataset``.</span>
-
-<span class="sd">    :type dataset: Optional[str]</span>
-
-<span class="sd">    :param default_source: Value provided for ``default_source``.</span>
-
-<span class="sd">    :type default_source: str</span>
-
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
-
-<span class="sd">    :type cache_dir: str</span>
-
-<span class="sd">    :param loader: Value provided for ``loader``.</span>
-
-<span class="sd">    :type loader: Callable[[str, str], _Dataset]</span>
-
-<span class="sd">    :param issue_lookup: Value provided for ``issue_lookup``.</span>
-
-<span class="sd">    :type issue_lookup: Callable[[_Dataset], Sequence[str]]</span>
-
-<span class="sd">    :returns: Result produced by ``prepare_dataset``.</span>
-
-<span class="sd">    :rtype: Tuple[str, _Dataset, Sequence[str]]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
-    <span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">dataset_source</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">default_source</span>
-    <span class="n">base_ds</span> <span class="o">=</span> <span class="n">loader</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">available_issues</span> <span class="o">=</span> <span class="n">issue_lookup</span><span class="p">(</span><span class="n">base_ds</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">dataset_source</span><span class="p">,</span> <span class="n">base_ds</span><span class="p">,</span> <span class="n">available_issues</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">compose_issue_slug</span><span class="p">(</span><span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">study_tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-
-
-<span class="sd">        Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.</span>
-
-
-
-<span class="sd">        Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.</span>
-
-
-
-<span class="sd">    :param issue: Value provided for ``issue``.</span>
-
-<span class="sd">    :type issue: str</span>
-
-<span class="sd">    :param study_tokens: Value provided for ``study_tokens``.</span>
-
-<span class="sd">    :type study_tokens: Sequence[str]</span>
-
-<span class="sd">    :returns: Result produced by ``compose_issue_slug``.</span>
-
-<span class="sd">    :rtype: str</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
-    <span class="n">base_slug</span> <span class="o">=</span> <span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">issue</span> <span class="ow">and</span> <span class="n">issue</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;all&quot;</span>
-    <span class="n">suffix_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">seen_suffix</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">study_tokens</span><span class="p">:</span>
-        <span class="n">slug</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">slug</span> <span class="ow">and</span> <span class="n">slug</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span> <span class="ow">and</span> <span class="n">slug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_suffix</span><span class="p">:</span>
-            <span class="n">suffix_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-            <span class="n">seen_suffix</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">suffix_parts</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">suffix_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="n">base_slug</span>
-
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span> <span class="s2">&quot;ensure_hf_cache&quot;</span><span class="p">,</span> <span class="s2">&quot;prepare_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;safe_div&quot;</span><span class="p">]</span>
 </pre></div>
         </article>
       </div>

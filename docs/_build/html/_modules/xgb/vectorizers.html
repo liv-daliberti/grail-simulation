@@ -211,8 +211,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -263,18 +263,11 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="n">joblib</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.feature_extraction.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="n">TfidfVectorizer</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span><span class="p">,</span> <span class="n">SentenceTransformerEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_tfidf_vectorizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">knn.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">Word2VecConfig</span><span class="p">,</span> <span class="n">Word2VecFeatureBuilder</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._optional</span><span class="w"> </span><span class="kn">import</span> <span class="n">TfidfVectorizer</span><span class="p">,</span> <span class="n">joblib</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;BaseTextVectorizer&quot;</span><span class="p">,</span>
@@ -302,15 +295,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the vectoriser on ``documents`` and return the resulting features.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Corpus used to establish model parameters.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Any</span>
-<span class="sd">            Implementation-specific feature matrix.</span>
+<span class="sd">        :param documents: Corpus used to establish model parameters.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Implementation-specific feature matrix.</span>
+<span class="sd">        :rtype: Any</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -322,15 +310,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Encode ``documents`` using the fitted vectoriser.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Inputs to transform with the learned representation.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Any</span>
-<span class="sd">            Feature matrix aligned with the fitted model state.</span>
+<span class="sd">        :param documents: Inputs transformed with the learned representation.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Feature matrix aligned with the fitted model state.</span>
+<span class="sd">        :rtype: Any</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -342,10 +325,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the number of features produced during transformation.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Width of the feature representation.</span>
+<span class="sd">        :returns: Width of the feature representation.</span>
+<span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -357,10 +338,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Persist the trained vectoriser into ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Destination folder for serialised artefacts.</span>
+<span class="sd">        :param directory: Destination folder for serialised artefacts.</span>
+<span class="sd">        :type directory: Path</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -373,15 +352,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reconstruct a vectoriser from ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Location containing saved model artefacts.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        BaseTextVectorizer</span>
-<span class="sd">            Fully initialised subclass instance.</span>
+<span class="sd">        :param directory: Location containing saved model artefacts.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :returns: Fully initialised subclass instance.</span>
+<span class="sd">        :rtype: BaseTextVectorizer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -390,7 +364,12 @@
 <div class="viewcode-block" id="BaseTextVectorizer.metadata">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.BaseTextVectorizer.metadata">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return serialisable metadata describing the vectoriser.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return serialisable metadata describing the vectoriser.</span>
+
+<span class="sd">        :returns: Dictionary describing the vectoriser kind and dimension.</span>
+<span class="sd">        :rtype: Dict[str, Any]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_dimension</span><span class="p">()}</span></div>
 </div>
@@ -420,24 +399,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a TF-IDF vectoriser wrapper.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        config:</span>
-<span class="sd">            Hyper-parameters controlling vocabulary size and tokenisation.</span>
+<span class="sd">        :param config: Hyper-parameters controlling vocabulary size and tokenisation.</span>
+<span class="sd">        :type config: TfidfConfig</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">TfidfVectorizer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Install scikit-learn to use TF-IDF vectorisation.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span>
-            <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">strip_accents</span><span class="o">=</span><span class="s2">&quot;unicode&quot;</span><span class="p">,</span>
-            <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-            <span class="n">min_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">stop_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">token_pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;(?u)\b[\w\-]{2,}\b&quot;</span><span class="p">,</span>
-            <span class="n">max_features</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_features</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_tfidf_vectorizer</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_features</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="TfidfVectorizerWrapper.fit_transform">
@@ -446,15 +415,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the TF-IDF vectoriser and transform ``documents``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Corpus used for fitting and transformation.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Any</span>
-<span class="sd">            Sparse matrix of TF-IDF features.</span>
+<span class="sd">        :param documents: Corpus used for fitting and transformation.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Sparse matrix of TF-IDF features.</span>
+<span class="sd">        :rtype: Any</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span></div>
@@ -466,15 +430,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Transform ``documents`` using the fitted TF-IDF model.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Input texts to encode.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Any</span>
-<span class="sd">            Sparse matrix of TF-IDF features matching the fitted vocabulary.</span>
+<span class="sd">        :param documents: Input texts to encode.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Sparse matrix of TF-IDF features matching the fitted vocabulary.</span>
+<span class="sd">        :rtype: Any</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span></div>
@@ -486,10 +445,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the number of TF-IDF features exposed by the model.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Vocabulary size reflected in the vectoriser.</span>
+<span class="sd">        :returns: Vocabulary size reflected in the vectoriser.</span>
+<span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">n_features</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vectorizer</span><span class="p">,</span> <span class="s2">&quot;max_features&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -506,10 +463,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Persist the fitted TF-IDF vectoriser to ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Destination folder receiving the serialised model artefacts.</span>
+<span class="sd">        :param directory: Destination folder receiving the serialised model artefacts.</span>
+<span class="sd">        :type directory: Path</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -527,15 +482,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Restore a TF-IDF vectoriser previously saved with :meth:`save`.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Folder containing the saved estimator and metadata.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        TfidfVectorizerWrapper</span>
-<span class="sd">            Reconstructed wrapper ready for inference.</span>
+<span class="sd">        :param directory: Folder containing the saved estimator and metadata.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :returns: Reconstructed wrapper ready for inference.</span>
+<span class="sd">        :rtype: TfidfVectorizerWrapper</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">joblib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
@@ -579,10 +529,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build a Word2Vec-backed vectoriser.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        config:</span>
-<span class="sd">            Training and inference options for the Word2Vec feature builder.</span>
+<span class="sd">        :param config: Training and inference options for the Word2Vec feature builder.</span>
+<span class="sd">        :type config: Word2VecVectorizerConfig</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
@@ -606,15 +554,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Train the Word2Vec model and encode ``documents``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Corpus used for model fitting and embedding aggregation.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray</span>
-<span class="sd">            Dense embedding matrix with one row per document.</span>
+<span class="sd">        :param documents: Corpus used for model fitting and embedding aggregation.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Dense embedding matrix with one row per document.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_builder</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
@@ -627,15 +570,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Encode ``documents`` using the fitted Word2Vec model.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Texts to convert into averaged embeddings.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray</span>
-<span class="sd">            Dense embedding matrix using the cached embeddings.</span>
+<span class="sd">        :param documents: Texts to convert into averaged embeddings.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Dense embedding matrix using the cached embeddings.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_builder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span></div>
@@ -647,10 +585,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the dimensionality of the produced Word2Vec embeddings.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Embedding size configured for the model.</span>
+<span class="sd">        :returns: Embedding size configured for the model.</span>
+<span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_builder</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">vector_size</span><span class="p">)</span></div>
@@ -662,10 +598,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Store the Word2Vec model artefacts in ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Destination folder receiving the trained embeddings and metadata.</span>
+<span class="sd">        :param directory: Destination folder receiving the trained embeddings and metadata.</span>
+<span class="sd">        :type directory: Path</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -694,15 +628,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load a Word2Vec vectoriser from ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Folder containing a previous call to :meth:`save`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Word2VecVectorizer</span>
-<span class="sd">            Rehydrated vectoriser with weights and configuration applied.</span>
+<span class="sd">        :param directory: Folder containing a previous call to :meth:`save`.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :returns: Rehydrated vectoriser with weights and configuration applied.</span>
+<span class="sd">        :rtype: Word2VecVectorizer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="n">VECTORISER_META</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
@@ -741,10 +670,9 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a vectoriser backed by a sentence-transformer model.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        config:</span>
-<span class="sd">            Encoder settings forwarded to :class:`common.embeddings.SentenceTransformerEncoder`.</span>
+<span class="sd">        :param config: Encoder settings forwarded to</span>
+<span class="sd">            :class:`common.embeddings.SentenceTransformerEncoder`.</span>
+<span class="sd">        :type config: SentenceTransformerVectorizerConfig</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
@@ -765,15 +693,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Encode ``documents`` while caching the embedding dimensionality.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Texts to embed via the underlying sentence-transformer.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray</span>
-<span class="sd">            Dense array of unit-normalised document embeddings.</span>
+<span class="sd">        :param documents: Texts to embed via the underlying sentence-transformer.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Dense array of unit-normalised document embeddings.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">encoded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
@@ -787,15 +710,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Encode ``documents`` using the cached sentence-transformer model.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        documents:</span>
-<span class="sd">            Text inputs to convert into embeddings.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray</span>
-<span class="sd">            Dense embedding array reusing the cached model instance.</span>
+<span class="sd">        :param documents: Text inputs to convert into embeddings.</span>
+<span class="sd">        :type documents: Sequence[str]</span>
+<span class="sd">        :returns: Dense embedding array reusing the cached model instance.</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">encoded</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
@@ -810,10 +728,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the dimensionality of the sentence-transformer embeddings.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Embedding width either cached from training or derived on demand.</span>
+<span class="sd">        :returns: Embedding width either cached from training or derived on demand.</span>
+<span class="sd">        :rtype: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dimension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -828,10 +744,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Persist the vectoriser configuration metadata to ``directory``.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Destination folder receiving the serialised configuration.</span>
+<span class="sd">        :param directory: Destination folder receiving the serialised configuration.</span>
+<span class="sd">        :type directory: Path</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -855,15 +769,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Restore configuration needed to rebuild the sentence-transformer encoder.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        directory:</span>
-<span class="sd">            Folder containing metadata generated by :meth:`save`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        SentenceTransformerVectorizer</span>
-<span class="sd">            Vectoriser initialised with the persisted configuration.</span>
+<span class="sd">        :param directory: Folder containing metadata generated by :meth:`save`.</span>
+<span class="sd">        :type directory: Path</span>
+<span class="sd">        :returns: Vectoriser initialised with the persisted configuration.</span>
+<span class="sd">        :rtype: SentenceTransformerVectorizer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="n">VECTORISER_META</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
@@ -883,7 +792,21 @@
     <span class="n">word2vec</span><span class="p">:</span> <span class="n">Word2VecVectorizerConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sentence_transformer</span><span class="p">:</span> <span class="n">SentenceTransformerVectorizerConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseTextVectorizer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a vectoriser instance for ``kind``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instantiate a text vectoriser matching ``kind``.</span>
+
+<span class="sd">    :param kind: Vectoriser identifier (``tfidf``, ``word2vec``, ``sentence_transformer``).</span>
+<span class="sd">    :type kind: str</span>
+<span class="sd">    :param tfidf: Optional TF-IDF configuration.</span>
+<span class="sd">    :type tfidf: TfidfConfig | None</span>
+<span class="sd">    :param word2vec: Optional Word2Vec configuration.</span>
+<span class="sd">    :type word2vec: Word2VecVectorizerConfig | None</span>
+<span class="sd">    :param sentence_transformer: Optional sentence-transformer configuration.</span>
+<span class="sd">    :type sentence_transformer: SentenceTransformerVectorizerConfig | None</span>
+<span class="sd">    :returns: Concrete vectoriser instance.</span>
+<span class="sd">    :rtype: BaseTextVectorizer</span>
+<span class="sd">    :raises ValueError: If the vectoriser kind is unsupported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">TfidfVectorizerWrapper</span><span class="p">(</span><span class="n">tfidf</span> <span class="ow">or</span> <span class="n">TfidfConfig</span><span class="p">())</span>
@@ -900,7 +823,15 @@
 <div class="viewcode-block" id="load_vectorizer">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.load_vectorizer">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_vectorizer</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseTextVectorizer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a vectoriser saved via :meth:`BaseTextVectorizer.save`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a vectoriser saved via :meth:`BaseTextVectorizer.save`.</span>
+
+<span class="sd">    :param directory: Directory containing the serialized vectoriser.</span>
+<span class="sd">    :type directory: Path</span>
+<span class="sd">    :returns: Restored vectoriser instance.</span>
+<span class="sd">    :rtype: BaseTextVectorizer</span>
+<span class="sd">    :raises ValueError: If the persisted vectoriser kind is unsupported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="n">VECTORISER_META</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>

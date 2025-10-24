@@ -212,8 +212,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -302,34 +302,40 @@ examples feed into the training curve diagnostics.</p>
 <p id="module-knn.data">Dataset loading and issue filtering utilities for the KNN baseline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.filter_dataset_for_issue">
-<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
-<dd><p>Return a dataset filtered down to a specific issue label.</p>
+<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
+<dd><p>Filter a dataset down to a specific issue label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing the <code class="docutils literal notranslate"><span class="pre">issue</span></code> column.</p></li>
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label to retain (<code class="docutils literal notranslate"><span class="pre">all</span></code> preserves every row).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary restricted to rows matching <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.filter_dataset_for_participant_studies">
-<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_participant_studies" title="Link to this definition">¶</a></dt>
-<dd><p>Return a dataset filtered to rows whose <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> matches <code class="docutils literal notranslate"><span class="pre">studies</span></code>.</p>
+<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_participant_studies" title="Link to this definition">¶</a></dt>
+<dd><p>Filter the dataset to rows whose <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> matches <code class="docutils literal notranslate"><span class="pre">studies</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p></li>
-<li><p><strong>studies</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing the <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> column.</p></li>
+<li><p><strong>studies</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Study identifiers to retain.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary filtered to the requested studies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -337,24 +343,36 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.filter_split_for_participant_studies">
 <span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_split_for_participant_studies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_split_for_participant_studies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_split_for_participant_studies" title="Link to this definition">¶</a></dt>
-<dd><p>Filter a HF dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
+<dd><p>Filter a dataset split to the requested <code class="docutils literal notranslate"><span class="pre">participant_study</span></code> tokens.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>split_ds</strong> (<em>datasets.Dataset</em>) – Dataset split supporting <code class="xref py py-meth docutils literal notranslate"><span class="pre">filter()</span></code>.</p></li>
+<li><p><strong>studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Study identifiers to retain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered dataset split covering only the requested studies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.Dataset</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.issues_in_dataset">
-<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">issues_in_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#issues_in_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.issues_in_dataset" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">issues_in_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#issues_in_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.issues_in_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Return the list of issue labels present in the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ds</strong> (<em>datasets.DatasetDict</em>)</p>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset dictionary containing at least one split.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sorted list of issue identifiers or <code class="docutils literal notranslate"><span class="pre">['all']</span></code> when absent.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -366,12 +384,21 @@ examples feed into the training curve diagnostics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em>)</p></li>
-<li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>source</strong> (<em>str</em>) – Local directory path or Hugging Face dataset identifier.</p></li>
+<li><p><strong>cache_dir</strong> (<em>str</em>) – Cache directory passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">datasets.load_dataset()</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>datasets.DatasetDict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset dictionary containing train and validation splits.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.DatasetDict</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – If <code class="xref py py-mod docutils literal notranslate"><span class="pre">datasets</span></code> is unavailable.</p></li>
+<li><p><strong>ValueError</strong> – When <code class="docutils literal notranslate"><span class="pre">source</span></code> does not yield a <code class="xref py py-class docutils literal notranslate"><span class="pre">datasets.DatasetDict</span></code>.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -383,8 +410,19 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration options for Word2Vec embeddings.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_size</strong> (<em>int</em>) – Dimensionality of the learned embedding vectors.</p></li>
+<li><p><strong>window</strong> (<em>int</em>) – Context window size used during training.</p></li>
+<li><p><strong>min_count</strong> (<em>int</em>) – Minimum token frequency retained in the vocabulary.</p></li>
+<li><p><strong>epochs</strong> (<em>int</em>) – Number of Word2Vec training epochs.</p></li>
+<li><p><strong>model_dir</strong> (<em>Path</em>) – Directory where trained embeddings are persisted.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for Word2Vec initialisation.</p></li>
+<li><p><strong>workers</strong> (<em>int</em>) – Number of worker threads allocated to training.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>vector_size</strong> (<em>int</em>)</p></li>
 <li><p><strong>window</strong> (<em>int</em>)</p></li>
 <li><p><strong>min_count</strong> (<em>int</em>)</p></li>
@@ -438,8 +476,14 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Create Word2Vec embeddings from viewer prompts.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a><em>]</em>)</p>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a>) – Configuration bundle controlling Word2Vec training/inference.</p></li>
+<li><p><strong>_model</strong> (<em>gensim.models.Word2Vec</em><em> | </em><em>None</em>) – Loaded gensim <code class="xref py py-class docutils literal notranslate"><span class="pre">Word2Vec</span></code> instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>config</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a><em>]</em>)</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -448,7 +492,7 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Initialise the builder with optional configuration overrides.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a><em> | </em><em>None</em>) – Optional <a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">Word2VecConfig</span></code></a> instance.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#knn.features.Word2VecConfig" title="knn.features.Word2VecConfig"><em>Word2VecConfig</em></a><em> | </em><em>None</em>) – Optional configuration bundle to override defaults.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -462,10 +506,16 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return the averaged embedding vector for <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Document to encode using the fitted embeddings.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Averaged embedding vector representing <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the model has not been trained or loaded.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -473,10 +523,13 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="knn.features.Word2VecFeatureBuilder.is_trained">
 <span class="sig-name descname"><span class="pre">is_trained</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecFeatureBuilder.is_trained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecFeatureBuilder.is_trained" title="Link to this definition">¶</a></dt>
-<dd><p>Return True when the underlying Word2Vec model is ready for inference.</p>
+<dd><p>Indicate whether the underlying Word2Vec model is ready for inference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when a trained model is loaded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -487,10 +540,13 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Load a previously trained Word2Vec model from disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Directory containing the saved Word2Vec model.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ImportError</strong> – If <code class="xref py py-mod docutils literal notranslate"><span class="pre">gensim</span></code> is unavailable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -501,10 +557,13 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Persist the trained model to <code class="docutils literal notranslate"><span class="pre">directory</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>directory</strong> (<em>Path</em>) – Destination directory receiving the model artefact.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the model has not been trained or loaded.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -515,10 +574,13 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Train a Word2Vec model using the provided corpus.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>corpus</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>corpus</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Iterable of documents used to fit the embeddings.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ImportError</strong> – If <code class="xref py py-mod docutils literal notranslate"><span class="pre">gensim</span></code> is unavailable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -529,10 +591,16 @@ examples feed into the training curve diagnostics.</p>
 <dd><p>Return stacked embeddings for <code class="docutils literal notranslate"><span class="pre">corpus</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>corpus</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>corpus</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Sequence of documents to transform.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matrix of shape <code class="docutils literal notranslate"><span class="pre">(len(corpus),</span> <span class="pre">vector_size)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the model has not been trained or loaded.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -542,16 +610,19 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.assemble_document">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#assemble_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.assemble_document" title="Link to this definition">¶</a></dt>
-<dd><p>Return concatenated text used to featurise <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dd><p>Concatenate prompt components into a single document for featurisation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>example</strong> (<em>dict</em>)</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>example</strong> (<em>dict</em>) – Dataset row describing the prompt and slate context.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional additional column names appended to the document.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Combined prompt text passed to vectorisers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -559,13 +630,16 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.extract_now_watching">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.extract_now_watching" title="Link to this definition">¶</a></dt>
-<dd><p>Return the currently watched title/id, if known.</p>
+<dd><p>Retrieve the currently watched item for an interaction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example describing viewer activity.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[str, str] | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> when the “now watching” context exists.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[Tuple[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -573,13 +647,16 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.extract_slate_items">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#extract_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.extract_slate_items" title="Link to this definition">¶</a></dt>
-<dd><p>Return the slate as <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> pairs.</p>
+<dd><p>Extract the slate of candidate items from an interaction example.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing slate metadata.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>Tuple</em>[str, str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ordered list of <code class="docutils literal notranslate"><span class="pre">(title,</span> <span class="pre">video_id)</span></code> tuples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tuple[str, str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -587,14 +664,21 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.prepare_training_documents">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#prepare_training_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
-<dd><p>Return TF-IDF training documents and associated labels.</p>
+<dd><p>Prepare prompt documents, labels, and metadata for TF-IDF training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
-<li><p><strong>seed</strong> (<em>int</em>)</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>train_ds</strong> (<em>datasets.Dataset</em><em> | </em><em>Sequence</em><em>[</em><em>dict</em><em>]</em>) – Dataset split providing training rows.</p></li>
+<li><p><strong>max_train</strong> (<em>int</em>) – Optional cap on the number of training rows retained (0 keeps all).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed used when subsampling <code class="docutils literal notranslate"><span class="pre">train_ds</span></code>.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Additional columns appended to the prompt document.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(documents,</span> <span class="pre">label_ids,</span> <span class="pre">participant_ids)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[list[str], list[str], list[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -602,13 +686,16 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.prompt_from_builder">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#prompt_from_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
-<dd><p>Return the prompt text for <code class="docutils literal notranslate"><span class="pre">example</span></code> using the shared builder.</p>
+<dd><p>Assemble the full prompt text for a dataset example.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example containing prompt components.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Prompt text used for feature extraction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -616,13 +703,16 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.title_for">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.title_for" title="Link to this definition">¶</a></dt>
-<dd><p>Return a human-readable title for a YouTube id if available.</p>
+<dd><p>Look up a human-readable title for a given YouTube identifier.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – Candidate YouTube video identifier to resolve.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Title associated with <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when present in the cache.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -630,13 +720,16 @@ examples feed into the training curve diagnostics.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.viewer_profile_sentence">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#viewer_profile_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
-<dd><p>Return the viewer profile sentence for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dd><p>Compose the viewer profile sentence associated with a dataset row.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Interaction example containing viewer profile fields.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Natural-language sentence describing the participant profile.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -738,10 +831,13 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dd><p>Load a sentence-transformer index saved via <a class="reference internal" href="#knn.index.save_sentence_transformer_index" title="knn.index.save_sentence_transformer_index"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_sentence_transformer_index()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>in_dir</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>in_dir</strong> (<em>str</em>) – Directory containing previously persisted artefacts to load from disk.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of the loaded sentence-transformer index and associated metadata.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -787,12 +883,15 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
-<li><p><strong>out_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – KNN index object or registry being manipulated.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Output directory receiving generated metrics and reports.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -834,11 +933,11 @@ indicates that a prediction could not be produced for that <code class="docutils
 <p id="module-knn.evaluate">Evaluation loop and metrics for the KNN baseline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.bin_nopts">
-<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">bin_nopts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#bin_nopts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.bin_nopts" title="Link to this definition">¶</a></dt>
-<dd><p>Bucket the number of options into the reporting categories.</p>
+<span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">bin_nopts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option_count</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#bin_nopts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.bin_nopts" title="Link to this definition">¶</a></dt>
+<dd><p>Bucket the number of slate options into reporting-friendly categories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>n</strong> (<em>int</em>)</p>
+<dd class="field-odd"><p><strong>option_count</strong> (<em>int</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>str</p>
@@ -849,13 +948,28 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.bucket_from_pos">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">bucket_from_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#bucket_from_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.bucket_from_pos" title="Link to this definition">¶</a></dt>
-<dd><p>Bucket the original position index (0-based) into reporting bins.</p>
+<dd><blockquote>
+<div><p>Bucket a 0-based position index into the standard reporting bins.</p>
+<p>Parameters</p>
+<p>pos_idx:</p>
+<blockquote>
+<div><p>Zero-based position of the correct item within the retrieved slate.</p>
+</div></blockquote>
+<p>Returns</p>
+<p>str</p>
+<blockquote>
+<div><p>One of <code class="docutils literal notranslate"><span class="pre">{&quot;unknown&quot;,</span> <span class="pre">&quot;1&quot;,</span> <span class="pre">&quot;2&quot;,</span> <span class="pre">&quot;3&quot;,</span> <span class="pre">&quot;4&quot;,</span> <span class="pre">&quot;5+&quot;}</span></code> describing the bucket.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pos_idx</strong> (<em>int</em>)</p>
+<dd class="field-odd"><p><strong>pos_idx</strong> (<em>int</em>) – Position index being transformed into a categorical bucket.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Named bucket representing the supplied positional index.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -863,13 +977,28 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.canon">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">canon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#canon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.canon" title="Link to this definition">¶</a></dt>
-<dd><p>Canonicalise a text fragment for comparisons.</p>
+<dd><blockquote>
+<div><p>Canonicalise a text fragment by lowercasing and removing punctuation.</p>
+<p>Parameters</p>
+<p>text:</p>
+<blockquote>
+<div><p>Raw text fragment to normalise.</p>
+</div></blockquote>
+<p>Returns</p>
+<p>str</p>
+<blockquote>
+<div><p>Canonical form suitable for equality comparisons.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Free-form text string that requires normalisation.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonicalised text normalised for downstream processing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -877,17 +1006,33 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.compute_auc_from_curve">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">compute_auc_from_curve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#compute_auc_from_curve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.compute_auc_from_curve" title="Link to this definition">¶</a></dt>
-<dd><p>Return raw and normalised area under the accuracy vs k curve.</p>
+<dd><blockquote>
+<div><p>Compute the area under the accuracy-vs-<code class="docutils literal notranslate"><span class="pre">k</span></code> curve.</p>
+<p>Parameters</p>
+<p>k_values:</p>
+<blockquote>
+<div><p>Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
+</div></blockquote>
+<p>accuracy_by_k:</p>
+<blockquote>
+<div><p>Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to measured accuracy.</p>
+</div></blockquote>
+<p>Returns</p>
+<p>tuple[float, float]</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">(auc_area,</span> <span class="pre">auc_normalized)</span></code> where <code class="docutils literal notranslate"><span class="pre">auc_area</span></code> is the trapezoidal</p>
+<p>integral and <code class="docutils literal notranslate"><span class="pre">auc_normalized</span></code> scales the area by the extent of <code class="docutils literal notranslate"><span class="pre">k</span></code>.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values considered during evaluation.</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to observed accuracy.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(auc_area,</span> <span class="pre">auc_normalized)</span></code> where <code class="docutils literal notranslate"><span class="pre">auc_area</span></code> is the
-trapezoidal integral and <code class="docutils literal notranslate"><span class="pre">auc_normalized</span></code> divides by the span of <code class="docutils literal notranslate"><span class="pre">k</span></code>.</p>
+<dd class="field-even"><p>Area-under-curve value computed from the accuracy trajectory.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple[float, float]</p>
@@ -898,24 +1043,70 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.evaluate_issue">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate a single issue split and write metrics/predictions.</p>
+<dd><blockquote>
+<div><p>Evaluate a single issue slice and persist metrics, curves, and predictions.</p>
+<p>Parameters</p>
+<p>issue_slug:</p>
+<blockquote>
+<div><p>Normalised identifier for the issue under evaluation (used in paths).</p>
+</div></blockquote>
+<p>dataset_source:</p>
+<blockquote>
+<div><p>Name or path of the dataset backing the current run.</p>
+</div></blockquote>
+<p>train_ds:</p>
+<blockquote>
+<div><p>Training split (may be <code class="docutils literal notranslate"><span class="pre">None</span></code>) used for optional curve diagnostics.</p>
+</div></blockquote>
+<p>eval_ds:</p>
+<blockquote>
+<div><p>Evaluation split containing the rows scored for reporting.</p>
+</div></blockquote>
+<p>k_values:</p>
+<blockquote>
+<div><p>Sequence of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to consider when computing accuracy.</p>
+</div></blockquote>
+<p>knn_index:</p>
+<blockquote>
+<div><p>Prepared KNN index artefacts for the active feature space.</p>
+</div></blockquote>
+<p>extra_fields:</p>
+<blockquote>
+<div><p>Additional text fields concatenated into the query document.</p>
+</div></blockquote>
+<p>feature_space:</p>
+<blockquote>
+<div><p>Feature space identifier (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>, or <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p>
+</div></blockquote>
+<p>args:</p>
+<blockquote>
+<div><p>Parsed CLI namespace controlling evaluation behaviour.</p>
+</div></blockquote>
+<p>provenance:</p>
+<blockquote>
+<div><p>Mapping of provenance metadata recorded alongside the metrics.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>issue_slug</strong> (<em>str</em>) – Normalised issue identifier.</p></li>
-<li><p><strong>dataset_source</strong> (<em>str</em>) – Name or path of the dataset originated from.</p></li>
-<li><p><strong>train_ds</strong> – Training split dataset for optional curve diagnostics.</p></li>
-<li><p><strong>eval_ds</strong> – Evaluation split dataset.</p></li>
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Sequence of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to assess.</p></li>
-<li><p><strong>knn_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Prepared KNN index artifacts.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Extra text fields appended to queries.</p></li>
-<li><p><strong>feature_space</strong> (<em>str</em>) – Active feature space (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code> or <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>).</p></li>
-<li><p><strong>args</strong> – CLI namespace controlling evaluation options.</p></li>
-<li><p><strong>provenance</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>issue_slug</strong> (<em>str</em>) – Slugified identifier representing the study/issue on disk.</p></li>
+<li><p><strong>dataset_source</strong> (<em>str</em>) – Identifier describing where the dataset was loaded from.</p></li>
+<li><p><strong>train_ds</strong> (<em>Any</em>) – Training dataset split used to build the index.</p></li>
+<li><p><strong>eval_ds</strong> (<em>Any</em>) – Evaluation dataset split passed to the scorer.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
+<li><p><strong>knn_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Fitted KNN index used to score neighbours.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional dataset columns included when building prompts or outputs.</p></li>
+<li><p><strong>feature_space</strong> (<em>str</em>) – Feature space identifier such as <code class="docutils literal notranslate"><span class="pre">tfidf</span></code> or <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>.</p></li>
+<li><p><strong>args</strong> (<em>Any</em>) – Namespace object containing parsed command-line arguments.</p></li>
+<li><p><strong>provenance</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Metadata describing how the evaluation artefacts were produced.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -923,16 +1114,36 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.parse_k_values">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">parse_k_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_default</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#parse_k_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.parse_k_values" title="Link to this definition">¶</a></dt>
-<dd><p>Return the sorted list of k values derived from CLI configuration.</p>
+<dd><blockquote>
+<div><p>Derive the sorted set of <code class="docutils literal notranslate"><span class="pre">k</span></code> values requested for evaluation.</p>
+<p>Parameters</p>
+<p>k_default:</p>
+<blockquote>
+<div><p>The baseline <code class="docutils literal notranslate"><span class="pre">k</span></code> value supplied via the CLI (used when the sweep is empty).</p>
+</div></blockquote>
+<p>sweep:</p>
+<blockquote>
+<div><p>Comma-delimited string of additional <code class="docutils literal notranslate"><span class="pre">k</span></code> candidates provided by the user.</p>
+</div></blockquote>
+<p>Returns</p>
+<p>list[int]</p>
+<blockquote>
+<div><p>Strictly positive <code class="docutils literal notranslate"><span class="pre">k</span></code> values in ascending order. Falls back to <code class="docutils literal notranslate"><span class="pre">k_default</span></code></p>
+<p>(or <code class="docutils literal notranslate"><span class="pre">25</span></code> when unset) if the sweep does not contain any valid integers.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_default</strong> (<em>int</em>)</p></li>
-<li><p><strong>sweep</strong> (<em>str</em>)</p></li>
+<li><p><strong>k_default</strong> (<em>int</em>) – Fallback <code class="docutils literal notranslate"><span class="pre">k</span></code> value applied when no sweep result is available.</p></li>
+<li><p><strong>sweep</strong> (<em>str</em>) – Sweep configuration or CLI payload under inspection.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[int]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sorted list of unique <code class="docutils literal notranslate"><span class="pre">k</span></code> values parsed from the sweep specification.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -940,19 +1151,45 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.plot_elbow">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">plot_elbow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#plot_elbow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.plot_elbow" title="Link to this definition">¶</a></dt>
-<dd><p>Create an error-rate vs <code class="docutils literal notranslate"><span class="pre">k</span></code> plot for diagnostic purposes.</p>
+<dd><blockquote>
+<div><p>Generate an error-rate plot to visualise the KNN elbow heuristic.</p>
+<p>Parameters</p>
+<p>k_values:</p>
+<blockquote>
+<div><p>Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
+</div></blockquote>
+<p>accuracy_by_k:</p>
+<blockquote>
+<div><p>Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to accuracy on the selected split.</p>
+</div></blockquote>
+<p>best_k:</p>
+<blockquote>
+<div><p>The configuration chosen for downstream reporting.</p>
+</div></blockquote>
+<p>output_path:</p>
+<blockquote>
+<div><p>Destination filename for the generated PNG.</p>
+</div></blockquote>
+<p>data_split:</p>
+<blockquote>
+<div><p>Human-readable label describing the evaluation split (defaults to <code class="docutils literal notranslate"><span class="pre">validation</span></code>).</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to accuracy on the requested split.</p></li>
-<li><p><strong>best_k</strong> (<em>int</em>) – Selected <code class="docutils literal notranslate"><span class="pre">k</span></code> value for reporting.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path for the generated figure.</p></li>
-<li><p><strong>data_split</strong> (<em>str</em>) – Human-readable label describing the data split used.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
+<li><p><strong>best_k</strong> (<em>int</em>) – Neighbourhood size selected as optimal for the evaluation.</p></li>
+<li><p><strong>output_path</strong> (<em>Path</em>) – Filesystem path for the generated report or figure.</p></li>
+<li><p><strong>data_split</strong> (<em>str</em>) – Name of the dataset split from which metrics were derived.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -960,13 +1197,28 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.resolve_reports_dir">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">resolve_reports_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#resolve_reports_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.resolve_reports_dir" title="Link to this definition">¶</a></dt>
-<dd><p>Return the reports directory associated with <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p>
+<dd><blockquote>
+<div><p>Resolve the canonical reports directory corresponding to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p>
+<p>Parameters</p>
+<p>out_dir:</p>
+<blockquote>
+<div><p>Directory containing pipeline artefacts (typically under <code class="docutils literal notranslate"><span class="pre">models/knn</span></code>).</p>
+</div></blockquote>
+<p>Returns</p>
+<p>pathlib.Path</p>
+<blockquote>
+<div><p>Path pointing at the root <code class="docutils literal notranslate"><span class="pre">reports</span></code> directory for the repository.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out_dir</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>out_dir</strong> (<em>Path</em>) – Output directory receiving generated metrics and reports.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Path</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Directory path where the generated report files will be stored.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -974,13 +1226,24 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.run_eval">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">run_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#run_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.run_eval" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate the KNN baseline across the requested issues.</p>
+<dd><blockquote>
+<div><p>Evaluate the KNN baseline across the issues specified on the CLI.</p>
+<p>Parameters</p>
+<p>args:</p>
+<blockquote>
+<div><p>Namespace returned by <a class="reference internal" href="#knn.cli.build_parser" title="knn.cli.build_parser"><code class="xref py py-func docutils literal notranslate"><span class="pre">knn.cli.build_parser()</span></code></a>, including dataset,</p>
+<p>feature-space, and sweep configuration.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> – Parsed CLI namespace returned by <a class="reference internal" href="#knn.cli.build_parser" title="knn.cli.build_parser"><code class="xref py py-func docutils literal notranslate"><span class="pre">knn.cli.build_parser()</span></code></a>.</p>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – Namespace object containing parsed command-line arguments.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -988,16 +1251,36 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.select_best_k">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">select_best_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#select_best_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.select_best_k" title="Link to this definition">¶</a></dt>
-<dd><p>Return the elbow-selected <code class="docutils literal notranslate"><span class="pre">k</span></code> from accuracy measurements.</p>
+<dd><blockquote>
+<div><p>Choose an appropriate <code class="docutils literal notranslate"><span class="pre">k</span></code> by applying a simple elbow heuristic.</p>
+<p>Parameters</p>
+<p>k_values:</p>
+<blockquote>
+<div><p>Sorted sequence of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
+</div></blockquote>
+<p>accuracy_by_k:</p>
+<blockquote>
+<div><p>Observed accuracy for each <code class="docutils literal notranslate"><span class="pre">k</span></code> on the validation split.</p>
+</div></blockquote>
+<p>Returns</p>
+<p>int</p>
+<blockquote>
+<div><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> value where marginal gains fall below half of the initial slope,</p>
+<p>or the accuracy-maximising <code class="docutils literal notranslate"><span class="pre">k</span></code> when the heuristic cannot be applied.</p>
+</div></blockquote>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Neighbourhood size that maximises the provided accuracy scores.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1005,12 +1288,21 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <p id="module-knn.opinion">Post-study opinion index evaluation for the KNN baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.opinion.OpinionSpec">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration describing one study’s opinion index columns.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p></li>
+<li><p><strong>issue</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">label</span></code>.</p></li>
+<li><p><strong>before_column</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">before_column</span></code>.</p></li>
+<li><p><strong>after_column</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">after_column</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>key</strong> (<em>str</em>)</p></li>
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>label</strong> (<em>str</em>)</p></li>
@@ -1051,6 +1343,12 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">run_opinion_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/opinion.html#run_opinion_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.run_opinion_eval" title="Link to this definition">¶</a></dt>
 <dd><p>Execute the post-study opinion index evaluation.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – Namespace object containing parsed command-line arguments.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -1061,13 +1359,16 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.cli.build_parser">
 <span class="sig-prename descclassname"><span class="pre">knn.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.cli.build_parser" title="Link to this definition">¶</a></dt>
-<dd><p>Return the argument parser for the KNN baseline CLI.</p>
+<dd><p>Build the command-line parser that drives the refactored KNN workflows.</p>
+<p>The parser exposes switches for both slate (next-video) and opinion
+prediction flows, including feature-space selection, pre-computed index
+reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Configured <code class="xref py py-class docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code> instance with all KNN options.</p>
+<dd class="field-odd"><p>Parser pre-populated with all supported CLI arguments for the KNN baseline.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>ArgumentParser</em></p>
+<dd class="field-even"><p>argparse.ArgumentParser</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1075,14 +1376,20 @@ trapezoidal integral and <code class="docutils literal notranslate"><span class=
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.cli.main">
 <span class="sig-prename descclassname"><span class="pre">knn.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.cli.main" title="Link to this definition">¶</a></dt>
-<dd><p>Parse CLI arguments and execute the evaluation routine.</p>
+<dd><p>Dispatch execution for the CLI by parsing arguments and invoking the correct runner.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list of command-line arguments. When <code class="docutils literal notranslate"><span class="pre">None</span></code> the values
-are read from <code class="xref py py-data docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional argument vector supplied for testing. When <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+<code class="xref py py-data docutils literal notranslate"><span class="pre">sys.argv</span></code> is used verbatim.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>. The function delegates work to the slate or opinion pipeline.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">--task</span></code> is neither <code class="docutils literal notranslate"><span class="pre">slate</span></code> nor <code class="docutils literal notranslate"><span class="pre">opinion</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

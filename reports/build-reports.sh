@@ -142,7 +142,7 @@ fi
 
 KNN_OUT_DIR="${KNN_REPORTS_OUT_DIR:-${REPO_ROOT}/models/knn}"
 KNN_CACHE_DIR="${KNN_REPORTS_CACHE_DIR:-${REPO_ROOT}/.cache/huggingface/knn}"
-KNN_W2V_DIR="${KNN_REPORTS_WORD2VEC_DIR:-${KNN_OUT_DIR}/word2vec_models}"
+KNN_W2V_DIR="${KNN_REPORTS_WORD2VEC_DIR:-${KNN_OUT_DIR}/next_video/word2vec_models}"
 
 mkdir -p "${KNN_OUT_DIR}" "${KNN_CACHE_DIR}" "${KNN_W2V_DIR}"
 

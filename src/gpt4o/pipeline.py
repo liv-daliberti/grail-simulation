@@ -427,7 +427,7 @@ def _write_catalog_report(reports_dir: Path) -> None:
     lines = [
         "# GPT-4o Report Catalog",
         "",
-        "Generated artefacts for the GPT-4o slate-selection baseline:",
+        "Generated artifacts for the GPT-4o slate-selection baseline:",
         "",
         "- `next_video/` – summary metrics and fairness cuts for the selected configuration.",
         "- `hyperparameter_tuning/` – sweep results across temperature and max token settings.",

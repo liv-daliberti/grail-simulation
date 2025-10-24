@@ -637,7 +637,7 @@ def _resolve_study_specs(
     :type requested_issues: Sequence[str]
     :param requested_studies: Study tokens supplied by the user.
     :type requested_studies: Sequence[str]
-    :param allow_incomplete: Flag controlling behavior when datasets are unavailable.
+    :param allow_incomplete: Flag controlling behaviour when datasets are unavailable.
     :type allow_incomplete: bool
     :returns: Ordered list of study specifications.
     :rtype: List[StudySpec]

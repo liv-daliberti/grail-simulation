@@ -35,50 +35,17 @@ _Dataset = TypeVar("_Dataset")
 
 
 def safe_div(numerator: float, denominator: float, *, default: float = 0.0) -> float:
-    """
+    """Return the division result while guarding against a zero denominator.
 
-
-
-        Return the division result guarding against a zero denominator.
-
-
-
-        Parameters
-
-        ----------
-
-        numerator:
-
-            Value forming the numerator.
-
-        denominator:
-
-            Value forming the denominator.
-
-        default:
-
-            Fallback value returned when ``denominator`` is zero.
-
-
-
-    :param numerator: Value provided for ``numerator``.
-
+    :param numerator: Value forming the numerator.
     :type numerator: float
-
-    :param denominator: Value provided for ``denominator``.
-
+    :param denominator: Value forming the denominator.
     :type denominator: float
-
-    :param default: Value provided for ``default``.
-
+    :param default: Fallback returned when ``denominator`` is zero.
     :type default: float
-
-    :returns: Result produced by ``safe_div``.
-
+    :returns: Division result or ``default`` when the denominator is zero.
     :rtype: float
-
     """
-
 
     if not denominator:
         return default

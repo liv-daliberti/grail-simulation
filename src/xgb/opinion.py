@@ -610,7 +610,7 @@ def run_opinion_eval(
     _vectorizer_available()
 
     dataset_source = request.dataset or DEFAULT_DATASET_SOURCE
-    ds = load_dataset_source(dataset_source, request.cache_dir or "")
+    dataset_bundle = load_dataset_source(dataset_source, request.cache_dir or "")
     selected_specs = _resolve_studies(studies or ())
     results: Dict[str, Dict[str, Any]] = {}
 
@@ -619,7 +619,7 @@ def run_opinion_eval(
 
     for spec in selected_specs:
         payload = _evaluate_spec(
-            dataset=ds,
+            dataset=dataset_bundle,
             spec=spec,
             base_dir=base_dir,
             dataset_source=dataset_source,

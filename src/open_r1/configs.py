@@ -40,6 +40,10 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     trl = None  # type: ignore[assignment]
 
+ScriptArgumentsBase = trl.ScriptArguments if trl is not None else object
+GRPOConfigBase = trl.GRPOConfig if trl is not None else object
+SFTConfigBase = trl.SFTConfig if trl is not None else object
+
 
 @dataclass
 class DatasetConfig:
@@ -62,7 +66,7 @@ class DatasetMixtureConfig:
 
 
 @dataclass
-class ScriptArguments(trl.ScriptArguments if trl is not None else object):
+class ScriptArguments(ScriptArgumentsBase):
     """
     Extended version of ScriptArguments with support for dataset mixtures.
 
@@ -170,7 +174,7 @@ class ScriptArguments(trl.ScriptArguments if trl is not None else object):
 
 # NOTE: Consider adding shared options with a mixin to reduce code duplication.
 @dataclass
-class GRPOConfig(trl.GRPOConfig):
+class GRPOConfig(GRPOConfigBase):
     """Arguments for callbacks, benchmarks, and related settings."""
 
     # pylint: disable=too-many-instance-attributes
@@ -229,8 +233,19 @@ class GRPOConfig(trl.GRPOConfig):
         metadata={"help": "The group to store runs under."},
     )
 
+    def __post_init__(self) -> None:
+        """Validate optional dependencies before continuing configuration."""
+
+        if trl is None:  # pragma: no cover - optional dependency guard
+            raise ImportError(
+                "trl must be installed to construct GRPOConfig "
+                "(pip install trl)."
+            )
+        if hasattr(super(), "__post_init__"):
+            super().__post_init__()  # type: ignore[misc]
+
 @dataclass
-class SFTConfig(trl.SFTConfig):
+class SFTConfig(SFTConfigBase):
     """Arguments for callbacks, benchmarks, and related settings."""
 
     # pylint: disable=too-many-instance-attributes
@@ -275,6 +290,17 @@ class SFTConfig(trl.SFTConfig):
         default=None,
         metadata={"help": "The group to store runs under."},
     )
+
+    def __post_init__(self) -> None:
+        """Validate optional dependencies before continuing configuration."""
+
+        if trl is None:  # pragma: no cover - optional dependency guard
+            raise ImportError(
+                "trl must be installed to construct SFTConfig "
+                "(pip install trl)."
+            )
+        if hasattr(super(), "__post_init__"):
+            super().__post_init__()  # type: ignore[misc]
 
 
 @dataclass

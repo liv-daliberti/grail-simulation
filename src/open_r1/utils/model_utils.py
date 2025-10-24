@@ -16,7 +16,7 @@ def _require_transformers() -> Any:
     """Import ``transformers`` lazily and raise a helpful error when missing."""
 
     try:
-        import transformers  # type: ignore
+        import transformers  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "transformers is required for Open-R1 training utilities. "
@@ -29,7 +29,7 @@ def _require_trl() -> Any:
     """Import ``trl`` lazily and raise a helpful error when missing."""
 
     try:
-        import trl  # type: ignore
+        import trl  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "trl is required for Open-R1 training utilities. "
@@ -42,7 +42,7 @@ def _require_torch() -> Any:
     """Import ``torch`` lazily and raise a helpful error when missing."""
 
     try:
-        import torch  # type: ignore
+        import torch  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "torch is required for Open-R1 training utilities. "

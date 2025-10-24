@@ -21,12 +21,12 @@ else:
     AzureOpenAIType = Any  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
-    from openai import AzureOpenAI as _AzureOpenAI  # type: ignore
+    from openai import AzureOpenAI as _AzureOpenAI  # type: ignore  # pylint: disable=import-error
 except ImportError as exc:  # pragma: no cover - optional dependency
     _AzureOpenAI = None  # type: ignore[assignment]
-    _AZURE_OPENAI_IMPORT_ERROR = exc
+    AZURE_OPENAI_IMPORT_ERROR = exc
 else:  # pragma: no cover
-    _AZURE_OPENAI_IMPORT_ERROR = None
+    AZURE_OPENAI_IMPORT_ERROR = None
 
 
 def _require_openai() -> Any:
@@ -41,7 +41,7 @@ def _require_openai() -> Any:
         raise ImportError(
             "The 'openai' package is required to use Azure OpenAI client helpers. "
             "Install it with `pip install openai`."
-        ) from _AZURE_OPENAI_IMPORT_ERROR
+        ) from AZURE_OPENAI_IMPORT_ERROR
     return _AzureOpenAI
 
 

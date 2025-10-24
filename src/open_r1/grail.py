@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -232,7 +232,7 @@ class OnlineDiscriminator:
 
         :param model_name: Hugging Face model identifier for the classifier.
         :param device: Torch device where the model should live.
-        :param learning_rate: Learning rate used for the discriminator optimizer.
+        :param learning_rate: Learning rate used for the discriminator optimiser.
         """
         self._model_name = model_name
         self._learning_rate = learning_rate
@@ -554,7 +554,11 @@ def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
     disc_lr = float(os.environ.get("GAIL_LR", "2e-5"))
     gail_alpha = float(os.environ.get("GAIL_ALPHA", "1.0"))
 
-    discriminator = OnlineDiscriminator(disc_model, disc_device, lr=disc_lr)
+    discriminator = OnlineDiscriminator(
+        disc_model,
+        disc_device,
+        learning_rate=disc_lr,
+    )
     gail_fn = make_gail_reward_fn(discriminator, alpha=gail_alpha)
     gail_fn.__name__ = "gail_reward"
     reward_fns.append(gail_fn)

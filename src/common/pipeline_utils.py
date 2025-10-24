@@ -43,58 +43,19 @@ def merge_ordered(
     order_key: Callable[[T], int],
     on_replace: Callable[[T, T], None] | None = None,
 ) -> List[T]:
-    """
+    """Merge cached and freshly executed results while preserving order indices.
 
-    Merge cached and freshly executed results preserving order indices.
-
-
-
-        Parameters
-
-        ----------
-
-        cached:
-
-            Previously materialised results (e.g., metrics read from disk).
-
-        executed:
-
-            Newly computed results from the current run.
-
-        order_key:
-
-            Callable returning a deterministic integer position for each result.
-
-        on_replace:
-
-            Optional callback invoked when an executed item replaces a cached one
-
-            at the same index.
-
-
-
-    :param cached: Value provided for ``cached``.
-
+    :param cached: Previously materialised results (e.g., metrics read from disk).
     :type cached: Sequence[T]
-
-    :param executed: Value provided for ``executed``.
-
+    :param executed: Newly computed results from the current run.
     :type executed: Sequence[T]
-
-    :param order_key: Value provided for ``order_key``.
-
+    :param order_key: Callable returning a deterministic integer position for each result.
     :type order_key: Callable[[T], int]
-
-    :param on_replace: Value provided for ``on_replace``.
-
+    :param on_replace: Optional callback invoked when ``executed`` replaces ``cached`` at an index.
     :type on_replace: Callable[[T, T], None] | None
-
-    :returns: Result produced by ``merge_ordered``.
-
+    :returns: Combined results ordered by ``order_key``.
     :rtype: List[T]
-
     """
-
 
     by_index: Dict[int, T] = {order_key(item): item for item in cached}
     for item in executed:

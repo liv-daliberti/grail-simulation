@@ -1,6 +1,6 @@
 # KNN Next-Video Baseline
 
-This report summarises the slate-ranking KNN model that predicts the next video a viewer will click.
+This report summarizes the slate-ranking KNN model that predicts the next video a viewer will click.
 
 - Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation

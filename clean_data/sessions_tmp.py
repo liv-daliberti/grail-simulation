@@ -453,14 +453,18 @@ def _build_detail_entry(
     idx: int,
     raw_vid: str,
     base_vid: str,
-    tree_meta: Dict[str, Any],
-    fallback_titles: Dict[str, Any],
-    tree_issue_map: Dict[str, str],
+    metadata: _VideoMetadataSources,
     timings: SessionTiming,
 ) -> Dict[str, Any]:
     """Return a single watched-detail dictionary with timing fields."""
 
-    meta = _video_meta(base_vid, raw_vid, tree_meta, fallback_titles, tree_issue_map)
+    meta = _video_meta(
+        base_vid,
+        raw_vid,
+        metadata.tree_meta,
+        metadata.fallback_titles,
+        metadata.tree_issue_map,
+    )
     title_val, title_missing = _resolve_title(meta, base_vid)
     channel_val, channel_missing = _resolve_channel(meta)
     entry: Dict[str, Any] = {
@@ -485,9 +489,7 @@ def _build_detail_entry(
 def _build_watched_details(
     raw_vids: List[str],
     base_vids: List[str],
-    tree_meta: Dict[str, Any],
-    fallback_titles: Dict[str, Any],
-    tree_issue_map: Dict[str, str],
+    metadata: _VideoMetadataSources,
     *,
     timings: SessionTiming,
 ) -> List[Dict[str, Any]]:
@@ -495,9 +497,7 @@ def _build_watched_details(
 
     :param raw_vids: List of raw video identifiers from the session log.
     :param base_vids: List of canonical video identifiers aligned with ``raw_vids``.
-    :param tree_meta: Recommendation metadata keyed by canonical id.
-    :param fallback_titles: Mapping from video id to fallback title strings.
-    :param tree_issue_map: Mapping from video id to issue labels.
+    :param metadata: Recommendation metadata lookups for video enrichment.
     :param timings: Structured timing information for the session.
     :returns: Sequence of dictionaries summarising each watched item.
     """
@@ -510,9 +510,7 @@ def _build_watched_details(
                 idx,
                 raw_vid,
                 base,
-                tree_meta,
-                fallback_titles,
-                tree_issue_map,
+                metadata,
                 timings,
             )
         )
@@ -580,6 +578,15 @@ def normalize_display_orders(
 
 
 @dataclass(frozen=True)
+class _VideoMetadataSources:
+    """Bundles recommendation metadata lookups for helper functions."""
+
+    tree_meta: Dict[str, Dict[str, Any]]
+    fallback_titles: Dict[str, Any]
+    tree_issue_map: Dict[str, str]
+
+
+@dataclass(frozen=True)
 class _SessionResources:
     """Reusable datasets needed to build session interaction rows."""
 
@@ -601,22 +608,65 @@ class _SessionBuildState:
 
 
 @dataclass(frozen=True)
+class _WatchContext:
+    """Per-session watch sequence artefacts shared across builders."""
+
+    raw_vids: List[str]
+    base_vids: List[str]
+    details: List[Dict[str, Any]]
+    timings: SessionTiming
+    display_orders: Dict[int, List[str]]
+
+
+@dataclass(frozen=True)
 class _SessionContext:
     """Derived per-session inputs consumed when creating interaction rows."""
 
     session_payload: Mapping[str, Any]
-    raw_vids: List[str]
-    base_vids: List[str]
-    timings: SessionTiming
-    watched_details: List[Dict[str, Any]]
     info: SessionInfo
+    watch: _WatchContext
     canonical_issue: str
     survey_rows: List[Dict[str, Any]]
     candidate_entries: List[Tuple[int, str, str, str, str, Dict[str, Any]]]
     enforce_allowlist: bool
-    display_orders: Dict[int, List[str]]
-    watched_vids_json: List[str]
-    watched_detailed_json: List[Dict[str, Any]]
+
+    @property
+    def raw_vids(self) -> List[str]:
+        return self.watch.raw_vids
+
+    @property
+    def base_vids(self) -> List[str]:
+        return self.watch.base_vids
+
+    @property
+    def watched_details(self) -> List[Dict[str, Any]]:
+        return self.watch.details
+
+    @property
+    def timings(self) -> SessionTiming:
+        return self.watch.timings
+
+    @property
+    def display_orders(self) -> Dict[int, List[str]]:
+        return self.watch.display_orders
+
+    @property
+    def watched_vids_json(self) -> List[str]:
+        return list(self.watch.base_vids)
+
+    @property
+    def watched_detailed_json(self) -> List[Dict[str, Any]]:
+        return deepcopy(self.watch.details)
+
+
+@dataclass(frozen=True)
+class _ParticipantSessionMeta:
+    """Participant identifiers resolved for a session."""
+
+    selected_row: Dict[str, Any]
+    worker_id: str
+    case_id: str
+    study_label: str
 
 
 def _gather_slate_candidates(
@@ -767,8 +817,8 @@ def _session_info(sess: dict, watched_details: List[Dict[str, Any]]) -> SessionI
 def _candidate_start_timestamp(candidate_row: Mapping[str, Any]) -> int:
     """Return the earliest available nanosecond timestamp for the row."""
 
-    for field in ("start_time2", "start_time", "start_time_w2"):
-        start_ns = _parse_timestamp_ns(candidate_row.get(field))
+    for field_name in ("start_time2", "start_time", "start_time_w2"):
+        start_ns = _parse_timestamp_ns(candidate_row.get(field_name))
         if start_ns is not None:
             return start_ns
     return int(1e20)
@@ -794,7 +844,6 @@ def _classify_candidate_topic(
     allowlist: AllowlistState,
     worker_candidate: str,
     case_candidate: str,
-    candidate_row: Mapping[str, Any],
 ) -> Tuple[str, Optional[str], bool]:
     """Return ``(study_label, participant_token, valid)`` for the row."""
 
@@ -847,7 +896,6 @@ def _candidate_entry(
         allowlist,
         worker_candidate,
         case_candidate,
-        candidate_row,
     )
     if valid:
         valid = _validate_candidate_entry(study_label, candidate_row)
@@ -888,6 +936,300 @@ def _candidate_entries_for_survey(
     entries.sort(key=lambda item: (item[0], item[1]))
     return entries
 
+
+def _resolve_issue_and_surveys(
+    sess: Mapping[str, Any],
+    info: SessionInfo,
+    watched_details: List[Dict[str, Any]],
+    surveys: Dict[str, Dict[str, List[Dict[str, Any]]]],
+) -> Tuple[str, List[Dict[str, Any]]]:
+    """Derive the canonical issue and survey rows associated with the session."""
+
+    canonical_issue: Optional[str] = None
+    survey_rows: List[Dict[str, Any]] = []
+    for issue_key, lookup in surveys.items():
+        rows_for_url = lookup.get(info.urlid, [])
+        if rows_for_url:
+            canonical_issue = issue_key
+            survey_rows = list(rows_for_url)
+            break
+
+    issue_name = canonical_issue or infer_issue_from_topic(info.topic)
+    if not issue_name:
+        for detail in watched_details:
+            candidate_issue = detail.get("issue")
+            if isinstance(candidate_issue, str) and candidate_issue.strip():
+                issue_name = candidate_issue.strip().lower()
+                break
+    if not issue_name:
+        raw_issue = str(sess.get("issue") or "").strip().lower()
+        if raw_issue in {"gun_control", "minimum_wage", "min_wage"}:
+            issue_name = "minimum_wage" if raw_issue == "min_wage" else raw_issue
+
+    canonical_issue_value = ((issue_name or info.topic) or "").strip().lower()
+    if not survey_rows:
+        survey_rows = list(surveys.get(canonical_issue_value, {}).get(info.urlid, []))
+    return canonical_issue_value, survey_rows
+
+
+def _build_session_context(
+    sess: Dict[str, Any],
+    resources: _SessionResources,
+    state: _SessionBuildState,
+) -> Optional[_SessionContext]:
+    """Normalize the session payload into reusable components."""
+
+    state.interaction_stats["sessions_total"] += 1
+    raw_vids = [
+        str(v).strip()
+        for v in (sess.get("vids") or [])
+        if isinstance(v, str) and str(v).strip()
+    ]
+    if len(raw_vids) < 2:
+        state.interaction_stats["sessions_too_short"] += 1
+        return None
+
+    base_vids = [_strip_session_video_id(v) for v in raw_vids]
+    if not all(base_vids):
+        state.interaction_stats["sessions_invalid_ids"] += 1
+        return None
+
+    state.interaction_stats["pairs_total"] += max(0, len(base_vids) - 1)
+    timings = _build_session_timings(sess, raw_vids, base_vids)
+    metadata_sources = _VideoMetadataSources(
+        tree_meta=resources.tree_meta,
+        fallback_titles=resources.fallback_titles,
+        tree_issue_map=resources.tree_issue_map,
+    )
+    watched_details = _build_watched_details(
+        raw_vids,
+        base_vids,
+        metadata_sources,
+        timings=timings,
+    )
+    info = _session_info(sess, watched_details)
+    canonical_issue, survey_rows = _resolve_issue_and_surveys(
+        sess,
+        info,
+        watched_details,
+        resources.surveys,
+    )
+    candidate_entries = _candidate_entries_for_survey(
+        canonical_issue,
+        info.urlid,
+        survey_rows,
+        resources.allowlist,
+    )
+    enforce_allowlist = resources.allowlist.requires_enforcement(canonical_issue)
+    display_orders = normalize_display_orders(sess.get("displayOrders"))
+
+    watch_context = _WatchContext(
+        raw_vids=raw_vids,
+        base_vids=base_vids,
+        details=watched_details,
+        timings=timings,
+        display_orders=display_orders,
+    )
+
+    return _SessionContext(
+        session_payload=sess,
+        info=info,
+        watch=watch_context,
+        canonical_issue=canonical_issue,
+        survey_rows=survey_rows,
+        candidate_entries=candidate_entries,
+        enforce_allowlist=enforce_allowlist,
+    )
+
+
+def _participant_metadata(context: _SessionContext) -> _ParticipantSessionMeta:
+    """Return participant identifiers and study metadata for the session."""
+
+    if context.candidate_entries:
+        _, _, worker_value, case_value, study_label, survey_row = context.candidate_entries[0]
+        return _ParticipantSessionMeta(
+            selected_row=dict(survey_row),
+            worker_id=worker_value,
+            case_id=case_value,
+            study_label=study_label,
+        )
+
+    if context.survey_rows:
+        selected = select_survey_row(context.survey_rows, context.info.topic or "") or {}
+        worker_value = _normalize_identifier(
+            selected.get("worker_id")
+            or selected.get("workerid")
+            or selected.get("WorkerID")
+        )
+        case_value = _normalize_identifier(
+            selected.get("caseid") or selected.get("CaseID")
+        )
+        study_label = infer_participant_study(
+            context.info.topic,
+            selected,
+            context.info.topic,
+            context.session_payload,
+        )
+        return _ParticipantSessionMeta(
+            selected_row=dict(selected),
+            worker_id=worker_value,
+            case_id=case_value,
+            study_label=study_label,
+        )
+
+    return _ParticipantSessionMeta(
+        selected_row={},
+        worker_id="",
+        case_id="",
+        study_label="unknown",
+    )
+
+
+def _fallback_title_for_next(
+    context: _SessionContext,
+    idx: int,
+    next_base: str,
+) -> str:
+    """Return a fallback title for the next video when slate metadata omits it."""
+
+    if idx + 1 < len(context.watched_details):
+        candidate = context.watched_details[idx + 1].get("title") or ""
+        if candidate:
+            return candidate
+    return next_base
+
+
+def _build_step_row(
+    idx: int,
+    context: _SessionContext,
+    participant_meta: _ParticipantSessionMeta,
+    state: _SessionBuildState,
+    resources: _SessionResources,
+) -> Optional[Dict[str, Any]]:
+    """Construct a single interaction row for the given step."""
+
+    next_base = context.base_vids[idx + 1]
+    if not next_base:
+        return None
+
+    current_base = context.base_vids[idx]
+    detail = context.watched_details[idx]
+    row: Dict[str, Any] = {
+        "session_id": context.info.session_id,
+        "step_index": idx,
+        "display_step": idx + 1,
+        "current_video_id": current_base,
+        "current_video_raw_id": context.raw_vids[idx],
+        "current_video_title": detail["title"],
+        "current_video_channel": detail["channel_title"],
+        "current_video_channel_id": detail.get("channel_id"),
+        "start_time_ms": lookup_session_value(
+            context.timings.start,
+            context.raw_vids[idx],
+            current_base,
+        ),
+        "end_time_ms": lookup_session_value(
+            context.timings.end,
+            context.raw_vids[idx],
+            current_base,
+        ),
+        "percent_visible": context.session_payload.get("percentVisible"),
+        "session_finished": context.session_payload.get("sessionFinished"),
+        "trajectory_json": context.info.trajectory_json,
+    }
+
+    slate_items, slate_source = build_slate_items(
+        idx,
+        context.display_orders,
+        detail.get("recommendations") if isinstance(detail.get("recommendations"), list) else [],
+        resources.tree_meta,
+        resources.fallback_titles,
+    )
+    if not slate_items:
+        state.interaction_stats["pairs_missing_slates"] += 1
+        return None
+
+    if (
+        slate_source == "tree_metadata"
+        and next_base
+        and not any(item.get("id") == next_base for item in slate_items)
+    ):
+        slate_items = slate_items + [
+            {"id": next_base, "title": _fallback_title_for_next(context, idx, next_base)}
+        ]
+
+    row["slate_items_json"] = slate_items
+    row["slate_source"] = slate_source
+    row["n_options"] = len(slate_items)
+    row["next_video_id"] = next_base
+    row["next_video_raw_id"] = context.raw_vids[idx + 1]
+    row["next_video_title"] = (
+        context.watched_details[idx + 1]["title"]
+        if idx + 1 < len(context.watched_details)
+        else ""
+    )
+    row["watched_vids_json"] = context.watched_vids_json
+    row["watched_detailed_json"] = context.watched_detailed_json
+
+    participant_identifier, state.fallback_participant_counter = participant_key(
+        ParticipantIdentifiers(
+            worker_id=participant_meta.worker_id,
+            case_id=participant_meta.case_id,
+            anon_id=context.info.anon_id,
+            urlid=context.info.urlid,
+            session_id=context.info.session_id,
+        ),
+        state.fallback_participant_counter,
+    )
+
+    if (participant_meta.study_label or "").strip().lower() not in {"study1", "study2", "study3"}:
+        state.interaction_stats["sessions_filtered_non_core_study"] += 1
+        return None
+
+    participant_issue_key = (participant_identifier, context.canonical_issue)
+    if participant_issue_key in state.seen_participant_issue:
+        state.interaction_stats["sessions_duplicate_participant_issue"] += 1
+    else:
+        state.seen_participant_issue.add(participant_issue_key)
+
+    row["participant_id"] = participant_identifier
+    row["participant_study"] = participant_meta.study_label or "unknown"
+    row["issue"] = context.canonical_issue
+    row["urlid"] = context.info.urlid
+    row["topic_id"] = context.info.topic
+    row["selected_survey_row"] = participant_meta.selected_row
+    for col in DEMOGRAPHIC_COLUMNS:
+        if col in participant_meta.selected_row:
+            row[col] = participant_meta.selected_row.get(col)
+    return row
+
+
+def _collect_session_rows(
+    sess: Dict[str, Any],
+    resources: _SessionResources,
+    state: _SessionBuildState,
+) -> None:
+    """Append interaction rows for the session into ``state.rows``."""
+
+    context = _build_session_context(sess, resources, state)
+    if context is None:
+        return
+
+    if context.enforce_allowlist and not context.candidate_entries:
+        state.interaction_stats["sessions_filtered_allowlist"] += 1
+        return
+
+    participant_meta = _participant_metadata(context)
+    for idx in range(len(context.base_vids) - 1):
+        row = _build_step_row(
+            idx,
+            context,
+            participant_meta,
+            state,
+            resources,
+        )
+        if row is not None:
+            state.rows.append(row)
 
 
 def coerce_session_value(value: Any) -> Any:
@@ -1016,8 +1358,8 @@ def get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
         if isinstance(value, str) and value.strip() and value.strip() != current:
             return value.strip()
     candidate_fields = ("next_video_id", "clicked_id", "label", "answer")
-    for field in candidate_fields:
-        value = ex.get(field)
+    for field_name in candidate_fields:
+        value = ex.get(field_name)
         if isinstance(value, str) and value.strip() and value.strip() != current:
             return value.strip()
     return derive_next_from_history(ex, current)
@@ -1046,7 +1388,7 @@ def gold_index_from_items(gold: str, items: List[dict]) -> int:
     return -1
 
 
-def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
+def build_codeocean_rows(data_root: Path) -> pd.DataFrame:
     """Construct the full interaction dataframe from raw CodeOcean assets.
 
     :param data_root: Capsule ``data`` directory.
@@ -1060,222 +1402,22 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:  # pylint: disable=to
     fallback_titles = load_video_metadata(data_root)
     allowlist = AllowlistState.from_mapping(load_participant_allowlists(capsule_root))
 
-    rows: List[Dict[str, Any]] = []
-    interaction_stats: Counter[str] = Counter()
-    seen_participant_issue: set[Tuple[str, str]] = set()
-    fallback_participant_counter = 0
+    resources = _SessionResources(
+        surveys=surveys,
+        tree_meta=tree_meta,
+        tree_issue_map=tree_issue_map,
+        fallback_titles=fallback_titles,
+        allowlist=allowlist,
+    )
+    state = _SessionBuildState()
 
     for sess in sessions:
-        interaction_stats["sessions_total"] += 1
-        raw_vids = [
-            str(v).strip()
-            for v in (sess.get("vids") or [])
-            if isinstance(v, str) and str(v).strip()
-        ]
-        if len(raw_vids) < 2:
-            interaction_stats["sessions_too_short"] += 1
-            continue
+        _collect_session_rows(sess, resources, state)
 
-        base_vids = [_strip_session_video_id(v) for v in raw_vids]
-        if not all(base_vids):
-            interaction_stats["sessions_invalid_ids"] += 1
-            continue
-
-        interaction_stats["pairs_total"] += max(0, len(base_vids) - 1)
-        timings = _build_session_timings(sess, raw_vids, base_vids)
-        watched_details = _build_watched_details(
-            raw_vids,
-            base_vids,
-            tree_meta,
-            fallback_titles,
-            tree_issue_map,
-            timings=timings,
-        )
-        info = _session_info(sess, watched_details)
-
-        canonical_issue: Optional[str] = None
-        survey_rows: List[Dict[str, Any]] = []
-        for issue_key, lookup in surveys.items():
-            rows_for_url = lookup.get(info.urlid, [])
-            if rows_for_url:
-                canonical_issue = issue_key
-                survey_rows = rows_for_url
-                break
-
-        issue_name = canonical_issue or infer_issue_from_topic(info.topic)
-        if not issue_name and watched_details:
-            for detail in watched_details:
-                candidate_issue = detail.get("issue")
-                if isinstance(candidate_issue, str) and candidate_issue.strip():
-                    issue_name = candidate_issue.strip().lower()
-                    break
-        if not issue_name:
-            raw_issue = str(sess.get("issue") or "").strip().lower()
-            if raw_issue in {"gun_control", "minimum_wage", "min_wage"}:
-                issue_name = "minimum_wage" if raw_issue == "min_wage" else raw_issue
-
-        canonical_issue = issue_name or info.topic.lower()
-        if not survey_rows:
-            survey_lookup = surveys.get(canonical_issue, {})
-            survey_rows = survey_lookup.get(info.urlid, [])
-        candidate_entries = _candidate_entries_for_survey(
-            canonical_issue,
-            info.urlid,
-            survey_rows,
-            allowlist,
-        )
-
-        enforce_allowlist = allowlist.requires_enforcement(canonical_issue)
-
-        display_orders = normalize_display_orders(sess.get("displayOrders"))
-        watched_vids_json = list(base_vids)
-        watched_detailed_json = deepcopy(watched_details)
-
-        for idx in range(len(base_vids) - 1):
-            current_base = base_vids[idx]
-            next_base = base_vids[idx + 1]
-            if not next_base:
-                continue
-
-            row: Dict[str, Any] = {
-                "session_id": info.session_id,
-                "step_index": idx,
-                "display_step": idx + 1,
-                "current_video_id": current_base,
-                "current_video_raw_id": raw_vids[idx],
-                "current_video_title": watched_details[idx]["title"],
-                "current_video_channel": watched_details[idx]["channel_title"],
-                "current_video_channel_id": watched_details[idx].get("channel_id"),
-                "start_time_ms": lookup_session_value(
-                    timings.start,
-                    raw_vids[idx],
-                    current_base,
-                ),
-                "end_time_ms": lookup_session_value(
-                    timings.end,
-                    raw_vids[idx],
-                    current_base,
-                ),
-                "percent_visible": sess.get("percentVisible"),
-                "session_finished": sess.get("sessionFinished"),
-                "trajectory_json": info.trajectory_json,
-            }
-
-            selected_survey_row: Dict[str, Any] = {}
-            worker_id_value = ""
-            case_id_value = ""
-            participant_study_label = "unknown"
-
-            if candidate_entries:
-                (
-                    _,
-                    _,
-                    worker_id_value,
-                    case_id_value,
-                    participant_study_label,
-                    selected_survey_row,
-                ) = candidate_entries[0]
-            elif survey_rows:
-                selected_survey_row = select_survey_row(survey_rows, info.topic or "")
-                worker_id_value = _normalize_identifier(
-                    selected_survey_row.get("worker_id")
-                    or selected_survey_row.get("workerid")
-                    or selected_survey_row.get("WorkerID")
-                )
-                case_id_value = _normalize_identifier(
-                    selected_survey_row.get("caseid")
-                    or selected_survey_row.get("CaseID")
-                )
-                participant_study_label = infer_participant_study(
-                    info.topic,
-                    selected_survey_row or {},
-                    info.topic,
-                    sess,
-                )
-
-            if enforce_allowlist and not candidate_entries:
-                interaction_stats["sessions_filtered_allowlist"] += 1
-                continue
-
-            recommendations = (
-                watched_details[idx].get("recommendations")
-                if idx < len(watched_details)
-                else []
-            )
-            slate_items, slate_source = build_slate_items(
-                idx,
-                display_orders,
-                recommendations,
-                tree_meta,
-                fallback_titles,
-            )
-            if not slate_items:
-                interaction_stats["pairs_missing_slates"] += 1
-                continue
-
-            if (
-                slate_source == "tree_metadata"
-                and next_base
-                and not any(item.get("id") == next_base for item in slate_items)
-            ):
-                fallback_title = ""
-                if idx + 1 < len(watched_details):
-                    fallback_title = watched_details[idx + 1].get("title") or ""
-                if not fallback_title:
-                    fallback_title = next_base
-                slate_items = slate_items + [{"id": next_base, "title": fallback_title}]
-                row["slate_items_json"] = slate_items
-                row["n_options"] = len(slate_items)
-            else:
-                row["slate_items_json"] = slate_items
-                row["n_options"] = len(slate_items)
-
-            participant_identifier, fallback_participant_counter = participant_key(
-                ParticipantIdentifiers(
-                    worker_id=worker_id_value,
-                    case_id=case_id_value,
-                    anon_id=info.anon_id,
-                    urlid=info.urlid,
-                    session_id=info.session_id,
-                ),
-                fallback_participant_counter,
-            )
-            normalized_study = (participant_study_label or "").strip().lower()
-            if normalized_study not in {"study1", "study2", "study3"}:
-                interaction_stats["sessions_filtered_non_core_study"] += 1
-                continue
-            participant_issue_key = (participant_identifier, canonical_issue)
-            if participant_issue_key in seen_participant_issue:
-                interaction_stats["sessions_duplicate_participant_issue"] += 1
-            else:
-                seen_participant_issue.add(participant_issue_key)
-
-            row["participant_id"] = participant_identifier
-            row["participant_study"] = participant_study_label or "unknown"
-            row["issue"] = canonical_issue
-            row["urlid"] = info.urlid
-            row["topic_id"] = info.topic
-            row["selected_survey_row"] = selected_survey_row
-            row["slate_items_json"] = slate_items
-            row["slate_source"] = slate_source
-            row["next_video_id"] = next_base
-            row["next_video_raw_id"] = raw_vids[idx + 1]
-            row["next_video_title"] = (
-                watched_details[idx + 1]["title"] if idx + 1 < len(watched_details) else ""
-            )
-            row["watched_vids_json"] = watched_vids_json
-            row["watched_detailed_json"] = watched_detailed_json
-
-            for col in DEMOGRAPHIC_COLUMNS:
-                if col in selected_survey_row:
-                    row[col] = selected_survey_row.get(col)
-
-            rows.append(row)
-
-    interaction_frame = pd.DataFrame(rows)
+    interaction_frame = pd.DataFrame(state.rows)
     log.info(
         "Interaction stats: %s",
-        {k: int(v) for k, v in interaction_stats.items()},
+        {k: int(v) for k, v in state.interaction_stats.items()},
     )
     return interaction_frame
 

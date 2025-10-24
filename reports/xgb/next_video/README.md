@@ -4,7 +4,7 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 
 - Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation
-- Metrics: accuracy, coverage of known candidates, and availability of known neighbours.
+- Metrics: accuracy, coverage of known candidates, and availability of known neighbors.
 
 ## Portfolio Summary
 

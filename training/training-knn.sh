@@ -601,7 +601,7 @@ submit_jobs() {
   local default_gpu_cpus="${KNN_GPU_CPUS:-16}"
   local default_gpu_time="${KNN_GPU_TIME:-${finalize_time}}"
   local should_use_gpu_finalize=0
-  if (( gpu_enabled )) && [[ "${KNN_FINAL_USE_GPU:-1}" == "1" ]] && (( want_next_video )); then
+  if (( gpu_enabled )) && [[ "${KNN_FINAL_USE_GPU:-1}" == "1" ]] && (( want_next_video || want_opinion )); then
     should_use_gpu_finalize=1
   fi
   if (( should_use_gpu_finalize )); then

@@ -773,7 +773,7 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
     The cleaning pipeline now retains every interaction row long enough to
     run prompt diagnostics (e.g., prior-history coverage). Downstream
     consumers that require the historical one-row-per-participant-and-issue
-    view can apply this helper to recover the previous behavior.
+    view can apply this helper to recover the previous behaviour.
 
     :param dataset: Dataset containing potential participant/issue duplicates.
     :returns: Dataset with duplicates removed within each split.

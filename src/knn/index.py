@@ -52,7 +52,7 @@ from .features import (
 @dataclass(frozen=True)
 class SlateQueryConfig:
     """
-    Configuration controlling slate scoring behavior.
+    Configuration controlling slate scoring behaviour.
 
     :ivar text_fields: Dataset fields whose text is appended to the viewer prompt.
     :vartype text_fields: Sequence[str]

@@ -18,14 +18,14 @@ from typing import Dict, Mapping, Optional, Sequence
 from open_r1.utils.replay_buffer import ReplayBuffer
 
 try:  # pragma: no cover - optional dependency
-    from transformers import (
+    from transformers import (  # pylint: disable=import-error
         TrainerCallback,
         TrainerControl,
         TrainerState,
         TrainingArguments,
     )
 except ImportError as exc:  # pragma: no cover
-    class TrainerCallback:  # type: ignore[too-few-public-methods]
+    class TrainerCallback:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Fallback that surfaces a helpful error when Transformers is missing."""
 
         def __init__(self, *_args, **_kwargs) -> None:
@@ -34,13 +34,13 @@ except ImportError as exc:  # pragma: no cover
                 "Install it with `pip install transformers`."
             ) from exc
 
-    class TrainerControl:  # type: ignore[too-few-public-methods]
+    class TrainerControl:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Transformers control placeholder used when the package is unavailable."""
 
-    class TrainerState:  # type: ignore[too-few-public-methods]
+    class TrainerState:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Transformers state placeholder used when the package is unavailable."""
 
-    class TrainingArguments:  # type: ignore[too-few-public-methods]
+    class TrainingArguments:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Transformers arguments placeholder used when the package is unavailable."""
 
 # ---------------------------------------------------------------------------
@@ -70,6 +70,7 @@ class PushToHubRevisionCallback(TrainerCallback):
 
     def __init__(self, model_cfg):
         """Store the model configuration used when scheduling pushes."""
+        super().__init__()
         self.model_cfg = model_cfg
         self.log = logging.getLogger("PushToHub")
 
@@ -126,6 +127,7 @@ class SuccessCachingCallback(TrainerCallback):  # pylint: disable=too-few-public
 
     def __init__(self, replay_buffer: ReplayBuffer, acc_threshold: float = 0.999):
         """Initialise the callback with a replay buffer and accuracy threshold."""
+        super().__init__()
         self.buf = replay_buffer
         self.thr = acc_threshold
         self._trainer = None                         # will be set later
@@ -194,6 +196,7 @@ class ReplayBufferCallback(TrainerCallback):  # pylint: disable=too-few-public-m
         threshold: float = 1.0,
     ):
         """Configure the callback with replay buffer, tokenizer and reward key."""
+        super().__init__()
         self.buf  = replay_buffer
         self.tok  = tokenizer
         self.key  = accuracy_key

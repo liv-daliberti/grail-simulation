@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Type, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, Type, TYPE_CHECKING
 
 import requests
 
@@ -11,6 +11,41 @@ from .router_common import build_router_payload
 
 if TYPE_CHECKING:  # pragma: no cover
     from e2b_code_interpreter.models import Execution, ExecutionError, Result
+
+
+def _hydrate_execution(
+    model_classes: Tuple[
+        Type["Execution"],
+        Type["ExecutionError"],
+        Type["Result"],
+    ],
+    result: Dict[str, Any],
+) -> "Execution":
+    """
+    Convert an E2B router response payload into an ``Execution`` instance.
+
+    Separating the construction logic keeps ``run_code`` smaller and within the
+    pylint local-variable threshold while keeping the conversion code testable.
+    """
+
+    execution_cls, execution_error_cls, result_cls = model_classes
+    execution_payload = result.get("execution")
+    if execution_payload is None:
+        return execution_cls()
+
+    error_payload = execution_payload.get("error")
+    error_obj = (
+        execution_error_cls(**error_payload) if error_payload else None
+    )
+    results = [
+        result_cls(**res_payload) for res_payload in execution_payload.get("results", [])
+    ]
+    return execution_cls(
+        results=results,
+        logs=execution_payload.get("logs"),
+        error=error_obj,
+        execution_count=execution_payload.get("execution_count"),
+    )
 
 
 class RoutedSandbox:
@@ -54,7 +89,7 @@ class RoutedSandbox:
                 Execution,
                 ExecutionError,
                 Result,
-            )
+            )  # pylint: disable=import-error,import-outside-toplevel
         except ImportError as exc:  # pragma: no cover - handled via error propagation
             raise ImportError(
                 "e2b-code-interpreter is required to use the routed sandbox. "
@@ -107,51 +142,33 @@ class RoutedSandbox:
         :return: Execution objects containing results, logs, and errors (if any) per script.
         :rtype: list[Execution]
         """
-        timeout = timeout if timeout is not None else self.timeout
-        request_timeout = (
+        effective_timeout = timeout if timeout is not None else self.timeout
+        effective_request_timeout = (
             request_timeout if request_timeout is not None else self.request_timeout
         )
-
-        execution_cls, execution_error_cls, result_cls = self._get_model_classes()
-
-        languages, payload = build_router_payload(
+        model_classes = self._get_model_classes()
+        _, payload = build_router_payload(
             scripts,
             languages,
-            timeout=timeout,
-            request_timeout=request_timeout,
+            timeout=effective_timeout,
+            request_timeout=effective_request_timeout,
         )
 
         try:
             response = requests.post(
                 f"http://{self.router_url}/execute_batch",
                 json=payload,
-                timeout=request_timeout,
+                timeout=effective_request_timeout,
             )
             response.raise_for_status()
         except requests.RequestException as exc:
             print(f"Request to E2B router failed: {exc}")
-            return [execution_cls() for _ in scripts]
+            return [model_classes[0]() for _ in scripts]
 
-        results = response.json()
-        output = []
-        for result in results:
-            if result["execution"] is None:
-                execution = execution_cls()
-            else:
-                exec_payload = result["execution"]
-                execution = execution_cls(
-                    results=[result_cls(**res) for res in exec_payload["results"]],
-                    logs=exec_payload["logs"],
-                    error=(
-                        execution_error_cls(**exec_payload["error"])
-                        if exec_payload["error"]
-                        else None
-                    ),
-                    execution_count=exec_payload["execution_count"],
-                )
-            output.append(execution)
-
-        return output
+        return [
+            _hydrate_execution(model_classes, result)
+            for result in response.json()
+        ]
 
 
 if __name__ == "__main__":

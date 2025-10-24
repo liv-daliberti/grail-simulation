@@ -11,12 +11,15 @@ import tempfile
 from contextlib import suppress
 from typing import Any, Dict, Optional, Tuple
 
-from dotenv import load_dotenv
+try:  # pragma: no cover - optional dependency
+    from dotenv import load_dotenv  # type: ignore[import]
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None  # type: ignore[assignment]
 from open_r1.utils.import_utils import is_morph_available
 
 
 if is_morph_available():
-    from morphcloud.api import Instance, InstanceExecResponse, MorphCloudClient
+    from morphcloud.api import Instance, InstanceExecResponse, MorphCloudClient  # pylint: disable=import-error
 else:
     Instance = None  # type: ignore[assignment]  # pylint: disable=invalid-name
     InstanceExecResponse = None  # type: ignore[assignment]  # pylint: disable=invalid-name
@@ -723,6 +726,12 @@ def get_morph_client_from_env(_session=None) -> MorphCloudExecutionClient:
         raise ImportError(
             "MorphCloud is not available and required for this function. "
             "Install it with `pip install morphcloud` and add an API key to a `.env` file."
+        )
+
+    if load_dotenv is None:
+        raise ImportError(
+            "python-dotenv is required to load MorphCloud credentials. "
+            "Install it with `pip install python-dotenv`."
         )
 
     load_dotenv()

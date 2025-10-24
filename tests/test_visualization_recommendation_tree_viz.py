@@ -149,11 +149,11 @@ def test_build_session_graph_handles_highlights() -> None:
     source = graph.source
     assert "step1_opt1" in source  # chosen option node exists
     assert "label=selected" in source  # selected edge annotated
-    assert '#bf616a' in source  # highlight color applied
+    assert '#bf616a' in source  # highlight colour applied
 
 
 def test_load_trajectories_jsonl(tmp_path: Path) -> None:
-    """Trajectory loader should normalize repeated identifiers."""
+    """Trajectory loader should normalise repeated identifiers."""
     path = tmp_path / "trajectories.jsonl"
     entries = [
         {"sequences": [["vid1", "vid1", "vid2"]]},

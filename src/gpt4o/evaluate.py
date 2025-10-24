@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pylint: disable=duplicate-code
+
 """Top-level orchestration helpers for the ``clean_data`` package.
 
 This module stitches together the key pieces of the cleaning pipeline:

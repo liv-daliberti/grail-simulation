@@ -97,8 +97,8 @@ def extract_numeric_series(curve_map: Mapping[str, object]) -> Tuple[List[int], 
     if not points:
         return ([], [])
     points.sort(key=lambda item: item[0])
-    xs, ys = zip(*points)
-    return (list(xs), list(ys))
+    step_values, metric_values = zip(*points)
+    return (list(step_values), list(metric_values))
 
 
 __all__ = ["extract_numeric_series", "start_markdown_report"]

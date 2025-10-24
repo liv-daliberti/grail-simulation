@@ -18,12 +18,13 @@
 from __future__ import annotations
 
 import os
-from enum import Enum
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 try:  # pragma: no cover - optional dependency
     from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 except ImportError:  # pragma: no cover - optional dependency
+    from enum import Enum
+
     class IntervalStrategyFallback(str, Enum):
         """Fallback interval strategy constants when transformers is unavailable."""
 

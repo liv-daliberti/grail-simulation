@@ -77,7 +77,7 @@ class SentenceTransformerEncoder:
     """
     Thin wrapper over ``sentence_transformers`` with lazy loading.
 
-    :ivar config: Runtime configuration controlling inference behavior.
+    :ivar config: Runtime configuration controlling inference behaviour.
     :vartype config: SentenceTransformerConfig
     :ivar _model: Lazily initialised SentenceTransformer instance (``None`` until used).
     :vartype _model: SentenceTransformer | None

@@ -25,6 +25,8 @@ distributed under the repository's Apache 2.0 license; see LICENSE for
 details.
 """
 
+from __future__ import annotations
+
 import asyncio
 import os
 from dataclasses import dataclass

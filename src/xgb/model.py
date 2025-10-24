@@ -68,7 +68,7 @@ except ImportError:  # pragma: no cover - optional dependency
     XGBClassifier = None  # type: ignore
 
 LOGGER = logging.getLogger("xgb.model")
-GPU_TRAINING_ENABLED = True
+gpu_training_enabled = True
 
 
 def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
@@ -386,7 +386,7 @@ def _train_booster(
     booster_kwargs.setdefault("num_class", unique_labels)
 
     requested_method = params.tree_method or "hist"
-    use_gpu = requested_method.lower().startswith("gpu") and GPU_TRAINING_ENABLED
+    use_gpu = requested_method.lower().startswith("gpu") and gpu_training_enabled
     effective_method = requested_method if use_gpu else (
         "hist" if requested_method.lower().startswith("gpu") else requested_method
     )
@@ -444,10 +444,10 @@ def _disable_gpu_boosters() -> None:
     Invoked after repeated GPU failures to prevent recurring retries.
     """
 
-    global GPU_TRAINING_ENABLED  # pylint: disable=global-statement
-    if GPU_TRAINING_ENABLED:
+    global gpu_training_enabled  # pylint: disable=global-statement
+    if gpu_training_enabled:
         LOGGER.warning("Disabling XGBoost GPU boosters for the remainder of this process.")
-    GPU_TRAINING_ENABLED = False
+    gpu_training_enabled = False
 
 
 def _scrub_gpu_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:

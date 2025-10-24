@@ -126,18 +126,18 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 | Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim450_sub0p9_col0p8_l21_l11**<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.9, colsample=0.8, λ=1, α=1 | 0.642 | 0.074 | +0.568 | — | 162 | 0.086 | -0.048 | 0.115 | 0.840 |
-| tfidf_lr0p03_depth3_estim450_sub0p8_col1_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=0.5, α=1 | 0.623 | 0.074 | +0.549 | — | 162 | 0.086 | -0.049 | 0.115 | 0.838 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=1, colsample=0.6, λ=1, α=1 | 0.648 | 0.074 | +0.574 | — | 162 | 0.086 | -0.049 | 0.115 | 0.840 |
-| tfidf_lr0p03_depth3_estim450_sub0p9_col0p8_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.9, colsample=0.8, λ=0.5, α=1 | 0.648 | 0.074 | +0.574 | — | 162 | 0.086 | -0.049 | 0.115 | 0.839 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col1_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=1, λ=0.5, α=1 | 0.642 | 0.074 | +0.568 | — | 162 | 0.086 | -0.049 | 0.116 | 0.838 |
-| tfidf_lr0p03_depth3_estim350_sub1_col0p6_l21p5_l10p5<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=1, colsample=0.6, λ=1.5, α=0.5 | 0.648 | 0.074 | +0.574 | — | 162 | 0.086 | -0.049 | 0.115 | 0.838 |
-| tfidf_lr0p03_depth3_estim250_sub1_col0p6_l21p5_l10p5<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=1, colsample=0.6, λ=1.5, α=0.5 | 0.667 | 0.074 | +0.593 | — | 162 | 0.086 | -0.049 | 0.115 | 0.839 |
-| tfidf_lr0p03_depth3_estim450_sub0p8_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=1, α=1 | 0.642 | 0.074 | +0.568 | — | 162 | 0.086 | -0.049 | 0.116 | 0.837 |
-| tfidf_lr0p03_depth3_estim350_sub0p9_col0p8_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.9, colsample=0.8, λ=1, α=1 | 0.642 | 0.074 | +0.568 | — | 162 | 0.086 | -0.049 | 0.115 | 0.839 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p6_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.6, λ=0.5, α=0.1 | 0.642 | 0.074 | +0.568 | — | 162 | 0.086 | -0.049 | 0.116 | 0.837 |
-*Showing top 10 of 443 configurations.*
-  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues gun_control --studies study1 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 3 --n-estimators-grid 450 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
+| **tfidf_lr0p03_depth4_estim250_sub1_col0p6_l21p5_l10p5**<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=1, colsample=0.6, λ=1.5, α=0.5 | 0.673 | 0.074 | +0.599 | — | 162 | 0.082 | -0.045 | 0.112 | 0.849 |
+| tfidf_lr0p03_depth4_estim150_sub1_col0p6_l21_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=1, colsample=0.6, λ=1, α=0.1 | 0.660 | 0.074 | +0.586 | — | 162 | 0.082 | -0.045 | 0.112 | 0.849 |
+| tfidf_lr0p03_depth4_estim250_sub0p8_col1_l20p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.8, colsample=1, λ=0.5, α=0 | 0.642 | 0.074 | +0.568 | — | 162 | 0.082 | -0.045 | 0.112 | 0.846 |
+| tfidf_lr0p03_depth4_estim150_sub1_col0p6_l20p5_l10p5<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=1, colsample=0.6, λ=0.5, α=0.5 | 0.673 | 0.074 | +0.599 | — | 162 | 0.082 | -0.045 | 0.112 | 0.847 |
+| tfidf_lr0p03_depth4_estim150_sub1_col1_l21p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=1, colsample=1, λ=1.5, α=0.1 | 0.667 | 0.074 | +0.593 | — | 162 | 0.083 | -0.045 | 0.112 | 0.847 |
+| tfidf_lr0p03_depth4_estim150_sub0p9_col1_l20p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=1, λ=0.5, α=0 | 0.685 | 0.074 | +0.611 | — | 162 | 0.083 | -0.045 | 0.113 | 0.846 |
+| tfidf_lr0p03_depth4_estim250_sub0p8_col0p8_l20p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.8, colsample=0.8, λ=0.5, α=0 | 0.623 | 0.074 | +0.549 | — | 162 | 0.083 | -0.045 | 0.112 | 0.849 |
+| tfidf_lr0p03_depth4_estim150_sub1_col1_l20p5_l10p5<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=1, colsample=1, λ=0.5, α=0.5 | 0.667 | 0.074 | +0.593 | — | 162 | 0.083 | -0.046 | 0.112 | 0.847 |
+| tfidf_lr0p03_depth4_estim150_sub0p9_col1_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=1, λ=0.5, α=0.1 | 0.673 | 0.074 | +0.599 | — | 162 | 0.083 | -0.046 | 0.113 | 0.844 |
+| tfidf_lr0p03_depth4_estim250_sub0p9_col0p8_l20p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.9, colsample=0.8, λ=0.5, α=0 | 0.667 | 0.074 | +0.593 | — | 162 | 0.083 | -0.046 | 0.113 | 0.844 |
+*Showing top 10 of 636 configurations.*
+  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues gun_control --studies study1 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 4 --n-estimators-grid 250 --subsample-grid 1 --colsample-grid 0.6 --reg-lambda-grid 1.5 --reg-alpha-grid 0.5 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 2 – Minimum Wage (MTurk)
 
@@ -150,12 +150,12 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.7, colsample=0.8, λ=0.5, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
 | tfidf_lr0p03_depth3_estim350_sub0p7_col0p8_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.7, colsample=0.8, λ=1.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
 | tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.8, λ=1, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
+| tfidf_lr0p03_depth3_estim450_sub0p8_col1_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=1.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
+| tfidf_lr0p03_depth3_estim450_sub0p9_col0p8_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.9, colsample=0.8, λ=1.5, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.054 | 0.963 |
 | tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.8, λ=1.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=1, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.054 | 0.963 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col1_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=0.5, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.054 | 0.963 |
-| tfidf_lr0p03_depth3_estim450_sub0p7_col0p8_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.7, colsample=0.8, λ=1.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.054 | 0.053 | 0.963 |
-| tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.8, λ=0.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.054 | 0.053 | 0.963 |
-*Showing top 10 of 442 configurations.*
+*Showing top 10 of 643 configurations.*
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study2 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 3 --n-estimators-grid 450 --subsample-grid 0.8 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 3 – Minimum Wage (YouGov)
@@ -164,22 +164,22 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 | Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1**<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=0.5, α=0.1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
+| **tfidf_lr0p03_depth4_estim150_sub0p9_col0p6_l21_l10p1**<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=0.6, λ=1, α=0.1 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.077 | 0.912 |
+| tfidf_lr0p03_depth4_estim150_sub0p9_col0p6_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=0.6, λ=0.5, α=0.1 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.077 | 0.913 |
+| tfidf_lr0p03_depth4_estim150_sub0p9_col0p6_l21p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=0.6, λ=1.5, α=0.1 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.077 | 0.912 |
+| tfidf_lr0p03_depth4_estim250_sub0p9_col0p6_l21_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.9, colsample=0.6, λ=1, α=0.1 | 0.696 | 0.058 | +0.638 | — | 257 | 0.057 | +0.027 | 0.077 | 0.913 |
+| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=0.5, α=0.1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
+| tfidf_lr0p03_depth4_estim250_sub0p9_col0p6_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.9, colsample=0.6, λ=0.5, α=0.1 | 0.708 | 0.058 | +0.650 | — | 257 | 0.057 | +0.027 | 0.077 | 0.913 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=1.5, α=0 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
 | tfidf_lr0p03_depth3_estim250_sub0p9_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=0.9, colsample=1, λ=1, α=1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.080 | 0.907 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=1, α=0.1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
-| tfidf_lr0p03_depth3_estim250_sub0p9_col1_l21_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=0.9, colsample=1, λ=1, α=0.1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.078 | 0.910 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=1.5, α=0.1 | 0.696 | 0.058 | +0.638 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
-| tfidf_lr0p03_depth3_estim250_sub0p9_col1_l21p5_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=0.9, colsample=1, λ=1.5, α=0 | 0.689 | 0.058 | +0.630 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
-| tfidf_lr0p03_depth3_estim250_sub0p9_col1_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=0.9, colsample=1, λ=1.5, α=1 | 0.696 | 0.058 | +0.638 | — | 257 | 0.057 | +0.027 | 0.079 | 0.907 |
-| tfidf_lr0p03_depth3_estim150_sub0p8_col1_l21p5_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.8, colsample=1, λ=1.5, α=0 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
-| tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=1, α=1 | 0.700 | 0.058 | +0.642 | — | 257 | 0.057 | +0.027 | 0.079 | 0.907 |
-*Showing top 10 of 438 configurations.*
-  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study3 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 3 --n-estimators-grid 150 --subsample-grid 0.9 --colsample-grid 1 --reg-lambda-grid 0.5 --reg-alpha-grid 0.1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
+| tfidf_lr0p03_depth4_estim150_sub0p9_col0p6_l21p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=0.6, λ=1.5, α=0 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.077 | 0.912 |
+*Showing top 10 of 634 configurations.*
+  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study3 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 4 --n-estimators-grid 150 --subsample-grid 0.9 --colsample-grid 0.6 --reg-lambda-grid 1 --reg-alpha-grid 0.1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Portfolio Summary
 
-- Weighted MAE 0.060 across 584 participants.
-- Weighted baseline MAE 0.074 (+0.014 vs. final).
+- Weighted MAE 0.059 across 584 participants.
+- Weighted baseline MAE 0.074 (+0.015 vs. final).
 - Largest MAE reduction: Study 2 – Minimum Wage (MTurk) (+0.055).
-- Lowest MAE: Study 2 – Minimum Wage (MTurk) (0.041); Highest MAE: Study 1 – Gun Control (MTurk) (0.086).
+- Lowest MAE: Study 2 – Minimum Wage (MTurk) (0.041); Highest MAE: Study 1 – Gun Control (MTurk) (0.082).

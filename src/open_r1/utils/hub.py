@@ -37,17 +37,17 @@ except ImportError as exc:  # pragma: no cover - optional dependency
     create_branch = create_repo = get_safetensors_metadata = None
     list_repo_commits = list_repo_files = list_repo_refs = None
     repo_exists = upload_folder = None
-    HUGGINGFACE_HUB_IMPORT_ERROR = exc
+    _huggingface_hub_import_error = exc
 else:
-    HUGGINGFACE_HUB_IMPORT_ERROR = None
+    _huggingface_hub_import_error = None
 
 try:  # pragma: no cover - optional dependency
     from transformers import AutoConfig
 except ImportError as exc:  # pragma: no cover - optional dependency
     AutoConfig = None
-    TRANSFORMERS_IMPORT_ERROR = exc
+    _transformers_import_error = exc
 else:
-    TRANSFORMERS_IMPORT_ERROR = None
+    _transformers_import_error = None
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from trl import GRPOConfig, SFTConfig
@@ -60,11 +60,11 @@ logger = logging.getLogger(__name__)
 
 def _require_huggingface_hub():
     """Return huggingface_hub helpers or raise a clear installation error."""
-    if HUGGINGFACE_HUB_IMPORT_ERROR is not None:
+    if _huggingface_hub_import_error is not None:
         raise ImportError(
             "huggingface_hub is required for Hub interactions. "
             "Install it with `pip install huggingface_hub`."
-        ) from HUGGINGFACE_HUB_IMPORT_ERROR
+        ) from _huggingface_hub_import_error
     assert create_repo is not None
     assert list_repo_commits is not None
     assert create_branch is not None
@@ -87,11 +87,11 @@ def _require_huggingface_hub():
 
 def _require_transformers():
     """Return AutoConfig or raise a clear installation error."""
-    if TRANSFORMERS_IMPORT_ERROR is not None:
+    if _transformers_import_error is not None:
         raise ImportError(
             "transformers is required for reading model configurations. "
             "Install it with `pip install transformers`."
-        ) from TRANSFORMERS_IMPORT_ERROR
+        ) from _transformers_import_error
     assert AutoConfig is not None
     return AutoConfig
 

@@ -30,6 +30,8 @@
 
 """Reward functions used by the GRPO training pipeline."""
 
+from __future__ import annotations
+
 import asyncio
 import importlib
 import json
@@ -39,10 +41,43 @@ import re
 from functools import partial, update_wrapper
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from latex2sympy2_extended import NormalizationConfig  # pylint: disable=import-error
-from math_verify import LatexExtractionConfig, parse, verify  # pylint: disable=import-error
-import transformers  # pylint: disable=import-error
-from transformers.utils.import_utils import _is_package_available  # pylint: disable=import-error
+try:  # pragma: no cover - optional dependency
+    from latex2sympy2_extended import NormalizationConfig  # type: ignore[import]
+except ImportError:  # pragma: no cover - optional dependency
+    NormalizationConfig = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from math_verify import (  # type: ignore[import]
+        LatexExtractionConfig,
+        parse as _math_parse,
+        verify as _math_verify,
+    )
+except ImportError:  # pragma: no cover - optional dependency
+    LatexExtractionConfig = None  # type: ignore[assignment]
+
+    def _math_missing(*_, **__) -> Any:
+        raise ImportError(
+            "math_verify and latex2sympy2_extended are required for math-based rewards "
+            "(pip install math-verify latex2sympy2_extended)."
+        )
+
+    parse = _math_missing  # type: ignore[assignment]
+    verify = _math_missing  # type: ignore[assignment]
+else:  # pragma: no cover - optional dependency
+    parse = _math_parse  # type: ignore[assignment]
+    verify = _math_verify  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    import transformers  # type: ignore[import]
+except ImportError:  # pragma: no cover - optional dependency
+    transformers = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from transformers.utils.import_utils import _is_package_available  # type: ignore[attr-defined]
+except (ImportError, AttributeError):  # pragma: no cover - optional dependency
+
+    def _is_package_available(_: str) -> bool:
+        return False
 
 from .utils.code_providers import get_provider
 from .utils.ioi import (
@@ -57,21 +92,37 @@ from .utils.ioi import (
 PURE_ACC_ENV_FLAG = "PUREACC_ALLOW_BARE_NUMBER"
 PURE_ACC_TRUE_VALUES = {"1", "true", "t", "yes", "y"}
 BINARY_THRESHOLD = 0.99
-LEN_EXTRACTION_CONFIG = [
-    LatexExtractionConfig(
-        normalization_config=NormalizationConfig(
-            nits=False,
-            malformed_operators=False,
-            basic_latex=True,
-            equations=True,
-            boxed=True,
-            units=True,
-        ),
-        boxed_match_priority=0,
-        try_extract_without_anchor=False,
-    )
-]
-DEFAULT_EXTRACTION_CONFIG = [LatexExtractionConfig()]
+HAS_MATH_REWARD_DEPS = LatexExtractionConfig is not None and NormalizationConfig is not None
+
+if HAS_MATH_REWARD_DEPS:
+    LEN_EXTRACTION_CONFIG = [
+        LatexExtractionConfig(
+            normalization_config=NormalizationConfig(
+                nits=False,
+                malformed_operators=False,
+                basic_latex=True,
+                equations=True,
+                boxed=True,
+                units=True,
+            ),
+            boxed_match_priority=0,
+            try_extract_without_anchor=False,
+        )
+    ]
+    DEFAULT_EXTRACTION_CONFIG = [LatexExtractionConfig()]
+else:  # pragma: no cover - optional dependency
+    LEN_EXTRACTION_CONFIG = []
+    DEFAULT_EXTRACTION_CONFIG = []
+
+
+def _require_math_reward_deps() -> None:
+    """Raise an informative error when math reward dependencies are missing."""
+    if not HAS_MATH_REWARD_DEPS:
+        raise ImportError(
+            "math_verify and latex2sympy2_extended are required for math-based rewards. "
+            "Install the optional dependencies with "
+            "`pip install math-verify latex2sympy2_extended`."
+        )
 
 # ── helpers ───────────────────────────────────────────────────────────
 
@@ -260,6 +311,7 @@ def accuracy_reward(
     **kwargs,
 ) -> list[Optional[float]]:
     """Reward function that checks if a completion matches the ground truth."""
+    _require_math_reward_deps()
     _ = kwargs  # Unused but kept for API compatibility
     contents = [completion[0]["content"] for completion in completions]
     rewards: list[Optional[float]] = []
@@ -373,6 +425,7 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
 
 def _compute_length_correctness(contents: List[str], solution: List[str]) -> List[bool]:
     """Return per-sample correctness for length-based rewards."""
+    _require_math_reward_deps()
     correctness: List[bool] = []
     for content, sol in zip(contents, solution):
         gold_parsed = parse(
@@ -468,6 +521,7 @@ def get_cosine_scaled_reward(
             ``max_value_correct``, and ``max_len`` captured from the outer scope.
         :rtype: list[float]
         """
+        _require_math_reward_deps()
         _ = kwargs
         contents = [completion[0]["content"] for completion in completions]
         rewards = []

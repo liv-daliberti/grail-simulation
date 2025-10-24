@@ -156,7 +156,7 @@ def _filter_split_for_issues(split_ds, issues: Sequence[str]):
 
     def _match_issue(row: Mapping[str, Any]) -> bool:
         """
-        Determine whether a row's ``issue`` matches the normalized filter set.
+        Determine whether a row's ``issue`` matches the normalised filter set.
 
         :param row: Dataset example retrieved from ``split_ds``.
         :type row: Mapping[str, Any]
@@ -248,7 +248,7 @@ def _accuracy_for_rows(rows: Sequence[Mapping[str, Any]], k_val: int) -> float:
     """
     Return accuracy for ``rows`` using predictions at ``k_val``.
 
-    :param rows: Iterable of evaluation rows or metrics to analyze.
+    :param rows: Iterable of evaluation rows or metrics to analyse.
 
     :type rows: Sequence[Mapping[str, Any]]
 
@@ -278,7 +278,7 @@ def _baseline_accuracy_for_rows(rows: Sequence[Mapping[str, Any]], baseline_inde
     """
     Return accuracy for the most frequent baseline over ``rows``.
 
-    :param rows: Iterable of evaluation rows or metrics to analyze.
+    :param rows: Iterable of evaluation rows or metrics to analyse.
 
     :type rows: Sequence[Mapping[str, Any]]
 
@@ -316,11 +316,11 @@ def _bootstrap_uncertainty(
     """
     Return bootstrap-based uncertainty estimates for accuracy metrics.
 
-    :param rows: Iterable of evaluation rows or metrics to analyze.
+    :param rows: Iterable of evaluation rows or metrics to analyse.
 
     :type rows: Sequence[Mapping[str, Any]]
 
-    :param best_k: Neighborhood size selected as optimal for the evaluation.
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
 
     :type best_k: int
 
@@ -468,7 +468,7 @@ def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> i
 
             The ``k`` value where marginal gains fall below half of the initial slope,
 
-            or the accuracy-maximizing ``k`` when the heuristic cannot be applied.
+            or the accuracy-maximising ``k`` when the heuristic cannot be applied.
 
     :param k_values: Iterable of ``k`` values to evaluate or report.
 
@@ -478,7 +478,7 @@ def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> i
 
     :type accuracy_by_k: Dict[int, float]
 
-    :returns: Neighborhood size that maximizes the provided accuracy scores.
+    :returns: Neighbourhood size that maximises the provided accuracy scores.
 
     :rtype: int
 
@@ -585,7 +585,7 @@ def plot_elbow(
 
     :type accuracy_by_k: Dict[int, float]
 
-    :param best_k: Neighborhood size selected as optimal for the evaluation.
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
 
     :type best_k: int
 
@@ -1502,7 +1502,7 @@ def _curve_summary(
 
     :type per_k_stats: Dict[int, Dict[str, int]]
 
-    :param best_k: Neighborhood size selected as optimal for the evaluation.
+    :param best_k: Neighbourhood size selected as optimal for the evaluation.
 
     :type best_k: int
 
@@ -1515,7 +1515,7 @@ def _curve_summary(
     :rtype: Dict[str, Any]
 
     """
-    area, normalized = compute_auc_from_curve(k_values, accuracy_by_k)
+    area, normalised = compute_auc_from_curve(k_values, accuracy_by_k)
     sorted_k = sorted({int(k) for k in k_values})
     accuracy_serialised = {
         str(k): float(accuracy_by_k.get(k, 0.0))
@@ -1534,7 +1534,7 @@ def _curve_summary(
         "eligible_by_k": eligible_serialised,
         "correct_by_k": correct_serialised,
         "auc_area": float(area),
-        "auc_normalized": float(normalized),
+        "auc_normalized": float(normalised),
         "best_k": int(best_k),
         "best_accuracy": float(accuracy_by_k.get(best_k, 0.0)),
         "n_examples": int(n_examples),
@@ -1594,7 +1594,7 @@ def evaluate_issue(
 
         args:
 
-            Parsed CLI namespace controlling evaluation behavior.
+            Parsed CLI namespace controlling evaluation behaviour.
 
         provenance:
 
@@ -1807,7 +1807,7 @@ def canon(text: str) -> str:
 
         text:
 
-            Raw text fragment to normalize.
+            Raw text fragment to normalise.
 
         Returns
 
@@ -1817,11 +1817,11 @@ def canon(text: str) -> str:
 
             Canonical form suitable for equality comparisons.
 
-    :param text: Free-form text string that requires normalization.
+    :param text: Free-form text string that requires normalisation.
 
     :type text: str
 
-    :returns: Canonicalized text normalized for downstream processing.
+    :returns: Canonicalised text normalised for downstream processing.
 
     :rtype: str
 

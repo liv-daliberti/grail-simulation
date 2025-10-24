@@ -852,7 +852,7 @@ def _write_catalog_report(
     lines.append("# XGBoost Report Catalog")
     lines.append("")
     lines.append(
-        "The Markdown artefacts in this directory are produced by `python -m xgb.pipeline` "
+        "The Markdown artifacts in this directory are produced by `python -m xgb.pipeline` "
         "(or `training/training-xgb.sh`) and track the XGBoost baselines that accompany the simulation:"
     )
     lines.append("")
@@ -862,7 +862,7 @@ def _write_catalog_report(
     if include_opinion:
         lines.append("- `opinion/README.md` – post-study opinion regression metrics with MAE deltas versus the no-change baseline.")
     lines.append("")
-    lines.append("Raw metrics, model checkpoints, and intermediate artefacts referenced by these reports live beneath `models/xgb/…`.")
+    lines.append("Raw metrics, model checkpoints, and intermediate artifacts referenced by these reports live beneath `models/xgb/…`.")
     lines.append("")
     lines.append("## Refreshing Reports")
     lines.append("")
@@ -1015,7 +1015,7 @@ def _write_hyperparameter_report(
             lines.append("No next-video sweep runs were available when this report was generated.")
             if allow_incomplete:
                 lines.append(
-                    "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
+                    "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artifacts are ready."
                 )
             lines.append("")
 
@@ -1061,7 +1061,7 @@ def _opinion_hyperparameter_section(
         lines.append("No opinion sweep runs were available when this report was generated.")
         if allow_incomplete:
             lines.append(
-                "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
+                "Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artifacts are ready."
             )
         lines.append("")
         return lines
@@ -1603,7 +1603,7 @@ def _write_next_video_report(
         lines.append("")
         lines.append(f"- Dataset: `{dataset_name}`")
         lines.append("- Split: validation")
-        lines.append("- Metrics: accuracy, coverage of known candidates, and availability of known neighbours.")
+        lines.append("- Metrics: accuracy, coverage of known candidates, and availability of known neighbors.")
         lines.append("")
         lines.extend(_next_video_portfolio_summary(metrics))
     else:
@@ -1614,7 +1614,7 @@ def _write_next_video_report(
         lines.append("No finalized evaluation metrics were available when this report was generated.")
         if allow_incomplete:
             lines.append(
-                "Run the pipeline with `--stage finalize` once sufficient artefacts exist to refresh this table."
+                "Run the pipeline with `--stage finalize` once sufficient artifacts exist to refresh this table."
             )
         lines.append("")
         write_markdown_lines(path, lines)

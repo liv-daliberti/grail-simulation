@@ -233,17 +233,18 @@ def run_eval(args) -> None:
             args,
             issue,
             base_ds,
-            dataset_source,
-            extra_fields,
-            study_tokens,
+            dataset_source=dataset_source,
+            extra_fields=extra_fields,
+            study_tokens=study_tokens,
         )
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-locals
 def _evaluate_issue(
     args,
     issue: str,
     base_ds,
+    *,
     dataset_source: str,
     extra_fields: List[str],
     study_tokens: Sequence[str],
@@ -267,11 +268,11 @@ def _evaluate_issue(
         ",".join(tokens) or "all",
     )
 
-    ds = filter_dataset_for_issue(base_ds, issue)
+    issue_dataset = filter_dataset_for_issue(base_ds, issue)
     if tokens:
-        ds = filter_dataset_for_participant_studies(ds, tokens)
-    train_ds = ds[TRAIN_SPLIT]
-    eval_ds = ds[EVAL_SPLIT]
+        issue_dataset = filter_dataset_for_participant_studies(issue_dataset, tokens)
+    train_ds = issue_dataset[TRAIN_SPLIT]
+    eval_ds = issue_dataset[EVAL_SPLIT]
 
     train_rows = len(train_ds)
     eval_rows = len(eval_ds)

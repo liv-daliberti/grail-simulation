@@ -48,7 +48,7 @@ def ensure_azure_env() -> None:
     Ensure the Azure environment variables are present.
 
     The sandbox runner historically relied on these being set globally.
-    We keep the behavior but allow shell overrides to win.
+    We keep the behaviour but allow shell overrides to win.
     """
 
     os.environ.setdefault("SANDBOX_API_KEY", SANDBOX_API_KEY)

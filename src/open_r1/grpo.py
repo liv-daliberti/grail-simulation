@@ -15,8 +15,6 @@
 
 """Standard GRPO training entrypoint for the GRAIL simulation dataset."""
 
-from __future__ import annotations
-
 import logging
 import os
 from functools import partial
@@ -62,6 +60,25 @@ else:  # pragma: no cover - fallback when datasets is unavailable at lint time
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_training_dependencies() -> None:
+    """Ensure optional training dependencies are installed before execution."""
+
+    if set_seed is None:  # pragma: no cover - optional dependency guard
+        raise ImportError(
+            "transformers must be installed to run GRPO training "
+            "(pip install transformers)."
+        )
+    if (
+        ModelConfig is None
+        or get_peft_config is None
+        or GRPOTrainer is None
+    ):  # pragma: no cover - optional dependency guard
+        raise ImportError(
+            "trl must be installed to run GRPO training "
+            "(pip install trl)."
+        )
 
 
 def _row_to_example(
@@ -173,6 +190,8 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
         normalised = [max(0.0, float(value)) for value in training_args.reward_weights]
         total = sum(normalised) or 1.0
         training_args.reward_weights = [value / total for value in normalised]
+
+
 def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
     """Return the checkpoint path to resume from when available."""
 
@@ -185,6 +204,7 @@ def main(
     model_args: ModelConfig,
 ) -> None:
     """Orchestrate dataset preparation, trainer construction, and the training loop."""
+    _ensure_training_dependencies()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
 
@@ -242,4 +262,5 @@ def main(
 
 
 if __name__ == "__main__":
+    _ensure_training_dependencies()
     parse_and_run(main, (GRPOScriptArguments, GRPOConfig, ModelConfig))

@@ -42,45 +42,23 @@ from .pipeline_context import (
 from .pipeline_cli import (
     build_base_cli as _build_base_cli,
     build_pipeline_context as _build_pipeline_context,
-    default_cache_dir as _default_cache_dir,
-    default_dataset as _default_dataset,
-    default_out_dir as _default_out_dir,
     log_dry_run as _log_dry_run,
     log_run_configuration as _log_run_configuration,
     parse_args as _parse_args,
     repo_root as _repo_root,
 )
 from .pipeline_data import (
-    issue_slug_for_study as _issue_slug_for_study,
     resolve_studies as _resolve_studies,
-    study_specs as _study_specs,
     warn_if_issue_tokens_used as _warn_if_issue_tokens_used,
-)
-from .pipeline_utils import (
-    ensure_dir as _ensure_dir,
-    extract_metric_summary as _extract_metric_summary,
-    extract_opinion_summary as _extract_opinion_summary,
-    format_count as _format_count,
-    format_delta as _format_delta,
-    format_float as _format_float,
-    format_k as _format_k,
-    format_optional_float as _format_optional_float,
-    format_uncertainty_details as _format_uncertainty_details,
-    parse_ci as _parse_ci,
-    safe_float as _safe_float,
-    safe_int as _safe_int,
-    snake_to_title as _snake_to_title,
 )
 from .pipeline_io import (
     load_final_metrics_from_disk as _load_final_metrics_from_disk,
     load_loso_metrics_from_disk as _load_loso_metrics_from_disk,
-    load_metrics as _load_metrics,
     load_opinion_metrics as _load_opinion_metrics,
 )
 from .pipeline_sweeps import (
     build_sweep_configs as _build_sweep_configs,
     emit_combined_sweep_plan as _emit_combined_sweep_plan,
-    emit_sweep_plan as _emit_sweep_plan,
     execute_opinion_sweep_task as _execute_opinion_sweep_task,
     execute_opinion_sweep_tasks as _execute_opinion_sweep_tasks,
     execute_sweep_task as _execute_sweep_task,
@@ -89,14 +67,10 @@ from .pipeline_sweeps import (
     format_sweep_task_descriptor as _format_sweep_task_descriptor,
     merge_opinion_sweep_outcomes as _merge_opinion_sweep_outcomes,
     merge_sweep_outcomes as _merge_sweep_outcomes,
-    opinion_sweep_outcome_from_metrics as _opinion_sweep_outcome_from_metrics,
     prepare_opinion_sweep_tasks as _prepare_opinion_sweep_tasks,
     prepare_sweep_tasks as _prepare_sweep_tasks,
-    run_knn_cli as _run_knn_cli,
-    run_sweeps as _run_sweeps,
     select_best_configs as _select_best_configs,
     select_best_opinion_configs as _select_best_opinion_configs,
-    sweep_outcome_from_metrics as _sweep_outcome_from_metrics,
 )
 from .pipeline_evaluate import (
     run_cross_study_evaluations as _run_cross_study_evaluations,

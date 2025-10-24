@@ -354,16 +354,14 @@ submit_jobs() {
     local type="cpu"
     if (( gpu_enabled )); then
       local is_gpu_task=0
-      if [[ "${feature_lower}" == "opinion" ]]; then
+      if (( gpu_match_all )); then
+        is_gpu_task=1
+      elif [[ "${feature_lower}" == "opinion" ]]; then
         if [[ -n "${GPU_FEATURE_MAP[opinion]:-}" ]]; then
           is_gpu_task=1
         fi
-      else
-        if (( gpu_match_all )); then
-          is_gpu_task=1
-        elif [[ -n "${GPU_FEATURE_MAP[${feature_lower}]:-}" ]]; then
-          is_gpu_task=1
-        fi
+      elif [[ -n "${GPU_FEATURE_MAP[${feature_lower}]:-}" ]]; then
+        is_gpu_task=1
       fi
       if (( is_gpu_task )); then
         type="gpu"
@@ -574,7 +572,7 @@ submit_jobs() {
   local default_gpu_cpus="${XGB_GPU_CPUS:-16}"
   local default_gpu_time="${XGB_GPU_TIME:-${finalize_time}}"
   local should_use_gpu_finalize=0
-  if (( gpu_enabled )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]] && (( want_next_video )); then
+  if (( gpu_enabled )) && [[ "${XGB_FINAL_USE_GPU:-1}" == "1" ]] && (( want_next_video || want_opinion )); then
     should_use_gpu_finalize=1
   fi
   if (( should_use_gpu_finalize )); then

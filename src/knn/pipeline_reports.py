@@ -336,7 +336,7 @@ def _hyperparameter_report_intro(
             ]
         )
     if include_opinion and not include_next_video:
-        lines.append("Opinion-regression sweeps are summarised below.")
+        lines.append("Opinion-regression sweeps are summarized below.")
         lines.append("")
     return lines
 
@@ -660,7 +660,7 @@ def _hyperparameter_opinion_section(
         lines.append("No opinion sweeps were available when this report was generated.")
         if allow_incomplete:
             lines.append(
-                "Run the KNN pipeline with `--stage sweeps` or `--stage full` once artefacts are ready."
+                "Run the KNN pipeline with `--stage sweeps` or `--stage full` once artifacts are ready."
             )
         lines.append("")
         return lines
@@ -904,7 +904,7 @@ def _next_video_intro(
     intro = [
         "# KNN Next-Video Baseline",
         "",
-        "This report summarises the slate-ranking KNN model that predicts the next video a viewer will click.",
+        "This report summarizes the slate-ranking KNN model that predicts the next video a viewer will click.",
         "",
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
@@ -1926,7 +1926,7 @@ def _build_catalog_report(
     lines.append("# KNN Report Catalog")
     lines.append("")
     lines.append(
-        "Baseline: k-nearest neighbours slate-ranking and opinion-regression models built on "
+        "Baseline: k-nearest neighbors slate-ranking and opinion-regression models built on "
         "TF-IDF, Word2Vec, and Sentence-Transformer feature spaces."
     )
     lines.append("")
@@ -1951,7 +1951,7 @@ def _build_catalog_report(
         )
     lines.append("")
     lines.append(
-        "All artefacts referenced in the Markdown live under `models/knn/…`. Running the pipeline"
+        "All artifacts referenced in the Markdown live under `models/knn/…`. Running the pipeline"
         " again will overwrite these reports with fresh numbers."
     )
     lines.append("")

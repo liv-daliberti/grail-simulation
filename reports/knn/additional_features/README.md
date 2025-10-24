@@ -22,6 +22,7 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | --- | --- | --- |
 | tfidf | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
 | tfidf | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
+| tfidf | Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text` |
 
 ## Opinion Regression
 

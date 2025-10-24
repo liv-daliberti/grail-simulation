@@ -8,6 +8,8 @@ from typing import Dict, List, Mapping
 
 import pytest
 
+from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+
 from knn import pipeline_cli
 from knn import pipeline_data as data
 from knn import pipeline_evaluate as evaluate
@@ -31,7 +33,11 @@ def _make_study(key: str, issue: str, label: str) -> StudySpec:
 
 
 def _make_sweep_config(feature_space: str, metric: str = "cosine") -> SweepConfig:
-    return SweepConfig(feature_space=feature_space, metric=metric, text_fields=())
+    return SweepConfig(
+        feature_space=feature_space,
+        metric=metric,
+        text_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+    )
 
 
 def test_resolve_studies_accepts_issue_tokens() -> None:
@@ -174,7 +180,7 @@ def test_prepare_sweep_tasks_word2vec_without_cached_metrics(tmp_path: Path) -> 
     config = SweepConfig(
         feature_space="word2vec",
         metric="cosine",
-        text_fields=(),
+        text_fields=DEFAULT_EXTRA_TEXT_FIELDS,
         word2vec_size=128,
         word2vec_window=5,
         word2vec_min_count=1,
@@ -244,7 +250,7 @@ def test_opinion_sweep_outcome_from_metrics_handles_partial_payload(tmp_path: Pa
     config = SweepConfig(
         feature_space="tfidf",
         metric="cosine",
-        text_fields=(),
+        text_fields=DEFAULT_EXTRA_TEXT_FIELDS,
     )
     context = SweepTaskContext(
         base_cli=["--dataset", "stub"],
@@ -252,7 +258,7 @@ def test_opinion_sweep_outcome_from_metrics_handles_partial_payload(tmp_path: Pa
         sweep_dir=tmp_path,
         word2vec_model_base=tmp_path / "word2vec",
     )
-    task, _ = sweeps._build_opinion_task(
+    task, _ = sweeps.build_opinion_task(
         index=0,
         config=config,
         study=study,
@@ -657,7 +663,11 @@ def test_generate_reports_creates_expected_sections(tmp_path: Path) -> None:
     ]
 
     def make_outcome(feature_space: str, study: StudySpec, accuracy: float, tag: str) -> SweepOutcome:
-        config = SweepConfig(feature_space=feature_space, metric="cosine", text_fields=())
+        config = SweepConfig(
+            feature_space=feature_space,
+            metric="cosine",
+            text_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+        )
         return SweepOutcome(
             order_index=0,
             study=study,

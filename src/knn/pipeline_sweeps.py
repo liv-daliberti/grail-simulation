@@ -23,22 +23,22 @@ stages can select the best configurations.
 # pylint: disable=line-too-long
 from __future__ import annotations
 
-import json
 import logging
 import os
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.pipeline_executor import execute_indexed_tasks, execute_sequential_tasks
+from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_utils import merge_ordered
+from common.prompt_docs import merge_default_extra_fields
 
 from knn.cli import build_parser as build_knn_parser
 from knn.evaluate import run_eval
 
+from . import opinion_sweeps as _opinion_sweeps
 from .opinion import run_opinion_eval
 from .pipeline_context import (
-    OpinionStudySelection,
     OpinionSweepOutcome,
     OpinionSweepTask,
     PipelineContext,
@@ -51,7 +51,7 @@ from .pipeline_context import (
 )
 from .pipeline_data import issue_slug_for_study
 from .pipeline_io import load_metrics
-from .pipeline_utils import ensure_dir, extract_metric_summary, extract_opinion_summary
+from .pipeline_utils import ensure_dir, extract_metric_summary
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
 
@@ -78,6 +78,29 @@ def run_knn_cli(argv: Sequence[str]) -> None:
         return
     raise ValueError(f"Unsupported task '{namespace.task}'.")
 
+def _word2vec_param_grid(context: PipelineContext) -> Dict[str, Tuple[int, ...]]:
+    """Read word2vec sweep parameters from environment variables or defaults."""
+
+    def _parse_env(name: str, default: str) -> Tuple[int, ...]:
+        return tuple(
+            int(token)
+            for token in os.environ.get(name, default).split(",")
+            if token.strip()
+        )
+
+    return {
+        "sizes": _parse_env("WORD2VEC_SWEEP_SIZES", "128,256"),
+        "windows": _parse_env("WORD2VEC_SWEEP_WINDOWS", "5,10"),
+        "min_counts": _parse_env("WORD2VEC_SWEEP_MIN_COUNTS", "1"),
+        "epochs": _parse_env(
+            "WORD2VEC_SWEEP_EPOCHS", str(context.word2vec_epochs)
+        ),
+        "workers": _parse_env(
+            "WORD2VEC_SWEEP_WORKERS", str(context.word2vec_workers)
+        ),
+    }
+
+
 def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     """
     Return the grid of configurations evaluated during sweeps.
@@ -91,8 +114,8 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     :rtype: List[SweepConfig]
 
     """
-    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
-    text_options: Tuple[Tuple[str, ...], ...] = ((), ("viewer_profile", "state_text"))
+    default_text_fields = merge_default_extra_fields(())
+    text_options: Tuple[Tuple[str, ...], ...] = (default_text_fields,)
     feature_spaces = context.feature_spaces
 
     configs: List[SweepConfig] = []
@@ -110,54 +133,28 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
 
     if "word2vec" in feature_spaces:
         word2vec_metrics = ("cosine", "l2")
-        word2vec_sizes = tuple(
-            int(token)
-            for token in os.environ.get("WORD2VEC_SWEEP_SIZES", "128,256").split(",")
-            if token.strip()
-        )
-        word2vec_windows = tuple(
-            int(token)
-            for token in os.environ.get("WORD2VEC_SWEEP_WINDOWS", "5,10").split(",")
-            if token.strip()
-        )
-        word2vec_min_counts = tuple(
-            int(token)
-            for token in os.environ.get("WORD2VEC_SWEEP_MIN_COUNTS", "1").split(",")
-            if token.strip()
-        )
-        word2vec_epochs_options = tuple(
-            int(token)
-            for token in os.environ.get(
-                "WORD2VEC_SWEEP_EPOCHS", str(context.word2vec_epochs)
-            ).split(",")
-            if token.strip()
-        )
-        word2vec_workers_options = tuple(
-            int(token)
-            for token in os.environ.get(
-                "WORD2VEC_SWEEP_WORKERS", str(context.word2vec_workers)
-            ).split(",")
-            if token.strip()
-        )
+        param_grid = _word2vec_param_grid(context)
         for metric in word2vec_metrics:
             for fields in text_options:
-                for size in word2vec_sizes:
-                    for window in word2vec_windows:
-                        for min_count in word2vec_min_counts:
-                            for epochs in word2vec_epochs_options:
-                                for workers in word2vec_workers_options:
-                                    configs.append(
-                                        SweepConfig(
-                                            feature_space="word2vec",
-                                            metric=metric,
-                                            text_fields=fields,
-                                            word2vec_size=size,
-                                            word2vec_window=window,
-                                            word2vec_min_count=min_count,
-                                            word2vec_epochs=epochs,
-                                            word2vec_workers=workers,
-                                        )
-                                    )
+                for size, window, min_count, epochs, workers in product(
+                    param_grid["sizes"],
+                    param_grid["windows"],
+                    param_grid["min_counts"],
+                    param_grid["epochs"],
+                    param_grid["workers"],
+                ):
+                    configs.append(
+                        SweepConfig(
+                            feature_space="word2vec",
+                            metric=metric,
+                            text_fields=fields,
+                            word2vec_size=size,
+                            word2vec_window=window,
+                            word2vec_min_count=min_count,
+                            word2vec_epochs=epochs,
+                            word2vec_workers=workers,
+                        )
+                    )
 
     if "sentence_transformer" in feature_spaces:
         for metric in ("cosine", "l2"):
@@ -175,6 +172,56 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
                 )
 
     return configs
+
+def _build_sweep_task(
+    *,
+    index: int,
+    config: SweepConfig,
+    study: StudySpec,
+    context: SweepTaskContext,
+    cli_args: Tuple[Tuple[str, ...], Tuple[str, ...]],
+) -> SweepTask:
+    """Construct a sweep task for the next-video pipeline."""
+
+    base_cli, extra_cli = cli_args
+    issue_slug = issue_slug_for_study(study)
+    run_root = context.sweep_dir / config.feature_space / study.study_slug / config.label()
+    metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
+    word2vec_model_dir = None
+    if config.feature_space == "word2vec":
+        word2vec_model_dir = (
+            context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
+        )
+    return SweepTask(
+        index=index,
+        study=study,
+        config=config,
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        run_root=run_root,
+        word2vec_model_dir=word2vec_model_dir,
+        issue=study.issue,
+        issue_slug=issue_slug,
+        metrics_path=metrics_path,
+    )
+
+
+def _load_cached_outcome(task: SweepTask) -> Optional[SweepOutcome]:
+    """Load cached metrics for ``task`` when available."""
+
+    try:
+        metrics, metrics_path = load_metrics(task.run_root, task.issue_slug)
+    except FileNotFoundError:
+        LOGGER.debug("Expected cached metrics at %s but none found.", task.metrics_path)
+        return None
+    LOGGER.info(
+        "[SWEEP][SKIP] feature=%s study=%s label=%s (metrics cached).",
+        task.config.feature_space,
+        task.study.key,
+        task.config.label(),
+    )
+    return sweep_outcome_from_metrics(task, metrics, metrics_path)
+
 
 def prepare_sweep_tasks(
     *,
@@ -206,7 +253,6 @@ def prepare_sweep_tasks(
     :rtype: Tuple[List[SweepTask], List[SweepOutcome]]
 
     """
-    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
     pending_tasks: List[SweepTask] = []
     cached_outcomes: List[SweepOutcome] = []
     base_cli_tuple = tuple(context.base_cli)
@@ -215,144 +261,22 @@ def prepare_sweep_tasks(
     task_index = 0
     for config in configs:
         for study in studies:
-            issue_slug = issue_slug_for_study(study)
-            run_root = context.sweep_dir / config.feature_space / study.study_slug / config.label()
-            metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
-            word2vec_model_dir = None
-            if config.feature_space == "word2vec":
-                word2vec_model_dir = (
-                    context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
-                )
-            task = SweepTask(
+            task = _build_sweep_task(
                 index=task_index,
-                study=study,
                 config=config,
-                base_cli=base_cli_tuple,
-                extra_cli=extra_cli_tuple,
-                run_root=run_root,
-                word2vec_model_dir=word2vec_model_dir,
-                issue=study.issue,
-                issue_slug=issue_slug,
-                metrics_path=metrics_path,
+                study=study,
+                context=context,
+                cli_args=(base_cli_tuple, extra_cli_tuple),
             )
             task_index += 1
-            if reuse_existing and metrics_path.exists():
-                try:
-                    metrics, cached_path = load_metrics(run_root, issue_slug)
-                except FileNotFoundError:
-                    LOGGER.debug("Expected cached metrics at %s but none found.", metrics_path)
-                else:
-                    LOGGER.info(
-                        "[SWEEP][SKIP] feature=%s study=%s label=%s (metrics cached).",
-                        config.feature_space,
-                        study.key,
-                        config.label(),
-                    )
-                    cached_outcomes.append(sweep_outcome_from_metrics(task, metrics, cached_path))
+            if reuse_existing and task.metrics_path.exists():
+                cached = _load_cached_outcome(task)
+                if cached is not None:
+                    cached_outcomes.append(cached)
                     continue
             pending_tasks.append(task)
     return pending_tasks, cached_outcomes
 
-
-def _build_opinion_task(
-    *,
-    index: int,
-    config: SweepConfig,
-    study: StudySpec,
-    context: SweepTaskContext,
-) -> Tuple[OpinionSweepTask, Path]:
-    run_root = (
-        context.sweep_dir
-        / "opinion"
-        / config.feature_space
-        / study.study_slug
-        / config.label()
-    )
-    metrics_path = (
-        run_root
-        / "opinion"
-        / config.feature_space
-        / study.key
-        / f"opinion_knn_{study.key}_validation_metrics.json"
-    )
-    word2vec_model_dir = None
-    if config.feature_space == "word2vec":
-        word2vec_model_dir = (
-            context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
-        )
-    task = OpinionSweepTask(
-        index=index,
-        study=study,
-        config=config,
-        base_cli=tuple(context.base_cli),
-        extra_cli=tuple(context.extra_cli),
-        run_root=run_root,
-        word2vec_model_dir=word2vec_model_dir,
-        metrics_path=metrics_path,
-    )
-    return task, metrics_path
-
-
-def prepare_opinion_sweep_tasks(
-    *,
-    studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
-    context: SweepTaskContext,
-    reuse_existing: bool,
-) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
-    """
-    Return opinion sweep tasks requiring execution and cached outcomes.
-
-    :param studies: Sequence of study specifications targeted by the workflow.
-
-    :type studies: Sequence[StudySpec]
-
-    :param configs: Iterable of sweep configurations scheduled for execution.
-
-    :type configs: Sequence[SweepConfig]
-
-    :param context: Shared CLI/runtime parameters reused across sweep invocations.
-    :type context: SweepTaskContext
-
-    :param reuse_existing: Whether to reuse cached results instead of recomputing them.
-
-    :type reuse_existing: bool
-
-    :returns: opinion sweep tasks requiring execution and cached outcomes
-
-    :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
-
-    """
-    # pylint: disable=too-many-branches
-    pending_tasks: List[OpinionSweepTask] = []
-    cached_outcomes: List[OpinionSweepOutcome] = []
-
-    for task_index, (config, study) in enumerate(product(configs, studies)):
-        task, metrics_path = _build_opinion_task(
-            index=task_index,
-            config=config,
-            study=study,
-            context=context,
-        )
-        if reuse_existing and metrics_path.exists():
-            try:
-                with open(metrics_path, "r", encoding="utf-8") as handle:
-                    metrics = json.load(handle)
-            except FileNotFoundError:
-                LOGGER.debug("Expected cached opinion metrics at %s but none found.", metrics_path)
-            else:
-                LOGGER.info(
-                    "[OPINION][SKIP] feature=%s study=%s label=%s (metrics cached).",
-                    config.feature_space,
-                    study.key,
-                    config.label(),
-                )
-                cached_outcomes.append(
-                    opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
-                )
-                continue
-        pending_tasks.append(task)
-    return pending_tasks, cached_outcomes
 
 def sweep_outcome_from_metrics(
     task: SweepTask,
@@ -395,88 +319,12 @@ def sweep_outcome_from_metrics(
         metrics=metrics,
     )
 
-def opinion_sweep_outcome_from_metrics(
-    task: OpinionSweepTask,
-    metrics: Mapping[str, object],
-    metrics_path: Path,
-) -> OpinionSweepOutcome:
-    """
-    Translate cached opinion metrics into an :class:`OpinionSweepOutcome`.
-
-    :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
-    :param metrics: Metrics dictionary captured from a previous pipeline stage.
-
-    :type metrics: Mapping[str, object]
-
-    :param metrics_path: Filesystem path where the metrics JSON artefact resides.
-
-    :type metrics_path: Path
-
-    :returns: Opinion sweep outcome reconstructed from cached metrics.
-
-    :rtype: OpinionSweepOutcome
-
-    """
-    summary = extract_opinion_summary(metrics)
-    best_metrics = metrics.get("best_metrics", {})
-    mae = summary.mae if summary.mae is not None else float(metrics.get("best_mae", float("inf")))
-    rmse = summary.rmse if summary.rmse is not None else float(best_metrics.get("rmse_after", 0.0))
-    r2_score = summary.r2_score
-    if r2_score is None:
-        r2_score = best_metrics.get("r2_after", 0.0)
-        r2_score = float(r2_score) if r2_score is not None else 0.0
-    participants = summary.participants if summary.participants is not None else int(
-        metrics.get("n_participants", 0)
-    )
-    best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
-    baseline_mae = summary.baseline_mae
-    if baseline_mae is None:
-        baseline_mae_raw = metrics.get("baseline", {}).get("mae_using_before")
-        baseline_mae = float(baseline_mae_raw) if baseline_mae_raw is not None else None
-    mae_delta = summary.mae_delta
-    if mae_delta is None and baseline_mae is not None:
-        mae_delta = float(mae) - float(baseline_mae)
-    accuracy = summary.accuracy
-    if accuracy is None:
-        accuracy = best_metrics.get("direction_accuracy")
-        accuracy = float(accuracy) if accuracy is not None else None
-    baseline_accuracy = summary.baseline_accuracy
-    if baseline_accuracy is None:
-        baseline_accuracy = metrics.get("baseline", {}).get("direction_accuracy")
-        baseline_accuracy = (
-            float(baseline_accuracy) if baseline_accuracy is not None else None
-        )
-    accuracy_delta = summary.accuracy_delta
-    if accuracy_delta is None and accuracy is not None and baseline_accuracy is not None:
-        accuracy_delta = accuracy - baseline_accuracy
-    eligible = summary.eligible
-    if eligible is None:
-        eligible = metrics.get("eligible")
-        eligible = int(eligible) if isinstance(eligible, (int, float)) else None
-    if eligible is None:
-        eligible = participants
-    return OpinionSweepOutcome(
-        order_index=task.index,
-        study=task.study,
-        config=task.config,
-        feature_space=task.config.feature_space,
-        mae=float(mae),
-        rmse=float(rmse),
-        r2_score=float(r2_score),
-        baseline_mae=baseline_mae,
-        mae_delta=mae_delta,
-        accuracy=accuracy,
-        baseline_accuracy=baseline_accuracy,
-        accuracy_delta=accuracy_delta,
-        best_k=best_k,
-        participants=participants,
-        eligible=eligible,
-        metrics_path=metrics_path,
-        metrics=metrics,
-    )
+prepare_opinion_sweep_tasks = _opinion_sweeps.prepare_opinion_sweep_tasks
+opinion_sweep_outcome_from_metrics = _opinion_sweeps.opinion_sweep_outcome_from_metrics
+merge_opinion_sweep_outcomes = _opinion_sweeps.merge_opinion_sweep_outcomes
+format_opinion_sweep_task_descriptor = _opinion_sweeps.format_opinion_sweep_task_descriptor
+select_best_opinion_configs = _opinion_sweeps.select_best_opinion_configs
+build_opinion_task = _opinion_sweeps.build_opinion_task
 
 def merge_sweep_outcomes(
     cached: Sequence[SweepOutcome],
@@ -524,50 +372,19 @@ def merge_sweep_outcomes(
         on_replace=_on_replace,
     )
 
-def merge_opinion_sweep_outcomes(
-    cached: Sequence[OpinionSweepOutcome],
-    executed: Sequence[OpinionSweepOutcome],
-) -> List[OpinionSweepOutcome]:
+def execute_opinion_sweep_tasks(tasks: Sequence[OpinionSweepTask]) -> List[OpinionSweepOutcome]:
     """
-    Combine cached and freshly executed opinion outcomes preserving order.
-
-    :param cached: Previously computed artefacts available for reuse.
-
-    :type cached: Sequence[OpinionSweepOutcome]
-
-    :param executed: Iterable of tasks that were actually executed during the run.
-
-    :type executed: Sequence[OpinionSweepOutcome]
-
-    :returns: Mapping of feature spaces to merged opinion sweep outcomes.
-
-    :rtype: List[OpinionSweepOutcome]
-
+    Run the supplied opinion sweep tasks sequentially via the shared CLI runner.
     """
-    def _on_replace(_existing: OpinionSweepOutcome, incoming: OpinionSweepOutcome) -> None:
-        """
-        Emit a warning when an opinion sweep outcome is replaced.
+    return _opinion_sweeps.execute_opinion_sweep_tasks(tasks, cli_runner=run_knn_cli)
 
-        :param _existing: Previously cached opinion outcome.
-        :type _existing: OpinionSweepOutcome
-        :param incoming: Newly produced outcome that supersedes ``_existing``.
-        :type incoming: OpinionSweepOutcome
-        :returns: ``None``. The function logs a warning for visibility.
-        :rtype: None
-        """
 
-        LOGGER.warning(
-            "Duplicate opinion sweep outcome detected for index=%d (study=%s). Overwriting.",
-            incoming.order_index,
-            incoming.study.key,
-        )
+def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
+    """
+    Execute a single opinion sweep task using the shared CLI runner.
+    """
+    return _opinion_sweeps.execute_opinion_sweep_task(task, cli_runner=run_knn_cli)
 
-    return merge_ordered(
-        cached,
-        executed,
-        order_key=lambda outcome: outcome.order_index,
-        on_replace=_on_replace,
-    )
 
 def execute_sweep_tasks(
     tasks: Sequence[SweepTask],
@@ -591,23 +408,6 @@ def execute_sweep_tasks(
 
     """
     return execute_indexed_tasks(tasks, execute_sweep_task, jobs=jobs, logger=LOGGER, label="sweep")
-
-def execute_opinion_sweep_tasks(tasks: Sequence[OpinionSweepTask]) -> List[OpinionSweepOutcome]:
-    """
-    Run the supplied opinion sweep tasks sequentially.
-
-    :param tasks: Collection of sweep tasks scheduled for execution.
-
-    :type tasks: Sequence[OpinionSweepTask]
-
-    :returns: List of opinion sweep outcomes generated from the provided tasks.
-
-    :rtype: List[OpinionSweepOutcome]
-
-    """
-    if not tasks:
-        return []
-    return execute_sequential_tasks(tasks, execute_opinion_sweep_task)
 
 def execute_sweep_task(task: SweepTask) -> SweepOutcome:
     """
@@ -646,50 +446,6 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
     run_knn_cli(cli_args)
     metrics, metrics_path = load_metrics(run_root, task.issue_slug)
     return sweep_outcome_from_metrics(task, metrics, metrics_path)
-
-def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
-    """
-    Execute a single opinion sweep task and return the captured metrics.
-
-    :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
-    :returns: Opinion sweep outcome produced by executing the given task.
-
-    :rtype: OpinionSweepOutcome
-
-    """
-    run_root = ensure_dir(task.run_root)
-    outputs_root = run_root / "opinion" / task.config.feature_space
-    model_dir = None
-    if task.config.feature_space == "word2vec":
-        if task.word2vec_model_dir is None:
-            raise RuntimeError("Word2Vec opinion sweep task missing model directory.")
-        model_dir = ensure_dir(task.word2vec_model_dir)
-
-    cli_args: List[str] = list(task.base_cli)
-    cli_args.extend(task.config.cli_args(word2vec_model_dir=model_dir))
-    cli_args.extend(["--task", "opinion"])
-    cli_args.extend(["--out-dir", str(run_root)])
-    cli_args.extend(["--opinion-studies", task.study.key])
-    cli_args.extend(task.extra_cli)
-
-    LOGGER.info(
-        "[OPINION][SWEEP] feature=%s study=%s label=%s",
-        task.config.feature_space,
-        task.study.key,
-        task.config.label(),
-    )
-    run_knn_cli(cli_args)
-    metrics_path = (
-        outputs_root / task.study.key / f"opinion_knn_{task.study.key}_validation_metrics.json"
-    )
-    if not metrics_path.exists():
-        raise FileNotFoundError(f"Opinion sweep metrics missing at {metrics_path}")
-    with open(metrics_path, "r", encoding="utf-8") as handle:
-        metrics = json.load(handle)
-    return opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
 
 def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:
     """
@@ -763,21 +519,6 @@ def format_sweep_task_descriptor(task: SweepTask) -> str:
     :type task: SweepTask
 
     :returns: a short descriptor for a sweep task
-
-    :rtype: str
-
-    """
-    return f"{task.config.feature_space}:{task.study.key}:{task.config.label()}"
-
-def format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:
-    """
-    Return a short descriptor for an opinion sweep task.
-
-    :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
-    :returns: a short descriptor for an opinion sweep task
 
     :rtype: str
 
@@ -900,82 +641,6 @@ def select_best_configs(
         raise RuntimeError("Failed to select a best configuration for any feature space.")
     return selections
 
-def select_best_opinion_configs(
-    *,
-    outcomes: Sequence[OpinionSweepOutcome],
-    studies: Sequence[StudySpec],
-    allow_incomplete: bool = False,
-) -> Dict[str, Dict[str, OpinionStudySelection]]:
-    """
-    Select the best configuration per feature space and study for opinion.
-
-    :param outcomes: Iterable of sweep outcomes available for aggregation.
-
-    :type outcomes: Sequence[OpinionSweepOutcome]
-
-    :param studies: Sequence of study specifications targeted by the workflow.
-
-    :type studies: Sequence[StudySpec]
-
-    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
-
-    :type allow_incomplete: bool
-
-    :returns: Mapping of feature spaces to their selected opinion configurations.
-
-    :rtype: Dict[str, Dict[str, OpinionStudySelection]]
-
-    """
-    def _is_better(candidate: OpinionSweepOutcome, incumbent: OpinionSweepOutcome) -> bool:
-        """Return ``True`` when ``candidate`` should replace ``incumbent``."""
-
-        def _compare_metric(lhs: float | None, rhs: float | None) -> int:
-            if lhs is None or rhs is None:
-                return 0
-            delta = lhs - rhs
-            if abs(delta) <= 1e-9:
-                return 0
-            return -1 if delta < 0 else 1
-
-        for lhs, rhs in ((candidate.mae, incumbent.mae), (candidate.rmse, incumbent.rmse)):
-            result = _compare_metric(lhs, rhs)
-            if result != 0:
-                return result < 0
-
-        candidate_participants = candidate.participants or 0
-        incumbent_participants = incumbent.participants or 0
-        if candidate_participants != incumbent_participants:
-            return candidate_participants > incumbent_participants
-        return candidate.best_k < incumbent.best_k
-
-    selections: Dict[str, Dict[str, OpinionStudySelection]] = {}
-    for outcome in outcomes:
-        per_feature = selections.setdefault(outcome.feature_space, {})
-        current = per_feature.get(outcome.study.key)
-        if current is None or _is_better(outcome, current.outcome):
-            per_feature[outcome.study.key] = OpinionStudySelection(
-                study=outcome.study,
-                outcome=outcome,
-            )
-
-    expected_keys = [study.key for study in studies]
-    for feature_space, per_feature in selections.items():
-        missing = [key for key in expected_keys if key not in per_feature]
-        if missing:
-            if allow_incomplete:
-                LOGGER.warning(
-                    "Missing opinion sweep selections for feature=%s: %s. Continuing because allow-incomplete mode is enabled.",
-                    feature_space,
-                    ", ".join(missing),
-                )
-            else:
-                raise RuntimeError(
-                    f"Missing opinion sweep selections for feature={feature_space}: {', '.join(missing)}"
-                )
-    if not selections and outcomes:
-        raise RuntimeError("Failed to select a best configuration for any opinion feature space.")
-    return selections
-
 __all__ = [
     "build_sweep_configs",
     "emit_combined_sweep_plan",
@@ -989,6 +654,7 @@ __all__ = [
     "merge_opinion_sweep_outcomes",
     "merge_sweep_outcomes",
     "opinion_sweep_outcome_from_metrics",
+    "build_opinion_task",
     "prepare_opinion_sweep_tasks",
     "prepare_sweep_tasks",
     "run_knn_cli",

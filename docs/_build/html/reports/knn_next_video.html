@@ -215,7 +215,7 @@
 <li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -262,12 +262,12 @@
         <article role="main" id="furo-main-content">
           <section id="knn-next-video-baseline">
 <h1>KNN Next-Video Baseline<a class="headerlink" href="#knn-next-video-baseline" title="Link to this heading">¶</a></h1>
-<p>This report summarizes the slate-ranking KNN model that predicts the next video a viewer will click.</p>
+<p>This report summarises the slate-ranking KNN model that predicts the next clicked video.</p>
 <ul class="simple">
 <li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
 <li><p>Split: validation</p></li>
-<li><p>Metric: accuracy on eligible slates (gold index present)</p></li>
-<li><p>Baseline column: accuracy from always recommending the most-frequent gold index for the study.</p></li>
+<li><p>Metric: accuracy on eligible slates (gold index present).</p></li>
+<li><p>Baseline column: accuracy from recommending the most frequent gold index.</p></li>
 <li><p>Δ column: improvement over that baseline accuracy.</p></li>
 <li><p>Random column: expected accuracy from uniformly sampling one candidate per slate.</p></li>
 <li><p>Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)</p></li>
@@ -464,6 +464,9 @@
 </tbody>
 </table>
 </div>
+</section>
+<section id="accuracy-curves">
+<h2>Accuracy Curves<a class="headerlink" href="#accuracy-curves" title="Link to this heading">¶</a></h2>
 <section id="study-1-gun-control-mturk-tfidf">
 <h3>Study 1 – Gun Control (MTurk) (TFIDF)<a class="headerlink" href="#study-1-gun-control-mturk-tfidf" title="Link to this heading">¶</a></h3>
 <p><img alt="Accuracy curve" src="../_images/study1.png" /></p>
@@ -507,7 +510,7 @@
 <li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.889 (baseline 0.540, Δ +0.349, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.338 (baseline 0.368, Δ -0.030, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.292 (baseline 0.479, Δ -0.187, k=2, eligible 1,200); averages: mean Δ +0.044, mean random 0.279.</p></li>
 <li><p>WORD2VEC: Study 1 – Gun Control (MTurk): 0.859 (baseline 0.540, Δ +0.319, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.268 (baseline 0.368, Δ -0.100, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.288 (baseline 0.479, Δ -0.191, k=10, eligible 1,200); averages: mean Δ +0.010, mean random 0.279.</p></li>
 <li><p>SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.801 (baseline 0.540, Δ +0.261, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.308 (baseline 0.368, Δ -0.060, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.322 (baseline 0.479, Δ -0.158, k=2, eligible 1,200); averages: mean Δ +0.015, mean random 0.279.</p></li>
-<li><p>Random values correspond to the expected accuracy from a uniform guess across the slate options.</p></li>
+<li><p>Random values approximate the accuracy from uniformly guessing across the slate.</p></li>
 </ul>
 </section>
 <section id="cross-study-holdouts">
@@ -619,6 +622,13 @@
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>0.304</p></td>
+<td class="text-right"><p>-0.175</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>4</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -684,7 +694,8 @@
 <li><a class="reference internal" href="#portfolio-summary">Portfolio Summary</a></li>
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
-<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a><ul>
+<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a></li>
+<li><a class="reference internal" href="#accuracy-curves">Accuracy Curves</a><ul>
 <li><a class="reference internal" href="#study-1-gun-control-mturk-tfidf">Study 1 – Gun Control (MTurk) (TFIDF)</a></li>
 <li><a class="reference internal" href="#study-2-minimum-wage-mturk-tfidf">Study 2 – Minimum Wage (MTurk) (TFIDF)</a></li>
 <li><a class="reference internal" href="#study-3-minimum-wage-yougov-tfidf">Study 3 – Minimum Wage (YouGov) (TFIDF)</a></li>

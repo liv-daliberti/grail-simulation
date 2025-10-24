@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Shared utilities for merging sweep outcomes and representing selections.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -329,41 +319,13 @@
 <a class="viewcode-back" href="../../api/common.html#common.OpinionStudySelection">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionStudySelection</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">StudyT</span><span class="p">,</span> <span class="n">OutcomeT</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Base selection container shared between opinion pipelines.</span>
-
-
-
-<span class="sd">    :ivar study: Attribute ``study``.</span>
-
-<span class="sd">    :vartype study: StudyT</span>
-
-<span class="sd">    :ivar outcome: Attribute ``outcome``.</span>
-
-<span class="sd">    :vartype outcome: OutcomeT</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pair a study descriptor with the selected outcome for that study.&quot;&quot;&quot;</span>
     <span class="n">study</span><span class="p">:</span> <span class="n">StudyT</span>
     <span class="n">outcome</span><span class="p">:</span> <span class="n">OutcomeT</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">        Return the configuration promoting this study outcome.</span>
-
-
-
-<span class="sd">        :returns: Result produced by ``config``.</span>
-
-<span class="sd">        :rtype: Any</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-
-
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the configuration object associated with the selection.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span></div>
 
 

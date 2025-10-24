@@ -10,6 +10,8 @@ pytest.importorskip("sklearn")
 pytest.importorskip("joblib")
 pytest.importorskip("gensim")
 
+from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+
 from knn import cli, evaluate
 from knn.data import DEFAULT_DATASET_SOURCE
 from knn.features import Word2VecConfig, prepare_training_documents
@@ -55,7 +57,7 @@ def test_prepare_training_documents_returns_docs() -> None:
         dataset,
         max_train=10,
         seed=0,
-        extra_fields=(),
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
     )
     assert docs and labels_id and labels_title
     assert labels_id[0] == "video12345"

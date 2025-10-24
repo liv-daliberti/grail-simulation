@@ -20,7 +20,7 @@ from __future__ import annotations
 import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..pipeline_context import OpinionSummary, StudySpec
 from ..pipeline_utils import (
@@ -37,68 +37,210 @@ from .shared import _feature_space_heading
 class _OpinionPortfolioStats:
     """Aggregate opinion-regression metrics across feature spaces and studies."""
 
-    total_weight: float = 0.0
-    weighted_mae_sum: float = 0.0
-    weighted_baseline_sum: float = 0.0
-    mae_entries: List[Tuple[float, str]] = field(default_factory=list)
-    delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+    totals: Dict[str, float] = field(
+        default_factory=lambda: {
+            "participants": 0.0,
+            "mae": 0.0,
+            "baseline_mae": 0.0,
+            "accuracy": 0.0,
+            "accuracy_baseline": 0.0,
+        }
+    )
+    weights: Dict[str, float] = field(
+        default_factory=lambda: {
+            "accuracy": 0.0,
+            "accuracy_baseline": 0.0,
+        }
+    )
+    entries: Dict[str, List[Tuple[float, str]]] = field(
+        default_factory=lambda: {
+            "mae": [],
+            "delta": [],
+            "accuracy": [],
+            "accuracy_delta": [],
+        }
+    )
 
     def record(self, summary: OpinionSummary, label: str) -> None:
         """Add a study summary to the aggregate."""
+
+        totals = self.totals
+        weights = self.weights
+        entries = self.entries
+
         mae_value = summary.mae
         baseline_value = summary.baseline_mae
         delta_value = summary.mae_delta
+        accuracy_value = summary.accuracy
+        baseline_accuracy = summary.baseline_accuracy
+        accuracy_delta = summary.accuracy_delta
         participants = float(summary.participants or 0)
 
         if mae_value is not None:
-            self.mae_entries.append((mae_value, label))
+            entries["mae"].append((mae_value, label))
             if participants > 0:
-                self.total_weight += participants
-                self.weighted_mae_sum += mae_value * participants
+                totals["participants"] += participants
+                totals["mae"] += mae_value * participants
                 if baseline_value is not None:
-                    self.weighted_baseline_sum += baseline_value * participants
+                    totals["baseline_mae"] += baseline_value * participants
 
         if delta_value is not None:
-            self.delta_entries.append((delta_value, label))
+            entries["delta"].append((delta_value, label))
 
-    def to_lines(self, heading: str = "### Portfolio Summary") -> List[str]:
-        """Render aggregated statistics as Markdown."""
-        if not self.mae_entries:
-            return []
+        if accuracy_value is not None:
+            entries["accuracy"].append((accuracy_value, label))
+        if accuracy_delta is not None:
+            entries["accuracy_delta"].append((accuracy_delta, label))
+        if participants > 0 and accuracy_value is not None:
+            totals["accuracy"] += accuracy_value * participants
+            weights["accuracy"] += participants
+            if baseline_accuracy is not None:
+                totals["accuracy_baseline"] += baseline_accuracy * participants
+                weights["accuracy_baseline"] += participants
 
-        lines: List[str] = [heading, ""]
+    def _weighted_summary(self) -> Dict[str, Optional[float]]:
+        participants = self.totals["participants"]
         weighted_mae = None
         weighted_baseline = None
         weighted_delta = None
-        if self.total_weight > 0:
-            weighted_mae = self.weighted_mae_sum / self.total_weight
-            if self.weighted_baseline_sum > 0:
-                weighted_baseline = self.weighted_baseline_sum / self.total_weight
+        if participants > 0:
+            weighted_mae = self.totals["mae"] / participants
+            if self.totals["baseline_mae"] > 0:
+                weighted_baseline = self.totals["baseline_mae"] / participants
                 weighted_delta = weighted_baseline - weighted_mae
 
-        if weighted_mae is not None:
-            lines.append(
-                f"- Weighted MAE {format_optional_float(weighted_mae)} "
-                f"across {format_count(int(self.total_weight))} participants."
+        accuracy_weight = self.weights["accuracy"]
+        weighted_accuracy = None
+        if accuracy_weight > 0:
+            weighted_accuracy = self.totals["accuracy"] / accuracy_weight
+
+        baseline_weight = self.weights["accuracy_baseline"]
+        weighted_accuracy_baseline = None
+        weighted_accuracy_delta = None
+        if baseline_weight > 0:
+            weighted_accuracy_baseline = (
+                self.totals["accuracy_baseline"] / baseline_weight
             )
-        if weighted_baseline is not None:
-            lines.append(
-                f"- Weighted baseline MAE {format_optional_float(weighted_baseline)} "
-                f"({format_delta(weighted_delta)} vs. final)."
+        if (
+            weighted_accuracy is not None
+            and weighted_accuracy_baseline is not None
+        ):
+            weighted_accuracy_delta = (
+                weighted_accuracy - weighted_accuracy_baseline
             )
-        if self.delta_entries:
-            best_delta, best_label = max(self.delta_entries, key=lambda item: item[0])
+
+        return {
+            "participants": participants,
+            "mae": weighted_mae,
+            "baseline_mae": weighted_baseline,
+            "mae_delta": weighted_delta,
+            "accuracy": weighted_accuracy,
+            "accuracy_baseline": weighted_accuracy_baseline,
+            "accuracy_delta": weighted_accuracy_delta,
+        }
+
+    def _weighted_lines(
+        self,
+        summary_values: Mapping[str, Optional[float]],
+        participant_count: int,
+    ) -> List[str]:
+        """Return Markdown bullets for weighted portfolio metrics."""
+
+        lines: List[str] = []
+        mae_value = summary_values["mae"]
+        if mae_value is not None:
             lines.append(
-                f"- Largest MAE reduction: {best_label} ({format_delta(best_delta)})."
+                f"- Weighted MAE {format_optional_float(mae_value)} "
+                f"across {format_count(participant_count)} participants."
             )
-        if len(self.mae_entries) > 1:
-            best_mae, best_label = min(self.mae_entries, key=lambda item: item[0])
-            worst_mae, worst_label = max(self.mae_entries, key=lambda item: item[0])
+
+        baseline_value = summary_values["baseline_mae"]
+        if baseline_value is not None:
+            lines.append(
+                f"- Weighted baseline MAE {format_optional_float(baseline_value)} "
+                f"({format_delta(summary_values['mae_delta'])} vs. final)."
+            )
+
+        accuracy_value = summary_values["accuracy"]
+        if accuracy_value is not None:
+            lines.append(
+                f"- Weighted directional accuracy {format_optional_float(accuracy_value)} "
+                f"across {format_count(participant_count)} participants."
+            )
+
+        baseline_accuracy = summary_values["accuracy_baseline"]
+        if baseline_accuracy is not None:
+            lines.append(
+                f"- Weighted baseline accuracy {format_optional_float(baseline_accuracy)} "
+                f"({format_delta(summary_values['accuracy_delta'])} vs. final)."
+            )
+
+        return lines
+
+    def _mae_lines(self) -> List[str]:
+        """Return qualitative bullets derived from MAE statistics."""
+
+        lines: List[str] = []
+        delta_entries = self.entries["delta"]
+        if delta_entries:
+            best_delta, best_label = max(delta_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Largest MAE reduction: {best_label} "
+                f"({format_delta(best_delta)})."
+            )
+
+        mae_entries = self.entries["mae"]
+        if len(mae_entries) > 1:
+            best_mae, best_label = min(mae_entries, key=lambda item: item[0])
+            worst_mae, worst_label = max(mae_entries, key=lambda item: item[0])
             lines.append(
                 f"- Lowest MAE: {best_label} ({format_optional_float(best_mae)}); "
                 f"Highest MAE: {worst_label} ({format_optional_float(worst_mae)})."
             )
 
+        return lines
+
+    def _accuracy_lines(self) -> List[str]:
+        """Return qualitative bullets derived from accuracy statistics."""
+
+        lines: List[str] = []
+        accuracy_entries = self.entries["accuracy"]
+        if accuracy_entries:
+            best_acc, best_label = max(accuracy_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Highest directional accuracy: {best_label} "
+                f"({format_optional_float(best_acc)})."
+            )
+            if len(accuracy_entries) > 1:
+                worst_acc, worst_label = min(accuracy_entries, key=lambda item: item[0])
+                lines.append(
+                    f"- Lowest directional accuracy: {worst_label} "
+                    f"({format_optional_float(worst_acc)})."
+                )
+
+        delta_entries = self.entries["accuracy_delta"]
+        if delta_entries:
+            best_delta_acc, best_label = max(delta_entries, key=lambda item: item[0])
+            lines.append(
+                f"- Largest accuracy gain vs. baseline: {best_label} "
+                f"({format_delta(best_delta_acc)})."
+            )
+
+        return lines
+
+    def to_lines(self, heading: str = "### Portfolio Summary") -> List[str]:
+        """Render aggregated statistics as Markdown."""
+
+        if not self.entries["mae"]:
+            return []
+
+        summary_values = self._weighted_summary()
+        participant_count = int(summary_values["participants"])
+        lines: List[str] = [heading, ""]
+
+        lines.extend(self._weighted_lines(summary_values, participant_count))
+        lines.extend(self._mae_lines())
+        lines.extend(self._accuracy_lines())
         lines.append("")
         return lines
 
@@ -130,6 +272,72 @@ def _opinion_report_intro(dataset_name: str, split: str) -> List[str]:
         ),
         "",
     ]
+
+
+def _opinion_unweighted_lines(summaries: Sequence[OpinionSummary]) -> List[str]:
+    """Return unweighted statistics across opinion summaries."""
+
+    lines: List[str] = []
+
+    def _range_text(values: Sequence[float]) -> str:
+        return (
+            f"{format_optional_float(min(values))} – "
+            f"{format_optional_float(max(values))}"
+        )
+
+    mae_values = [summary.mae for summary in summaries if summary.mae is not None]
+    if mae_values:
+        mean_mae = sum(mae_values) / len(mae_values)
+        stdev_mae = statistics.pstdev(mae_values) if len(mae_values) > 1 else 0.0
+        lines.append(
+            f"- Unweighted MAE {format_optional_float(mean_mae)} "
+            f"(σ {format_optional_float(stdev_mae)}, range "
+            f"{_range_text(mae_values)})."
+        )
+
+    delta_values = [summary.mae_delta for summary in summaries if summary.mae_delta is not None]
+    if delta_values:
+        mean_delta = sum(delta_values) / len(delta_values)
+        stdev_delta = statistics.pstdev(delta_values) if len(delta_values) > 1 else 0.0
+        lines.append(
+            f"- MAE delta mean {format_optional_float(mean_delta)} "
+            f"(σ {format_optional_float(stdev_delta)}, range "
+            f"{_range_text(delta_values)})."
+        )
+
+    accuracy_values = [
+        summary.accuracy for summary in summaries if summary.accuracy is not None
+    ]
+    if accuracy_values:
+        mean_accuracy = sum(accuracy_values) / len(accuracy_values)
+        stdev_accuracy = (
+            statistics.pstdev(accuracy_values) if len(accuracy_values) > 1 else 0.0
+        )
+        lines.append(
+            f"- Unweighted directional accuracy {format_optional_float(mean_accuracy)} "
+            f"(σ {format_optional_float(stdev_accuracy)}, range "
+            f"{_range_text(accuracy_values)})."
+        )
+
+    accuracy_delta_values = [
+        summary.accuracy_delta
+        for summary in summaries
+        if summary.accuracy_delta is not None
+    ]
+    if accuracy_delta_values:
+        mean_accuracy_delta = sum(accuracy_delta_values) / len(accuracy_delta_values)
+        stdev_accuracy_delta = (
+            statistics.pstdev(accuracy_delta_values)
+            if len(accuracy_delta_values) > 1
+            else 0.0
+        )
+        lines.append(
+            f"- Accuracy delta mean {format_optional_float(mean_accuracy_delta)} "
+            f"(σ {format_optional_float(stdev_accuracy_delta)}, range "
+            f"{_range_text(accuracy_delta_values)})."
+        )
+
+    return lines
 
 
 def _opinion_dataset_info(
@@ -384,25 +592,7 @@ def _cross_study_feature_lines(
         return []
     lines: List[str] = [_feature_space_heading(feature_space), ""]
     lines.extend(portfolio.to_lines("#### Weighted Summary"))
-
-    maes = [summary.mae for summary in summaries if summary.mae is not None]
-    if maes:
-        mean_mae = sum(maes) / len(maes)
-        stdev_mae = statistics.pstdev(maes) if len(maes) > 1 else 0.0
-        lines.append(
-            f"- Unweighted MAE {format_optional_float(mean_mae)} "
-            f"(σ {format_optional_float(stdev_mae)}, range "
-            f"{format_optional_float(min(maes))} – {format_optional_float(max(maes))})."
-        )
-    deltas = [summary.mae_delta for summary in summaries if summary.mae_delta is not None]
-    if deltas:
-        mean_delta = sum(deltas) / len(deltas)
-        stdev_delta = statistics.pstdev(deltas) if len(deltas) > 1 else 0.0
-        lines.append(
-            f"- MAE delta mean {format_optional_float(mean_delta)} "
-            f"(σ {format_optional_float(stdev_delta)}, range "
-            f"{format_optional_float(min(deltas))} – {format_optional_float(max(deltas))})."
-        )
+    lines.extend(_opinion_unweighted_lines(summaries))
     lines.append("")
     return lines
 

@@ -62,18 +62,28 @@ class BucketAccumulator:
     formatted: Counter[str] = field(default_factory=Counter)
 
     def record_seen(self, key: str) -> None:
+        """Increment the seen counter for ``key``."""
+
         self.seen[key] += 1
 
     def record_formatted(self, key: str) -> None:
+        """Increment the correctly formatted counter for ``key``."""
+
         self.formatted[key] += 1
 
     def record_parsed(self, key: str) -> None:
+        """Increment the parsed counter for ``key``."""
+
         self.parsed[key] += 1
 
     def record_eligible(self, key: str) -> None:
+        """Increment the eligible counter for ``key``."""
+
         self.eligible[key] += 1
 
     def record_correct(self, key: str) -> None:
+        """Increment the correct counter for ``key``."""
+
         self.correct[key] += 1
 
     def summary(
@@ -121,7 +131,7 @@ class BucketAccumulator:
 
 
 @dataclass(frozen=True)
-class Observation:
+class Observation:  # pylint: disable=too-many-instance-attributes
     """Snapshot of a single evaluation example."""
 
     issue_label: str
@@ -136,8 +146,16 @@ class Observation:
     is_correct: bool
 
 
+@dataclass(frozen=True)
+class EvaluationFilters:
+    """Filter selections applied during evaluation."""
+
+    issues: Sequence[str]
+    studies: Sequence[str]
+
+
 @dataclass
-class EvaluationAccumulator:
+class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
     """Stateful accumulator tracking evaluation metrics across examples."""
 
     position: BucketAccumulator = field(default_factory=BucketAccumulator)
@@ -300,8 +318,7 @@ class EvaluationAccumulator:
         model_name: str,
         dataset_name: str,
         eval_split: str,
-        requested_issues: Sequence[str],
-        requested_studies: Sequence[str],
+        filters: EvaluationFilters,
     ) -> Dict[str, Any]:
         """Return the metrics blob written to disk after evaluation."""
 
@@ -322,8 +339,8 @@ class EvaluationAccumulator:
             "split_single_vs_multi": self.single_multi_summary(),
             "group_metrics": self.group_summary(),
             "filters": {
-                "issues": list(requested_issues),
-                "studies": list(requested_studies),
+                "issues": list(filters.issues),
+                "studies": list(filters.studies),
             },
             "gold_index_distribution": gold_distribution,
             "baseline_most_frequent_gold_index": baseline_most_frequent,
@@ -612,8 +629,7 @@ def run_eval(args: Any) -> None:
         getattr(args, "deployment", None) or DEPLOYMENT_NAME,
         dataset_name,
         eval_split,
-        requested_issues,
-        requested_studies,
+        EvaluationFilters(issues=requested_issues, studies=requested_studies),
     )
 
     with open(metrics_json, "w", encoding="utf-8") as handle:

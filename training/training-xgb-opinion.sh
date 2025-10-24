@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Wrapper that runs the XGBoost pipeline for opinion tasks only.
+# Compatibility wrapper for tooling that previously targeted opinion-only runs.
+# training-xgb.sh now schedules both next-video and opinion tasks by default.
 
 set -euo pipefail
 
@@ -11,5 +12,5 @@ else
   ROOT_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 fi
 export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
-export XGB_PIPELINE_TASKS="opinion"
+export XGB_PIPELINE_TASKS="next_video,opinion"
 exec "${SCRIPT_DIR}/training-xgb.sh" "$@"

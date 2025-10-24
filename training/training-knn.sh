@@ -16,6 +16,41 @@
 
 set -euo pipefail
 
+ensure_dual_task_string() {
+  local raw="$1"
+  local -a tokens=()
+  local -a extras=()
+  declare -A seen=()
+  IFS=',' read -r -a tokens <<<"${raw}"
+  for token in "${tokens[@]}"; do
+    local trimmed
+    trimmed=$(echo "${token}" | tr '[:upper:]' '[:lower:]')
+    trimmed=$(echo "${trimmed}" | xargs 2>/dev/null || echo "${trimmed}")
+    [[ -z "${trimmed}" ]] && continue
+    case "${trimmed}" in
+      next|next_video|next-video|nextvideo|slate)
+        seen[next_video]=1
+        ;;
+      opinion|opinion_stage|opinion-stage)
+        seen[opinion]=1
+        ;;
+      *)
+        if [[ -z "${seen[${trimmed}]:-}" ]]; then
+          extras+=("${trimmed}")
+          seen["${trimmed}"]=1
+        fi
+        ;;
+    esac
+  done
+  local -a ordered=(next_video opinion)
+  for extra in "${extras[@]}"; do
+    if [[ "${extra}" != "next_video" && "${extra}" != "opinion" ]]; then
+      ordered+=("${extra}")
+    fi
+  done
+  printf '%s\n' "$(IFS=','; echo "${ordered[*]}")"
+}
+
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 if [[ -n "${TRAINING_REPO_ROOT:-}" ]]; then
   ROOT_DIR=$(realpath "${TRAINING_REPO_ROOT}")
@@ -75,7 +110,24 @@ export KNN_REUSE_FINAL
 : "${KNN_SLURM_ACCOUNT:=mltheory}"
 : "${KNN_SLURM_PARTITION:=mltheory}"
 : "${KNN_GPU_PARTITION:=${KNN_SLURM_PARTITION}}"
-: "${KNN_PIPELINE_TASKS:=next_video,opinion}"
+DEFAULT_KNN_PIPELINE_TASKS="next_video,opinion"
+: "${KNN_PIPELINE_TASKS:=${DEFAULT_KNN_PIPELINE_TASKS}}"
+KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
+: "${KNN_FEATURE_SPACES:=tfidf}"
+: "${KNN_K_SWEEP:=1,3,5,10}"
+: "${WORD2VEC_SWEEP_SIZES:=256}"
+: "${WORD2VEC_SWEEP_WINDOWS:=5}"
+: "${WORD2VEC_SWEEP_MIN_COUNTS:=1}"
+: "${WORD2VEC_SWEEP_EPOCHS:=10}"
+: "${WORD2VEC_SWEEP_WORKERS:=8}"
+
+export KNN_FEATURE_SPACES
+export KNN_K_SWEEP
+export WORD2VEC_SWEEP_SIZES
+export WORD2VEC_SWEEP_WINDOWS
+export WORD2VEC_SWEEP_MIN_COUNTS
+export WORD2VEC_SWEEP_EPOCHS
+export WORD2VEC_SWEEP_WORKERS
 
 export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT_DIR}"
@@ -131,6 +183,25 @@ append_flag_once() {
     fi
   done
   target+=("${flag}" "${value}")
+}
+
+ensure_tasks_flag() {
+  local -n target=$1
+  local default_value=${2:-"${KNN_PIPELINE_TASKS}"}
+  local canonical=""
+  for ((i = 0; i < ${#target[@]}; ++i)); do
+    if [[ "${target[i]}" == "--tasks" ]]; then
+      local existing="${target[i + 1]:-}"
+      canonical=$(ensure_dual_task_string "${existing}")
+      target[i + 1]="${canonical}"
+      break
+    fi
+  done
+  if [[ -z "${canonical}" ]]; then
+    canonical=$(ensure_dual_task_string "${default_value}")
+    append_flag_once target --tasks "${canonical}"
+  fi
+  printf '%s\n' "${canonical}"
 }
 
 check_python_env() {
@@ -243,16 +314,15 @@ run_plan() {
   check_python_env
   local -a args=("$@")
   ensure_reuse_final_flag args
-  append_flag_once args --tasks "${KNN_PIPELINE_TASKS}"
+  ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m knn.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
   ensure_reuse_final_flag pipeline_args
-  append_flag_once pipeline_args --tasks "${KNN_PIPELINE_TASKS}"
-
-  local pipeline_tasks_raw="${KNN_PIPELINE_TASKS:-next_video,opinion}"
+  local pipeline_tasks_raw
+  pipeline_tasks_raw=$(ensure_tasks_flag pipeline_args "${KNN_PIPELINE_TASKS}")
   IFS=',' read -r -a pipeline_task_tokens <<<"${pipeline_tasks_raw}"
   local want_next_video=0
   local want_opinion=0
@@ -674,7 +744,7 @@ run_finalize() {
   ensure_reuse_final_flag args
   echo "[knn] Running finalize stage locally."
   check_python_env
-  append_flag_once args --tasks "${KNN_PIPELINE_TASKS}"
+  ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m knn.pipeline --stage finalize "${args[@]}"
 }
 
@@ -700,7 +770,7 @@ run_sweeps_worker() {
     sweep_args+=(--sweep-task-count "${count}")
   fi
   check_python_env
-  append_flag_once args --tasks "${KNN_PIPELINE_TASKS}"
+  ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m knn.pipeline --stage sweeps "${sweep_args[@]}" "${args[@]}"
 }
 

@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Utilities for assembling prompt documents from cleaned GRAIL datasets."""
 
 from __future__ import annotations
 
@@ -64,6 +54,8 @@ DEFAULT_TITLE_DIRS = [
     f"{_TITLE_INDEX_ROOT}/trees_wage",
 ]
 
+DEFAULT_EXTRA_TEXT_FIELDS: Tuple[str, ...] = ("viewer_profile", "state_text")
+
 EXTRA_FIELD_LABELS: Dict[str, str] = {
     "pid1": "Party identification",
     "pid2": "Party lean",
@@ -87,6 +79,35 @@ EXTRA_FIELD_LABELS.update(prompt_constants.MIN_WAGE_FIELD_LABELS)
 EXTRA_FIELD_LABELS.update(prompt_constants.GUN_FIELD_LABELS)
 
 _default_title_resolver_cache: Optional[TitleResolver] = None
+
+
+def merge_default_extra_fields(extra_fields: Sequence[str] | None) -> Tuple[str, ...]:
+    """
+    Ensure the default extra text fields are always present.
+
+    :param extra_fields: Caller-provided sequence of extra field names.
+    :type extra_fields: Sequence[str] | None
+    :returns: Tuple containing the default field list plus any additional ones.
+    :rtype: Tuple[str, ...]
+    """
+
+    ordered: List[str] = []
+    seen: set[str] = set()
+
+    for field in DEFAULT_EXTRA_TEXT_FIELDS:
+        token = field.strip()
+        if token and token not in seen:
+            ordered.append(token)
+            seen.add(token)
+
+    if extra_fields:
+        for field in extra_fields:
+            token = str(field or "").strip()
+            if token and token not in seen:
+                ordered.append(token)
+                seen.add(token)
+
+    return tuple(ordered)
 
 
 def default_title_resolver() -> TitleResolver:
@@ -957,9 +978,11 @@ class PromptDocumentBuilder:
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
+    "DEFAULT_EXTRA_TEXT_FIELDS",
     "EXTRA_FIELD_LABELS",
     "PromptDocumentBuilder",
     "create_prompt_document_builder",
     "default_title_resolver",
     "load_trajectory_entries",
+    "merge_default_extra_fields",
 ]

@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Reusable option builders shared across pipeline CLIs."""
 
 from __future__ import annotations
 
@@ -31,23 +21,7 @@ import argparse
 
 
 def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
-    """
-
-    Add the ``--jobs`` argument controlling parallelism.
-
-
-
-    :param parser: Value provided for ``parser``.
-
-    :type parser: argparse.ArgumentParser
-
-    :returns: ``None``.
-
-    :rtype: None
-
-    """
-
-
+    """Register the ``--jobs`` argument controlling worker parallelism."""
     parser.add_argument(
         "--jobs",
         type=int,
@@ -57,23 +31,7 @@ def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
-    """
-
-    Add the common stage and sweep-task arguments.
-
-
-
-    :param parser: Value provided for ``parser``.
-
-    :type parser: argparse.ArgumentParser
-
-    :returns: ``None``.
-
-    :rtype: None
-
-    """
-
-
+    """Register shared stage-selection arguments used by pipelines."""
     parser.add_argument(
         "--stage",
         choices=["full", "plan", "sweeps", "finalize", "reports"],
@@ -95,23 +53,7 @@ def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
-    """
-
-    Add the shared ``--log-level`` argument.
-
-
-
-    :param parser: Value provided for ``parser``.
-
-    :type parser: argparse.ArgumentParser
-
-    :returns: ``None``.
-
-    :rtype: None
-
-    """
-
-
+    """Add the shared ``--log-level`` argument."""
     parser.add_argument(
         "--log-level",
         "--log_level",
@@ -121,23 +63,7 @@ def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_overwrite_argument(parser: argparse.ArgumentParser) -> None:
-    """
-
-    Add the standard ``--overwrite`` boolean flag.
-
-
-
-    :param parser: Value provided for ``parser``.
-
-    :type parser: argparse.ArgumentParser
-
-    :returns: ``None``.
-
-    :rtype: None
-
-    """
-
-
+    """Expose the standard ``--overwrite`` boolean flag."""
     parser.add_argument(
         "--overwrite",
         action="store_true",

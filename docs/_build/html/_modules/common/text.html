@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;String normalisation helpers shared across experiments.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -298,23 +288,7 @@
 <div class="viewcode-block" id="canon_text">
 <a class="viewcode-back" href="../../api/common.html#common.canon_text">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canon_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Return a lowercased alphanumeric canonical representation.</span>
-
-
-
-<span class="sd">    :param text: Value provided for ``text``.</span>
-
-<span class="sd">    :type text: str | None</span>
-
-<span class="sd">    :returns: Result produced by ``canon_text``.</span>
-
-<span class="sd">    :rtype: str</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a lowercased alphanumeric representation of ``text``.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CANON_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span></div>
@@ -324,23 +298,7 @@
 <div class="viewcode-block" id="canon_video_id">
 <a class="viewcode-back" href="../../api/xgb.html#common.canon_video_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canon_video_id</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Normalise a YouTube id when present in ``value``.</span>
-
-
-
-<span class="sd">    :param value: Value provided for ``value``.</span>
-
-<span class="sd">    :type value: object | None</span>
-
-<span class="sd">    :returns: Result produced by ``canon_video_id``.</span>
-
-<span class="sd">    :rtype: str</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract a canonical YouTube id from ``value`` when possible.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -355,23 +313,7 @@
 <div class="viewcode-block" id="split_env_list">
 <a class="viewcode-back" href="../../api/common.html#common.split_env_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">split_env_list</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Parse a colon/comma/space separated list from an environment string.</span>
-
-
-
-<span class="sd">    :param value: Value provided for ``value``.</span>
-
-<span class="sd">    :type value: str | None</span>
-
-<span class="sd">    :returns: Result produced by ``split_env_list``.</span>
-
-<span class="sd">    :rtype: list[str]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse colon/comma/space separated environment list values.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">return</span> <span class="p">[</span>
@@ -385,23 +327,7 @@
 <div class="viewcode-block" id="resolve_paths_from_env">
 <a class="viewcode-back" href="../../api/common.html#common.resolve_paths_from_env">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_paths_from_env</span><span class="p">(</span><span class="n">variable_names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Collect file or directory paths from a set of environment variables.</span>
-
-
-
-<span class="sd">    :param variable_names: Value provided for ``variable_names``.</span>
-
-<span class="sd">    :type variable_names: Iterable[str]</span>
-
-<span class="sd">    :returns: Result produced by ``resolve_paths_from_env``.</span>
-
-<span class="sd">    :rtype: list[str]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate filesystem paths from the given environment variables.&quot;&quot;&quot;</span>
     <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">variable_names</span><span class="p">:</span>
         <span class="n">paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">split_env_list</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>

@@ -215,7 +215,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -1304,15 +1304,7 @@ answer tags associated with <cite>format_reward()</cite>.</p>
 </section>
 <section id="module-open_r1.utils">
 <span id="utility-modules"></span><h2>Utility Modules<a class="headerlink" href="#module-open_r1.utils" title="Link to this heading">¶</a></h2>
-<p>Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p>Convenience exports for Open-R1 model and dataset utilities.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.get_dataset">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.</span></span><span class="sig-name descname"><span class="pre">get_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/data.html#get_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.get_dataset" title="Link to this definition">¶</a></dt>
@@ -1689,15 +1681,7 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 </dl>
 </dd></dl>
 
-<p id="module-open_r1.utils.evaluation">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-open_r1.utils.evaluation">Helpers for launching and configuring Open-R1 evaluation runs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="open_r1.utils.evaluation.get_lighteval_tasks">
 <span class="sig-prename descclassname"><span class="pre">open_r1.utils.evaluation.</span></span><span class="sig-name descname"><span class="pre">get_lighteval_tasks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/evaluation.html#get_lighteval_tasks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.evaluation.get_lighteval_tasks" title="Link to this definition">¶</a></dt>

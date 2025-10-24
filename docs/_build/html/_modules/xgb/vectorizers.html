@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Vectoriser abstractions used by the Grail Simulation XGBoost models.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -414,7 +404,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration parameters for TF-IDF vectorisation.</span>
 
-<span class="sd">    :ivar max_features: Maximum number of features retained after fitting.</span>
+<span class="sd">    :param max_features: Maximum number of features retained after fitting.</span>
+<span class="sd">    :type max_features: int | None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">200_000</span></div>
@@ -546,13 +537,20 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration for Word2Vec-based embeddings.</span>
 
-<span class="sd">    :ivar vector_size: Dimensionality of the generated embeddings.</span>
-<span class="sd">    :ivar window: Context window size for Word2Vec training.</span>
-<span class="sd">    :ivar min_count: Minimum token frequency required for inclusion.</span>
-<span class="sd">    :ivar epochs: Number of training epochs for the Word2Vec model.</span>
-<span class="sd">    :ivar workers: Number of worker threads used during training.</span>
-<span class="sd">    :ivar seed: Random seed for reproducibility.</span>
-<span class="sd">    :ivar model_dir: Directory containing persisted Word2Vec artefacts.</span>
+<span class="sd">    :param vector_size: Dimensionality of the generated embeddings.</span>
+<span class="sd">    :type vector_size: int</span>
+<span class="sd">    :param window: Context window size for Word2Vec training.</span>
+<span class="sd">    :type window: int</span>
+<span class="sd">    :param min_count: Minimum token frequency required for inclusion.</span>
+<span class="sd">    :type min_count: int</span>
+<span class="sd">    :param epochs: Number of training epochs for the Word2Vec model.</span>
+<span class="sd">    :type epochs: int</span>
+<span class="sd">    :param workers: Number of worker threads used during training.</span>
+<span class="sd">    :type workers: int</span>
+<span class="sd">    :param seed: Random seed for reproducibility.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param model_dir: Directory containing persisted Word2Vec artefacts.</span>
+<span class="sd">    :type model_dir: str | None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">vector_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span>
@@ -704,10 +702,14 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration bundle for SentenceTransformer vectorisation.</span>
 
-<span class="sd">    :ivar model_name: Hugging Face model identifier used for encoding.</span>
-<span class="sd">    :ivar device: Computation device override (e.g. ``&quot;cuda&quot;`` or ``&quot;cpu&quot;``).</span>
-<span class="sd">    :ivar batch_size: Batch size used during encoding.</span>
-<span class="sd">    :ivar normalize: Flag controlling embedding normalisation.</span>
+<span class="sd">    :param model_name: Hugging Face model identifier used for encoding.</span>
+<span class="sd">    :type model_name: str</span>
+<span class="sd">    :param device: Computation device override (e.g. ``&quot;cuda&quot;`` or ``&quot;cpu&quot;``).</span>
+<span class="sd">    :type device: str | None</span>
+<span class="sd">    :param batch_size: Batch size used during encoding.</span>
+<span class="sd">    :type batch_size: int</span>
+<span class="sd">    :param normalize: Flag controlling embedding normalisation.</span>
+<span class="sd">    :type normalize: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sentence-transformers/all-mpnet-base-v2&quot;</span>

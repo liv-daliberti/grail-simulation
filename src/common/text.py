@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""String normalisation helpers shared across experiments."""
 
 from __future__ import annotations
 
@@ -40,46 +30,14 @@ CANON_RE = re.compile(_CANON_EXPR)
 
 
 def canon_text(text: str | None) -> str:
-    """
-
-    Return a lowercased alphanumeric canonical representation.
-
-
-
-    :param text: Value provided for ``text``.
-
-    :type text: str | None
-
-    :returns: Result produced by ``canon_text``.
-
-    :rtype: str
-
-    """
-
-
+    """Return a lowercased alphanumeric representation of ``text``."""
     if not text:
         return ""
     return CANON_RE.sub("", text.lower().strip())
 
 
 def canon_video_id(value: object | None) -> str:
-    """
-
-    Normalise a YouTube id when present in ``value``.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: object | None
-
-    :returns: Result produced by ``canon_video_id``.
-
-    :rtype: str
-
-    """
-
-
+    """Extract a canonical YouTube id from ``value`` when possible."""
     if value is None:
         return ""
     if not isinstance(value, str):
@@ -91,23 +49,7 @@ def canon_video_id(value: object | None) -> str:
 
 
 def split_env_list(value: str | None) -> list[str]:
-    """
-
-    Parse a colon/comma/space separated list from an environment string.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: str | None
-
-    :returns: Result produced by ``split_env_list``.
-
-    :rtype: list[str]
-
-    """
-
-
+    """Parse colon/comma/space separated environment list values."""
     if not value:
         return []
     return [
@@ -118,23 +60,7 @@ def split_env_list(value: str | None) -> list[str]:
 
 
 def resolve_paths_from_env(variable_names: Iterable[str]) -> list[str]:
-    """
-
-    Collect file or directory paths from a set of environment variables.
-
-
-
-    :param variable_names: Value provided for ``variable_names``.
-
-    :type variable_names: Iterable[str]
-
-    :returns: Result produced by ``resolve_paths_from_env``.
-
-    :rtype: list[str]
-
-    """
-
-
+    """Aggregate filesystem paths from the given environment variables."""
     paths: list[str] = []
     for name in variable_names:
         paths.extend(split_env_list(os.environ.get(name)))

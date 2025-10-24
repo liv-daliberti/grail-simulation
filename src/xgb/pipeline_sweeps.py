@@ -714,11 +714,17 @@ def _load_opinion_metrics_from_disk(
 
     results: Dict[str, Dict[str, object]] = {}
     for spec in studies:
-        metrics_path = (
-            opinion_dir / spec.key / f"opinion_xgb_{spec.key}_validation_metrics.json"
-        )
+        metrics_path = opinion_dir / spec.key / f"opinion_xgb_{spec.key}_validation_metrics.json"
         if not metrics_path.exists():
-            continue
+            legacy_path = (
+                opinion_dir
+                / "opinion"
+                / spec.key
+                / f"opinion_xgb_{spec.key}_validation_metrics.json"
+            )
+            if not legacy_path.exists():
+                continue
+            metrics_path = legacy_path
         metrics = dict(_load_metrics(metrics_path))
         results[spec.key] = metrics
     return results

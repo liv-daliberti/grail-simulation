@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""SentenceTransformer configuration and encoding helpers used in pipelines."""
 
 from __future__ import annotations
 
@@ -42,31 +32,7 @@ __all__ = ["SentenceTransformerConfig", "SentenceTransformerEncoder"]
 
 @dataclass(frozen=True)
 class SentenceTransformerConfig:
-    """
-
-    Configuration controlling SentenceTransformer inference.
-
-
-
-    :ivar model_name: Attribute ``model_name``.
-
-    :vartype model_name: str
-
-    :ivar device: Attribute ``device``.
-
-    :vartype device: str | None
-
-    :ivar batch_size: Attribute ``batch_size``.
-
-    :vartype batch_size: int
-
-    :ivar normalize: Attribute ``normalize``.
-
-    :vartype normalize: bool
-
-    """
-
-
+    """Runtime options controlling SentenceTransformer inference."""
     model_name: str = "sentence-transformers/all-mpnet-base-v2"
     device: str | None = None
     batch_size: int = 32

@@ -10,7 +10,7 @@ Each report captures the latest KNN baseline performance at a glance.
 - `next_video/README.md` — validation accuracy, confidence intervals, baseline deltas, and training versus validation accuracy curves for the production slate task.
 - `opinion/README.md` — post-study opinion regression metrics, plus heatmaps under `reports/knn/opinion/`.
 
-All referenced Markdown artifacts live under `models/knn/…`. Re-running the pipeline refreshes them with new metrics.
+All referenced Markdown artifacts live under `models/knn/next_video` or `models/knn/opinions`. Re-running the pipeline refreshes them with new metrics.
 
 ## Refreshing Reports
 

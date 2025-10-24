@@ -68,8 +68,8 @@ def _build_catalog_report(
         )
     lines.append("")
     lines.append(
-        "All referenced Markdown artifacts live under `models/knn/…`. Re-running the pipeline "
-        "refreshes them with new metrics."
+        "All referenced Markdown artifacts live under `models/knn/next_video` or "
+        "`models/knn/opinions`. Re-running the pipeline refreshes them with new metrics."
     )
     lines.append("")
     lines.append("## Refreshing Reports")

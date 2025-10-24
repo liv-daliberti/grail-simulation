@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,16 +269,10 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
+<span class="sd">&quot;&quot;&quot;Data structures describing the Grail Simulation XGBoost pipeline.</span>
 
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
+<span class="sd">Defines sweep configuration objects, execution contexts, and selection</span>
+<span class="sd">results exchanged between the sweep, evaluation, and reporting stages.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -304,26 +298,26 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Hyper-parameter configuration evaluated during XGBoost sweeps.</span>
 
-<span class="sd">    :ivar text_vectorizer: Vectoriser identifier (e.g. ``tfidf``).</span>
-<span class="sd">    :vartype text_vectorizer: str</span>
-<span class="sd">    :ivar vectorizer_tag: Short tag used in directory and report labels.</span>
-<span class="sd">    :vartype vectorizer_tag: str</span>
-<span class="sd">    :ivar learning_rate: Booster learning rate.</span>
-<span class="sd">    :vartype learning_rate: float</span>
-<span class="sd">    :ivar max_depth: Tree depth explored during sweeps.</span>
-<span class="sd">    :vartype max_depth: int</span>
-<span class="sd">    :ivar n_estimators: Number of boosting rounds.</span>
-<span class="sd">    :vartype n_estimators: int</span>
-<span class="sd">    :ivar subsample: Row subsampling ratio.</span>
-<span class="sd">    :vartype subsample: float</span>
-<span class="sd">    :ivar colsample_bytree: Column subsampling ratio per tree.</span>
-<span class="sd">    :vartype colsample_bytree: float</span>
-<span class="sd">    :ivar reg_lambda: L2 regularisation weight.</span>
-<span class="sd">    :vartype reg_lambda: float</span>
-<span class="sd">    :ivar reg_alpha: L1 regularisation weight.</span>
-<span class="sd">    :vartype reg_alpha: float</span>
-<span class="sd">    :ivar vectorizer_cli: Extra CLI arguments associated with the vectoriser.</span>
-<span class="sd">    :vartype vectorizer_cli: Tuple[str, ...]</span>
+<span class="sd">    :param text_vectorizer: Vectoriser identifier (e.g. ``tfidf``).</span>
+<span class="sd">    :type text_vectorizer: str</span>
+<span class="sd">    :param vectorizer_tag: Short tag used in directory and report labels.</span>
+<span class="sd">    :type vectorizer_tag: str</span>
+<span class="sd">    :param learning_rate: Booster learning rate.</span>
+<span class="sd">    :type learning_rate: float</span>
+<span class="sd">    :param max_depth: Tree depth explored during sweeps.</span>
+<span class="sd">    :type max_depth: int</span>
+<span class="sd">    :param n_estimators: Number of boosting rounds.</span>
+<span class="sd">    :type n_estimators: int</span>
+<span class="sd">    :param subsample: Row subsampling ratio.</span>
+<span class="sd">    :type subsample: float</span>
+<span class="sd">    :param colsample_bytree: Column subsampling ratio per tree.</span>
+<span class="sd">    :type colsample_bytree: float</span>
+<span class="sd">    :param reg_lambda: L2 regularisation weight.</span>
+<span class="sd">    :type reg_lambda: float</span>
+<span class="sd">    :param reg_alpha: L1 regularisation weight.</span>
+<span class="sd">    :type reg_alpha: float</span>
+<span class="sd">    :param vectorizer_cli: Extra CLI arguments associated with the vectoriser.</span>
+<span class="sd">    :type vectorizer_cli: Tuple[str, ...]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">text_vectorizer</span><span class="p">:</span> <span class="nb">str</span>
@@ -343,6 +337,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Produce a filesystem- and report-friendly identifier.</span>
 
+<span class="sd">        :param self: Sweep configuration instance being labelled.</span>
+<span class="sd">        :type self: SweepConfig</span>
 <span class="sd">        :returns: Composite label encoding vectoriser and booster parameters.</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -425,22 +421,22 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Metrics captured for a (study, configuration) sweep evaluation.</span>
 
-<span class="sd">    :ivar order_index: Deterministic ordering index assigned to the task.</span>
-<span class="sd">    :vartype order_index: int</span>
-<span class="sd">    :ivar study: Study metadata associated with the sweep.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar config: Evaluated sweep configuration.</span>
-<span class="sd">    :vartype config: SweepConfig</span>
-<span class="sd">    :ivar accuracy: Validation accuracy achieved by the configuration.</span>
-<span class="sd">    :vartype accuracy: float</span>
-<span class="sd">    :ivar coverage: Validation coverage achieved by the configuration.</span>
-<span class="sd">    :vartype coverage: float</span>
-<span class="sd">    :ivar evaluated: Number of evaluation rows.</span>
-<span class="sd">    :vartype evaluated: int</span>
-<span class="sd">    :ivar metrics_path: Filesystem path to the metrics artefact.</span>
-<span class="sd">    :vartype metrics_path: Path</span>
-<span class="sd">    :ivar metrics: Raw metrics payload loaded from disk.</span>
-<span class="sd">    :vartype metrics: Mapping[str, object]</span>
+<span class="sd">    :param order_index: Deterministic ordering index assigned to the task.</span>
+<span class="sd">    :type order_index: int</span>
+<span class="sd">    :param study: Study metadata associated with the sweep.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param config: Evaluated sweep configuration.</span>
+<span class="sd">    :type config: SweepConfig</span>
+<span class="sd">    :param accuracy: Validation accuracy achieved by the configuration.</span>
+<span class="sd">    :type accuracy: float</span>
+<span class="sd">    :param coverage: Validation coverage achieved by the configuration.</span>
+<span class="sd">    :type coverage: float</span>
+<span class="sd">    :param evaluated: Number of evaluation rows.</span>
+<span class="sd">    :type evaluated: int</span>
+<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :type metrics_path: Path</span>
+<span class="sd">    :param metrics: Raw metrics payload loaded from disk.</span>
+<span class="sd">    :type metrics: Mapping[str, object]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
@@ -462,22 +458,22 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Container describing a single sweep execution request.</span>
 
-<span class="sd">    :ivar index: Stable index used for ordering and scheduling.</span>
-<span class="sd">    :vartype index: int</span>
-<span class="sd">    :ivar study: Study metadata being evaluated.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar config: Sweep configuration executed for the study.</span>
-<span class="sd">    :vartype config: SweepConfig</span>
-<span class="sd">    :ivar base_cli: Baseline CLI arguments shared across tasks.</span>
-<span class="sd">    :vartype base_cli: Tuple[str, ...]</span>
-<span class="sd">    :ivar extra_cli: Additional passthrough CLI arguments.</span>
-<span class="sd">    :vartype extra_cli: Tuple[str, ...]</span>
-<span class="sd">    :ivar run_root: Directory under which sweep artefacts are stored.</span>
-<span class="sd">    :vartype run_root: Path</span>
-<span class="sd">    :ivar tree_method: Tree construction algorithm supplied to XGBoost.</span>
-<span class="sd">    :vartype tree_method: str</span>
-<span class="sd">    :ivar metrics_path: Target path for the ``metrics.json`` artefact.</span>
-<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    :param index: Stable index used for ordering and scheduling.</span>
+<span class="sd">    :type index: int</span>
+<span class="sd">    :param study: Study metadata being evaluated.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param config: Sweep configuration executed for the study.</span>
+<span class="sd">    :type config: SweepConfig</span>
+<span class="sd">    :param base_cli: Baseline CLI arguments shared across tasks.</span>
+<span class="sd">    :type base_cli: Tuple[str, ...]</span>
+<span class="sd">    :param extra_cli: Additional passthrough CLI arguments.</span>
+<span class="sd">    :type extra_cli: Tuple[str, ...]</span>
+<span class="sd">    :param run_root: Directory under which sweep artefacts are stored.</span>
+<span class="sd">    :type run_root: Path</span>
+<span class="sd">    :param tree_method: Tree construction algorithm supplied to XGBoost.</span>
+<span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param metrics_path: Target path for the ``metrics.json`` artefact.</span>
+<span class="sd">    :type metrics_path: Path</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
@@ -498,10 +494,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Selected configuration for the final evaluation of a participant study.</span>
 
-<span class="sd">    :ivar study: Study metadata chosen for final evaluation.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar outcome: Winning sweep outcome leveraged for reporting.</span>
-<span class="sd">    :vartype outcome: SweepOutcome</span>
+<span class="sd">    :param study: Study metadata chosen for final evaluation.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param outcome: Winning sweep outcome leveraged for reporting.</span>
+<span class="sd">    :type outcome: SweepOutcome</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
 
 
@@ -513,16 +509,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    CLI arguments shared across sweep invocations.</span>
 
-<span class="sd">    :ivar base_cli: Baseline CLI arguments applied to every sweep run.</span>
-<span class="sd">    :vartype base_cli: Sequence[str]</span>
-<span class="sd">    :ivar extra_cli: Additional CLI flags appended for each invocation.</span>
-<span class="sd">    :vartype extra_cli: Sequence[str]</span>
-<span class="sd">    :ivar sweep_dir: Root directory where sweep artefacts are written.</span>
-<span class="sd">    :vartype sweep_dir: Path</span>
-<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
-<span class="sd">    :vartype tree_method: str</span>
-<span class="sd">    :ivar jobs: Parallel worker count for sweep execution.</span>
-<span class="sd">    :vartype jobs: int</span>
+<span class="sd">    :param base_cli: Baseline CLI arguments applied to every sweep run.</span>
+<span class="sd">    :type base_cli: Sequence[str]</span>
+<span class="sd">    :param extra_cli: Additional CLI flags appended for each invocation.</span>
+<span class="sd">    :type extra_cli: Sequence[str]</span>
+<span class="sd">    :param sweep_dir: Root directory where sweep artefacts are written.</span>
+<span class="sd">    :type sweep_dir: Path</span>
+<span class="sd">    :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param jobs: Parallel worker count for sweep execution.</span>
+<span class="sd">    :type jobs: int</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -540,18 +536,18 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Runtime configuration for final slate evaluations.</span>
 
-<span class="sd">    :ivar base_cli: Baseline CLI arguments for :mod:`xgb.cli`.</span>
-<span class="sd">    :vartype base_cli: Sequence[str]</span>
-<span class="sd">    :ivar extra_cli: Additional CLI arguments forwarded to each invocation.</span>
-<span class="sd">    :vartype extra_cli: Sequence[str]</span>
-<span class="sd">    :ivar out_dir: Target directory for final evaluation artefacts.</span>
-<span class="sd">    :vartype out_dir: Path</span>
-<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
-<span class="sd">    :vartype tree_method: str</span>
-<span class="sd">    :ivar save_model_dir: Optional directory for persisted models.</span>
-<span class="sd">    :vartype save_model_dir: Optional[Path]</span>
-<span class="sd">    :ivar reuse_existing: Flag controlling reuse of cached metrics.</span>
-<span class="sd">    :vartype reuse_existing: bool</span>
+<span class="sd">    :param base_cli: Baseline CLI arguments for :mod:`xgb.cli`.</span>
+<span class="sd">    :type base_cli: Sequence[str]</span>
+<span class="sd">    :param extra_cli: Additional CLI arguments forwarded to each invocation.</span>
+<span class="sd">    :type extra_cli: Sequence[str]</span>
+<span class="sd">    :param out_dir: Target directory for final evaluation artefacts.</span>
+<span class="sd">    :type out_dir: Path</span>
+<span class="sd">    :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param save_model_dir: Optional directory for persisted models.</span>
+<span class="sd">    :type save_model_dir: Optional[Path]</span>
+<span class="sd">    :param reuse_existing: Flag controlling reuse of cached metrics.</span>
+<span class="sd">    :type reuse_existing: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -571,28 +567,28 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inputs required to launch the opinion regression stage.</span>
 
-<span class="sd">    :ivar dataset: Dataset identifier passed to the opinion stage.</span>
-<span class="sd">    :vartype dataset: str</span>
-<span class="sd">    :ivar cache_dir: Cache directory for dataset loading.</span>
-<span class="sd">    :vartype cache_dir: str</span>
-<span class="sd">    :ivar base_out_dir: Base output directory for opinion artefacts.</span>
-<span class="sd">    :vartype base_out_dir: Path</span>
-<span class="sd">    :ivar extra_fields: Additional prompt columns appended to documents.</span>
-<span class="sd">    :vartype extra_fields: Sequence[str]</span>
-<span class="sd">    :ivar studies: Opinion study keys to evaluate.</span>
-<span class="sd">    :vartype studies: Sequence[str]</span>
-<span class="sd">    :ivar max_participants: Optional cap on participants per study.</span>
-<span class="sd">    :vartype max_participants: int</span>
-<span class="sd">    :ivar seed: Random seed for subsampling.</span>
-<span class="sd">    :vartype seed: int</span>
-<span class="sd">    :ivar max_features: Maximum TF-IDF features (``None`` keeps all).</span>
-<span class="sd">    :vartype max_features: Optional[int]</span>
-<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
-<span class="sd">    :vartype tree_method: str</span>
-<span class="sd">    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
-<span class="sd">    :vartype overwrite: bool</span>
-<span class="sd">    :ivar reuse_existing: Flag enabling reuse of cached results.</span>
-<span class="sd">    :vartype reuse_existing: bool</span>
+<span class="sd">    :param dataset: Dataset identifier passed to the opinion stage.</span>
+<span class="sd">    :type dataset: str</span>
+<span class="sd">    :param cache_dir: Cache directory for dataset loading.</span>
+<span class="sd">    :type cache_dir: str</span>
+<span class="sd">    :param base_out_dir: Base output directory for opinion artefacts.</span>
+<span class="sd">    :type base_out_dir: Path</span>
+<span class="sd">    :param extra_fields: Additional prompt columns appended to documents.</span>
+<span class="sd">    :type extra_fields: Sequence[str]</span>
+<span class="sd">    :param studies: Opinion study keys to evaluate.</span>
+<span class="sd">    :type studies: Sequence[str]</span>
+<span class="sd">    :param max_participants: Optional cap on participants per study.</span>
+<span class="sd">    :type max_participants: int</span>
+<span class="sd">    :param seed: Random seed for subsampling.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param max_features: Maximum TF-IDF features (``None`` keeps all).</span>
+<span class="sd">    :type max_features: Optional[int]</span>
+<span class="sd">    :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
+<span class="sd">    :type overwrite: bool</span>
+<span class="sd">    :param reuse_existing: Flag enabling reuse of cached results.</span>
+<span class="sd">    :type reuse_existing: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -617,30 +613,30 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Metrics captured for a (study, configuration) combination during opinion sweeps.</span>
 
-<span class="sd">    :ivar order_index: Deterministic ordering index assigned to the task.</span>
-<span class="sd">    :vartype order_index: int</span>
-<span class="sd">    :ivar study: Study metadata associated with the sweep.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar config: Evaluated sweep configuration.</span>
-<span class="sd">    :vartype config: SweepConfig</span>
-<span class="sd">    :ivar mae: Mean absolute error achieved by the configuration.</span>
-<span class="sd">    :vartype mae: float</span>
-<span class="sd">    :ivar rmse: Root mean squared error achieved by the configuration.</span>
-<span class="sd">    :vartype rmse: float</span>
-<span class="sd">    :ivar r_squared: Coefficient of determination achieved by the configuration.</span>
-<span class="sd">    :vartype r_squared: float</span>
-<span class="sd">    :ivar metrics_path: Filesystem path to the metrics artefact.</span>
-<span class="sd">    :vartype metrics_path: Path</span>
-<span class="sd">    :ivar metrics: Raw metrics payload loaded from disk.</span>
-<span class="sd">    :vartype metrics: Mapping[str, object]</span>
-<span class="sd">    :ivar accuracy: Directional accuracy achieved by the configuration.</span>
-<span class="sd">    :vartype accuracy: Optional[float]</span>
-<span class="sd">    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.</span>
-<span class="sd">    :vartype baseline_accuracy: Optional[float]</span>
-<span class="sd">    :ivar accuracy_delta: Improvement in accuracy over the baseline.</span>
-<span class="sd">    :vartype accuracy_delta: Optional[float]</span>
-<span class="sd">    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.</span>
-<span class="sd">    :vartype eligible: Optional[int]</span>
+<span class="sd">    :param order_index: Deterministic ordering index assigned to the task.</span>
+<span class="sd">    :type order_index: int</span>
+<span class="sd">    :param study: Study metadata associated with the sweep.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param config: Evaluated sweep configuration.</span>
+<span class="sd">    :type config: SweepConfig</span>
+<span class="sd">    :param mae: Mean absolute error achieved by the configuration.</span>
+<span class="sd">    :type mae: float</span>
+<span class="sd">    :param rmse: Root mean squared error achieved by the configuration.</span>
+<span class="sd">    :type rmse: float</span>
+<span class="sd">    :param r_squared: Coefficient of determination achieved by the configuration.</span>
+<span class="sd">    :type r_squared: float</span>
+<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
+<span class="sd">    :type metrics_path: Path</span>
+<span class="sd">    :param metrics: Raw metrics payload loaded from disk.</span>
+<span class="sd">    :type metrics: Mapping[str, object]</span>
+<span class="sd">    :param accuracy: Directional accuracy achieved by the configuration.</span>
+<span class="sd">    :type accuracy: Optional[float]</span>
+<span class="sd">    :param baseline_accuracy: Directional accuracy achieved by the baseline.</span>
+<span class="sd">    :type baseline_accuracy: Optional[float]</span>
+<span class="sd">    :param accuracy_delta: Improvement in accuracy over the baseline.</span>
+<span class="sd">    :type accuracy_delta: Optional[float]</span>
+<span class="sd">    :param eligible: Number of evaluation examples contributing to accuracy metrics.</span>
+<span class="sd">    :type eligible: Optional[int]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
@@ -665,16 +661,14 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Container describing a single opinion sweep execution request.</span>
 
-<span class="sd">    :ivar index: Stable index used for ordering and scheduling.</span>
-<span class="sd">    :vartype index: int</span>
-<span class="sd">    :ivar study: Study metadata being evaluated.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar config: Sweep configuration executed for the opinion task.</span>
-<span class="sd">    :vartype config: SweepConfig</span>
-<span class="sd">    :ivar request_args: Keyword arguments passed to :func:`run_opinion_eval`.</span>
-<span class="sd">    :vartype request_args: Mapping[str, object]</span>
-<span class="sd">    :ivar metrics_path: Target path for the ``metrics.json`` artefact.</span>
-<span class="sd">    :vartype metrics_path: Path</span>
+<span class="sd">    :param index: Stable index used for ordering and scheduling.</span>
+<span class="sd">    :type index: int</span>
+<span class="sd">    :param study: Study metadata being evaluated.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param config: Sweep configuration executed for the opinion task.</span>
+<span class="sd">    :type config: SweepConfig</span>
+<span class="sd">    :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.</span>
+<span class="sd">    :type request_args: Mapping[str, object]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
@@ -699,10 +693,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Selected configuration for the final opinion regression evaluation.</span>
 
-<span class="sd">    :ivar study: Study metadata chosen for final evaluation.</span>
-<span class="sd">    :vartype study: StudySpec</span>
-<span class="sd">    :ivar outcome: Winning opinion sweep outcome leveraged for reporting.</span>
-<span class="sd">    :vartype outcome: OpinionSweepOutcome</span>
+<span class="sd">    :param study: Study metadata chosen for final evaluation.</span>
+<span class="sd">    :type study: StudySpec</span>
+<span class="sd">    :param outcome: Winning opinion sweep outcome leveraged for reporting.</span>
+<span class="sd">    :type outcome: OpinionSweepOutcome</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
 
 
@@ -715,24 +709,24 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration shared across opinion sweep evaluations.</span>
 
-<span class="sd">    :ivar dataset: Dataset identifier passed to opinion sweeps.</span>
-<span class="sd">    :vartype dataset: str</span>
-<span class="sd">    :ivar cache_dir: Cache directory leveraged by dataset loading.</span>
-<span class="sd">    :vartype cache_dir: str</span>
-<span class="sd">    :ivar sweep_dir: Root directory where opinion sweep artefacts are stored.</span>
-<span class="sd">    :vartype sweep_dir: Path</span>
-<span class="sd">    :ivar extra_fields: Additional prompt columns appended to documents.</span>
-<span class="sd">    :vartype extra_fields: Sequence[str]</span>
-<span class="sd">    :ivar max_participants: Optional cap on participants per study.</span>
-<span class="sd">    :vartype max_participants: int</span>
-<span class="sd">    :ivar seed: Random seed for subsampling.</span>
-<span class="sd">    :vartype seed: int</span>
-<span class="sd">    :ivar max_features: Maximum TF-IDF features (``None`` allows all).</span>
-<span class="sd">    :vartype max_features: Optional[int]</span>
-<span class="sd">    :ivar tree_method: Tree construction algorithm passed to XGBoost.</span>
-<span class="sd">    :vartype tree_method: str</span>
-<span class="sd">    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
-<span class="sd">    :vartype overwrite: bool</span>
+<span class="sd">    :param dataset: Dataset identifier passed to opinion sweeps.</span>
+<span class="sd">    :type dataset: str</span>
+<span class="sd">    :param cache_dir: Cache directory leveraged by dataset loading.</span>
+<span class="sd">    :type cache_dir: str</span>
+<span class="sd">    :param sweep_dir: Root directory where opinion sweep artefacts are stored.</span>
+<span class="sd">    :type sweep_dir: Path</span>
+<span class="sd">    :param extra_fields: Additional prompt columns appended to documents.</span>
+<span class="sd">    :type extra_fields: Sequence[str]</span>
+<span class="sd">    :param max_participants: Optional cap on participants per study.</span>
+<span class="sd">    :type max_participants: int</span>
+<span class="sd">    :param seed: Random seed for subsampling.</span>
+<span class="sd">    :type seed: int</span>
+<span class="sd">    :param max_features: Maximum TF-IDF features (``None`` allows all).</span>
+<span class="sd">    :type max_features: Optional[int]</span>
+<span class="sd">    :param tree_method: Tree construction algorithm passed to XGBoost.</span>
+<span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
+<span class="sd">    :type overwrite: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -755,30 +749,30 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Normalised view of slate metrics emitted by the XGBoost evaluations.</span>
 
-<span class="sd">    :ivar accuracy: Validation accuracy (``None`` when unavailable).</span>
-<span class="sd">    :vartype accuracy: Optional[float]</span>
-<span class="sd">    :ivar coverage: Validation coverage capturing known candidate recall.</span>
-<span class="sd">    :vartype coverage: Optional[float]</span>
-<span class="sd">    :ivar evaluated: Number of evaluation rows.</span>
-<span class="sd">    :vartype evaluated: Optional[int]</span>
-<span class="sd">    :ivar correct: Number of correct predictions.</span>
-<span class="sd">    :vartype correct: Optional[int]</span>
-<span class="sd">    :ivar known_hits: Correct predictions among known candidates.</span>
-<span class="sd">    :vartype known_hits: Optional[int]</span>
-<span class="sd">    :ivar known_total: Evaluations featuring at least one known candidate.</span>
-<span class="sd">    :vartype known_total: Optional[int]</span>
-<span class="sd">    :ivar known_availability: Fraction of evaluations containing a known candidate.</span>
-<span class="sd">    :vartype known_availability: Optional[float]</span>
-<span class="sd">    :ivar avg_probability: Mean probability recorded for known predictions.</span>
-<span class="sd">    :vartype avg_probability: Optional[float]</span>
-<span class="sd">    :ivar dataset: Dataset identifier.</span>
-<span class="sd">    :vartype dataset: Optional[str]</span>
-<span class="sd">    :ivar issue: Issue key under evaluation.</span>
-<span class="sd">    :vartype issue: Optional[str]</span>
-<span class="sd">    :ivar issue_label: Human-readable issue label.</span>
-<span class="sd">    :vartype issue_label: Optional[str]</span>
-<span class="sd">    :ivar study_label: Human-readable study label.</span>
-<span class="sd">    :vartype study_label: Optional[str]</span>
+<span class="sd">    :param accuracy: Validation accuracy (``None`` when unavailable).</span>
+<span class="sd">    :type accuracy: Optional[float]</span>
+<span class="sd">    :param coverage: Validation coverage capturing known candidate recall.</span>
+<span class="sd">    :type coverage: Optional[float]</span>
+<span class="sd">    :param evaluated: Number of evaluation rows.</span>
+<span class="sd">    :type evaluated: Optional[int]</span>
+<span class="sd">    :param correct: Number of correct predictions.</span>
+<span class="sd">    :type correct: Optional[int]</span>
+<span class="sd">    :param known_hits: Correct predictions among known candidates.</span>
+<span class="sd">    :type known_hits: Optional[int]</span>
+<span class="sd">    :param known_total: Evaluations featuring at least one known candidate.</span>
+<span class="sd">    :type known_total: Optional[int]</span>
+<span class="sd">    :param known_availability: Fraction of evaluations containing a known candidate.</span>
+<span class="sd">    :type known_availability: Optional[float]</span>
+<span class="sd">    :param avg_probability: Mean probability recorded for known predictions.</span>
+<span class="sd">    :type avg_probability: Optional[float]</span>
+<span class="sd">    :param dataset: Dataset identifier.</span>
+<span class="sd">    :type dataset: Optional[str]</span>
+<span class="sd">    :param issue: Issue key under evaluation.</span>
+<span class="sd">    :type issue: Optional[str]</span>
+<span class="sd">    :param issue_label: Human-readable issue label.</span>
+<span class="sd">    :type issue_label: Optional[str]</span>
+<span class="sd">    :param study_label: Human-readable study label.</span>
+<span class="sd">    :type study_label: Optional[str]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -804,29 +798,29 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Normalised view of opinion-regression metrics.</span>
 
-<span class="sd">    :ivar mae_after: Mean absolute error achieved by the regressor.</span>
-<span class="sd">    :vartype mae_after: Optional[float]</span>
-<span class="sd">    :ivar rmse_after: Root mean squared error achieved by the regressor.</span>
-<span class="sd">    :vartype rmse_after: Optional[float]</span>
-<span class="sd">    :ivar r2_after: Coefficient of determination achieved by the regressor.</span>
-<span class="sd">    :vartype r2_after: Optional[float]</span>
-<span class="sd">    :ivar baseline_mae: Baseline MAE using the no-change predictor.</span>
-<span class="sd">    :vartype baseline_mae: Optional[float]</span>
-<span class="sd">    :ivar mae_delta: Absolute MAE improvement over the baseline.</span>
-<span class="sd">    :vartype mae_delta: Optional[float]</span>
-<span class="sd">    :ivar accuracy_after: Directional accuracy achieved by the regressor.</span>
-<span class="sd">    :vartype accuracy_after: Optional[float]</span>
-<span class="sd">    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.</span>
-<span class="sd">    :vartype baseline_accuracy: Optional[float]</span>
-<span class="sd">    :ivar accuracy_delta: Improvement in directional accuracy over the baseline.</span>
-<span class="sd">    :vartype accuracy_delta: Optional[float]</span>
-<span class="sd">    :ivar participants: Number of participants in the evaluation split.</span>
-<span class="sd">    :vartype participants: Optional[int]</span>
-<span class="sd">    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.</span>
-<span class="sd">    :vartype eligible: Optional[int]</span>
-<span class="sd">    :ivar dataset: Dataset identifier.</span>
-<span class="sd">    :vartype dataset: Optional[str]</span>
-<span class="sd">    :ivar split: Evaluation split name.</span>
+<span class="sd">    :param mae_after: Mean absolute error achieved by the regressor.</span>
+<span class="sd">    :type mae_after: Optional[float]</span>
+<span class="sd">    :param rmse_after: Root mean squared error achieved by the regressor.</span>
+<span class="sd">    :type rmse_after: Optional[float]</span>
+<span class="sd">    :param r2_after: Coefficient of determination achieved by the regressor.</span>
+<span class="sd">    :type r2_after: Optional[float]</span>
+<span class="sd">    :param baseline_mae: Baseline MAE using the no-change predictor.</span>
+<span class="sd">    :type baseline_mae: Optional[float]</span>
+<span class="sd">    :param mae_delta: Absolute MAE improvement over the baseline.</span>
+<span class="sd">    :type mae_delta: Optional[float]</span>
+<span class="sd">    :param accuracy_after: Directional accuracy achieved by the regressor.</span>
+<span class="sd">    :type accuracy_after: Optional[float]</span>
+<span class="sd">    :param baseline_accuracy: Directional accuracy achieved by the baseline.</span>
+<span class="sd">    :type baseline_accuracy: Optional[float]</span>
+<span class="sd">    :param accuracy_delta: Improvement in directional accuracy over the baseline.</span>
+<span class="sd">    :type accuracy_delta: Optional[float]</span>
+<span class="sd">    :param participants: Number of participants in the evaluation split.</span>
+<span class="sd">    :type participants: Optional[int]</span>
+<span class="sd">    :param eligible: Number of evaluation examples contributing to accuracy metrics.</span>
+<span class="sd">    :type eligible: Optional[int]</span>
+<span class="sd">    :param dataset: Dataset identifier.</span>
+<span class="sd">    :type dataset: Optional[str]</span>
+<span class="sd">    :param split: Evaluation split name.</span>
 <span class="sd">    :vartype split: Optional[str]</span>
 <span class="sd">    :ivar label: Human-readable study label.</span>
 <span class="sd">    :vartype label: Optional[str]</span>

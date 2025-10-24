@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -276,13 +276,15 @@
 <span class="k">else</span><span class="p">:</span>
     <span class="n">AzureOpenAIType</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore[assignment]</span>
 
+<span class="n">azure_openai_import_error</span><span class="p">:</span> <span class="ne">ImportError</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureOpenAI</span> <span class="k">as</span> <span class="n">_AzureOpenAI</span>  <span class="c1"># type: ignore  # pylint: disable=import-error</span>
 <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">_AzureOpenAI</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-    <span class="n">AZURE_OPENAI_IMPORT_ERROR</span> <span class="o">=</span> <span class="n">exc</span>
+    <span class="n">azure_openai_import_error</span> <span class="o">=</span> <span class="n">exc</span>
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="n">AZURE_OPENAI_IMPORT_ERROR</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">azure_openai_import_error</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_require_openai</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -297,7 +299,7 @@
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
             <span class="s2">&quot;The &#39;openai&#39; package is required to use Azure OpenAI client helpers. &quot;</span>
             <span class="s2">&quot;Install it with `pip install openai`.&quot;</span>
-        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">AZURE_OPENAI_IMPORT_ERROR</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">azure_openai_import_error</span>
     <span class="k">return</span> <span class="n">_AzureOpenAI</span>
 
 

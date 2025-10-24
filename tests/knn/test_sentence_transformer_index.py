@@ -7,6 +7,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+
 from knn.index import (
     build_sentence_transformer_index,
     load_sentence_transformer_index,
@@ -41,7 +43,7 @@ def test_build_sentence_transformer_index(monkeypatch) -> None:
         train_ds=[],
         max_train=10,
         seed=0,
-        extra_fields=("viewer_profile",),
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
         config=SentenceTransformerConfig(model_name="stub-model"),
     )
     assert index["feature_space"] == "sentence_transformer"
@@ -79,12 +81,18 @@ def test_save_and_load_sentence_transformer_index(monkeypatch, tmp_path: Path) -
 
 
 def test_pipeline_sentence_transformer_sweep(tmp_path: Path) -> None:
+    next_video_dir = tmp_path / "next_video"
+    opinion_dir = tmp_path / "opinions"
     context = PipelineContext(
         dataset="dataset",
         out_dir=tmp_path,
         cache_dir=str(tmp_path / "cache"),
-        sweep_dir=tmp_path / "sweeps",
-        word2vec_model_dir=tmp_path / "word2vec",
+        sweep_dir=next_video_dir / "sweeps",
+        word2vec_model_dir=next_video_dir / "word2vec",
+        next_video_dir=next_video_dir,
+        opinion_dir=opinion_dir,
+        opinion_sweep_dir=opinion_dir / "sweeps",
+        opinion_word2vec_dir=opinion_dir / "word2vec",
         k_sweep="1,2",
         study_tokens=(),
         word2vec_epochs=5,

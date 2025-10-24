@@ -17,11 +17,14 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple
-
 from common.prompt_docs import (
     DEFAULT_TITLE_DIRS as _DEFAULT_TITLE_DIRS,
     create_prompt_document_builder,
+)
+from common.prompt_selection import (
+    CandidateMetadata,
+    PromptSelectionHelper,
+    candidate_feature_tokens,
 )
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
@@ -36,153 +39,30 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
     logger_name="xgb.features",
 )
 
+_PROMPT_FEATURES = PromptSelectionHelper(_PROMPT_DOC_BUILDER)
 
-def title_for(video_id: str) -> Optional[str]:
-    """
-    Look up a human-readable title for a given YouTube identifier.
-
-    :param video_id: Candidate YouTube video identifier to resolve.
-    :type video_id: str
-    :returns: Title associated with ``video_id`` when present in the cache.
-    :rtype: Optional[str]
-    """
-
-    return _PROMPT_DOC_BUILDER.title_for(video_id)
-
-
-def viewer_profile_sentence(example: dict) -> str:
-    """
-    Compose the viewer profile sentence associated with a dataset row.
-
-    :param example: Interaction example containing viewer profile fields.
-    :type example: dict
-    :returns: Natural-language sentence describing the participant profile.
-    :rtype: str
-    """
-
-    return _PROMPT_DOC_BUILDER.viewer_profile_sentence(example)
-
-
-def prompt_from_builder(example: dict) -> str:
-    """
-    Assemble the full prompt text for a dataset example.
-
-    :param example: Interaction example containing prompt components.
-    :type example: dict
-    :returns: Prompt text used for feature extraction.
-    :rtype: str
-    """
-
-    return _PROMPT_DOC_BUILDER.prompt_from_builder(example)
-
-
-def extract_now_watching(example: dict) -> Optional[Tuple[str, str]]:
-    """
-    Retrieve the currently watched item for an interaction.
-
-    :param example: Interaction example describing viewer activity.
-    :type example: dict
-    :returns: Tuple of ``(title, video_id)`` when the "now watching" context exists.
-    :rtype: Optional[Tuple[str, str]]
-    """
-
-    return _PROMPT_DOC_BUILDER.extract_now_watching(example)
-
-
-def extract_slate_items(example: dict) -> List[Tuple[str, str]]:
-    """
-    Extract the slate of candidate items from an interaction example.
-
-    :param example: Dataset row containing slate metadata.
-    :type example: dict
-    :returns: Ordered list of ``(title, video_id)`` tuples.
-    :rtype: List[Tuple[str, str]]
-    """
-
-    return _PROMPT_DOC_BUILDER.extract_slate_items(example)
-
-
-def assemble_document(example: dict, extra_fields: Sequence[str] | None = None) -> str:
-    """
-    Concatenate prompt components into a single document for featurisation.
-
-    :param example: Dataset row describing the prompt and slate context.
-    :type example: dict
-    :param extra_fields: Optional additional column names appended to the document.
-    :type extra_fields: Sequence[str] | None
-    :returns: Combined prompt text passed to vectorisers.
-    :rtype: str
-    """
-
-    return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
-
-
-def prepare_training_documents(
-    train_ds,
-    max_train: int,
-    seed: int,
-    extra_fields: Sequence[str] | None = None,
-) -> Tuple[list[str], list[str], list[str]]:
-    """
-    Prepare prompt documents, labels, and metadata for TF-IDF training.
-
-    :param train_ds: Dataset split providing training rows.
-    :type train_ds: datasets.Dataset | Sequence[dict]
-    :param max_train: Optional cap on the number of training rows retained (0 keeps all).
-    :type max_train: int
-    :param seed: Random seed used when subsampling ``train_ds``.
-    :type seed: int
-    :param extra_fields: Additional columns appended to the prompt document.
-    :type extra_fields: Sequence[str] | None
-    :returns: Tuple of ``(documents, label_ids, participant_ids)``.
-    :rtype: Tuple[list[str], list[str], list[str]]
-    """
-
-    return _PROMPT_DOC_BUILDER.prepare_training_documents(
-        train_ds,
-        max_train,
-        seed,
-        extra_fields,
-    )
-
-
-def prepare_prompt_documents(
-    train_ds,
-    max_train: int,
-    seed: int,
-    extra_fields: Sequence[str] | None = None,
-) -> Tuple[list[str], list[str], list[str]]:
-    """
-    Convenience wrapper around :func:`prepare_training_documents`.
-
-    :param train_ds: Dataset split providing training rows.
-    :type train_ds: datasets.Dataset | Sequence[dict]
-    :param max_train: Optional cap on the number of training rows retained (0 keeps all).
-    :type max_train: int
-    :param seed: Random seed used when subsampling ``train_ds``.
-    :type seed: int
-    :param extra_fields: Additional columns appended to the prompt document.
-    :type extra_fields: Sequence[str] | None
-    :returns: Tuple of ``(documents, label_ids, participant_ids)`` mirroring
-        :func:`prepare_training_documents`.
-    :rtype: Tuple[list[str], list[str], list[str]]
-    """
-
-    return prepare_training_documents(
-        train_ds,
-        max_train=max_train,
-        seed=seed,
-        extra_fields=extra_fields,
-    )
-
+title_for = _PROMPT_FEATURES.title_for
+viewer_profile_sentence = _PROMPT_FEATURES.viewer_profile_sentence
+prompt_from_builder = _PROMPT_FEATURES.prompt_from_builder
+extract_now_watching = _PROMPT_FEATURES.extract_now_watching
+extract_slate_items = _PROMPT_FEATURES.extract_slate_items
+collect_candidate_metadata = _PROMPT_FEATURES.collect_candidate_metadata
+selection_feature_tokens = _PROMPT_FEATURES.selection_feature_tokens
+assemble_document = _PROMPT_FEATURES.assemble_document
+prepare_training_documents = _PROMPT_FEATURES.prepare_training_documents
+prepare_prompt_documents = _PROMPT_FEATURES.prepare_prompt_documents
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
+    "CandidateMetadata",
+    "candidate_feature_tokens",
+    "collect_candidate_metadata",
     "assemble_document",
     "extract_now_watching",
     "extract_slate_items",
     "prepare_prompt_documents",
     "prepare_training_documents",
+    "selection_feature_tokens",
     "prompt_from_builder",
     "title_for",
     "viewer_profile_sentence",

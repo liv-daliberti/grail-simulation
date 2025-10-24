@@ -215,7 +215,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -301,15 +301,7 @@ downstream analysis.</p></li>
 </ul>
 <p>Set <code class="docutils literal notranslate"><span class="pre">--train-curve-max</span></code> when invoking the CLI to limit how many training
 examples feed into the training curve diagnostics.</p>
-<p id="module-knn.data">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-knn.data">Dataset loading and filtering utilities for the KNN baselines.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.data.filter_dataset_for_issue">
 <span class="sig-prename descclassname"><span class="pre">knn.data.</span></span><span class="sig-name descname"><span class="pre">filter_dataset_for_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/data.html#filter_dataset_for_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.data.filter_dataset_for_issue" title="Link to this definition">¶</a></dt>
@@ -413,15 +405,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.features">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-knn.features">Prompt feature construction utilities shared by the KNN baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.features.Word2VecConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">Word2VecConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('models/knn_word2vec')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#Word2VecConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.Word2VecConfig" title="Link to this definition">¶</a></dt>
@@ -646,6 +630,37 @@ details.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="knn.features.candidate_feature_tokens">
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">candidate_feature_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidate</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#candidate_feature_tokens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.candidate_feature_tokens" title="Link to this definition">¶</a></dt>
+<dd><p>Generate candidate-specific tokens used during query scoring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>candidate</strong> (<em>CandidateMetadata</em>)</p></li>
+<li><p><strong>option_count</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="knn.features.collect_candidate_metadata">
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">collect_candidate_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#collect_candidate_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.collect_candidate_metadata" title="Link to this definition">¶</a></dt>
+<dd><p>Return slate candidate metadata enriched with slot indices and channel info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>CandidateMetadata</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="knn.features.extract_now_watching">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.extract_now_watching" title="Link to this definition">¶</a></dt>
 <dd><p>Retrieve the currently watched item for an interaction.</p>
@@ -719,6 +734,23 @@ details.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="knn.features.selection_feature_tokens">
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">selection_feature_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#selection_feature_tokens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.selection_feature_tokens" title="Link to this definition">¶</a></dt>
+<dd><p>Construct additive tokens that highlight the selected candidate within a prompt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+<li><p><strong>candidates</strong> (<em>Sequence</em><em>[</em><em>CandidateMetadata</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="knn.features.title_for">
 <span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/features.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.title_for" title="Link to this definition">¶</a></dt>
 <dd><p>Look up a human-readable title for a given YouTube identifier.</p>
@@ -752,15 +784,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.index">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-knn.index">Index construction and scoring logic for the KNN slate baselines.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.index.build_sentence_transformer_index">
 <span class="sig-prename descclassname"><span class="pre">knn.index.</span></span><span class="sig-name descname"><span class="pre">build_sentence_transformer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/index.html#build_sentence_transformer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.index.build_sentence_transformer_index" title="Link to this definition">¶</a></dt>
@@ -1156,32 +1180,15 @@ feature-space, and sweep configuration.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.opinion">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-knn.opinion">Opinion-regression utilities supporting the KNN baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.opinion.OpinionSpec">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.opinion.</span></span><span class="sig-name descname"><span class="pre">OpinionSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#OpinionSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Configuration describing one study’s opinion index columns.</p>
+<p>Configuration describing one opinion-study index.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>key</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p></li>
-<li><p><strong>issue</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">issue</span></code>.</p></li>
-<li><p><strong>label</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">label</span></code>.</p></li>
-<li><p><strong>before_column</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">before_column</span></code>.</p></li>
-<li><p><strong>after_column</strong> (<em>str</em>) – Attribute <code class="docutils literal notranslate"><span class="pre">after_column</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
 <li><p><strong>key</strong> (<em>str</em>)</p></li>
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>label</strong> (<em>str</em>)</p></li>
@@ -1234,15 +1241,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-knn.cli">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-knn.cli">Command-line interface for the Grail Simulation KNN baselines.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.cli.build_parser">
 <span class="sig-prename descclassname"><span class="pre">knn.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.cli.build_parser" title="Link to this definition">¶</a></dt>
@@ -1368,10 +1367,13 @@ reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#knn.features.assemble_document"><code class="docutils literal notranslate"><span class="pre">assemble_document()</span></code></a></li>
+<li><a class="reference internal" href="#knn.features.candidate_feature_tokens"><code class="docutils literal notranslate"><span class="pre">candidate_feature_tokens()</span></code></a></li>
+<li><a class="reference internal" href="#knn.features.collect_candidate_metadata"><code class="docutils literal notranslate"><span class="pre">collect_candidate_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.extract_now_watching"><code class="docutils literal notranslate"><span class="pre">extract_now_watching()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.extract_slate_items"><code class="docutils literal notranslate"><span class="pre">extract_slate_items()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.prepare_training_documents"><code class="docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
+<li><a class="reference internal" href="#knn.features.selection_feature_tokens"><code class="docutils literal notranslate"><span class="pre">selection_feature_tokens()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.title_for"><code class="docutils literal notranslate"><span class="pre">title_for()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.viewer_profile_sentence"><code class="docutils literal notranslate"><span class="pre">viewer_profile_sentence()</span></code></a></li>
 <li><a class="reference internal" href="#knn.index.build_sentence_transformer_index"><code class="docutils literal notranslate"><span class="pre">build_sentence_transformer_index()</span></code></a></li>

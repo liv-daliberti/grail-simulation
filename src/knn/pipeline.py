@@ -129,6 +129,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         sweep_dir=context.sweep_dir,
         word2vec_model_base=context.word2vec_model_dir,
     )
+    opinion_sweep_context = SweepTaskContext(
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        sweep_dir=context.opinion_sweep_dir,
+        word2vec_model_base=context.opinion_word2vec_dir,
+    )
 
     # Enumerate the full sweep plan once so it can be reused across stages.
     planned_tasks: List[SweepTask] = []
@@ -146,7 +152,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         planned_opinion_tasks, cached_planned_opinion = _prepare_opinion_sweep_tasks(
             studies=studies,
             configs=configs,
-            context=sweep_context,
+            context=opinion_sweep_context,
             reuse_existing=context.reuse_sweeps,
         )
 
@@ -234,7 +240,8 @@ def main(argv: Sequence[str] | None = None) -> None:
                     task.metrics_path,
                 )
                 return
-            outcome = _execute_opinion_sweep_task(task)
+            # Execute opinion sweeps via the batch helper to satisfy pylint's inference.
+            outcome = _execute_opinion_sweep_tasks([task])[0]
             LOGGER.info(
                 "[OPINION] Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
                 outcome.order_index,
@@ -264,7 +271,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         pending_opinion_tasks, cached_opinion_outcomes = _prepare_opinion_sweep_tasks(
             studies=studies,
             configs=configs,
-            context=sweep_context,
+            context=opinion_sweep_context,
             reuse_existing=reuse_for_stage,
         )
 
@@ -349,13 +356,13 @@ def main(argv: Sequence[str] | None = None) -> None:
         loso_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
         if context.run_next_video:
             slate_metrics = _load_final_metrics_from_disk(
-                out_dir=context.out_dir,
+                out_dir=context.next_video_dir,
                 feature_spaces=context.feature_spaces,
                 studies=studies,
             )
             if not slate_metrics:
                 message = (
-                    f"No slate metrics found under {context.out_dir}. "
+                    f"No slate metrics found under {context.next_video_dir}. "
                     "Run --stage=finalize before generating reports."
                 )
                 if context.allow_incomplete:
@@ -363,14 +370,14 @@ def main(argv: Sequence[str] | None = None) -> None:
                 else:
                     raise RuntimeError(message)
             loso_metrics = _load_loso_metrics_from_disk(
-                out_dir=context.out_dir,
+                out_dir=context.next_video_dir,
                 feature_spaces=context.feature_spaces,
                 studies=studies,
             )
         opinion_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
         if context.run_opinion:
             for feature_space in context.feature_spaces:
-                metrics = _load_opinion_metrics(context.out_dir, feature_space)
+                metrics = _load_opinion_metrics(context.opinion_dir, feature_space)
                 if metrics:
                     opinion_metrics[feature_space] = metrics
         report_bundle = ReportBundle(
@@ -398,8 +405,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     eval_context = EvaluationContext(
         base_cli=base_cli,
         extra_cli=extra_cli,
-        out_dir=context.out_dir,
-        word2vec_model_dir=context.word2vec_model_dir,
+        next_video_out_dir=context.next_video_dir,
+        opinion_out_dir=context.opinion_dir,
+        next_video_word2vec_dir=context.word2vec_model_dir,
+        opinion_word2vec_dir=context.opinion_word2vec_dir,
         reuse_existing=context.reuse_final,
     )
     if context.run_next_video:

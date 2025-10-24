@@ -32,9 +32,7 @@
 
 from __future__ import annotations
 
-import asyncio
 import importlib
-import json
 import math
 import os
 import re
@@ -79,19 +77,28 @@ except (ImportError, AttributeError):  # pragma: no cover - optional dependency
     def _is_package_available(_: str) -> bool:
         return False
 
-from .utils.code_providers import get_provider
-from .utils.ioi import (
-    SubtaskResult,
-    TestResult,
-    add_includes,
-    get_morph_client_from_env,
-    get_piston_client_from_env,
-    score_subtask,
+from .rewards_code import (
+    BINARY_THRESHOLD as _BINARY_THRESHOLD,
+    binary_code_reward as _binary_code_reward,
+    code_reward as _code_reward,
+    extract_code as _extract_code,
+    get_code_format_reward as _get_code_format_reward,
+    ioi_code_reward as _ioi_code_reward,
 )
 
 PURE_ACC_ENV_FLAG = "PUREACC_ALLOW_BARE_NUMBER"
 PURE_ACC_TRUE_VALUES = {"1", "true", "t", "yes", "y"}
-BINARY_THRESHOLD = 0.99
+BINARY_THRESHOLD = _BINARY_THRESHOLD
+ioi_code_reward = _ioi_code_reward
+ioi_code_reward.__module__ = __name__
+binary_code_reward = _binary_code_reward
+binary_code_reward.__module__ = __name__
+code_reward = _code_reward
+code_reward.__module__ = __name__
+extract_code = _extract_code
+extract_code.__module__ = __name__
+get_code_format_reward = _get_code_format_reward
+get_code_format_reward.__module__ = __name__
 HAS_MATH_REWARD_DEPS = LatexExtractionConfig is not None and NormalizationConfig is not None
 
 if HAS_MATH_REWARD_DEPS:
@@ -237,8 +244,15 @@ def pure_accuracy_reward(  # pylint: disable=too-many-locals
     2. Compare the parsed value to ``gold_index`` (1-based).
     3. Optionally ensure ``1 <= NUMBER <= n_options`` if option counts are provided.
 
-    Returns:
-        list[float]: Per-sample accuracy scores (``1.0`` or ``0.0``).
+    :param completions: Model completions whose answers should be evaluated.
+    :type completions: list[Any]
+    :param _answer: Placeholder argument kept for API compatibility; ignored.
+    :type _answer: list[str]
+    :param kwargs: Additional metadata such as ``gold_index`` (the reference index) and
+        ``n_options`` (optional option counts).
+    :type kwargs: dict
+    :returns: Per-sample accuracy scores (``1.0`` or ``0.0``).
+    :rtype: list[float]
     """
     gold_idx_arr = kwargs.get("gold_index")
     option_counts = kwargs.get("n_options")
@@ -307,10 +321,23 @@ def pure_accuracy_reward(  # pylint: disable=too-many-locals
 
 def accuracy_reward(
     completions: list[list[dict[str, str]]],
-    solution: list[str],
-    **kwargs,
+   solution: list[str],
+   **kwargs,
 ) -> list[Optional[float]]:
-    """Reward function that checks if a completion matches the ground truth."""
+    """
+    Reward function that checks if a completion matches the ground truth.
+
+    :param completions: Chat-style completions where the first message contains
+        the assistant response to evaluate.
+    :type completions: list[list[dict[str, str]]]
+    :param solution: Ground-truth answers expressed in LaTeX.
+    :type solution: list[str]
+    :param kwargs: Additional keyword arguments (unused).
+    :type kwargs: dict
+    :returns: Binary rewards (``1.0`` for correct, ``0.0`` for incorrect) or ``None`` when
+        the example cannot be scored.
+    :rtype: list[Optional[float]]
+    """
     _require_math_reward_deps()
     _ = kwargs  # Unused but kept for API compatibility
     contents = [completion[0]["content"] for completion in completions]
@@ -359,7 +386,16 @@ def accuracy_reward(
 
 
 def formating(completions, **kwargs):
-    """Check whether completions follow the expected think/answer tag format."""
+    """
+    Check whether completions follow the expected think/answer tag format.
+
+    :param completions: Chat-style completions produced by the policy.
+    :type completions: list[list[dict[str, str]]]
+    :param kwargs: Additional keyword arguments (unused).
+    :type kwargs: dict
+    :returns: A list indicating whether each completion matches the format.
+    :rtype: list[float]
+    """
     _ = kwargs
     pattern = r"^<think>\n.*?\n</think>\n<answer>\n.*?\n</answer>$"
     completion_contents = [completion[0]["content"] for completion in completions]
@@ -379,6 +415,17 @@ def format_reward(
     """
     Return the usual format reward only if the sample's accuracy reward is 0.
     Works with either `solution=[…]` or `answer=[…]`.
+
+    :param completions: Chat-style completions to evaluate.
+    :type completions: list[list[dict]]
+    :param solution: Optional list of ground-truth answers.
+    :type solution: list[str] | None
+    :param answer: Alias for ``solution``.
+    :type answer: list[str] | None
+    :param kwargs: Additional keyword arguments forwarded to :func:`accuracy_reward`.
+    :type kwargs: dict
+    :returns: Format rewards gated by accuracy (``None`` when accuracy cannot be computed).
+    :rtype: list[Optional[float]]
     """
     golds = solution if solution is not None else answer
 
@@ -398,15 +445,29 @@ def format_reward(
 def tag_count_reward(completions, **kwargs) -> list[float]:
     """
     Reward function that checks if we produce the desired number of think and
-    answer tags associated with `format_reward()`.
+    answer tags associated with :func:`format_reward`.
 
     Adapted from:
     https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90
+
+    :param completions: Chat-style completions produced by the policy.
+    :type completions: list[list[dict[str, str]]]
+    :param kwargs: Additional keyword arguments (unused).
+    :type kwargs: dict
+    :returns: Partial rewards for each completion based on tag presence.
+    :rtype: list[float]
     """
     _ = kwargs
 
     def count_tags(text: str) -> float:
-        """Return a partial reward based on the presence of required tags."""
+        """
+        Return a partial reward based on the presence of required tags.
+
+        :param text: Completion text to inspect.
+        :type text: str
+        :returns: Score in ``[0, 1]`` reflecting tag compliance.
+        :rtype: float
+        """
 
         count = 0.0
         if text.count("<think>\n") == 1:
@@ -502,7 +563,22 @@ def get_cosine_scaled_reward(
     max_value_correct: float = 1.0,
     max_len: int = 1000,
 ):
-    """Create a cosine-scaled reward function parameterised by length."""
+    """
+    Create a cosine-scaled reward function parameterised by length.
+
+    :param min_value_wrong: Minimum reward for incorrect answers.
+    :type min_value_wrong: float
+    :param max_value_wrong: Maximum reward for incorrect answers.
+    :type max_value_wrong: float
+    :param min_value_correct: Minimum reward for correct answers.
+    :type min_value_correct: float
+    :param max_value_correct: Maximum reward for correct answers.
+    :type max_value_correct: float
+    :param max_len: Length corresponding to a full cosine cycle.
+    :type max_len: int
+    :returns: Configured reward function that applies cosine scaling.
+    :rtype: Callable[[list[Any], list[str]], list[float]]
+    """
 
     def cosine_scaled_reward(completions, solution, **kwargs):  # pylint: disable=too-many-locals
         """Reward function that scales based on completion length using a cosine schedule.
@@ -590,7 +666,16 @@ def get_repetition_penalty_reward(
     if language == "en":
 
         def zipngram(text: str, ngram_length: int):
-            """Return iterator over n-grams and the token list for English text."""
+            """
+            Return iterator over n-grams and the token list for English text.
+
+            :param text: Text snippet to tokenise.
+            :type text: str
+            :param ngram_length: Length of the n-grams to extract.
+            :type ngram_length: int
+            :returns: Tuple containing the n-gram iterator and the token list.
+            :rtype: tuple[iter, list[str]]
+            """
 
             words = text.lower().split()
             return zip(*[words[i:] for i in range(ngram_length)]), words
@@ -602,7 +687,16 @@ def get_repetition_penalty_reward(
         jieba_module = importlib.import_module("jieba")
 
         def zipngram(text: str, ngram_length: int):
-            """Return iterator over n-grams and the token list for Chinese text."""
+            """
+            Return iterator over n-grams and the token list for Chinese text.
+
+            :param text: Text snippet to tokenise with jieba.
+            :type text: str
+            :param ngram_length: Length of the n-grams to extract.
+            :type ngram_length: int
+            :returns: Tuple containing the n-gram iterator and the token list.
+            :rtype: tuple[iter, list[str]]
+            """
 
             seg_list = list(jieba_module.cut(text))
             return zip(*[seg_list[i:] for i in range(ngram_length)]), seg_list
@@ -673,234 +767,6 @@ def get_repetition_penalty_reward(
 
     return repetition_penalty_reward
 
-def _init_event_loop():
-    """Initialize or get the current event loop."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop
-
-
-def ioi_code_reward(
-    completions,
-    test_batch_size: int = 1,
-    provider_type: str = "piston",
-    **kwargs,
-) -> list[float]:
-    """Evaluate IOI problems using the configured execution client."""
-
-    if provider_type == "morph":
-        execution_client = get_morph_client_from_env()
-    else:
-        # for info on setting up piston workers, see slurm/piston/README.md
-        execution_client = get_piston_client_from_env()
-
-    code_snippets = []
-    for completion, problem_id in zip(completions, kwargs["id"]):
-        snippet = extract_code(completion[-1]["content"], "cpp")
-        code_snippets.append(add_includes(snippet, problem_id))
-
-    problems_data = [
-        dict(zip(kwargs.keys(), values)) for values in zip(*kwargs.values())
-    ]
-
-    loop = _init_event_loop()
-    eval_tasks = [
-        loop.create_task(
-            score_subtask(
-                execution_client,
-                problem_data,
-                code,
-                test_batch_size=test_batch_size,
-            )
-        )
-        for problem_data, code in zip(problems_data, code_snippets)
-    ]
-
-    gathered = loop.run_until_complete(
-        asyncio.gather(*eval_tasks, return_exceptions=True)
-    )
-
-    safe_results: List[SubtaskResult] = []
-    for result in gathered:
-        if isinstance(result, SubtaskResult):
-            safe_results.append(result)
-            continue
-
-        if isinstance(result, BaseException):
-            print(f"Error from {provider_type} worker: {result}")
-            safe_results.append(SubtaskResult())
-            continue
-
-        safe_results.append(
-            SubtaskResult(
-                test_results=[TestResult(test_name="synthetic", score=float(result))]
-            )
-        )
-
-    return [result.score for result in safe_results]
-
-
-def extract_code(completion: str, language: str = "python") -> str:
-    """Return the last fenced code block for the requested language."""
-    pattern = re.compile(rf"```{language}\n(.*?)```", re.DOTALL)
-    matches = pattern.findall(completion)
-    extracted_answer = matches[-1] if matches else ""
-    return extracted_answer
-
-
-def binary_code_reward(
-    completions,
-    num_parallel: int = 2,
-    provider_type: str = "e2b",
-    enforce_same_language: bool = False,
-    **kwargs,
-) -> list[Optional[float]]:
-    """Convert execution rewards into binary success scores."""
-    rewards = code_reward(
-        completions,
-        num_parallel=num_parallel,
-        provider_type=provider_type,
-        enforce_same_language=enforce_same_language,
-        **kwargs,
-    )
-
-    output = []
-    for reward in rewards:
-        if reward is None:
-            output.append(None)
-        else:
-            output.append(1.0 if reward > BINARY_THRESHOLD else 0.0)
-
-    return output
-
-
-def code_reward(  # pylint: disable=too-many-locals
-    completions,
-    num_parallel: int = 2,
-    provider_type: str = "e2b",
-    enforce_same_language: bool = False,
-    **kwargs,
-) -> list[float]:
-    """Reward function that evaluates code snippets using a code execution provider.
-
-    Assumes the dataset contains a `verification_info` column with test cases.
-
-    :param completions: List of model completions to evaluate.
-    :type completions: list[Any]
-    :param num_parallel: Number of parallel code executions.
-    :type num_parallel: int
-    :param provider_type: Code execution provider to use (default ``"e2b"``).
-    :type provider_type: str
-    :param enforce_same_language: Whether to verify all problems share the same language.
-    :type enforce_same_language: bool
-    :param kwargs: Additional arguments passed to the verification layer.
-    :type kwargs: dict
-    :return: Reward values for each completion.
-    :rtype: list[float]
-    """
-    evaluation_script_template = """
-    import subprocess
-    import json
-
-    def evaluate_code(code, test_cases):
-        passed = 0
-        total = len(test_cases)
-        exec_timeout = 5
-
-        for case in test_cases:
-            process = subprocess.run(
-                ["python3", "-c", code],
-                input=case["input"],
-                text=True,
-                capture_output=True,
-                timeout=exec_timeout
-            )
-
-            if process.returncode != 0:  # Error in execution
-                continue
-
-            output = process.stdout.strip()
-
-            # TODO: replace with a validator that compares structured
-            #       outputs rather than relying on exact stdout matches.
-            all_correct = True
-            for line1, line2 in zip(
-                output.split('\\n'),
-                case["output"].split('\\n'),
-            ):
-                all_correct = all_correct and line1.strip() == line2.strip()
-
-            if all_correct:
-                passed += 1
-
-        success_rate = (passed / total)
-        return success_rate
-
-    code_snippet = {code}
-    test_cases = json.loads({test_cases})
-
-    evaluate_code(code_snippet, test_cases)
-    """
-
-    code_snippets = [
-        extract_code(completion[-1]["content"]) for completion in completions
-    ]
-    verification_info = kwargs["verification_info"]
-
-    scripts: List[str] = []
-    for code, info in zip(code_snippets, verification_info):
-        script = evaluation_script_template.format(
-            code=json.dumps(code),
-            test_cases=json.dumps(json.dumps(info["test_cases"])),
-        )
-        scripts.append(script)
-
-    language = verification_info[0]["language"]
-
-    if enforce_same_language:
-        all_same_language = all(v["language"] == language for v in verification_info)
-        if not all_same_language:
-            raise ValueError("verification_info entries must share the same language")
-
-    execution_provider = get_provider(
-        provider_type=provider_type,
-        num_parallel=num_parallel,
-        **kwargs,
-    )
-
-    return execution_provider.execute_scripts(
-        scripts,
-        ["python"] * len(scripts),
-    )
-
-
-def get_code_format_reward(language: str = "python"):
-    """Format reward function specifically for code responses.
-
-    :param language: Programming language supported by E2B.
-    :type language: str
-    :return: Reward function that checks the language-specific format.
-    :rtype: Callable[[list[Any]], list[float]]
-    """
-    pattern = rf"^<think>\n.*?\n</think>\n<answer>\n.*?```{language}.*?```.*?\n</answer>$"
-
-    def code_format_reward(completions, **kwargs):
-        """Return 1.0 when the completion matches the language-specific format pattern."""
-
-        _ = kwargs
-        completion_contents = [completion[0]["content"] for completion in completions]
-        matches = [
-            re.match(pattern, content, re.DOTALL | re.MULTILINE)
-            for content in completion_contents
-        ]
-        return [1.0 if match else 0.0 for match in matches]
-
-    return code_format_reward
-
-
 def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
     """
     Penalise overlong completions without rewarding shorter ones.
@@ -920,7 +786,16 @@ def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
         completion_ids: list[list[int]],
         **kwargs,
     ) -> list[float]:
-        """Reward function that penalizes overlong completions."""
+        """
+        Reward function that penalises overlong completions.
+
+        :param completion_ids: Token id sequences representing generated completions.
+        :type completion_ids: list[list[int]]
+        :param kwargs: Additional keyword arguments (unused).
+        :type kwargs: dict
+        :returns: Negative rewards when completions exceed the configured limits.
+        :rtype: list[float]
+        """
         _ = kwargs
         rewards = []
         for ids in completion_ids:
@@ -941,7 +816,18 @@ def get_reward_funcs(
     _ref_model: transformers.PreTrainedModel,
     _tokenizer: transformers.PreTrainedTokenizerBase,
 ) -> list[Callable]:
-    """Assemble the reward functions requested by the training script."""
+    """
+    Assemble the reward functions requested by the training script.
+
+    :param script_args: Argument namespace containing reward configuration flags.
+    :type script_args: argparse.Namespace
+    :param _ref_model: Reference model supplied for API parity (unused).
+    :type _ref_model: transformers.PreTrainedModel
+    :param _tokenizer: Tokeniser supplied for API parity (unused).
+    :type _tokenizer: transformers.PreTrainedTokenizerBase
+    :returns: Ordered list of reward callables to evaluate during training.
+    :rtype: list[Callable]
+    """
     enforce_same_language = getattr(script_args, "enforce_same_language", False)
     reward_funcs_registry = {
         "pure_accuracy_reward": pure_accuracy_reward,

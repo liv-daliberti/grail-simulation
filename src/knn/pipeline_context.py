@@ -37,30 +37,31 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
     """
     Describe a single hyper-parameter configuration scheduled for execution.
 
-    :ivar feature_space: Feature space identifier (``tfidf``, ``word2vec``, or ``sentence_transformer``).
-    :vartype feature_space: str
-    :ivar metric: Distance metric passed to the KNN scorer (``l2`` or ``cosine``).
-    :vartype metric: str
-    :ivar text_fields: Additional text columns merged into the viewer prompt.
-    :vartype text_fields: Tuple[str, ...]
-    :ivar word2vec_size: Word2Vec embedding dimensionality when ``feature_space`` is ``word2vec``.
-    :vartype word2vec_size: int | None
-    :ivar word2vec_window: Word2Vec context window size for training.
-    :vartype word2vec_window: int | None
-    :ivar word2vec_min_count: Minimum token frequency retained in the Word2Vec vocabulary.
-    :vartype word2vec_min_count: int | None
-    :ivar word2vec_epochs: Number of epochs used when (re)training the Word2Vec model.
-    :vartype word2vec_epochs: int | None
-    :ivar word2vec_workers: Worker count for Word2Vec training/encoding.
-    :vartype word2vec_workers: int | None
-    :ivar sentence_transformer_model: SentenceTransformer model identifier evaluated for this sweep.
-    :vartype sentence_transformer_model: str | None
-    :ivar sentence_transformer_device: Device override applied when encoding sentence embeddings.
-    :vartype sentence_transformer_device: str | None
-    :ivar sentence_transformer_batch_size: Batch size used when generating sentence embeddings.
-    :vartype sentence_transformer_batch_size: int | None
-    :ivar sentence_transformer_normalize: Whether embeddings are L2-normalised prior to similarity scoring.
-    :vartype sentence_transformer_normalize: bool | None
+    :param feature_space: Feature space identifier (``tfidf``, ``word2vec``,
+        or ``sentence_transformer``).
+    :type feature_space: str
+    :param metric: Distance metric passed to the KNN scorer (``l2`` or ``cosine``).
+    :type metric: str
+    :param text_fields: Additional text columns merged into the viewer prompt.
+    :type text_fields: Tuple[str, ...]
+    :param word2vec_size: Word2Vec embedding dimensionality when the feature space is ``word2vec``.
+    :type word2vec_size: int | None
+    :param word2vec_window: Word2Vec context window size for training.
+    :type word2vec_window: int | None
+    :param word2vec_min_count: Minimum token frequency retained in the Word2Vec vocabulary.
+    :type word2vec_min_count: int | None
+    :param word2vec_epochs: Number of epochs used when (re)training the Word2Vec model.
+    :type word2vec_epochs: int | None
+    :param word2vec_workers: Worker count for Word2Vec training/encoding.
+    :type word2vec_workers: int | None
+    :param sentence_transformer_model: SentenceTransformer model identifier evaluated for this sweep.
+    :type sentence_transformer_model: str | None
+    :param sentence_transformer_device: Device override applied when encoding sentence embeddings.
+    :type sentence_transformer_device: str | None
+    :param sentence_transformer_batch_size: Batch size used when generating sentence embeddings.
+    :type sentence_transformer_batch_size: int | None
+    :param sentence_transformer_normalize: Whether embeddings are L2-normalised prior to similarity scoring.
+    :type sentence_transformer_normalize: bool | None
     """
     feature_space: str
     metric: str
@@ -79,6 +80,8 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
         """
         Create a filesystem-friendly identifier summarising the configuration.
 
+        :param self: Configuration instance being labelled.
+        :type self: SweepConfig
         :returns: Underscore-delimited label that highlights metric, text fields, and model specifics.
         :rtype: str
         """
@@ -163,24 +166,24 @@ class SweepOutcome:  # pylint: disable=too-many-instance-attributes
     """
     Persisted metrics for evaluating a configuration against a single study.
 
-    :ivar order_index: Stable position reflecting the original sweep submission order.
-    :vartype order_index: int
-    :ivar study: Study metadata describing the evaluated dataset slice.
-    :vartype study: StudySpec
-    :ivar feature_space: Feature space evaluated by the sweep run.
-    :vartype feature_space: str
-    :ivar config: Hyper-parameter configuration that produced the metrics.
-    :vartype config: SweepConfig
-    :ivar accuracy: Held-out accuracy achieved on the validation split.
-    :vartype accuracy: float
-    :ivar best_k: Optimal neighbour count determined for the study.
-    :vartype best_k: int
-    :ivar eligible: Number of evaluation rows contributing to the metrics.
-    :vartype eligible: int
-    :ivar metrics_path: Filesystem path to the JSON metrics artefact.
-    :vartype metrics_path: Path
-    :ivar metrics: Raw metrics dictionary loaded from :attr:`metrics_path`.
-    :vartype metrics: Mapping[str, object]
+    :param order_index: Stable position reflecting the original sweep submission order.
+    :type order_index: int
+    :param study: Study metadata describing the evaluated dataset slice.
+    :type study: StudySpec
+    :param feature_space: Feature space evaluated by the sweep run.
+    :type feature_space: str
+    :param config: Hyper-parameter configuration that produced the metrics.
+    :type config: SweepConfig
+    :param accuracy: Held-out accuracy achieved on the validation split.
+    :type accuracy: float
+    :param best_k: Optimal neighbour count determined for the study.
+    :type best_k: int
+    :param eligible: Number of evaluation rows contributing to the metrics.
+    :type eligible: int
+    :param metrics_path: Filesystem path to the JSON metrics artefact.
+    :type metrics_path: Path
+    :param metrics: Raw metrics dictionary loaded from :attr:`metrics_path`.
+    :type metrics: Mapping[str, object]
     """
     order_index: int
     study: "StudySpec"
@@ -197,26 +200,26 @@ class SweepTask:  # pylint: disable=too-many-instance-attributes
     """
     Describe an executable sweep job with resolved CLI arguments and paths.
 
-    :ivar index: Stable ordinal used to preserve scheduling order.
-    :vartype index: int
-    :ivar study: Study specification that the sweep job evaluates.
-    :vartype study: StudySpec
-    :ivar config: Hyper-parameter configuration to realise in the job.
-    :vartype config: SweepConfig
-    :ivar base_cli: Shared CLI arguments applied to every sweep invocation.
-    :vartype base_cli: Tuple[str, ...]
-    :ivar extra_cli: User-specified CLI arguments appended to the invocation.
-    :vartype extra_cli: Tuple[str, ...]
-    :ivar run_root: Directory where intermediate sweep artefacts are written.
-    :vartype run_root: Path
-    :ivar word2vec_model_dir: Optional directory providing cached Word2Vec models.
-    :vartype word2vec_model_dir: Path | None
-    :ivar issue: Human-readable issue label aligned with the study.
-    :vartype issue: str
-    :ivar issue_slug: Normalised slug used for filesystem naming.
-    :vartype issue_slug: str
-    :ivar metrics_path: Expected location of the metrics JSON produced by the run.
-    :vartype metrics_path: Path
+    :param index: Stable ordinal used to preserve scheduling order.
+    :type index: int
+    :param study: Study specification that the sweep job evaluates.
+    :type study: StudySpec
+    :param config: Hyper-parameter configuration to realise in the job.
+    :type config: SweepConfig
+    :param base_cli: Shared CLI arguments applied to every sweep invocation.
+    :type base_cli: Tuple[str, ...]
+    :param extra_cli: User-specified CLI arguments appended to the invocation.
+    :type extra_cli: Tuple[str, ...]
+    :param run_root: Directory where intermediate sweep artefacts are written.
+    :type run_root: Path
+    :param word2vec_model_dir: Optional directory providing cached Word2Vec models.
+    :type word2vec_model_dir: Path | None
+    :param issue: Human-readable issue label aligned with the study.
+    :type issue: str
+    :param issue_slug: Normalised slug used for filesystem naming.
+    :type issue_slug: str
+    :param metrics_path: Expected location of the metrics JSON produced by the run.
+    :type metrics_path: Path
     """
     index: int
     study: "StudySpec"
@@ -234,16 +237,18 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
     """
     Selected configuration for a specific study within a feature space.
 
-    :ivar study: Study metadata chosen for final evaluation.
-    :vartype study: StudySpec
-    :ivar outcome: Winning sweep outcome promoted for the study.
-    :vartype outcome: SweepOutcome
+    :param study: Study metadata chosen for final evaluation.
+    :type study: StudySpec
+    :param outcome: Winning sweep outcome promoted for the study.
+    :type outcome: SweepOutcome
     """
     @property
     def accuracy(self) -> float:
         """
         Return the held-out accuracy achieved by the selection.
 
+        :param self: Selection exposing the chosen sweep outcome.
+        :type self: StudySelection
         :returns: the held-out accuracy achieved by the selection
 
         :rtype: float
@@ -256,6 +261,8 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
         """
         Return the optimal ``k`` discovered during sweeps.
 
+        :param self: Selection exposing the chosen sweep outcome.
+        :type self: StudySelection
         :returns: the optimal ``k`` discovered during sweeps
 
         :rtype: int
@@ -268,40 +275,40 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     """
     Metrics captured for a configuration/study pair during opinion sweeps.
 
-    :ivar order_index: Stable order matching how sweep jobs were enqueued.
-    :vartype order_index: int
-    :ivar study: Opinion study associated with the outcome.
-    :vartype study: StudySpec
-    :ivar config: Hyper-parameter configuration that produced the outcome.
-    :vartype config: SweepConfig
-    :ivar feature_space: Feature space evaluated by the opinion sweep.
-    :vartype feature_space: str
-    :ivar mae: Mean absolute error achieved on the validation split.
-    :vartype mae: float
-    :ivar rmse: Root-mean-square error achieved on the validation split.
-    :vartype rmse: float
-    :ivar r2_score: Coefficient of determination for the opinion regression.
-    :vartype r2_score: float
-    :ivar baseline_mae: Baseline MAE measured using before-study opinions (if any).
-    :vartype baseline_mae: Optional[float]
-    :ivar mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
-    :vartype mae_delta: Optional[float]
-    :ivar accuracy: Directional accuracy achieved by the configuration.
-    :vartype accuracy: Optional[float]
-    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
-    :vartype baseline_accuracy: Optional[float]
-    :ivar accuracy_delta: Improvement in accuracy over the baseline.
-    :vartype accuracy_delta: Optional[float]
-    :ivar best_k: Optimal neighbour count determined for the study.
-    :vartype best_k: int
-    :ivar participants: Number of participants contributing to the metrics.
-    :vartype participants: int
-    :ivar eligible: Count of evaluation examples used for accuracy metrics.
-    :vartype eligible: Optional[int]
-    :ivar metrics_path: Filesystem path to the metrics JSON artefact.
-    :vartype metrics_path: Path
-    :ivar metrics: Raw metrics payload loaded from :attr:`metrics_path`.
-    :vartype metrics: Mapping[str, object]
+    :param order_index: Stable order matching how sweep jobs were enqueued.
+    :type order_index: int
+    :param study: Opinion study associated with the outcome.
+    :type study: StudySpec
+    :param config: Hyper-parameter configuration that produced the outcome.
+    :type config: SweepConfig
+    :param feature_space: Feature space evaluated by the opinion sweep.
+    :type feature_space: str
+    :param mae: Mean absolute error achieved on the validation split.
+    :type mae: float
+    :param rmse: Root-mean-square error achieved on the validation split.
+    :type rmse: float
+    :param r2_score: Coefficient of determination for the opinion regression.
+    :type r2_score: float
+    :param baseline_mae: Baseline MAE measured using before-study opinions (if any).
+    :type baseline_mae: Optional[float]
+    :param mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
+    :type mae_delta: Optional[float]
+    :param accuracy: Directional accuracy achieved by the configuration.
+    :type accuracy: Optional[float]
+    :param baseline_accuracy: Directional accuracy achieved by the baseline.
+    :type baseline_accuracy: Optional[float]
+    :param accuracy_delta: Improvement in accuracy over the baseline.
+    :type accuracy_delta: Optional[float]
+    :param best_k: Optimal neighbour count determined for the study.
+    :type best_k: int
+    :param participants: Number of participants contributing to the metrics.
+    :type participants: int
+    :param eligible: Count of evaluation examples used for accuracy metrics.
+    :type eligible: Optional[int]
+    :param metrics_path: Filesystem path to the metrics JSON artefact.
+    :type metrics_path: Path
+    :param metrics: Raw metrics payload loaded from :attr:`metrics_path`.
+    :type metrics: Mapping[str, object]
     """
     order_index: int
     study: StudySpec
@@ -327,14 +334,14 @@ class SweepTaskContext:
     """
     Shared CLI/runtime parameters required to materialise sweep tasks.
 
-    :ivar base_cli: Baseline CLI arguments applied to each sweep invocation.
-    :vartype base_cli: Sequence[str]
-    :ivar extra_cli: Additional CLI arguments appended to the baseline invocation.
-    :vartype extra_cli: Sequence[str]
-    :ivar sweep_dir: Root directory where sweep artefacts are written.
-    :vartype sweep_dir: Path
-    :ivar word2vec_model_base: Directory storing cached Word2Vec artefacts.
-    :vartype word2vec_model_base: Path
+    :param base_cli: Baseline CLI arguments applied to each sweep invocation.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI arguments appended to the baseline invocation.
+    :type extra_cli: Sequence[str]
+    :param sweep_dir: Root directory where sweep artefacts are written.
+    :type sweep_dir: Path
+    :param word2vec_model_base: Directory storing cached Word2Vec artefacts.
+    :type word2vec_model_base: Path
     """
 
     base_cli: Sequence[str]
@@ -343,37 +350,129 @@ class SweepTaskContext:
     word2vec_model_base: Path
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class EvaluationContext:
-    """Shared CLI/runtime parameters for final evaluation stages."""
+    """
+    Shared CLI/runtime parameters for final evaluation stages.
+
+    :param base_cli: Baseline CLI arguments reused for every invocation.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI arguments appended to each invocation.
+    :type extra_cli: Sequence[str]
+    :param next_video_out_dir: Output directory where next-video artefacts are written.
+    :type next_video_out_dir: Path
+    :param opinion_out_dir: Output directory where opinion artefacts are written.
+    :type opinion_out_dir: Path
+    :param next_video_word2vec_dir: Location of cached Word2Vec models for next-video runs.
+    :type next_video_word2vec_dir: Path
+    :param opinion_word2vec_dir: Location of cached Word2Vec models for opinion runs.
+    :type opinion_word2vec_dir: Path
+    :param reuse_existing: Flag controlling whether cached artefacts may be reused.
+    :type reuse_existing: bool
+    :param out_dir: Legacy base directory used for both tasks (fallback when task-specific
+        directories are omitted).
+    :type out_dir: Path | None
+    :param word2vec_model_dir: Legacy Word2Vec cache directory shared across tasks.
+    :type word2vec_model_dir: Path | None
+    """
 
     base_cli: Sequence[str]
     extra_cli: Sequence[str]
+    next_video_out_dir: Path
+    opinion_out_dir: Path
+    next_video_word2vec_dir: Path
+    opinion_word2vec_dir: Path
+    reuse_existing: bool
     out_dir: Path
     word2vec_model_dir: Path
-    reuse_existing: bool
+
+    def __init__(
+        self,
+        *,
+        base_cli: Sequence[str],
+        extra_cli: Sequence[str],
+        reuse_existing: bool,
+        out_dir: Path | None = None,
+        word2vec_model_dir: Path | None = None,
+        next_video_out_dir: Path | None = None,
+        opinion_out_dir: Path | None = None,
+        next_video_word2vec_dir: Path | None = None,
+        opinion_word2vec_dir: Path | None = None,
+    ) -> None:
+        """
+        Allow callers to supply either the legacy ``out_dir``/``word2vec_model_dir`` pair or the
+        newer, task-specific directories. Missing values are derived to preserve backwards
+        compatibility with existing tests and workflows.
+        """
+
+        resolved_opinion_out = (
+            opinion_out_dir
+            if opinion_out_dir is not None
+            else out_dir
+            if out_dir is not None
+            else next_video_out_dir
+        )
+        resolved_next_out = (
+            next_video_out_dir
+            if next_video_out_dir is not None
+            else out_dir
+            if out_dir is not None
+            else resolved_opinion_out
+        )
+        if resolved_opinion_out is None or resolved_next_out is None:
+            raise TypeError(
+                "EvaluationContext requires out_dir, or explicit next/opinion output directories."
+            )
+
+        resolved_word2vec_dir = (
+            word2vec_model_dir
+            if word2vec_model_dir is not None
+            else next_video_word2vec_dir
+            if next_video_word2vec_dir is not None
+            else opinion_word2vec_dir
+            if opinion_word2vec_dir is not None
+            else resolved_next_out / "word2vec_models"
+        )
+        resolved_next_w2v = (
+            next_video_word2vec_dir if next_video_word2vec_dir is not None else resolved_word2vec_dir
+        )
+        resolved_opinion_w2v = (
+            opinion_word2vec_dir if opinion_word2vec_dir is not None else resolved_word2vec_dir
+        )
+
+        resolved_out_dir = out_dir if out_dir is not None else resolved_opinion_out
+
+        object.__setattr__(self, "base_cli", base_cli)
+        object.__setattr__(self, "extra_cli", extra_cli)
+        object.__setattr__(self, "reuse_existing", reuse_existing)
+        object.__setattr__(self, "next_video_out_dir", resolved_next_out)
+        object.__setattr__(self, "opinion_out_dir", resolved_opinion_out)
+        object.__setattr__(self, "next_video_word2vec_dir", resolved_next_w2v)
+        object.__setattr__(self, "opinion_word2vec_dir", resolved_opinion_w2v)
+        object.__setattr__(self, "out_dir", resolved_out_dir)
+        object.__setattr__(self, "word2vec_model_dir", resolved_word2vec_dir)
 
 @dataclass(frozen=True)
 class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes
     """
     Describe an opinion-sweep job paired with its execution context.
 
-    :ivar index: Stable ordinal matching the submission order.
-    :vartype index: int
-    :ivar study: Opinion study that the sweep job targets.
-    :vartype study: StudySpec
-    :ivar config: Hyper-parameter configuration under evaluation.
-    :vartype config: SweepConfig
-    :ivar base_cli: Baseline CLI arguments reused across tasks.
-    :vartype base_cli: Tuple[str, ...]
-    :ivar extra_cli: Additional passthrough CLI arguments for the job.
-    :vartype extra_cli: Tuple[str, ...]
-    :ivar run_root: Directory where opinion sweep outputs are written.
-    :vartype run_root: Path
-    :ivar word2vec_model_dir: Optional directory providing cached Word2Vec models.
-    :vartype word2vec_model_dir: Path | None
-    :ivar metrics_path: Expected location of the metrics JSON produced by the run.
-    :vartype metrics_path: Path
+    :param index: Stable ordinal matching the submission order.
+    :type index: int
+    :param study: Opinion study that the sweep job targets.
+    :type study: StudySpec
+    :param config: Hyper-parameter configuration under evaluation.
+    :type config: SweepConfig
+    :param base_cli: Baseline CLI arguments reused across tasks.
+    :type base_cli: Tuple[str, ...]
+    :param extra_cli: Additional passthrough CLI arguments for the job.
+    :type extra_cli: Tuple[str, ...]
+    :param run_root: Directory where opinion sweep outputs are written.
+    :type run_root: Path
+    :param word2vec_model_dir: Optional directory providing cached Word2Vec models.
+    :type word2vec_model_dir: Path | None
+    :param metrics_path: Expected location of the metrics JSON produced by the run.
+    :type metrics_path: Path
     """
     index: int
     study: StudySpec
@@ -397,16 +496,18 @@ class OpinionStudySelection(OpinionSelectionBase):  # pylint: disable=too-many-i
     """
     Selected configuration for the final opinion evaluation.
 
-    :ivar study: Opinion study metadata chosen for final evaluation.
-    :vartype study: StudySpec
-    :ivar outcome: Winning opinion sweep outcome promoted for the study.
-    :vartype outcome: OpinionSweepOutcome
+    :param study: Opinion study metadata chosen for final evaluation.
+    :type study: StudySpec
+    :param outcome: Winning opinion sweep outcome promoted for the study.
+    :type outcome: OpinionSweepOutcome
     """
     @property
     def best_k(self) -> int:
         """
         Return the selected ``k`` for the study.
 
+        :param self: Opinion selection exposing the chosen sweep outcome.
+        :type self: OpinionStudySelection
         :returns: the selected ``k`` for the study
 
         :rtype: int
@@ -419,52 +520,64 @@ class PipelineContext:  # pylint: disable=too-many-instance-attributes
     """
     Normalised configuration for a pipeline run.
 
-    :ivar dataset: Dataset path or HuggingFace identifier used for all workloads.
-    :vartype dataset: str
-    :ivar out_dir: Output directory where sweeps, reports, and metrics are written.
-    :vartype out_dir: Path
-    :ivar cache_dir: Hugging Face datasets cache directory.
-    :vartype cache_dir: str
-    :ivar sweep_dir: Directory that stores hyper-parameter sweep outputs.
-    :vartype sweep_dir: Path
-    :ivar word2vec_model_dir: Location used to persist or read Word2Vec models.
-    :vartype word2vec_model_dir: Path
-    :ivar k_sweep: Comma-separated list of ``k`` values evaluated during sweeps.
-    :vartype k_sweep: str
-    :ivar study_tokens: Study identifiers supplied via CLI or environment overrides.
-    :vartype study_tokens: Tuple[str, ...]
-    :ivar word2vec_epochs: Number of epochs to use when training Word2Vec embeddings.
-    :vartype word2vec_epochs: int
-    :ivar word2vec_workers: Number of parallel workers for Word2Vec processing.
-    :vartype word2vec_workers: int
-    :ivar sentence_model: SentenceTransformer model identifier to encode viewer prompts.
-    :vartype sentence_model: str
-    :ivar sentence_device: Device hint (``cpu``/``cuda``) for SentenceTransformer, if provided.
-    :vartype sentence_device: str | None
-    :ivar sentence_batch_size: Batch size used during SentenceTransformer encoding.
-    :vartype sentence_batch_size: int
-    :ivar sentence_normalize: Flag indicating whether embeddings are L2-normalised.
-    :vartype sentence_normalize: bool
-    :ivar feature_spaces: Feature spaces that should be evaluated during the run.
-    :vartype feature_spaces: Tuple[str, ...]
-    :ivar jobs: Level of parallelism when scheduling sweep or evaluation tasks.
-    :vartype jobs: int
-    :ivar reuse_sweeps: Whether cached sweep artefacts can be reused instead of re-running.
-    :vartype reuse_sweeps: bool
-    :ivar reuse_final: Whether cached final evaluation artefacts can be reused.
-    :vartype reuse_final: bool
-    :ivar allow_incomplete: Permit finalize/report stages to run with partial sweep coverage.
-    :vartype allow_incomplete: bool
-    :ivar run_next_video: Toggle controlling whether slate evaluation is executed.
-    :vartype run_next_video: bool
-    :ivar run_opinion: Toggle controlling whether opinion evaluation is executed.
-    :vartype run_opinion: bool
+    :param dataset: Dataset path or HuggingFace identifier used for all workloads.
+    :type dataset: str
+    :param out_dir: Output directory where sweeps, reports, and metrics are written.
+    :type out_dir: Path
+    :param cache_dir: Hugging Face datasets cache directory.
+    :type cache_dir: str
+    :param sweep_dir: Directory that stores next-video hyper-parameter sweep outputs.
+    :type sweep_dir: Path
+    :param word2vec_model_dir: Location used to persist or read Word2Vec models.
+    :type word2vec_model_dir: Path
+    :param next_video_dir: Root directory for next-video evaluation artefacts.
+    :type next_video_dir: Path
+    :param opinion_dir: Root directory for opinion evaluation artefacts.
+    :type opinion_dir: Path
+    :param opinion_sweep_dir: Directory storing opinion hyper-parameter sweep outputs.
+    :type opinion_sweep_dir: Path
+    :param opinion_word2vec_dir: Location used to persist or read opinion Word2Vec models.
+    :type opinion_word2vec_dir: Path
+    :param k_sweep: Comma-separated list of ``k`` values evaluated during sweeps.
+    :type k_sweep: str
+    :param study_tokens: Study identifiers supplied via CLI or environment overrides.
+    :type study_tokens: Tuple[str, ...]
+    :param word2vec_epochs: Number of epochs to use when training Word2Vec embeddings.
+    :type word2vec_epochs: int
+    :param word2vec_workers: Number of parallel workers for Word2Vec processing.
+    :type word2vec_workers: int
+    :param sentence_model: SentenceTransformer model identifier to encode viewer prompts.
+    :type sentence_model: str
+    :param sentence_device: Device hint (``cpu``/``cuda``) for SentenceTransformer, if provided.
+    :type sentence_device: str | None
+    :param sentence_batch_size: Batch size used during SentenceTransformer encoding.
+    :type sentence_batch_size: int
+    :param sentence_normalize: Flag indicating whether embeddings are L2-normalised.
+    :type sentence_normalize: bool
+    :param feature_spaces: Feature spaces that should be evaluated during the run.
+    :type feature_spaces: Tuple[str, ...]
+    :param jobs: Level of parallelism when scheduling sweep or evaluation tasks.
+    :type jobs: int
+    :param reuse_sweeps: Whether cached sweep artefacts can be reused instead of re-running.
+    :type reuse_sweeps: bool
+    :param reuse_final: Whether cached final evaluation artefacts can be reused.
+    :type reuse_final: bool
+    :param allow_incomplete: Permit finalize/report stages to run with partial sweep coverage.
+    :type allow_incomplete: bool
+    :param run_next_video: Toggle controlling whether slate evaluation is executed.
+    :type run_next_video: bool
+    :param run_opinion: Toggle controlling whether opinion evaluation is executed.
+    :type run_opinion: bool
     """
     dataset: str
     out_dir: Path
     cache_dir: str
     sweep_dir: Path
     word2vec_model_dir: Path
+    next_video_dir: Path
+    opinion_dir: Path
+    opinion_sweep_dir: Path
+    opinion_word2vec_dir: Path
     k_sweep: str
     study_tokens: Tuple[str, ...]
     word2vec_epochs: int
@@ -486,34 +599,34 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     """
     Aggregated artefacts required to render Markdown reports for the pipeline run.
 
-    :ivar selections: Winning slate selections keyed by feature space and study slug.
-    :vartype selections: Mapping[str, Mapping[str, StudySelection]]
-    :ivar sweep_outcomes: Chronological list of all slate sweep outcomes.
-    :vartype sweep_outcomes: Sequence[SweepOutcome]
-    :ivar opinion_selections: Winning opinion selections keyed by feature space and study slug.
-    :vartype opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
-    :ivar opinion_sweep_outcomes: Chronological list of all opinion sweep outcomes.
-    :vartype opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
-    :ivar studies: Study descriptors used when rendering friendly labels.
-    :vartype studies: Sequence[StudySpec]
-    :ivar metrics_by_feature: Cached final slate metrics grouped by feature space and study.
-    :vartype metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
-    :ivar opinion_metrics: Cached final opinion metrics grouped by feature space and study.
-    :vartype opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
-    :ivar k_sweep: Textual representation of the ``k`` sweep grid.
-    :vartype k_sweep: str
-    :ivar loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.
-    :vartype loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None
-    :ivar feature_spaces: Ordered set of feature spaces included in the bundle.
-    :vartype feature_spaces: Tuple[str, ...]
-    :ivar sentence_model: SentenceTransformer model name when reports include that feature space.
-    :vartype sentence_model: Optional[str]
-    :ivar allow_incomplete: Whether missing sweeps are tolerated when rendering summaries.
-    :vartype allow_incomplete: bool
-    :ivar include_next_video: Flag indicating whether slate sections should be generated.
-    :vartype include_next_video: bool
-    :ivar include_opinion: Flag indicating whether opinion sections should be generated.
-    :vartype include_opinion: bool
+    :param selections: Winning slate selections keyed by feature space and study slug.
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :param sweep_outcomes: Chronological list of all slate sweep outcomes.
+    :type sweep_outcomes: Sequence[SweepOutcome]
+    :param opinion_selections: Winning opinion selections keyed by feature space and study slug.
+    :type opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :param opinion_sweep_outcomes: Chronological list of all opinion sweep outcomes.
+    :type opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    :param studies: Study descriptors used when rendering friendly labels.
+    :type studies: Sequence[StudySpec]
+    :param metrics_by_feature: Cached final slate metrics grouped by feature space and study.
+    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param opinion_metrics: Cached final opinion metrics grouped by feature space and study.
+    :type opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param k_sweep: Textual representation of the ``k`` sweep grid.
+    :type k_sweep: str
+    :param loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.
+    :type loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None
+    :param feature_spaces: Ordered set of feature spaces included in the bundle.
+    :type feature_spaces: Tuple[str, ...]
+    :param sentence_model: SentenceTransformer model name when reports include that feature space.
+    :type sentence_model: Optional[str]
+    :param allow_incomplete: Whether missing sweeps are tolerated when rendering summaries.
+    :type allow_incomplete: bool
+    :param include_next_video: Flag indicating whether slate sections should be generated.
+    :type include_next_video: bool
+    :param include_opinion: Flag indicating whether opinion sections should be generated.
+    :type include_opinion: bool
     """
     selections: Mapping[str, Mapping[str, StudySelection]]
     sweep_outcomes: Sequence[SweepOutcome]
@@ -541,22 +654,22 @@ class MetricSummary:  # pylint: disable=too-many-instance-attributes
     """
     Normalised slice of slate evaluation metrics used across reports.
 
-    :ivar accuracy: Validation accuracy for the selected configuration.
-    :vartype accuracy: Optional[float]
-    :ivar accuracy_ci: 95% confidence interval for :attr:`accuracy`.
-    :vartype accuracy_ci: Optional[Tuple[float, float]]
-    :ivar baseline: Baseline accuracy from the most-frequent-gold comparator.
-    :vartype baseline: Optional[float]
-    :ivar baseline_ci: 95% confidence interval for :attr:`baseline`.
-    :vartype baseline_ci: Optional[Tuple[float, float]]
-    :ivar random_baseline: Expected accuracy for a random slate selection baseline.
-    :vartype random_baseline: Optional[float]
-    :ivar best_k: ``k`` value delivering the best validation accuracy.
-    :vartype best_k: Optional[int]
-    :ivar n_total: Total number of evaluation rows considered.
-    :vartype n_total: Optional[int]
-    :ivar n_eligible: Number of rows eligible for the final metric.
-    :vartype n_eligible: Optional[int]
+    :param accuracy: Validation accuracy for the selected configuration.
+    :type accuracy: Optional[float]
+    :param accuracy_ci: 95% confidence interval for :attr:`accuracy`.
+    :type accuracy_ci: Optional[Tuple[float, float]]
+    :param baseline: Baseline accuracy from the most-frequent-gold comparator.
+    :type baseline: Optional[float]
+    :param baseline_ci: 95% confidence interval for :attr:`baseline`.
+    :type baseline_ci: Optional[Tuple[float, float]]
+    :param random_baseline: Expected accuracy for a random slate selection baseline.
+    :type random_baseline: Optional[float]
+    :param best_k: ``k`` value delivering the best validation accuracy.
+    :type best_k: Optional[int]
+    :param n_total: Total number of evaluation rows considered.
+    :type n_total: Optional[int]
+    :param n_eligible: Number of rows eligible for the final metric.
+    :type n_eligible: Optional[int]
     """
     accuracy: Optional[float] = None
     accuracy_ci: Optional[Tuple[float, float]] = None
@@ -572,34 +685,34 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     """
     Normalised view of opinion-regression metrics.
 
-    :ivar mae: Mean absolute error for the selected configuration.
-    :vartype mae: Optional[float]
-    :ivar rmse: Root-mean-square error for the selected configuration.
-    :vartype rmse: Optional[float]
-    :ivar r2_score: Coefficient of determination capturing explained variance.
-    :vartype r2_score: Optional[float]
-    :ivar mae_change: Normalised change in MAE relative to the baseline.
-    :vartype mae_change: Optional[float]
-    :ivar baseline_mae: Baseline MAE measured using pre-study opinions.
-    :vartype baseline_mae: Optional[float]
-    :ivar mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
-    :vartype mae_delta: Optional[float]
-    :ivar accuracy: Directional accuracy comparing predicted opinion shifts.
-    :vartype accuracy: Optional[float]
-    :ivar baseline_accuracy: Directional accuracy achieved by the no-change baseline.
-    :vartype baseline_accuracy: Optional[float]
-    :ivar accuracy_delta: Improvement in directional accuracy over the baseline.
-    :vartype accuracy_delta: Optional[float]
-    :ivar best_k: Neighbourhood size delivering the final metrics.
-    :vartype best_k: Optional[int]
-    :ivar participants: Number of participants included in the evaluation split.
-    :vartype participants: Optional[int]
-    :ivar eligible: Count of evaluation examples used to compute accuracy metrics.
-    :vartype eligible: Optional[int]
-    :ivar dataset: Name of the dataset used to compute the metrics.
-    :vartype dataset: Optional[str]
-    :ivar split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
-    :vartype split: Optional[str]
+    :param mae: Mean absolute error for the selected configuration.
+    :type mae: Optional[float]
+    :param rmse: Root-mean-square error for the selected configuration.
+    :type rmse: Optional[float]
+    :param r2_score: Coefficient of determination capturing explained variance.
+    :type r2_score: Optional[float]
+    :param mae_change: Normalised change in MAE relative to the baseline.
+    :type mae_change: Optional[float]
+    :param baseline_mae: Baseline MAE measured using pre-study opinions.
+    :type baseline_mae: Optional[float]
+    :param mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
+    :type mae_delta: Optional[float]
+    :param accuracy: Directional accuracy comparing predicted opinion shifts.
+    :type accuracy: Optional[float]
+    :param baseline_accuracy: Directional accuracy achieved by the no-change baseline.
+    :type baseline_accuracy: Optional[float]
+    :param accuracy_delta: Improvement in directional accuracy over the baseline.
+    :type accuracy_delta: Optional[float]
+    :param best_k: Neighbourhood size delivering the final metrics.
+    :type best_k: Optional[int]
+    :param participants: Number of participants included in the evaluation split.
+    :type participants: Optional[int]
+    :param eligible: Count of evaluation examples used to compute accuracy metrics.
+    :type eligible: Optional[int]
+    :param dataset: Name of the dataset used to compute the metrics.
+    :type dataset: Optional[str]
+    :param split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
+    :type split: Optional[str]
     """
     mae: Optional[float] = None
     rmse: Optional[float] = None

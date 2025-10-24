@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Generic task execution helpers used by sweep orchestration code."""
 
 from __future__ import annotations
 
@@ -42,39 +32,7 @@ def execute_indexed_tasks(
     logger,
     label: str = "task",
 ) -> List[ResultT]:
-    """
-
-    Execute ``tasks`` using ``worker`` with optional parallelism.
-
-
-
-    :param tasks: Value provided for ``tasks``.
-
-    :type tasks: Sequence[TaskT]
-
-    :param worker: Value provided for ``worker``.
-
-    :type worker: Callable[[TaskT], ResultT]
-
-    :param jobs: Value provided for ``jobs``.
-
-    :type jobs: int
-
-    :param logger: Value provided for ``logger``.
-
-    :type logger: Any
-
-    :param label: Value provided for ``label``.
-
-    :type label: str
-
-    :returns: Result produced by ``execute_indexed_tasks``.
-
-    :rtype: List[ResultT]
-
-    """
-
-
+    """Execute ``tasks`` possibly in parallel, preserving task order."""
     if not tasks:
         return []
 
@@ -102,27 +60,7 @@ def execute_sequential_tasks(
     tasks: Sequence[TaskT],
     worker: Callable[[TaskT], ResultT],
 ) -> List[ResultT]:
-    """
-
-    Execute ``tasks`` sequentially and collect the results.
-
-
-
-    :param tasks: Value provided for ``tasks``.
-
-    :type tasks: Sequence[TaskT]
-
-    :param worker: Value provided for ``worker``.
-
-    :type worker: Callable[[TaskT], ResultT]
-
-    :returns: Result produced by ``execute_sequential_tasks``.
-
-    :rtype: List[ResultT]
-
-    """
-
-
+    """Execute ``tasks`` sequentially and collect the corresponding results."""
     results: List[ResultT] = []
     for task in tasks:
         results.append(worker(task))

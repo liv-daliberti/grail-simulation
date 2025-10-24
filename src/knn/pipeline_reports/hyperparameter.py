@@ -43,21 +43,40 @@ from .shared import _feature_space_heading, _format_shell_command
 
 
 @dataclass(frozen=True)
+class HyperparameterCommonContext:
+    """Shared context used across hyper-parameter report sections."""
+
+    studies: Sequence[StudySpec]
+    feature_spaces: Sequence[str]
+    k_sweep: Sequence[int]
+    sentence_model: Optional[str]
+
+
+@dataclass(frozen=True)
+class NextVideoSectionConfig:
+    """Configuration for the next-video portion of the hyper-parameter report."""
+
+    selections: Mapping[str, Mapping[str, StudySelection]]
+    sweep_outcomes: Sequence[SweepOutcome]
+
+
+@dataclass(frozen=True)
+class OpinionSectionConfig:
+    """Configuration for the opinion portion of the hyper-parameter report."""
+
+    selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    sweep_outcomes: Sequence[OpinionSweepOutcome]
+
+
+@dataclass(frozen=True)
 class HyperparameterReportConfig:
     """Configuration bundle for the hyper-parameter report builder."""
 
     output_dir: Path
-    selections: Mapping[str, Mapping[str, StudySelection]]
-    sweep_outcomes: Sequence[SweepOutcome]
-    studies: Sequence[StudySpec]
-    k_sweep: Sequence[int]
-    feature_spaces: Sequence[str]
-    sentence_model: Optional[str]
-    opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
-    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    common: HyperparameterCommonContext
     allow_incomplete: bool
-    include_next_video: bool
-    include_opinion: bool
+    next_video: Optional[NextVideoSectionConfig] = None
+    opinion: Optional[OpinionSectionConfig] = None
 
 
 def _metric_summary_to_mapping(summary: MetricSummary) -> Dict[str, object]:
@@ -594,13 +613,16 @@ def _hyperparameter_opinion_section(
     portfolio = _OpinionPortfolioStats()
     top_n = 5
     for feature_space in _ordered_opinion_spaces(feature_spaces, grouped_outcomes):
-        section_lines = _opinion_feature_section_lines(
-            feature_space=feature_space,
-            study_outcomes=grouped_outcomes.get(feature_space, {}),
-            opinion_selection_map=opinion_selections.get(feature_space, {}),
+        context = OpinionFeatureContext(
+            selection_map=opinion_selections.get(feature_space, {}),
             studies=studies,
             top_n=top_n,
             portfolio=portfolio,
+        )
+        section_lines = _opinion_feature_section_lines(
+            feature_space=feature_space,
+            study_outcomes=grouped_outcomes.get(feature_space, {}),
+            context=context,
         )
         if section_lines:
             lines.extend(section_lines)
@@ -633,14 +655,21 @@ def _ordered_opinion_spaces(
     return ordered
 
 
+@dataclass(frozen=True)
+class OpinionFeatureContext:
+    """Reusable bundle of context needed for opinion feature sections."""
+
+    selection_map: Mapping[str, OpinionStudySelection]
+    studies: Sequence[StudySpec]
+    top_n: int
+    portfolio: _OpinionPortfolioStats
+
+
 def _opinion_feature_section_lines(
     *,
     feature_space: str,
     study_outcomes: Mapping[str, Sequence[OpinionSweepOutcome]],
-    opinion_selection_map: Mapping[str, OpinionStudySelection],
-    studies: Sequence[StudySpec],
-    top_n: int,
-    portfolio: _OpinionPortfolioStats,
+    context: OpinionFeatureContext,
 ) -> List[str]:
     """Render table lines for a single feature space."""
     if not study_outcomes:
@@ -657,18 +686,15 @@ def _opinion_feature_section_lines(
     )
     lines.append(header)
     lines.append(divider)
-    for study in studies:
+    for study in context.studies:
         outcomes = study_outcomes.get(study.key, [])
         if not outcomes:
             continue
-        selection = opinion_selection_map.get(study.key)
         rows = _opinion_rows_for_study(
             feature_space=feature_space,
             study=study,
             outcomes=outcomes,
-            selection=selection,
-            top_n=top_n,
-            portfolio=portfolio,
+            context=context,
         )
         lines.extend(rows)
     lines.append("")
@@ -680,17 +706,18 @@ def _opinion_rows_for_study(
     feature_space: str,
     study: StudySpec,
     outcomes: Sequence[OpinionSweepOutcome],
-    selection: Optional[OpinionStudySelection],
-    top_n: int,
-    portfolio: _OpinionPortfolioStats,
+    context: OpinionFeatureContext,
 ) -> List[str]:
     """Return formatted rows for a single study within a feature space."""
-    limit = max(1, top_n)
+    selection = context.selection_map.get(study.key)
+    limit = max(1, context.top_n)
     displayed = _select_displayed_outcomes(outcomes, selection, limit)
     rows: List[str] = []
     for outcome in displayed:
         summary_obj = extract_opinion_summary(outcome.metrics or {})
-        portfolio.record(summary_obj, f"{feature_space.upper()} – {study.label}")
+        context.portfolio.record(
+            summary_obj, f"{feature_space.upper()} – {study.label}"
+        )
         summary = _opinion_summary_to_mapping(summary_obj)
         rows.append(
             _format_opinion_sweep_row(
@@ -794,29 +821,34 @@ def _build_hyperparameter_report(config: HyperparameterReportConfig) -> None:
     config.output_dir.mkdir(parents=True, exist_ok=True)
     readme_path = config.output_dir / "README.md"
 
+    common = config.common
     lines: List[str] = _hyperparameter_report_intro(
-        studies=config.studies,
-        k_sweep=config.k_sweep,
-        feature_spaces=config.feature_spaces,
-        sentence_model=config.sentence_model,
+        studies=common.studies,
+        k_sweep=common.k_sweep,
+        feature_spaces=common.feature_spaces,
+        sentence_model=common.sentence_model,
     )
-    if config.include_next_video:
+    if config.next_video:
         lines.extend(
             _hyperparameter_table_section(
-                selections=config.selections,
-                studies=config.studies,
-                feature_spaces=config.feature_spaces,
+                selections=config.next_video.selections,
+                studies=common.studies,
+                feature_spaces=common.feature_spaces,
             )
         )
-        lines.extend(_hyperparameter_observations_section(config.selections))
-        lines.extend(_hyperparameter_leaderboard_section(config.sweep_outcomes))
-    if config.include_opinion:
+        lines.extend(
+            _hyperparameter_observations_section(config.next_video.selections)
+        )
+        lines.extend(
+            _hyperparameter_leaderboard_section(config.next_video.sweep_outcomes)
+        )
+    if config.opinion:
         lines.extend(
             _hyperparameter_opinion_section(
-                opinion_selections=config.opinion_selections,
-                opinion_sweep_outcomes=config.opinion_sweep_outcomes,
-                studies=config.studies,
-                feature_spaces=config.feature_spaces,
+                opinion_selections=config.opinion.selections,
+                opinion_sweep_outcomes=config.opinion.sweep_outcomes,
+                studies=common.studies,
+                feature_spaces=common.feature_spaces,
                 allow_incomplete=config.allow_incomplete,
             )
         )

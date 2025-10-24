@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+
 from xgb import opinion
 
 
@@ -66,7 +68,7 @@ def test_collect_examples_prefers_latest_step(monkeypatch: pytest.MonkeyPatch) -
     examples = opinion.collect_examples(
         dataset,
         spec=spec,
-        extra_fields=(),
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
         max_participants=0,
         seed=0,
     )

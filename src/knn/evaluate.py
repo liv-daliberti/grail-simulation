@@ -33,6 +33,7 @@ from numpy.random import default_rng
 
 from common.embeddings import SentenceTransformerConfig
 from common.eval_utils import compose_issue_slug, prepare_dataset, safe_div
+from common.prompt_docs import merge_default_extra_fields
 
 try:  # pragma: no cover - optional dependency
     import matplotlib
@@ -844,11 +845,7 @@ def run_eval(args) -> None:  # pylint: disable=too-many-locals
             "code": repo_state,
         }
 
-        extra_fields = [
-            token.strip()
-            for token in (args.knn_text_fields or "").split(",")
-            if token.strip()
-        ]
+        extra_fields = merge_default_extra_fields(_split_tokens(args.knn_text_fields))
         knn_index = _build_or_load_index(
             train_ds=filtered_train,
             issue_slug=issue_slug,
@@ -1144,7 +1141,7 @@ def _accumulate_row(
     # If the dataset does not provide an explicit position, fall back to the
     # (1-based) gold index so the positional diagnostics still reflect where the
     # answer appeared in the slate.
-    if position < 0 and gold_index > 0:
+    if position < 0 < gold_index:
         position = gold_index - 1
     pos_bucket = bucket_from_pos(position)
     bucket_stats["position_seen"][pos_bucket] += 1

@@ -47,7 +47,8 @@ class BaseTextVectorizer:
     """
     Interface for text vectorisers used by the XGBoost slate model.
 
-    :cvar kind: String identifier describing the vectoriser subtype.
+    :param kind: String identifier describing the vectoriser subtype.
+    :type kind: str
     """
 
     kind: str
@@ -80,6 +81,8 @@ class BaseTextVectorizer:
         """
         Return the number of features produced during transformation.
 
+        :param self: Vectoriser instance being inspected.
+        :type self: BaseTextVectorizer
         :returns: Width of the feature representation.
         :rtype: int
         """
@@ -113,6 +116,8 @@ class BaseTextVectorizer:
         """
         Return serialisable metadata describing the vectoriser.
 
+        :param self: Vectoriser instance exposed to callers.
+        :type self: BaseTextVectorizer
         :returns: Dictionary describing the vectoriser kind and dimension.
         :rtype: Dict[str, Any]
         """
@@ -125,7 +130,8 @@ class TfidfConfig:
     """
     Configuration parameters for TF-IDF vectorisation.
 
-    :ivar max_features: Maximum number of features retained after fitting.
+    :param max_features: Maximum number of features retained after fitting.
+    :type max_features: int | None
     """
 
     max_features: int | None = 200_000
@@ -135,7 +141,8 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
     """
     Wrapper around scikit-learn's TF-IDF vectoriser.
 
-    :cvar kind: Identifier used when serialising the vectoriser.
+    :param config: TF-IDF configuration used to initialise the vectoriser.
+    :type config: TfidfConfig
     """
 
     kind = "tfidf"
@@ -181,6 +188,8 @@ class TfidfVectorizerWrapper(BaseTextVectorizer):
         """
         Return the number of TF-IDF features exposed by the model.
 
+        :param self: Wrapper instance exposing the fitted TF-IDF model.
+        :type self: TfidfVectorizerWrapper
         :returns: Vocabulary size reflected in the vectoriser.
         :rtype: int
         """
@@ -233,13 +242,20 @@ class Word2VecVectorizerConfig:
     """
     Configuration for Word2Vec-based embeddings.
 
-    :ivar vector_size: Dimensionality of the generated embeddings.
-    :ivar window: Context window size for Word2Vec training.
-    :ivar min_count: Minimum token frequency required for inclusion.
-    :ivar epochs: Number of training epochs for the Word2Vec model.
-    :ivar workers: Number of worker threads used during training.
-    :ivar seed: Random seed for reproducibility.
-    :ivar model_dir: Directory containing persisted Word2Vec artefacts.
+    :param vector_size: Dimensionality of the generated embeddings.
+    :type vector_size: int
+    :param window: Context window size for Word2Vec training.
+    :type window: int
+    :param min_count: Minimum token frequency required for inclusion.
+    :type min_count: int
+    :param epochs: Number of training epochs for the Word2Vec model.
+    :type epochs: int
+    :param workers: Number of worker threads used during training.
+    :type workers: int
+    :param seed: Random seed for reproducibility.
+    :type seed: int
+    :param model_dir: Directory containing persisted Word2Vec artefacts.
+    :type model_dir: str | None
     """
 
     vector_size: int = 256
@@ -255,7 +271,8 @@ class Word2VecVectorizer(BaseTextVectorizer):
     """
     Vectoriser that averages Word2Vec embeddings.
 
-    :cvar kind: Identifier used when serialising the vectoriser.
+    :param config: Word2Vec configuration controlling training and inference.
+    :type config: Word2VecVectorizerConfig
     """
 
     kind = "word2vec"
@@ -311,6 +328,8 @@ class Word2VecVectorizer(BaseTextVectorizer):
         """
         Return the dimensionality of the produced Word2Vec embeddings.
 
+        :param self: Vectoriser instance exposing the Word2Vec builder.
+        :type self: Word2VecVectorizer
         :returns: Embedding size configured for the model.
         :rtype: int
         """
@@ -367,10 +386,14 @@ class SentenceTransformerVectorizerConfig:
     """
     Configuration bundle for SentenceTransformer vectorisation.
 
-    :ivar model_name: Hugging Face model identifier used for encoding.
-    :ivar device: Computation device override (e.g. ``"cuda"`` or ``"cpu"``).
-    :ivar batch_size: Batch size used during encoding.
-    :ivar normalize: Flag controlling embedding normalisation.
+    :param model_name: Hugging Face model identifier used for encoding.
+    :type model_name: str
+    :param device: Computation device override (e.g. ``"cuda"`` or ``"cpu"``).
+    :type device: str | None
+    :param batch_size: Batch size used during encoding.
+    :type batch_size: int
+    :param normalize: Flag controlling embedding normalisation.
+    :type normalize: bool
     """
 
     model_name: str = "sentence-transformers/all-mpnet-base-v2"
@@ -383,7 +406,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
     """
     Vectoriser using pre-trained sentence-transformer encoders.
 
-    :cvar kind: Identifier used when serialising the vectoriser.
+    :param config: Sentence-transformer configuration applied to the encoder.
+    :type config: SentenceTransformerVectorizerConfig
     """
 
     kind = "sentence_transformer"
@@ -441,6 +465,8 @@ class SentenceTransformerVectorizer(BaseTextVectorizer):
         """
         Return the dimensionality of the sentence-transformer embeddings.
 
+        :param self: Vectoriser instance exposing the sentence-transformer encoder.
+        :type self: SentenceTransformerVectorizer
         :returns: Embedding width either cached from training or derived on demand.
         :rtype: int
         """

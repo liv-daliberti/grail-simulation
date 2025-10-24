@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Index construction and scoring logic for the KNN slate baselines.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -297,7 +287,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_tfidf_vectorizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CandidateMetadata</span><span class="p">,</span>
     <span class="n">assemble_document</span><span class="p">,</span>
+    <span class="n">candidate_feature_tokens</span><span class="p">,</span>
+    <span class="n">collect_candidate_metadata</span><span class="p">,</span>
     <span class="n">extract_slate_items</span><span class="p">,</span>
     <span class="n">prepare_training_documents</span><span class="p">,</span>
     <span class="n">Word2VecConfig</span><span class="p">,</span>
@@ -358,41 +351,42 @@
 <span class="sd">    :vartype config: SlateQueryConfig</span>
 <span class="sd">    :ivar unique_k: Unique set of neighbour counts to report in the score output.</span>
 <span class="sd">    :vartype unique_k: Sequence[int]</span>
-
+<span class="sd">    :ivar option_count: Total number of slate options for the current example.</span>
+<span class="sd">    :vartype option_count: int</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span>
     <span class="n">base_parts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span>
     <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">option_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="n">CandidateMetadata</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return per-``k`` scores for the given slate candidate.</span>
 
-<span class="sd">        :param title: Human-readable title associated with the candidate slate item.</span>
-
-<span class="sd">        :type title: str</span>
-
-<span class="sd">        :param video_id: Identifier of the candidate video being scored.</span>
-
-<span class="sd">        :type video_id: str</span>
-
-<span class="sd">        :returns: per-``k`` scores for the given slate candidate</span>
-
+<span class="sd">        :param candidate: Metadata describing the candidate slate item.</span>
+<span class="sd">        :type candidate: CandidateMetadata</span>
+<span class="sd">        :returns: per-``k`` scores for the given slate candidate.</span>
 <span class="sd">        :rtype: Dict[int, float]</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query</span><span class="p">,</span> <span class="n">sims</span> <span class="o">=</span> <span class="n">_candidate_query</span><span class="p">(</span>
             <span class="n">index_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">,</span>
             <span class="n">base_parts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_parts</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
-            <span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">candidate</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">video_id</span><span class="o">=</span><span class="n">candidate</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">candidate_tokens</span><span class="o">=</span><span class="n">candidate_feature_tokens</span><span class="p">(</span>
+                <span class="n">candidate</span><span class="p">,</span>
+                <span class="n">option_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">option_count</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">_candidate_mask</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">_candidate_mask</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">video_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">fallback</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sims</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.01</span><span class="p">)</span> <span class="k">if</span> <span class="n">sims</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">fallback</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_k</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">sims</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_k</span><span class="p">}</span>
+            <span class="n">score_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sims</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">nan</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_aggregate_scores</span><span class="p">(</span><span class="n">score_vector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_k</span><span class="p">)</span>
 
         <span class="n">sims_masked</span> <span class="o">=</span> <span class="n">sims</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">sims_masked</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -787,7 +781,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_base_parts</span><span class="p">(</span>
     <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="n">slate_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">],</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the base text parts used to score slate candidates.</span>
@@ -803,8 +797,8 @@
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_safe_str</span><span class="p">(</span><span class="n">base_text</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">lowercase</span><span class="p">))</span>
 
     <span class="n">surfaces</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">title</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">slate_pairs</span><span class="p">:</span>
-        <span class="n">surface</span> <span class="o">=</span> <span class="n">_surface_text</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">surface</span> <span class="o">=</span> <span class="n">_surface_text</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">candidate</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">surface</span><span class="p">:</span>
             <span class="n">surfaces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_safe_str</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">lowercase</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">surfaces</span><span class="p">:</span>
@@ -824,7 +818,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_score_candidates</span><span class="p">(</span>
     <span class="n">index_data</span><span class="p">:</span> <span class="n">SlateIndexData</span><span class="p">,</span>
-    <span class="n">slate_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">],</span>
     <span class="n">base_parts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">unique_k</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
@@ -838,10 +832,16 @@
 <span class="sd">    :param config: Query configuration instance.</span>
 <span class="sd">    :returns: Mapping from ``k`` to the list of scores per candidate.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">scorer</span> <span class="o">=</span> <span class="n">CandidateScorer</span><span class="p">(</span><span class="n">index_data</span><span class="p">,</span> <span class="n">base_parts</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">unique_k</span><span class="p">)</span>
+    <span class="n">scorer</span> <span class="o">=</span> <span class="n">CandidateScorer</span><span class="p">(</span>
+        <span class="n">index_data</span><span class="o">=</span><span class="n">index_data</span><span class="p">,</span>
+        <span class="n">base_parts</span><span class="o">=</span><span class="n">base_parts</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+        <span class="n">unique_k</span><span class="o">=</span><span class="n">unique_k</span><span class="p">,</span>
+        <span class="n">option_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">scores_by_k</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">title</span><span class="p">,</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">slate_pairs</span><span class="p">:</span>
-        <span class="n">candidate_scores</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">candidate_scores</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">candidate_scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">scores_by_k</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">scores_by_k</span>
@@ -852,6 +852,7 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">SlateQueryConfig</span><span class="p">,</span>
+    <span class="n">candidate_tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the transformed query vector and raw similarities for a candidate.</span>
 
@@ -866,6 +867,8 @@
     <span class="n">parts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_parts</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">surface</span><span class="p">:</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_safe_str</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">lowercase</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">candidate_tokens</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">candidate_tokens</span><span class="p">))</span>
     <span class="n">query_text</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">part</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">part</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">index_data</span><span class="o">.</span><span class="n">feature_space</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;word2vec&quot;</span><span class="p">,</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">}:</span>
@@ -986,11 +989,17 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">unique_k</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
 
-    <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">slate_pairs</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span><span class="p">}</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">collect_candidate_metadata</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">slate_pairs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">unique_k</span><span class="p">}</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CandidateMetadata</span><span class="p">(</span><span class="n">slot</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">]</span>
 
-    <span class="n">base_parts</span> <span class="o">=</span> <span class="n">_build_base_parts</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">slate_pairs</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="n">base_parts</span> <span class="o">=</span> <span class="n">_build_base_parts</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
     <span class="n">index_data</span> <span class="o">=</span> <span class="n">_build_index_data</span><span class="p">(</span><span class="n">knn_index</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">index_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -998,7 +1007,7 @@
 
     <span class="n">scores_by_k</span> <span class="o">=</span> <span class="n">_score_candidates</span><span class="p">(</span>
         <span class="n">index_data</span><span class="p">,</span>
-        <span class="n">slate_pairs</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">,</span>
         <span class="n">base_parts</span><span class="p">,</span>
         <span class="n">unique_k</span><span class="p">,</span>
         <span class="n">config</span><span class="p">,</span>

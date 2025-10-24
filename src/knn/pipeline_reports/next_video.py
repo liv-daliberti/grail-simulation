@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from common.report_utils import extract_numeric_series
 
@@ -43,6 +43,11 @@ from ..pipeline_utils import (
 )
 from .shared import LOGGER, _feature_space_heading
 
+if TYPE_CHECKING:
+    from ..pipeline_context import MetricSummary
+else:  # pragma: no cover - type hint fallback
+    MetricSummary = Any
+
 
 @dataclass
 class PortfolioAggregate:
@@ -53,6 +58,105 @@ class PortfolioAggregate:
     random: Optional[float]
     eligible: int
     studies: int
+
+
+@dataclass
+class _PortfolioAccumulator:
+    """Mutable helper used to compute weighted aggregates."""
+
+    accuracy_total: float = 0.0
+    accuracy_weight: int = 0
+    baseline_total: float = 0.0
+    baseline_weight: int = 0
+    random_total: float = 0.0
+    random_weight: int = 0
+    studies_with_metrics: int = 0
+
+    def add(self, summary: MetricSummary) -> None:
+        """Record weighted contributions from ``summary`` when eligible."""
+
+        eligible = summary.n_eligible
+        if not eligible:
+            return
+
+        recorded = False
+        for total_attr, weight_attr, field_name in (
+            ("accuracy_total", "accuracy_weight", "accuracy"),
+            ("baseline_total", "baseline_weight", "baseline"),
+            ("random_total", "random_weight", "random_baseline"),
+        ):
+            value = getattr(summary, field_name)
+            if value is None:
+                continue
+            setattr(self, total_attr, getattr(self, total_attr) + value * eligible)
+            setattr(self, weight_attr, getattr(self, weight_attr) + eligible)
+            recorded = True
+
+        if recorded:
+            self.studies_with_metrics += 1
+
+    def result(self) -> Optional[PortfolioAggregate]:
+        """Return the weighted aggregates accumulated so far."""
+
+        if not self.studies_with_metrics:
+            return None
+
+        def _average(total: float, weight: int) -> Optional[float]:
+            return total / weight if weight else None
+
+        weighted_accuracy = _average(self.accuracy_total, self.accuracy_weight)
+        weighted_baseline = _average(self.baseline_total, self.baseline_weight)
+        weighted_random = _average(self.random_total, self.random_weight)
+        eligible_total = max(self.accuracy_weight, self.baseline_weight, self.random_weight)
+
+        return PortfolioAggregate(
+            accuracy=weighted_accuracy,
+            baseline=weighted_baseline,
+            random=weighted_random,
+            eligible=eligible_total,
+            studies=self.studies_with_metrics,
+        )
+
+
+@dataclass
+class _ObservationAccumulator:
+    """Running statistics for qualitative observations."""
+
+    delta_sum: float = 0.0
+    delta_count: int = 0
+    random_sum: float = 0.0
+    random_count: int = 0
+
+    def record(self, summary: MetricSummary) -> None:
+        """Update accumulated statistics with ``summary``."""
+
+        delta = (
+            summary.accuracy - summary.baseline
+            if summary.accuracy is not None and summary.baseline is not None
+            else None
+        )
+        if delta is not None:
+            self.delta_sum += delta
+            self.delta_count += 1
+
+        random_value = summary.random_baseline
+        if random_value is not None:
+            self.random_sum += random_value
+            self.random_count += 1
+
+    def averages(self) -> List[str]:
+        """Return formatted average statistics when available."""
+
+        extras: List[str] = []
+        if self.delta_count:
+            extras.append(
+                f"mean Δ {format_delta(self.delta_sum / self.delta_count)}"
+            )
+        if self.random_count:
+            extras.append(
+                f"mean random {format_optional_float(self.random_sum / self.random_count)}"
+            )
+        return extras
 
 
 @dataclass
@@ -123,42 +227,11 @@ def _aggregate_portfolio_metrics(
     """
     if not metrics:
         return None
-    totals = {"accuracy": 0.0, "baseline": 0.0, "random": 0.0}
-    weights = {"accuracy": 0, "baseline": 0, "random": 0}
-    studies_with_metrics = 0
-    for data in metrics.values():
-        summary = extract_metric_summary(data)
-        eligible = summary.n_eligible
-        if not eligible:
-            continue
-        recorded = False
-        for field_name, attr in (
-            ("accuracy", "accuracy"),
-            ("baseline", "baseline"),
-            ("random", "random_baseline"),
-        ):
-            value = getattr(summary, attr)
-            if value is None:
-                continue
-            totals[field_name] += value * eligible
-            weights[field_name] += eligible
-            recorded = True
-        if recorded:
-            studies_with_metrics += 1
-    if not studies_with_metrics:
-        return None
-    weighted = {
-        field: (totals[field] / weights[field] if weights[field] else None)
-        for field in totals
-    }
-    eligible_total = max(weights.values()) if weights else 0
-    return PortfolioAggregate(
-        accuracy=weighted["accuracy"],
-        baseline=weighted["baseline"],
-        random=weighted["random"],
-        eligible=eligible_total,
-        studies=studies_with_metrics,
-    )
+
+    accumulator = _PortfolioAccumulator()
+    for payload in metrics.values():
+        accumulator.add(extract_metric_summary(payload))
+    return accumulator.result()
 
 
 def _summarise_feature_observations(
@@ -179,38 +252,27 @@ def _summarise_feature_observations(
     :rtype: Optional[str]
     """
     bullet_parts: List[str] = []
-    delta_values: List[float] = []
-    random_values: List[float] = []
+    stats = _ObservationAccumulator()
     for study in studies:
-        data = metrics.get(study.key)
-        if not data:
+        payload = metrics.get(study.key)
+        if not payload:
             continue
-        summary = extract_metric_summary(data)
+        summary = extract_metric_summary(payload)
         accuracy = summary.accuracy
         if accuracy is None:
             continue
-        baseline = summary.baseline
-        delta_val = accuracy - baseline if baseline is not None else None
-        if delta_val is not None:
-            delta_values.append(delta_val)
-        random_value = summary.random_baseline
-        if random_value is not None:
-            random_values.append(random_value)
-        detail = (
+        baseline_val = summary.baseline
+        delta_val = accuracy - baseline_val if baseline_val is not None else None
+        stats.record(summary)
+        bullet_parts.append(
             f"{study.label}: {format_optional_float(accuracy)} "
-            f"(baseline {format_optional_float(baseline)}, Δ {format_delta(delta_val)}, "
+            f"(baseline {format_optional_float(baseline_val)}, "
+            f"Δ {format_delta(delta_val)}, "
             f"k={format_k(summary.best_k)}, eligible {format_count(summary.n_eligible)})"
         )
-        bullet_parts.append(detail)
     if not bullet_parts:
         return None
-    extras: List[str] = []
-    if delta_values:
-        mean_delta = sum(delta_values) / len(delta_values)
-        extras.append(f"mean Δ {format_delta(mean_delta)}")
-    if random_values:
-        mean_random = sum(random_values) / len(random_values)
-        extras.append(f"mean random {format_optional_float(mean_random)}")
+    extras = stats.averages()
     if extras:
         bullet_parts.append("averages: " + ", ".join(extras))
     joined = "; ".join(bullet_parts)
@@ -310,7 +372,8 @@ def _next_video_portfolio_summary(
     """
     ordered_spaces = _ordered_feature_spaces(feature_spaces, metrics_by_feature)
     rows: List[str] = []
-    best: Optional[Tuple[str, PortfolioAggregate]] = None
+    best_space: Optional[str] = None
+    best_metrics: Optional[PortfolioAggregate] = None
 
     for feature_space in ordered_spaces:
         aggregates = _aggregate_portfolio_metrics(
@@ -322,18 +385,18 @@ def _next_video_portfolio_summary(
         if aggregates.accuracy is not None and aggregates.baseline is not None:
             delta_value = aggregates.accuracy - aggregates.baseline
         rows.append(
-            "| {space} | {accuracy} | {delta} | {random} | {eligible} | {studies} |".format(
-                space=feature_space.upper(),
-                accuracy=format_optional_float(aggregates.accuracy),
-                delta=format_delta(delta_value),
-                random=format_optional_float(aggregates.random),
-                eligible=format_count(aggregates.eligible),
-                studies=format_count(aggregates.studies),
-            )
+            f"| {feature_space.upper()} | {format_optional_float(aggregates.accuracy)} | "
+            f"{format_delta(delta_value)} | {format_optional_float(aggregates.random)} | "
+            f"{format_count(aggregates.eligible)} | {format_count(aggregates.studies)} |"
         )
         if aggregates.accuracy is not None:
-            if best is None or aggregates.accuracy > best[1].accuracy:
-                best = (feature_space, aggregates)
+            if (
+                best_metrics is None
+                or best_metrics.accuracy is None
+                or aggregates.accuracy > best_metrics.accuracy
+            ):
+                best_space = feature_space
+                best_metrics = aggregates
 
     if not rows:
         return []
@@ -343,16 +406,12 @@ def _next_video_portfolio_summary(
     lines.append(PORTFOLIO_RULE)
     lines.extend(rows)
     lines.append("")
-    if best:
-        best_space, best_metrics = best
+    if best_space and best_metrics:
         lines.append(
-            "Best-performing feature space: **{space}** with weighted accuracy "
-            "{accuracy} across {eligible} eligible slates ({studies} studies).".format(
-                space=best_space.upper(),
-                accuracy=format_optional_float(best_metrics.accuracy),
-                eligible=format_count(best_metrics.eligible),
-                studies=format_count(best_metrics.studies),
-            )
+            f"Best-performing feature space: **{best_space.upper()}** with weighted "
+            f"accuracy {format_optional_float(best_metrics.accuracy)} across "
+            f"{format_count(best_metrics.eligible)} eligible slates "
+            f"({format_count(best_metrics.studies)} studies)."
         )
         lines.append("")
     return lines
@@ -581,6 +640,105 @@ def _next_video_observations(
     return lines
 
 
+def _ordered_loso_feature_spaces(
+    loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+) -> List[str]:
+    """Return feature spaces ordered by canonical preference then presence."""
+
+    ordered = [
+        space
+        for space in ("tfidf", "word2vec", "sentence_transformer")
+        if space in loso_metrics
+    ]
+    ordered.extend(space for space in loso_metrics if space not in ordered)
+    return ordered
+
+
+def _collect_loso_summaries(
+    metrics: Mapping[str, Mapping[str, object]],
+    studies: Sequence[StudySpec],
+) -> List[Tuple[str, MetricSummary, Optional[float]]]:
+    """Return holdout summaries paired with their accuracy deltas."""
+
+    summaries: List[Tuple[str, MetricSummary, Optional[float]]] = []
+    for study in studies:
+        payload = metrics.get(study.key)
+        if not payload:
+            continue
+        summary = extract_metric_summary(payload)
+        delta = (
+            summary.accuracy - summary.baseline
+            if summary.accuracy is not None and summary.baseline is not None
+            else None
+        )
+        summaries.append((study.label, summary, delta))
+    return summaries
+
+
+def _loso_highlight_lines(
+    summaries: Sequence[Tuple[str, MetricSummary, Optional[float]]]
+) -> List[str]:
+    """Return highlight bullets for key holdout statistics."""
+
+    if not summaries:
+        return []
+    lines: List[str] = []
+    accuracy_entries = [
+        (label, summary.accuracy, delta)
+        for label, summary, delta in summaries
+        if summary.accuracy is not None
+    ]
+    if accuracy_entries:
+        best_label, best_acc, best_delta = max(
+            accuracy_entries, key=lambda item: item[1] or float("-inf")
+        )
+        lines.append(
+            f"- Highest holdout accuracy: {best_label} "
+            f"({format_optional_float(best_acc)}) "
+            f"{format_delta(best_delta)} vs. baseline."
+        )
+        worst_label, worst_acc, worst_delta = min(
+            accuracy_entries, key=lambda item: item[1] or float("inf")
+        )
+        lines.append(
+            f"- Lowest holdout accuracy: {worst_label} "
+            f"({format_optional_float(worst_acc)}) "
+            f"{format_delta(worst_delta)} vs. baseline."
+        )
+    delta_values = [delta for _label, _summary, delta in summaries if delta is not None]
+    if delta_values:
+        lines.append(
+            f"- Average accuracy delta across holdouts: "
+            f"{format_delta(sum(delta_values) / len(delta_values))}."
+        )
+    return lines
+
+
+def _loso_table_rows(
+    metrics: Mapping[str, Mapping[str, object]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    """Return Markdown table rows for leave-one-study-out metrics."""
+
+    rows: List[str] = []
+    for study in studies:
+        payload = metrics.get(study.key)
+        if not payload:
+            continue
+        summary = extract_metric_summary(payload)
+        delta = (
+            summary.accuracy - summary.baseline
+            if summary.accuracy is not None and summary.baseline is not None
+            else None
+        )
+        rows.append(
+            f"| {study.label} | {format_optional_float(summary.accuracy)} | "
+            f"{format_delta(delta)} | {format_optional_float(summary.baseline)} | "
+            f"{format_k(summary.best_k)} | {format_count(summary.n_eligible)} |"
+        )
+    return rows
+
+
 def _next_video_loso_section(
     loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
@@ -595,40 +753,26 @@ def _next_video_loso_section(
     :returns: Markdown section summarising leave-one-study-out accuracy.
     :rtype: List[str]
     """
+
     if not loso_metrics:
         return []
     lines: List[str] = ["## Cross-Study Holdouts", ""]
-    ordered_spaces = [
-        space
-        for space in ("tfidf", "word2vec", "sentence_transformer")
-        if space in loso_metrics
-    ]
-    for space in loso_metrics:
-        if space not in ordered_spaces:
-            ordered_spaces.append(space)
-    for feature_space in ordered_spaces:
+    for feature_space in _ordered_loso_feature_spaces(loso_metrics):
         metrics = loso_metrics.get(feature_space, {})
-        if not metrics:
+        rows = _loso_table_rows(metrics, studies)
+        if not rows:
             continue
         lines.append(_feature_space_heading(feature_space))
         lines.append("")
+        highlights = _loso_highlight_lines(_collect_loso_summaries(metrics, studies))
+        if highlights:
+            lines.append("Key holdout takeaways:")
+            lines.append("")
+            lines.extend(highlights)
+            lines.append("")
         lines.append(LOSO_TABLE_HEADER)
         lines.append(LOSO_TABLE_RULE)
-        for study in studies:
-            data = metrics.get(study.key)
-            if not data:
-                continue
-            summary = extract_metric_summary(data)
-            delta = (
-                summary.accuracy - summary.baseline
-                if summary.accuracy is not None and summary.baseline is not None
-                else None
-            )
-            lines.append(
-                f"| {study.label} | {format_optional_float(summary.accuracy)} | "
-                f"{format_delta(delta)} | {format_optional_float(summary.baseline)} | "
-                f"{format_k(summary.best_k)} | {format_count(summary.n_eligible)} |"
-            )
+        lines.extend(rows)
         lines.append("")
     return lines
 
@@ -643,7 +787,24 @@ def _build_next_video_report(inputs: NextVideoReportInputs) -> None:
     inputs.output_dir.mkdir(parents=True, exist_ok=True)
     readme_path = inputs.output_dir / "README.md"
 
-    dataset_name, split = _next_video_dataset_info(inputs.metrics_by_feature)
+    try:
+        dataset_name, split = _next_video_dataset_info(inputs.metrics_by_feature)
+    except RuntimeError:
+        if not inputs.allow_incomplete:
+            raise
+        placeholder = [
+            "# KNN Next-Video Baseline",
+            "",
+            (
+                "Next-video slate metrics are not available yet. "
+                "Execute the finalize stage to refresh these results."
+            ),
+            "",
+            "This placeholder was generated with `--allow-incomplete` enabled.",
+            "",
+        ]
+        readme_path.write_text("\n".join(placeholder), encoding="utf-8")
+        return
     uncertainty = _next_video_uncertainty_info(inputs.metrics_by_feature)
 
     lines: List[str] = _next_video_intro(dataset_name, split, uncertainty)

@@ -6,6 +6,8 @@ This directory contains the automated checks for the project. Everything is writ
 
 ### Top-level regression files
 - `test_clean_data_module.py` exercises dataset validation, schema alignment, and serialization helpers in `clean_data`.
+- `test_clean_data_helpers.py` covers low-level normalization, parsing, and timestamp helpers surfaced by `clean_data.helpers`.
+- `test_clean_data_io.py` exercises the file-system adapters in `clean_data.io`, including capsule discovery and CSV readers.
 - `test_filters_reporting.py` checks aggregate issue statistics produced by the filtering/reporting utilities.
 - `test_prompt_builder_package.py`, `test_prompt_utils.py`, and `test_prompt_smoke.py` cover prompt construction from multiple perspectives (unit behavior, helper functions, and smoke-level end-to-end assembly).
 - `test_research_article_political_sciences.py` validates the replication analysis helpers, including dataframe preparation, statistics, markdown reporting, and plotting.
@@ -17,7 +19,7 @@ This directory contains the automated checks for the project. Everything is writ
 - `gpt4o/` targets the profile summarization and conversation-building logic, using fixtures to stub upstream title lookups.
 - `knn/` and `xgb/` verify the recommendation baselines; each file uses `pytest.importorskip` so the tests only run when optional ML dependencies are installed.
 - `open_r1/` confirms configuration parsing and reward helpers function with the provided dependency stubs.
-- `integration/` currently contains `test_clean_prompt_flow.py`, which stitches together prompt cleaning and building to guard against regressions across packages.
+- `integration/` bundles cross-package flows: `test_clean_prompt_flow.py` exercises prompt-building from raw capsule rows, while `test_pipeline_end_to_end.py` patches the heavy CLI layers to validate the knn/xgb pipeline stage wiring.
 
 ### Shared fixtures and helpers
 - `helpers/` provides stub modules (datasets, graphviz, openai, pandas, torch) used by `conftest.py` to allow the suite to run without the real heavy dependencies.

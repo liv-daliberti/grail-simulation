@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -271,16 +271,10 @@
 
 <span class="c1"># pylint: disable=duplicate-code</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
+<span class="sd">&quot;&quot;&quot;Evaluation routines for the GPT-4o slate-ranking baseline.</span>
 
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
+<span class="sd">Fetches the configured dataset, issues batched GPT-4o requests, parses the</span>
+<span class="sd">responses, and aggregates accuracy and formatting metrics for reporting.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code</span>
@@ -291,9 +285,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -310,6 +305,352 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATASET_NAME</span><span class="p">,</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span> <span class="n">EVAL_SPLIT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conversation</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_conversation_record</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANS_TAG</span><span class="p">,</span> <span class="n">INDEX_ONLY</span>
+
+
+<div class="viewcode-block" id="BucketAccumulator">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BucketAccumulator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulate per-bucket evaluation counts.&quot;&quot;&quot;</span>
+
+    <span class="n">seen</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">correct</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">parsed</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">formatted</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BucketAccumulator.record_seen">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_seen">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_seen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.record_formatted">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_formatted">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.record_parsed">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_parsed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_parsed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsed</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.record_eligible">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_eligible">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_eligible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eligible</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.record_correct">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_correct">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.summary">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skip_empty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated metrics per bucket.&quot;&quot;&quot;</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">order</span> <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">seen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">skip_empty</span> <span class="ow">and</span> <span class="n">seen</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">eligible</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">correct</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;n_seen&quot;</span><span class="p">:</span> <span class="n">seen</span><span class="p">,</span>
+                <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="n">eligible</span><span class="p">,</span>
+                <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="n">correct</span><span class="p">,</span>
+                <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">eligible</span><span class="p">),</span>
+                <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span> <span class="n">seen</span><span class="p">),</span>
+                <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted</span><span class="p">,</span> <span class="n">seen</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.histogram">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.histogram">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return integer histogram for the requested attribute.&quot;&quot;&quot;</span>
+
+        <span class="n">counter</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">order</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BucketAccumulator.ratio">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.ratio">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numerator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ratios for ``numerator`` divided by ``denominator``.&quot;&quot;&quot;</span>
+
+        <span class="n">num</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numerator</span><span class="p">)</span>
+        <span class="n">denom</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">denominator</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">num</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">denom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">order</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Observation">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.Observation">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Observation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snapshot of a single evaluation example.&quot;&quot;&quot;</span>
+
+    <span class="n">issue_label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">study_label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">position_bucket</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">option_bucket</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">option_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">gold_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">parsed_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">is_formatted</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">is_correct</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<div class="viewcode-block" id="EvaluationAccumulator">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationAccumulator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stateful accumulator tracking evaluation metrics across examples.&quot;&quot;&quot;</span>
+
+    <span class="n">position</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
+    <span class="n">study</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
+    <span class="n">total_seen</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">format_ok</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">parsed_ok</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">eligible_overall</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">correct_overall</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">seen_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">seen_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">eligible_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">eligible_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">correct_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">correct_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">parsed_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">formatted_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">all_gold_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">option_counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EvaluationAccumulator.observe">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.observe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">observe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update aggregates for a single example observation.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_formatted</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format_ok</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parsed_ok</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seen_single</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_formatted</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">formatted_multi</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parsed_multi</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">eligible</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="p">[</span><span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">all_gold_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_count</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_correct</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">correct_overall</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">correct_single</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">correct_multi</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.accuracy">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.accuracy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return overall accuracy computed over eligible examples.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_overall</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.parsed_rate">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.parsed_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parsed_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return rate of successfully parsed completions.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.format_rate">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.format_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return rate of outputs that matched the expected format.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_ok</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.position_summary">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.position_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">position_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated position metrics.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.options_summary">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.options_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">options_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated option-count metrics.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;hist_seen&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;eligible&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;correct&quot;</span><span class="p">,</span> <span class="s2">&quot;eligible&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
+            <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;parsed&quot;</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
+            <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;formatted&quot;</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.group_summary">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.group_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">group_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return per-issue and per-study aggregates.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;by_issue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">skip_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;by_participant_study&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">skip_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.single_multi_summary">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.single_multi_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">single_multi_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return metrics comparing single-option and multi-option prompts.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;n_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_single</span><span class="p">),</span>
+            <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">),</span>
+            <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span><span class="p">),</span>
+            <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span><span class="p">),</span>
+            <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_single</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span><span class="p">),</span>
+            <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_multi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span><span class="p">),</span>
+            <span class="s2">&quot;parsed_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">)),</span>
+            <span class="s2">&quot;format_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatted_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">)),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.baseline_metrics">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.baseline_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">baseline_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return gold index distribution and baseline accuracies.&quot;&quot;&quot;</span>
+
+        <span class="n">distribution</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">distribution</span><span class="p">:</span>
+            <span class="n">baseline</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;top_index&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+            <span class="n">expected_random</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">top_index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">baseline</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;top_index&quot;</span><span class="p">:</span> <span class="n">top_index</span><span class="p">,</span>
+                <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="p">[</span><span class="n">top_index</span><span class="p">]),</span>
+                <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_gold_indices</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">top_index</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+            <span class="n">expected_random</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">distribution</span><span class="p">,</span> <span class="n">baseline</span><span class="p">,</span> <span class="n">expected_random</span></div>
+
+
+<div class="viewcode-block" id="EvaluationAccumulator.metrics_payload">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.metrics_payload">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_payload</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">eval_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">requested_issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">requested_studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the metrics blob written to disk after evaluation.&quot;&quot;&quot;</span>
+
+        <span class="n">position_order</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">]</span>
+        <span class="n">option_order</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
+        <span class="n">gold_distribution</span><span class="p">,</span> <span class="n">baseline_most_frequent</span><span class="p">,</span> <span class="n">random_baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_metrics</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span>
+            <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_name</span><span class="p">,</span>
+            <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">eval_split</span><span class="p">,</span>
+            <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">),</span>
+            <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">),</span>
+            <span class="s2">&quot;accuracy_overall&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(),</span>
+            <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">(),</span>
+            <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_rate</span><span class="p">(),</span>
+            <span class="s2">&quot;position_stats&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_summary</span><span class="p">(</span><span class="n">position_order</span><span class="p">),</span>
+            <span class="s2">&quot;by_n_options&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options_summary</span><span class="p">(</span><span class="n">option_order</span><span class="p">),</span>
+            <span class="s2">&quot;split_single_vs_multi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_multi_summary</span><span class="p">(),</span>
+            <span class="s2">&quot;group_metrics&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_summary</span><span class="p">(),</span>
+            <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">requested_issues</span><span class="p">),</span>
+                <span class="s2">&quot;studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">requested_studies</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;gold_index_distribution&quot;</span><span class="p">:</span> <span class="n">gold_distribution</span><span class="p">,</span>
+            <span class="s2">&quot;baseline_most_frequent_gold_index&quot;</span><span class="p">:</span> <span class="n">baseline_most_frequent</span><span class="p">,</span>
+            <span class="s2">&quot;random_baseline_expected_accuracy&quot;</span><span class="p">:</span> <span class="n">random_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">&quot;Accuracy computed over eligible rows (gold_index&gt;0). Buckets: 1..4, 5+, unknown.&quot;</span>
+            <span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -494,46 +835,11 @@
         <span class="n">studies_filter</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="n">n_eval_target</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_max</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">accumulator</span> <span class="o">=</span> <span class="n">EvaluationAccumulator</span><span class="p">()</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">seen_rows</span> <span class="o">=</span> <span class="mi">0</span>
+
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_jsonl</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
-        <span class="n">buckets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">]</span>
-        <span class="n">opts_buckets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
-        <span class="n">seen_by_pos</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">eligible_by_pos</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">correct_by_pos</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-
-        <span class="n">seen_by_opts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">eligible_by_opts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">correct_by_opts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">parsed_by_opts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">formatted_by_opts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-
-        <span class="n">seen_by_issue</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">eligible_by_issue</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">correct_by_issue</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">parsed_by_issue</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">formatted_by_issue</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-
-        <span class="n">seen_by_study</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">eligible_by_study</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">correct_by_study</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">parsed_by_study</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">formatted_by_study</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-
-        <span class="n">seen_single</span> <span class="o">=</span> <span class="n">seen_multi</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">elig_single</span> <span class="o">=</span> <span class="n">elig_multi</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">corr_single</span> <span class="o">=</span> <span class="n">corr_multi</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">parsed_multi</span> <span class="o">=</span> <span class="n">formatted_multi</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="n">eligible_overall</span> <span class="o">=</span> <span class="n">correct_overall</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">format_ok</span> <span class="o">=</span> <span class="n">parsed_ok</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">all_gold_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">all_option_counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">seen_rows</span> <span class="o">=</span> <span class="mi">0</span>
-
         <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">data_iter</span><span class="p">:</span>
             <span class="n">issue_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="n">issue_label</span> <span class="o">=</span> <span class="n">issue_raw</span> <span class="k">if</span> <span class="n">issue_raw</span> <span class="k">else</span> <span class="s2">&quot;unspecified&quot;</span>
@@ -555,9 +861,6 @@
             <span class="n">position_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;position_index&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
             <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">_bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span>
-            <span class="n">seen_by_pos</span><span class="p">[</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">seen_by_issue</span><span class="p">[</span><span class="n">issue_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">seen_by_study</span><span class="p">[</span><span class="n">study_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">raw_output</span> <span class="o">=</span> <span class="n">ds_call</span><span class="p">(</span>
@@ -566,68 +869,32 @@
                     <span class="n">temperature</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
                     <span class="n">deployment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
                 <span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - best effort logging</span>
                 <span class="n">raw_output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
 
             <span class="n">is_formatted</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw_output</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">is_formatted</span><span class="p">:</span>
-                <span class="n">format_ok</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">formatted_by_issue</span><span class="p">[</span><span class="n">issue_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">formatted_by_study</span><span class="p">[</span><span class="n">study_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
             <span class="n">parsed_index</span> <span class="o">=</span> <span class="n">_parse_index_from_output</span><span class="p">(</span><span class="n">raw_output</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">parsed_ok</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">parsed_by_issue</span><span class="p">[</span><span class="n">issue_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">parsed_by_study</span><span class="p">[</span><span class="n">study_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
             <span class="n">option_bucket</span> <span class="o">=</span> <span class="n">_bucket_from_options</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
-            <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">option_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">is_formatted</span><span class="p">:</span>
-                <span class="n">formatted_by_opts</span><span class="p">[</span><span class="n">option_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">parsed_by_opts</span><span class="p">[</span><span class="n">option_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-            <span class="k">if</span> <span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">seen_single</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">seen_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">is_formatted</span><span class="p">:</span>
-                    <span class="n">formatted_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">parsed_multi</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">eligible</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">option_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
-            <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
-                <span class="n">eligible_overall</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">option_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">eligible_by_issue</span><span class="p">[</span><span class="n">issue_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">eligible_by_study</span><span class="p">[</span><span class="n">study_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                <span class="n">gold_hist</span><span class="p">[</span><span class="n">gold_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">gold_hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gold_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">all_gold_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gold_index</span><span class="p">)</span>
-                <span class="n">all_option_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
-
             <span class="n">is_correct</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">eligible</span> <span class="ow">and</span> <span class="p">(</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">parsed_index</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_correct</span><span class="p">:</span>
-                <span class="n">correct_overall</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">correct_by_pos</span><span class="p">[</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">correct_by_opts</span><span class="p">[</span><span class="n">option_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">correct_by_issue</span><span class="p">[</span><span class="n">issue_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">correct_by_study</span><span class="p">[</span><span class="n">study_label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="k">if</span> <span class="n">eligible</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">elig_single</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">if</span> <span class="n">is_correct</span><span class="p">:</span>
-                        <span class="n">corr_single</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">elig_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">if</span> <span class="n">is_correct</span><span class="p">:</span>
-                        <span class="n">corr_multi</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">accumulator</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span>
+                <span class="n">Observation</span><span class="p">(</span>
+                    <span class="n">issue_label</span><span class="o">=</span><span class="n">issue_label</span><span class="p">,</span>
+                    <span class="n">study_label</span><span class="o">=</span><span class="n">study_label</span><span class="p">,</span>
+                    <span class="n">position_bucket</span><span class="o">=</span><span class="n">pos_bucket</span><span class="p">,</span>
+                    <span class="n">option_bucket</span><span class="o">=</span><span class="n">option_bucket</span><span class="p">,</span>
+                    <span class="n">option_count</span><span class="o">=</span><span class="n">option_count</span><span class="p">,</span>
+                    <span class="n">gold_index</span><span class="o">=</span><span class="n">gold_index</span><span class="p">,</span>
+                    <span class="n">parsed_index</span><span class="o">=</span><span class="n">parsed_index</span><span class="p">,</span>
+                    <span class="n">is_formatted</span><span class="o">=</span><span class="n">is_formatted</span><span class="p">,</span>
+                    <span class="n">eligible</span><span class="o">=</span><span class="n">eligible</span><span class="p">,</span>
+                    <span class="n">is_correct</span><span class="o">=</span><span class="n">is_correct</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
 
             <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
@@ -651,146 +918,24 @@
 
             <span class="k">if</span> <span class="n">seen_rows</span> <span class="o">%</span> <span class="mi">25</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
-                <span class="n">accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
                 <span class="n">denom</span> <span class="o">=</span> <span class="n">n_eval_target</span> <span class="k">if</span> <span class="n">n_eval_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">seen_rows</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;[eval] </span><span class="si">%d</span><span class="s2">/</span><span class="si">%s</span><span class="s2">  acc=</span><span class="si">%.3f</span><span class="s2">  parsed=</span><span class="si">%.3f</span><span class="s2">  fmt=</span><span class="si">%.3f</span><span class="s2">  </span><span class="si">%.1f</span><span class="s2">s&quot;</span><span class="p">,</span>
                     <span class="n">seen_rows</span><span class="p">,</span>
                     <span class="n">denom</span><span class="p">,</span>
-                    <span class="n">accuracy</span><span class="p">,</span>
-                    <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
-                    <span class="n">safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">),</span>
+                    <span class="n">accumulator</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(),</span>
+                    <span class="n">accumulator</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">(),</span>
+                    <span class="n">accumulator</span><span class="o">.</span><span class="n">format_rate</span><span class="p">(),</span>
                     <span class="n">elapsed</span><span class="p">,</span>
                 <span class="p">)</span>
 
-    <span class="n">total_seen</span> <span class="o">=</span> <span class="n">seen_rows</span>
-    <span class="n">overall_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_overall</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
-    <span class="n">format_rate</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">format_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
-    <span class="n">parsed_rate</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="n">total_seen</span><span class="p">)</span>
-
-    <span class="n">position_stats</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">bucket</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;n_seen&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-            <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-            <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">correct_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_pos</span><span class="p">[</span><span class="n">bucket</span><span class="p">]),</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">buckets</span>
-    <span class="p">}</span>
-
-    <span class="n">by_options</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;hist_seen&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span><span class="p">},</span>
-        <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span><span class="p">},</span>
-        <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">bucket</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">correct_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span> <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span><span class="p">},</span>
-        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">eligible_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">bucket</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">],</span> <span class="n">seen_by_opts</span><span class="p">[</span><span class="n">bucket</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">bucket</span> <span class="ow">in</span> <span class="n">opts_buckets</span>
-        <span class="p">},</span>
-    <span class="p">}</span>
-
-    <span class="n">split_single_multi</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;n_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_single</span><span class="p">),</span>
-        <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen_multi</span><span class="p">),</span>
-        <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_single</span><span class="p">),</span>
-        <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elig_multi</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_single</span><span class="p">,</span> <span class="n">elig_single</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">corr_multi</span><span class="p">,</span> <span class="n">elig_multi</span><span class="p">),</span>
-        <span class="s2">&quot;parsed_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
-        <span class="s2">&quot;format_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">seen_multi</span><span class="p">)),</span>
-    <span class="p">}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_summarise_group</span><span class="p">(</span>
-        <span class="n">seen_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-        <span class="n">eligible_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-        <span class="n">correct_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-        <span class="n">parsed_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-        <span class="n">formatted_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aggregate per-group counts and rates into a summary dictionary.&quot;&quot;&quot;</span>
-
-        <span class="n">summary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">seen_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="n">seen</span> <span class="o">=</span> <span class="n">seen_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">seen</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">summary</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;n_seen&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span>
-                <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
-                <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">correct_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
-                <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">eligible_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
-                <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">seen</span><span class="p">),</span>
-                <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">seen</span><span class="p">),</span>
-            <span class="p">}</span>
-        <span class="k">return</span> <span class="n">summary</span>
-
-    <span class="n">group_metrics</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;by_issue&quot;</span><span class="p">:</span> <span class="n">_summarise_group</span><span class="p">(</span>
-            <span class="n">seen_by_issue</span><span class="p">,</span>
-            <span class="n">eligible_by_issue</span><span class="p">,</span>
-            <span class="n">correct_by_issue</span><span class="p">,</span>
-            <span class="n">parsed_by_issue</span><span class="p">,</span>
-            <span class="n">formatted_by_issue</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="s2">&quot;by_participant_study&quot;</span><span class="p">:</span> <span class="n">_summarise_group</span><span class="p">(</span>
-            <span class="n">seen_by_study</span><span class="p">,</span>
-            <span class="n">eligible_by_study</span><span class="p">,</span>
-            <span class="n">correct_by_study</span><span class="p">,</span>
-            <span class="n">parsed_by_study</span><span class="p">,</span>
-            <span class="n">formatted_by_study</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">}</span>
-
-    <span class="n">gold_index_distribution</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
-    <span class="k">if</span> <span class="n">gold_hist</span><span class="p">:</span>
-        <span class="n">top_index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">baseline_correct</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">all_gold_indices</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">top_index</span><span class="p">)</span>
-        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">baseline_correct</span><span class="p">,</span> <span class="n">eligible_overall</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">top_index</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">baseline_accuracy</span> <span class="o">=</span> <span class="mf">0.0</span>
-
-    <span class="n">baseline_most_frequent</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;top_index&quot;</span><span class="p">:</span> <span class="n">top_index</span><span class="p">,</span>
-        <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">top_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">top_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">baseline_accuracy</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="n">random_baseline_accuracy</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">all_option_counts</span><span class="p">]))</span>
-        <span class="k">if</span> <span class="n">all_option_counts</span>
-        <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">metrics_payload</span><span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">eval_split</span><span class="p">,</span>
+        <span class="n">requested_issues</span><span class="p">,</span>
+        <span class="n">requested_studies</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span>
-        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_name</span><span class="p">,</span>
-        <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">eval_split</span><span class="p">,</span>
-        <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_seen</span><span class="p">),</span>
-        <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible_overall</span><span class="p">),</span>
-        <span class="s2">&quot;accuracy_overall&quot;</span><span class="p">:</span> <span class="n">overall_accuracy</span><span class="p">,</span>
-        <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="n">parsed_rate</span><span class="p">,</span>
-        <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="n">format_rate</span><span class="p">,</span>
-        <span class="s2">&quot;position_stats&quot;</span><span class="p">:</span> <span class="n">position_stats</span><span class="p">,</span>
-        <span class="s2">&quot;by_n_options&quot;</span><span class="p">:</span> <span class="n">by_options</span><span class="p">,</span>
-        <span class="s2">&quot;split_single_vs_multi&quot;</span><span class="p">:</span> <span class="n">split_single_multi</span><span class="p">,</span>
-        <span class="s2">&quot;group_metrics&quot;</span><span class="p">:</span> <span class="n">group_metrics</span><span class="p">,</span>
-        <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="n">requested_issues</span><span class="p">,</span>
-            <span class="s2">&quot;studies&quot;</span><span class="p">:</span> <span class="n">requested_studies</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;gold_index_distribution&quot;</span><span class="p">:</span> <span class="n">gold_index_distribution</span><span class="p">,</span>
-        <span class="s2">&quot;baseline_most_frequent_gold_index&quot;</span><span class="p">:</span> <span class="n">baseline_most_frequent</span><span class="p">,</span>
-        <span class="s2">&quot;random_baseline_expected_accuracy&quot;</span><span class="p">:</span> <span class="n">random_baseline_accuracy</span><span class="p">,</span>
-        <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="s2">&quot;Accuracy computed over eligible rows (gold_index&gt;0). Buckets: 1..4, 5+, unknown.&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">metrics_json</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -798,11 +943,11 @@
     <span class="n">summary_bits</span> <span class="o">=</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s2">&quot;[DONE] dataset=</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">&quot;split=</span><span class="si">{</span><span class="n">eval_split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="n">total_seen</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;eligible=</span><span class="si">{</span><span class="n">eligible_overall</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;accuracy=</span><span class="si">{</span><span class="n">overall_accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;parsed_ok=</span><span class="si">{</span><span class="n">parsed_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;format_rate=</span><span class="si">{</span><span class="n">format_rate</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;n=</span><span class="si">{</span><span class="n">accumulator</span><span class="o">.</span><span class="n">total_seen</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;eligible=</span><span class="si">{</span><span class="n">accumulator</span><span class="o">.</span><span class="n">eligible_overall</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;accuracy=</span><span class="si">{</span><span class="n">accumulator</span><span class="o">.</span><span class="n">accuracy</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;parsed_ok=</span><span class="si">{</span><span class="n">accumulator</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;format_rate=</span><span class="si">{</span><span class="n">accumulator</span><span class="o">.</span><span class="n">format_rate</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">summary</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">summary_bits</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>

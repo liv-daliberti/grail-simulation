@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Factory helpers for creating shared TF-IDF vectorisers."""
 
 from __future__ import annotations
 
@@ -36,23 +26,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 
 def create_tfidf_vectorizer(*, max_features: Optional[int] = None) -> TfidfVectorizer:
-    """
-
-    Return a TF-IDF vectoriser with the shared configuration.
-
-
-
-    :param max_features: Value provided for ``max_features``.
-
-    :type max_features: Optional[int]
-
-    :returns: Result produced by ``create_tfidf_vectorizer``.
-
-    :rtype: TfidfVectorizer
-
-    """
-
-
+    """Return a TF-IDF vectoriser configured with shared defaults."""
     if TfidfVectorizer is None:  # pragma: no cover - optional dependency
         raise ImportError("Install scikit-learn to use TF-IDF vectorisation.")
     return TfidfVectorizer(

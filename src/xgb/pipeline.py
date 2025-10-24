@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
 
 from common.pipeline_stage import prepare_sweep_execution
+from common.prompt_docs import merge_default_extra_fields
 
 from .pipeline_context import (
     FinalEvalContext,
@@ -66,7 +67,7 @@ from .pipeline_sweeps import (
     _select_best_opinion_configs,
 )
 from .pipeline_evaluate import _run_final_evaluations, _run_opinion_stage
-from .pipeline_reports import _write_reports
+from .pipeline_reports import OpinionReportData, SweepReportData, _write_reports
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
@@ -101,7 +102,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     dataset = args.dataset or str(root / "data" / "cleaned_grail")
     cache_dir = args.cache_dir or str(_default_cache_dir(root))
     out_dir = Path(args.out_dir or _default_out_dir(root))
-    sweep_dir = Path(args.sweep_dir or (out_dir / "sweeps"))
+    next_video_dir = out_dir / "next_video"
+    opinion_dir = out_dir / "opinions"
+    sweep_dir = Path(args.sweep_dir or (next_video_dir / "sweeps"))
+    opinion_sweep_dir = Path(os.environ.get("XGB_OPINION_SWEEP_DIR") or (opinion_dir / "sweeps"))
     reports_dir = Path(args.reports_dir or _default_reports_dir(root))
 
     jobs_value = getattr(args, "jobs", 1) or 1
@@ -130,7 +134,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         requested_studies=study_tokens,
         allow_incomplete=allow_incomplete,
     )
-    extra_fields = _split_tokens(args.extra_text_fields)
+    extra_fields = merge_default_extra_fields(_split_tokens(args.extra_text_fields))
 
     task_log: List[str] = []
     if run_next_video:
@@ -198,7 +202,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         opinion_sweep_context = OpinionSweepRunContext(
             dataset=dataset,
             cache_dir=cache_dir,
-            sweep_dir=sweep_dir / "opinion",
+            sweep_dir=opinion_sweep_dir,
             extra_fields=tuple(extra_fields),
             max_participants=args.opinion_max_participants,
             seed=args.seed,
@@ -459,7 +463,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         final_eval_context = FinalEvalContext(
             base_cli=base_cli,
             extra_cli=extra_cli,
-            out_dir=out_dir / "next_video",
+            out_dir=next_video_dir,
             tree_method=args.tree_method,
             save_model_dir=Path(args.save_model_dir) if args.save_model_dir else None,
             reuse_existing=reuse_final,
@@ -487,20 +491,29 @@ def main(argv: Sequence[str] | None = None) -> None:
         opinion_metrics: Dict[str, Dict[str, object]] = {}
         if run_opinion:
             opinion_metrics = _load_opinion_metrics_from_disk(
-                opinion_dir=out_dir / "opinion",
+                opinion_dir=opinion_dir,
                 studies=study_specs,
             )
-        _write_reports(
-            reports_dir=reports_dir,
+        sweep_report = SweepReportData(
             outcomes=outcomes,
             selections=selections,
             final_metrics=final_metrics,
-            opinion_metrics=opinion_metrics,
+        )
+        opinion_report = (
+            OpinionReportData(
+                metrics=opinion_metrics,
+                outcomes=opinion_sweep_outcomes,
+                selections=opinion_selections,
+            )
+            if run_opinion
+            else None
+        )
+        _write_reports(
+            reports_dir=reports_dir,
+            sweeps=sweep_report,
             allow_incomplete=allow_incomplete,
             include_next_video=run_next_video,
-            include_opinion=run_opinion,
-            opinion_outcomes=opinion_sweep_outcomes,
-            opinion_selections=opinion_selections,
+            opinion=opinion_report,
         )
         return
 
@@ -513,7 +526,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         opinion_stage_config = OpinionStageConfig(
             dataset=dataset,
             cache_dir=cache_dir,
-            base_out_dir=out_dir,
+            base_out_dir=opinion_dir,
             extra_fields=extra_fields,
             studies=study_tokens,
             max_participants=args.opinion_max_participants,
@@ -531,17 +544,26 @@ def main(argv: Sequence[str] | None = None) -> None:
     if stage == "finalize":
         return
 
-    _write_reports(
-        reports_dir=reports_dir,
+    sweep_report = SweepReportData(
         outcomes=outcomes,
         selections=selections,
         final_metrics=final_metrics,
-        opinion_metrics=opinion_metrics,
+    )
+    opinion_report = (
+        OpinionReportData(
+            metrics=opinion_metrics,
+            outcomes=opinion_sweep_outcomes,
+            selections=opinion_selections,
+        )
+        if run_opinion
+        else None
+    )
+    _write_reports(
+        reports_dir=reports_dir,
+        sweeps=sweep_report,
         allow_incomplete=allow_incomplete,
         include_next_video=run_next_video,
-        include_opinion=run_opinion,
-        opinion_outcomes=opinion_sweep_outcomes,
-        opinion_selections=opinion_selections,
+        opinion=opinion_report,
     )
 
 

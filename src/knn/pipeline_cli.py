@@ -65,7 +65,10 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
     parser.add_argument(
         "--word2vec-model-dir",
         default=None,
-        help="Directory for persisted Word2Vec models (default: <out-dir>/word2vec_models).",
+        help=(
+            "Directory for persisted Word2Vec models "
+            "(default: <out-dir>/next_video/word2vec_models)."
+        ),
     )
     parser.add_argument(
         "--sentence-transformer-model",
@@ -145,7 +148,7 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
     parser.add_argument(
         "--sweep-dir",
         default=None,
-        help="Directory for hyper-parameter sweeps (default: <out-dir>/sweeps).",
+        help="Directory for hyper-parameter sweeps (default: <out-dir>/next_video/sweeps).",
     )
     parser.add_argument(
         "--k-sweep",
@@ -219,12 +222,22 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
     dataset = args.dataset or os.environ.get("DATASET") or default_dataset(root)
     out_dir_value = args.out_dir or os.environ.get("OUT_DIR") or default_out_dir(root)
     out_dir = Path(out_dir_value)
+    next_video_dir = out_dir / "next_video"
+    opinion_dir = out_dir / "opinions"
     cache_dir_value = args.cache_dir or os.environ.get("CACHE_DIR") or default_cache_dir(root)
-    sweep_dir = Path(args.sweep_dir or os.environ.get("KNN_SWEEP_DIR") or (out_dir / "sweeps"))
+    sweep_dir = Path(
+        args.sweep_dir or os.environ.get("KNN_SWEEP_DIR") or (next_video_dir / "sweeps")
+    )
+    opinion_sweep_dir = Path(
+        os.environ.get("KNN_OPINION_SWEEP_DIR") or (opinion_dir / "sweeps")
+    )
     word2vec_model_dir = Path(
         args.word2vec_model_dir
         or os.environ.get("WORD2VEC_MODEL_DIR")
-        or (out_dir / "word2vec_models")
+        or (next_video_dir / "word2vec_models")
+    )
+    opinion_word2vec_dir = Path(
+        os.environ.get("KNN_OPINION_WORD2VEC_DIR") or (opinion_dir / "word2vec_models")
     )
     k_sweep = (
         args.k_sweep
@@ -316,6 +329,10 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         cache_dir=str(cache_dir_value),
         sweep_dir=sweep_dir,
         word2vec_model_dir=word2vec_model_dir,
+        next_video_dir=next_video_dir,
+        opinion_dir=opinion_dir,
+        opinion_sweep_dir=opinion_sweep_dir,
+        opinion_word2vec_dir=opinion_word2vec_dir,
         k_sweep=k_sweep,
         study_tokens=study_tokens,
         word2vec_epochs=word2vec_epochs,

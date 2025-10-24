@@ -125,7 +125,7 @@ def _run_opinion_stage(
         LOGGER.warning("Skipping opinion stage; no selections available.")
         return {}
 
-    opinion_out_dir = config.base_out_dir / "opinion"
+    opinion_out_dir = config.base_out_dir
     requested = [token for token in config.studies if token and token.lower() != "all"]
     if not requested:
         requested = [spec.key for spec in DEFAULT_SPECS]

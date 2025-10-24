@@ -44,7 +44,8 @@ python -m xgb.cli \
 CLI arguments cover common experimentation knobs:
 
 - `--extra_text_fields` appends additional columns to the prompt document before
-  vectorization (useful for ablations).
+  vectorization (the pipeline automatically includes `viewer_profile` and `state_text`;
+  pass this flag to add more fields).
 - `--max_train`, `--max_features`, and `--seed` control subsampling and TF-IDF
   vocabulary size.
 - `--xgb_*` flags forward hyper-parameters directly to `xgboost.XGBClassifier`.

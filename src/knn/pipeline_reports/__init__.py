@@ -21,7 +21,13 @@ from pathlib import Path
 
 from ..pipeline_context import ReportBundle
 from .catalog import _build_catalog_report
-from .hyperparameter import HyperparameterReportConfig, _build_hyperparameter_report
+from .hyperparameter import (
+    HyperparameterCommonContext,
+    HyperparameterReportConfig,
+    NextVideoSectionConfig,
+    OpinionSectionConfig,
+    _build_hyperparameter_report,
+)
 from .next_video import NextVideoReportInputs, _build_next_video_report
 from .opinion import _build_opinion_report
 from .shared import parse_k_sweep
@@ -50,34 +56,35 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
     )
 
     if report_bundle.include_next_video or report_bundle.include_opinion:
+        common_context = HyperparameterCommonContext(
+            studies=report_bundle.studies,
+            feature_spaces=feature_spaces,
+            k_sweep=k_sweep_values,
+            sentence_model=report_bundle.sentence_model,
+        )
+        next_video_config = (
+            NextVideoSectionConfig(
+                selections=report_bundle.selections,
+                sweep_outcomes=report_bundle.sweep_outcomes,
+            )
+            if report_bundle.include_next_video
+            else None
+        )
+        opinion_config = (
+            OpinionSectionConfig(
+                selections=report_bundle.opinion_selections,
+                sweep_outcomes=report_bundle.opinion_sweep_outcomes,
+            )
+            if report_bundle.include_opinion
+            else None
+        )
         _build_hyperparameter_report(
             HyperparameterReportConfig(
                 output_dir=reports_root / "hyperparameter_tuning",
-                selections=(
-                    report_bundle.selections if report_bundle.include_next_video else {}
-                ),
-                sweep_outcomes=(
-                    report_bundle.sweep_outcomes
-                    if report_bundle.include_next_video
-                    else ()
-                ),
-                studies=report_bundle.studies,
-                k_sweep=k_sweep_values,
-                feature_spaces=feature_spaces,
-                sentence_model=report_bundle.sentence_model,
-                opinion_selections=(
-                    report_bundle.opinion_selections
-                    if report_bundle.include_opinion
-                    else {}
-                ),
-                opinion_sweep_outcomes=(
-                    report_bundle.opinion_sweep_outcomes
-                    if report_bundle.include_opinion
-                    else ()
-                ),
+                common=common_context,
                 allow_incomplete=allow_incomplete,
-                include_next_video=report_bundle.include_next_video,
-                include_opinion=report_bundle.include_opinion,
+                next_video=next_video_config,
+                opinion=opinion_config,
             )
         )
     if report_bundle.include_next_video:

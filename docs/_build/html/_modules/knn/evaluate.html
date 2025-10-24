@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -1403,13 +1403,6 @@
     <span class="n">n_bucket</span> <span class="o">=</span> <span class="n">bin_nopts</span><span class="p">(</span><span class="n">n_options</span><span class="p">)</span>
     <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;options_seen&quot;</span><span class="p">][</span><span class="n">n_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_pos</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-    <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;position_seen&quot;</span><span class="p">][</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
     <span class="n">gold_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">gold_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">slate_pairs</span><span class="p">:</span>
@@ -1417,6 +1410,18 @@
             <span class="k">if</span> <span class="n">gold_raw</span> <span class="ow">and</span> <span class="p">(</span><span class="n">gold_raw</span> <span class="o">==</span> <span class="n">vid</span> <span class="ow">or</span> <span class="n">canon</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span> <span class="o">==</span> <span class="n">canon</span><span class="p">(</span><span class="n">title</span><span class="p">)):</span>
                 <span class="n">gold_index</span> <span class="o">=</span> <span class="n">option_index</span>
                 <span class="k">break</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># If the dataset does not provide an explicit position, fall back to the</span>
+    <span class="c1"># (1-based) gold index so the positional diagnostics still reflect where the</span>
+    <span class="c1"># answer appeared in the slate.</span>
+    <span class="k">if</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">gold_index</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_pos</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="n">bucket_stats</span><span class="p">[</span><span class="s2">&quot;position_seen&quot;</span><span class="p">][</span><span class="n">pos_bucket</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="n">predictions</span> <span class="o">=</span> <span class="n">knn_predict_among_slate_multi</span><span class="p">(</span>
         <span class="n">knn_index</span><span class="o">=</span><span class="n">knn_index</span><span class="p">,</span>

@@ -214,7 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Utility helpers shared by multiple evaluation pipelines.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -312,23 +302,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Ensure Hugging Face cache directories default to ``cache_dir``.</span>
-
-
-
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
-
-<span class="sd">    :type cache_dir: str</span>
-
-<span class="sd">    :returns: ``None``.</span>
-
-<span class="sd">    :rtype: None</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default HF cache environment variables to ``cache_dir`` if unset.&quot;&quot;&quot;</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
 
@@ -341,77 +315,7 @@
     <span class="n">loader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">_Dataset</span><span class="p">],</span>
     <span class="n">issue_lookup</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_Dataset</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-
-
-
-<span class="sd">        Configure the HF cache, load the dataset, and list available issues.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        dataset:</span>
-
-<span class="sd">            Dataset identifier supplied via CLI (``None`` uses ``default_source``).</span>
-
-<span class="sd">        default_source:</span>
-
-<span class="sd">            Default dataset identifier when ``dataset`` is not provided.</span>
-
-<span class="sd">        cache_dir:</span>
-
-<span class="sd">            Directory used for Hugging Face caching.</span>
-
-<span class="sd">        loader:</span>
-
-<span class="sd">            Callable that loads the dataset for ``dataset_source``.</span>
-
-<span class="sd">        issue_lookup:</span>
-
-<span class="sd">            Callable returning the available issue labels for ``loader``&#39;s output.</span>
-
-
-
-<span class="sd">        Returns</span>
-
-<span class="sd">        -------</span>
-
-<span class="sd">        tuple[str, Any, Sequence[str]]</span>
-
-<span class="sd">            The dataset source string, loaded dataset object, and issue labels.</span>
-
-
-
-<span class="sd">    :param dataset: Value provided for ``dataset``.</span>
-
-<span class="sd">    :type dataset: Optional[str]</span>
-
-<span class="sd">    :param default_source: Value provided for ``default_source``.</span>
-
-<span class="sd">    :type default_source: str</span>
-
-<span class="sd">    :param cache_dir: Value provided for ``cache_dir``.</span>
-
-<span class="sd">    :type cache_dir: str</span>
-
-<span class="sd">    :param loader: Value provided for ``loader``.</span>
-
-<span class="sd">    :type loader: Callable[[str, str], _Dataset]</span>
-
-<span class="sd">    :param issue_lookup: Value provided for ``issue_lookup``.</span>
-
-<span class="sd">    :type issue_lookup: Callable[[_Dataset], Sequence[str]]</span>
-
-<span class="sd">    :returns: Result produced by ``prepare_dataset``.</span>
-
-<span class="sd">    :rtype: Tuple[str, _Dataset, Sequence[str]]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the dataset source, load it, and enumerate available issues.&quot;&quot;&quot;</span>
     <span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
     <span class="n">dataset_source</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">default_source</span>
     <span class="n">base_ds</span> <span class="o">=</span> <span class="n">loader</span><span class="p">(</span><span class="n">dataset_source</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>

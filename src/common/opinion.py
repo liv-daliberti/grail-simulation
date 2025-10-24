@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Opinion study dataclasses and helpers shared by multiple pipelines."""
 
 from __future__ import annotations
 
@@ -34,35 +24,7 @@ from typing import Any, Optional, Tuple
 
 @dataclass(frozen=True)
 class OpinionSpec:
-    """
-
-    Configuration describing one study's opinion index columns.
-
-
-
-    :ivar key: Attribute ``key``.
-
-    :vartype key: str
-
-    :ivar issue: Attribute ``issue``.
-
-    :vartype issue: str
-
-    :ivar label: Attribute ``label``.
-
-    :vartype label: str
-
-    :ivar before_column: Attribute ``before_column``.
-
-    :vartype before_column: str
-
-    :ivar after_column: Attribute ``after_column``.
-
-    :vartype after_column: str
-
-    """
-
-
+    """Configuration describing one opinion-study index."""
     key: str
     issue: str
     label: str
@@ -72,39 +34,7 @@ class OpinionSpec:
 
 @dataclass
 class OpinionExample:
-    """
-
-    Collapsed participant-level prompt and opinion values.
-
-
-
-    :ivar participant_id: Attribute ``participant_id``.
-
-    :vartype participant_id: str
-
-    :ivar participant_study: Attribute ``participant_study``.
-
-    :vartype participant_study: str
-
-    :ivar issue: Attribute ``issue``.
-
-    :vartype issue: str
-
-    :ivar document: Attribute ``document``.
-
-    :vartype document: str
-
-    :ivar before: Attribute ``before``.
-
-    :vartype before: float
-
-    :ivar after: Attribute ``after``.
-
-    :vartype after: float
-
-    """
-
-
+    """Collapsed participant-level prompt and opinion measurements."""
     participant_id: str
     participant_study: str
     issue: str
@@ -139,23 +69,7 @@ DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
 
 
 def float_or_none(value: Any) -> Optional[float]:
-    """
-
-    Return ``value`` converted to ``float`` or ``None`` when invalid.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: Any
-
-    :returns: Result produced by ``float_or_none``.
-
-    :rtype: Optional[float]
-
-    """
-
-
+    """Return ``value`` as ``float`` when possible, otherwise ``None``."""
     if value is None:
         return None
     try:

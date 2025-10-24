@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Opinion-regression utilities supporting the KNN baselines."""
 
 # pylint: disable=too-many-lines
 from __future__ import annotations
@@ -50,6 +40,7 @@ from common.opinion import (
     float_or_none,
     opinion_example_kwargs,
 )
+from common.prompt_docs import merge_default_extra_fields
 from common.vectorizers import create_tfidf_vectorizer
 
 from .data import (
@@ -1154,11 +1145,9 @@ def run_opinion_eval(args) -> None:
 
     specs = [find_spec(token) for token in requested]
 
-    extra_fields = [
-        token.strip()
-        for token in (args.knn_text_fields or "").split(",")
-        if token.strip()
-    ]
+    extra_fields = merge_default_extra_fields(
+        [token.strip() for token in (args.knn_text_fields or "").split(",") if token.strip()]
+    )
 
     k_values = parse_k_values(args.knn_k, args.knn_k_sweep)
     LOGGER.info("[OPINION] Evaluating k values: %s", k_values)

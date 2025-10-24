@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Index construction and scoring logic for the KNN slate baselines."""
 
 from __future__ import annotations
 
@@ -41,7 +31,10 @@ from common.embeddings import SentenceTransformerConfig, SentenceTransformerEnco
 from common.vectorizers import create_tfidf_vectorizer
 
 from .features import (
+    CandidateMetadata,
     assemble_document,
+    candidate_feature_tokens,
+    collect_candidate_metadata,
     extract_slate_items,
     prepare_training_documents,
     Word2VecConfig,
@@ -102,41 +95,41 @@ class CandidateScorer:
     :vartype config: SlateQueryConfig
     :ivar unique_k: Unique set of neighbour counts to report in the score output.
     :vartype unique_k: Sequence[int]
-
+    :ivar option_count: Total number of slate options for the current example.
+    :vartype option_count: int
     """
+
     index_data: SlateIndexData
     base_parts: Sequence[str]
     config: SlateQueryConfig
     unique_k: Sequence[int]
+    option_count: int = 0
 
-    def score(self, title: str, video_id: str) -> Dict[int, float]:
+    def score(self, candidate: CandidateMetadata) -> Dict[int, float]:
         """
         Return per-``k`` scores for the given slate candidate.
 
-        :param title: Human-readable title associated with the candidate slate item.
-
-        :type title: str
-
-        :param video_id: Identifier of the candidate video being scored.
-
-        :type video_id: str
-
-        :returns: per-``k`` scores for the given slate candidate
-
+        :param candidate: Metadata describing the candidate slate item.
+        :type candidate: CandidateMetadata
+        :returns: per-``k`` scores for the given slate candidate.
         :rtype: Dict[int, float]
-
         """
         query, sims = _candidate_query(
             index_data=self.index_data,
             base_parts=self.base_parts,
-            title=title,
-            video_id=video_id,
+            candidate=candidate,
             config=self.config,
+            candidate_tokens=candidate_feature_tokens(
+                candidate,
+                option_count=self.option_count or None,
+            ),
         )
-        mask = _candidate_mask(title, video_id, self.index_data)
+        mask = _candidate_mask(candidate.title, candidate.video_id, self.index_data)
         if not mask.any():
-            fallback = float(sims.max() * 0.01) if sims.size else 0.0
-            return {k: fallback for k in self.unique_k}
+            if sims.size == 0:
+                return {k: 0.0 for k in self.unique_k}
+            score_vector = np.nan_to_num(np.asarray(sims, dtype=np.float32), nan=0.0)
+            return _aggregate_scores(score_vector, self.unique_k)
 
         sims_masked = sims[mask]
         if sims_masked.size == 0:
@@ -504,7 +497,7 @@ def _safe_str(value: Any, *, lowercase: bool = True) -> str:
 
 def _build_base_parts(
     example: dict,
-    slate_pairs: Sequence[tuple[str, str]],
+    candidates: Sequence[CandidateMetadata],
     config: SlateQueryConfig,
 ) -> List[str]:
     """Assemble the base text parts used to score slate candidates.
@@ -520,8 +513,8 @@ def _build_base_parts(
         parts.append(_safe_str(base_text, lowercase=config.lowercase))
 
     surfaces = []
-    for title, video_id in slate_pairs:
-        surface = _surface_text(title, video_id)
+    for candidate in candidates:
+        surface = _surface_text(candidate.title, candidate.video_id)
         if surface:
             surfaces.append(_safe_str(surface, lowercase=config.lowercase))
     if surfaces:
@@ -541,7 +534,7 @@ def _surface_text(title: str, video_id: str) -> str:
 
 def _score_candidates(
     index_data: SlateIndexData,
-    slate_pairs: Sequence[tuple[str, str]],
+    candidates: Sequence[CandidateMetadata],
     base_parts: Sequence[str],
     unique_k: Sequence[int],
     config: SlateQueryConfig,
@@ -555,10 +548,16 @@ def _score_candidates(
     :param config: Query configuration instance.
     :returns: Mapping from ``k`` to the list of scores per candidate.
     """
-    scorer = CandidateScorer(index_data, base_parts, config, unique_k)
+    scorer = CandidateScorer(
+        index_data=index_data,
+        base_parts=base_parts,
+        config=config,
+        unique_k=unique_k,
+        option_count=len(candidates),
+    )
     scores_by_k = {k: [] for k in unique_k}
-    for title, video_id in slate_pairs:
-        candidate_scores = scorer.score(title, video_id)
+    for candidate in candidates:
+        candidate_scores = scorer.score(candidate)
         for k, score in candidate_scores.items():
             scores_by_k[k].append(score)
     return scores_by_k
@@ -566,23 +565,24 @@ def _score_candidates(
 def _candidate_query(
     index_data: SlateIndexData,
     base_parts: Sequence[str],
-    title: str,
-    video_id: str,
+    candidate: CandidateMetadata,
     config: SlateQueryConfig,
+    candidate_tokens: Sequence[str] | None = None,
 ):
     """Return the transformed query vector and raw similarities for a candidate.
 
     :param index_data: Prepared index data (vectoriser + matrix + labels).
     :param base_parts: Text fragments shared across candidates for the slate.
-    :param title: Candidate title.
-    :param video_id: Candidate video identifier.
+    :param candidate: Slate candidate metadata including title and video id.
     :param config: Query configuration controlling casing and metric.
     :returns: Tuple of ``(query_vector, similarity_array)``.
     """
-    surface = _surface_text(title, video_id)
+    surface = _surface_text(candidate.title, candidate.video_id)
     parts = list(base_parts)
     if surface:
         parts.append(_safe_str(surface, lowercase=config.lowercase))
+    if candidate_tokens:
+        parts.append(" ".join(candidate_tokens))
     query_text = "\n".join(part for part in parts if part)
 
     if index_data.feature_space in {"word2vec", "sentence_transformer"}:
@@ -701,11 +701,17 @@ def knn_predict_among_slate_multi(
     if not unique_k:
         return {}
 
-    slate_pairs = extract_slate_items(example)
-    if not slate_pairs:
-        return {k: 1 for k in unique_k}
+    candidates = collect_candidate_metadata(example)
+    if not candidates:
+        slate_pairs = extract_slate_items(example)
+        if not slate_pairs:
+            return {k: 1 for k in unique_k}
+        candidates = [
+            CandidateMetadata(slot=idx, title=title, video_id=video_id)
+            for idx, (title, video_id) in enumerate(slate_pairs, start=1)
+        ]
 
-    base_parts = _build_base_parts(example, slate_pairs, config)
+    base_parts = _build_base_parts(example, candidates, config)
 
     index_data = _build_index_data(knn_index)
     if index_data is None:
@@ -713,7 +719,7 @@ def knn_predict_among_slate_multi(
 
     scores_by_k = _score_candidates(
         index_data,
-        slate_pairs,
+        candidates,
         base_parts,
         unique_k,
         config,

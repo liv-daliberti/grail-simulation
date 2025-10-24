@@ -215,7 +215,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#knn-hyperparameter-tuning-notes">KNN Hyperparameter Tuning Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
@@ -266,15 +266,7 @@
 viewer profiles and assembling user prompts from the cleaned GRAIL
 dataset rows. The following pages document the public interfaces exposed
 by each module.</p>
-<p id="module-prompt_builder">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-prompt_builder">Public exports for the prompt-builder utilities package.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="prompt_builder.PromptSample">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.PromptSample" title="Link to this definition">¶</a></dt>
@@ -514,15 +506,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.constants">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-prompt_builder.constants">Shared constants for rendering viewer profiles and prompts.</p>
 <p id="module-prompt_builder.parsers">Parsing helpers shared by the prompt_builder package.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.parsers.as_list_json">
@@ -650,15 +634,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.formatters">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-prompt_builder.formatters">String formatting helpers used while rendering viewer prompts.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.formatters.clean_text">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">clean_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#clean_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.clean_text" title="Link to this definition">¶</a></dt>
@@ -784,15 +760,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.profiles">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-prompt_builder.profiles">Profile rendering utilities for viewer-centric prompt generation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="prompt_builder.profiles.ProfileRender">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.profiles.</span></span><span class="sig-name descname"><span class="pre">ProfileRender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sentences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewer_placeholder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles.html#ProfileRender"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.profiles.ProfileRender" title="Link to this definition">¶</a></dt>
@@ -1008,15 +976,7 @@ details.</p>
 </dl>
 </dd></dl>
 
-<p id="module-prompt_builder.video_stats">Top-level orchestration helpers for the <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> package.</p>
-<p>This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository’s Apache 2.0 license; see LICENSE for
-details.</p>
+<p id="module-prompt_builder.video_stats">Lazy loader for YouTube video engagement statistics used in prompts.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.video_stats.get_video_stats">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.video_stats.</span></span><span class="sig-name descname"><span class="pre">get_video_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#get_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.video_stats.get_video_stats" title="Link to this definition">¶</a></dt>

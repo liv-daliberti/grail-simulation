@@ -40,26 +40,26 @@ class SweepConfig:
     """
     Hyper-parameter configuration evaluated during XGBoost sweeps.
 
-    :ivar text_vectorizer: Vectoriser identifier (e.g. ``tfidf``).
-    :vartype text_vectorizer: str
-    :ivar vectorizer_tag: Short tag used in directory and report labels.
-    :vartype vectorizer_tag: str
-    :ivar learning_rate: Booster learning rate.
-    :vartype learning_rate: float
-    :ivar max_depth: Tree depth explored during sweeps.
-    :vartype max_depth: int
-    :ivar n_estimators: Number of boosting rounds.
-    :vartype n_estimators: int
-    :ivar subsample: Row subsampling ratio.
-    :vartype subsample: float
-    :ivar colsample_bytree: Column subsampling ratio per tree.
-    :vartype colsample_bytree: float
-    :ivar reg_lambda: L2 regularisation weight.
-    :vartype reg_lambda: float
-    :ivar reg_alpha: L1 regularisation weight.
-    :vartype reg_alpha: float
-    :ivar vectorizer_cli: Extra CLI arguments associated with the vectoriser.
-    :vartype vectorizer_cli: Tuple[str, ...]
+    :param text_vectorizer: Vectoriser identifier (e.g. ``tfidf``).
+    :type text_vectorizer: str
+    :param vectorizer_tag: Short tag used in directory and report labels.
+    :type vectorizer_tag: str
+    :param learning_rate: Booster learning rate.
+    :type learning_rate: float
+    :param max_depth: Tree depth explored during sweeps.
+    :type max_depth: int
+    :param n_estimators: Number of boosting rounds.
+    :type n_estimators: int
+    :param subsample: Row subsampling ratio.
+    :type subsample: float
+    :param colsample_bytree: Column subsampling ratio per tree.
+    :type colsample_bytree: float
+    :param reg_lambda: L2 regularisation weight.
+    :type reg_lambda: float
+    :param reg_alpha: L1 regularisation weight.
+    :type reg_alpha: float
+    :param vectorizer_cli: Extra CLI arguments associated with the vectoriser.
+    :type vectorizer_cli: Tuple[str, ...]
     """
 
     text_vectorizer: str
@@ -77,6 +77,8 @@ class SweepConfig:
         """
         Produce a filesystem- and report-friendly identifier.
 
+        :param self: Sweep configuration instance being labelled.
+        :type self: SweepConfig
         :returns: Composite label encoding vectoriser and booster parameters.
         :rtype: str
         """
@@ -149,22 +151,22 @@ class SweepOutcome:
     """
     Metrics captured for a (study, configuration) sweep evaluation.
 
-    :ivar order_index: Deterministic ordering index assigned to the task.
-    :vartype order_index: int
-    :ivar study: Study metadata associated with the sweep.
-    :vartype study: StudySpec
-    :ivar config: Evaluated sweep configuration.
-    :vartype config: SweepConfig
-    :ivar accuracy: Validation accuracy achieved by the configuration.
-    :vartype accuracy: float
-    :ivar coverage: Validation coverage achieved by the configuration.
-    :vartype coverage: float
-    :ivar evaluated: Number of evaluation rows.
-    :vartype evaluated: int
-    :ivar metrics_path: Filesystem path to the metrics artefact.
-    :vartype metrics_path: Path
-    :ivar metrics: Raw metrics payload loaded from disk.
-    :vartype metrics: Mapping[str, object]
+    :param order_index: Deterministic ordering index assigned to the task.
+    :type order_index: int
+    :param study: Study metadata associated with the sweep.
+    :type study: StudySpec
+    :param config: Evaluated sweep configuration.
+    :type config: SweepConfig
+    :param accuracy: Validation accuracy achieved by the configuration.
+    :type accuracy: float
+    :param coverage: Validation coverage achieved by the configuration.
+    :type coverage: float
+    :param evaluated: Number of evaluation rows.
+    :type evaluated: int
+    :param metrics_path: Filesystem path to the metrics artefact.
+    :type metrics_path: Path
+    :param metrics: Raw metrics payload loaded from disk.
+    :type metrics: Mapping[str, object]
     """
 
     order_index: int
@@ -183,22 +185,22 @@ class SweepTask:
     """
     Container describing a single sweep execution request.
 
-    :ivar index: Stable index used for ordering and scheduling.
-    :vartype index: int
-    :ivar study: Study metadata being evaluated.
-    :vartype study: StudySpec
-    :ivar config: Sweep configuration executed for the study.
-    :vartype config: SweepConfig
-    :ivar base_cli: Baseline CLI arguments shared across tasks.
-    :vartype base_cli: Tuple[str, ...]
-    :ivar extra_cli: Additional passthrough CLI arguments.
-    :vartype extra_cli: Tuple[str, ...]
-    :ivar run_root: Directory under which sweep artefacts are stored.
-    :vartype run_root: Path
-    :ivar tree_method: Tree construction algorithm supplied to XGBoost.
-    :vartype tree_method: str
-    :ivar metrics_path: Target path for the ``metrics.json`` artefact.
-    :vartype metrics_path: Path
+    :param index: Stable index used for ordering and scheduling.
+    :type index: int
+    :param study: Study metadata being evaluated.
+    :type study: StudySpec
+    :param config: Sweep configuration executed for the study.
+    :type config: SweepConfig
+    :param base_cli: Baseline CLI arguments shared across tasks.
+    :type base_cli: Tuple[str, ...]
+    :param extra_cli: Additional passthrough CLI arguments.
+    :type extra_cli: Tuple[str, ...]
+    :param run_root: Directory under which sweep artefacts are stored.
+    :type run_root: Path
+    :param tree_method: Tree construction algorithm supplied to XGBoost.
+    :type tree_method: str
+    :param metrics_path: Target path for the ``metrics.json`` artefact.
+    :type metrics_path: Path
     """
 
     index: int
@@ -216,10 +218,10 @@ class StudySelection(BaseStudySelection[SweepOutcome]):
     """
     Selected configuration for the final evaluation of a participant study.
 
-    :ivar study: Study metadata chosen for final evaluation.
-    :vartype study: StudySpec
-    :ivar outcome: Winning sweep outcome leveraged for reporting.
-    :vartype outcome: SweepOutcome
+    :param study: Study metadata chosen for final evaluation.
+    :type study: StudySpec
+    :param outcome: Winning sweep outcome leveraged for reporting.
+    :type outcome: SweepOutcome
     """
 
 
@@ -228,16 +230,16 @@ class SweepRunContext:
     """
     CLI arguments shared across sweep invocations.
 
-    :ivar base_cli: Baseline CLI arguments applied to every sweep run.
-    :vartype base_cli: Sequence[str]
-    :ivar extra_cli: Additional CLI flags appended for each invocation.
-    :vartype extra_cli: Sequence[str]
-    :ivar sweep_dir: Root directory where sweep artefacts are written.
-    :vartype sweep_dir: Path
-    :ivar tree_method: Tree construction algorithm passed to XGBoost.
-    :vartype tree_method: str
-    :ivar jobs: Parallel worker count for sweep execution.
-    :vartype jobs: int
+    :param base_cli: Baseline CLI arguments applied to every sweep run.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI flags appended for each invocation.
+    :type extra_cli: Sequence[str]
+    :param sweep_dir: Root directory where sweep artefacts are written.
+    :type sweep_dir: Path
+    :param tree_method: Tree construction algorithm passed to XGBoost.
+    :type tree_method: str
+    :param jobs: Parallel worker count for sweep execution.
+    :type jobs: int
     """
 
     base_cli: Sequence[str]
@@ -252,18 +254,18 @@ class FinalEvalContext:
     """
     Runtime configuration for final slate evaluations.
 
-    :ivar base_cli: Baseline CLI arguments for :mod:`xgb.cli`.
-    :vartype base_cli: Sequence[str]
-    :ivar extra_cli: Additional CLI arguments forwarded to each invocation.
-    :vartype extra_cli: Sequence[str]
-    :ivar out_dir: Target directory for final evaluation artefacts.
-    :vartype out_dir: Path
-    :ivar tree_method: Tree construction algorithm passed to XGBoost.
-    :vartype tree_method: str
-    :ivar save_model_dir: Optional directory for persisted models.
-    :vartype save_model_dir: Optional[Path]
-    :ivar reuse_existing: Flag controlling reuse of cached metrics.
-    :vartype reuse_existing: bool
+    :param base_cli: Baseline CLI arguments for :mod:`xgb.cli`.
+    :type base_cli: Sequence[str]
+    :param extra_cli: Additional CLI arguments forwarded to each invocation.
+    :type extra_cli: Sequence[str]
+    :param out_dir: Target directory for final evaluation artefacts.
+    :type out_dir: Path
+    :param tree_method: Tree construction algorithm passed to XGBoost.
+    :type tree_method: str
+    :param save_model_dir: Optional directory for persisted models.
+    :type save_model_dir: Optional[Path]
+    :param reuse_existing: Flag controlling reuse of cached metrics.
+    :type reuse_existing: bool
     """
 
     base_cli: Sequence[str]
@@ -280,28 +282,28 @@ class OpinionStageConfig:
     """
     Inputs required to launch the opinion regression stage.
 
-    :ivar dataset: Dataset identifier passed to the opinion stage.
-    :vartype dataset: str
-    :ivar cache_dir: Cache directory for dataset loading.
-    :vartype cache_dir: str
-    :ivar base_out_dir: Base output directory for opinion artefacts.
-    :vartype base_out_dir: Path
-    :ivar extra_fields: Additional prompt columns appended to documents.
-    :vartype extra_fields: Sequence[str]
-    :ivar studies: Opinion study keys to evaluate.
-    :vartype studies: Sequence[str]
-    :ivar max_participants: Optional cap on participants per study.
-    :vartype max_participants: int
-    :ivar seed: Random seed for subsampling.
-    :vartype seed: int
-    :ivar max_features: Maximum TF-IDF features (``None`` keeps all).
-    :vartype max_features: Optional[int]
-    :ivar tree_method: Tree construction algorithm passed to XGBoost.
-    :vartype tree_method: str
-    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.
-    :vartype overwrite: bool
-    :ivar reuse_existing: Flag enabling reuse of cached results.
-    :vartype reuse_existing: bool
+    :param dataset: Dataset identifier passed to the opinion stage.
+    :type dataset: str
+    :param cache_dir: Cache directory for dataset loading.
+    :type cache_dir: str
+    :param base_out_dir: Base output directory for opinion artefacts.
+    :type base_out_dir: Path
+    :param extra_fields: Additional prompt columns appended to documents.
+    :type extra_fields: Sequence[str]
+    :param studies: Opinion study keys to evaluate.
+    :type studies: Sequence[str]
+    :param max_participants: Optional cap on participants per study.
+    :type max_participants: int
+    :param seed: Random seed for subsampling.
+    :type seed: int
+    :param max_features: Maximum TF-IDF features (``None`` keeps all).
+    :type max_features: Optional[int]
+    :param tree_method: Tree construction algorithm passed to XGBoost.
+    :type tree_method: str
+    :param overwrite: Flag controlling whether existing artefacts may be overwritten.
+    :type overwrite: bool
+    :param reuse_existing: Flag enabling reuse of cached results.
+    :type reuse_existing: bool
     """
 
     dataset: str
@@ -323,30 +325,30 @@ class OpinionSweepOutcome:
     """
     Metrics captured for a (study, configuration) combination during opinion sweeps.
 
-    :ivar order_index: Deterministic ordering index assigned to the task.
-    :vartype order_index: int
-    :ivar study: Study metadata associated with the sweep.
-    :vartype study: StudySpec
-    :ivar config: Evaluated sweep configuration.
-    :vartype config: SweepConfig
-    :ivar mae: Mean absolute error achieved by the configuration.
-    :vartype mae: float
-    :ivar rmse: Root mean squared error achieved by the configuration.
-    :vartype rmse: float
-    :ivar r_squared: Coefficient of determination achieved by the configuration.
-    :vartype r_squared: float
-    :ivar metrics_path: Filesystem path to the metrics artefact.
-    :vartype metrics_path: Path
-    :ivar metrics: Raw metrics payload loaded from disk.
-    :vartype metrics: Mapping[str, object]
-    :ivar accuracy: Directional accuracy achieved by the configuration.
-    :vartype accuracy: Optional[float]
-    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
-    :vartype baseline_accuracy: Optional[float]
-    :ivar accuracy_delta: Improvement in accuracy over the baseline.
-    :vartype accuracy_delta: Optional[float]
-    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.
-    :vartype eligible: Optional[int]
+    :param order_index: Deterministic ordering index assigned to the task.
+    :type order_index: int
+    :param study: Study metadata associated with the sweep.
+    :type study: StudySpec
+    :param config: Evaluated sweep configuration.
+    :type config: SweepConfig
+    :param mae: Mean absolute error achieved by the configuration.
+    :type mae: float
+    :param rmse: Root mean squared error achieved by the configuration.
+    :type rmse: float
+    :param r_squared: Coefficient of determination achieved by the configuration.
+    :type r_squared: float
+    :param metrics_path: Filesystem path to the metrics artefact.
+    :type metrics_path: Path
+    :param metrics: Raw metrics payload loaded from disk.
+    :type metrics: Mapping[str, object]
+    :param accuracy: Directional accuracy achieved by the configuration.
+    :type accuracy: Optional[float]
+    :param baseline_accuracy: Directional accuracy achieved by the baseline.
+    :type baseline_accuracy: Optional[float]
+    :param accuracy_delta: Improvement in accuracy over the baseline.
+    :type accuracy_delta: Optional[float]
+    :param eligible: Number of evaluation examples contributing to accuracy metrics.
+    :type eligible: Optional[int]
     """
 
     order_index: int
@@ -368,16 +370,14 @@ class OpinionSweepTask:
     """
     Container describing a single opinion sweep execution request.
 
-    :ivar index: Stable index used for ordering and scheduling.
-    :vartype index: int
-    :ivar study: Study metadata being evaluated.
-    :vartype study: StudySpec
-    :ivar config: Sweep configuration executed for the opinion task.
-    :vartype config: SweepConfig
-    :ivar request_args: Keyword arguments passed to :func:`run_opinion_eval`.
-    :vartype request_args: Mapping[str, object]
-    :ivar metrics_path: Target path for the ``metrics.json`` artefact.
-    :vartype metrics_path: Path
+    :param index: Stable index used for ordering and scheduling.
+    :type index: int
+    :param study: Study metadata being evaluated.
+    :type study: StudySpec
+    :param config: Sweep configuration executed for the opinion task.
+    :type config: SweepConfig
+    :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.
+    :type request_args: Mapping[str, object]
     """
 
     index: int
@@ -399,10 +399,10 @@ class OpinionStudySelection(OpinionSelectionBase):
     """
     Selected configuration for the final opinion regression evaluation.
 
-    :ivar study: Study metadata chosen for final evaluation.
-    :vartype study: StudySpec
-    :ivar outcome: Winning opinion sweep outcome leveraged for reporting.
-    :vartype outcome: OpinionSweepOutcome
+    :param study: Study metadata chosen for final evaluation.
+    :type study: StudySpec
+    :param outcome: Winning opinion sweep outcome leveraged for reporting.
+    :type outcome: OpinionSweepOutcome
     """
 
 
@@ -412,24 +412,24 @@ class OpinionSweepRunContext:
     """
     Configuration shared across opinion sweep evaluations.
 
-    :ivar dataset: Dataset identifier passed to opinion sweeps.
-    :vartype dataset: str
-    :ivar cache_dir: Cache directory leveraged by dataset loading.
-    :vartype cache_dir: str
-    :ivar sweep_dir: Root directory where opinion sweep artefacts are stored.
-    :vartype sweep_dir: Path
-    :ivar extra_fields: Additional prompt columns appended to documents.
-    :vartype extra_fields: Sequence[str]
-    :ivar max_participants: Optional cap on participants per study.
-    :vartype max_participants: int
-    :ivar seed: Random seed for subsampling.
-    :vartype seed: int
-    :ivar max_features: Maximum TF-IDF features (``None`` allows all).
-    :vartype max_features: Optional[int]
-    :ivar tree_method: Tree construction algorithm passed to XGBoost.
-    :vartype tree_method: str
-    :ivar overwrite: Flag controlling whether existing artefacts may be overwritten.
-    :vartype overwrite: bool
+    :param dataset: Dataset identifier passed to opinion sweeps.
+    :type dataset: str
+    :param cache_dir: Cache directory leveraged by dataset loading.
+    :type cache_dir: str
+    :param sweep_dir: Root directory where opinion sweep artefacts are stored.
+    :type sweep_dir: Path
+    :param extra_fields: Additional prompt columns appended to documents.
+    :type extra_fields: Sequence[str]
+    :param max_participants: Optional cap on participants per study.
+    :type max_participants: int
+    :param seed: Random seed for subsampling.
+    :type seed: int
+    :param max_features: Maximum TF-IDF features (``None`` allows all).
+    :type max_features: Optional[int]
+    :param tree_method: Tree construction algorithm passed to XGBoost.
+    :type tree_method: str
+    :param overwrite: Flag controlling whether existing artefacts may be overwritten.
+    :type overwrite: bool
     """
 
     dataset: str
@@ -449,30 +449,30 @@ class NextVideoMetricSummary:
     """
     Normalised view of slate metrics emitted by the XGBoost evaluations.
 
-    :ivar accuracy: Validation accuracy (``None`` when unavailable).
-    :vartype accuracy: Optional[float]
-    :ivar coverage: Validation coverage capturing known candidate recall.
-    :vartype coverage: Optional[float]
-    :ivar evaluated: Number of evaluation rows.
-    :vartype evaluated: Optional[int]
-    :ivar correct: Number of correct predictions.
-    :vartype correct: Optional[int]
-    :ivar known_hits: Correct predictions among known candidates.
-    :vartype known_hits: Optional[int]
-    :ivar known_total: Evaluations featuring at least one known candidate.
-    :vartype known_total: Optional[int]
-    :ivar known_availability: Fraction of evaluations containing a known candidate.
-    :vartype known_availability: Optional[float]
-    :ivar avg_probability: Mean probability recorded for known predictions.
-    :vartype avg_probability: Optional[float]
-    :ivar dataset: Dataset identifier.
-    :vartype dataset: Optional[str]
-    :ivar issue: Issue key under evaluation.
-    :vartype issue: Optional[str]
-    :ivar issue_label: Human-readable issue label.
-    :vartype issue_label: Optional[str]
-    :ivar study_label: Human-readable study label.
-    :vartype study_label: Optional[str]
+    :param accuracy: Validation accuracy (``None`` when unavailable).
+    :type accuracy: Optional[float]
+    :param coverage: Validation coverage capturing known candidate recall.
+    :type coverage: Optional[float]
+    :param evaluated: Number of evaluation rows.
+    :type evaluated: Optional[int]
+    :param correct: Number of correct predictions.
+    :type correct: Optional[int]
+    :param known_hits: Correct predictions among known candidates.
+    :type known_hits: Optional[int]
+    :param known_total: Evaluations featuring at least one known candidate.
+    :type known_total: Optional[int]
+    :param known_availability: Fraction of evaluations containing a known candidate.
+    :type known_availability: Optional[float]
+    :param avg_probability: Mean probability recorded for known predictions.
+    :type avg_probability: Optional[float]
+    :param dataset: Dataset identifier.
+    :type dataset: Optional[str]
+    :param issue: Issue key under evaluation.
+    :type issue: Optional[str]
+    :param issue_label: Human-readable issue label.
+    :type issue_label: Optional[str]
+    :param study_label: Human-readable study label.
+    :type study_label: Optional[str]
     """
 
     accuracy: Optional[float] = None
@@ -495,29 +495,29 @@ class OpinionSummary:
     """
     Normalised view of opinion-regression metrics.
 
-    :ivar mae_after: Mean absolute error achieved by the regressor.
-    :vartype mae_after: Optional[float]
-    :ivar rmse_after: Root mean squared error achieved by the regressor.
-    :vartype rmse_after: Optional[float]
-    :ivar r2_after: Coefficient of determination achieved by the regressor.
-    :vartype r2_after: Optional[float]
-    :ivar baseline_mae: Baseline MAE using the no-change predictor.
-    :vartype baseline_mae: Optional[float]
-    :ivar mae_delta: Absolute MAE improvement over the baseline.
-    :vartype mae_delta: Optional[float]
-    :ivar accuracy_after: Directional accuracy achieved by the regressor.
-    :vartype accuracy_after: Optional[float]
-    :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
-    :vartype baseline_accuracy: Optional[float]
-    :ivar accuracy_delta: Improvement in directional accuracy over the baseline.
-    :vartype accuracy_delta: Optional[float]
-    :ivar participants: Number of participants in the evaluation split.
-    :vartype participants: Optional[int]
-    :ivar eligible: Number of evaluation examples contributing to accuracy metrics.
-    :vartype eligible: Optional[int]
-    :ivar dataset: Dataset identifier.
-    :vartype dataset: Optional[str]
-    :ivar split: Evaluation split name.
+    :param mae_after: Mean absolute error achieved by the regressor.
+    :type mae_after: Optional[float]
+    :param rmse_after: Root mean squared error achieved by the regressor.
+    :type rmse_after: Optional[float]
+    :param r2_after: Coefficient of determination achieved by the regressor.
+    :type r2_after: Optional[float]
+    :param baseline_mae: Baseline MAE using the no-change predictor.
+    :type baseline_mae: Optional[float]
+    :param mae_delta: Absolute MAE improvement over the baseline.
+    :type mae_delta: Optional[float]
+    :param accuracy_after: Directional accuracy achieved by the regressor.
+    :type accuracy_after: Optional[float]
+    :param baseline_accuracy: Directional accuracy achieved by the baseline.
+    :type baseline_accuracy: Optional[float]
+    :param accuracy_delta: Improvement in directional accuracy over the baseline.
+    :type accuracy_delta: Optional[float]
+    :param participants: Number of participants in the evaluation split.
+    :type participants: Optional[int]
+    :param eligible: Number of evaluation examples contributing to accuracy metrics.
+    :type eligible: Optional[int]
+    :param dataset: Dataset identifier.
+    :type dataset: Optional[str]
+    :param split: Evaluation split name.
     :vartype split: Optional[str]
     :ivar label: Human-readable study label.
     :vartype label: Optional[str]

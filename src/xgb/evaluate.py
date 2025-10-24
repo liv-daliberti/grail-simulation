@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 
 from common.eval_utils import compose_issue_slug, prepare_dataset, safe_div
+from common.prompt_docs import merge_default_extra_fields
 
 from .data import (
     DEFAULT_DATASET_SOURCE,
@@ -231,11 +232,7 @@ def run_eval(args) -> None:
 
     study_tokens = _split_tokens(getattr(args, "participant_studies", ""))
 
-    extra_fields = [
-        token.strip()
-        for token in (args.extra_text_fields or "").split(",")
-        if token.strip()
-    ]
+    extra_fields = merge_default_extra_fields(_split_tokens(args.extra_text_fields))
 
     for issue in issues:
         _evaluate_issue(

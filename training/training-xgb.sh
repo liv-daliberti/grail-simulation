@@ -11,6 +11,41 @@
 
 set -euo pipefail
 
+ensure_dual_task_string() {
+  local raw="$1"
+  local -a tokens=()
+  local -a extras=()
+  declare -A seen=()
+  IFS=',' read -r -a tokens <<<"${raw}"
+  for token in "${tokens[@]}"; do
+    local trimmed
+    trimmed=$(echo "${token}" | tr '[:upper:]' '[:lower:]')
+    trimmed=$(echo "${trimmed}" | xargs 2>/dev/null || echo "${trimmed}")
+    [[ -z "${trimmed}" ]] && continue
+    case "${trimmed}" in
+      next|next_video|next-video|nextvideo|slate)
+        seen[next_video]=1
+        ;;
+      opinion|opinion_stage|opinion-stage)
+        seen[opinion]=1
+        ;;
+      *)
+        if [[ -z "${seen[${trimmed}]:-}" ]]; then
+          extras+=("${trimmed}")
+          seen["${trimmed}"]=1
+        fi
+        ;;
+    esac
+  done
+  local -a ordered=(next_video opinion)
+  for extra in "${extras[@]}"; do
+    if [[ "${extra}" != "next_video" && "${extra}" != "opinion" ]]; then
+      ordered+=("${extra}")
+    fi
+  done
+  printf '%s\n' "$(IFS=','; echo "${ordered[*]}")"
+}
+
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 if [[ -n "${TRAINING_REPO_ROOT:-}" ]]; then
   ROOT_DIR=$(realpath "${TRAINING_REPO_ROOT}")
@@ -69,7 +104,17 @@ mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 : "${XGB_FINAL_MEM:=}"
 : "${XGB_FINAL_TIME:=}"
 export XGB_REUSE_FINAL
-: "${XGB_PIPELINE_TASKS:=next_video,opinion}"
+DEFAULT_XGB_PIPELINE_TASKS="next_video,opinion"
+: "${XGB_PIPELINE_TASKS:=${DEFAULT_XGB_PIPELINE_TASKS}}"
+XGB_PIPELINE_TASKS=$(ensure_dual_task_string "${XGB_PIPELINE_TASKS}")
+: "${XGB_LEARNING_RATE_GRID:=0.05,0.1}"
+: "${XGB_MAX_DEPTH_GRID:=3}"
+: "${XGB_N_ESTIMATORS_GRID:=200,350}"
+: "${XGB_SUBSAMPLE_GRID:=0.8}"
+: "${XGB_COLSAMPLE_GRID:=0.8}"
+: "${XGB_REG_LAMBDA_GRID:=0.5,1.0}"
+: "${XGB_REG_ALPHA_GRID:=0.0}"
+: "${XGB_TEXT_VECTORIZER_GRID:=tfidf}"
 
 export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
 cd "${ROOT_DIR}"
@@ -114,15 +159,46 @@ EOF
 }
 
 append_flag_once() {
-  local -n target=$1
+  local -n arr_ref=$1
   local flag=$2
   local value=$3
-  for ((i = 0; i < ${#target[@]}; ++i)); do
-    if [[ "${target[i]}" == "${flag}" ]]; then
+  for ((i = 0; i < ${#arr_ref[@]}; ++i)); do
+    if [[ "${arr_ref[i]}" == "${flag}" ]]; then
       return
     fi
   done
-  target+=("${flag}" "${value}")
+  arr_ref+=("${flag}" "${value}")
+}
+
+ensure_tasks_flag() {
+  local -n target=$1
+  local default_value=${2:-"${XGB_PIPELINE_TASKS}"}
+  local canonical=""
+  for ((i = 0; i < ${#target[@]}; ++i)); do
+    if [[ "${target[i]}" == "--tasks" ]]; then
+      local existing="${target[i + 1]:-}"
+      canonical=$(ensure_dual_task_string "${existing}")
+      target[i + 1]="${canonical}"
+      break
+    fi
+  done
+  if [[ -z "${canonical}" ]]; then
+    canonical=$(ensure_dual_task_string "${default_value}")
+    append_flag_once target --tasks "${canonical}"
+  fi
+  printf '%s\n' "${canonical}"
+}
+
+apply_default_sweep_grids() {
+  local -n target=$1
+  append_flag_once target --learning-rate-grid "${XGB_LEARNING_RATE_GRID}"
+  append_flag_once target --max-depth-grid "${XGB_MAX_DEPTH_GRID}"
+  append_flag_once target --n-estimators-grid "${XGB_N_ESTIMATORS_GRID}"
+  append_flag_once target --subsample-grid "${XGB_SUBSAMPLE_GRID}"
+  append_flag_once target --colsample-grid "${XGB_COLSAMPLE_GRID}"
+  append_flag_once target --reg-lambda-grid "${XGB_REG_LAMBDA_GRID}"
+  append_flag_once target --reg-alpha-grid "${XGB_REG_ALPHA_GRID}"
+  append_flag_once target --text-vectorizer-grid "${XGB_TEXT_VECTORIZER_GRID}"
 }
 
 check_python_env() {
@@ -235,16 +311,17 @@ run_plan() {
   check_python_env
   local -a args=("$@")
   ensure_reuse_final_flag args
-  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
+  apply_default_sweep_grids args
+  ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
   ensure_reuse_final_flag pipeline_args
-  append_flag_once pipeline_args --tasks "${XGB_PIPELINE_TASKS}"
-
-  local pipeline_tasks_raw="${XGB_PIPELINE_TASKS:-next_video,opinion}"
+  apply_default_sweep_grids pipeline_args
+  local pipeline_tasks_raw
+  pipeline_tasks_raw=$(ensure_tasks_flag pipeline_args "${XGB_PIPELINE_TASKS}")
   IFS=',' read -r -a pipeline_task_tokens <<<"${pipeline_tasks_raw}"
   local want_next_video=0
   local want_opinion=0
@@ -640,9 +717,10 @@ submit_jobs() {
 run_finalize_local() {
   local -a args=("$@")
   ensure_reuse_final_flag args
+  apply_default_sweep_grids args
   echo "[xgb] Running finalize stage locally."
   check_python_env
-  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
+  ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage finalize "${args[@]}"
 }
 
@@ -668,7 +746,8 @@ run_sweeps_worker() {
     sweep_args+=(--sweep-task-count "${count}")
   fi
   check_python_env
-  append_flag_once args --tasks "${XGB_PIPELINE_TASKS}"
+  apply_default_sweep_grids args
+  ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage sweeps "${sweep_args[@]}" "${args[@]}"
 }
 

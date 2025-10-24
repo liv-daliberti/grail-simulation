@@ -14,6 +14,10 @@ from src.knn.pipeline_context import (
     SweepOutcome,
 )
 from src.knn.pipeline_reports import generate_reports
+from src.knn.pipeline_reports.next_video import (
+    NextVideoReportInputs,
+    _build_next_video_report,
+)
 from src.knn.pipeline_reports.shared import parse_k_sweep
 
 
@@ -138,3 +142,22 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     opinion_text = opinion_path.read_text()
     assert "KNN Opinion Shift Study" in opinion_text
     assert "Study A" in opinion_text
+
+
+def test_next_video_report_writes_placeholder_when_metrics_missing(tmp_path: Path) -> None:
+    """`--allow-incomplete` should emit a placeholder when slate metrics are absent."""
+    inputs = NextVideoReportInputs(
+        output_dir=tmp_path,
+        metrics_by_feature={},
+        studies=(),
+        feature_spaces=(),
+        allow_incomplete=True,
+    )
+
+    _build_next_video_report(inputs)
+
+    readme = tmp_path / "README.md"
+    assert readme.exists()
+    text = readme.read_text()
+    assert "Next-video slate metrics are not available yet." in text
+    assert "allow-incomplete" in text

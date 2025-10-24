@@ -59,9 +59,12 @@ def load_opinion_metrics(out_dir: Path, feature_space: str) -> Dict[str, Mapping
     :rtype: Dict[str, Mapping[str, object]]
     """
     result: Dict[str, Mapping[str, object]] = {}
-    base_dir = out_dir / "opinion" / feature_space
+    base_dir = out_dir / feature_space
     if not base_dir.exists():
-        return result
+        legacy_dir = out_dir / "opinion" / feature_space
+        if not legacy_dir.exists():
+            return result
+        base_dir = legacy_dir
     for study_dir in sorted(base_dir.iterdir()):
         if not study_dir.is_dir():
             continue

@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Formatting helpers used by pipeline reports and logs."""
 
 from __future__ import annotations
 
@@ -31,134 +21,34 @@ from typing import Optional
 
 
 def format_float(value: float) -> str:
-    """
-
-    Format a floating-point metric with three decimal places.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: float
-
-    :returns: Result produced by ``format_float``.
-
-    :rtype: str
-
-    """
-
-
+    """Format a floating-point metric with three decimal places."""
     return f"{value:.3f}"
 
 
 def format_optional_float(value: Optional[float]) -> str:
-    """
-
-    Format optional floating-point metrics.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: Optional[float]
-
-    :returns: Result produced by ``format_optional_float``.
-
-    :rtype: str
-
-    """
-
-
+    """Return ``format_float`` output or an em dash when the value is ``None``."""
     return format_float(value) if value is not None else "—"
 
 
 def format_delta(value: Optional[float]) -> str:
-    """
-
-    Return a signed delta with three decimal places.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: Optional[float]
-
-    :returns: Result produced by ``format_delta``.
-
-    :rtype: str
-
-    """
-
-
+    """Render a signed delta using ``+0.000`` formatting."""
     return f"{value:+.3f}" if value is not None else "—"
 
 
 def format_count(value: Optional[int]) -> str:
-    """
-
-    Render optional integer counts with thousands separators.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: Optional[int]
-
-    :returns: Result produced by ``format_count``.
-
-    :rtype: str
-
-    """
-
-
+    """Format integer counts with thousands separators or return an em dash."""
     return f"{value:,}" if value is not None else "—"
 
 
 def format_ratio(numerator: Optional[int], denominator: Optional[int]) -> str:
-    """
-
-    Format ratios as 'hit/total' when both sides are known.
-
-
-
-    :param numerator: Value provided for ``numerator``.
-
-    :type numerator: Optional[int]
-
-    :param denominator: Value provided for ``denominator``.
-
-    :type denominator: Optional[int]
-
-    :returns: Result produced by ``format_ratio``.
-
-    :rtype: str
-
-    """
-
-
+    """Format ratios as ``hits/total`` when both parts are available."""
     if numerator is None or denominator is None:
         return "—"
     return f"{numerator:,}/{denominator:,}"
 
 
 def safe_float(value: object) -> Optional[float]:
-    """
-
-    Best-effort conversion to float.
-
-
-
-    :param value: Value provided for ``value``.
-
-    :type value: object
-
-    :returns: Result produced by ``safe_float``.
-
-    :rtype: Optional[float]
-
-    """
-
-
+    """Attempt to convert ``value`` to ``float`` returning ``None`` on failure."""
     try:
         return float(value)
     except (TypeError, ValueError):

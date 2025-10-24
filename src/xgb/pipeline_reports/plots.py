@@ -1,0 +1,412 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Curve extraction and plotting helpers for XGBoost pipeline reports."""
+
+from __future__ import annotations
+
+import json
+import math
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, List, Mapping, Optional, Sequence, Tuple
+
+from common.report_utils import extract_numeric_series
+
+from .shared import LOGGER, _slugify_label, plt
+
+
+def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
+    """
+    Extract sorted evaluation steps and accuracies from a curve payload.
+
+    :param curve_block: Curve payload containing an ``accuracy_by_step`` mapping.
+    :type curve_block: Mapping[str, object]
+    :returns: Pair of ``(steps, accuracies)`` sorted by evaluation index.
+    :rtype: Tuple[List[int], List[float]]
+    """
+
+    accuracy_map = curve_block.get("accuracy_by_step")
+    if not isinstance(accuracy_map, Mapping):
+        return ([], [])
+    return extract_numeric_series(accuracy_map)
+
+
+def _extract_accuracy_curves(
+    payload: Mapping[str, object]
+) -> Optional[Tuple[List[int], List[float], List[int], List[float]]]:
+    """
+    Pull validation and training cumulative accuracy curves from ``payload``.
+
+    Args:
+        payload: Metrics payload, potentially referencing embedded or on-disk curves.
+
+    Returns:
+        Tuple containing validation x/y pairs followed by training x/y pairs, or ``None`` when
+        the payload does not expose the necessary series.
+    """
+
+    curve_bundle = _load_curve_bundle(payload)
+    if not isinstance(curve_bundle, Mapping):
+        return None
+
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    eval_x, eval_y = _extract_curve_steps(eval_curve)
+    if not eval_x:
+        return None
+
+    train_x: List[int] = []
+    train_y: List[float] = []
+    train_curve = curve_bundle.get("train")
+    if isinstance(train_curve, Mapping):
+        train_x, train_y = _extract_curve_steps(train_curve)
+
+    return (eval_x, eval_y, train_x, train_y)
+
+
+def _extract_mae_curves(
+    payload: Mapping[str, object]
+) -> Optional[Tuple[List[int], List[float], List[int], List[float]]]:
+    """
+    Pull validation and training MAE curves from ``payload``.
+
+    Args:
+        payload: Metrics payload, potentially referencing embedded or on-disk curves.
+
+    Returns:
+        Tuple containing validation x/y pairs followed by training x/y pairs, or ``None`` when
+        the payload does not expose the necessary series.
+    """
+
+    curve_bundle = _load_curve_bundle(payload)
+    if not isinstance(curve_bundle, Mapping):
+        return None
+
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    eval_source = eval_curve.get("mae_by_round") or eval_curve.get("mae_by_step")
+    if not isinstance(eval_source, Mapping):
+        return None
+    eval_x, eval_y = extract_numeric_series(eval_source)
+    if not eval_x:
+        return None
+
+    train_x: List[int] = []
+    train_y: List[float] = []
+    train_curve = curve_bundle.get("train")
+    if isinstance(train_curve, Mapping):
+        train_source = train_curve.get("mae_by_round") or train_curve.get("mae_by_step")
+        if isinstance(train_source, Mapping):
+            train_x, train_y = extract_numeric_series(train_source)
+
+    return (eval_x, eval_y, train_x, train_y)
+
+
+@dataclass
+class _CurveSeries:
+    """Container for paired validation/training curve data."""
+
+    label: str
+    eval_x: List[int]
+    eval_y: List[float]
+    train_x: List[int]
+    train_y: List[float]
+
+    def has_training(self) -> bool:
+        """Return ``True`` when training curves are available."""
+
+        return bool(self.train_x and self.train_y)
+
+
+def _build_curve_series(
+    label: str,
+    payload: Mapping[str, object],
+    extractor: Callable[
+        [Mapping[str, object]],
+        Optional[Tuple[List[int], List[float], List[int], List[float]]],
+    ],
+) -> Optional[_CurveSeries]:
+    """
+    Construct a ``_CurveSeries`` using the provided extraction callable.
+
+    :param label: Title to associate with the curve.
+    :param payload: Metrics payload containing the curve data.
+    :param extractor: Function retrieving paired validation/training series.
+    :returns: Populated ``_CurveSeries`` or ``None`` when extraction fails.
+    """
+
+    curves = extractor(payload)
+    if curves is None:
+        return None
+    eval_x, eval_y, train_x, train_y = curves
+    return _CurveSeries(label, eval_x, eval_y, train_x, train_y)
+
+
+def _collect_curve_series(
+    entries: Sequence[Tuple[str, Mapping[str, object]]],
+    extractor: Callable[
+        [Mapping[str, object]],
+        Optional[Tuple[List[int], List[float], List[int], List[float]]],
+    ],
+) -> List[_CurveSeries]:
+    """
+    Gather curve series for each ``(label, payload)`` pair.
+
+    :param entries: Iterable of labelled payloads.
+    :param extractor: Callable converting each payload into curve data.
+    :returns: List of successfully extracted curve series.
+    """
+
+    collected: List[_CurveSeries] = []
+    for label, payload in entries:
+        series = _build_curve_series(label, payload, extractor)
+        if series is not None:
+            collected.append(series)
+    return collected
+
+
+def _plot_curve_on_axis(
+    axis,
+    series: _CurveSeries,
+    *,
+    x_label: str,
+    y_label: str,
+    legend_loc: str = "best",
+) -> None:
+    """
+    Plot validation and training curves on ``axis``.
+
+    :param axis: Matplotlib axis receiving the plot.
+    :param series: Curve data to render.
+    :param x_label: Caption for the x-axis.
+    :param y_label: Caption for the y-axis.
+    :param legend_loc: Preferred legend location.
+    """
+
+    axis.plot(series.eval_x, series.eval_y, marker="o", label="validation")
+    if series.has_training():
+        axis.plot(
+            series.train_x,
+            series.train_y,
+            marker="o",
+            linestyle="--",
+            label="training",
+        )
+    axis.set_title(series.label)
+    axis.set_xlabel(x_label)
+    axis.set_ylabel(y_label)
+    axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
+    axis.legend(loc=legend_loc)
+
+
+def _load_curve_bundle(payload: Mapping[str, object]) -> Optional[Mapping[str, object]]:
+    """
+    Load the stored curve metrics bundle, reading from disk when required.
+
+    :param payload: Metrics dictionary potentially containing in-memory or on-disk curves.
+    :type payload: Mapping[str, object]
+    :returns: Curve metrics mapping or ``None`` when unavailable.
+    :rtype: Optional[Mapping[str, object]]
+    """
+
+    curve_bundle = payload.get("curve_metrics")
+    if isinstance(curve_bundle, Mapping):
+        return curve_bundle
+    curve_path = payload.get("curve_metrics_path")
+    if not curve_path:
+        return None
+    try:
+        with open(curve_path, "r", encoding="utf-8") as handle:
+            loaded = json.load(handle)
+            if isinstance(loaded, Mapping):
+                return loaded
+    except (OSError, json.JSONDecodeError) as exc:  # pragma: no cover - logging aid
+        LOGGER.warning("Unable to read curve metrics from %s: %s", curve_path, exc)
+    return None
+
+
+def _plot_xgb_curve(
+    *,
+    directory: Path,
+    study_label: str,
+    study_key: str,
+    payload: Mapping[str, object],
+) -> Optional[str]:
+    """
+    Persist a training/validation accuracy curve plot for a study.
+
+    :param directory: Report directory where plots are stored.
+    :type directory: Path
+    :param study_label: Human-readable study label.
+    :type study_label: str
+    :param study_key: Study identifier used for slug generation.
+    :type study_key: str
+    :param payload: Metrics payload containing curve information.
+    :type payload: Mapping[str, object]
+    :returns: Relative path to the generated image or ``None`` when plotting fails.
+    :rtype: Optional[str]
+    """
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+    label = study_label or study_key or "study"
+    series = _build_curve_series(label, payload, _extract_accuracy_curves)
+    if series is None:
+        return None
+
+    curves_dir = directory / "curves"
+    curves_dir.mkdir(parents=True, exist_ok=True)
+    slug = _slugify_label(series.label, fallback="study")
+    plot_path = curves_dir / f"{slug}.png"
+
+    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    _plot_curve_on_axis(
+        axis,
+        series,
+        x_label="Evaluated examples",
+        y_label="Cumulative accuracy",
+    )
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return plot_path.relative_to(directory).as_posix()
+    except ValueError:
+        return plot_path.as_posix()
+
+
+def _plot_xgb_curve_overview(
+    *,
+    directory: Path,
+    entries: Sequence[Tuple[str, Mapping[str, object]]],
+) -> Optional[str]:
+    """
+    Render a multi-panel overview of validation/training accuracy curves.
+
+    Args:
+        directory: Report directory receiving the generated image.
+        entries: Iterable of ``(label, payload)`` pairs supplying curve data.
+
+    Returns:
+        Relative path to the overview figure or ``None`` when curves are unavailable.
+    """
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+
+    series_list = _collect_curve_series(entries, _extract_accuracy_curves)
+    if not series_list:
+        return None
+
+    curves_dir = directory / "curves"
+    curves_dir.mkdir(parents=True, exist_ok=True)
+
+    cols = min(3, len(series_list))
+    rows = math.ceil(len(series_list) / cols)
+    fig, axes = plt.subplots(  # type: ignore[attr-defined]
+        rows,
+        cols,
+        figsize=(4.6 * cols, 3.2 * rows),
+        squeeze=False,
+        sharex=False,
+        sharey=False,
+    )
+
+    axes_flat = [axis for row_axes in axes for axis in row_axes]
+    for axis, series in zip(axes_flat, series_list):
+        _plot_curve_on_axis(
+            axis,
+            series,
+            x_label="Evaluated examples",
+            y_label="Cumulative accuracy",
+            legend_loc="lower right",
+        )
+    for axis in axes_flat[len(series_list):]:
+        axis.axis("off")
+
+    fig.tight_layout()
+    overview_path = curves_dir / "accuracy_overview.png"
+    fig.savefig(overview_path, dpi=135)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return overview_path.relative_to(directory).as_posix()
+    except ValueError:
+        return overview_path.as_posix()
+
+
+def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-statements
+    *,
+    directory: Path,
+    study_label: str,
+    study_key: str,
+    payload: Mapping[str, object],
+) -> Optional[str]:
+    """
+    Persist a MAE training/validation curve plot for the opinion regressor.
+
+    :param directory: Report directory where plots are stored.
+    :type directory: Path
+    :param study_label: Human-readable study label.
+    :type study_label: str
+    :param study_key: Study identifier used for slug generation.
+    :type study_key: str
+    :param payload: Metrics payload containing curve information.
+    :type payload: Mapping[str, object]
+    :returns: Relative path to the generated image or ``None`` when unavailable.
+    :rtype: Optional[str]
+    """
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+    label = study_label or study_key or "study"
+    series = _build_curve_series(label, payload, _extract_mae_curves)
+    if series is None:
+        return None
+
+    curves_dir = directory / "curves"
+    curves_dir.mkdir(parents=True, exist_ok=True)
+    slug = _slugify_label(series.label, fallback="study")
+    plot_path = curves_dir / f"{slug}_mae.png"
+
+    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    _plot_curve_on_axis(
+        axis,
+        series,
+        x_label="Boosting rounds",
+        y_label="Mean absolute error",
+    )
+    fig.tight_layout()
+    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
+    plt.close(fig)  # type: ignore[attr-defined]
+    try:
+        return plot_path.relative_to(directory).as_posix()
+    except ValueError:
+        return plot_path.as_posix()
+
+
+__all__ = [
+    "_CurveSeries",
+    "_build_curve_series",
+    "_collect_curve_series",
+    "_extract_accuracy_curves",
+    "_extract_mae_curves",
+    "_plot_curve_on_axis",
+    "_plot_opinion_curve",
+    "_plot_xgb_curve",
+    "_plot_xgb_curve_overview",
+]

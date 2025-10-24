@@ -8,6 +8,8 @@ from typing import Dict, List
 
 import pytest
 
+from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+
 from xgb import pipeline_cli as cli
 from xgb import pipeline_evaluate as evaluate
 from xgb import pipeline_reports as reports
@@ -286,7 +288,7 @@ def test_run_final_evaluations_reads_metrics(monkeypatch: pytest.MonkeyPatch, tm
     assert metrics[study.key]["evaluated"] == 128
 
 
-def test_run_final_evaluations_reuses_metrics_and_sets_metadata(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_run_final_evaluations_uses_save_model_and_sets_metadata(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     study = _make_study_spec()
     config = _make_sweep_config()
     outcome = SweepOutcome(
@@ -307,19 +309,24 @@ def test_run_final_evaluations_reuses_metrics_and_sets_metadata(monkeypatch: pyt
         out_dir=tmp_path / "out",
         tree_method="hist",
         save_model_dir=save_model_dir,
-        reuse_existing=True,
+        reuse_existing=False,
     )
 
-    metrics_path = context.out_dir / study.evaluation_slug / "metrics.json"
-    metrics_path.parent.mkdir(parents=True, exist_ok=True)
-    metrics_payload = {"accuracy": 0.83}
-    metrics_path.write_text(json.dumps(metrics_payload), encoding="utf-8")
+    call_details: dict[str, object] = {}
 
-    monkeypatch.setattr(
-        evaluate,
-        "_run_xgb_cli",
-        lambda *_args, **_kwargs: pytest.fail("_run_xgb_cli should not be called when metrics cached"),
-    )
+    def fake_run(args: List[str]) -> None:
+        call_details["args"] = list(args)
+        out_dir_index = args.index("--out_dir") + 1
+        out_dir = Path(args[out_dir_index])
+        evaluation_slug = study.evaluation_slug
+        metrics_path = out_dir / evaluation_slug / "metrics.json"
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.write_text(json.dumps({"accuracy": 0.83}), encoding="utf-8")
+        if "--save_model" in args:
+            model_dir = Path(args[args.index("--save_model") + 1])
+            model_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(evaluate, "_run_xgb_cli", fake_run)
 
     metrics = evaluate._run_final_evaluations(selections=selections, context=context)
 
@@ -333,6 +340,8 @@ def test_run_final_evaluations_reuses_metrics_and_sets_metadata(monkeypatch: pyt
         }
     }
     assert save_model_dir.exists()
+    assert "--save_model" in call_details["args"]
+    assert str(save_model_dir) in call_details["args"]
 
 
 def test_run_opinion_stage_invokes_matching_studies(
@@ -363,8 +372,8 @@ def test_run_opinion_stage_invokes_matching_studies(
     stage_config = OpinionStageConfig(
         dataset="dataset",
         cache_dir="cache",
-        base_out_dir=tmp_path,
-        extra_fields=("viewer_profile",),
+        base_out_dir=tmp_path / "opinions",
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
         studies=("study1",),
         max_participants=50,
         seed=999,
@@ -380,6 +389,60 @@ def test_run_opinion_stage_invokes_matching_studies(
     assert "study1" in results
 
 
+def test_run_opinion_stage_reuses_metrics_and_warns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    study = _make_study_spec()
+    config = _make_sweep_config()
+    selection = OpinionStudySelection(
+        study=study,
+        outcome=OpinionSweepOutcome(
+            order_index=0,
+            study=study,
+            config=config,
+            mae=0.5,
+            rmse=0.7,
+            r_squared=0.2,
+            metrics_path=tmp_path / "cached.json",
+            metrics={},
+        ),
+    )
+    selections = {study.key: selection}
+
+    reuse_dir = tmp_path / "out" / "tfidf" / study.key
+    reuse_dir.mkdir(parents=True, exist_ok=True)
+    metrics_path = reuse_dir / f"opinion_xgb_{study.key}_validation_metrics.json"
+    cached_metrics = {"mae_after": 0.41}
+    metrics_path.write_text(json.dumps(cached_metrics), encoding="utf-8")
+
+    call_counter = {"count": 0}
+
+    def fake_run_opinion_eval(*args, **kwargs):
+        call_counter["count"] += 1
+        return {}
+
+    monkeypatch.setattr(evaluate, "run_opinion_eval", fake_run_opinion_eval)
+
+    config_stage = OpinionStageConfig(
+        dataset="dataset",
+        cache_dir="cache",
+        base_out_dir=tmp_path / "out",
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+        studies=(study.key, "missing_study"),
+        max_participants=0,
+        seed=0,
+        max_features=None,
+        tree_method="hist",
+        overwrite=False,
+        reuse_existing=True,
+    )
+
+    with caplog.at_level("WARNING", logger="xgb.pipeline.finalize"):
+        results = evaluate._run_opinion_stage(selections=selections, config=config_stage)
+
+    assert results == {study.key: cached_metrics}
+    assert call_counter["count"] == 0
+    assert any("Skipping opinion study for study=missing_study" in message for message in caplog.messages)
+
+
 def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -389,7 +452,7 @@ def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
         dataset="dataset",
         cache_dir="cache",
         sweep_dir=tmp_path,
-        extra_fields=("viewer_profile",),
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
         max_participants=25,
         seed=123,
         max_features=None,
@@ -470,6 +533,53 @@ def test_prepare_sweep_tasks_reuses_cached_metrics(monkeypatch: pytest.MonkeyPat
     assert call_counter["count"] == 1
 
 
+def test_gpu_tree_method_supported_variants(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Case 1: xgboost unavailable
+    monkeypatch.setattr(sweeps, "xgboost", None)
+    assert sweeps._gpu_tree_method_supported() is False
+
+    # Case 2: modern build with _has_cuda_support returning truthy
+    class ModernCore:
+        def __init__(self) -> None:
+            self._calls: int = 0
+
+        def _has_cuda_support(self) -> bool:
+            self._calls += 1
+            return True
+
+    modern = type("ModernXGB", (), {"core": ModernCore()})()
+    monkeypatch.setattr(sweeps, "xgboost", modern)
+    assert sweeps._gpu_tree_method_supported() is True
+    assert modern.core._calls == 1  # type: ignore[attr-defined]
+
+    # Case 3: _has_cuda_support raises -> expect False
+    class FaultyCore:
+        def _has_cuda_support(self) -> bool:
+            raise RuntimeError("boom")
+
+    faulty = type("FaultyXGB", (), {"core": FaultyCore()})()
+    monkeypatch.setattr(sweeps, "xgboost", faulty)
+    assert sweeps._gpu_tree_method_supported() is False
+
+    # Case 4: legacy build exposing _LIB symbol lookup
+    class LegacyLib:
+        def __init__(self, has_symbol: bool) -> None:
+            self._has_symbol = has_symbol
+
+        def __getattr__(self, item: str) -> object:
+            if item == "XGBoosterPredictFromDeviceDMatrix" and self._has_symbol:
+                return object()
+            raise AttributeError(item)
+
+    legacy_with_symbol = type("LegacyXGB", (), {"core": type("Core", (), {"_LIB": LegacyLib(True)})()})()
+    monkeypatch.setattr(sweeps, "xgboost", legacy_with_symbol)
+    assert sweeps._gpu_tree_method_supported() is True
+
+    legacy_without_symbol = type("LegacyXGBNoSymbol", (), {"core": type("Core", (), {"_LIB": LegacyLib(False)})()})()
+    monkeypatch.setattr(sweeps, "xgboost", legacy_without_symbol)
+    assert sweeps._gpu_tree_method_supported() is False
+
+
 def test_format_float_three_decimal_precision() -> None:
     assert reports._format_float(0.12349) == "0.123"
     assert reports._format_float(0.12354) == "0.124"
@@ -509,13 +619,17 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
         }
     }
 
-    reports._write_reports(
-        reports_dir=tmp_path,
+    sweep_report = reports.SweepReportData(
         outcomes=[outcome],
         selections=selections,
         final_metrics=final_metrics,
-        opinion_metrics=opinion_metrics,
+    )
+    opinion_report = reports.OpinionReportData(metrics=opinion_metrics)
+    reports._write_reports(
+        reports_dir=tmp_path,
+        sweeps=sweep_report,
         allow_incomplete=False,
+        opinion=opinion_report,
     )
 
     catalog = (tmp_path / "README.md").read_text(encoding="utf-8")
@@ -533,20 +647,39 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
     assert "Study One" in opinion
 
 
+def test_load_final_metrics_from_disk_adds_defaults(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    next_video_dir = tmp_path / "final"
+    metrics_path = next_video_dir / study.evaluation_slug / "metrics.json"
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path.write_text(json.dumps({"accuracy": 0.71}), encoding="utf-8")
+
+    result = sweeps._load_final_metrics_from_disk(
+        next_video_dir=next_video_dir,
+        studies=[study],
+    )
+
+    assert study.key in result
+    metrics = result[study.key]
+    assert metrics["accuracy"] == 0.71
+    assert metrics["issue"] == study.issue
+    assert metrics["issue_label"] == "Gun Control"
+    assert metrics["study"] == study.key
+    assert metrics["study_label"] == study.label
+
+
 def test_write_reports_handles_disabled_sections(tmp_path: Path) -> None:
+    sweep_report = reports.SweepReportData()
     reports._write_reports(
         reports_dir=tmp_path,
-        outcomes=[],
-        selections={},
-        final_metrics={},
-        opinion_metrics={},
+        sweeps=sweep_report,
         allow_incomplete=False,
         include_next_video=False,
-        include_opinion=False,
+        opinion=None,
     )
 
     catalog = (tmp_path / "README.md").read_text(encoding="utf-8")
-    assert "next_video" not in catalog.lower()
+    assert "next_video/README.md" not in catalog
 
     hyper = (tmp_path / "hyperparameter_tuning" / "README.md").read_text(encoding="utf-8")
     assert "disabled" in hyper.lower()

@@ -75,7 +75,7 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     parser.add_argument(
         "--sweep-dir",
         default=None,
-        help="Directory for hyper-parameter sweep outputs (default: <out-dir>/sweeps).",
+        help="Directory for hyper-parameter sweep outputs (default: <out-dir>/next_video/sweeps).",
     )
     parser.add_argument(
         "--reports-dir",

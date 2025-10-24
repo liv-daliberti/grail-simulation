@@ -66,10 +66,12 @@ def run_final_evaluations(
                 study.issue,
                 selection.accuracy,
             )
-            feature_out_dir = ensure_dir(context.out_dir / feature_space / study.study_slug)
+            feature_out_dir = ensure_dir(
+                context.next_video_out_dir / feature_space / study.study_slug
+            )
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(context.word2vec_model_dir / study.study_slug)
+                model_dir = ensure_dir(context.next_video_word2vec_dir / study.study_slug)
             issue_slug = issue_slug_for_study(study)
             metrics_path = (
                 feature_out_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
@@ -130,7 +132,7 @@ def run_opinion_evaluations(
     metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
-        feature_out_dir = ensure_dir(context.out_dir)
+        feature_out_dir = ensure_dir(context.opinion_out_dir)
         cached_metrics = (
             load_opinion_metrics(feature_out_dir, feature_space)
             if context.reuse_existing
@@ -150,7 +152,7 @@ def run_opinion_evaluations(
             LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(context.word2vec_model_dir / study.study_slug)
+                model_dir = ensure_dir(context.opinion_word2vec_dir / study.study_slug)
             cli_args: list[str] = []
             cli_args.extend(context.base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
@@ -185,7 +187,7 @@ def run_cross_study_evaluations(
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     cached_cross = (
         load_loso_metrics_from_disk(
-            out_dir=context.out_dir,
+            out_dir=context.next_video_out_dir,
             feature_spaces=tuple(selections.keys()),
             studies=studies,
         )
@@ -194,7 +196,7 @@ def run_cross_study_evaluations(
     )
     for feature_space, per_study in selections.items():
         feature_metrics: Dict[str, Mapping[str, object]] = dict(cached_cross.get(feature_space, {}))
-        feature_out_dir = ensure_dir(context.out_dir / feature_space / "loso")
+        feature_out_dir = ensure_dir(context.next_video_out_dir / feature_space / "loso")
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
@@ -217,7 +219,9 @@ def run_cross_study_evaluations(
 
             model_dir = None
             if feature_space == "word2vec":
-                model_dir = ensure_dir(context.word2vec_model_dir / "loso" / study.study_slug)
+                model_dir = ensure_dir(
+                    context.next_video_word2vec_dir / "loso" / study.study_slug
+                )
 
             holdout_out_dir = ensure_dir(feature_out_dir / study.study_slug)
             cli_args: list[str] = []

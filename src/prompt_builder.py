@@ -13,16 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
+"""Compatibility shim forwarding legacy ``prompt_builder`` imports.
 
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
+The actual prompt-construction utilities now live under the
+``prompt_builder`` package; this module re-exports them for downstream
+code that still references ``prompt_builder.py`` directly.
 """
 
 # pylint: skip-file

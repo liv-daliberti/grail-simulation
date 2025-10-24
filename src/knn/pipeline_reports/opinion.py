@@ -125,8 +125,8 @@ def _opinion_report_intro(dataset_name: str, split: str) -> List[str]:
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
         (
-            "- Metrics: MAE / RMSE / R² on the predicted post index, compared "
-            "against a no-change baseline."
+            "- Metrics: MAE / RMSE / R² / directional accuracy on the predicted "
+            "post index, compared against a no-change baseline."
         ),
         "",
     ]
@@ -183,10 +183,12 @@ def _opinion_feature_sections(
         if not per_feature:
             continue
         header = (
-            "| Study | Participants | Best k | MAE ↓ | Δ vs baseline ↓ | "
-            "RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |"
+            "| Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | "
+            "MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |"
         )
-        divider = "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+        divider = (
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+        )
         lines.extend(
             [
                 _feature_space_heading(feature_space),
@@ -200,6 +202,9 @@ def _opinion_feature_sections(
             if not data:
                 continue
             lines.append(_format_opinion_row(study, data))
+        lines.append(
+            f"*Assets:* [MAE / R² curves and heatmaps](../{feature_space}/opinion/)"
+        )
         lines.append("")
     return lines
 
@@ -222,6 +227,9 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
         label,
         participants_text,
         format_k(summary.best_k),
+        format_optional_float(summary.accuracy),
+        format_optional_float(summary.baseline_accuracy),
+        format_delta(summary.accuracy_delta),
         format_optional_float(summary.mae),
         format_delta(summary.mae_delta),
         format_optional_float(summary.rmse),
@@ -238,8 +246,9 @@ def _opinion_heatmap_section() -> List[str]:
         "### Opinion Change Heatmaps",
         "",
         (
-            "Plots are refreshed under `reports/knn/opinion/<feature-space>/` "
-            "for MAE, R², and change heatmaps."
+            "Plots are refreshed under `reports/knn/<feature-space>/opinion/` "
+            "including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), "
+            "and change heatmaps (`change_heatmap_<study>.png`)."
         ),
         "",
     ]

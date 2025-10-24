@@ -4,35 +4,38 @@ This study evaluates a second KNN baseline that predicts each participant's post
 
 - Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation
-- Metrics: MAE / RMSE / R² on the predicted post index, compared against a no-change baseline.
+- Metrics: MAE / RMSE / R² / directional accuracy on the predicted post index, compared against a no-change baseline.
 
 ## TF-IDF Feature Space
 
-| Study | Participants | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 150 | 0.030 | -0.007 | 0.037 | 0.983 | 0.030 | 0.037 |
-| Study 2 – Minimum Wage (MTurk) | 165 | 20 | 0.092 | -0.004 | 0.127 | 0.790 | 0.092 | 0.096 |
-| Study 3 – Minimum Wage (YouGov) | 257 | 150 | 0.086 | +0.002 | 0.124 | 0.773 | 0.086 | 0.084 |
+| Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 162 | 150 | 0.704 | 0.074 | +0.630 | 0.030 | -0.007 | 0.037 | 0.983 | 0.030 | 0.037 |
+| Study 2 – Minimum Wage (MTurk) | 165 | 20 | 0.552 | 0.061 | +0.491 | 0.092 | -0.004 | 0.127 | 0.790 | 0.092 | 0.096 |
+| Study 3 – Minimum Wage (YouGov) | 257 | 150 | 0.502 | 0.058 | +0.444 | 0.086 | +0.002 | 0.124 | 0.773 | 0.086 | 0.084 |
+*Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion/)
 
 ## Word2Vec Feature Space
 
-| Study | Participants | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.030 | -0.007 | 0.037 | 0.983 | 0.030 | 0.037 |
-| Study 2 – Minimum Wage (MTurk) | 165 | 15 | 0.091 | -0.005 | 0.124 | 0.799 | 0.091 | 0.096 |
-| Study 3 – Minimum Wage (YouGov) | 257 | 75 | 0.088 | +0.004 | 0.125 | 0.770 | 0.088 | 0.084 |
+| Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | -0.007 | 0.037 | 0.983 | 0.030 | 0.037 |
+| Study 2 – Minimum Wage (MTurk) | 165 | 15 | 0.533 | 0.061 | +0.473 | 0.091 | -0.005 | 0.124 | 0.799 | 0.091 | 0.096 |
+| Study 3 – Minimum Wage (YouGov) | 257 | 75 | 0.475 | 0.058 | +0.416 | 0.088 | +0.004 | 0.125 | 0.770 | 0.088 | 0.084 |
+*Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion/)
 
 ## Sentence-Transformer Feature Space
 
-| Study | Participants | Best k | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 75 | 0.030 | -0.008 | 0.037 | 0.984 | 0.030 | 0.037 |
-| Study 2 – Minimum Wage (MTurk) | 165 | 125 | 0.088 | -0.008 | 0.124 | 0.801 | 0.088 | 0.096 |
-| Study 3 – Minimum Wage (YouGov) | 257 | 75 | 0.086 | +0.002 | 0.124 | 0.773 | 0.086 | 0.084 |
+| Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | Baseline MAE ↓ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 162 | 75 | 0.704 | 0.074 | +0.630 | 0.030 | -0.008 | 0.037 | 0.984 | 0.030 | 0.037 |
+| Study 2 – Minimum Wage (MTurk) | 165 | 125 | 0.539 | 0.061 | +0.479 | 0.088 | -0.008 | 0.124 | 0.801 | 0.088 | 0.096 |
+| Study 3 – Minimum Wage (YouGov) | 257 | 75 | 0.537 | 0.058 | +0.479 | 0.086 | +0.002 | 0.124 | 0.773 | 0.086 | 0.084 |
+*Assets:* [MAE / R² curves and heatmaps](../sentence_transformer/opinion/)
 
 ### Opinion Change Heatmaps
 
-Plots are refreshed under `reports/knn/opinion/<feature-space>/` for MAE, R², and change heatmaps.
+Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), and change heatmaps (`change_heatmap_<study>.png`).
 
 ## Cross-Study Diagnostics
 

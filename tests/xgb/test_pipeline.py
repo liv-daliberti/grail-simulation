@@ -286,6 +286,55 @@ def test_run_final_evaluations_reads_metrics(monkeypatch: pytest.MonkeyPatch, tm
     assert metrics[study.key]["evaluated"] == 128
 
 
+def test_run_final_evaluations_reuses_metrics_and_sets_metadata(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    study = _make_study_spec()
+    config = _make_sweep_config()
+    outcome = SweepOutcome(
+        order_index=0,
+        study=study,
+        config=config,
+        accuracy=0.8,
+        coverage=0.6,
+        evaluated=200,
+        metrics_path=tmp_path / "metrics.json",
+        metrics={"accuracy": 0.8},
+    )
+    selections = {study.key: StudySelection(study=study, outcome=outcome)}
+    save_model_dir = tmp_path / "models"
+    context = FinalEvalContext(
+        base_cli=["--dataset", "stub"],
+        extra_cli=["--extra", "flag"],
+        out_dir=tmp_path / "out",
+        tree_method="hist",
+        save_model_dir=save_model_dir,
+        reuse_existing=True,
+    )
+
+    metrics_path = context.out_dir / study.evaluation_slug / "metrics.json"
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_payload = {"accuracy": 0.83}
+    metrics_path.write_text(json.dumps(metrics_payload), encoding="utf-8")
+
+    monkeypatch.setattr(
+        evaluate,
+        "_run_xgb_cli",
+        lambda *_args, **_kwargs: pytest.fail("_run_xgb_cli should not be called when metrics cached"),
+    )
+
+    metrics = evaluate._run_final_evaluations(selections=selections, context=context)
+
+    assert metrics == {
+        study.key: {
+            "accuracy": 0.83,
+            "issue": study.issue,
+            "issue_label": "Gun Control",
+            "study": study.key,
+            "study_label": study.label,
+        }
+    }
+    assert save_model_dir.exists()
+
+
 def test_run_opinion_stage_invokes_matching_studies(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -377,6 +426,48 @@ def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
     assert isinstance(cached_outcome, OpinionSweepOutcome)
     assert cached_outcome.metrics_path == metrics_path
     assert cached_outcome.mae == pytest.approx(0.4)
+
+
+def test_prepare_sweep_tasks_reuses_cached_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    study = _make_study_spec()
+    config = _make_sweep_config()
+    context = SweepRunContext(
+        base_cli=["--dataset", "stub"],
+        extra_cli=["--seed", "1"],
+        sweep_dir=tmp_path,
+        tree_method="hist",
+        jobs=1,
+    )
+
+    run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
+    metrics_path = run_root / study.evaluation_slug / "metrics.json"
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path.write_text("{}", encoding="utf-8")
+
+    stub_metrics = {"accuracy": 0.91, "coverage": 0.63, "evaluated": 512}
+    call_counter = {"count": 0}
+
+    def fake_load(path: Path) -> dict:
+        call_counter["count"] += 1
+        assert path == metrics_path
+        return stub_metrics
+
+    monkeypatch.setattr(sweeps, "_load_metrics", fake_load)
+
+    pending, cached = sweeps._prepare_sweep_tasks(
+        studies=[study],
+        configs=[config],
+        context=context,
+        reuse_existing=True,
+    )
+
+    assert pending == []
+    assert len(cached) == 1
+    outcome = cached[0]
+    assert outcome.metrics_path == metrics_path
+    assert outcome.accuracy == pytest.approx(0.91)
+    assert outcome.metrics["evaluated"] == 512
+    assert call_counter["count"] == 1
 
 
 def test_format_float_three_decimal_precision() -> None:

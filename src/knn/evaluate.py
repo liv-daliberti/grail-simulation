@@ -1129,13 +1129,6 @@ def _accumulate_row(
     n_bucket = bin_nopts(n_options)
     bucket_stats["options_seen"][n_bucket] += 1
 
-    try:
-        position = int(example.get("video_index") or -1)
-    except (TypeError, ValueError):
-        position = -1
-    pos_bucket = bucket_from_pos(position)
-    bucket_stats["position_seen"][pos_bucket] += 1
-
     gold_index = int(example.get("gold_index") or -1)
     gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
     if gold_index < 1 and slate_pairs:
@@ -1143,6 +1136,18 @@ def _accumulate_row(
             if gold_raw and (gold_raw == vid or canon(gold_raw) == canon(title)):
                 gold_index = option_index
                 break
+
+    try:
+        position = int(example.get("video_index") or -1)
+    except (TypeError, ValueError):
+        position = -1
+    # If the dataset does not provide an explicit position, fall back to the
+    # (1-based) gold index so the positional diagnostics still reflect where the
+    # answer appeared in the slate.
+    if position < 0 and gold_index > 0:
+        position = gold_index - 1
+    pos_bucket = bucket_from_pos(position)
+    bucket_stats["position_seen"][pos_bucket] += 1
 
     predictions = knn_predict_among_slate_multi(
         knn_index=knn_index,

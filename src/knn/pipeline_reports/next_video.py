@@ -55,6 +55,33 @@ class PortfolioAggregate:
     studies: int
 
 
+@dataclass
+class NextVideoReportInputs:
+    """Input bundle required to render the next-video report."""
+
+    output_dir: Path
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
+    studies: Sequence[StudySpec]
+    feature_spaces: Sequence[str]
+    loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None
+    allow_incomplete: bool = False
+
+PORTFOLIO_HEADER = (
+    "| Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | "
+    "Studies |"
+)
+PORTFOLIO_RULE = "| --- | ---: | ---: | ---: | ---: | ---: |"
+FEATURE_TABLE_HEADER = (
+    "| Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | "
+    "Eligible | Total |"
+)
+FEATURE_TABLE_RULE = "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+LOSO_TABLE_HEADER = (
+    "| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |"
+)
+LOSO_TABLE_RULE = "| --- | ---: | ---: | ---: | ---: | ---: |"
+
+
 def _ordered_feature_spaces(
     preferred: Sequence[str],
     available: Iterable[str],
@@ -132,6 +159,62 @@ def _aggregate_portfolio_metrics(
         eligible=eligible_total,
         studies=studies_with_metrics,
     )
+
+
+def _summarise_feature_observations(
+    feature_space: str,
+    metrics: Mapping[str, Mapping[str, object]],
+    studies: Sequence[StudySpec],
+) -> Optional[str]:
+    """
+    Summarise qualitative observations for a feature space.
+
+    :param feature_space: Feature space identifier such as ``tfidf``.
+    :type feature_space: str
+    :param metrics: Study-level metrics for the feature space.
+    :type metrics: Mapping[str, Mapping[str, object]]
+    :param studies: Ordered study specifications.
+    :type studies: Sequence[StudySpec]
+    :returns: Markdown bullet or None when there is nothing to report.
+    :rtype: Optional[str]
+    """
+    bullet_parts: List[str] = []
+    delta_values: List[float] = []
+    random_values: List[float] = []
+    for study in studies:
+        data = metrics.get(study.key)
+        if not data:
+            continue
+        summary = extract_metric_summary(data)
+        accuracy = summary.accuracy
+        if accuracy is None:
+            continue
+        baseline = summary.baseline
+        delta_val = accuracy - baseline if baseline is not None else None
+        if delta_val is not None:
+            delta_values.append(delta_val)
+        random_value = summary.random_baseline
+        if random_value is not None:
+            random_values.append(random_value)
+        detail = (
+            f"{study.label}: {format_optional_float(accuracy)} "
+            f"(baseline {format_optional_float(baseline)}, Δ {format_delta(delta_val)}, "
+            f"k={format_k(summary.best_k)}, eligible {format_count(summary.n_eligible)})"
+        )
+        bullet_parts.append(detail)
+    if not bullet_parts:
+        return None
+    extras: List[str] = []
+    if delta_values:
+        mean_delta = sum(delta_values) / len(delta_values)
+        extras.append(f"mean Δ {format_delta(mean_delta)}")
+    if random_values:
+        mean_random = sum(random_values) / len(random_values)
+        extras.append(f"mean random {format_optional_float(mean_random)}")
+    if extras:
+        bullet_parts.append("averages: " + ", ".join(extras))
+    joined = "; ".join(bullet_parts)
+    return f"- {feature_space.upper()}: {joined}."
 
 
 def _next_video_dataset_info(
@@ -256,11 +339,8 @@ def _next_video_portfolio_summary(
         return []
 
     lines: List[str] = ["## Portfolio Summary", ""]
-    lines.append(
-        "| Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | "
-        "Studies |"
-    )
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
+    lines.append(PORTFOLIO_HEADER)
+    lines.append(PORTFOLIO_RULE)
     lines.extend(rows)
     lines.append("")
     if best:
@@ -392,8 +472,8 @@ def _next_video_feature_section(
     lines: List[str] = [
         _feature_space_heading(feature_space),
         "",
-        "| Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |",
-        "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        FEATURE_TABLE_HEADER,
+        FEATURE_TABLE_RULE,
     ]
     for study in studies:
         data = metrics.get(study.key)
@@ -440,12 +520,7 @@ def _next_video_curve_sections(
         return []
 
     sections: List[str] = []
-    ordered_spaces = [
-        space for space in ("tfidf", "word2vec", "sentence_transformer") if space in metrics_by_feature
-    ]
-    for feature_space in metrics_by_feature:
-        if feature_space not in ordered_spaces:
-            ordered_spaces.append(feature_space)
+    ordered_spaces = _ordered_feature_spaces((), metrics_by_feature)
 
     for feature_space in ordered_spaces:
         feature_metrics = metrics_by_feature.get(feature_space, {})
@@ -490,56 +565,18 @@ def _next_video_observations(
     :rtype: List[str]
     """
     lines: List[str] = ["## Observations", ""]
-    ordered_spaces = [
-        space
-        for space in ("tfidf", "word2vec", "sentence_transformer")
-        if space in metrics_by_feature
-    ]
-    for space in metrics_by_feature:
-        if space not in ordered_spaces:
-            ordered_spaces.append(space)
+    ordered_spaces = _ordered_feature_spaces((), metrics_by_feature)
     for feature_space in ordered_spaces:
-        metrics = metrics_by_feature.get(feature_space, {})
-        if not metrics:
-            continue
-        bullet_bits: List[str] = []
-        deltas: List[float] = []
-        randoms: List[float] = []
-        for study in studies:
-            data = metrics.get(study.key)
-            if not data:
-                continue
-            summary = extract_metric_summary(data)
-            if summary.accuracy is None:
-                continue
-            delta_val = (
-                summary.accuracy - summary.baseline
-                if summary.baseline is not None
-                else None
-            )
-            if delta_val is not None:
-                deltas.append(delta_val)
-            if summary.random_baseline is not None:
-                randoms.append(summary.random_baseline)
-            detail = (
-                f"{study.label}: {format_optional_float(summary.accuracy)} "
-                f"(baseline {format_optional_float(summary.baseline)}, "
-                f"Δ {format_delta(delta_val)}, k={format_k(summary.best_k)}, "
-                f"eligible {format_count(summary.n_eligible)})"
-            )
-            bullet_bits.append(detail)
-        extras: List[str] = []
-        if deltas:
-            mean_delta = sum(deltas) / len(deltas)
-            extras.append(f"mean Δ {format_delta(mean_delta)}")
-        if randoms:
-            mean_random = sum(randoms) / len(randoms)
-            extras.append(f"mean random {format_optional_float(mean_random)}")
-        if extras:
-            bullet_bits.append("averages: " + ", ".join(extras))
-        if bullet_bits:
-            lines.append(f"- {feature_space.upper()}: " + "; ".join(bullet_bits) + ".")
-    lines.append("- Random values correspond to the expected accuracy from a uniform guess across the slate options.")
+        observation = _summarise_feature_observations(
+            feature_space,
+            metrics_by_feature.get(feature_space, {}),
+            studies,
+        )
+        if observation:
+            lines.append(observation)
+    lines.append(
+        "- Random values approximate the accuracy from uniformly guessing across the slate."
+    )
     lines.append("")
     return lines
 
@@ -575,8 +612,8 @@ def _next_video_loso_section(
             continue
         lines.append(_feature_space_heading(feature_space))
         lines.append("")
-        lines.append("| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |")
-        lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
+        lines.append(LOSO_TABLE_HEADER)
+        lines.append(LOSO_TABLE_RULE)
         for study in studies:
             data = metrics.get(study.key)
             if not data:
@@ -596,59 +633,43 @@ def _next_video_loso_section(
     return lines
 
 
-def _build_next_video_report(
-    *,
-    output_dir: Path,
-    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
-    studies: Sequence[StudySpec],
-    feature_spaces: Sequence[str],
-    loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None,
-    allow_incomplete: bool = False,
-) -> None:
+def _build_next_video_report(inputs: NextVideoReportInputs) -> None:
     """
-    Compose the next-video evaluation report under ``output_dir``.
+    Compose the next-video evaluation report under ``inputs.output_dir``.
 
-    :param output_dir: Directory where the rendered report should be written.
-    :type output_dir: Path
-    :param metrics_by_feature: Nested mapping of metrics grouped by feature space and study.
-    :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
-    :param studies: Sequence of study specifications targeted by the workflow.
-    :type studies: Sequence[StudySpec]
-    :param feature_spaces: Ordered feature spaces considered by the pipeline.
-    :type feature_spaces: Sequence[str]
-    :param loso_metrics: Optional leave-one-study-out evaluation bundle.
-    :type loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]]
-    :param allow_incomplete: Whether missing metrics should surface placeholders.
-    :type allow_incomplete: bool
+    :param inputs: Structured bundle of report inputs.
+    :type inputs: NextVideoReportInputs
     """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    readme_path = output_dir / "README.md"
+    inputs.output_dir.mkdir(parents=True, exist_ok=True)
+    readme_path = inputs.output_dir / "README.md"
 
-    dataset_name, split = _next_video_dataset_info(metrics_by_feature)
-    uncertainty = _next_video_uncertainty_info(metrics_by_feature)
+    dataset_name, split = _next_video_dataset_info(inputs.metrics_by_feature)
+    uncertainty = _next_video_uncertainty_info(inputs.metrics_by_feature)
 
     lines: List[str] = _next_video_intro(dataset_name, split, uncertainty)
-    lines.extend(_next_video_portfolio_summary(metrics_by_feature, feature_spaces))
+    lines.extend(
+        _next_video_portfolio_summary(inputs.metrics_by_feature, inputs.feature_spaces)
+    )
 
-    for feature_space in feature_spaces:
-        per_feature = metrics_by_feature.get(feature_space, {})
-        lines.extend(_next_video_feature_section(feature_space, per_feature, studies))
+    for feature_space in inputs.feature_spaces:
+        per_feature = inputs.metrics_by_feature.get(feature_space, {})
+        lines.extend(_next_video_feature_section(feature_space, per_feature, inputs.studies))
 
     curve_sections = _next_video_curve_sections(
-        output_dir=output_dir,
-        metrics_by_feature=metrics_by_feature,
-        studies=studies,
+        output_dir=inputs.output_dir,
+        metrics_by_feature=inputs.metrics_by_feature,
+        studies=inputs.studies,
     )
     if curve_sections:
         lines.append("## Accuracy Curves")
         lines.append("")
         lines.extend(curve_sections)
 
-    lines.extend(_next_video_observations(metrics_by_feature, studies))
+    lines.extend(_next_video_observations(inputs.metrics_by_feature, inputs.studies))
 
-    if loso_metrics:
-        lines.extend(_next_video_loso_section(loso_metrics, studies))
-    elif allow_incomplete:
+    if inputs.loso_metrics:
+        lines.extend(_next_video_loso_section(inputs.loso_metrics, inputs.studies))
+    elif inputs.allow_incomplete:
         lines.append(
             "Leave-one-study-out metrics were unavailable when this report was generated."
         )
@@ -658,4 +679,4 @@ def _build_next_video_report(
     readme_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-__all__ = ["_build_next_video_report"]
+__all__ = ["NextVideoReportInputs", "_build_next_video_report"]

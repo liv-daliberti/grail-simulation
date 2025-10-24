@@ -13,16 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
+"""Markdown report builders for the Grail Simulation XGBoost pipeline.
 
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
+Generates catalog, sweep, next-video, and opinion summaries based on the
+metric bundles assembled by ``xgb.pipeline``.
 """
 
 # pylint: disable=line-too-long,duplicate-code,too-many-lines
@@ -1721,7 +1715,9 @@ def _write_opinion_report(
         lines.append("")
         write_markdown_lines(path, lines)
         return
-    lines.append("MAE / RMSE / R² scores for predicting the post-study opinion index.")
+    lines.append(
+        "MAE / RMSE / R² / directional accuracy scores for predicting the post-study opinion index."
+    )
     lines.append("")
     dataset_name = "unknown"
     split_name = "validation"
@@ -1735,14 +1731,25 @@ def _write_opinion_report(
             break
     lines.append(f"- Dataset: `{dataset_name}`")
     lines.append(f"- Split: {split_name}")
-    lines.append("- Metrics: MAE, RMSE, and R² compared against a no-change baseline (pre-study opinion).")
+    lines.append(
+        "- Metrics: MAE, RMSE, R², and directional accuracy compared against a no-change baseline "
+        "(pre-study opinion)."
+    )
     lines.append("")
-    lines.append("| Study | Participants | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Baseline MAE ↓ |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append(
+        "| Study | Participants | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | "
+        "MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Baseline MAE ↓ |"
+    )
+    lines.append(
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+    )
     for study_key, payload in sorted(metrics.items()):
         summary = _extract_opinion_summary(payload)
         lines.append(
             f"| {summary.label or study_key} | {_format_count(summary.participants)} | "
+            f"{_format_optional_float(summary.accuracy_after)} | "
+            f"{_format_optional_float(summary.baseline_accuracy)} | "
+            f"{_format_delta(summary.accuracy_delta)} | "
             f"{_format_optional_float(summary.mae_after)} | {_format_delta(summary.mae_delta)} | "
             f"{_format_optional_float(summary.rmse_after)} | {_format_optional_float(summary.r2_after)} | "
             f"{_format_optional_float(summary.baseline_mae)} |"

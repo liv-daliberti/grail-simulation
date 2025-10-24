@@ -30,6 +30,7 @@ from .hyperparameter import (
 )
 from .next_video import NextVideoReportInputs, _build_next_video_report
 from .opinion import _build_opinion_report
+from .features import build_feature_report
 from .shared import parse_k_sweep
 
 __all__ = ["generate_reports"]
@@ -106,3 +107,4 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
             studies=report_bundle.studies,
             allow_incomplete=allow_incomplete,
         )
+    build_feature_report(repo_root, report_bundle)

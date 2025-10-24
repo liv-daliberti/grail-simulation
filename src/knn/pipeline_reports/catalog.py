@@ -53,6 +53,11 @@ def _build_catalog_report(
     )
     lines.append("Each report captures the latest KNN baseline performance at a glance.")
     lines.append("")
+    lines.append(
+        "- `additional_features/README.md` — overview of the extra text fields appended to prompts."
+    )
+    if include_next_video or include_opinion:
+        lines.append("")
     if include_next_video:
         lines.append(
             "- `hyperparameter_tuning/README.md` — sweep leaderboards and the per-study winners."

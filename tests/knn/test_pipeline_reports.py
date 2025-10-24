@@ -123,11 +123,13 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     hyper_path = repo_root / "reports" / "knn" / "hyperparameter_tuning" / "README.md"
     next_video_path = repo_root / "reports" / "knn" / "next_video" / "README.md"
     opinion_path = repo_root / "reports" / "knn" / "opinion" / "README.md"
+    features_path = repo_root / "reports" / "knn" / "additional_features" / "README.md"
 
     assert catalog_path.exists()
     assert hyper_path.exists()
     assert next_video_path.exists()
     assert opinion_path.exists()
+    assert features_path.exists()
 
     assert "# KNN Report Catalog" in catalog_path.read_text()
 
@@ -142,6 +144,11 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     opinion_text = opinion_path.read_text()
     assert "KNN Opinion Shift Study" in opinion_text
     assert "Study A" in opinion_text
+
+    features_text = features_path.read_text()
+    assert "Additional Text Features" in features_text
+    assert "`title`" in features_text
+    assert "`viewer_profile`" in features_text
 
 
 def test_next_video_report_writes_placeholder_when_metrics_missing(tmp_path: Path) -> None:

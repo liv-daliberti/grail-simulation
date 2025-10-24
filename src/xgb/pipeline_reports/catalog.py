@@ -57,6 +57,10 @@ def _write_catalog_report(
     )
     lines.append("Each report captures the current XGBoost baseline performance at a glance.")
     lines.append("")
+    lines.append(
+        "- `additional_features/README.md` — overview of the extra text fields appended to prompts."
+    )
+    lines.append("")
     if include_next_video:
         lines.append(
             "- `hyperparameter_tuning/README.md` — sweep leaderboards and the per-study winners."

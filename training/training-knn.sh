@@ -174,32 +174,33 @@ EOF
 }
 
 append_flag_once() {
-  local -n target=$1
+  local -n target_ref=$1
   local flag=$2
   local value=$3
-  for ((i = 0; i < ${#target[@]}; ++i)); do
-    if [[ "${target[i]}" == "${flag}" ]]; then
+  for ((i = 0; i < ${#target_ref[@]}; ++i)); do
+    if [[ "${target_ref[i]}" == "${flag}" ]]; then
       return
     fi
   done
-  target+=("${flag}" "${value}")
+  target_ref+=("${flag}" "${value}")
 }
 
 ensure_tasks_flag() {
-  local -n target=$1
+  local target_name=$1
+  local -n target_ref=$1
   local default_value=${2:-"${KNN_PIPELINE_TASKS}"}
   local canonical=""
-  for ((i = 0; i < ${#target[@]}; ++i)); do
-    if [[ "${target[i]}" == "--tasks" ]]; then
-      local existing="${target[i + 1]:-}"
+  for ((i = 0; i < ${#target_ref[@]}; ++i)); do
+    if [[ "${target_ref[i]}" == "--tasks" ]]; then
+      local existing="${target_ref[i + 1]:-}"
       canonical=$(ensure_dual_task_string "${existing}")
-      target[i + 1]="${canonical}"
+      target_ref[i + 1]="${canonical}"
       break
     fi
   done
   if [[ -z "${canonical}" ]]; then
     canonical=$(ensure_dual_task_string "${default_value}")
-    append_flag_once target --tasks "${canonical}"
+    append_flag_once "${target_name}" --tasks "${canonical}"
   fi
   printf '%s\n' "${canonical}"
 }
@@ -255,7 +256,7 @@ append_range_chunks() {
   local start=$1
   local end=$2
   local chunk_size=$3
-  local -n target=$4
+  local -n target_ref=$4
   if [[ -z "${start}" || -z "${end}" ]]; then
     return
   fi
@@ -269,9 +270,9 @@ append_range_chunks() {
       chunk_end=$end
     fi
     if (( chunk_start == chunk_end )); then
-      target+=("${chunk_start}")
+      target_ref+=("${chunk_start}")
     else
-      target+=("${chunk_start}-${chunk_end}")
+      target_ref+=("${chunk_start}-${chunk_end}")
     fi
     chunk_start=$((chunk_end + 1))
   done
@@ -301,13 +302,13 @@ format_range_bounds() {
 }
 
 ensure_reuse_final_flag() {
-  local -n target=$1
-  for flag in "${target[@]}"; do
+  local -n target_ref=$1
+  for flag in "${target_ref[@]}"; do
     if [[ "${flag}" == "--reuse-final" || "${flag}" == "--no-reuse-final" ]]; then
       return
     fi
   done
-  target+=("--reuse-final")
+  target_ref+=("--reuse-final")
 }
 
 run_plan() {

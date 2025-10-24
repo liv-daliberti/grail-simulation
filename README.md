@@ -17,25 +17,26 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 
 ```
 .
+├── README.md                 # Project overview, setup, and usage guide
+├── LICENSE                   # Project license (MIT-style)
+├── pytest.ini                # Root pytest configuration consumed by scripts/run-tests.sh
+├── .readthedocs.yaml         # Read the Docs configuration (must live at repo root)
+├── .github/                  # GitHub Actions workflows
 ├── capsule-5416997/          # Snapshot of the CodeOcean capsule inputs/metadata
 ├── clean_data/               # Data cleaning pipeline and publication replicas
 │   ├── sessions/             # Session ingestion helpers (see clean_data/sessions/README.md)
 │   ├── prompt/               # Prompt analytics plots and Markdown builders
 │   └── research_article_political_sciences/  # Replication figures + summaries
 ├── data/                     # Local cleaned datasets (gitignored artifacts)
+├── development/              # Centralized tooling configs (linting, packaging helpers)
+│   ├── .pylintrc             # Pylint configuration
+│   ├── pytest.ini            # Pytest configuration for editable installs
+│   ├── requirements-dev.txt  # Development-only dependencies
+│   └── setup.py              # Editable package definition (`pip install -e development`)
 ├── docs/                     # Sphinx project that powers the Read the Docs site
-├── logs/                     # Default output location for training/eval runs
 ├── models/                   # Trained model checkpoints and evaluation curves
 ├── recipes/                  # Training configuration files organized by model family
 ├── reports/                  # Markdown reports rendered from analyses
-├── .github/                  # GitHub Actions workflows
-├── .gitignore                # Repository-wide ignore rules (must live at root)
-├── .readthedocs.yaml         # Read the Docs configuration (root path required)
-├── development/              # Centralized tooling configs (linting, packaging helpers)
-│   ├── .pylintrc             # Pylint configuration
-│   ├── pytest.ini            # Pytest configuration
-│   ├── requirements-dev.txt  # Development-only dependencies
-│   └── setup.py              # Editable package definition (pip install -e development)
 ├── scripts/                  # Utility entrypoints (linting, testing, exports)
 ├── src/                      # Python packages for agents, models, and visualization
 │   ├── common/               # Shared utilities
@@ -48,6 +49,8 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 ├── tests/                    # Pytest suite covering data + model components
 └── training/                 # SLURM launchers and experiment configs
 ```
+
+> **Note:** Runtime artifacts (for example `logs/` or `.cache/`) are gitignored and created on demand by the training and evaluation scripts.
 
 ## Data Sources
 

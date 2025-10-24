@@ -32,6 +32,7 @@ from .hyperparameter import _write_hyperparameter_report
 from .next_video import _write_next_video_report
 from .opinion import _write_opinion_report
 from .shared import _write_disabled_report
+from .features import _write_feature_report
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,12 @@ def _write_reports(
             "Opinion Regression",
             "Opinion sweeps were disabled for this run.",
         )
+    _write_feature_report(
+        reports_dir / "additional_features",
+        sweeps,
+        include_next_video=include_next_video,
+        opinion=opinion if include_opinion else None,
+    )
 
 
 __all__ = ["OpinionReportData", "SweepReportData", "_write_reports"]

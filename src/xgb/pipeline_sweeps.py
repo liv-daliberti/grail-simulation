@@ -607,23 +607,31 @@ def _emit_combined_sweep_plan(
     """
 
     total = len(slate_tasks) + len(opinion_tasks)
+    sections: List[str] = []
+    if slate_tasks:
+        sections.append("next_video")
+    if opinion_tasks:
+        sections.append("opinion")
+    if sections:
+        print(",".join(sections))
     print(f"TOTAL_TASKS={total}")
-    if total == 0:
-        return
-    print("INDEX\tSTUDY\tISSUE\tVECTORIZER\tLABEL")
-    display_index = 0
-    for task in slate_tasks:
-        print(
-            f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
-            f"{task.config.text_vectorizer}\t{task.config.label()}"
-        )
-        display_index += 1
-    for task in opinion_tasks:
-        print(
-            f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
-            f"opinion\t{task.config.label()}"
-        )
-        display_index += 1
+    if slate_tasks:
+        print("### NEXT_VIDEO")
+        print("INDEX\tSTUDY\tISSUE\tVECTORIZER\tLABEL")
+        for display_index, task in enumerate(slate_tasks):
+            print(
+                f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
+                f"{task.config.text_vectorizer}\t{task.config.label()}"
+            )
+    if opinion_tasks:
+        print("### OPINION")
+        print("INDEX\tSTUDY\tISSUE\tVECTORIZER\tLABEL")
+        for display_index, task in enumerate(opinion_tasks):
+            vectorizer = getattr(task.config, "text_vectorizer", "opinion")
+            print(
+                f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
+                f"{vectorizer}\t{task.config.label()}"
+            )
 
 
 def _format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:

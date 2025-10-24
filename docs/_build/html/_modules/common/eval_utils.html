@@ -293,50 +293,17 @@
 <div class="viewcode-block" id="safe_div">
 <a class="viewcode-back" href="../../api/xgb.html#common.safe_div">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the division result while guarding against a zero denominator.</span>
 
-
-
-<span class="sd">        Return the division result guarding against a zero denominator.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        numerator:</span>
-
-<span class="sd">            Value forming the numerator.</span>
-
-<span class="sd">        denominator:</span>
-
-<span class="sd">            Value forming the denominator.</span>
-
-<span class="sd">        default:</span>
-
-<span class="sd">            Fallback value returned when ``denominator`` is zero.</span>
-
-
-
-<span class="sd">    :param numerator: Value provided for ``numerator``.</span>
-
+<span class="sd">    :param numerator: Value forming the numerator.</span>
 <span class="sd">    :type numerator: float</span>
-
-<span class="sd">    :param denominator: Value provided for ``denominator``.</span>
-
+<span class="sd">    :param denominator: Value forming the denominator.</span>
 <span class="sd">    :type denominator: float</span>
-
-<span class="sd">    :param default: Value provided for ``default``.</span>
-
+<span class="sd">    :param default: Fallback returned when ``denominator`` is zero.</span>
 <span class="sd">    :type default: float</span>
-
-<span class="sd">    :returns: Result produced by ``safe_div``.</span>
-
+<span class="sd">    :returns: Division result or ``default`` when the denominator is zero.</span>
 <span class="sd">    :rtype: float</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
-
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">denominator</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">default</span>

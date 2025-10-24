@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Matplotlib-based visualisations for the prompt analytics workflow.
+"""Matplotlib-based visualizations for the prompt analytics workflow.
 
 These helpers generate the numeric and categorical histograms that populate
 the prompt feature report, both at the global level and broken down by

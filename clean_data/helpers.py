@@ -17,7 +17,7 @@
 
 This module holds normalization routines, regex utilities, and shared
 constants that power session parsing, prompt construction, and survey
-processing. Anything that manipulates identifiers, serialised JSON, or
+processing. Anything that manipulates identifiers, serialized JSON, or
 core feature definitions typically lives here to avoid circular imports
 between the higher-level modules. All routines are made available under the
 repository's Apache 2.0 license; review the LICENSE file for full terms.

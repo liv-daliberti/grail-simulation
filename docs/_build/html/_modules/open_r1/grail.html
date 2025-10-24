@@ -254,7 +254,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.grail</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -492,7 +492,7 @@
 
 <span class="sd">        :param model_name: Hugging Face model identifier for the classifier.</span>
 <span class="sd">        :param device: Torch device where the model should live.</span>
-<span class="sd">        :param learning_rate: Learning rate used for the discriminator optimizer.</span>
+<span class="sd">        :param learning_rate: Learning rate used for the discriminator optimiser.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span> <span class="o">=</span> <span class="n">model_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span>
@@ -825,7 +825,11 @@
     <span class="n">disc_lr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GAIL_LR&quot;</span><span class="p">,</span> <span class="s2">&quot;2e-5&quot;</span><span class="p">))</span>
     <span class="n">gail_alpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GAIL_ALPHA&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0&quot;</span><span class="p">))</span>
 
-    <span class="n">discriminator</span> <span class="o">=</span> <span class="n">OnlineDiscriminator</span><span class="p">(</span><span class="n">disc_model</span><span class="p">,</span> <span class="n">disc_device</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">disc_lr</span><span class="p">)</span>
+    <span class="n">discriminator</span> <span class="o">=</span> <span class="n">OnlineDiscriminator</span><span class="p">(</span>
+        <span class="n">disc_model</span><span class="p">,</span>
+        <span class="n">disc_device</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="n">disc_lr</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">gail_fn</span> <span class="o">=</span> <span class="n">make_gail_reward_fn</span><span class="p">(</span><span class="n">discriminator</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">gail_alpha</span><span class="p">)</span>
     <span class="n">gail_fn</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;gail_reward&quot;</span>
     <span class="n">reward_fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gail_fn</span><span class="p">)</span>

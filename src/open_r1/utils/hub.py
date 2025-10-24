@@ -17,37 +17,11 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 import re
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any
-
-try:  # pragma: no cover - optional dependency
-    from huggingface_hub import (
-        create_branch,
-        create_repo,
-        get_safetensors_metadata,
-        list_repo_commits,
-        list_repo_files,
-        list_repo_refs,
-        repo_exists,
-        upload_folder,
-    )
-except ImportError as exc:  # pragma: no cover - optional dependency
-    create_branch = create_repo = get_safetensors_metadata = None
-    list_repo_commits = list_repo_files = list_repo_refs = None
-    repo_exists = upload_folder = None
-    _huggingface_hub_import_error = exc
-else:
-    _huggingface_hub_import_error = None
-
-try:  # pragma: no cover - optional dependency
-    from transformers import AutoConfig
-except ImportError as exc:  # pragma: no cover - optional dependency
-    AutoConfig = None
-    _transformers_import_error = exc
-else:
-    _transformers_import_error = None
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from trl import GRPOConfig, SFTConfig
@@ -57,43 +31,68 @@ else:  # pragma: no cover - runtime fallback
 
 logger = logging.getLogger(__name__)
 
+_huggingface_cache: Dict[str, Any] = {"error": None, "helpers": None}
+_transformers_cache: Dict[str, Any] = {"error": None, "module": None}
+
 
 def _require_huggingface_hub():
     """Return huggingface_hub helpers or raise a clear installation error."""
-    if _huggingface_hub_import_error is not None:
+    helpers = _huggingface_cache.get("helpers")
+    if helpers is not None:
+        return helpers
+
+    if _huggingface_cache.get("error") is not None:
         raise ImportError(
             "huggingface_hub is required for Hub interactions. "
             "Install it with `pip install huggingface_hub`."
-        ) from _huggingface_hub_import_error
-    assert create_repo is not None
-    assert list_repo_commits is not None
-    assert create_branch is not None
-    assert upload_folder is not None
-    assert repo_exists is not None
-    assert list_repo_refs is not None
-    assert list_repo_files is not None
-    assert get_safetensors_metadata is not None
-    return (
-        create_repo,
-        list_repo_commits,
-        create_branch,
-        upload_folder,
-        repo_exists,
-        list_repo_refs,
-        list_repo_files,
-        get_safetensors_metadata,
+        ) from _huggingface_cache["error"]
+
+    try:
+        hub_module = importlib.import_module("huggingface_hub")
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        _huggingface_cache["error"] = exc
+        raise ImportError(
+            "huggingface_hub is required for Hub interactions. "
+            "Install it with `pip install huggingface_hub`."
+        ) from exc
+
+    helpers = (
+        hub_module.create_repo,
+        hub_module.list_repo_commits,
+        hub_module.create_branch,
+        hub_module.upload_folder,
+        hub_module.repo_exists,
+        hub_module.list_repo_refs,
+        hub_module.list_repo_files,
+        hub_module.get_safetensors_metadata,
     )
+    _huggingface_cache["helpers"] = helpers
+    return helpers
 
 
 def _require_transformers():
     """Return AutoConfig or raise a clear installation error."""
-    if _transformers_import_error is not None:
+    module = _transformers_cache.get("module")
+    if module is not None:
+        return module.AutoConfig
+
+    if _transformers_cache.get("error") is not None:
         raise ImportError(
             "transformers is required for reading model configurations. "
             "Install it with `pip install transformers`."
-        ) from _transformers_import_error
-    assert AutoConfig is not None
-    return AutoConfig
+        ) from _transformers_cache["error"]
+
+    try:
+        module = importlib.import_module("transformers")
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        _transformers_cache["error"] = exc
+        raise ImportError(
+            "transformers is required for reading model configurations. "
+            "Install it with `pip install transformers`."
+        ) from exc
+
+    _transformers_cache["module"] = module
+    return module.AutoConfig
 
 
 def push_to_hub_revision(

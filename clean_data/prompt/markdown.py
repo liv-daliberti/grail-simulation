@@ -98,7 +98,7 @@ class ReportContext:
 def _relative_path(path: Path, base: Path) -> str:
     """Return ``path`` relative to ``base`` when possible for cleaner Markdown links.
 
-    :param path: Path that should be relativised.
+    :param path: Path that should be relativized.
     :param base: Base directory used for relative calculations.
     :returns: Relative path string when possible, otherwise the absolute path.
     """

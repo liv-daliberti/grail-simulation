@@ -296,6 +296,10 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">trl</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
+<span class="n">ScriptArgumentsBase</span> <span class="o">=</span> <span class="n">trl</span><span class="o">.</span><span class="n">ScriptArguments</span> <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">object</span>
+<span class="n">GRPOConfigBase</span> <span class="o">=</span> <span class="n">trl</span><span class="o">.</span><span class="n">GRPOConfig</span> <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">object</span>
+<span class="n">SFTConfigBase</span> <span class="o">=</span> <span class="n">trl</span><span class="o">.</span><span class="n">SFTConfig</span> <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">object</span>
+
 
 <div class="viewcode-block" id="DatasetConfig">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.configs.DatasetConfig">[docs]</a>
@@ -326,7 +330,7 @@
 <div class="viewcode-block" id="ScriptArguments">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.configs.ScriptArguments">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ScriptArguments</span><span class="p">(</span><span class="n">trl</span><span class="o">.</span><span class="n">ScriptArguments</span> <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScriptArguments</span><span class="p">(</span><span class="n">ScriptArgumentsBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extended version of ScriptArguments with support for dataset mixtures.</span>
 
@@ -437,7 +441,7 @@
 <div class="viewcode-block" id="GRPOConfig">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.configs.GRPOConfig">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">GRPOConfig</span><span class="p">(</span><span class="n">trl</span><span class="o">.</span><span class="n">GRPOConfig</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GRPOConfig</span><span class="p">(</span><span class="n">GRPOConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Arguments for callbacks, benchmarks, and related settings.&quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=too-many-instance-attributes</span>
@@ -494,13 +498,24 @@
     <span class="n">wandb_run_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;The group to store runs under.&quot;</span><span class="p">},</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate optional dependencies before continuing configuration.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;trl must be installed to construct GRPOConfig &quot;</span>
+                <span class="s2">&quot;(pip install trl).&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(),</span> <span class="s2">&quot;__post_init__&quot;</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>  <span class="c1"># type: ignore[misc]</span></div>
 
 
 <div class="viewcode-block" id="SFTConfig">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.configs.SFTConfig">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">SFTConfig</span><span class="p">(</span><span class="n">trl</span><span class="o">.</span><span class="n">SFTConfig</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SFTConfig</span><span class="p">(</span><span class="n">SFTConfigBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Arguments for callbacks, benchmarks, and related settings.&quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=too-many-instance-attributes</span>
@@ -544,7 +559,18 @@
     <span class="n">wandb_run_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;The group to store runs under.&quot;</span><span class="p">},</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate optional dependencies before continuing configuration.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">trl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;trl must be installed to construct SFTConfig &quot;</span>
+                <span class="s2">&quot;(pip install trl).&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(),</span> <span class="s2">&quot;__post_init__&quot;</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>  <span class="c1"># type: ignore[misc]</span></div>
 
 
 

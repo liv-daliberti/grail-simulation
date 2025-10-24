@@ -15,7 +15,7 @@
 
 """Shared constants for prompt building and stats.
 
-This module centralises the prompt passthrough columns, default system
+This module centralizes the prompt passthrough columns, default system
 prompt text, and other reusable parameters relied upon by the prompt
 generation and analytics layers. All constants are released under the
 repository's Apache 2.0 license; see LICENSE for more information.

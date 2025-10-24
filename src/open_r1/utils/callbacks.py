@@ -65,7 +65,7 @@ def _slurm_available() -> bool:
 #  Push-to-hub callback ------------------------------------------------------
 # ---------------------------------------------------------------------------
 
-class PushToHubRevisionCallback(TrainerCallback):
+class PushToHubRevisionCallback(TrainerCallback):  # pylint: disable=too-few-public-methods
     """Callback that pushes checkpoints to the Hub using revision tags."""
 
     def __init__(self, model_cfg):

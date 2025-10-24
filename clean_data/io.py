@@ -17,7 +17,7 @@
 
 The functions in this module know how to locate capsule directories,
 read CSV/RDS exports from the CodeOcean bundle, parse supplemental
-metadata, and normalise the resulting structures for downstream use.
+metadata, and normalize the resulting structures for downstream use.
 They form the foundation upon which the session parser reconstructs the
 full interaction dataset. All functionality is licensed under Apache 2.0;
 refer to the repository's LICENSE file for details.

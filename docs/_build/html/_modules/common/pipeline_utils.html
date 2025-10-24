@@ -301,58 +301,19 @@
     <span class="n">order_key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
     <span class="n">on_replace</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge cached and freshly executed results while preserving order indices.</span>
 
-<span class="sd">    Merge cached and freshly executed results preserving order indices.</span>
-
-
-
-<span class="sd">        Parameters</span>
-
-<span class="sd">        ----------</span>
-
-<span class="sd">        cached:</span>
-
-<span class="sd">            Previously materialised results (e.g., metrics read from disk).</span>
-
-<span class="sd">        executed:</span>
-
-<span class="sd">            Newly computed results from the current run.</span>
-
-<span class="sd">        order_key:</span>
-
-<span class="sd">            Callable returning a deterministic integer position for each result.</span>
-
-<span class="sd">        on_replace:</span>
-
-<span class="sd">            Optional callback invoked when an executed item replaces a cached one</span>
-
-<span class="sd">            at the same index.</span>
-
-
-
-<span class="sd">    :param cached: Value provided for ``cached``.</span>
-
+<span class="sd">    :param cached: Previously materialised results (e.g., metrics read from disk).</span>
 <span class="sd">    :type cached: Sequence[T]</span>
-
-<span class="sd">    :param executed: Value provided for ``executed``.</span>
-
+<span class="sd">    :param executed: Newly computed results from the current run.</span>
 <span class="sd">    :type executed: Sequence[T]</span>
-
-<span class="sd">    :param order_key: Value provided for ``order_key``.</span>
-
+<span class="sd">    :param order_key: Callable returning a deterministic integer position for each result.</span>
 <span class="sd">    :type order_key: Callable[[T], int]</span>
-
-<span class="sd">    :param on_replace: Value provided for ``on_replace``.</span>
-
+<span class="sd">    :param on_replace: Optional callback invoked when ``executed`` replaces ``cached`` at an index.</span>
 <span class="sd">    :type on_replace: Callable[[T, T], None] | None</span>
-
-<span class="sd">    :returns: Result produced by ``merge_ordered``.</span>
-
+<span class="sd">    :returns: Combined results ordered by ``order_key``.</span>
 <span class="sd">    :rtype: List[T]</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
-
 
     <span class="n">by_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">order_key</span><span class="p">(</span><span class="n">item</span><span class="p">):</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">cached</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">executed</span><span class="p">:</span>

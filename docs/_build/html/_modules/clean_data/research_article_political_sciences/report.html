@@ -298,8 +298,8 @@
     <span class="n">histogram2d_counts</span><span class="p">,</span>
     <span class="n">load_assignment_frame</span><span class="p">,</span>
     <span class="n">prepare_study_frame</span><span class="p">,</span>
-    <span class="n">summarise_assignments</span><span class="p">,</span>
-    <span class="n">summarise_shift</span><span class="p">,</span>
+    <span class="n">summarize_assignments</span><span class="p">,</span>
+    <span class="n">summarize_shift</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.markdown</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarkdownArtifacts</span><span class="p">,</span> <span class="n">build_markdown</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_heatmap</span><span class="p">,</span> <span class="n">plot_assignment_panels</span>
@@ -355,7 +355,7 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">heatmap_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate heatmaps and Markdown summarising opinion shifts per study.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate heatmaps and Markdown summarizing opinion shifts per study.</span>
 
 <span class="sd">    :param dataset: Hugging Face ``DatasetDict`` containing cleaned sessions.</span>
 <span class="sd">    :param output_dir: Directory where plots and the Markdown report are written.</span>
@@ -384,7 +384,7 @@
         <span class="n">heatmap_path</span> <span class="o">=</span> <span class="n">output_path</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">heatmap_filename</span>
         <span class="n">plot_heatmap</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">heatmap_path</span><span class="p">)</span>
         <span class="n">heatmap_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">heatmap_path</span><span class="p">)</span>
-        <span class="n">summary</span> <span class="o">=</span> <span class="n">summarise_shift</span><span class="p">(</span><span class="n">study_frame</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">before_column</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">after_column</span><span class="p">)</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">summarize_shift</span><span class="p">(</span><span class="n">study_frame</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">before_column</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">after_column</span><span class="p">)</span>
         <span class="n">study_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s2">&quot;spec&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="p">,</span>
@@ -400,7 +400,7 @@
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">study_entries</span><span class="p">:</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;spec&quot;</span><span class="p">]</span>
         <span class="n">assignment_frame</span> <span class="o">=</span> <span class="n">load_assignment_frame</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="n">summaries</span> <span class="o">=</span> <span class="n">summarise_assignments</span><span class="p">(</span><span class="n">assignment_frame</span><span class="p">)</span>
+        <span class="n">summaries</span> <span class="o">=</span> <span class="n">summarize_assignments</span><span class="p">(</span><span class="n">assignment_frame</span><span class="p">)</span>
         <span class="n">assignment_panels</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">summaries</span><span class="p">))</span>
         <span class="n">control_entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
             <span class="p">(</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">summaries</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;assignment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">),</span>

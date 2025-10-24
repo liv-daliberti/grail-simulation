@@ -6,6 +6,9 @@ temperature / max-token settings, promotes the best configuration, and writes
 both the summary Markdown and the underlying metrics JSON to `reports/gpt4o/`
 and `models/gpt4o/`.
 
+Need the provenance for the cleaned rows? See `clean_data/sessions/README.md`
+for the session-ingestion reference.
+
 - `next_video/` – overall accuracy, formatting/parse rates, and fairness cuts by
   issue and participant study for the promoted configuration. The directory also
   captures the raw `metrics.json` emitted by the evaluation stage.

@@ -52,6 +52,10 @@ focused modules so it mirrors the structure of the `knn/` and `xgb/` baselines.
 location with sufficient disk space. When disk pressure is detected the loader
 automatically falls back to streaming mode.
 
+Curious how the cleaned rows are produced before uploading to Hugging Face?
+`clean_data/sessions/README.md` walks through the session-ingestion pipeline
+that backs every downstream baseline.
+
 > 💡 The legacy command `python src/gpt4o/gpt-4o-baseline.py` still works and now
 > forwards to `gpt4o.cli:main`.
 

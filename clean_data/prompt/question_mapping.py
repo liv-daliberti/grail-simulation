@@ -79,7 +79,7 @@ QUESTION_ID_MAPPING: Dict[str, QuestionMapping] = {
     },
     "favorite_channels": {
         "question_ids": ["q8", "fav_channels"],
-        "description": "Open-ended list of favourite YouTube channels.",
+        "description": "Open-ended list of favorite YouTube channels.",
         "notes": "Qualtrics export stores the raw text under q8.",
     },
     "popular_channels_followed": {

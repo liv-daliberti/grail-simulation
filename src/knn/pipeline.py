@@ -13,17 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
+"""Pipeline orchestration for the Grail Simulation KNN baselines.
 
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+The module coordinates hyper-parameter sweeps, final evaluations, and
+Markdown report generation for the slate-ranking and opinion-regression
+KNN workflows used throughout the project."""
 
 # pylint: disable=line-too-long
 from __future__ import annotations

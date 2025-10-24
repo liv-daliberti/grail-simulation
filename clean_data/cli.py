@@ -17,7 +17,7 @@
 
 The CLI parses user arguments, configures :mod:`clean_data.clean_data`
 options, orchestrates dataset construction, kicks off prompt analytics,
-and handles optional issue-level exports. It mirrors the behaviour of the
+and handles optional issue-level exports. It mirrors the behavior of the
 original CodeOcean pipeline while exposing a Python-first interface. Usage
 of this CLI is governed by the repository's Apache 2.0 license; consult
 LICENSE for the full terms.

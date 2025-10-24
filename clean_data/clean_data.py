@@ -166,7 +166,6 @@ class BuildOptions:
     sol_key: Optional[str] = None
     max_history: int = 12
     num_proc: Optional[int] = None
-    num_proc: Optional[int] = None
 
 
 def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
@@ -258,7 +257,7 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     if not data_files:
         raise RuntimeError(f"Dataset '{dataset_name}' does not expose data_files metadata")
 
-    split_files = _normalise_split_mappings(data_files)
+    split_files = _normalize_split_mappings(data_files)
     features: Optional[Features] = getattr(builder.info, "features", None)
     loader = _ColumnUnionLoader(dataset_name, builder, features)
     unioned = loader.build(split_files)
@@ -267,11 +266,11 @@ def _load_dataset_with_column_union(dataset_name: str) -> DatasetDict:
     return DatasetDict(unioned)
 
 
-def _normalise_split_mappings(data_files: Dict[str, Any]) -> Dict[str, list[str]]:
+def _normalize_split_mappings(data_files: Dict[str, Any]) -> Dict[str, list[str]]:
     """Coerce the builder ``data_files`` mapping into ``split -> [files]`` form.
 
     :param data_files: Mapping extracted from ``datasets.Builder`` configuration.
-    :returns: Normalised mapping where every value is a list of file references.
+    :returns: Normalized mapping where every value is a list of file references.
     :raises RuntimeError: If a mapping value cannot be interpreted as str or sequence.
     """
 
@@ -381,7 +380,7 @@ class _ColumnUnionLoader:
             raise
 
     def _read_csv_frame(self, filesystem: Any, path: Any) -> pd.DataFrame:
-        """Read and normalise a CSV shard into a pandas DataFrame.
+        """Read and normalize a CSV shard into a pandas DataFrame.
 
         :param filesystem: Filesystem handle capable of opening the shard.
         :param path: Path or identifier of the shard within ``filesystem``.
@@ -446,7 +445,7 @@ class _ColumnUnionLoader:
         :param sample_bytes: Initial slice of the CSV payload used for detection heuristics.
         :returns: List of ``(encoding, text)`` tuples in evaluation order.
         :raises UnicodeDecodeError: If no encoding successfully decodes the bytes.
-        :raises LookupError: If no recognised encoding can be used during detection.
+        :raises LookupError: If no recognized encoding can be used during detection.
         """
         decoded: list[tuple[str, str]] = []
         last_decode_err: Optional[UnicodeDecodeError] = None
@@ -535,7 +534,7 @@ class _ColumnUnionLoader:
         """Rename and prune columns so they align with the expected schema.
 
         :param frame: DataFrame produced by pandas for an individual shard.
-        :returns: Normalised DataFrame ready for unioning.
+        :returns: Normalized DataFrame ready for unioning.
         """
         frame = frame.drop(columns=["Unnamed: 0"], errors="ignore")
         frame_columns = set(frame.columns)
@@ -773,7 +772,7 @@ def dedupe_by_participant_issue(dataset: DatasetDict) -> DatasetDict:
     The cleaning pipeline now retains every interaction row long enough to
     run prompt diagnostics (e.g., prior-history coverage). Downstream
     consumers that require the historical one-row-per-participant-and-issue
-    view can apply this helper to recover the previous behaviour.
+    view can apply this helper to recover the previous behavior.
 
     :param dataset: Dataset containing potential participant/issue duplicates.
     :returns: Dataset with duplicates removed within each split.

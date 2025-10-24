@@ -16,7 +16,7 @@
 """Core prompt construction logic for the cleaned GRAIL dataset.
 
 This module converts the normalized session rows into structured prompt
-examples: resolving slate items, synthesising system/user messages,
+examples: resolving slate items, synthesizing system/user messages,
 tracking passthrough metadata, and enforcing GRPO column requirements.
 Other modules feed raw data into these helpers when building cleaned
 datasets or inspecting individual examples. These utilities are distributed
@@ -33,11 +33,16 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from clean_data.helpers import _as_list_json, _canon, _is_nanlike
+from clean_data.helpers import _as_list_json, _is_nanlike
 from clean_data.prompt.constants import (
     DEFAULT_SYSTEM_PROMPT,
     PASSTHROUGH_COLUMNS,
     YOUTUBE_FREQ_MAP,
+)
+from clean_data.sessions import (
+    get_gold_next_id,
+    gold_index_from_items,
+    load_slate_items,
 )
 
 
@@ -81,23 +86,6 @@ def _last_index(values: Any, target: Any) -> Optional[int]:
             last = index
     return last
 
-
-def load_slate_items(ex: dict) -> List[dict]:
-    """Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys.
-
-    :param ex: Session row dictionary containing slate metadata.
-    :returns: List of dictionaries with normalized ``title`` and ``id`` fields.
-    """
-    arr = _as_list_json(ex.get("slate_items_json"))
-    out: List[dict] = []
-    for raw_item in arr:
-        if not isinstance(raw_item, dict):
-            continue
-        title_text = (raw_item.get("title") or "").strip()
-        video_id = (raw_item.get("id") or "").strip()
-        if title_text or video_id:
-            out.append({"title": title_text, "id": video_id})
-    return out
 
 def _secs(value: Any) -> str:
     """Render a human-readable duration in seconds.
@@ -212,7 +200,7 @@ def _synthesize_viewer_sentence(ex: dict) -> str:
     """Construct a fallback viewer profile sentence from demographics.
 
     :param ex: Dataset row containing demographic fields.
-    :returns: Short sentence summarising age, gender, race, etc.
+    :returns: Short sentence summarizing age, gender, race, etc.
     """
 
     bits: List[str] = []
@@ -393,7 +381,7 @@ def _render_full_history_lines_disc(ex: dict, include_current: bool = False) -> 
         return []
 
     def _key(row: dict) -> tuple[int, float]:
-        """Sort key for trajectory rows prioritising explicit indices.
+        """Sort key for trajectory rows prioritizing explicit indices.
 
         :param row: Trajectory dictionary element.
         :returns: Tuple used to sort rows by index then end timestamp.
@@ -484,80 +472,6 @@ def _build_state_disc_text(ex: dict) -> str:
     if prior:
         parts += ["", "PRIOR_SLATES:", *prior]
     return "\n".join(parts)
-
-# ---------- gold next id ----------
-def _derive_next_from_history(ex: dict, current_id: str) -> str:
-    """Infer the next video id from the watch history when explicit labels are missing.
-
-    :param ex: Session row dictionary.
-    :param current_id: Canonical id of the current video.
-    :return: Next video id or an empty string when cannot be determined.
-    """
-
-    vids = _as_list_json(ex.get("watched_vids_json"))
-    if current_id and isinstance(vids, list) and vids:
-        try:
-            i = vids.index(current_id)
-            if i + 1 < len(vids):
-                nxt = vids[i + 1]
-                if isinstance(nxt, str) and nxt.strip():
-                    return nxt.strip()
-        except ValueError:
-            pass
-    detailed_history = _as_list_json(ex.get("watched_detailed_json"))
-    if current_id and isinstance(detailed_history, list) and detailed_history:
-        for entry_index, detail_row in enumerate(detailed_history):
-            if isinstance(detail_row, dict) and (detail_row.get("id") or "").strip() == current_id:
-                if entry_index + 1 < len(detailed_history):
-                    nxt = (detailed_history[entry_index + 1].get("id") or "").strip()
-                    if nxt:
-                        return nxt
-                break
-    return ""
-
-def get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
-    """Resolve the gold next-video id for a session step.
-
-    :param ex: Session row being transformed.
-    :param sol_key: Optional alternate column name containing the gold id.
-    :return: Canonical next-video id or an empty string when unavailable.
-    """
-    current_video_id = (ex.get("current_video_id") or "").strip()
-    if sol_key and sol_key not in {"current_video_id", "current_id"}:
-        candidate_value = ex.get(sol_key)
-        if (
-            isinstance(candidate_value, str)
-            and candidate_value.strip()
-            and candidate_value.strip() != current_video_id
-        ):
-            return candidate_value.strip()
-    candidate_fields = ("next_video_id", "clicked_id", "label", "answer")
-    for field in candidate_fields:
-        value = ex.get(field)
-        if isinstance(value, str) and value.strip() and value.strip() != current_video_id:
-            return value.strip()
-    return _derive_next_from_history(ex, current_video_id)
-
-def gold_index_from_items(gold: str, items: List[dict]) -> int:
-    """Locate the 1-based index of ``gold`` inside the slate items list.
-
-    :param gold: Gold video id (canonical string).
-    :param items: Slate items pulled from the session log.
-    :return: Index in ``items`` or ``-1`` when the id cannot be matched.
-    """
-
-    gold = (gold or "").strip()
-    if not gold or not items:
-        return -1
-    for item_index, slate_item in enumerate(items, 1):
-        if gold == (slate_item.get("id") or ""):
-            return item_index
-    canonical_gold = _canon(gold)
-    if canonical_gold:
-        for item_index, slate_item in enumerate(items, 1):
-            if canonical_gold == _canon(slate_item.get("title", "")):
-                return item_index
-    return -1
 
 
 @dataclass(frozen=True)

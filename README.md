@@ -19,6 +19,7 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 .
 ├── capsule-5416997/          # Snapshot of the CodeOcean capsule inputs/metadata
 ├── clean_data/               # Data cleaning pipeline and publication replicas
+│   ├── sessions/             # Session ingestion helpers (see clean_data/sessions/README.md)
 │   ├── prompt/               # Prompt analytics plots and Markdown builders
 │   └── research_article_political_sciences/  # Replication figures + summaries
 ├── data/                     # Local cleaned datasets (gitignored artifacts)
@@ -184,7 +185,7 @@ The HTML documentation (autodoc + autosummary for `clean_data`) lands in `docs/_
 
 The repository stitches together several subsystems to turn raw CodeOcean logs into reproducible training/evaluation runs. The core stages are:
 
-1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair.
+1. **Session ingestion & filtering** – `clean_data.sessions.build_codeocean_rows` loads the capsule exports, enforces participant allow-lists, and retains the full interaction history for every `(participant, issue)` pair. See `clean_data/sessions/README.md` for the module layout and helper reference.
 2. **Prompt construction** – `clean_data.prompting.row_to_example` builds GRPO-style prompts, applying the shared viewer-profile logic used by downstream models.
 3. **Model training & evaluation** – consult the package READMEs under `src/` (e.g., `src/knn/README.md`, `src/gpt4o/README.md`, `src/xgb/README.md`) for baseline-specific pipelines, CLI commands, and reporting details.
 

@@ -2,7 +2,7 @@
 
 ## Dataset coverage notes
 
-Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues, using the full retained rows (no within-session subsetting).
+Statistics and charts focus on the core study sessions (study1–study3) covering the `gun_control` and `minimum_wage` issues, using the full retained rows (no within-session subsetting). Session-ingestion details now live in `clean_data/sessions/README.md`.
 
 - Train: 21460 rows (89.9% of dataset)
 - Validation: 2419 rows (10.1% of dataset)

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Union, Any
 
 from ..configs import GRPOConfig, SFTConfig
@@ -16,39 +17,36 @@ def _require_transformers() -> Any:
     """Import ``transformers`` lazily and raise a helpful error when missing."""
 
     try:
-        import transformers  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
+        return importlib.import_module("transformers")
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "transformers is required for Open-R1 training utilities. "
             "Install it with `pip install transformers`."
         ) from exc
-    return transformers
 
 
 def _require_trl() -> Any:
     """Import ``trl`` lazily and raise a helpful error when missing."""
 
     try:
-        import trl  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
+        return importlib.import_module("trl")
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "trl is required for Open-R1 training utilities. "
             "Install it with `pip install trl`."
         ) from exc
-    return trl
 
 
 def _require_torch() -> Any:
     """Import ``torch`` lazily and raise a helpful error when missing."""
 
     try:
-        import torch  # type: ignore  # pylint: disable=import-error,import-outside-toplevel
+        return importlib.import_module("torch")
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "torch is required for Open-R1 training utilities. "
             "Install it with `pip install torch` (or the appropriate wheel for your platform)."
         ) from exc
-    return torch
 
 
 

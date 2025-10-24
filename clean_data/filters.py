@@ -17,7 +17,7 @@
 
 This module contains the lightweight predicates used to discard unusable
 interaction rows before prompt construction as well as diagnostic helpers
-that summarise the issue distribution across splits. These functions are
+that summarize the issue distribution across splits. These functions are
 intended to be composed by :mod:`clean_data.clean_data` and higher-level
 entry points rather than imported by downstream consumers directly. The
 suite is provided under the repository's Apache 2.0 license; refer to the

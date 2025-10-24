@@ -1,6 +1,6 @@
 # Clean Data Pipeline
 
-This document describes how the Python implementation in `clean_data/` mirrors the CodeOcean preprocessing used in the PNAS “Filter Bubble” studies. It complements the high-level project README and focuses on provenance, filtering rules, and module responsibilities.
+This document describes how the Python implementation in `clean_data/` mirrors the CodeOcean preprocessing used in the PNAS “Filter Bubble” studies. It complements the high-level project README and focuses on provenance, filtering rules, and module responsibilities. A deeper dive into the session-ingestion helpers now lives in `clean_data/sessions/README.md`.
 
 ## Package Overview
 

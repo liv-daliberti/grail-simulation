@@ -288,6 +288,10 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     :vartype rmse: float
     :ivar r2_score: Coefficient of determination for the opinion regression.
     :vartype r2_score: float
+    :ivar baseline_mae: Baseline MAE measured using before-study opinions (if any).
+    :vartype baseline_mae: Optional[float]
+    :ivar mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
+    :vartype mae_delta: Optional[float]
     :ivar accuracy: Directional accuracy achieved by the configuration.
     :vartype accuracy: Optional[float]
     :ivar baseline_accuracy: Directional accuracy achieved by the baseline.
@@ -312,6 +316,8 @@ class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
     mae: float
     rmse: float
     r2_score: float
+    baseline_mae: Optional[float]
+    mae_delta: Optional[float]
     accuracy: Optional[float]
     baseline_accuracy: Optional[float]
     accuracy_delta: Optional[float]

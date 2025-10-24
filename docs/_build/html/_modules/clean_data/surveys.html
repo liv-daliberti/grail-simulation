@@ -475,7 +475,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a trimmed string series with missing values coerced to empty strings.</span>
 
 <span class="sd">        :param series: Input pandas series containing identifier values.</span>
-<span class="sd">        :returns: Normalised series with whitespace stripped and ``NaN`` replaced.</span>
+<span class="sd">        :returns: Normalized series with whitespace stripped and ``NaN`` replaced.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>

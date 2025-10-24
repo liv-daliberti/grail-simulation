@@ -274,14 +274,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils.replay_buffer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReplayBuffer</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># pylint: disable=import-error</span>
         <span class="n">TrainerCallback</span><span class="p">,</span>
         <span class="n">TrainerControl</span><span class="p">,</span>
         <span class="n">TrainerState</span><span class="p">,</span>
         <span class="n">TrainingArguments</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerCallback</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerCallback</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback that surfaces a helpful error when Transformers is missing.&quot;&quot;&quot;</span>
 
         <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -290,13 +290,13 @@
                 <span class="s2">&quot;Install it with `pip install transformers`.&quot;</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
-    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerControl</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerControl</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers control placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
 
-    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerState</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainerState</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers state placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
 
-    <span class="k">class</span><span class="w"> </span><span class="nc">TrainingArguments</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">TrainingArguments</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transformers arguments placeholder used when the package is unavailable.&quot;&quot;&quot;</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -323,13 +323,14 @@
 
 <div class="viewcode-block" id="PushToHubRevisionCallback">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PushToHubRevisionCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PushToHubRevisionCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Callback that pushes checkpoints to the Hub using revision tags.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PushToHubRevisionCallback.__init__">
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.PushToHubRevisionCallback.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_cfg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Store the model configuration used when scheduling pushes.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_cfg</span> <span class="o">=</span> <span class="n">model_cfg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;PushToHub&quot;</span><span class="p">)</span></div>
 
@@ -395,6 +396,7 @@
 <a class="viewcode-back" href="../../../api/open_r1.html#open_r1.utils.callbacks.SuccessCachingCallback.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replay_buffer</span><span class="p">:</span> <span class="n">ReplayBuffer</span><span class="p">,</span> <span class="n">acc_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.999</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the callback with a replay buffer and accuracy threshold.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">replay_buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thr</span> <span class="o">=</span> <span class="n">acc_threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="o">=</span> <span class="kc">None</span>                         <span class="c1"># will be set later</span>
@@ -475,6 +477,7 @@
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure the callback with replay buffer, tokenizer and reward key.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buf</span>  <span class="o">=</span> <span class="n">replay_buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tok</span>  <span class="o">=</span> <span class="n">tokenizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key</span>  <span class="o">=</span> <span class="n">accuracy_key</span>

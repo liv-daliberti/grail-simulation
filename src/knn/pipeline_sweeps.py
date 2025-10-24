@@ -437,6 +437,13 @@ def opinion_sweep_outcome_from_metrics(
         metrics.get("n_participants", 0)
     )
     best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
+    baseline_mae = summary.baseline_mae
+    if baseline_mae is None:
+        baseline_mae_raw = metrics.get("baseline", {}).get("mae_using_before")
+        baseline_mae = float(baseline_mae_raw) if baseline_mae_raw is not None else None
+    mae_delta = summary.mae_delta
+    if mae_delta is None and baseline_mae is not None:
+        mae_delta = float(mae) - float(baseline_mae)
     accuracy = summary.accuracy
     if accuracy is None:
         accuracy = best_metrics.get("direction_accuracy")
@@ -464,6 +471,8 @@ def opinion_sweep_outcome_from_metrics(
         mae=float(mae),
         rmse=float(rmse),
         r2_score=float(r2_score),
+        baseline_mae=baseline_mae,
+        mae_delta=mae_delta,
         accuracy=accuracy,
         baseline_accuracy=baseline_accuracy,
         accuracy_delta=accuracy_delta,

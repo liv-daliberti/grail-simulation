@@ -16,7 +16,7 @@
 """Plotting helpers for the political sciences replication report.
 
 These functions generate the heatmaps and opinion-shift bar charts used to
-replicate the published study's figures. The visualisation utilities are
+replicate the published study's figures. The visualization utilities are
 licensed under the repository's Apache 2.0 terms; see LICENSE for details.
 """
 

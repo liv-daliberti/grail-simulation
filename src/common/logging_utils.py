@@ -32,38 +32,15 @@ from pathlib import Path
 
 
 def get_logger(name: str, *, level: int = logging.INFO) -> logging.Logger:
+    """Return a memoised logger configured with a simple stream handler.
+
+    Args:
+        name: Name registered on the logger.
+        level: Log level applied when initialising the logger.
+
+    Returns:
+        logging.Logger: Configured logger instance.
     """
-
-
-
-        Return a memoised logger configured with a simple stream handler.
-
-
-
-        The helper mirrors the historical behaviour from the individual
-
-        baselines: create a ``logging.Logger``, attach a stream handler
-
-        when none are registered yet, and set the level to ``INFO`` (or a
-
-        caller-provided override).
-
-
-
-    :param name: Value provided for ``name``.
-
-    :type name: str
-
-    :param level: Value provided for ``level``.
-
-    :type level: int
-
-    :returns: Result produced by ``get_logger``.
-
-    :rtype: logging.Logger
-
-    """
-
 
     logger = logging.getLogger(name)
     if not logger.handlers:
@@ -76,34 +53,11 @@ def get_logger(name: str, *, level: int = logging.INFO) -> logging.Logger:
 
 
 def ensure_directory(path: Path | str) -> None:
+    """Create ``path`` (including parents) when it does not already exist.
+
+    Args:
+        path: Target directory to ensure.
     """
-
-
-
-        Create ``path`` (including parents) when it does not already exist.
-
-
-
-        Parameters
-
-        ----------
-
-        path:
-
-            Target directory to ensure.
-
-
-
-    :param path: Value provided for ``path``.
-
-    :type path: Path | str
-
-    :returns: ``None``.
-
-    :rtype: None
-
-    """
-
 
     Path(path).mkdir(parents=True, exist_ok=True)
 

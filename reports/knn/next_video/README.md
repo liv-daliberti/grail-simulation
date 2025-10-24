@@ -1,11 +1,11 @@
 # KNN Next-Video Baseline
 
-This report summarizes the slate-ranking KNN model that predicts the next video a viewer will click.
+This report summarises the slate-ranking KNN model that predicts the next clicked video.
 
 - Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation
-- Metric: accuracy on eligible slates (gold index present)
-- Baseline column: accuracy from always recommending the most-frequent gold index for the study.
+- Metric: accuracy on eligible slates (gold index present).
+- Baseline column: accuracy from recommending the most frequent gold index.
 - Δ column: improvement over that baseline accuracy.
 - Random column: expected accuracy from uniformly sampling one candidate per slate.
 - Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)
@@ -43,6 +43,8 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.440 across 2,4
 | Study 1 – Gun Control (MTurk) | 0.801 | [0.765, 0.838] | +0.261 | 0.540 | 0.326 | 2 | 548 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.308 | [0.276, 0.350] | -0.060 | 0.368 | 0.255 | 3 | 671 | 671 |
 | Study 3 – Minimum Wage (YouGov) | 0.322 | [0.294, 0.346] | -0.158 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
+
+## Accuracy Curves
 
 ### Study 1 – Gun Control (MTurk) (TFIDF)
 
@@ -111,3 +113,5 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.440 across 2,4
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.027 | -0.513 | 0.540 | 2 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.313 | -0.055 | 0.368 | 3 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.304 | -0.175 | 0.479 | 4 | 1,200 |
+

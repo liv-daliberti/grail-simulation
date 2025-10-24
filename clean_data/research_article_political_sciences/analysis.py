@@ -16,7 +16,7 @@
 """Core data wrangling helpers for the political sciences replication.
 
 This module prepares cleaned dataset splits for analysis by filtering
-per-study frames, harmonising opinion indices, and computing the heatmap
+per-study frames, harmonizing opinion indices, and computing the heatmap
 counts consumed by the reporting layer. All functionality is distributed
 under the repository's Apache 2.0 license; see LICENSE for the permitted
 uses.
@@ -130,7 +130,7 @@ def histogram2d_counts(
     return hist.astype(int), bin_edges
 
 
-def summarise_shift(
+def summarize_shift(
     data_frame: pd.DataFrame,
     before_col: str,
     after_col: str,
@@ -173,8 +173,6 @@ def summarise_shift(
         "share_decrease": float(np.mean(change < 0.0)),
         "share_small_change": float(np.mean(abs_change <= epsilon)),
     }
-
-
 def assemble_study_specs() -> Iterable[StudySpec]:
     """Return the static study specifications handled by the report.
 
@@ -510,7 +508,7 @@ def load_assignment_frame(spec: StudySpec) -> pd.DataFrame:
     return pd.DataFrame(columns=["participant_id", "before", "after", "assignment"])
 
 
-def summarise_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
+def summarize_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
     """Return summary statistics for each assignment group in a dataframe.
 
     :param frame: Assignment dataframe produced by :func:`load_assignment_frame`.
@@ -522,7 +520,7 @@ def summarise_assignments(frame: pd.DataFrame) -> List[Dict[str, float]]:
 
     summaries: List[Dict[str, float]] = []
     for assignment, group in frame.groupby("assignment"):
-        metrics = summarise_shift(group, "before", "after")
+        metrics = summarize_shift(group, "before", "after")
         count = int(metrics["n"])
         stderr = float("nan")
         if count > 0 and not math.isnan(metrics["std_change"]):

@@ -42,8 +42,8 @@ from .analysis import (
     histogram2d_counts,
     load_assignment_frame,
     prepare_study_frame,
-    summarise_assignments,
-    summarise_shift,
+    summarize_assignments,
+    summarize_shift,
 )
 from .markdown import MarkdownArtifacts, build_markdown
 from .plotting import plot_heatmap, plot_assignment_panels
@@ -97,7 +97,7 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
     *,
     heatmap_bins: int = 10,
 ) -> Dict[str, object]:
-    """Generate heatmaps and Markdown summarising opinion shifts per study.
+    """Generate heatmaps and Markdown summarizing opinion shifts per study.
 
     :param dataset: Hugging Face ``DatasetDict`` containing cleaned sessions.
     :param output_dir: Directory where plots and the Markdown report are written.
@@ -126,7 +126,7 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
         heatmap_path = output_path / spec.heatmap_filename
         plot_heatmap(hist, edges, spec.label, heatmap_path)
         heatmap_paths.append(heatmap_path)
-        summary = summarise_shift(study_frame, spec.before_column, spec.after_column)
+        summary = summarize_shift(study_frame, spec.before_column, spec.after_column)
         study_entries.append(
             {
                 "spec": spec,
@@ -142,7 +142,7 @@ def generate_research_article_report(  # pylint: disable=too-many-locals
     for entry in study_entries:
         spec = entry["spec"]
         assignment_frame = load_assignment_frame(spec)
-        summaries = summarise_assignments(assignment_frame)
+        summaries = summarize_assignments(assignment_frame)
         assignment_panels.append((spec.label, summaries))
         control_entry = next(
             (item for item in summaries if item["assignment"] == "control"),

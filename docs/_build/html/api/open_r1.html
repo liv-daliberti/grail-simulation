@@ -705,14 +705,14 @@ options. Example:</p>
 </dd></dl>
 
 <p id="module-open_r1.generate">Utilities for constructing distilabel pipelines for data generation.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="open_r1.generate.build_distilabel_pipeline">
-<span class="sig-prename descclassname"><span class="pre">open_r1.generate.</span></span><span class="sig-name descname"><span class="pre">build_distilabel_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'http://localhost:8000/v1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt_template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'{{</span> <span class="pre">instruction</span> <span class="pre">}}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8192</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_generations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_replicas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/generate.html#build_distilabel_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.generate.build_distilabel_pipeline" title="Link to this definition">¶</a></dt>
-<dd><p>Construct a distilabel pipeline configured for OpenAI-compatible endpoints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.generate.</span></span><span class="sig-name descname"><span class="pre">DistilabelPipelineConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'http://localhost:8000/v1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt_template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'{{</span> <span class="pre">instruction</span> <span class="pre">}}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8192</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_generations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_replicas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">900</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/generate.html#DistilabelPipelineConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration options used to assemble a distilabel pipeline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>str</em>)</p></li>
 <li><p><strong>base_url</strong> (<em>str</em>)</p></li>
 <li><p><strong>prompt_column</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>prompt_template</strong> (<em>str</em>)</p></li>
@@ -726,8 +726,101 @@ options. Example:</p>
 <li><p><strong>retries</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.base_url">
+<span class="sig-name descname"><span class="pre">base_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'http://localhost:8000/v1'</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.base_url" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.build_generation_kwargs">
+<span class="sig-name descname"><span class="pre">build_generation_kwargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/generate.html#DistilabelPipelineConfig.build_generation_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.build_generation_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Return keyword arguments forwarded to the distilabel text generation step.</p>
+<p>The method centralises the logic for handling optional sampling parameters so
+callers keep the outer function signature small enough for linting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.client_replicas">
+<span class="sig-name descname"><span class="pre">client_replicas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.client_replicas" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.input_batch_size">
+<span class="sig-name descname"><span class="pre">input_batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.input_batch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.max_new_tokens">
+<span class="sig-name descname"><span class="pre">max_new_tokens</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8192</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.max_new_tokens" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.num_generations">
+<span class="sig-name descname"><span class="pre">num_generations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.num_generations" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.prompt_column">
+<span class="sig-name descname"><span class="pre">prompt_column</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.prompt_column" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.prompt_template">
+<span class="sig-name descname"><span class="pre">prompt_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{{</span> <span class="pre">instruction</span> <span class="pre">}}'</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.prompt_template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.retries">
+<span class="sig-name descname"><span class="pre">retries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.retries" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.temperature" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.timeout">
+<span class="sig-name descname"><span class="pre">timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">900</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.timeout" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="open_r1.generate.DistilabelPipelineConfig.top_p">
+<span class="sig-name descname"><span class="pre">top_p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#open_r1.generate.DistilabelPipelineConfig.top_p" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="open_r1.generate.build_distilabel_pipeline">
+<span class="sig-prename descclassname"><span class="pre">open_r1.generate.</span></span><span class="sig-name descname"><span class="pre">build_distilabel_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/generate.html#build_distilabel_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.generate.build_distilabel_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a distilabel pipeline configured for OpenAI-compatible endpoints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>str</em>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig" title="open_r1.generate.DistilabelPipelineConfig"><em>DistilabelPipelineConfig</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="open_r1.generate.main">
+<span class="sig-prename descclassname"><span class="pre">open_r1.generate.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/generate.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.generate.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entry point for running the module as a CLI script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -760,7 +853,7 @@ underlying user prompt construction is shared with <code class="docutils literal
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>) – Hugging Face model identifier for the classifier.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Torch device where the model should live.</p></li>
-<li><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate used for the discriminator optimizer.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate used for the discriminator optimiser.</p></li>
 </ul>
 </dd>
 </dl>
@@ -901,6 +994,30 @@ underlying user prompt construction is shared with <code class="docutils literal
 <li><p><strong>disc</strong> (<a class="reference internal" href="#open_r1.grail.OnlineDiscriminator" title="open_r1.grail.OnlineDiscriminator"><em>OnlineDiscriminator</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-open_r1.grpo">Standard GRPO training entrypoint for the GRAIL simulation dataset.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="open_r1.grpo.get_peft_config">
+<span class="sig-prename descclassname"><span class="pre">open_r1.grpo.</span></span><span class="sig-name descname"><span class="pre">get_peft_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.grpo.get_peft_config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="open_r1.grpo.main">
+<span class="sig-prename descclassname"><span class="pre">open_r1.grpo.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grpo.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grpo.main" title="Link to this definition">¶</a></dt>
+<dd><p>Orchestrate dataset preparation, trainer construction, and the training loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>GRPOScriptArguments</em></a>)</p></li>
+<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>)</p></li>
+<li><p><strong>model_args</strong> (<em>ModelConfig</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2262,7 +2379,23 @@ requests.</p>
 <li><a class="reference internal" href="#open_r1.configs.ScriptArguments.dataset_name"><code class="docutils literal notranslate"><span class="pre">ScriptArguments.dataset_name</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig</span></code></a><ul>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.base_url"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.base_url</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.build_generation_kwargs"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.build_generation_kwargs()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.client_replicas"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.client_replicas</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.input_batch_size"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.input_batch_size</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.max_new_tokens"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.max_new_tokens</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.num_generations"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.num_generations</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.prompt_column"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.prompt_column</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.prompt_template"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.prompt_template</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.retries"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.retries</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.temperature"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.temperature</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.timeout"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.timeout</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig.top_p"><code class="docutils literal notranslate"><span class="pre">DistilabelPipelineConfig.top_p</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#open_r1.generate.build_distilabel_pipeline"><code class="docutils literal notranslate"><span class="pre">build_distilabel_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.generate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator.__init__"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator.prob_positive"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator.prob_positive()</span></code></a></li>
@@ -2283,6 +2416,8 @@ requests.</p>
 <li><a class="reference internal" href="#open_r1.grail.get_peft_config"><code class="docutils literal notranslate"><span class="pre">get_peft_config()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.make_gail_reward_fn"><code class="docutils literal notranslate"><span class="pre">make_gail_reward_fn()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.grpo.get_peft_config"><code class="docutils literal notranslate"><span class="pre">get_peft_config()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.grpo.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.accuracy_reward"><code class="docutils literal notranslate"><span class="pre">accuracy_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.binary_code_reward"><code class="docutils literal notranslate"><span class="pre">binary_code_reward()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.rewards.code_reward"><code class="docutils literal notranslate"><span class="pre">code_reward()</span></code></a></li>

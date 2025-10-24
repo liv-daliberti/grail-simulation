@@ -306,7 +306,7 @@ def unique_content_counts(
         return int(cleaned.nunique())
 
     def _canonical_slates(data_frame: pd.DataFrame) -> pd.Series:
-        """Return a series of canonicalised slate tuples for each row.
+        """Return a series of canonicalized slate tuples for each row.
 
         :param data_frame: Dataframe potentially containing slate columns.
         :returns: Series of canonical slates; empty series when unavailable.

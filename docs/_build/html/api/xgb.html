@@ -1705,32 +1705,17 @@ details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.evaluate.safe_div">
 <span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">safe_div</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">numerator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">denominator</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/eval_utils.html#safe_div"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.safe_div" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Return the division result guarding against a zero denominator.</p>
-<p>Parameters</p>
-<p>numerator:</p>
-<blockquote>
-<div><p>Value forming the numerator.</p>
-</div></blockquote>
-<p>denominator:</p>
-<blockquote>
-<div><p>Value forming the denominator.</p>
-</div></blockquote>
-<p>default:</p>
-<blockquote>
-<div><p>Fallback value returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Return the division result while guarding against a zero denominator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>numerator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">numerator</span></code>.</p></li>
-<li><p><strong>denominator</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">denominator</span></code>.</p></li>
-<li><p><strong>default</strong> (<em>float</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">default</span></code>.</p></li>
+<li><p><strong>numerator</strong> (<em>float</em>) – Value forming the numerator.</p></li>
+<li><p><strong>denominator</strong> (<em>float</em>) – Value forming the denominator.</p></li>
+<li><p><strong>default</strong> (<em>float</em>) – Fallback returned when <code class="docutils literal notranslate"><span class="pre">denominator</span></code> is zero.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">safe_div</span></code>.</p>
+<dd class="field-even"><p>Division result or <code class="docutils literal notranslate"><span class="pre">default</span></code> when the denominator is zero.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
@@ -1804,23 +1789,13 @@ details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.utils.ensure_directory">
 <span class="sig-prename descclassname"><span class="pre">xgb.utils.</span></span><span class="sig-name descname"><span class="pre">ensure_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#ensure_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.utils.ensure_directory" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
-<p>Parameters</p>
-<p>path:</p>
-<blockquote>
-<div><p>Target directory to ensure.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Create <code class="docutils literal notranslate"><span class="pre">path</span></code> (including parents) when it does not already exist.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">path</span></code>.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>Path</em><em> | </em><em>str</em>) – Target directory to ensure.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1828,22 +1803,16 @@ details.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="xgb.utils.get_logger">
 <span class="sig-prename descclassname"><span class="pre">xgb.utils.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/logging_utils.html#get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.utils.get_logger" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Return a memoised logger configured with a simple stream handler.</p>
-<p>The helper mirrors the historical behaviour from the individual</p>
-<p>baselines: create a <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code>, attach a stream handler</p>
-<p>when none are registered yet, and set the level to <code class="docutils literal notranslate"><span class="pre">INFO</span></code> (or a</p>
-<p>caller-provided override).</p>
-</div></blockquote>
+<dd><p>Return a memoised logger configured with a simple stream handler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></li>
-<li><p><strong>level</strong> (<em>int</em>) – Value provided for <code class="docutils literal notranslate"><span class="pre">level</span></code>.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name registered on the logger.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Log level applied when initialising the logger.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Result produced by <code class="docutils literal notranslate"><span class="pre">get_logger</span></code>.</p>
+<dd class="field-even"><p>Configured logger instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>logging.Logger</p>

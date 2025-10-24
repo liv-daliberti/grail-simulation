@@ -15,42 +15,64 @@
 
 """Utilities for constructing distilabel pipelines for data generation."""
 
+import argparse
+import importlib
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-DISTILABEL_IMPORT_ERROR: Optional[Exception]
-try:  # pragma: no cover - optional dependency
-    from distilabel.llms import OpenAILLM
-    from distilabel.pipeline import Pipeline
-    from distilabel.steps import StepResources
-    from distilabel.steps.tasks import TextGeneration
-except ImportError as exc:  # pragma: no cover - handled via helper
-    OpenAILLM = None  # type: ignore[assignment]
-    Pipeline = None  # type: ignore[assignment]
-    StepResources = None  # type: ignore[assignment]
-    TextGeneration = None  # type: ignore[assignment]
-    DISTILABEL_IMPORT_ERROR = exc
-else:
-    DISTILABEL_IMPORT_ERROR = None
+_distilabel_cache: Dict[str, Any] = {"imports": None, "error": None}
 
 
 def _require_distilabel() -> tuple[Any, Any, Any, Any]:
     """Return distilabel helpers or raise an informative installation error."""
 
-    if DISTILABEL_IMPORT_ERROR is not None:
+    cache = _distilabel_cache
+    cached_imports = cache.get("imports")
+    if cached_imports is not None:
+        return cached_imports
+
+    cached_error = cache.get("error")
+    if cached_error is not None:
         raise ImportError(
             "distilabel is required to build generation pipelines. "
             "Install it with `pip install distilabel`."
-        ) from DISTILABEL_IMPORT_ERROR
-    assert Pipeline is not None
-    assert OpenAILLM is not None
-    assert StepResources is not None
-    assert TextGeneration is not None
-    return Pipeline, OpenAILLM, StepResources, TextGeneration
+        ) from cached_error
+
+    try:
+        pipeline_module = importlib.import_module("distilabel.pipeline")
+        llms_module = importlib.import_module("distilabel.llms")
+        steps_module = importlib.import_module("distilabel.steps")
+        tasks_module = importlib.import_module("distilabel.steps.tasks")
+    except ImportError as exc:  # pragma: no cover - handled via helper
+        cache["error"] = exc
+        raise ImportError(
+            "distilabel is required to build generation pipelines. "
+            "Install it with `pip install distilabel`."
+        ) from exc
+
+    cache["imports"] = (
+        pipeline_module.Pipeline,
+        llms_module.OpenAILLM,
+        steps_module.StepResources,
+        tasks_module.TextGeneration,
+    )
+    return cache["imports"]
+
+
+def _require_datasets_loader():
+    """Return ``datasets.load_dataset`` or raise an informative error."""
+
+    try:
+        return importlib.import_module("datasets").load_dataset
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "The 'datasets' package is required to run open_r1.generate as a script. "
+            "Install it with `pip install datasets`."
+        ) from exc
 
 
 @dataclass
-class DistilabelPipelineConfig:
+class DistilabelPipelineConfig:  # pylint: disable=too-many-instance-attributes
     """Configuration options used to assemble a distilabel pipeline."""
 
     base_url: str = "http://localhost:8000/v1"
@@ -114,17 +136,8 @@ def build_distilabel_pipeline(
     return pipeline_obj
 
 
-if __name__ == "__main__":
-    import argparse
-
-    try:
-        from datasets import load_dataset  # type: ignore
-    except ImportError as exc:  # pragma: no cover - optional dependency
-        raise ImportError(
-            "The 'datasets' package is required to run open_r1.generate as a script. "
-            "Install it with `pip install datasets`."
-        ) from exc
-
+def _build_arg_parser() -> argparse.ArgumentParser:
+    """Return the CLI argument parser used when running the module as a script."""
     parser = argparse.ArgumentParser(
         description=(
             "Run a distilabel pipeline for generating responses with the DeepSeek R1 model"
@@ -228,26 +241,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether to make the output dataset private when pushing to HF Hub",
     )
+    return parser
 
-    args = parser.parse_args()
 
-    print("\nRunning with arguments:")
-    for arg, value in vars(args).items():
-        print(f"  {arg}: {value}")
-    print()
-
-    print(
-        f"Loading '{args.hf_dataset}' "
-        f"(config: {args.hf_dataset_config}, split: {args.hf_dataset_split}) dataset..."
-    )
-    dataset = load_dataset(
-        args.hf_dataset,
-        args.hf_dataset_config,
-        split=args.hf_dataset_split,
-    )
-    print("Dataset loaded!")
-
-    pipeline_config = DistilabelPipelineConfig(
+def _create_pipeline_config(args: argparse.Namespace) -> DistilabelPipelineConfig:
+    """Convert CLI arguments into a :class:`DistilabelPipelineConfig` instance."""
+    return DistilabelPipelineConfig(
         base_url=args.vllm_server_url,
         prompt_column=args.prompt_column,
         prompt_template=args.prompt_template,
@@ -260,9 +259,37 @@ if __name__ == "__main__":
         timeout=args.timeout,
         retries=args.retries,
     )
+
+
+def _log_cli_arguments(args: argparse.Namespace) -> None:
+    """Print the CLI arguments for transparency in CLI usage."""
+    print("\nRunning with arguments:")
+    for arg, value in vars(args).items():
+        print(f"  {arg}: {value}")
+    print()
+
+    print(
+        f"Loading '{args.hf_dataset}' "
+        f"(config: {args.hf_dataset_config}, split: {args.hf_dataset_split}) dataset..."
+    )
+
+
+def main() -> None:
+    """Entry point for running the module as a CLI script."""
+    parser = _build_arg_parser()
+    args = parser.parse_args()
+    _log_cli_arguments(args)
+
+    dataset = _require_datasets_loader()(
+        args.hf_dataset,
+        args.hf_dataset_config,
+        split=args.hf_dataset_split,
+    )
+    print("Dataset loaded!")
+
     pipeline = build_distilabel_pipeline(
         model=args.model,
-        config=pipeline_config,
+        config=_create_pipeline_config(args),
     )
 
     print("Running generation pipeline...")
@@ -277,3 +304,7 @@ if __name__ == "__main__":
         print(f"Pushing resulting dataset to '{args.hf_output_dataset}'...")
         distiset.push_to_hub(args.hf_output_dataset, private=args.private)
         print("Dataset pushed!")
+
+
+if __name__ == "__main__":
+    main()

@@ -51,6 +51,10 @@ CLI arguments cover common experimentation knobs:
 
 See `python -m xgb.cli --help` for the full list.
 
+Need a refresher on how the cleaned dataset is assembled? Consult
+`clean_data/sessions/README.md` for the session-ingestion primitives that feed
+the downstream pipelines.
+
 ## Pipeline workflow
 
 `python -m xgb.pipeline` mirrors the automated flow available for the kNN

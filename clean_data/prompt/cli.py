@@ -91,7 +91,7 @@ def _write_summary_json(output_dir: Path, payload: Dict[str, Any]) -> None:
     """Write the aggregated prompt statistics to ``summary.json``.
 
     :param output_dir: Directory where the summary should be saved.
-    :param payload: JSON-serialisable dictionary of summary data.
+    :param payload: JSON-serializable dictionary of summary data.
     """
 
     summary_path = output_dir / "summary.json"

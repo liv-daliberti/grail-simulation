@@ -115,6 +115,15 @@ class EvaluationConfig:
     participant_studies: Sequence[str]
 
 
+@dataclass(frozen=True)
+class IssueEvaluationContext:
+    """Static context shared across issue evaluations within a single run."""
+
+    dataset_source: str
+    extra_fields: Sequence[str]
+    study_tokens: Sequence[str]
+
+
 # pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
 class PredictionOutcome:
@@ -233,9 +242,11 @@ def run_eval(args) -> None:
             args,
             issue,
             base_ds,
-            dataset_source=dataset_source,
-            extra_fields=extra_fields,
-            study_tokens=study_tokens,
+            context=IssueEvaluationContext(
+                dataset_source=dataset_source,
+                extra_fields=tuple(extra_fields),
+                study_tokens=tuple(study_tokens),
+            ),
         )
 
 
@@ -245,9 +256,7 @@ def _evaluate_issue(
     issue: str,
     base_ds,
     *,
-    dataset_source: str,
-    extra_fields: List[str],
-    study_tokens: Sequence[str],
+    context: IssueEvaluationContext,
 ) -> None:
     """Evaluate a single issue for the XGBoost baseline and persist outputs.
 
@@ -259,7 +268,7 @@ def _evaluate_issue(
     :param study_tokens: Participant study filters applied to train/eval splits.
     """
 
-    tokens = [token for token in study_tokens if token]
+    tokens = [token for token in context.study_tokens if token]
     issue_slug = compose_issue_slug(issue, tokens)
 
     logger.info(
@@ -287,11 +296,11 @@ def _evaluate_issue(
         )
         return
 
-    model = _load_or_train_model(args, issue_slug, train_ds, extra_fields)
+    model = _load_or_train_model(args, issue_slug, train_ds, context.extra_fields)
 
     eval_config = EvaluationConfig(
-        dataset_source=dataset_source,
-        extra_fields=tuple(extra_fields),
+        dataset_source=context.dataset_source,
+        extra_fields=tuple(context.extra_fields),
         eval_max=args.eval_max,
         participant_studies=tuple(tokens),
     )
@@ -305,7 +314,7 @@ def _evaluate_issue(
     train_curve = _curve_metrics_for_split(
         model=model,
         dataset=train_ds,
-        extra_fields=tuple(extra_fields),
+        extra_fields=tuple(context.extra_fields),
     )
     if train_curve.get("n_examples"):
         curve_bundle["train"] = train_curve

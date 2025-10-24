@@ -136,7 +136,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p03_depth4_estim150_sub1_col1_l20p5_l10p5<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=1, colsample=1, λ=0.5, α=0.5 | 0.667 | 0.074 | +0.593 | — | 162 | 0.083 | -0.046 | 0.112 | 0.847 |
 | tfidf_lr0p03_depth4_estim150_sub0p9_col1_l20p5_l10p1<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=1, λ=0.5, α=0.1 | 0.673 | 0.074 | +0.599 | — | 162 | 0.083 | -0.046 | 0.113 | 0.844 |
 | tfidf_lr0p03_depth4_estim250_sub0p9_col0p8_l20p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=250, subsample=0.9, colsample=0.8, λ=0.5, α=0 | 0.667 | 0.074 | +0.593 | — | 162 | 0.083 | -0.046 | 0.113 | 0.844 |
-*Showing top 10 of 636 configurations.*
+*Showing top 10 of 720 configurations.*
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues gun_control --studies study1 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 4 --n-estimators-grid 250 --subsample-grid 1 --colsample-grid 0.6 --reg-lambda-grid 1.5 --reg-alpha-grid 0.5 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 2 – Minimum Wage (MTurk)
@@ -155,7 +155,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p03_depth3_estim350_sub0p8_col0p8_l21p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=350, subsample=0.8, colsample=0.8, λ=1.5, α=1 | 0.758 | 0.061 | +0.697 | — | 165 | 0.042 | +0.055 | 0.053 | 0.963 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=1, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.054 | 0.963 |
 | tfidf_lr0p03_depth3_estim450_sub0p8_col1_l20p5_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=450, subsample=0.8, colsample=1, λ=0.5, α=1 | 0.764 | 0.061 | +0.703 | — | 165 | 0.042 | +0.055 | 0.054 | 0.963 |
-*Showing top 10 of 643 configurations.*
+*Showing top 10 of 740 configurations.*
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study2 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 3 --n-estimators-grid 450 --subsample-grid 0.8 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 3 – Minimum Wage (YouGov)
@@ -174,7 +174,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p03_depth3_estim250_sub0p9_col1_l21_l11<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=250, subsample=0.9, colsample=1, λ=1, α=1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.080 | 0.907 |
 | tfidf_lr0p03_depth3_estim150_sub0p9_col1_l21_l10p1<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=150, subsample=0.9, colsample=1, λ=1, α=0.1 | 0.693 | 0.058 | +0.634 | — | 257 | 0.057 | +0.027 | 0.079 | 0.909 |
 | tfidf_lr0p03_depth4_estim150_sub0p9_col0p6_l21p5_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=150, subsample=0.9, colsample=0.6, λ=1.5, α=0 | 0.704 | 0.058 | +0.646 | — | 257 | 0.057 | +0.027 | 0.077 | 0.912 |
-*Showing top 10 of 634 configurations.*
+*Showing top 10 of 729 configurations.*
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study3 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 4 --n-estimators-grid 150 --subsample-grid 0.9 --colsample-grid 0.6 --reg-lambda-grid 1 --reg-alpha-grid 0.1 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Portfolio Summary

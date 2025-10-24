@@ -272,7 +272,7 @@
 <span class="sd">&quot;&quot;&quot;Core data wrangling helpers for the political sciences replication.</span>
 
 <span class="sd">This module prepares cleaned dataset splits for analysis by filtering</span>
-<span class="sd">per-study frames, harmonising opinion indices, and computing the heatmap</span>
+<span class="sd">per-study frames, harmonizing opinion indices, and computing the heatmap</span>
 <span class="sd">counts consumed by the reporting layer. All functionality is distributed</span>
 <span class="sd">under the repository&#39;s Apache 2.0 license; see LICENSE for the permitted</span>
 <span class="sd">uses.</span>
@@ -401,9 +401,9 @@
 
 
 
-<div class="viewcode-block" id="summarise_shift">
-<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarise_shift">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">summarise_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="summarize_shift">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarize_shift">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize_shift</span><span class="p">(</span>
     <span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">before_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">after_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -446,8 +446,6 @@
         <span class="s2">&quot;share_decrease&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">change</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">)),</span>
         <span class="s2">&quot;share_small_change&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">abs_change</span> <span class="o">&lt;=</span> <span class="n">epsilon</span><span class="p">)),</span>
     <span class="p">}</span></div>
-
-
 
 <div class="viewcode-block" id="assemble_study_specs">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.assemble_study_specs">[docs]</a>
@@ -790,9 +788,9 @@
 
 
 
-<div class="viewcode-block" id="summarise_assignments">
-<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarise_assignments">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">summarise_assignments</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<div class="viewcode-block" id="summarize_assignments">
+<a class="viewcode-back" href="../../../api/clean_data.html#clean_data.research_article_political_sciences.analysis.summarize_assignments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize_assignments</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return summary statistics for each assignment group in a dataframe.</span>
 
 <span class="sd">    :param frame: Assignment dataframe produced by :func:`load_assignment_frame`.</span>
@@ -804,7 +802,7 @@
 
     <span class="n">summaries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">assignment</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;assignment&quot;</span><span class="p">):</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="n">summarise_shift</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="s2">&quot;before&quot;</span><span class="p">,</span> <span class="s2">&quot;after&quot;</span><span class="p">)</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">summarize_shift</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="s2">&quot;before&quot;</span><span class="p">,</span> <span class="s2">&quot;after&quot;</span><span class="p">)</span>
         <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">])</span>
         <span class="n">stderr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;std_change&quot;</span><span class="p">]):</span>

@@ -423,7 +423,6 @@
     <span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">max_history</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span>
-    <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">num_proc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -520,7 +519,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">data_files</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose data_files metadata&quot;</span><span class="p">)</span>
 
-    <span class="n">split_files</span> <span class="o">=</span> <span class="n">_normalise_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">)</span>
+    <span class="n">split_files</span> <span class="o">=</span> <span class="n">_normalize_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">)</span>
     <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">loader</span> <span class="o">=</span> <span class="n">_ColumnUnionLoader</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">builder</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
     <span class="n">unioned</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">split_files</span><span class="p">)</span>
@@ -529,11 +528,11 @@
     <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">unioned</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_normalise_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce the builder ``data_files`` mapping into ``split -&gt; [files]`` form.</span>
 
 <span class="sd">    :param data_files: Mapping extracted from ``datasets.Builder`` configuration.</span>
-<span class="sd">    :returns: Normalised mapping where every value is a list of file references.</span>
+<span class="sd">    :returns: Normalized mapping where every value is a list of file references.</span>
 <span class="sd">    :raises RuntimeError: If a mapping value cannot be interpreted as str or sequence.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -643,7 +642,7 @@
             <span class="k">raise</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_csv_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filesystem</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read and normalise a CSV shard into a pandas DataFrame.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read and normalize a CSV shard into a pandas DataFrame.</span>
 
 <span class="sd">        :param filesystem: Filesystem handle capable of opening the shard.</span>
 <span class="sd">        :param path: Path or identifier of the shard within ``filesystem``.</span>
@@ -708,7 +707,7 @@
 <span class="sd">        :param sample_bytes: Initial slice of the CSV payload used for detection heuristics.</span>
 <span class="sd">        :returns: List of ``(encoding, text)`` tuples in evaluation order.</span>
 <span class="sd">        :raises UnicodeDecodeError: If no encoding successfully decodes the bytes.</span>
-<span class="sd">        :raises LookupError: If no recognised encoding can be used during detection.</span>
+<span class="sd">        :raises LookupError: If no recognized encoding can be used during detection.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">decoded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">last_decode_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">UnicodeDecodeError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -797,7 +796,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Rename and prune columns so they align with the expected schema.</span>
 
 <span class="sd">        :param frame: DataFrame produced by pandas for an individual shard.</span>
-<span class="sd">        :returns: Normalised DataFrame ready for unioning.</span>
+<span class="sd">        :returns: Normalized DataFrame ready for unioning.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnamed: 0&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
         <span class="n">frame_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>

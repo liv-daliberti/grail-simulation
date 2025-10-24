@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib
 from typing import Any, Dict, List, Optional, Tuple, Type, TYPE_CHECKING
 
 import requests
@@ -85,18 +86,18 @@ class RoutedSandbox:
         """Import execution-related models from ``e2b_code_interpreter`` on demand."""
 
         try:
-            from e2b_code_interpreter.models import (
-                Execution,
-                ExecutionError,
-                Result,
-            )  # pylint: disable=import-error,import-outside-toplevel
+            models_module = importlib.import_module("e2b_code_interpreter.models")
         except ImportError as exc:  # pragma: no cover - handled via error propagation
             raise ImportError(
                 "e2b-code-interpreter is required to use the routed sandbox. "
                 "Install it with `pip install e2b-code-interpreter`."
             ) from exc
 
-        return Execution, ExecutionError, Result
+        return (
+            models_module.Execution,
+            models_module.ExecutionError,
+            models_module.Result,
+        )
 
     def _get_model_classes(self) -> Tuple[
         Type["Execution"],

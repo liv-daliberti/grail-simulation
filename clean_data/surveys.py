@@ -205,7 +205,7 @@ def load_participant_allowlists(capsule_root: Path) -> Dict[str, Dict[str, Set[s
         """Return a trimmed string series with missing values coerced to empty strings.
 
         :param series: Input pandas series containing identifier values.
-        :returns: Normalised series with whitespace stripped and ``NaN`` replaced.
+        :returns: Normalized series with whitespace stripped and ``NaN`` replaced.
         """
 
         return series.fillna("").astype(str).str.strip()

@@ -254,7 +254,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for open_r1.rewards</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python</span>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -286,6 +286,8 @@
 
 <span class="sd">&quot;&quot;&quot;Reward functions used by the GRPO training pipeline.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -295,10 +297,43 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">update_wrapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">latex2sympy2_extended</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationConfig</span>  <span class="c1"># pylint: disable=import-error</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">math_verify</span><span class="w"> </span><span class="kn">import</span> <span class="n">LatexExtractionConfig</span><span class="p">,</span> <span class="n">parse</span><span class="p">,</span> <span class="n">verify</span>  <span class="c1"># pylint: disable=import-error</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>  <span class="c1"># pylint: disable=import-error</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers.utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_package_available</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">latex2sympy2_extended</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalizationConfig</span>  <span class="c1"># type: ignore[import]</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">NormalizationConfig</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">math_verify</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore[import]</span>
+        <span class="n">LatexExtractionConfig</span><span class="p">,</span>
+        <span class="n">parse</span> <span class="k">as</span> <span class="n">_math_parse</span><span class="p">,</span>
+        <span class="n">verify</span> <span class="k">as</span> <span class="n">_math_verify</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">LatexExtractionConfig</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_math_missing</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;math_verify and latex2sympy2_extended are required for math-based rewards &quot;</span>
+            <span class="s2">&quot;(pip install math-verify latex2sympy2_extended).&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">parse</span> <span class="o">=</span> <span class="n">_math_missing</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">verify</span> <span class="o">=</span> <span class="n">_math_missing</span>  <span class="c1"># type: ignore[assignment]</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">parse</span> <span class="o">=</span> <span class="n">_math_parse</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">verify</span> <span class="o">=</span> <span class="n">_math_verify</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>  <span class="c1"># type: ignore[import]</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">transformers</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_package_available</span>  <span class="c1"># type: ignore[attr-defined]</span>
+<span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_package_available</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.code_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_provider</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.ioi</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -313,21 +348,37 @@
 <span class="n">PURE_ACC_ENV_FLAG</span> <span class="o">=</span> <span class="s2">&quot;PUREACC_ALLOW_BARE_NUMBER&quot;</span>
 <span class="n">PURE_ACC_TRUE_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span>
 <span class="n">BINARY_THRESHOLD</span> <span class="o">=</span> <span class="mf">0.99</span>
-<span class="n">LEN_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">LatexExtractionConfig</span><span class="p">(</span>
-        <span class="n">normalization_config</span><span class="o">=</span><span class="n">NormalizationConfig</span><span class="p">(</span>
-            <span class="n">nits</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">malformed_operators</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">basic_latex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">equations</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">boxed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">units</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">boxed_match_priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">try_extract_without_anchor</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
-<span class="p">]</span>
-<span class="n">DEFAULT_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[</span><span class="n">LatexExtractionConfig</span><span class="p">()]</span>
+<span class="n">HAS_MATH_REWARD_DEPS</span> <span class="o">=</span> <span class="n">LatexExtractionConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">NormalizationConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<span class="k">if</span> <span class="n">HAS_MATH_REWARD_DEPS</span><span class="p">:</span>
+    <span class="n">LEN_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">LatexExtractionConfig</span><span class="p">(</span>
+            <span class="n">normalization_config</span><span class="o">=</span><span class="n">NormalizationConfig</span><span class="p">(</span>
+                <span class="n">nits</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">malformed_operators</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">basic_latex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">equations</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">boxed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">units</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">boxed_match_priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">try_extract_without_anchor</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">DEFAULT_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[</span><span class="n">LatexExtractionConfig</span><span class="p">()]</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">LEN_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">DEFAULT_EXTRACTION_CONFIG</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_math_reward_deps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise an informative error when math reward dependencies are missing.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_MATH_REWARD_DEPS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;math_verify and latex2sympy2_extended are required for math-based rewards. &quot;</span>
+            <span class="s2">&quot;Install the optional dependencies with &quot;</span>
+            <span class="s2">&quot;`pip install math-verify latex2sympy2_extended`.&quot;</span>
+        <span class="p">)</span>
 
 <span class="c1"># ── helpers ───────────────────────────────────────────────────────────</span>
 
@@ -521,6 +572,7 @@
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reward function that checks if a completion matches the ground truth.&quot;&quot;&quot;</span>
+    <span class="n">_require_math_reward_deps</span><span class="p">()</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>  <span class="c1"># Unused but kept for API compatibility</span>
     <span class="n">contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
     <span class="n">rewards</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -644,6 +696,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_length_correctness</span><span class="p">(</span><span class="n">contents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">solution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-sample correctness for length-based rewards.&quot;&quot;&quot;</span>
+    <span class="n">_require_math_reward_deps</span><span class="p">()</span>
     <span class="n">correctness</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">content</span><span class="p">,</span> <span class="n">sol</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">contents</span><span class="p">,</span> <span class="n">solution</span><span class="p">):</span>
         <span class="n">gold_parsed</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span>
@@ -744,6 +797,7 @@
 <span class="sd">            ``max_value_correct``, and ``max_len`` captured from the outer scope.</span>
 <span class="sd">        :rtype: list[float]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_require_math_reward_deps</span><span class="p">()</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span>
         <span class="n">contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">completion</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">completion</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">]</span>
         <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>

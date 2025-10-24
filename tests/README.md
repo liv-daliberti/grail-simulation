@@ -9,7 +9,7 @@ This directory contains the automated checks for the project. Everything is writ
 - `test_filters_reporting.py` checks aggregate issue statistics produced by the filtering/reporting utilities.
 - `test_prompt_builder_package.py`, `test_prompt_utils.py`, and `test_prompt_smoke.py` cover prompt construction from multiple perspectives (unit behavior, helper functions, and smoke-level end-to-end assembly).
 - `test_research_article_political_sciences.py` validates the replication analysis helpers, including dataframe preparation, statistics, markdown reporting, and plotting.
-- `test_sessions_slate.py` and `test_surveys_allowlists.py` focus on the session slate reconstruction logic and survey allow-list ingestion.
+- `test_sessions_slate.py` and `test_surveys_allowlists.py` focus on the session slate reconstruction logic and survey allow-list ingestion (see `clean_data/sessions/README.md` for the helper overview).
 - `test_visualization_recommendation_tree_viz.py` covers graph construction and rendering utilities for recommendation trees.
 
 ### Module-specific packages

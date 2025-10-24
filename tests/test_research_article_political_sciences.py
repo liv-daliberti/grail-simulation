@@ -15,7 +15,7 @@ from clean_data.research_article_political_sciences.analysis import (
     dataframe_from_splits,
     histogram2d_counts,
     prepare_study_frame,
-    summarise_shift,
+    summarize_shift,
     to_numeric,
 )
 from clean_data.research_article_political_sciences.markdown import build_markdown
@@ -75,17 +75,17 @@ def test_histogram2d_counts_returns_zero_matrix_for_empty_frame():
     np.testing.assert_allclose(edges, np.linspace(0.0, 1.0, 4))
 
 
-def test_summarise_shift_returns_nan_for_empty_frame():
-    summary = summarise_shift(pd.DataFrame(columns=["pre", "post"]), "pre", "post")
+def test_summarize_shift_returns_nan_for_empty_frame():
+    summary = summarize_shift(pd.DataFrame(columns=["pre", "post"]), "pre", "post")
     assert summary["n"] == 0
     for key, value in summary.items():
         if key != "n":
             assert math.isnan(value)
 
 
-def test_summarise_shift_computes_expected_statistics():
+def test_summarize_shift_computes_expected_statistics():
     df = pd.DataFrame({"pre": [0.1, 0.4, 0.3], "post": [0.2, 0.6, 0.1]})
-    summary = summarise_shift(df, "pre", "post")
+    summary = summarize_shift(df, "pre", "post")
     changes = np.array([0.1, 0.2, -0.2])
     assert summary["n"] == pytest.approx(3.0)
     assert summary["mean_change"] == pytest.approx(changes.mean())

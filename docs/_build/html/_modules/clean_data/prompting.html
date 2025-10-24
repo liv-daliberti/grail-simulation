@@ -272,7 +272,7 @@
 <span class="sd">&quot;&quot;&quot;Core prompt construction logic for the cleaned GRAIL dataset.</span>
 
 <span class="sd">This module converts the normalized session rows into structured prompt</span>
-<span class="sd">examples: resolving slate items, synthesising system/user messages,</span>
+<span class="sd">examples: resolving slate items, synthesizing system/user messages,</span>
 <span class="sd">tracking passthrough metadata, and enforcing GRPO column requirements.</span>
 <span class="sd">Other modules feed raw data into these helpers when building cleaned</span>
 <span class="sd">datasets or inspecting individual examples. These utilities are distributed</span>
@@ -289,11 +289,16 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_as_list_json</span><span class="p">,</span> <span class="n">_canon</span><span class="p">,</span> <span class="n">_is_nanlike</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_as_list_json</span><span class="p">,</span> <span class="n">_is_nanlike</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompt.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_SYSTEM_PROMPT</span><span class="p">,</span>
     <span class="n">PASSTHROUGH_COLUMNS</span><span class="p">,</span>
     <span class="n">YOUTUBE_FREQ_MAP</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.sessions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_gold_next_id</span><span class="p">,</span>
+    <span class="n">gold_index_from_items</span><span class="p">,</span>
+    <span class="n">load_slate_items</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -336,26 +341,6 @@
         <span class="k">if</span> <span class="n">candidate</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
             <span class="n">last</span> <span class="o">=</span> <span class="n">index</span>
     <span class="k">return</span> <span class="n">last</span>
-
-
-<div class="viewcode-block" id="load_slate_items">
-<a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompting.load_slate_items">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ``slate_items_json`` into a list of dictionaries with ``title`` and ``id`` keys.</span>
-
-<span class="sd">    :param ex: Session row dictionary containing slate metadata.</span>
-<span class="sd">    :returns: List of dictionaries with normalized ``title`` and ``id`` fields.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
-    <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">raw_item</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">title_text</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">video_id</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">title_text</span> <span class="ow">or</span> <span class="n">video_id</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title_text</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">video_id</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">out</span></div>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_secs</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -471,7 +456,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a fallback viewer profile sentence from demographics.</span>
 
 <span class="sd">    :param ex: Dataset row containing demographic fields.</span>
-<span class="sd">    :returns: Short sentence summarising age, gender, race, etc.</span>
+<span class="sd">    :returns: Short sentence summarizing age, gender, race, etc.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">bits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -652,7 +637,7 @@
         <span class="k">return</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_key</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sort key for trajectory rows prioritising explicit indices.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sort key for trajectory rows prioritizing explicit indices.</span>
 
 <span class="sd">        :param row: Trajectory dictionary element.</span>
 <span class="sd">        :returns: Tuple used to sort rows by index then end timestamp.</span>
@@ -743,86 +728,6 @@
     <span class="k">if</span> <span class="n">prior</span><span class="p">:</span>
         <span class="n">parts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;PRIOR_SLATES:&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">prior</span><span class="p">]</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
-
-<span class="c1"># ---------- gold next id ----------</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_derive_next_from_history</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Infer the next video id from the watch history when explicit labels are missing.</span>
-
-<span class="sd">    :param ex: Session row dictionary.</span>
-<span class="sd">    :param current_id: Canonical id of the current video.</span>
-<span class="sd">    :return: Next video id or an empty string when cannot be determined.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">vids</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vids</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vids</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">i</span> <span class="o">=</span> <span class="n">vids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">current_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">vids</span><span class="p">):</span>
-                <span class="n">nxt</span> <span class="o">=</span> <span class="n">vids</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nxt</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nxt</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                    <span class="k">return</span> <span class="n">nxt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">pass</span>
-    <span class="n">detailed_history</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detailed_history</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">detailed_history</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">entry_index</span><span class="p">,</span> <span class="n">detail_row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detailed_history</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detail_row</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">detail_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">current_id</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">entry_index</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">detailed_history</span><span class="p">):</span>
-                    <span class="n">nxt</span> <span class="o">=</span> <span class="p">(</span><span class="n">detailed_history</span><span class="p">[</span><span class="n">entry_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">nxt</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="n">nxt</span>
-                <span class="k">break</span>
-    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-
-<div class="viewcode-block" id="get_gold_next_id">
-<a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompting.get_gold_next_id">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_gold_next_id</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the gold next-video id for a session step.</span>
-
-<span class="sd">    :param ex: Session row being transformed.</span>
-<span class="sd">    :param sol_key: Optional alternate column name containing the gold id.</span>
-<span class="sd">    :return: Canonical next-video id or an empty string when unavailable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">current_video_id</span> <span class="o">=</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">sol_key</span> <span class="ow">and</span> <span class="n">sol_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;current_id&quot;</span><span class="p">}:</span>
-        <span class="n">candidate_value</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sol_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="n">candidate_value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="n">candidate_value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="n">current_video_id</span>
-        <span class="p">):</span>
-            <span class="k">return</span> <span class="n">candidate_value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">candidate_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span> <span class="s2">&quot;clicked_id&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;answer&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">candidate_fields</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="n">current_video_id</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">_derive_next_from_history</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">current_video_id</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="gold_index_from_items">
-<a class="viewcode-back" href="../../api/clean_data.html#clean_data.prompting.gold_index_from_items">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">gold_index_from_items</span><span class="p">(</span><span class="n">gold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate the 1-based index of ``gold`` inside the slate items list.</span>
-
-<span class="sd">    :param gold: Gold video id (canonical string).</span>
-<span class="sd">    :param items: Slate items pulled from the session log.</span>
-<span class="sd">    :return: Index in ``items`` or ``-1`` when the id cannot be matched.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">gold</span> <span class="o">=</span> <span class="p">(</span><span class="n">gold</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">gold</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="k">for</span> <span class="n">item_index</span><span class="p">,</span> <span class="n">slate_item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">gold</span> <span class="o">==</span> <span class="p">(</span><span class="n">slate_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">item_index</span>
-    <span class="n">canonical_gold</span> <span class="o">=</span> <span class="n">_canon</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">canonical_gold</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">item_index</span><span class="p">,</span> <span class="n">slate_item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">canonical_gold</span> <span class="o">==</span> <span class="n">_canon</span><span class="p">(</span><span class="n">slate_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)):</span>
-                <span class="k">return</span> <span class="n">item_index</span>
-    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
-
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

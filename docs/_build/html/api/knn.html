@@ -974,25 +974,13 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.bucket_from_pos">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">bucket_from_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#bucket_from_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.bucket_from_pos" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Bucket a 0-based position index into the standard reporting bins.</p>
-<p>Parameters</p>
-<p>pos_idx:</p>
-<blockquote>
-<div><p>Zero-based position of the correct item within the retrieved slate.</p>
-</div></blockquote>
-<p>Returns</p>
-<p>str</p>
-<blockquote>
-<div><p>One of <code class="docutils literal notranslate"><span class="pre">{&quot;unknown&quot;,</span> <span class="pre">&quot;1&quot;,</span> <span class="pre">&quot;2&quot;,</span> <span class="pre">&quot;3&quot;,</span> <span class="pre">&quot;4&quot;,</span> <span class="pre">&quot;5+&quot;}</span></code> describing the bucket.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Bucket a 0-based position index into the standard reporting bins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pos_idx</strong> (<em>int</em>) – Position index being transformed into a categorical bucket.</p>
+<dd class="field-odd"><p><strong>pos_idx</strong> (<em>int</em>) – Zero-based position of the correct item within the retrieved slate.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Named bucket representing the supplied positional index.</p>
+<dd class="field-even"><p>One of <code class="docutils literal notranslate"><span class="pre">{&quot;unknown&quot;,</span> <span class="pre">&quot;1&quot;,</span> <span class="pre">&quot;2&quot;,</span> <span class="pre">&quot;3&quot;,</span> <span class="pre">&quot;4&quot;,</span> <span class="pre">&quot;5+&quot;}</span></code> describing the bucket.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -1003,25 +991,13 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.canon">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">canon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#canon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.canon" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Canonicalise a text fragment by lowercasing and removing punctuation.</p>
-<p>Parameters</p>
-<p>text:</p>
-<blockquote>
-<div><p>Raw text fragment to normalize.</p>
-</div></blockquote>
-<p>Returns</p>
-<p>str</p>
-<blockquote>
-<div><p>Canonical form suitable for equality comparisons.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Canonicalise a text fragment by lowercasing and removing punctuation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Free-form text string that requires normalization.</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Raw text fragment to normalise.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Canonicalized text normalized for downstream processing.</p>
+<dd class="field-even"><p>Canonical form suitable for equality comparisons.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -1032,33 +1008,21 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.compute_auc_from_curve">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">compute_auc_from_curve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#compute_auc_from_curve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.compute_auc_from_curve" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Compute the area under the accuracy-vs-<code class="docutils literal notranslate"><span class="pre">k</span></code> curve.</p>
-<p>Parameters</p>
-<p>k_values:</p>
-<blockquote>
-<div><p>Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
-</div></blockquote>
-<p>accuracy_by_k:</p>
-<blockquote>
-<div><p>Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to measured accuracy.</p>
-</div></blockquote>
-<p>Returns</p>
-<p>tuple[float, float]</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">(auc_area,</span> <span class="pre">auc_normalized)</span></code> where <code class="docutils literal notranslate"><span class="pre">auc_area</span></code> is the trapezoidal</p>
-<p>integral and <code class="docutils literal notranslate"><span class="pre">auc_normalized</span></code> scales the area by the extent of <code class="docutils literal notranslate"><span class="pre">k</span></code>.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Compute the area under the accuracy-vs-<code class="docutils literal notranslate"><span class="pre">k</span></code> curve.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to measured accuracy.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Area-under-curve value computed from the accuracy trajectory.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">(auc_area,</span> <span class="pre">auc_normalized)</span></code> where <code class="docutils literal notranslate"><span class="pre">auc_area</span></code> is the</dt><dd><p>trapezoidal integral and <code class="docutils literal notranslate"><span class="pre">auc_normalized</span></code> scales the area by the extent of
+<code class="docutils literal notranslate"><span class="pre">k</span></code>.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple[float, float]</p>
@@ -1069,70 +1033,25 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.evaluate_issue">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#evaluate_issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.evaluate_issue" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Evaluate a single issue slice and persist metrics, curves, and predictions.</p>
-<p>Parameters</p>
-<p>issue_slug:</p>
-<blockquote>
-<div><p>Normalised identifier for the issue under evaluation (used in paths).</p>
-</div></blockquote>
-<p>dataset_source:</p>
-<blockquote>
-<div><p>Name or path of the dataset backing the current run.</p>
-</div></blockquote>
-<p>train_ds:</p>
-<blockquote>
-<div><p>Training split (may be <code class="docutils literal notranslate"><span class="pre">None</span></code>) used for optional curve diagnostics.</p>
-</div></blockquote>
-<p>eval_ds:</p>
-<blockquote>
-<div><p>Evaluation split containing the rows scored for reporting.</p>
-</div></blockquote>
-<p>k_values:</p>
-<blockquote>
-<div><p>Sequence of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to consider when computing accuracy.</p>
-</div></blockquote>
-<p>knn_index:</p>
-<blockquote>
-<div><p>Prepared KNN index artefacts for the active feature space.</p>
-</div></blockquote>
-<p>extra_fields:</p>
-<blockquote>
-<div><p>Additional text fields concatenated into the query document.</p>
-</div></blockquote>
-<p>feature_space:</p>
-<blockquote>
-<div><p>Feature space identifier (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>, or <code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p>
-</div></blockquote>
-<p>args:</p>
-<blockquote>
-<div><p>Parsed CLI namespace controlling evaluation behavior.</p>
-</div></blockquote>
-<p>provenance:</p>
-<blockquote>
-<div><p>Mapping of provenance metadata recorded alongside the metrics.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Evaluate a single issue slice and persist metrics, curves, and predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>issue_slug</strong> (<em>str</em>) – Slugified identifier representing the study/issue on disk.</p></li>
-<li><p><strong>dataset_source</strong> (<em>str</em>) – Identifier describing where the dataset was loaded from.</p></li>
-<li><p><strong>train_ds</strong> (<em>Any</em>) – Training dataset split used to build the index.</p></li>
-<li><p><strong>eval_ds</strong> (<em>Any</em>) – Evaluation dataset split passed to the scorer.</p></li>
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
-<li><p><strong>knn_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Fitted KNN index used to score neighbours.</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional dataset columns included when building prompts or outputs.</p></li>
-<li><p><strong>feature_space</strong> (<em>str</em>) – Feature space identifier such as <code class="docutils literal notranslate"><span class="pre">tfidf</span></code> or <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>.</p></li>
-<li><p><strong>args</strong> (<em>Any</em>) – Namespace object containing parsed command-line arguments.</p></li>
-<li><p><strong>provenance</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Metadata describing how the evaluation artefacts were produced.</p></li>
+<li><p><strong>issue_slug</strong> (<em>str</em>) – Normalised identifier for the issue under evaluation.</p></li>
+<li><p><strong>dataset_source</strong> (<em>str</em>) – Name or path of the dataset backing the current run.</p></li>
+<li><p><strong>train_ds</strong> – Training split (may be <code class="docutils literal notranslate"><span class="pre">None</span></code>) used for optional diagnostics.</p></li>
+<li><p><strong>eval_ds</strong> – Evaluation split containing the rows scored for reporting.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Sequence of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to consider when computing accuracy.</p></li>
+<li><p><strong>knn_index</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Prepared KNN index artefacts for the active feature space.</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional text fields concatenated into the query document.</p></li>
+<li><p><strong>feature_space</strong> (<em>str</em>) – Feature space identifier (<code class="docutils literal notranslate"><span class="pre">tfidf</span></code>, <code class="docutils literal notranslate"><span class="pre">word2vec</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sentence_transformer</span></code>).</p></li>
+<li><p><strong>args</strong> – Parsed CLI namespace controlling evaluation behaviour.</p></li>
+<li><p><strong>provenance</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Mapping of provenance metadata recorded alongside the metrics.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>None.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1140,36 +1059,23 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.parse_k_values">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">parse_k_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_default</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#parse_k_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.parse_k_values" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Derive the sorted set of <code class="docutils literal notranslate"><span class="pre">k</span></code> values requested for evaluation.</p>
-<p>Parameters</p>
-<p>k_default:</p>
-<blockquote>
-<div><p>The baseline <code class="docutils literal notranslate"><span class="pre">k</span></code> value supplied via the CLI (used when the sweep is empty).</p>
-</div></blockquote>
-<p>sweep:</p>
-<blockquote>
-<div><p>Comma-delimited string of additional <code class="docutils literal notranslate"><span class="pre">k</span></code> candidates provided by the user.</p>
-</div></blockquote>
-<p>Returns</p>
-<p>list[int]</p>
-<blockquote>
-<div><p>Strictly positive <code class="docutils literal notranslate"><span class="pre">k</span></code> values in ascending order. Falls back to <code class="docutils literal notranslate"><span class="pre">k_default</span></code></p>
-<p>(or <code class="docutils literal notranslate"><span class="pre">25</span></code> when unset) if the sweep does not contain any valid integers.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Derive the sorted set of <code class="docutils literal notranslate"><span class="pre">k</span></code> values requested for evaluation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_default</strong> (<em>int</em>) – Fallback <code class="docutils literal notranslate"><span class="pre">k</span></code> value applied when no sweep result is available.</p></li>
-<li><p><strong>sweep</strong> (<em>str</em>) – Sweep configuration or CLI payload under inspection.</p></li>
+<li><p><strong>k_default</strong> (<em>int</em>) – Baseline <code class="docutils literal notranslate"><span class="pre">k</span></code> value used when the sweep is empty.</p></li>
+<li><p><strong>sweep</strong> (<em>str</em>) – Comma-delimited string of additional <code class="docutils literal notranslate"><span class="pre">k</span></code> candidates.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Sorted list of unique <code class="docutils literal notranslate"><span class="pre">k</span></code> values parsed from the sweep specification.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>Strictly positive <code class="docutils literal notranslate"><span class="pre">k</span></code> values in ascending order. Falls back to</dt><dd><p><code class="docutils literal notranslate"><span class="pre">k_default</span></code> (or <code class="docutils literal notranslate"><span class="pre">25</span></code> when unset) if no valid integers are supplied.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List[int]</p>
+<dd class="field-odd"><p>list[int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1177,45 +1083,19 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.plot_elbow">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">plot_elbow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#plot_elbow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.plot_elbow" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Generate an error-rate plot to visualise the KNN elbow heuristic.</p>
-<p>Parameters</p>
-<p>k_values:</p>
-<blockquote>
-<div><p>Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
-</div></blockquote>
-<p>accuracy_by_k:</p>
-<blockquote>
-<div><p>Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to accuracy on the selected split.</p>
-</div></blockquote>
-<p>best_k:</p>
-<blockquote>
-<div><p>The configuration chosen for downstream reporting.</p>
-</div></blockquote>
-<p>output_path:</p>
-<blockquote>
-<div><p>Destination filename for the generated PNG.</p>
-</div></blockquote>
-<p>data_split:</p>
-<blockquote>
-<div><p>Human-readable label describing the evaluation split (defaults to <code class="docutils literal notranslate"><span class="pre">validation</span></code>).</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Generate an error-rate plot visualising the KNN elbow heuristic.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
-<li><p><strong>best_k</strong> (<em>int</em>) – Neighborhood size selected as optimal for the evaluation.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Filesystem path for the generated report or figure.</p></li>
-<li><p><strong>data_split</strong> (<em>str</em>) – Name of the dataset split from which metrics were derived.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from <code class="docutils literal notranslate"><span class="pre">k</span></code> to accuracy on the selected split.</p></li>
+<li><p><strong>best_k</strong> (<em>int</em>) – Configuration chosen for downstream reporting.</p></li>
+<li><p><strong>output_path</strong> (<em>Path</em>) – Destination filename for the generated PNG.</p></li>
+<li><p><strong>data_split</strong> (<em>str</em>) – Human-readable label for the evaluation split.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>None.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1223,25 +1103,13 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.resolve_reports_dir">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">resolve_reports_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#resolve_reports_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.resolve_reports_dir" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Resolve the canonical reports directory corresponding to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p>
-<p>Parameters</p>
-<p>out_dir:</p>
-<blockquote>
-<div><p>Directory containing pipeline artefacts (typically under <code class="docutils literal notranslate"><span class="pre">models/knn</span></code>).</p>
-</div></blockquote>
-<p>Returns</p>
-<p>pathlib.Path</p>
-<blockquote>
-<div><p>Path pointing at the root <code class="docutils literal notranslate"><span class="pre">reports</span></code> directory for the repository.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Resolve the canonical reports directory corresponding to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out_dir</strong> (<em>Path</em>) – Output directory receiving generated metrics and reports.</p>
+<dd class="field-odd"><p><strong>out_dir</strong> (<em>Path</em>) – Directory containing pipeline artefacts (typically under <code class="docutils literal notranslate"><span class="pre">models/knn</span></code>).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Directory path where the generated report files will be stored.</p>
+<dd class="field-even"><p>Path pointing at the repository-level <code class="docutils literal notranslate"><span class="pre">reports</span></code> directory.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Path</p>
@@ -1252,24 +1120,14 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.run_eval">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">run_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#run_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.run_eval" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Evaluate the KNN baseline across the issues specified on the CLI.</p>
-<p>Parameters</p>
-<p>args:</p>
-<blockquote>
-<div><p>Namespace returned by <a class="reference internal" href="#knn.cli.build_parser" title="knn.cli.build_parser"><code class="xref py py-func docutils literal notranslate"><span class="pre">knn.cli.build_parser()</span></code></a>, including dataset,</p>
-<p>feature-space, and sweep configuration.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Evaluate the KNN baseline across the issues specified on the CLI.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – Namespace object containing parsed command-line arguments.</p>
+<dd class="field-odd"><p><strong>args</strong> – Namespace returned by <a class="reference internal" href="#knn.cli.build_parser" title="knn.cli.build_parser"><code class="xref py py-func docutils literal notranslate"><span class="pre">knn.cli.build_parser()</span></code></a>, including dataset,
+feature-space, and sweep configuration.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>None.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1277,33 +1135,20 @@ indicates that a prediction could not be produced for that <code class="docutils
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.evaluate.select_best_k">
 <span class="sig-prename descclassname"><span class="pre">knn.evaluate.</span></span><span class="sig-name descname"><span class="pre">select_best_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_by_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/evaluate.html#select_best_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.evaluate.select_best_k" title="Link to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Choose an appropriate <code class="docutils literal notranslate"><span class="pre">k</span></code> by applying a simple elbow heuristic.</p>
-<p>Parameters</p>
-<p>k_values:</p>
-<blockquote>
-<div><p>Sorted sequence of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p>
-</div></blockquote>
-<p>accuracy_by_k:</p>
-<blockquote>
-<div><p>Observed accuracy for each <code class="docutils literal notranslate"><span class="pre">k</span></code> on the validation split.</p>
-</div></blockquote>
-<p>Returns</p>
-<p>int</p>
-<blockquote>
-<div><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> value where marginal gains fall below half of the initial slope,</p>
-<p>or the accuracy-maximizing <code class="docutils literal notranslate"><span class="pre">k</span></code> when the heuristic cannot be applied.</p>
-</div></blockquote>
-</div></blockquote>
+<dd><p>Choose an appropriate <code class="docutils literal notranslate"><span class="pre">k</span></code> by applying a simple elbow heuristic.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Iterable of <code class="docutils literal notranslate"><span class="pre">k</span></code> values to evaluate or report.</p></li>
-<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Mapping from each <code class="docutils literal notranslate"><span class="pre">k</span></code> to its measured validation accuracy.</p></li>
+<li><p><strong>k_values</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – Sorted sequence of evaluated <code class="docutils literal notranslate"><span class="pre">k</span></code> values.</p></li>
+<li><p><strong>accuracy_by_k</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>) – Observed accuracy for each <code class="docutils literal notranslate"><span class="pre">k</span></code> on the validation split.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Neighborhood size that maximizes the provided accuracy scores.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">k</span></code> where marginal gains fall below half of the initial slope, or the</dt><dd><p>accuracy-maximising <code class="docutils literal notranslate"><span class="pre">k</span></code> when the heuristic cannot be applied.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>

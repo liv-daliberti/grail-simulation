@@ -87,6 +87,26 @@ High-level progression (training + evaluation):
 
 Both the SLURM wrapper (`training/training-knn.sh`, which auto-submits sweeps/finalize jobs) and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
 
+Need deeper context on the ingestion step? See `clean_data/sessions/README.md` for the session-log builders that feed the dataset.
+
+## Report generation modules
+
+The report builder that previously lived entirely in `src/knn/pipeline_reports.py` now ships as the
+package `src/knn/pipeline_reports/`. The public entry point remains
+`knn.pipeline_reports.generate_reports(repo_root, report_bundle)` so existing imports and pipeline
+calls continue to work, but the implementation is split into focused modules:
+
+- `__init__.py` – orchestrates the overall workflow and wires the helper modules together.
+- `catalog.py` – creates the top-level `reports/knn/README.md` summary.
+- `hyperparameter.py` – renders sweep leaderboards, per-feature tables, and reproduction commands.
+- `next_video.py` – assembles next-video metrics tables, curve plots, and LOSO summaries.
+- `opinion.py` – produces opinion-regression tables, portfolio stats, and cross-study diagnostics.
+- `shared.py` – reusable helpers such as CLI formatting, feature-space headings, and logging.
+
+When you need to tweak layout or add new sections, update the dedicated module instead of hunting
+through a monolithic file. Each builder writes a single Markdown artifact and accepts the same
+`ReportBundle` produced by the pipeline, so the CLI and training scripts require no changes.
+
 ## Feature helpers
 
 `features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same

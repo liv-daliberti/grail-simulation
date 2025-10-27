@@ -274,11 +274,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptDocumentBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_selected_examples</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">canon_text</span><span class="p">,</span> <span class="n">canon_video_id</span>
 
 
@@ -540,31 +539,15 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare prompt documents, labels, and metadata for TF-IDF style training.&quot;&quot;&quot;</span>
 
         <span class="c1"># pylint: disable=too-many-locals</span>
-        <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
-        <span class="k">if</span> <span class="n">n_rows</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Train split is empty.&quot;</span><span class="p">)</span>
-
-        <span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">max_train</span> <span class="ow">and</span> <span class="n">max_train</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">take</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_train</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">)</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n_rows</span><span class="p">)[:</span><span class="n">take</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">))</span>
-
-        <span class="n">documents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">label_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">label_titles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
-            <span class="n">example</span> <span class="o">=</span> <span class="n">train_ds</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_collect</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_document</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">extra_fields</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">document</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                <span class="k">continue</span>
+                <span class="k">return</span> <span class="kc">None</span>
 
             <span class="n">video_raw</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solution_column</span><span class="p">)</span>
             <span class="n">video_id</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">video_raw</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">video_id</span><span class="p">:</span>
-                <span class="k">continue</span>
+                <span class="k">return</span> <span class="kc">None</span>
 
             <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_candidate_metadata</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
             <span class="n">gold_index</span> <span class="o">=</span> <span class="n">_parse_gold_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">))</span>
@@ -575,14 +558,20 @@
                 <span class="k">if</span> <span class="n">selected</span><span class="o">.</span><span class="n">title</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">label_title</span><span class="p">:</span>
                     <span class="n">label_title</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">title</span>
 
-            <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
-            <span class="n">label_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
-            <span class="n">label_titles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label_title</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">document</span><span class="p">,</span> <span class="n">video_id</span><span class="p">,</span> <span class="n">label_title</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">documents</span><span class="p">:</span>
+        <span class="n">_indices</span><span class="p">,</span> <span class="n">triples</span> <span class="o">=</span> <span class="n">collect_selected_examples</span><span class="p">(</span>
+            <span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">max_train</span><span class="o">=</span><span class="n">max_train</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+            <span class="n">collect</span><span class="o">=</span><span class="n">_collect</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">triples</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No eligible documents were generated for training.&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">documents</span><span class="p">,</span> <span class="n">label_ids</span><span class="p">,</span> <span class="n">label_titles</span>
+        <span class="n">documents</span><span class="p">,</span> <span class="n">label_ids</span><span class="p">,</span> <span class="n">label_titles</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">triples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">label_ids</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">label_titles</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare_prompt_documents</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -601,10 +590,164 @@
         <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_unbound_export</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a helpful error when prompt-selection helpers are not yet bound.&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Prompt selection helper &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is not bound. &quot;</span>
+        <span class="s2">&quot;Call &#39;bind_prompt_selection_exports&#39; to attach runtime implementations.&quot;</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="title_for">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.title_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">title_for</span><span class="p">(</span><span class="n">_video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;title_for&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="viewer_profile_sentence">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.viewer_profile_sentence">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">viewer_profile_sentence</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="prompt_from_builder">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.prompt_from_builder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prompt_from_builder</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;prompt_from_builder&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="extract_now_watching">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.extract_now_watching">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_now_watching</span><span class="p">(</span>
+    <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;extract_now_watching&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="extract_slate_items">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.extract_slate_items">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_slate_items</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;extract_slate_items&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="collect_candidate_metadata">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.collect_candidate_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_candidate_metadata</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;collect_candidate_metadata&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="selection_feature_tokens">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.selection_feature_tokens">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selection_feature_tokens</span><span class="p">(</span>
+    <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+    <span class="n">_candidates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;selection_feature_tokens&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="assemble_document">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.assemble_document">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assemble_document</span><span class="p">(</span>
+    <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+    <span class="n">_extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;assemble_document&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="prepare_training_documents">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.prepare_training_documents">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_training_documents</span><span class="p">(</span>
+    <span class="n">_train_ds</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="n">_max_train</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;prepare_training_documents&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="prepare_prompt_documents">
+<a class="viewcode-back" href="../../api/xgb.html#knn.features.prepare_prompt_documents">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_prompt_documents</span><span class="p">(</span>
+    <span class="n">_train_ds</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="n">_max_train</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder bound via :func:`bind_prompt_selection_exports`.&quot;&quot;&quot;</span>
+
+    <span class="k">raise</span> <span class="n">_unbound_export</span><span class="p">(</span><span class="s2">&quot;prepare_prompt_documents&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
+
+
+
+<span class="n">PROMPT_SELECTION_EXPORT_ATTRS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;title_for&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prompt_from_builder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_now_watching&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_slate_items&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;collect_candidate_metadata&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;selection_feature_tokens&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assemble_document&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prepare_training_documents&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prepare_prompt_documents&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bind_prompt_selection_exports</span><span class="p">(</span>
+    <span class="n">helper</span><span class="p">:</span> <span class="n">PromptSelectionHelper</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">include_candidate_tokens</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a mapping of standard prompt-selection helpers exposed by modules.</span>
+
+<span class="sd">    :param helper: Instance wrapping a :class:`PromptDocumentBuilder`.</span>
+<span class="sd">    :param include_candidate_tokens: When ``True`` include ``candidate_feature_tokens``.</span>
+<span class="sd">    :returns: Dictionary suitable for ``globals().update(...)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">exports</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">helper</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">PROMPT_SELECTION_EXPORT_ATTRS</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">include_candidate_tokens</span><span class="p">:</span>
+        <span class="n">exports</span><span class="p">[</span><span class="s2">&quot;candidate_feature_tokens&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">candidate_feature_tokens</span>
+    <span class="k">return</span> <span class="n">exports</span>
+
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;CandidateMetadata&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PROMPT_SELECTION_EXPORT_ATTRS&quot;</span><span class="p">,</span>
     <span class="s2">&quot;PromptSelectionHelper&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bind_prompt_selection_exports&quot;</span><span class="p">,</span>
     <span class="s2">&quot;candidate_feature_tokens&quot;</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">PROMPT_SELECTION_EXPORT_ATTRS</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
         </article>

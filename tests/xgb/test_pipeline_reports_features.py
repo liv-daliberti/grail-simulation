@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from src.common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 from src.xgb.pipeline_context import (
     OpinionStudySelection,
     OpinionSweepOutcome,
@@ -74,8 +75,11 @@ def test_feature_report_highlights_additional_fields(tmp_path: Path) -> None:
         mae=0.5,
         rmse=0.7,
         r_squared=0.2,
-        metrics_path=tmp_path / "opinion.json",
-        metrics={"extra_fields": ["viewer_profile", "state_text", "opinion_notes"]},
+        artifact=MetricsArtifact(
+            path=tmp_path / "opinion.json",
+            payload={"extra_fields": ["viewer_profile", "state_text", "opinion_notes"]},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
     opinion_selection = OpinionStudySelection(study=study, outcome=opinion_outcome)
 

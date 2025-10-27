@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 import pytest
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from common.pipeline_stage import prepare_sweep_execution as real_prepare_sweep_execution
 from knn import pipeline as knn_pipeline
@@ -316,14 +317,13 @@ def test_knn_pipeline_reports_stage_uses_stubbed_data(monkeypatch: pytest.Monkey
         r2_score=0.15,
         baseline_mae=0.5,
         mae_delta=-0.08,
-        accuracy=None,
-        baseline_accuracy=None,
-        accuracy_delta=None,
         best_k=7,
         participants=80,
-        eligible=80,
-        metrics_path=opinion_metrics_path,
-        metrics={"best_metrics": {"mae_after": 0.42}, "best_k": 7},
+        artifact=MetricsArtifact(
+            path=opinion_metrics_path,
+            payload={"best_metrics": {"mae_after": 0.42}, "best_k": 7},
+        ),
+        accuracy_summary=AccuracySummary(eligible=80),
     )
     opinion_selection = KnnOpinionStudySelection(study=study, outcome=opinion_outcome)
 
@@ -468,14 +468,13 @@ def test_knn_pipeline_finalize_emits_reports(monkeypatch: pytest.MonkeyPatch, tm
         r2_score=0.12,
         baseline_mae=0.5,
         mae_delta=-0.08,
-        accuracy=None,
-        baseline_accuracy=None,
-        accuracy_delta=None,
         best_k=7,
         participants=75,
-        eligible=75,
-        metrics_path=tmp_path / "opinion_metrics.json",
-        metrics={"best_metrics": {"mae_after": 0.42}, "best_k": 7},
+        artifact=MetricsArtifact(
+            path=tmp_path / "opinion_metrics.json",
+            payload={"best_metrics": {"mae_after": 0.42}, "best_k": 7},
+        ),
+        accuracy_summary=AccuracySummary(eligible=75),
     )
     opinion_selection = KnnOpinionStudySelection(study=study, outcome=opinion_outcome)
 
@@ -589,8 +588,11 @@ def test_xgb_pipeline_finalize_writes_reports(monkeypatch: pytest.MonkeyPatch, t
         mae=0.41,
         rmse=0.65,
         r_squared=0.2,
-        metrics_path=tmp_path / "xgb_opinion.json",
-        metrics={"metrics": {"mae_after": 0.41}},
+        artifact=MetricsArtifact(
+            path=tmp_path / "xgb_opinion.json",
+            payload={"metrics": {"mae_after": 0.41}},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
     opinion_selection = XgbOpinionStudySelection(study=study, outcome=opinion_outcome)
 
@@ -761,8 +763,11 @@ def test_xgb_pipeline_sweeps_and_finalize(monkeypatch: pytest.MonkeyPatch, tmp_p
         mae=0.45,
         rmse=0.68,
         r_squared=0.22,
-        metrics_path=tmp_path / "opinion_metrics.json",
-        metrics={"metrics": {"mae_after": 0.45}},
+        artifact=MetricsArtifact(
+            path=tmp_path / "opinion_metrics.json",
+            payload={"metrics": {"mae_after": 0.45}},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
     opinion_selection = XgbOpinionStudySelection(study=study, outcome=opinion_outcome)
 

@@ -275,7 +275,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 
 <div class="viewcode-block" id="OpinionSpec">
@@ -287,7 +287,29 @@
     <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">before_column</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">after_column</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">after_column</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="OpinionSpec.build_example_kwargs">
+<a class="viewcode-back" href="../../api/knn.html#common.OpinionSpec.build_example_kwargs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_example_kwargs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">document</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">before</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">after</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the standard keyword arguments for an ``OpinionExample``.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">opinion_example_kwargs</span><span class="p">(</span>
+            <span class="n">participant_id</span><span class="o">=</span><span class="n">participant_id</span><span class="p">,</span>
+            <span class="n">participant_study</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+            <span class="n">issue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+            <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
+            <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
+            <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
@@ -300,6 +322,99 @@
     <span class="n">document</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">before</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">after</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="n">ExampleT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;ExampleT&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionCalibrationMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Common calibration and baseline metrics shared across pipelines.&quot;&quot;&quot;</span>
+
+    <span class="n">baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accuracy_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_slope</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_calibration_slope</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_intercept</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_calibration_intercept</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_ece</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_calibration_ece</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kl_divergence_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_kl_divergence_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">participants</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="build_opinion_example">
+<a class="viewcode-back" href="../../api/common.html#common.build_opinion_example">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_opinion_example</span><span class="p">(</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ExampleT</span><span class="p">],</span>
+    <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">document</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">before</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">after</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_fields</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExampleT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct an opinion example instance using the provided factory callable.</span>
+
+<span class="sd">    :param spec: Opinion specification describing the study identifiers.</span>
+<span class="sd">    :type spec: OpinionSpec</span>
+<span class="sd">    :param factory: Callable (usually a dataclass) used to instantiate the example.</span>
+<span class="sd">    :type factory: Callable[..., ExampleT]</span>
+<span class="sd">    :param participant_id: Unique participant identifier sourced from the dataset.</span>
+<span class="sd">    :type participant_id: str</span>
+<span class="sd">    :param document: Assembled prompt text for the participant.</span>
+<span class="sd">    :type document: str</span>
+<span class="sd">    :param before: Pre-study opinion index value.</span>
+<span class="sd">    :type before: float</span>
+<span class="sd">    :param after: Post-study opinion index value.</span>
+<span class="sd">    :type after: float</span>
+<span class="sd">    :param extra_fields: Additional keyword arguments forwarded to ``factory``.</span>
+<span class="sd">    :type extra_fields: object</span>
+<span class="sd">    :returns: Instance created by ``factory`` populated with shared fields.</span>
+<span class="sd">    :rtype: ExampleT</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">base_kwargs</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">build_example_kwargs</span><span class="p">(</span>
+        <span class="n">participant_id</span><span class="o">=</span><span class="n">participant_id</span><span class="p">,</span>
+        <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
+        <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
+        <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">factory</span><span class="p">(</span><span class="o">**</span><span class="n">base_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_fields</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_opinion_example</span><span class="p">(</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span><span class="p">,</span>
+    <span class="n">participant_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">document</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">before</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">after</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ExampleT</span><span class="p">]</span> <span class="o">=</span> <span class="n">OpinionExample</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_fields</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExampleT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience wrapper around :func:`build_opinion_example`.</span>
+
+<span class="sd">    Accepts positional arguments for the core fields so callers can invoke it</span>
+<span class="sd">    without repeating keyword boilerplate across multiple pipelines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">build_opinion_example</span><span class="p">(</span>
+        <span class="n">spec</span><span class="p">,</span>
+        <span class="n">factory</span><span class="o">=</span><span class="n">factory</span><span class="p">,</span>
+        <span class="n">participant_id</span><span class="o">=</span><span class="n">participant_id</span><span class="p">,</span>
+        <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
+        <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
+        <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="n">DEFAULT_SPECS</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OpinionSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -402,7 +517,10 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;DEFAULT_SPECS&quot;</span><span class="p">,</span>
     <span class="s2">&quot;OpinionExample&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OpinionCalibrationMetrics&quot;</span><span class="p">,</span>
     <span class="s2">&quot;OpinionSpec&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_opinion_example&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_opinion_example&quot;</span><span class="p">,</span>
     <span class="s2">&quot;float_or_none&quot;</span><span class="p">,</span>
     <span class="s2">&quot;opinion_example_kwargs&quot;</span><span class="p">,</span>
 <span class="p">]</span>

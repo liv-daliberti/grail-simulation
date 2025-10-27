@@ -32,15 +32,9 @@ import numpy as np
 from numpy.random import default_rng
 
 from common.embeddings import SentenceTransformerConfig
+from common.matplotlib_utils import plt
 from common.eval_utils import compose_issue_slug, prepare_dataset, safe_div
 from common.prompt_docs import merge_default_extra_fields
-
-try:  # pragma: no cover - optional dependency
-    import matplotlib
-    matplotlib.use("Agg", force=True)
-    from matplotlib import pyplot as plt
-except ImportError:  # pragma: no cover - optional dependency
-    plt = None
 
 from .data import (
     DEFAULT_DATASET_SOURCE,

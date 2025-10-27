@@ -21,15 +21,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
 
-from common.report_utils import extract_numeric_series
-
-try:  # pragma: no cover - optional dependency
-    import matplotlib
-
-    matplotlib.use("Agg", force=True)
-    from matplotlib import pyplot as plt  # type: ignore[assignment]
-except ImportError:  # pragma: no cover - optional dependency
-    plt = None  # type: ignore[assignment]
+from common.matplotlib_utils import plt
+from common.report_utils import extract_curve_sections, extract_numeric_series
 
 from ..pipeline_context import StudySpec
 from ..pipeline_utils import (
@@ -471,20 +464,16 @@ def _plot_knn_curve_bundle(
     """
     if plt is None:  # pragma: no cover - optional dependency
         return None
-    curve_bundle = metrics.get("curve_metrics")
-    if not isinstance(curve_bundle, Mapping):
+    sections = extract_curve_sections(metrics.get("curve_metrics"))
+    if sections is None:
         return None
-    eval_curve = curve_bundle.get("eval")
-    if not isinstance(eval_curve, Mapping):
-        return None
+    eval_curve, train_curve = sections
     eval_x, eval_y = _extract_curve_series(eval_curve)
     if not eval_x:
         return None
-    train_curve = curve_bundle.get("train")
-    train_x: List[int] = []
-    train_y: List[float] = []
-    if isinstance(train_curve, Mapping):
-        train_x, train_y = _extract_curve_series(train_curve)
+    train_x, train_y = (
+        _extract_curve_series(train_curve) if train_curve is not None else ([], [])
+    )
 
     curves_dir = base_dir / "curves" / feature_space
     curves_dir.mkdir(parents=True, exist_ok=True)

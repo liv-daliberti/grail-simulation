@@ -19,12 +19,12 @@ from __future__ import annotations
 
 import json
 import logging
-from itertools import product
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_executor import execute_sequential_tasks
-from common.pipeline_utils import merge_ordered
+from common.pipeline_utils import merge_indexed_outcomes
+from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from .pipeline_context import (
     OpinionStudySelection,
@@ -34,7 +34,12 @@ from .pipeline_context import (
     SweepConfig,
     SweepTaskContext,
 )
-from .pipeline_utils import ensure_dir, extract_opinion_summary
+from .pipeline_utils import (
+    ensure_dir,
+    ensure_selection_coverage,
+    extract_opinion_summary,
+    prepare_task_grid,
+)
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
 
@@ -75,7 +80,7 @@ def _build_opinion_task(
     config: SweepConfig,
     study: StudySpec,
     context: SweepTaskContext,
-) -> Tuple[OpinionSweepTask, Path]:
+) -> OpinionSweepTask:
     run_root = (
         context.sweep_dir
         / "opinion"
@@ -105,7 +110,7 @@ def _build_opinion_task(
         word2vec_model_dir=word2vec_model_dir,
         metrics_path=metrics_path,
     )
-    return task, metrics_path
+    return task
 
 
 def build_opinion_task(
@@ -114,7 +119,7 @@ def build_opinion_task(
     config: SweepConfig,
     study: StudySpec,
     context: SweepTaskContext,
-) -> Tuple[OpinionSweepTask, Path]:
+) -> OpinionSweepTask:
     """Public wrapper that exposes the opinion task builder for testing."""
     return _build_opinion_task(
         index=index,
@@ -124,16 +129,14 @@ def build_opinion_task(
     )
 
 
-def _load_cached_opinion_outcome(
-    task: OpinionSweepTask, metrics_path: Path
-) -> Optional[OpinionSweepOutcome]:
+def _load_cached_opinion_outcome(task: OpinionSweepTask) -> Optional[OpinionSweepOutcome]:
     """Load cached opinion metrics if available."""
 
     try:
-        with open(metrics_path, "r", encoding="utf-8") as handle:
+        with open(task.metrics_path, "r", encoding="utf-8") as handle:
             metrics = json.load(handle)
     except FileNotFoundError:
-        LOGGER.debug("Expected cached opinion metrics at %s but none found.", metrics_path)
+        LOGGER.debug("Expected cached opinion metrics at %s but none found.", task.metrics_path)
         return None
     LOGGER.info(
         "[OPINION][SKIP] feature=%s study=%s label=%s (metrics cached).",
@@ -141,7 +144,7 @@ def _load_cached_opinion_outcome(
         task.study.key,
         task.config.label(),
     )
-    return opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
+    return opinion_sweep_outcome_from_metrics(task, metrics, task.metrics_path)
 
 
 def prepare_opinion_sweep_tasks(
@@ -174,23 +177,18 @@ def prepare_opinion_sweep_tasks(
     :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
 
     """
-    pending_tasks: List[OpinionSweepTask] = []
-    cached_outcomes: List[OpinionSweepOutcome] = []
-
-    for task_index, (config, study) in enumerate(product(configs, studies)):
-        task, metrics_path = _build_opinion_task(
+    return prepare_task_grid(
+        configs,
+        studies,
+        reuse_existing=reuse_existing,
+        build_task=lambda task_index, config, study: _build_opinion_task(
             index=task_index,
             config=config,
             study=study,
             context=context,
-        )
-        if reuse_existing and metrics_path.exists():
-            cached = _load_cached_opinion_outcome(task, metrics_path)
-            if cached is not None:
-                cached_outcomes.append(cached)
-                continue
-        pending_tasks.append(task)
-    return pending_tasks, cached_outcomes
+        ),
+        load_cached=_load_cached_opinion_outcome,
+    )
 
 
 def _coerce_optional_float(value: object, default: float | None = None) -> Optional[float]:
@@ -293,14 +291,15 @@ def opinion_sweep_outcome_from_metrics(
         ),
         baseline_mae=baseline_mae,
         mae_delta=mae_delta,
-        accuracy=accuracy,
-        baseline_accuracy=baseline_accuracy,
-        accuracy_delta=accuracy_delta,
         best_k=best_k,
         participants=participants,
-        eligible=eligible,
-        metrics_path=metrics_path,
-        metrics=metrics,
+        artifact=MetricsArtifact(path=metrics_path, payload=metrics),
+        accuracy_summary=AccuracySummary(
+            value=accuracy,
+            baseline=baseline_accuracy,
+            delta=accuracy_delta,
+            eligible=eligible,
+        ),
     )
 
 
@@ -324,30 +323,15 @@ def merge_opinion_sweep_outcomes(
     :rtype: List[OpinionSweepOutcome]
 
     """
-
-    def _on_replace(_existing: OpinionSweepOutcome, incoming: OpinionSweepOutcome) -> None:
-        """
-        Emit a warning when an opinion sweep outcome is replaced.
-
-        :param _existing: Previously cached opinion outcome.
-        :type _existing: OpinionSweepOutcome
-        :param incoming: Newly produced outcome that supersedes ``_existing``.
-        :type incoming: OpinionSweepOutcome
-        :returns: ``None``. The function logs a warning for visibility.
-        :rtype: None
-        """
-
-        LOGGER.warning(
-            "Duplicate opinion sweep outcome detected for index=%d (study=%s). Overwriting.",
-            incoming.order_index,
-            incoming.study.key,
-        )
-
-    return merge_ordered(
+    return merge_indexed_outcomes(
         cached,
         executed,
-        order_key=lambda outcome: outcome.order_index,
-        on_replace=_on_replace,
+        logger=LOGGER,
+        message="Duplicate opinion sweep outcome detected for index=%d (study=%s). Overwriting.",
+        args_factory=lambda _existing, incoming: (
+            incoming.order_index,
+            incoming.study.key,
+        ),
     )
 
 
@@ -485,24 +469,15 @@ def select_best_opinion_configs(
                 outcome=outcome,
             )
 
-    expected_keys = [study.key for study in studies]
-    for feature_space, per_feature in selections.items():
-        missing = [key for key in expected_keys if key not in per_feature]
-        if missing:
-            if allow_incomplete:
-                LOGGER.warning(
-                    "Missing opinion sweep selections for feature=%s: %s. "
-                    "Continuing because allow-incomplete mode is enabled.",
-                    feature_space,
-                    ", ".join(missing),
-                )
-            else:
-                raise RuntimeError(
-                    "Missing opinion sweep selections for feature="
-                    f"{feature_space}: {', '.join(missing)}"
-                )
-    if not selections and outcomes:
-        raise RuntimeError("Failed to select a best configuration for any opinion feature space.")
+    ensure_selection_coverage(
+        selections,
+        studies,
+        allow_incomplete=allow_incomplete,
+        logger=LOGGER,
+        missing_descriptor="opinion sweep selections",
+        empty_descriptor="opinion feature space",
+        require_selected=bool(outcomes),
+    )
     return selections
 
 

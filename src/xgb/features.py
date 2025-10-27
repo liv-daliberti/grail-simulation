@@ -23,8 +23,10 @@ from common.prompt_docs import (
 )
 from common.prompt_selection import (
     CandidateMetadata,
+    PROMPT_SELECTION_EXPORT_ATTRS,
     PromptSelectionHelper,
     candidate_feature_tokens,
+    bind_prompt_selection_exports,
 )
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
@@ -40,30 +42,23 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
 )
 
 _PROMPT_FEATURES = PromptSelectionHelper(_PROMPT_DOC_BUILDER)
+_PROMPT_EXPORTS = bind_prompt_selection_exports(_PROMPT_FEATURES)
 
-title_for = _PROMPT_FEATURES.title_for
-viewer_profile_sentence = _PROMPT_FEATURES.viewer_profile_sentence
-prompt_from_builder = _PROMPT_FEATURES.prompt_from_builder
-extract_now_watching = _PROMPT_FEATURES.extract_now_watching
-extract_slate_items = _PROMPT_FEATURES.extract_slate_items
-collect_candidate_metadata = _PROMPT_FEATURES.collect_candidate_metadata
-selection_feature_tokens = _PROMPT_FEATURES.selection_feature_tokens
-assemble_document = _PROMPT_FEATURES.assemble_document
-prepare_training_documents = _PROMPT_FEATURES.prepare_training_documents
-prepare_prompt_documents = _PROMPT_FEATURES.prepare_prompt_documents
+# Explicit re-exports keep static analysis tools such as pylint happy.
+title_for = _PROMPT_EXPORTS["title_for"]
+viewer_profile_sentence = _PROMPT_EXPORTS["viewer_profile_sentence"]
+prompt_from_builder = _PROMPT_EXPORTS["prompt_from_builder"]
+extract_now_watching = _PROMPT_EXPORTS["extract_now_watching"]
+extract_slate_items = _PROMPT_EXPORTS["extract_slate_items"]
+collect_candidate_metadata = _PROMPT_EXPORTS["collect_candidate_metadata"]
+selection_feature_tokens = _PROMPT_EXPORTS["selection_feature_tokens"]
+assemble_document = _PROMPT_EXPORTS["assemble_document"]
+prepare_training_documents = _PROMPT_EXPORTS["prepare_training_documents"]
+prepare_prompt_documents = _PROMPT_EXPORTS["prepare_prompt_documents"]
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
     "CandidateMetadata",
     "candidate_feature_tokens",
-    "collect_candidate_metadata",
-    "assemble_document",
-    "extract_now_watching",
-    "extract_slate_items",
-    "prepare_prompt_documents",
-    "prepare_training_documents",
-    "selection_feature_tokens",
-    "prompt_from_builder",
-    "title_for",
-    "viewer_profile_sentence",
+    *PROMPT_SELECTION_EXPORT_ATTRS,
 ]

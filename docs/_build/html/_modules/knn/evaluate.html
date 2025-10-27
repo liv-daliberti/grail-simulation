@@ -288,15 +288,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.matplotlib_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose_issue_slug</span><span class="p">,</span> <span class="n">prepare_dataset</span><span class="p">,</span> <span class="n">safe_div</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
-    <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="n">plt</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_DATASET_SOURCE</span><span class="p">,</span>

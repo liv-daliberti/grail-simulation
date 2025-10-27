@@ -400,6 +400,31 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="common.build_opinion_example">
+<span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">build_opinion_example</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#build_opinion_example"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.build_opinion_example" title="Link to this definition">¶</a></dt>
+<dd><p>Construct an opinion example instance using the provided factory callable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> (<a class="reference internal" href="knn.html#knn.opinion.OpinionSpec" title="knn.opinion.OpinionSpec"><em>OpinionSpec</em></a>) – Opinion specification describing the study identifiers.</p></li>
+<li><p><strong>factory</strong> (<em>Callable</em><em>[</em><em>...</em><em>, </em><em>ExampleT</em><em>]</em>) – Callable (usually a dataclass) used to instantiate the example.</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em>) – Unique participant identifier sourced from the dataset.</p></li>
+<li><p><strong>document</strong> (<em>str</em>) – Assembled prompt text for the participant.</p></li>
+<li><p><strong>before</strong> (<em>float</em>) – Pre-study opinion index value.</p></li>
+<li><p><strong>after</strong> (<em>float</em>) – Post-study opinion index value.</p></li>
+<li><p><strong>extra_fields</strong> (<em>object</em>) – Additional keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">factory</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Instance created by <code class="docutils literal notranslate"><span class="pre">factory</span></code> populated with shared fields.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ExampleT</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="common.canon_text">
 <span class="sig-prename descclassname"><span class="pre">common.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/text.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.canon_text" title="Link to this definition">¶</a></dt>
 <dd><p>Return a lowercased alphanumeric representation of <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p>
@@ -951,6 +976,7 @@ title resolution, and safe numerical operations used across the baselines.</p>
 </li>
 <li><a class="reference internal" href="#common.add_comma_separated_argument"><code class="docutils literal notranslate"><span class="pre">add_comma_separated_argument()</span></code></a></li>
 <li><a class="reference internal" href="#common.add_sentence_transformer_normalise_flags"><code class="docutils literal notranslate"><span class="pre">add_sentence_transformer_normalise_flags()</span></code></a></li>
+<li><a class="reference internal" href="#common.build_opinion_example"><code class="docutils literal notranslate"><span class="pre">build_opinion_example()</span></code></a></li>
 <li><a class="reference internal" href="#common.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
 <li><a class="reference internal" href="#common.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
 <li><a class="reference internal" href="#common.create_tfidf_vectorizer"><code class="docutils literal notranslate"><span class="pre">create_tfidf_vectorizer()</span></code></a></li>

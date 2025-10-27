@@ -9,6 +9,7 @@ from typing import Dict, List, Mapping
 import pytest
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from knn import pipeline_cli
 from knn import pipeline_data as data
@@ -258,7 +259,7 @@ def test_opinion_sweep_outcome_from_metrics_handles_partial_payload(tmp_path: Pa
         sweep_dir=tmp_path,
         word2vec_model_base=tmp_path / "word2vec",
     )
-    task, _ = sweeps.build_opinion_task(
+    task = sweeps.build_opinion_task(
         index=0,
         config=config,
         study=study,
@@ -375,14 +376,13 @@ def test_select_best_opinion_configs_tie_breakers() -> None:
             r2_score=0.0,
             baseline_mae=None,
             mae_delta=None,
-            accuracy=None,
-            baseline_accuracy=None,
-            accuracy_delta=None,
             best_k=best_k,
             participants=participants,
-            eligible=None,
-            metrics_path=Path("metrics.json"),
-            metrics={"best_metrics": {"mae_after": mae, "rmse_after": rmse}, "best_k": best_k},
+            artifact=MetricsArtifact(
+                path=Path("metrics.json"),
+                payload={"best_metrics": {"mae_after": mae, "rmse_after": rmse}, "best_k": best_k},
+            ),
+            accuracy_summary=AccuracySummary(),
         )
 
     outcomes = [
@@ -415,14 +415,13 @@ def test_select_best_opinion_configs_allow_incomplete(monkeypatch: pytest.Monkey
         r2_score=0.0,
         baseline_mae=None,
         mae_delta=None,
-        accuracy=None,
-        baseline_accuracy=None,
-        accuracy_delta=None,
         best_k=5,
         participants=100,
-        eligible=None,
-        metrics_path=Path("metrics.json"),
-        metrics={"best_metrics": {"mae_after": 0.4, "rmse_after": 1.0}, "best_k": 5},
+        artifact=MetricsArtifact(
+            path=Path("metrics.json"),
+            payload={"best_metrics": {"mae_after": 0.4, "rmse_after": 1.0}, "best_k": 5},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
 
     with caplog.at_level("WARNING", logger="knn.pipeline.sweeps"):
@@ -510,14 +509,13 @@ def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.Monke
         r2_score=0.1,
         baseline_mae=None,
         mae_delta=None,
-        accuracy=None,
-        baseline_accuracy=None,
-        accuracy_delta=None,
         best_k=9,
         participants=200,
-        eligible=None,
-        metrics_path=tmp_path / "dummy.json",
-        metrics={"best_metrics": {"mae_after": 0.42}, "best_k": 9},
+        artifact=MetricsArtifact(
+            path=tmp_path / "dummy.json",
+            payload={"best_metrics": {"mae_after": 0.42}, "best_k": 9},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
     selections = {"tfidf": {study.key: OpinionStudySelection(study=study, outcome=outcome)}}
 

@@ -18,12 +18,38 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from pathlib import Path
+from typing import Generic, Mapping, Type, TypeVar, TYPE_CHECKING, cast
 
 from .pipeline_models import StudySpec
 
 
+ConfigT = TypeVar("ConfigT")
 OutcomeT = TypeVar("OutcomeT")
+
+
+@dataclass
+class BasePipelineSweepOutcome(Generic[ConfigT]):
+    """
+    Base metrics captured for a (study, configuration) pipeline sweep evaluation.
+
+    :param order_index: Deterministic ordering index assigned to the task.
+    :type order_index: int
+    :param study: Study metadata associated with the sweep.
+    :type study: StudySpec
+    :param config: Evaluated sweep configuration.
+    :type config: ConfigT
+    :param metrics_path: Filesystem path to the metrics artefact.
+    :type metrics_path: Path
+    :param metrics: Raw metrics payload loaded from disk.
+    :type metrics: Mapping[str, object]
+    """
+
+    order_index: int
+    study: StudySpec
+    config: ConfigT
+    metrics_path: Path
+    metrics: Mapping[str, object]
 
 
 @dataclass
@@ -81,4 +107,30 @@ class OpinionStudySelection(Generic[OutcomeT]):
         return self.outcome.config
 
 
-__all__ = ["OpinionStudySelection", "StudySelection", "StudySpec"]
+def narrow_opinion_selection(
+    outcome_type: Type[OutcomeT],  # pylint: disable=unused-argument
+) -> type["OpinionStudySelection[OutcomeT]"]:
+    """
+    Return the :class:`OpinionStudySelection` specialised for ``OutcomeT``.
+
+    Static type checkers understand the specialised generic returned from this helper,
+    while at runtime the underlying class is reused without instantiating the generic.
+
+    :param outcome_type: Outcome type used purely for static analysis narrowing.
+    :type outcome_type: Type[OutcomeT]
+    :returns: Opinion study selection type parameterised by ``OutcomeT``.
+    :rtype: type[OpinionStudySelection[OutcomeT]]
+    """
+
+    if TYPE_CHECKING:
+        return cast("type[OpinionStudySelection[OutcomeT]]", OpinionStudySelection)
+    return OpinionStudySelection
+
+
+__all__ = [
+    "BasePipelineSweepOutcome",
+    "OpinionStudySelection",
+    "narrow_opinion_selection",
+    "StudySelection",
+    "StudySpec",
+]

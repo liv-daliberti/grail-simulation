@@ -107,4 +107,16 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
             studies=report_bundle.studies,
             allow_incomplete=allow_incomplete,
         )
+    if report_bundle.include_opinion_from_next:
+        _build_opinion_report(
+            output_path=reports_root / "opinion_from_next" / "README.md",
+            metrics=report_bundle.opinion_from_next_metrics,
+            studies=report_bundle.studies,
+            allow_incomplete=allow_incomplete,
+            title="# KNN Opinion Shift Study (Next-Video Config)",
+            description_lines=[
+                "This section reuses the selected next-video recommendation configuration "
+                "to estimate post-study opinion change.",
+            ],
+        )
     build_feature_report(repo_root, report_bundle)

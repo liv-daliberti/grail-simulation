@@ -610,7 +610,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.assemble_document">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.assemble_document" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">assemble_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#assemble_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.assemble_document" title="Link to this definition">¶</a></dt>
 <dd><p>Concatenate prompt components and selection tokens for feature extraction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -644,7 +644,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.collect_candidate_metadata">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">collect_candidate_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.collect_candidate_metadata" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">collect_candidate_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#collect_candidate_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.collect_candidate_metadata" title="Link to this definition">¶</a></dt>
 <dd><p>Return slate candidate metadata enriched with slot indices and channel info.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -658,7 +658,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.extract_now_watching">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.extract_now_watching" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_now_watching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#extract_now_watching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.extract_now_watching" title="Link to this definition">¶</a></dt>
 <dd><p>Retrieve the currently watched item for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -672,7 +672,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.extract_slate_items">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.extract_slate_items" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">extract_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#extract_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.extract_slate_items" title="Link to this definition">¶</a></dt>
 <dd><p>Extract the slate of candidate items from <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -685,8 +685,26 @@ examples feed into the training curve diagnostics.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="knn.features.prepare_prompt_documents">
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prepare_prompt_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#prepare_prompt_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.prepare_prompt_documents" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience wrapper mirroring <a class="reference internal" href="#knn.features.prepare_training_documents" title="knn.features.prepare_training_documents"><code class="xref py py-meth docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_train</strong> (<em>int</em>)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>)</p></li>
+<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[str], <em>List</em>[str], <em>List</em>[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="knn.features.prepare_training_documents">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prepare_training_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#prepare_training_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.prepare_training_documents" title="Link to this definition">¶</a></dt>
 <dd><p>Prepare prompt documents, labels, and metadata for TF-IDF style training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -704,7 +722,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.prompt_from_builder">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">prompt_from_builder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#prompt_from_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.prompt_from_builder" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble the full prompt text for <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -718,7 +736,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.selection_feature_tokens">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">selection_feature_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.selection_feature_tokens" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">selection_feature_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#selection_feature_tokens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.selection_feature_tokens" title="Link to this definition">¶</a></dt>
 <dd><p>Construct additive tokens that highlight the selected candidate within a prompt.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -735,7 +753,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.title_for">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.title_for" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">title_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#title_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.title_for" title="Link to this definition">¶</a></dt>
 <dd><p>Look up a human-readable title for <code class="docutils literal notranslate"><span class="pre">video_id</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -749,7 +767,7 @@ examples feed into the training curve diagnostics.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="knn.features.viewer_profile_sentence">
-<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">knn.features.</span></span><span class="sig-name descname"><span class="pre">viewer_profile_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/prompt_selection.html#viewer_profile_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.features.viewer_profile_sentence" title="Link to this definition">¶</a></dt>
 <dd><p>Compose the viewer profile sentence associated with <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1184,6 +1202,25 @@ feature-space, and sweep configuration.</p>
 <span class="sig-name descname"><span class="pre">before_column</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#knn.opinion.OpinionSpec.before_column" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="knn.opinion.OpinionSpec.build_example_kwargs">
+<span class="sig-name descname"><span class="pre">build_example_kwargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/opinion.html#OpinionSpec.build_example_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.opinion.OpinionSpec.build_example_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Return the standard keyword arguments for an <code class="docutils literal notranslate"><span class="pre">OpinionExample</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>participant_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>document</strong> (<em>str</em>)</p></li>
+<li><p><strong>before</strong> (<em>float</em>)</p></li>
+<li><p><strong>after</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, object]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="knn.opinion.OpinionSpec.issue">
 <span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#knn.opinion.OpinionSpec.issue" title="Link to this definition">¶</a></dt>
@@ -1348,6 +1385,7 @@ reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.</p>
 <li><a class="reference internal" href="#knn.features.collect_candidate_metadata"><code class="docutils literal notranslate"><span class="pre">collect_candidate_metadata()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.extract_now_watching"><code class="docutils literal notranslate"><span class="pre">extract_now_watching()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.extract_slate_items"><code class="docutils literal notranslate"><span class="pre">extract_slate_items()</span></code></a></li>
+<li><a class="reference internal" href="#knn.features.prepare_prompt_documents"><code class="docutils literal notranslate"><span class="pre">prepare_prompt_documents()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.prepare_training_documents"><code class="docutils literal notranslate"><span class="pre">prepare_training_documents()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.prompt_from_builder"><code class="docutils literal notranslate"><span class="pre">prompt_from_builder()</span></code></a></li>
 <li><a class="reference internal" href="#knn.features.selection_feature_tokens"><code class="docutils literal notranslate"><span class="pre">selection_feature_tokens()</span></code></a></li>
@@ -1376,6 +1414,7 @@ reuse, bootstrap configuration, and Word2Vec/SentenceTransformer tuning.</p>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec"><code class="docutils literal notranslate"><span class="pre">OpinionSpec</span></code></a><ul>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec.after_column"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.after_column</span></code></a></li>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec.before_column"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.before_column</span></code></a></li>
+<li><a class="reference internal" href="#knn.opinion.OpinionSpec.build_example_kwargs"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.build_example_kwargs()</span></code></a></li>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec.issue"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.issue</span></code></a></li>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec.key"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.key</span></code></a></li>
 <li><a class="reference internal" href="#knn.opinion.OpinionSpec.label"><code class="docutils literal notranslate"><span class="pre">OpinionSpec.label</span></code></a></li>

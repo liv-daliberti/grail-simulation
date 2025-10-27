@@ -24,12 +24,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping, Optional, Sequence, Tuple
+from typing import Mapping, Optional, Sequence, Tuple
 
+from common.opinion import OpinionCalibrationMetrics
 from common.pipeline_types import (
-    OpinionStudySelection as BaseOpinionStudySelection,
+    BasePipelineSweepOutcome,
     StudySelection as BaseStudySelection,
     StudySpec,
+    narrow_opinion_selection,
+)
+from common.opinion_sweep_types import (
+    BaseOpinionSweepOutcome,
+    BaseOpinionSweepTask,
+    BaseSweepTask,
 )
 
 @dataclass(frozen=True)
@@ -162,75 +169,46 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
         return args
 
 @dataclass
-class SweepOutcome:  # pylint: disable=too-many-instance-attributes
+class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):  # pylint: disable=too-many-instance-attributes
     """
     Persisted metrics for evaluating a configuration against a single study.
 
-    :param order_index: Stable position reflecting the original sweep submission order.
-    :type order_index: int
-    :param study: Study metadata describing the evaluated dataset slice.
-    :type study: StudySpec
+    Extends :class:`common.pipeline_types.BasePipelineSweepOutcome` with
+    feature-space metadata and KNN-specific evaluation statistics.
+
     :param feature_space: Feature space evaluated by the sweep run.
     :type feature_space: str
-    :param config: Hyper-parameter configuration that produced the metrics.
-    :type config: SweepConfig
     :param accuracy: Held-out accuracy achieved on the validation split.
     :type accuracy: float
     :param best_k: Optimal neighbour count determined for the study.
     :type best_k: int
     :param eligible: Number of evaluation rows contributing to the metrics.
     :type eligible: int
-    :param metrics_path: Filesystem path to the JSON metrics artefact.
-    :type metrics_path: Path
-    :param metrics: Raw metrics dictionary loaded from :attr:`metrics_path`.
-    :type metrics: Mapping[str, object]
     """
-    order_index: int
-    study: "StudySpec"
+
     feature_space: str
-    config: SweepConfig
     accuracy: float
     best_k: int
     eligible: int
-    metrics_path: Path
-    metrics: Mapping[str, object]
 
 @dataclass(frozen=True)
-class SweepTask:  # pylint: disable=too-many-instance-attributes
+class SweepTask(  # pylint: disable=too-many-instance-attributes
+    BaseSweepTask["SweepConfig"]
+):
     """
-    Describe an executable sweep job with resolved CLI arguments and paths.
+    Extend :class:`common.opinion_sweep_types.BaseSweepTask` with KNN metadata.
 
-    :param index: Stable ordinal used to preserve scheduling order.
-    :type index: int
-    :param study: Study specification that the sweep job evaluates.
-    :type study: StudySpec
-    :param config: Hyper-parameter configuration to realise in the job.
-    :type config: SweepConfig
-    :param base_cli: Shared CLI arguments applied to every sweep invocation.
-    :type base_cli: Tuple[str, ...]
-    :param extra_cli: User-specified CLI arguments appended to the invocation.
-    :type extra_cli: Tuple[str, ...]
-    :param run_root: Directory where intermediate sweep artefacts are written.
-    :type run_root: Path
     :param word2vec_model_dir: Optional directory providing cached Word2Vec models.
     :type word2vec_model_dir: Path | None
     :param issue: Human-readable issue label aligned with the study.
     :type issue: str
     :param issue_slug: Normalised slug used for filesystem naming.
     :type issue_slug: str
-    :param metrics_path: Expected location of the metrics JSON produced by the run.
-    :type metrics_path: Path
     """
-    index: int
-    study: "StudySpec"
-    config: SweepConfig
-    base_cli: Tuple[str, ...]
-    extra_cli: Tuple[str, ...]
-    run_root: Path
+
     word2vec_model_dir: Path | None
     issue: str
     issue_slug: str
-    metrics_path: Path
 
 @dataclass
 class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-many-instance-attributes
@@ -271,62 +249,33 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
         return self.outcome.best_k
 
 @dataclass
-class OpinionSweepOutcome:  # pylint: disable=too-many-instance-attributes
+class OpinionSweepOutcome(  # pylint: disable=too-many-instance-attributes
+    BaseOpinionSweepOutcome[SweepConfig]
+):
     """
-    Metrics captured for a configuration/study pair during opinion sweeps.
+    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepOutcome` with
+    KNN-specific opinion regression metrics.
 
-    :param order_index: Stable order matching how sweep jobs were enqueued.
-    :type order_index: int
-    :param study: Opinion study associated with the outcome.
-    :type study: StudySpec
-    :param config: Hyper-parameter configuration that produced the outcome.
-    :type config: SweepConfig
     :param feature_space: Feature space evaluated by the opinion sweep.
     :type feature_space: str
-    :param mae: Mean absolute error achieved on the validation split.
-    :type mae: float
-    :param rmse: Root-mean-square error achieved on the validation split.
-    :type rmse: float
     :param r2_score: Coefficient of determination for the opinion regression.
     :type r2_score: float
     :param baseline_mae: Baseline MAE measured using before-study opinions (if any).
     :type baseline_mae: Optional[float]
-    :param mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
+    :param mae_delta: Absolute delta between ``mae`` and ``baseline_mae``.
     :type mae_delta: Optional[float]
-    :param accuracy: Directional accuracy achieved by the configuration.
-    :type accuracy: Optional[float]
-    :param baseline_accuracy: Directional accuracy achieved by the baseline.
-    :type baseline_accuracy: Optional[float]
-    :param accuracy_delta: Improvement in accuracy over the baseline.
-    :type accuracy_delta: Optional[float]
     :param best_k: Optimal neighbour count determined for the study.
     :type best_k: int
     :param participants: Number of participants contributing to the metrics.
     :type participants: int
-    :param eligible: Count of evaluation examples used for accuracy metrics.
-    :type eligible: Optional[int]
-    :param metrics_path: Filesystem path to the metrics JSON artefact.
-    :type metrics_path: Path
-    :param metrics: Raw metrics payload loaded from :attr:`metrics_path`.
-    :type metrics: Mapping[str, object]
     """
-    order_index: int
-    study: StudySpec
-    config: SweepConfig
+
     feature_space: str
-    mae: float
-    rmse: float
     r2_score: float
     baseline_mae: Optional[float]
     mae_delta: Optional[float]
-    accuracy: Optional[float]
-    baseline_accuracy: Optional[float]
-    accuracy_delta: Optional[float]
     best_k: int
     participants: int
-    eligible: Optional[int]
-    metrics_path: Path
-    metrics: Mapping[str, object]
 
 
 @dataclass(frozen=True)
@@ -619,16 +568,13 @@ class EvaluationContext:
         return self.word2vec_models.shared
 
 @dataclass(frozen=True)
-class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes
+class OpinionSweepTask(  # pylint: disable=too-many-instance-attributes
+    BaseOpinionSweepTask[SweepConfig]
+):
     """
-    Describe an opinion-sweep job paired with its execution context.
+    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepTask` with the
+    CLI context required by the KNN implementation.
 
-    :param index: Stable ordinal matching the submission order.
-    :type index: int
-    :param study: Opinion study that the sweep job targets.
-    :type study: StudySpec
-    :param config: Hyper-parameter configuration under evaluation.
-    :type config: SweepConfig
     :param base_cli: Baseline CLI arguments reused across tasks.
     :type base_cli: Tuple[str, ...]
     :param extra_cli: Additional passthrough CLI arguments for the job.
@@ -637,26 +583,14 @@ class OpinionSweepTask:  # pylint: disable=too-many-instance-attributes
     :type run_root: Path
     :param word2vec_model_dir: Optional directory providing cached Word2Vec models.
     :type word2vec_model_dir: Path | None
-    :param metrics_path: Expected location of the metrics JSON produced by the run.
-    :type metrics_path: Path
     """
-    index: int
-    study: StudySpec
-    config: SweepConfig
+
     base_cli: Tuple[str, ...]
     extra_cli: Tuple[str, ...]
     run_root: Path
     word2vec_model_dir: Path | None
-    metrics_path: Path
 
-# ``typing`` evaluates generic subscripts at runtime, so avoid instantiating the
-# generic base while the module loads to prevent ``TypeError`` when Python
-# validates the number of parameters. Static analyzers still see the narrowed
-# generic thanks to the TYPE_CHECKING branch.
-if TYPE_CHECKING:
-    OpinionSelectionBase = BaseOpinionStudySelection[OpinionSweepOutcome]
-else:
-    OpinionSelectionBase = BaseOpinionStudySelection
+OpinionSelectionBase = narrow_opinion_selection(OpinionSweepOutcome)
 
 class OpinionStudySelection(OpinionSelectionBase):  # pylint: disable=too-many-instance-attributes
     """
@@ -779,6 +713,8 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param opinion_metrics: Cached final opinion metrics grouped by feature space and study.
     :type opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param opinion_from_next_metrics: Opinion metrics computed using the next-video configuration.
+    :type opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param k_sweep: Textual representation of the ``k`` sweep grid.
     :type k_sweep: str
     :param loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.
@@ -807,6 +743,9 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] = field(
         default_factory=dict
     )
+    opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] = field(
+        default_factory=dict
+    )
     k_sweep: str = ""
     loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None
     feature_spaces: Tuple[str, ...] = ("tfidf", "word2vec", "sentence_transformer")
@@ -814,6 +753,7 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     allow_incomplete: bool = False
     include_next_video: bool = True
     include_opinion: bool = True
+    include_opinion_from_next: bool = False
 
 @dataclass(frozen=True)
 class MetricSummary:  # pylint: disable=too-many-instance-attributes
@@ -847,7 +787,7 @@ class MetricSummary:  # pylint: disable=too-many-instance-attributes
     n_eligible: Optional[int] = None
 
 @dataclass(frozen=True)
-class OpinionSummary:  # pylint: disable=too-many-instance-attributes
+class OpinionSummary(OpinionCalibrationMetrics):  # pylint: disable=too-many-instance-attributes
     """
     Normalised view of opinion-regression metrics.
 
@@ -859,16 +799,26 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     :type r2_score: Optional[float]
     :param mae_change: Normalised change in MAE relative to the baseline.
     :type mae_change: Optional[float]
+    :param rmse_change: Root-mean-square error on the opinion-change signal.
+    :type rmse_change: Optional[float]
     :param baseline_mae: Baseline MAE measured using pre-study opinions.
     :type baseline_mae: Optional[float]
+    :param baseline_rmse_change: Baseline RMSE on the opinion-change signal.
+    :type baseline_rmse_change: Optional[float]
     :param mae_delta: Absolute delta between :attr:`mae` and :attr:`baseline_mae`.
     :type mae_delta: Optional[float]
     :param accuracy: Directional accuracy comparing predicted opinion shifts.
     :type accuracy: Optional[float]
-    :param baseline_accuracy: Directional accuracy achieved by the no-change baseline.
-    :type baseline_accuracy: Optional[float]
-    :param accuracy_delta: Improvement in directional accuracy over the baseline.
-    :type accuracy_delta: Optional[float]
+    :param calibration_slope: Calibration slope between predicted and actual opinion deltas.
+    :type calibration_slope: Optional[float]
+    :param calibration_intercept: Calibration intercept between predicted and actual opinion deltas.
+    :type calibration_intercept: Optional[float]
+    :param calibration_ece: Expected calibration error computed over opinion-change bins.
+    :type calibration_ece: Optional[float]
+    :param kl_divergence_change: KL divergence between predicted and actual change distributions.
+    :type kl_divergence_change: Optional[float]
+    :param calibration_bins: Optional tuple of bin summaries backing :attr:`calibration_ece`.
+    :type calibration_bins: Optional[Tuple[Mapping[str, float], ...]]
     :param best_k: Neighbourhood size delivering the final metrics.
     :type best_k: Optional[int]
     :param participants: Number of participants included in the evaluation split.
@@ -879,21 +829,23 @@ class OpinionSummary:  # pylint: disable=too-many-instance-attributes
     :type dataset: Optional[str]
     :param split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
     :type split: Optional[str]
+    :note: Baseline and calibration deltas are documented in :class:`common.opinion.OpinionCalibrationMetrics`.
     """
     mae: Optional[float] = None
     rmse: Optional[float] = None
     r2_score: Optional[float] = None
     mae_change: Optional[float] = None
+    rmse_change: Optional[float] = None
     baseline_mae: Optional[float] = None
+    baseline_rmse_change: Optional[float] = None
     mae_delta: Optional[float] = None
     accuracy: Optional[float] = None
-    baseline_accuracy: Optional[float] = None
-    accuracy_delta: Optional[float] = None
+    calibration_slope: Optional[float] = None
+    calibration_intercept: Optional[float] = None
+    calibration_ece: Optional[float] = None
+    kl_divergence_change: Optional[float] = None
+    calibration_bins: Optional[Tuple[Mapping[str, float], ...]] = None
     best_k: Optional[int] = None
-    participants: Optional[int] = None
-    eligible: Optional[int] = None
-    dataset: Optional[str] = None
-    split: Optional[str] = None
 
 __all__ = [
     "MetricSummary",

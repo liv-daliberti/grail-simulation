@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any, Callable, Dict, Optional, Sequence
 
 try:  # pragma: no cover - optional dependency
@@ -50,6 +51,24 @@ def slate_has_gold(  # pylint: disable=too-many-arguments
     return resolve_gold_index(gold_id, items) >= minimum_index
 
 
+def make_slate_validator(
+    *,
+    load_slate_items: SlateLoader,
+    lookup_gold_id: GoldLookup,
+    resolve_gold_index: IndexResolver,
+    minimum_index: int = 1,
+) -> Callable[[Dict[str, Any]], bool]:
+    """Return a partial of :func:`slate_has_gold` configured for dataset filtering."""
+
+    return partial(
+        slate_has_gold,
+        load_slate_items=load_slate_items,
+        lookup_gold_id=lookup_gold_id,
+        resolve_gold_index=resolve_gold_index,
+        minimum_index=minimum_index,
+    )
+
+
 def drop_marked_rows(dataset: DatasetDict, train_split: str) -> None:
     """Remove rows flagged with ``__drop__`` from every split in-place."""
 
@@ -61,4 +80,4 @@ def drop_marked_rows(dataset: DatasetDict, train_split: str) -> None:
         dataset[split] = dataset[split].select(keep_indices)
 
 
-__all__ = ["drop_marked_rows", "slate_has_gold"]
+__all__ = ["drop_marked_rows", "slate_has_gold", "make_slate_validator"]

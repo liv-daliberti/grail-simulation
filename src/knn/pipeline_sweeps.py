@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
-from common.pipeline_utils import merge_ordered
+from common.pipeline_utils import merge_indexed_outcomes
 from common.prompt_docs import merge_default_extra_fields
 
 from knn.cli import build_parser as build_knn_parser
@@ -51,7 +51,12 @@ from .pipeline_context import (
 )
 from .pipeline_data import issue_slug_for_study
 from .pipeline_io import load_metrics
-from .pipeline_utils import ensure_dir, extract_metric_summary
+from .pipeline_utils import (
+    ensure_dir,
+    ensure_selection_coverage,
+    extract_metric_summary,
+    prepare_task_grid,
+)
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
 
@@ -253,29 +258,22 @@ def prepare_sweep_tasks(
     :rtype: Tuple[List[SweepTask], List[SweepOutcome]]
 
     """
-    pending_tasks: List[SweepTask] = []
-    cached_outcomes: List[SweepOutcome] = []
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
 
-    task_index = 0
-    for config in configs:
-        for study in studies:
-            task = _build_sweep_task(
-                index=task_index,
-                config=config,
-                study=study,
-                context=context,
-                cli_args=(base_cli_tuple, extra_cli_tuple),
-            )
-            task_index += 1
-            if reuse_existing and task.metrics_path.exists():
-                cached = _load_cached_outcome(task)
-                if cached is not None:
-                    cached_outcomes.append(cached)
-                    continue
-            pending_tasks.append(task)
-    return pending_tasks, cached_outcomes
+    return prepare_task_grid(
+        configs,
+        studies,
+        reuse_existing=reuse_existing,
+        build_task=lambda task_index, config, study: _build_sweep_task(
+            index=task_index,
+            config=config,
+            study=study,
+            context=context,
+            cli_args=(base_cli_tuple, extra_cli_tuple),
+        ),
+        load_cached=_load_cached_outcome,
+    )
 
 
 def sweep_outcome_from_metrics(
@@ -346,30 +344,16 @@ def merge_sweep_outcomes(
     :rtype: List[SweepOutcome]
 
     """
-    def _on_replace(_existing: SweepOutcome, incoming: SweepOutcome) -> None:
-        """
-        Emit a warning when a cached sweep outcome is replaced.
-
-        :param _existing: Outcome currently registered for the task index.
-        :type _existing: SweepOutcome
-        :param incoming: Newly produced outcome that will replace ``_existing``.
-        :type incoming: SweepOutcome
-        :returns: ``None``. The function logs a warning for visibility.
-        :rtype: None
-        """
-
-        LOGGER.warning(
-            "Duplicate sweep outcome detected for index=%d (feature=%s study=%s). Overwriting.",
+    return merge_indexed_outcomes(
+        cached,
+        executed,
+        logger=LOGGER,
+        message="Duplicate sweep outcome detected for index=%d (feature=%s study=%s). Overwriting.",
+        args_factory=lambda _existing, incoming: (
             incoming.order_index,
             incoming.feature_space,
             incoming.study.key,
-        )
-
-    return merge_ordered(
-        cached,
-        executed,
-        order_key=lambda outcome: outcome.order_index,
-        on_replace=_on_replace,
+        ),
     )
 
 def execute_opinion_sweep_tasks(tasks: Sequence[OpinionSweepTask]) -> List[OpinionSweepOutcome]:
@@ -623,22 +607,15 @@ def select_best_configs(
         if current is None or _is_better(outcome, current.outcome):
             per_feature[outcome.study.key] = StudySelection(study=outcome.study, outcome=outcome)
 
-    expected_keys = [study.key for study in studies]
-    for feature_space, per_feature in selections.items():
-        missing = [key for key in expected_keys if key not in per_feature]
-        if missing:
-            if allow_incomplete:
-                LOGGER.warning(
-                    "Missing sweep selections for feature=%s: %s. Continuing because allow-incomplete mode is enabled.",
-                    feature_space,
-                    ", ".join(missing),
-                )
-            else:
-                raise RuntimeError(
-                    f"Missing sweep selections for feature={feature_space}: {', '.join(missing)}"
-                )
-    if not selections:
-        raise RuntimeError("Failed to select a best configuration for any feature space.")
+    ensure_selection_coverage(
+        selections,
+        studies,
+        allow_incomplete=allow_incomplete,
+        logger=LOGGER,
+        missing_descriptor="sweep selections",
+        empty_descriptor="feature space",
+        require_selected=True,
+    )
     return selections
 
 __all__ = [

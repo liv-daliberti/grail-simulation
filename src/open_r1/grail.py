@@ -26,11 +26,10 @@ from __future__ import annotations
 import logging
 import os
 import re
-from functools import partial
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
+    Callable,
     List,
     Mapping,
     NamedTuple,
@@ -51,30 +50,24 @@ from transformers import (  # pylint: disable=import-error
 from trl import ModelConfig, get_peft_config  # pylint: disable=import-error
 from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
 
+from common.hf_datasets import DatasetDict
 from prompt_builder import as_list_json
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
-from open_r1.dataset_utils import drop_marked_rows, slate_has_gold
+from open_r1.dataset_utils import drop_marked_rows, make_slate_validator
 from open_r1.example_utils import (
+    call_row_to_training_example,
     get_gold_next_id,
     gold_index_from_items,
     load_slate_items,
-    row_to_training_example,
 )
 from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
-    configure_eval as shared_configure_eval,
     parse_and_run,
-    prepare_eval_dataset as shared_prepare_eval_dataset,
-    resolve_checkpoint as shared_resolve_checkpoint,
+    prepare_model_eval_and_run_grpo,
 )
 from open_r1.utils import get_dataset, get_model, get_tokenizer
-
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from datasets import DatasetDict
-else:  # pragma: no cover - fallback for optional dependency
-    DatasetDict = Any
 
 logger = logging.getLogger(__name__)
 
@@ -118,28 +111,16 @@ def _parse_index_from_answer_block(text: str) -> Optional[int]:
         return None
 
 
-def _row_to_example(
-    ex: Dict[str, Any],
-    system_prompt: Optional[str],
-    sol_key: Optional[str],
-    max_hist: int = 12,
-) -> Optional[Dict[str, Any]]:
-    """Return the shared GRPO training payload for ``ex`` or ``None`` when invalid."""
+def _grail_extra_fields(
+    example: Mapping[str, Any],
+    _: Sequence[Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    """Return additional metadata fields to attach to each GRPO training example."""
 
-    def _extras(example: Mapping[str, Any], _: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
-        return {
-            "slate_items_with_meta": as_list_json(example.get("slate_items_json")),
-            **collect_passthrough_fields(example),
-        }
-
-    return row_to_training_example(
-        ex,
-        system_prompt=system_prompt,
-        solution_key=sol_key,
-        max_history=max_hist,
-        passthrough_fn=lambda example: {},
-        extra_fields_fn=_extras,
-    )
+    return {
+        "slate_items_with_meta": as_list_json(example.get("slate_items_json")),
+        **collect_passthrough_fields(example),
+    }
 
 
 def _render_disc_text(
@@ -194,10 +175,16 @@ def _prepare_dataset(
     def _format_example(example: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Return the formatted example or ``None`` when the slate is invalid."""
 
-        return _row_to_example(example, system_prompt, solution_key, max_hist=max_hist)
+        return call_row_to_training_example(
+            example,
+            system_prompt=system_prompt,
+            solution_key=solution_key,
+            max_history=max_hist,
+            passthrough_fn=None,
+            extra_fields_fn=_grail_extra_fields,
+        )
 
-    validator = partial(
-        slate_has_gold,
+    validator = make_slate_validator(
         load_slate_items=load_slate_items,
         lookup_gold_id=get_gold_next_id,
         resolve_gold_index=gold_index_from_items,
@@ -623,12 +610,6 @@ def _build_dataset_and_tokenizer(
     return dataset, tokenizer
 
 
-def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
-    """Return checkpoint path for the GAIL pipeline, respecting overrides."""
-
-    return shared_resolve_checkpoint(training_args)
-
-
 def main(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
@@ -649,48 +630,32 @@ def main(
         training_args.reward_weights,
     )
 
-    model = get_model(model_args, training_args)
-    model.generation_config.return_dict_in_generate = True
-    model.config.return_dict_in_generate = True
+    def _gail_eval_factory(grpo_trainer: Any) -> Callable[[], Mapping[str, Any]]:
+        """Return an evaluation wrapper that freezes GAIL gradients."""
 
-    train_split = script_args.dataset_train_split
-    eval_ds = shared_prepare_eval_dataset(
-        dataset,
-        script_args,
-        training_args,
+        def _evaluate_with_gail() -> Mapping[str, Any]:
+            os.environ["GAIL_EVAL_MODE"] = "1"
+            try:
+                return grpo_trainer.evaluate()
+            finally:
+                os.environ["GAIL_EVAL_MODE"] = "0"
+
+        return _evaluate_with_gail
+
+    prepare_model_eval_and_run_grpo(
+        model_builder=get_model,
+        dataset=dataset,
+        script_args=script_args,
+        training_args=training_args,
+        model_args=model_args,
+        tokenizer=tokenizer,
+        reward_funcs=reward_fns,
+        trainer_cls=GRPOTrainer,
         logger=logger,
         prefix="grail",
+        peft_config_fn=get_peft_config,
+        evaluate_fn_factory=_gail_eval_factory,
     )
-    shared_configure_eval(training_args, eval_ds, logger=logger, prefix="grail")
-
-    trainer = GRPOTrainer(
-        model=model,
-        args=training_args,
-        reward_funcs=reward_fns,
-        train_dataset=dataset[train_split],
-        eval_dataset=eval_ds,
-        peft_config=get_peft_config(model_args),
-        processing_class=tokenizer,
-    )
-
-    last_ckpt = _resolve_checkpoint(training_args)
-    train_result = trainer.train(resume_from_checkpoint=last_ckpt)
-    trainer.log_metrics("train", train_result.metrics)
-    trainer.save_metrics("train", train_result.metrics)
-    trainer.save_state()
-    trainer.save_model(training_args.output_dir)
-
-    if getattr(training_args, "do_eval", False) and eval_ds is not None:
-        # Toggle GAIL into eval mode so discriminator gradients stay frozen during validation.
-        os.environ["GAIL_EVAL_MODE"] = "1"
-        metrics = trainer.evaluate()
-        os.environ["GAIL_EVAL_MODE"] = "0"
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    if getattr(training_args, "push_to_hub", False):
-        # Use TRL helper so hub_model_id, hub_strategy, etc., from YAML apply automatically.
-        trainer.push_to_hub(dataset_name=script_args.dataset_name, tags=["open-r1"])
 
 
 if __name__ == "__main__":

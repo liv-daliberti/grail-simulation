@@ -275,7 +275,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -289,7 +289,11 @@
     <span class="n">EXTRA_FIELD_LABELS</span> <span class="k">as</span> <span class="n">_COMMON_EXTRA_FIELD_LABELS</span><span class="p">,</span>
     <span class="n">create_prompt_document_builder</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">CandidateMetadata</span><span class="p">,</span> <span class="n">PromptSelectionHelper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_selection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CandidateMetadata</span><span class="p">,</span>
+    <span class="n">PROMPT_SELECTION_EXPORT_ATTRS</span><span class="p">,</span>
+    <span class="n">PromptSelectionHelper</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">PROMPT_COLUMN</span><span class="p">,</span> <span class="n">PROMPT_MAX_HISTORY</span><span class="p">,</span> <span class="n">SOLUTION_COLUMN</span>
 
@@ -306,6 +310,7 @@
 
 <span class="n">_PROMPT_FEATURES</span> <span class="o">=</span> <span class="n">PromptSelectionHelper</span><span class="p">(</span><span class="n">_PROMPT_DOC_BUILDER</span><span class="p">)</span>
 
+<span class="c1"># Explicit re-exports so static analysers see the helper functions.</span>
 <span class="n">title_for</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">title_for</span>
 <span class="n">viewer_profile_sentence</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">viewer_profile_sentence</span>
 <span class="n">prompt_from_builder</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">prompt_from_builder</span>
@@ -316,7 +321,7 @@
 <span class="n">assemble_document</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">assemble_document</span>
 <span class="n">prepare_training_documents</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">prepare_training_documents</span>
 <span class="n">prepare_prompt_documents</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">prepare_prompt_documents</span>
-<span class="n">candidate_feature_tokens</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">candidate_feature_tokens</span>
+<span class="n">candidate_feature_tokens</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_PROMPT_FEATURES</span><span class="o">.</span><span class="n">candidate_feature_tokens</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -504,18 +509,10 @@
     <span class="s2">&quot;DEFAULT_TITLE_DIRS&quot;</span><span class="p">,</span>
     <span class="s2">&quot;EXTRA_FIELD_LABELS&quot;</span><span class="p">,</span>
     <span class="s2">&quot;CandidateMetadata&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;candidate_feature_tokens&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;collect_candidate_metadata&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;selection_feature_tokens&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Word2VecConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Word2VecFeatureBuilder&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;assemble_document&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;extract_now_watching&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;extract_slate_items&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;prepare_training_documents&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;prompt_from_builder&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;title_for&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;viewer_profile_sentence&quot;</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">PROMPT_SELECTION_EXPORT_ATTRS</span><span class="p">,</span>
+    <span class="s2">&quot;candidate_feature_tokens&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
         </article>

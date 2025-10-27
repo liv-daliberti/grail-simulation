@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 import numpy as np
 from numpy.random import default_rng
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.neighbors import NearestNeighbors
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
@@ -38,10 +38,12 @@ from common.opinion import (
     OpinionExample as BaseOpinionExample,
     OpinionSpec,
     float_or_none,
-    opinion_example_kwargs,
+    make_opinion_example,
 )
+from common.opinion_metrics import compute_opinion_metrics
 from common.prompt_docs import merge_default_extra_fields
 from common.vectorizers import create_tfidf_vectorizer
+from common.matplotlib_utils import plt
 
 from .data import (
     DEFAULT_DATASET_SOURCE,
@@ -51,14 +53,6 @@ from .data import (
 )
 from .evaluate import parse_k_values, resolve_reports_dir
 from .features import Word2VecConfig, Word2VecFeatureBuilder, assemble_document
-
-try:  # pragma: no cover - optional dependency
-    import matplotlib
-
-    matplotlib.use("Agg", force=True)
-    from matplotlib import pyplot as plt
-except ImportError:  # pragma: no cover - optional dependency
-    plt = None
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -186,16 +180,10 @@ def collect_examples(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         session_id = example.get("session_id")
-        base_kwargs = opinion_example_kwargs(
-            participant_id=participant_id,
-            participant_study=spec.key,
-            issue=spec.issue,
-            document=document,
-            before=before,
-            after=after,
-        )
-        candidate = OpinionExample(
-            **base_kwargs,
+        core_args = (spec, participant_id, document, before, after)
+        candidate = make_opinion_example(
+            *core_args,
+            factory=OpinionExample,
             step_index=step_index,
             session_id=str(session_id) if session_id is not None else None,
         )
@@ -546,15 +534,6 @@ def predict_post_indices(
         "per_k_change_predictions": per_k_change_predictions,
     }
 
-def _direction_labels(delta: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
-    """Return categorical labels capturing the direction of opinion change."""
-
-    labels = np.zeros(delta.shape, dtype=np.int8)
-    labels[delta > tolerance] = 1
-    labels[delta < -tolerance] = -1
-    return labels
-
-
 def _metric_bundle(
     *,
     truth_after: np.ndarray,
@@ -563,28 +542,11 @@ def _metric_bundle(
 ) -> Dict[str, float]:
     """Compute evaluation metrics for the supplied predictions."""
 
-    change_truth = truth_after - truth_before
-    change_pred = preds_arr - truth_before
-    mae = float(mean_absolute_error(truth_after, preds_arr))
-    rmse = float(math.sqrt(mean_squared_error(truth_after, preds_arr)))
-    r_squared = float(r2_score(truth_after, preds_arr))
-    change_mae = float(mean_absolute_error(change_truth, change_pred))
-    direction_truth = _direction_labels(change_truth)
-    direction_pred = _direction_labels(change_pred)
-    accuracy = (
-        float(np.mean(direction_truth == direction_pred))
-        if direction_truth.size
-        else float("nan")
+    return compute_opinion_metrics(
+        truth_after=truth_after,
+        truth_before=truth_before,
+        pred_after=preds_arr,
     )
-    eligible = int(direction_truth.size)
-    return {
-        "mae_after": mae,
-        "rmse_after": rmse,
-        "r2_after": r_squared,
-        "mae_change": change_mae,
-        "direction_accuracy": accuracy,
-        "eligible": eligible,
-    }
 
 
 def _row_prediction_values(
@@ -790,28 +752,34 @@ def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, floa
     """
     truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
     truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
-    change_truth = truth_after - truth_before
-
     baseline_mean = float(truth_after.mean()) if truth_after.size else float("nan")
     baseline_predictions = np.full_like(truth_after, baseline_mean)
     mae_mean = float(mean_absolute_error(truth_after, baseline_predictions))
     rmse_mean = float(math.sqrt(mean_squared_error(truth_after, baseline_predictions)))
 
-    mae_no_change = float(mean_absolute_error(truth_after, truth_before))
-    change_zero = np.zeros_like(change_truth)
-    mae_change_zero = float(mean_absolute_error(change_truth, change_zero))
-    direction_truth = _direction_labels(change_truth)
-    baseline_direction_accuracy = (
-        float(np.mean(direction_truth == 0))
-        if direction_truth.size
-        else float("nan")
+    no_change_metrics = compute_opinion_metrics(
+        truth_after=truth_after,
+        truth_before=truth_before,
+        pred_after=truth_before,
     )
+    baseline_direction_accuracy = no_change_metrics.get("direction_accuracy")
+    if baseline_direction_accuracy is not None and not math.isnan(baseline_direction_accuracy):
+        baseline_direction_accuracy = float(baseline_direction_accuracy)
+    else:
+        baseline_direction_accuracy = float("nan")
 
     return {
         "mae_global_mean_after": mae_mean,
         "rmse_global_mean_after": rmse_mean,
-        "mae_using_before": mae_no_change,
-        "mae_change_zero": mae_change_zero,
+        "mae_using_before": float(no_change_metrics["mae_after"]),
+        "rmse_using_before": float(no_change_metrics["rmse_after"]),
+        "mae_change_zero": float(no_change_metrics["mae_change"]),
+        "rmse_change_zero": float(no_change_metrics["rmse_change"]),
+        "calibration_slope_change_zero": no_change_metrics.get("calibration_slope"),
+        "calibration_intercept_change_zero": no_change_metrics.get("calibration_intercept"),
+        "calibration_ece_change_zero": no_change_metrics.get("calibration_ece"),
+        "calibration_bins_change_zero": no_change_metrics.get("calibration_bins"),
+        "kl_divergence_change_zero": no_change_metrics.get("kl_divergence_change"),
         "global_mean_after": baseline_mean,
         "direction_accuracy": baseline_direction_accuracy,
     }
@@ -964,6 +932,14 @@ class _OutputPayload:
     curve_metrics: Optional[Dict[str, Any]] = None
 
 
+@dataclass(frozen=True)
+class _PredictionResults:
+    """Intermediate predictions and metrics produced during evaluation."""
+
+    rows: Sequence[Dict[str, Any]]
+    metrics_by_k: Dict[int, Dict[str, float]]
+
+
 def _opinion_change_series(
     rows: Sequence[Dict[str, Any]],
     best_k: int,
@@ -1017,12 +993,33 @@ def _compose_metrics_record(
             "r2_after": float(values["r2_after"]),
             "mae_change": float(values["mae_change"]),
         }
-        direction_accuracy = values.get("direction_accuracy")
-        if direction_accuracy is not None:
-            bundle["direction_accuracy"] = float(direction_accuracy)
+        for key in (
+            "rmse_change",
+            "direction_accuracy",
+            "calibration_slope",
+            "calibration_intercept",
+            "calibration_ece",
+            "kl_divergence_change",
+        ):
+            optional_value = values.get(key)
+            if optional_value is None:
+                continue
+            try:
+                numeric_value = float(optional_value)
+            except (TypeError, ValueError):
+                continue
+            if math.isnan(numeric_value):
+                continue
+            bundle[key] = numeric_value
+        calibration_bins = values.get("calibration_bins")
+        if calibration_bins:
+            bundle["calibration_bins"] = calibration_bins
         eligible_value = values.get("eligible")
         if eligible_value is not None:
-            bundle["eligible"] = int(eligible_value)
+            try:
+                bundle["eligible"] = int(eligible_value)
+            except (TypeError, ValueError):
+                pass
         metrics_by_k[str(k)] = bundle
     record: Dict[str, Any] = {
         "model": "knn_opinion",
@@ -1046,9 +1043,11 @@ def _compose_metrics_record(
     if payload.curve_metrics:
         record["curve_metrics"] = payload.curve_metrics
     best_metrics = record["best_metrics"]
-    best_direction_accuracy = best_metrics.get("direction_accuracy")
-    if best_direction_accuracy is not None:
-        record["best_direction_accuracy"] = float(best_direction_accuracy)
+    if (
+        "direction_accuracy" in best_metrics
+        and best_metrics["direction_accuracy"] is not None
+    ):
+        record["best_direction_accuracy"] = float(best_metrics["direction_accuracy"])
     eligible_best = best_metrics.get("eligible")
     if eligible_best is not None:
         record["eligible"] = int(eligible_best)
@@ -1115,6 +1114,227 @@ def _write_outputs(
         metrics_path,
     )
 
+
+def _resolve_requested_specs(args: Any) -> List[OpinionSpec]:
+    """Return the list of opinion study specs requested via CLI arguments."""
+
+    raw = getattr(args, "opinion_studies", "") or ""
+    if raw:
+        tokens = [token.strip() for token in raw.split(",") if token.strip()]
+    else:
+        tokens = [spec.key for spec in DEFAULT_SPECS]
+    return [find_spec(token) for token in tokens]
+
+
+def _extra_fields_from_args(args: Any) -> Sequence[str]:
+    """Collect additional prompt fields configured for the evaluation run."""
+
+    raw_fields = getattr(args, "knn_text_fields", "") or ""
+    tokens = [token.strip() for token in raw_fields.split(",") if token.strip()]
+    return merge_default_extra_fields(tokens)
+
+
+def _resolve_word2vec_config(args: Any, feature_space: str) -> Optional[Word2VecConfig]:
+    """Return the Word2Vec configuration when enabled via ``feature_space``."""
+
+    if feature_space != "word2vec":
+        return None
+    defaults = Word2VecConfig()
+    model_override = getattr(args, "word2vec_model_dir", None)
+    model_dir = (
+        Path(model_override)
+        if model_override
+        else Path("models/knn/opinions/word2vec_models")
+    )
+    return Word2VecConfig(
+        vector_size=int(getattr(args, "word2vec_size", defaults.vector_size)),
+        window=int(getattr(args, "word2vec_window", defaults.window)),
+        min_count=int(getattr(args, "word2vec_min_count", defaults.min_count)),
+        epochs=int(getattr(args, "word2vec_epochs", defaults.epochs)),
+        model_dir=model_dir,
+        seed=int(getattr(args, "knn_seed", defaults.seed)),
+        workers=int(getattr(args, "word2vec_workers", defaults.workers)),
+    )
+
+
+def _resolve_sentence_config(
+    args: Any,
+    feature_space: str,
+) -> Optional[SentenceTransformerConfig]:
+    """Return the SentenceTransformer configuration when requested."""
+
+    if feature_space != "sentence_transformer":
+        return None
+    device = getattr(args, "sentence_transformer_device", "") or None
+    return SentenceTransformerConfig(
+        model_name=getattr(
+            args,
+            "sentence_transformer_model",
+            SentenceTransformerConfig().model_name,
+        ),
+        device=device,
+        batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
+        normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
+    )
+
+
+def _training_curve_metrics(
+    index: OpinionIndex,
+    train_examples: Sequence[OpinionExample],
+    k_values: Sequence[int],
+) -> Optional[Dict[str, Any]]:
+    """Compute curve metrics for the training split, if available."""
+
+    if not train_examples:
+        return None
+    predictions_bundle = predict_post_indices(
+        index=index,
+        eval_examples=train_examples,
+        k_values=k_values,
+        exclude_self=True,
+    )
+    metrics_by_k = _summary_metrics(
+        predictions=predictions_bundle["per_k_predictions"],
+        eval_examples=train_examples,
+        rows=predictions_bundle["rows"],
+    )
+    return _curve_payload(metrics_by_k, n_examples=len(train_examples))
+
+
+def _evaluation_predictions(
+    index: OpinionIndex,
+    eval_examples: Sequence[OpinionExample],
+    k_values: Sequence[int],
+) -> _PredictionResults:
+    """Return per-example predictions and summary metrics for evaluation examples."""
+
+    predictions_bundle = predict_post_indices(
+        index=index,
+        eval_examples=eval_examples,
+        k_values=k_values,
+    )
+    rows = predictions_bundle["rows"]
+    metrics_by_k = _summary_metrics(
+        predictions=predictions_bundle["per_k_predictions"],
+        eval_examples=eval_examples,
+        rows=rows,
+    )
+    return _PredictionResults(rows=rows, metrics_by_k=metrics_by_k)
+
+
+def _curve_metrics_bundle(
+    metrics_by_k: Dict[int, Dict[str, float]],
+    eval_examples: Sequence[OpinionExample],
+    train_curve_metrics: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    """Compose the optional train/eval curve payload persisted with metrics."""
+
+    eval_curve_metrics = _curve_payload(
+        metrics_by_k,
+        n_examples=len(eval_examples),
+    )
+    bundle: Optional[Dict[str, Any]] = None
+    if eval_curve_metrics:
+        bundle = {"eval": eval_curve_metrics}
+        if train_curve_metrics:
+            bundle["train"] = train_curve_metrics
+    elif train_curve_metrics:
+        bundle = {"train": train_curve_metrics}
+    if bundle is None:
+        return None
+    bundle["metric"] = "mae_after"
+    return bundle
+
+
+def _select_best_k(
+    metrics_by_k: Mapping[int, Mapping[str, float]],
+    k_values: Sequence[int],
+) -> int:
+    """Return the best-performing ``k`` according to the R^2 metric."""
+
+    if metrics_by_k:
+        return max(metrics_by_k.items(), key=lambda item: item[1]["r2_after"])[0]
+    return int(k_values[0])
+
+
+def _evaluate_opinion_study(
+    *,
+    args: Any,
+    dataset: Mapping[str, Sequence[Any]],
+    spec: OpinionSpec,
+    extra_fields: Sequence[str],
+    k_values: Sequence[int],
+    feature_space: str,
+    word2vec_config: Optional[Word2VecConfig],
+    sentence_config: Optional[SentenceTransformerConfig],
+    outputs_root: Path,
+) -> None:
+    """Run the full evaluation pipeline for a single opinion study."""
+
+    LOGGER.info("[OPINION] Study=%s (%s)", spec.key, spec.label)
+    train_examples = collect_examples(
+        dataset[TRAIN_SPLIT],
+        spec=spec,
+        extra_fields=extra_fields,
+        max_examples=int(getattr(args, "knn_max_train", 0) or 0),
+        seed=int(getattr(args, "knn_seed", 42)),
+    )
+    if not train_examples:
+        LOGGER.warning("[OPINION] No training examples found for study=%s", spec.key)
+        return
+
+    index = build_index(
+        examples=train_examples,
+        feature_space=feature_space,
+        spec=spec,
+        seed=int(getattr(args, "knn_seed", 42)),
+        metric=str(getattr(args, "knn_metric", "cosine")),
+        word2vec_config=word2vec_config,
+        sentence_config=sentence_config,
+    )
+
+    eval_examples = collect_examples(
+        dataset[EVAL_SPLIT],
+        spec=spec,
+        extra_fields=extra_fields,
+        max_examples=int(getattr(args, "eval_max", 0) or 0),
+        seed=int(getattr(args, "knn_seed", 42)),
+    )
+    if not eval_examples:
+        LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)
+        return
+
+    predictions = _evaluation_predictions(index, eval_examples, k_values)
+    best_k = _select_best_k(predictions.metrics_by_k, k_values)
+    output_payload = _OutputPayload(
+        rows=predictions.rows,
+        metrics_by_k=predictions.metrics_by_k,
+        baseline=_baseline_metrics(eval_examples),
+        best_k=best_k,
+        curve_metrics=_curve_metrics_bundle(
+            predictions.metrics_by_k,
+            eval_examples,
+            _training_curve_metrics(index, train_examples, k_values),
+        ),
+    )
+    _write_outputs(
+        context=_OutputContext(
+            args=args,
+            spec=spec,
+            index=index,
+            outputs_root=outputs_root,
+        ),
+        payload=output_payload,
+    )
+    LOGGER.info(
+        "[OPINION][DONE] study=%s participants=%d best_k=%d r2=%.4f mae=%.4f",
+        spec.key,
+        len(predictions.rows),
+        best_k,
+        float(output_payload.metrics_by_k.get(best_k, {}).get("r2_after", float("nan"))),
+        float(output_payload.metrics_by_k.get(best_k, {}).get("mae_after", float("nan"))),
+    )
+
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
 def run_opinion_eval(args) -> None:
     """
@@ -1129,168 +1349,33 @@ def run_opinion_eval(args) -> None:
     :rtype: None
 
     """
-    os_env = os.environ
-    os_env.setdefault("HF_DATASETS_CACHE", args.cache_dir)
-    os_env.setdefault("HF_HOME", args.cache_dir)
+    os.environ.setdefault("HF_DATASETS_CACHE", args.cache_dir)
+    os.environ.setdefault("HF_HOME", args.cache_dir)
 
-    dataset_source = args.dataset or DEFAULT_DATASET_SOURCE
-    dataset = load_dataset_source(dataset_source, args.cache_dir)
-
-    if args.opinion_studies:
-        requested = [
-            token.strip() for token in args.opinion_studies.split(",") if token.strip()
-        ]
-    else:
-        requested = [spec.key for spec in DEFAULT_SPECS]
-
-    specs = [find_spec(token) for token in requested]
-
-    extra_fields = merge_default_extra_fields(
-        [token.strip() for token in (args.knn_text_fields or "").split(",") if token.strip()]
-    )
-
+    dataset = load_dataset_source(args.dataset or DEFAULT_DATASET_SOURCE, args.cache_dir)
+    specs = _resolve_requested_specs(args)
+    extra_fields = _extra_fields_from_args(args)
     k_values = parse_k_values(args.knn_k, args.knn_k_sweep)
     LOGGER.info("[OPINION] Evaluating k values: %s", k_values)
 
     feature_space = str(getattr(args, "feature_space", "tfidf")).lower()
-    word2vec_cfg = None
-    if feature_space == "word2vec":
-        default_model_base = Path("models/knn/opinions/word2vec_models")
-        model_dir = Path(args.word2vec_model_dir) if args.word2vec_model_dir else default_model_base
-        word2vec_cfg = Word2VecConfig(
-            vector_size=int(args.word2vec_size),
-            window=int(getattr(args, "word2vec_window", Word2VecConfig().window)),
-            min_count=int(getattr(args, "word2vec_min_count", Word2VecConfig().min_count)),
-            epochs=int(getattr(args, "word2vec_epochs", Word2VecConfig().epochs)),
-            model_dir=model_dir,
-            seed=int(getattr(args, "knn_seed", Word2VecConfig().seed)),
-            workers=int(getattr(args, "word2vec_workers", Word2VecConfig().workers)),
-        )
-    sentence_cfg = None
-    if feature_space == "sentence_transformer":
-        device_raw = getattr(args, "sentence_transformer_device", "")
-        sentence_cfg = SentenceTransformerConfig(
-            model_name=getattr(
-                args,
-                "sentence_transformer_model",
-                SentenceTransformerConfig().model_name,
-            ),
-            device=device_raw or None,
-            batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
-            normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
-        )
+    word2vec_cfg = _resolve_word2vec_config(args, feature_space)
+    sentence_cfg = _resolve_sentence_config(args, feature_space)
 
     outputs_root = Path(args.out_dir) / "opinion" / feature_space
     outputs_root.mkdir(parents=True, exist_ok=True)
 
     for spec in specs:
-        LOGGER.info("[OPINION] Study=%s (%s)", spec.key, spec.label)
-        train_examples = collect_examples(
-            dataset[TRAIN_SPLIT],
+        _evaluate_opinion_study(
+            args=args,
+            dataset=dataset,
             spec=spec,
             extra_fields=extra_fields,
-            max_examples=int(getattr(args, "knn_max_train", 0) or 0),
-            seed=int(getattr(args, "knn_seed", 42)),
-        )
-        if not train_examples:
-            LOGGER.warning("[OPINION] No training examples found for study=%s", spec.key)
-            continue
-
-        index = build_index(
-            examples=train_examples,
+            k_values=k_values,
             feature_space=feature_space,
-            spec=spec,
-            seed=int(getattr(args, "knn_seed", 42)),
-            metric=str(getattr(args, "knn_metric", "cosine")),
             word2vec_config=word2vec_cfg,
             sentence_config=sentence_cfg,
-        )
-
-        eval_examples = collect_examples(
-            dataset[EVAL_SPLIT],
-            spec=spec,
-            extra_fields=extra_fields,
-            max_examples=int(getattr(args, "eval_max", 0) or 0),
-            seed=int(getattr(args, "knn_seed", 42)),
-        )
-        if not eval_examples:
-            LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)
-            continue
-
-        train_curve_metrics: Optional[Dict[str, Any]] = None
-        if train_examples:
-            train_predictions_bundle = predict_post_indices(
-                index=index,
-                eval_examples=train_examples,
-                k_values=k_values,
-                exclude_self=True,
-            )
-            train_rows = train_predictions_bundle["rows"]
-            train_metrics_by_k = _summary_metrics(
-                predictions=train_predictions_bundle["per_k_predictions"],
-                eval_examples=train_examples,
-                rows=train_rows,
-            )
-            train_curve = _curve_payload(
-                train_metrics_by_k,
-                n_examples=len(train_examples),
-            )
-            if train_curve:
-                train_curve_metrics = train_curve
-
-        predictions_bundle = predict_post_indices(
-            index=index,
-            eval_examples=eval_examples,
-            k_values=k_values,
-        )
-        rows = predictions_bundle["rows"]
-        metrics_by_k = _summary_metrics(
-            predictions=predictions_bundle["per_k_predictions"],
-            eval_examples=eval_examples,
-            rows=rows,
-        )
-
-        if metrics_by_k:
-            best_k, _ = max(metrics_by_k.items(), key=lambda item: item[1]["r2_after"])
-        else:
-            best_k = k_values[0]
-
-        baseline = _baseline_metrics(eval_examples)
-        eval_curve_metrics = _curve_payload(
-            metrics_by_k,
-            n_examples=len(eval_examples),
-        )
-        curve_bundle: Optional[Dict[str, Any]] = None
-        if eval_curve_metrics:
-            curve_bundle = {"eval": eval_curve_metrics}
-            if train_curve_metrics:
-                curve_bundle["train"] = train_curve_metrics
-        elif train_curve_metrics:
-            curve_bundle = {"train": train_curve_metrics}
-        if curve_bundle is not None:
-            curve_bundle["metric"] = "mae_after"
-        output_context = _OutputContext(
-            args=args,
-            spec=spec,
-            index=index,
             outputs_root=outputs_root,
-        )
-        output_payload = _OutputPayload(
-            rows=rows,
-            metrics_by_k=metrics_by_k,
-            baseline=baseline,
-            best_k=best_k,
-            curve_metrics=curve_bundle,
-        )
-        _write_outputs(context=output_context, payload=output_payload)
-
-        LOGGER.info(
-            "[OPINION][DONE] study=%s participants=%d best_k=%d r2=%.4f mae=%.4f",
-            spec.key,
-            len(rows),
-            best_k,
-            float(metrics_by_k.get(best_k, {}).get("r2_after", float("nan"))),
-            float(metrics_by_k.get(best_k, {}).get("mae_after", float("nan"))),
         )
 
 __all__ = ["run_opinion_eval", "OpinionSpec", "DEFAULT_SPECS"]

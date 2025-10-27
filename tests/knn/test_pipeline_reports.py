@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.common.pipeline_models import StudySpec
+from src.common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 from src.knn.pipeline_context import (
     OpinionStudySelection,
     OpinionSweepOutcome,
@@ -66,16 +67,26 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
         "split": "validation",
         "best_metrics": {
             "mae_after": 0.45,
+            "mae_change": 0.04,
             "rmse_after": 0.62,
+            "rmse_change": 0.31,
             "r2_after": 0.11,
             "direction_accuracy": 0.58,
+            "calibration_slope": 0.92,
+            "calibration_intercept": 0.01,
+            "calibration_ece": 0.05,
+            "kl_divergence_change": 0.15,
             "eligible": 48,
         },
         "baseline": {
             "mae_using_before": 0.5,
+            "rmse_change_zero": 0.4,
             "direction_accuracy": 0.5,
+            "calibration_slope_change_zero": 0.0,
+            "calibration_intercept_change_zero": 0.0,
+            "calibration_ece_change_zero": 0.08,
+            "kl_divergence_change_zero": 0.25,
         },
-        "mae_change": -0.05,
         "n_participants": 50,
         "best_k": 5,
     }
@@ -89,14 +100,18 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
         r2_score=0.11,
         baseline_mae=0.5,
         mae_delta=-0.05,
-        accuracy=0.58,
-        baseline_accuracy=0.5,
-        accuracy_delta=0.08,
         best_k=5,
         participants=50,
-        eligible=48,
-        metrics_path=repo_root / "opinion_metrics.json",
-        metrics=opinion_metrics,
+        artifact=MetricsArtifact(
+            path=repo_root / "opinion_metrics.json",
+            payload=opinion_metrics,
+        ),
+        accuracy_summary=AccuracySummary(
+            value=0.58,
+            baseline=0.5,
+            delta=0.08,
+            eligible=48,
+        ),
     )
     opinion_selection = OpinionStudySelection(study=study, outcome=opinion_outcome)
 
@@ -108,6 +123,7 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
         studies=[study],
         metrics_by_feature={"tfidf": {study.key: next_video_metrics}},
         opinion_metrics={"tfidf": {study.key: opinion_metrics}},
+        opinion_from_next_metrics={"tfidf": {study.key: opinion_metrics}},
         k_sweep="3, 5 / 7",
         loso_metrics={"tfidf": {study.key: next_video_metrics}},
         feature_spaces=("tfidf",),
@@ -115,6 +131,7 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
         allow_incomplete=False,
         include_next_video=True,
         include_opinion=True,
+        include_opinion_from_next=True,
     )
 
     generate_reports(repo_root, bundle)
@@ -123,12 +140,14 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     hyper_path = repo_root / "reports" / "knn" / "hyperparameter_tuning" / "README.md"
     next_video_path = repo_root / "reports" / "knn" / "next_video" / "README.md"
     opinion_path = repo_root / "reports" / "knn" / "opinion" / "README.md"
+    opinion_next_path = repo_root / "reports" / "knn" / "opinion_from_next" / "README.md"
     features_path = repo_root / "reports" / "knn" / "additional_features" / "README.md"
 
     assert catalog_path.exists()
     assert hyper_path.exists()
     assert next_video_path.exists()
     assert opinion_path.exists()
+    assert opinion_next_path.exists()
     assert features_path.exists()
 
     assert "# KNN Report Catalog" in catalog_path.read_text()
@@ -144,6 +163,11 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     opinion_text = opinion_path.read_text()
     assert "KNN Opinion Shift Study" in opinion_text
     assert "Study A" in opinion_text
+    assert "RMSE (change)" in opinion_text
+    assert "calibration slope &" in opinion_text
+
+    opinion_next_text = opinion_next_path.read_text()
+    assert "Next-Video Config" in opinion_next_text
 
     features_text = features_path.read_text()
     assert "Additional Text Features" in features_text

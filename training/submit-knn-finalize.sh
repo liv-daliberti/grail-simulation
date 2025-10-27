@@ -26,6 +26,17 @@ COMMON_FLAGS=(
   --export="ALL,TRAINING_REPO_ROOT=${ROOT_DIR}"
 )
 
+flag_present() {
+  local flag=$1
+  shift
+  for token in "$@"; do
+    if [[ "${token}" == "${flag}" || "${token}" == "${flag}"=* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 submit_finalize() {
   local job_name=$1
   shift
@@ -37,10 +48,15 @@ submit_finalize() {
     "$@"
 }
 
-echo "[submit-knn-finalize] Submitting next-video finalize job..."
-submit_finalize "knn-next-final" \
-  "${SCRIPT_DIR}/training-knn-next.sh" finalize --no-reuse-final "$@"
+user_args=("$@")
+if ! flag_present "--reuse-final" "${user_args[@]}" && ! flag_present "--no-reuse-final" "${user_args[@]}"; then
+  user_args+=(--no-reuse-final)
+fi
+if ! flag_present "--tasks" "${user_args[@]}"; then
+  default_tasks=${KNN_FINALIZE_TASKS:-"next_video,opinion"}
+  user_args+=(--tasks "${default_tasks}")
+fi
 
-echo "[submit-knn-finalize] Submitting opinion finalize job..."
-submit_finalize "knn-opinion-final" \
-  "${SCRIPT_DIR}/training-knn-opinion.sh" finalize --no-reuse-final "$@"
+echo "[submit-knn-finalize] Submitting combined finalize job for KNN (next-video + opinion)."
+submit_finalize "knn-finalize" \
+  "${SCRIPT_DIR}/training-knn.sh" finalize "${user_args[@]}"

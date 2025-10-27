@@ -83,6 +83,7 @@ from .rewards_code import (
     code_reward as _code_reward,
     extract_code as _extract_code,
     get_code_format_reward as _get_code_format_reward,
+    match_pattern_reward as _match_pattern_reward,
     ioi_code_reward as _ioi_code_reward,
 )
 
@@ -398,12 +399,7 @@ def formating(completions, **kwargs):
     """
     _ = kwargs
     pattern = r"^<think>\n.*?\n</think>\n<answer>\n.*?\n</answer>$"
-    completion_contents = [completion[0]["content"] for completion in completions]
-    matches = [
-        re.match(pattern, content, re.DOTALL | re.MULTILINE)
-        for content in completion_contents
-    ]
-    return [1.0 if match else 0.0 for match in matches]
+    return _match_pattern_reward(completions, pattern)
 
 
 def format_reward(

@@ -272,7 +272,6 @@
 <span class="sd">&quot;&quot;&quot;Dataset loading and mixture utilities for open_r1 training workflows.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_DATASETS</span>  <span class="c1"># type: ignore</span>
@@ -284,12 +283,9 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="n">concatenate_datasets</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScriptArguments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
-<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - runtime fallback</span>
-    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScriptArguments</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>

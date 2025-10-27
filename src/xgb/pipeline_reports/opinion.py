@@ -32,6 +32,8 @@ from common.pipeline_formatters import (
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 
+from common.opinion_metrics import summarise_opinion_metrics
+
 from ..pipeline_context import OpinionSummary
 from .plots import _plot_opinion_curve, plt
 
@@ -91,8 +93,53 @@ class _WeightedMetricAccumulator:
         return self.baseline_sum / self.baseline_weight_total
 
 
+def _difference(baseline: Optional[float], value: Optional[float]) -> Optional[float]:
+    """Return ``baseline - value`` when both inputs are present."""
+
+    if baseline is None or value is None:
+        return None
+    return baseline - value
+
+
+def _append_if_not_none(values: List[float], value: Optional[float]) -> None:
+    """Append ``value`` to ``values`` when the value is not ``None``."""
+
+    if value is not None:
+        values.append(value)
+
+
+def _append_difference(
+    values: List[float],
+    baseline: Optional[float],
+    value: Optional[float],
+) -> None:
+    """Append ``baseline - value`` to ``values`` when both numbers exist."""
+
+    delta_value = _difference(baseline, value)
+    if delta_value is not None:
+        values.append(delta_value)
+
+
 @dataclass
-class _OpinionPortfolioAccumulator:
+class _MetricTarget:
+    """Destinations for metric aggregation."""
+
+    entries: List[Tuple[float, str]]
+    stats: _WeightedMetricAccumulator
+    delta_entries: Optional[List[Tuple[float, str]]] = None
+
+
+@dataclass
+class _MetricContext:
+    """Metadata associated with a metric value being recorded."""
+
+    label: str
+    participants: Optional[float]
+    delta_value: Optional[float]
+
+
+@dataclass
+class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
     """
     Aggregate opinion-regression metrics across studies.
 
@@ -108,10 +155,44 @@ class _OpinionPortfolioAccumulator:
     accuracy_stats: _WeightedMetricAccumulator = field(
         default_factory=_WeightedMetricAccumulator
     )
+    rmse_change_stats: _WeightedMetricAccumulator = field(
+        default_factory=_WeightedMetricAccumulator
+    )
+    calibration_ece_stats: _WeightedMetricAccumulator = field(
+        default_factory=_WeightedMetricAccumulator
+    )
+    kl_divergence_stats: _WeightedMetricAccumulator = field(
+        default_factory=_WeightedMetricAccumulator
+    )
     mae_entries: List[Tuple[float, str]] = field(default_factory=list)
     delta_entries: List[Tuple[float, str]] = field(default_factory=list)
     accuracy_entries: List[Tuple[float, str]] = field(default_factory=list)
     accuracy_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+    rmse_change_entries: List[Tuple[float, str]] = field(default_factory=list)
+    rmse_change_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+    calibration_ece_entries: List[Tuple[float, str]] = field(default_factory=list)
+    calibration_ece_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+    kl_entries: List[Tuple[float, str]] = field(default_factory=list)
+    kl_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+
+    def _record_metric(
+        self,
+        value: Optional[float],
+        baseline: Optional[float],
+        target: _MetricTarget,
+        context: _MetricContext,
+    ) -> None:
+        """Record an individual metric value and optional delta."""
+
+        if value is not None:
+            target.entries.append((value, context.label))
+        if target.delta_entries is not None and context.delta_value is not None:
+            target.delta_entries.append((context.delta_value, context.label))
+        target.stats.add(
+            value=value,
+            baseline=baseline,
+            weight=context.participants,
+        )
 
     def record(self, summary: OpinionSummary, label: str) -> None:
         """
@@ -123,29 +204,86 @@ class _OpinionPortfolioAccumulator:
         :type label: str
         """
 
-        participants = float(summary.participants or 0)
-        mae_value = summary.mae_after
-        baseline_value = summary.baseline_mae
-        delta_value = summary.mae_delta
-        accuracy_value = summary.accuracy_after
-        baseline_accuracy = summary.baseline_accuracy
-        accuracy_delta = summary.accuracy_delta
-
-        if mae_value is not None:
-            self.mae_entries.append((mae_value, label))
-        self.mae_stats.add(value=mae_value, baseline=baseline_value, weight=participants)
-
-        if delta_value is not None:
-            self.delta_entries.append((delta_value, label))
-
-        if accuracy_value is not None:
-            self.accuracy_entries.append((accuracy_value, label))
-        if accuracy_delta is not None:
-            self.accuracy_delta_entries.append((accuracy_delta, label))
-        self.accuracy_stats.add(
-            value=accuracy_value,
-            baseline=baseline_accuracy,
-            weight=participants,
+        metrics = summarise_opinion_metrics(summary, prefer_after_fields=True)
+        participants = metrics.participants
+        self._record_metric(
+            metrics.mae,
+            metrics.baseline_mae,
+            _MetricTarget(
+                entries=self.mae_entries,
+                stats=self.mae_stats,
+                delta_entries=self.delta_entries,
+            ),
+            _MetricContext(
+                label=label,
+                participants=participants,
+                delta_value=metrics.mae_delta,
+            ),
+        )
+        self._record_metric(
+            metrics.accuracy,
+            metrics.baseline_accuracy,
+            _MetricTarget(
+                entries=self.accuracy_entries,
+                stats=self.accuracy_stats,
+                delta_entries=self.accuracy_delta_entries,
+            ),
+            _MetricContext(
+                label=label,
+                participants=participants,
+                delta_value=metrics.accuracy_delta,
+            ),
+        )
+        self._record_metric(
+            metrics.rmse_change,
+            metrics.baseline_rmse_change,
+            _MetricTarget(
+                entries=self.rmse_change_entries,
+                stats=self.rmse_change_stats,
+                delta_entries=self.rmse_change_delta_entries,
+            ),
+            _MetricContext(
+                label=label,
+                participants=participants,
+                delta_value=_difference(
+                    metrics.baseline_rmse_change,
+                    metrics.rmse_change,
+                ),
+            ),
+        )
+        self._record_metric(
+            metrics.calibration_ece,
+            metrics.baseline_calibration_ece,
+            _MetricTarget(
+                entries=self.calibration_ece_entries,
+                stats=self.calibration_ece_stats,
+                delta_entries=self.calibration_ece_delta_entries,
+            ),
+            _MetricContext(
+                label=label,
+                participants=participants,
+                delta_value=_difference(
+                    metrics.baseline_calibration_ece,
+                    metrics.calibration_ece,
+                ),
+            ),
+        )
+        self._record_metric(
+            metrics.kl_divergence_change,
+            metrics.baseline_kl_divergence_change,
+            _MetricTarget(
+                entries=self.kl_entries,
+                stats=self.kl_divergence_stats,
+                delta_entries=self.kl_delta_entries,
+            ),
+            _MetricContext(
+                label=label,
+                participants=participants,
+                delta_value=_difference(
+                    metrics.baseline_kl_divergence_change,
+                    metrics.kl_divergence_change,
+                ),
+            ),
         )
 
     def to_lines(self, heading_level: str = "####") -> List[str]:
@@ -165,9 +303,15 @@ class _OpinionPortfolioAccumulator:
         participant_total = int(self.mae_stats.weight_total)
         lines.extend(self._portfolio_mae_lines(participant_total))
         lines.extend(self._portfolio_accuracy_lines())
+        lines.extend(self._portfolio_rmse_change_lines(participant_total))
+        lines.extend(self._portfolio_calibration_lines(participant_total))
+        lines.extend(self._portfolio_kl_lines(participant_total))
         lines.extend(self._portfolio_mae_extremes())
         lines.extend(self._portfolio_accuracy_extremes())
         lines.extend(self._portfolio_accuracy_delta_lines())
+        lines.extend(self._portfolio_rmse_change_extremes())
+        lines.extend(self._portfolio_calibration_extremes())
+        lines.extend(self._portfolio_kl_extremes())
         lines.append("")
         return lines
 
@@ -218,6 +362,78 @@ class _OpinionPortfolioAccumulator:
             )
         return lines
 
+    def _portfolio_rmse_change_lines(self, participants: int) -> List[str]:
+        """Construct weighted RMSE(change) summary lines."""
+
+        lines: List[str] = []
+        weighted_rmse = self.rmse_change_stats.weighted_value()
+        weighted_baseline = self.rmse_change_stats.weighted_baseline()
+        weight_total = int(self.rmse_change_stats.weight_total) or participants
+        if weighted_rmse is not None:
+            lines.append(
+                "- Weighted RMSE (change) "
+                f"{_format_optional_float(weighted_rmse)} across "
+                f"{_format_count(weight_total)} participants."
+            )
+        if weighted_baseline is not None:
+            rmse_delta = None
+            if weighted_rmse is not None:
+                rmse_delta = weighted_baseline - weighted_rmse
+            delta_text = _format_delta(rmse_delta) if rmse_delta is not None else "—"
+            lines.append(
+                "- Weighted baseline RMSE (change) "
+                f"{_format_optional_float(weighted_baseline)} ({delta_text} vs. final)."
+            )
+        return lines
+
+    def _portfolio_calibration_lines(self, participants: int) -> List[str]:
+        """Construct weighted calibration summary lines."""
+
+        lines: List[str] = []
+        weighted_ece = self.calibration_ece_stats.weighted_value()
+        weighted_baseline = self.calibration_ece_stats.weighted_baseline()
+        weight_total = int(self.calibration_ece_stats.weight_total) or participants
+        if weighted_ece is not None:
+            lines.append(
+                "- Weighted calibration ECE "
+                f"{_format_optional_float(weighted_ece)} across "
+                f"{_format_count(weight_total)} participants."
+            )
+        if weighted_baseline is not None:
+            ece_delta = None
+            if weighted_ece is not None:
+                ece_delta = weighted_baseline - weighted_ece
+            delta_text = _format_delta(ece_delta) if ece_delta is not None else "—"
+            lines.append(
+                "- Weighted baseline ECE "
+                f"{_format_optional_float(weighted_baseline)} ({delta_text} vs. final)."
+            )
+        return lines
+
+    def _portfolio_kl_lines(self, participants: int) -> List[str]:
+        """Construct weighted KL divergence summary lines."""
+
+        lines: List[str] = []
+        weighted_kl = self.kl_divergence_stats.weighted_value()
+        weighted_baseline = self.kl_divergence_stats.weighted_baseline()
+        weight_total = int(self.kl_divergence_stats.weight_total) or participants
+        if weighted_kl is not None:
+            lines.append(
+                "- Weighted KL divergence "
+                f"{_format_optional_float(weighted_kl)} across "
+                f"{_format_count(weight_total)} participants."
+            )
+        if weighted_baseline is not None:
+            kl_delta = None
+            if weighted_kl is not None:
+                kl_delta = weighted_baseline - weighted_kl
+            delta_text = _format_delta(kl_delta) if kl_delta is not None else "—"
+            lines.append(
+                "- Weighted baseline KL divergence "
+                f"{_format_optional_float(weighted_baseline)} ({delta_text} vs. final)."
+            )
+        return lines
+
     def _portfolio_mae_extremes(self) -> List[str]:
         """Summarise portfolio MAE extremes."""
 
@@ -235,6 +451,66 @@ class _OpinionPortfolioAccumulator:
                 "- Lowest MAE: "
                 f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
                 f"Highest MAE: {highest[1]} ({_format_optional_float(highest[0])})."
+            )
+        return lines
+
+    def _portfolio_rmse_change_extremes(self) -> List[str]:
+        """Summarise RMSE(change) extremes across the portfolio."""
+
+        lines: List[str] = []
+        if self.rmse_change_delta_entries:
+            best_delta = max(self.rmse_change_delta_entries, key=lambda item: item[0])
+            lines.append(
+                "- Largest RMSE(change) reduction: "
+                f"{best_delta[1]} ({_format_delta(best_delta[0])})."
+            )
+        if len(self.rmse_change_entries) > 1:
+            lowest = min(self.rmse_change_entries, key=lambda item: item[0])
+            highest = max(self.rmse_change_entries, key=lambda item: item[0])
+            lines.append(
+                "- Lowest RMSE(change): "
+                f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
+                f"Highest: {highest[1]} ({_format_optional_float(highest[0])})."
+            )
+        return lines
+
+    def _portfolio_calibration_extremes(self) -> List[str]:
+        """Summarise calibration ECE extremes across the portfolio."""
+
+        lines: List[str] = []
+        if self.calibration_ece_delta_entries:
+            best_delta = max(self.calibration_ece_delta_entries, key=lambda item: item[0])
+            lines.append(
+                "- Largest calibration ECE drop: "
+                f"{best_delta[1]} ({_format_delta(best_delta[0])})."
+            )
+        if len(self.calibration_ece_entries) > 1:
+            lowest = min(self.calibration_ece_entries, key=lambda item: item[0])
+            highest = max(self.calibration_ece_entries, key=lambda item: item[0])
+            lines.append(
+                "- Lowest calibration ECE: "
+                f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
+                f"Highest: {highest[1]} ({_format_optional_float(highest[0])})."
+            )
+        return lines
+
+    def _portfolio_kl_extremes(self) -> List[str]:
+        """Summarise KL divergence extremes across the portfolio."""
+
+        lines: List[str] = []
+        if self.kl_delta_entries:
+            best_delta = max(self.kl_delta_entries, key=lambda item: item[0])
+            lines.append(
+                "- Largest KL divergence drop: "
+                f"{best_delta[1]} ({_format_delta(best_delta[0])})."
+            )
+        if len(self.kl_entries) > 1:
+            lowest = min(self.kl_entries, key=lambda item: item[0])
+            highest = max(self.kl_entries, key=lambda item: item[0])
+            lines.append(
+                "- Lowest KL divergence: "
+                f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
+                f"Highest: {highest[1]} ({_format_optional_float(highest[0])})."
             )
         return lines
 
@@ -279,36 +555,67 @@ def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     :rtype: OpinionSummary
     """
 
-    metrics_block = data.get("metrics", {})
-    baseline = data.get("baseline", {})
-    mae_after = _safe_float(metrics_block.get("mae_after"))
-    baseline_mae = _safe_float(baseline.get("mae_before") or baseline.get("mae_using_before"))
-    mae_delta = None
-    if mae_after is not None and baseline_mae is not None:
-        mae_delta = baseline_mae - mae_after
-    accuracy_after = _safe_float(metrics_block.get("direction_accuracy"))
-    baseline_accuracy = _safe_float(baseline.get("direction_accuracy"))
-    accuracy_delta = None
-    if accuracy_after is not None and baseline_accuracy is not None:
-        accuracy_delta = accuracy_after - baseline_accuracy
-    eligible = _safe_int(data.get("eligible"))
-    if eligible is None:
-        eligible = _safe_int(metrics_block.get("eligible"))
-    return OpinionSummary(
-        mae_after=mae_after,
-        rmse_after=_safe_float(metrics_block.get("rmse_after")),
-        r2_after=_safe_float(metrics_block.get("r2_after")),
-        baseline_mae=baseline_mae,
-        mae_delta=mae_delta,
-        accuracy_after=accuracy_after,
-        baseline_accuracy=baseline_accuracy,
-        accuracy_delta=accuracy_delta,
-        participants=_safe_int(data.get("n_participants")),
-        eligible=eligible,
-        dataset=str(data.get("dataset")) if data.get("dataset") else None,
-        split=str(data.get("split")) if data.get("split") else None,
-        label=str(data.get("label")) if data.get("label") else None,
+    metrics_block = data.get("metrics") or {}
+    baseline_raw = data.get("baseline") or {}
+    baseline_block = baseline_raw if isinstance(baseline_raw, Mapping) else {}
+
+    def metric_value(name: str) -> Optional[float]:
+        return _safe_float(metrics_block.get(name))
+
+    def baseline_value(*names: str) -> Optional[float]:
+        for candidate in names:
+            if candidate in baseline_block:
+                return _safe_float(baseline_block.get(candidate))
+        return None
+
+    summary_kwargs = {
+        "mae_after": metric_value("mae_after"),
+        "mae_change": metric_value("mae_change"),
+        "rmse_after": metric_value("rmse_after"),
+        "r2_after": metric_value("r2_after"),
+        "rmse_change": metric_value("rmse_change"),
+        "accuracy_after": metric_value("direction_accuracy"),
+        "calibration_slope": metric_value("calibration_slope"),
+        "calibration_intercept": metric_value("calibration_intercept"),
+        "calibration_ece": metric_value("calibration_ece"),
+        "kl_divergence_change": metric_value("kl_divergence_change"),
+        "participants": _safe_int(data.get("n_participants")),
+        "dataset": str(data.get("dataset")) if data.get("dataset") else None,
+        "split": str(data.get("split")) if data.get("split") else None,
+        "label": str(data.get("label")) if data.get("label") else None,
+    }
+    summary_kwargs["baseline_mae"] = baseline_value("mae_before", "mae_using_before")
+    summary_kwargs["baseline_rmse_change"] = _safe_float(baseline_block.get("rmse_change_zero"))
+    summary_kwargs["baseline_accuracy"] = _safe_float(baseline_block.get("direction_accuracy"))
+    summary_kwargs["baseline_calibration_slope"] = _safe_float(
+        baseline_block.get("calibration_slope_change_zero")
     )
+    summary_kwargs["baseline_calibration_intercept"] = _safe_float(
+        baseline_block.get("calibration_intercept_change_zero")
+    )
+    summary_kwargs["baseline_calibration_ece"] = _safe_float(
+        baseline_block.get("calibration_ece_change_zero")
+    )
+    summary_kwargs["baseline_kl_divergence_change"] = _safe_float(
+        baseline_block.get("kl_divergence_change_zero")
+    )
+
+    summary_kwargs["eligible"] = _safe_int(data.get("eligible"))
+    if summary_kwargs["eligible"] is None:
+        summary_kwargs["eligible"] = _safe_int(metrics_block.get("eligible"))
+
+    mae_delta = _difference(summary_kwargs["baseline_mae"], summary_kwargs["mae_after"])
+    accuracy_delta = None
+    if (
+        summary_kwargs["accuracy_after"] is not None
+        and summary_kwargs["baseline_accuracy"] is not None
+    ):
+        accuracy_delta = summary_kwargs["accuracy_after"] - summary_kwargs["baseline_accuracy"]
+
+    summary_kwargs["mae_delta"] = mae_delta
+    summary_kwargs["accuracy_delta"] = accuracy_delta
+
+    return OpinionSummary(**summary_kwargs)
 
 
 def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
@@ -324,30 +631,71 @@ def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[s
     if not metrics:
         return []
     lines: List[str] = ["## Observations", ""]
-    deltas: List[float] = []
-    r2_scores: List[float] = []
+    aggregates = {
+        "mae_delta": [],
+        "r2": [],
+        "rmse_change": [],
+        "rmse_delta": [],
+        "ece": [],
+        "ece_delta": [],
+        "kl": [],
+        "kl_delta": [],
+    }
     for study_key in sorted(metrics.keys()):
         summary = _extract_opinion_summary(metrics[study_key])
-        delta_text = _format_delta(summary.mae_delta)
-        mae_text = _format_optional_float(summary.mae_after)
-        r2_text = _format_optional_float(summary.r2_after)
+        label = summary.label or study_key
         lines.append(
-            f"- {summary.label or study_key}: MAE {mae_text} "
-            f"(Δ vs. baseline {delta_text}), R² {r2_text}."
+            f"- {label}: MAE {_format_optional_float(summary.mae_after)} "
+            f"(Δ vs. baseline {_format_delta(summary.mae_delta)}), "
+            f"RMSE(change) {_format_optional_float(summary.rmse_change)}, "
+            f"ECE {_format_optional_float(summary.calibration_ece)}, "
+            f"KL {_format_optional_float(summary.kl_divergence_change)}, "
+            f"R² {_format_optional_float(summary.r2_after)}."
         )
-        if summary.mae_delta is not None:
-            deltas.append(summary.mae_delta)
-        if summary.r2_after is not None:
-            r2_scores.append(summary.r2_after)
-    if deltas:
-        lines.append(
-            f"- Average MAE reduction {_format_delta(sum(deltas) / len(deltas))} across "
-            f"{len(deltas)} studies."
+        _append_if_not_none(aggregates["mae_delta"], summary.mae_delta)
+        _append_if_not_none(aggregates["r2"], summary.r2_after)
+        _append_if_not_none(aggregates["rmse_change"], summary.rmse_change)
+        _append_difference(
+            aggregates["rmse_delta"],
+            summary.baseline_rmse_change,
+            summary.rmse_change,
         )
-    if r2_scores:
-        lines.append(
-            f"- Mean R² {_format_optional_float(sum(r2_scores) / len(r2_scores))}."
+        _append_if_not_none(aggregates["ece"], summary.calibration_ece)
+        _append_difference(
+            aggregates["ece_delta"],
+            summary.baseline_calibration_ece,
+            summary.calibration_ece,
         )
+        _append_if_not_none(aggregates["kl"], summary.kl_divergence_change)
+        _append_difference(
+            aggregates["kl_delta"],
+            summary.baseline_kl_divergence_change,
+            summary.kl_divergence_change,
+        )
+    summary_configs = [
+        (
+            "mae_delta",
+            _format_delta,
+            "- Average MAE reduction {value} across {count} studies.",
+        ),
+        ("r2", _format_optional_float, "- Mean R² {value}."),
+        ("rmse_change", _format_optional_float, "- Mean RMSE(change) {value}."),
+        ("rmse_delta", _format_optional_float, "- Mean RMSE(change) delta {value}."),
+        ("ece", _format_optional_float, "- Mean calibration ECE {value}."),
+        ("ece_delta", _format_optional_float, "- Mean calibration ECE delta {value}."),
+        ("kl", _format_optional_float, "- Mean KL divergence {value}."),
+        ("kl_delta", _format_optional_float, "- Mean KL divergence delta {value}."),
+    ]
+    for key, formatter, template in summary_configs:
+        values = aggregates[key]
+        if values:
+            mean_value = sum(values) / len(values)
+            lines.append(
+                template.format(
+                    value=formatter(mean_value),
+                    count=len(values),
+                )
+            )
     lines.append("")
     return lines
 
@@ -372,6 +720,111 @@ def _metric_distribution_line(values: List[float], label: str) -> Optional[str]:
         f"(σ {_format_optional_float(stdev_value)}, range "
         f"{_format_optional_float(min_value)} – {_format_optional_float(max_value)})."
     )
+
+
+def _dataset_and_split(
+    metrics: Mapping[str, Mapping[str, object]],
+) -> Tuple[str, str]:
+    """Return representative dataset and split names for the metrics payload."""
+
+    dataset_name = "unknown"
+    split_name = "validation"
+    for payload in metrics.values():
+        summary = _extract_opinion_summary(payload)
+        if dataset_name == "unknown" and summary.dataset:
+            dataset_name = summary.dataset
+        if summary.split:
+            split_name = summary.split
+        if dataset_name != "unknown" and summary.split:
+            break
+    return dataset_name, split_name
+
+
+def _opinion_table_header() -> List[str]:
+    """Return the Markdown header rows for the opinion metrics table."""
+
+    header_segments = [
+        "| Study | Participants | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ |",
+        "Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | RMSE (change) ↓ |",
+        "Δ RMSE (change) ↓ | Calib slope | Calib intercept | ECE ↓ | Δ ECE ↓ |",
+        "KL div ↓ | Δ KL ↓ | Baseline MAE ↓ |",
+    ]
+    align_segments = [
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "---: | ---: | ---: | ---: | ---: | ---: |",
+        "---: | ---: | ---: | ---: | ---: | ---: |",
+        "---: | ---: | ---: | ---: |",
+    ]
+    header_line = " ".join(segment.strip() for segment in header_segments)
+    align_line = " ".join(segment.strip() for segment in align_segments)
+    return [header_line, align_line]
+
+
+def _opinion_table_rows(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
+    """Build Markdown table rows for opinion metrics."""
+
+    rows: List[str] = []
+    for study_key, payload in sorted(metrics.items()):
+        summary = _extract_opinion_summary(payload)
+        study_label = summary.label or study_key
+        row_segments = [
+            study_label,
+            _format_count(summary.participants),
+            _format_optional_float(summary.accuracy_after),
+            _format_optional_float(summary.baseline_accuracy),
+            _format_delta(summary.accuracy_delta),
+            _format_optional_float(summary.mae_after),
+            _format_delta(summary.mae_delta),
+            _format_optional_float(summary.rmse_after),
+            _format_optional_float(summary.r2_after),
+            _format_optional_float(summary.mae_change),
+            _format_optional_float(summary.rmse_change),
+            _format_delta(_difference(summary.baseline_rmse_change, summary.rmse_change)),
+            _format_optional_float(summary.calibration_slope),
+            _format_optional_float(summary.calibration_intercept),
+            _format_optional_float(summary.calibration_ece),
+            _format_delta(
+                _difference(
+                    summary.baseline_calibration_ece,
+                    summary.calibration_ece,
+                )
+            ),
+            _format_optional_float(summary.kl_divergence_change),
+            _format_delta(
+                _difference(
+                    summary.baseline_kl_divergence_change,
+                    summary.kl_divergence_change,
+                )
+            ),
+            _format_optional_float(summary.baseline_mae),
+        ]
+        rows.append(f"| {' | '.join(row_segments)} |")
+    return rows
+
+
+def _opinion_curve_lines(
+    directory: Path,
+    metrics: Mapping[str, Mapping[str, object]],
+) -> List[str]:
+    """Render training curve images, returning Markdown lines referencing them."""
+
+    if plt is None:
+        return []
+    curve_lines: List[str] = []
+    for study_key, payload in sorted(metrics.items()):
+        summary = _extract_opinion_summary(payload)
+        rel_path = _plot_opinion_curve(
+            directory=directory,
+            study_label=summary.label or study_key,
+            study_key=study_key,
+            payload=payload,
+        )
+        if rel_path:
+            if not curve_lines:
+                curve_lines.extend(["## Training Curves", ""])
+            curve_lines.append(f"![{summary.label or study_key}]({rel_path})")
+            curve_lines.append("")
+    return curve_lines
 
 
 def _opinion_cross_study_diagnostics(
@@ -415,6 +868,47 @@ def _opinion_cross_study_diagnostics(
             [item.accuracy_delta for item in summaries if item.accuracy_delta is not None],
             "- Accuracy delta mean",
         ),
+        (
+            [item.rmse_change for item in summaries if item.rmse_change is not None],
+            "- RMSE(change) mean",
+        ),
+        (
+            [
+                item.baseline_rmse_change - item.rmse_change
+                for item in summaries
+                if item.rmse_change is not None and item.baseline_rmse_change is not None
+            ],
+            "- RMSE(change) delta mean",
+        ),
+        (
+            [item.calibration_ece for item in summaries if item.calibration_ece is not None],
+            "- Calibration ECE mean",
+        ),
+        (
+            [
+                item.baseline_calibration_ece - item.calibration_ece
+                for item in summaries
+                if item.calibration_ece is not None and item.baseline_calibration_ece is not None
+            ],
+            "- Calibration ECE delta mean",
+        ),
+        (
+            [
+                item.kl_divergence_change
+                for item in summaries
+                if item.kl_divergence_change is not None
+            ],
+            "- KL divergence mean",
+        ),
+        (
+            [
+                item.baseline_kl_divergence_change - item.kl_divergence_change
+                for item in summaries
+                if item.kl_divergence_change is not None
+                and item.baseline_kl_divergence_change is not None
+            ],
+            "- KL divergence delta mean",
+        ),
     ]
     for values, label in stat_sources:
         distribution_line = _metric_distribution_line(values, label)
@@ -453,66 +947,23 @@ def _write_opinion_report(
         write_markdown_lines(path, lines)
         return
     lines.append(
-        "MAE / RMSE / R² / directional accuracy scores for predicting the post-study "
-        "opinion index."
+        "MAE / RMSE / R² / directional accuracy / MAE (change) / RMSE (change) / "
+        "calibration slope & intercept / calibration ECE / KL divergence, all compared "
+        "against a no-change baseline (pre-study opinion)."
     )
     lines.append("")
-    dataset_name = "unknown"
-    split_name = "validation"
-    for payload in metrics.values():
-        summary = _extract_opinion_summary(payload)
-        if dataset_name == "unknown" and summary.dataset:
-            dataset_name = summary.dataset
-        if summary.split:
-            split_name = summary.split
-        if dataset_name != "unknown" and summary.split:
-            break
+    dataset_name, split_name = _dataset_and_split(metrics)
     lines.append(f"- Dataset: `{dataset_name}`")
     lines.append(f"- Split: {split_name}")
     lines.append(
-        "- Metrics: MAE, RMSE, R², and directional accuracy compared against a "
-        "no-change baseline (pre-study opinion)."
+        "- Metrics: MAE, RMSE, R², directional accuracy, MAE(change), RMSE(change), "
+        "calibration slope & intercept, calibration ECE, and KL divergence."
     )
     lines.append("")
-    lines.append(
-        "| Study | Participants | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | "
-        "MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Baseline MAE ↓ |"
-    )
-    lines.append(
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
-    )
-    for study_key, payload in sorted(metrics.items()):
-        summary = _extract_opinion_summary(payload)
-        study_label = summary.label or study_key
-        row_segments = [
-            study_label,
-            _format_count(summary.participants),
-            _format_optional_float(summary.accuracy_after),
-            _format_optional_float(summary.baseline_accuracy),
-            _format_delta(summary.accuracy_delta),
-            _format_optional_float(summary.mae_after),
-            _format_delta(summary.mae_delta),
-            _format_optional_float(summary.rmse_after),
-            _format_optional_float(summary.r2_after),
-            _format_optional_float(summary.baseline_mae),
-        ]
-        lines.append(f"| {' | '.join(row_segments)} |")
+    lines.extend(_opinion_table_header())
+    lines.extend(_opinion_table_rows(metrics))
     lines.append("")
-    curve_lines: List[str] = []
-    if plt is not None:
-        for study_key, payload in sorted(metrics.items()):
-            summary = _extract_opinion_summary(payload)
-            rel_path = _plot_opinion_curve(
-                directory=directory,
-                study_label=summary.label or study_key,
-                study_key=study_key,
-                payload=payload,
-            )
-            if rel_path:
-                if not curve_lines:
-                    curve_lines.extend(["## Training Curves", ""])
-                curve_lines.append(f"![{summary.label or study_key}]({rel_path})")
-                curve_lines.append("")
+    curve_lines = _opinion_curve_lines(directory, metrics)
     if curve_lines:
         lines.extend(curve_lines)
     lines.extend(_opinion_cross_study_diagnostics(metrics))

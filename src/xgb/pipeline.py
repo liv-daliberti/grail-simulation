@@ -25,7 +25,14 @@ import os
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
 
-from common.pipeline_stage import prepare_sweep_execution
+from common.pipeline_stage import (
+    DryRunSummary,
+    execute_partitions_for_cli,
+    log_dry_run_summary,
+    make_sweep_partition,
+    prepare_sweep_execution as _prepare_sweep_execution,
+    SweepPartitionExecutors,
+)
 from common.prompt_docs import merge_default_extra_fields
 
 from .pipeline_context import (
@@ -72,6 +79,8 @@ from .pipeline_reports import OpinionReportData, SweepReportData, _write_reports
 LOGGER = logging.getLogger("xgb.pipeline")
 
 __all__ = ["main", "SweepRunContext", "OpinionStageConfig", "OpinionSweepRunContext"]
+
+prepare_sweep_execution = _prepare_sweep_execution
 
 
 
@@ -252,122 +261,69 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if args.dry_run:
-        summary_bits: List[str] = []
+        summaries: List[DryRunSummary] = []
         if run_next_video:
-            summary_bits.append(
-                f"next-video pending={len(planned_slate_tasks)} "
-                f"cached={len(cached_slate_planned)}"
+            summaries.append(
+                DryRunSummary(
+                    label="next-video",
+                    pending=len(planned_slate_tasks),
+                    cached=len(cached_slate_planned),
+                )
             )
         if run_opinion:
-            summary_bits.append(
-                f"opinion pending={len(planned_opinion_tasks)} "
-                f"cached={len(cached_opinion_planned)}"
+            summaries.append(
+                DryRunSummary(
+                    label="opinion",
+                    pending=len(planned_opinion_tasks),
+                    cached=len(cached_opinion_planned),
+                )
             )
-        LOGGER.info(
-            "Dry-run mode. %s.",
-            "; ".join(summary_bits) if summary_bits else "No tasks selected.",
-        )
+        log_dry_run_summary(LOGGER, summaries)
         return
 
     if stage == "sweeps":
-        slate_pending_by_index = {task.index: task for task in planned_slate_tasks}
-        slate_cached_by_index = {
-            outcome.order_index: outcome
-            for outcome in cached_slate_planned
-            if outcome.order_index not in slate_pending_by_index
-        }
-        slate_indices = set(slate_pending_by_index).union(slate_cached_by_index)
-        slate_total = (max(slate_indices) + 1) if slate_indices else 0
+        partitions = []
+        if run_next_video:
+            def describe_cached(outcome):
+                return f"{outcome.study.key}:{outcome.study.issue}:{outcome.config.label()}"
 
-        opinion_pending_by_index = {task.index: task for task in planned_opinion_tasks}
-        opinion_cached_by_index = {
-            outcome.order_index: outcome
-            for outcome in cached_opinion_planned
-            if outcome.order_index not in opinion_pending_by_index
-        }
-        opinion_indices = set(opinion_pending_by_index).union(opinion_cached_by_index)
-        opinion_total = (max(opinion_indices) + 1) if opinion_indices else 0
+            partitions.append(
+                make_sweep_partition(
+                    label="next-video",
+                    pending=planned_slate_tasks,
+                    cached=cached_slate_planned,
+                    reuse_existing=reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=lambda task: _execute_sweep_tasks([task], jobs=1)[0],
+                        describe_pending=_format_sweep_task_descriptor,
+                        describe_cached=describe_cached,
+                    ),
+                )
+            )
+        if run_opinion:
+            def describe_opinion_cached(outcome):
+                return f"{outcome.study.key}:{outcome.study.issue}:{outcome.config.label()}"
 
-        total_tasks = slate_total + opinion_total
-        task_id = prepare_sweep_execution(
-            total_tasks=total_tasks,
-            cli_task_id=args.sweep_task_id,
-            cli_task_count=args.sweep_task_count,
+            partitions.append(
+                make_sweep_partition(
+                    label="opinion",
+                    pending=planned_opinion_tasks,
+                    cached=cached_opinion_planned,
+                    reuse_existing=reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=lambda task: _execute_opinion_sweep_tasks([task], jobs=1)[0],
+                        describe_pending=_format_opinion_sweep_task_descriptor,
+                        describe_cached=describe_opinion_cached,
+                    ),
+                )
+            )
+
+        execute_partitions_for_cli(
+            partitions,
+            args=args,
             logger=LOGGER,
+            prepare=prepare_sweep_execution,
         )
-        if task_id is None:
-            return
-        if task_id < slate_total:
-            task = slate_pending_by_index.get(task_id)
-            if task is None:
-                cached_outcome = slate_cached_by_index.get(task_id)
-                if cached_outcome is not None:
-                    LOGGER.info(
-                        "Skipping sweep task %d (%s | %s | %s); metrics already exist at %s.",
-                        task_id,
-                        cached_outcome.study.key,
-                        cached_outcome.study.issue,
-                        cached_outcome.config.label(),
-                        cached_outcome.metrics_path,
-                    )
-                    return
-                LOGGER.warning(
-                    "No sweep task registered for index %d; skipping.",
-                    task_id,
-                )
-                return
-            if reuse_sweeps and task.metrics_path.exists():
-                LOGGER.info(
-                    "Skipping sweep task %d (%s); metrics already exist at %s.",
-                    task.index,
-                    _format_sweep_task_descriptor(task),
-                    task.metrics_path,
-                )
-                return
-            outcome = _execute_sweep_tasks([task], jobs=1)[0]
-            LOGGER.info(
-                "Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
-                outcome.order_index,
-                task.study.key,
-                task.study.issue,
-                task.config.label(),
-                outcome.metrics_path,
-            )
-        else:
-            opinion_index = task_id - slate_total
-            task = opinion_pending_by_index.get(opinion_index)
-            if task is None:
-                cached_outcome = opinion_cached_by_index.get(opinion_index)
-                if cached_outcome is not None:
-                    LOGGER.info(
-                        "Skipping opinion sweep task %d (%s | %s); metrics already exist at %s.",
-                        opinion_index,
-                        cached_outcome.study.key,
-                        cached_outcome.config.label(),
-                        cached_outcome.metrics_path,
-                    )
-                    return
-                LOGGER.warning(
-                    "No opinion sweep task registered for index %d; skipping.",
-                    opinion_index,
-                )
-                return
-            if reuse_sweeps and task.metrics_path.exists():
-                LOGGER.info(
-                    "Skipping opinion sweep task %d (%s); metrics already exist at %s.",
-                    task.index,
-                    _format_opinion_sweep_task_descriptor(task),
-                    task.metrics_path,
-                )
-                return
-            outcome = _execute_opinion_sweep_tasks([task], jobs=1)[0]
-            LOGGER.info(
-                "Completed opinion sweep task %d (%s | %s). Metrics stored at %s.",
-                outcome.order_index,
-                task.study.key,
-                task.config.label(),
-                outcome.metrics_path,
-            )
         return
 
     reuse_for_stage = reuse_sweeps

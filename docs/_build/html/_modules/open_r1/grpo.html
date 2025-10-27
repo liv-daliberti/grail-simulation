@@ -273,8 +273,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seed</span>
@@ -289,29 +288,24 @@
     <span class="n">get_peft_config</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="n">GRPOTrainer</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.dataset_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">drop_marked_rows</span><span class="p">,</span> <span class="n">slate_has_gold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.dataset_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">drop_marked_rows</span><span class="p">,</span> <span class="n">make_slate_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.example_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">call_row_to_training_example</span><span class="p">,</span>
     <span class="n">get_gold_next_id</span><span class="p">,</span>
     <span class="n">gold_index_from_items</span><span class="p">,</span>
     <span class="n">load_slate_items</span><span class="p">,</span>
-    <span class="n">row_to_training_example</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
     <span class="n">collect_passthrough_fields</span><span class="p">,</span>
-    <span class="n">configure_eval</span> <span class="k">as</span> <span class="n">shared_configure_eval</span><span class="p">,</span>
     <span class="n">parse_and_run</span><span class="p">,</span>
-    <span class="n">prepare_eval_dataset</span> <span class="k">as</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">,</span>
-    <span class="n">resolve_checkpoint</span> <span class="k">as</span> <span class="n">shared_resolve_checkpoint</span><span class="p">,</span>
+    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.rewards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_reward_funcs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_tokenizer</span>
-
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing-only import</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
-<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - fallback when datasets is unavailable at lint time</span>
-    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>
 
 <span class="n">KEEP_COLUMNS</span> <span class="o">=</span> <span class="n">BASE_TRAIN_KEEP_COLUMNS</span>
 
@@ -335,26 +329,6 @@
             <span class="s2">&quot;trl must be installed to run GRPO training &quot;</span>
             <span class="s2">&quot;(pip install trl).&quot;</span>
         <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_row_to_example</span><span class="p">(</span>
-    <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">system_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">sol_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert a raw dataset row into the prompt/answer payload expected by GRPO.</span>
-
-<span class="sd">    Returns None when the slate is empty or the gold label cannot be mapped to it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">row_to_training_example</span><span class="p">(</span>
-        <span class="n">ex</span><span class="p">,</span>
-        <span class="n">system_prompt</span><span class="o">=</span><span class="n">system_prompt</span><span class="p">,</span>
-        <span class="n">solution_key</span><span class="o">=</span><span class="n">sol_key</span><span class="p">,</span>
-        <span class="n">max_history</span><span class="o">=</span><span class="n">max_hist</span><span class="p">,</span>
-        <span class="n">passthrough_fn</span><span class="o">=</span><span class="n">collect_passthrough_fields</span><span class="p">,</span>
-    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prune_columns</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
@@ -387,19 +361,19 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">raw</span> <span class="o">=</span> <span class="n">get_dataset</span><span class="p">(</span><span class="n">script_args</span><span class="p">)</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
-        <span class="n">slate_has_gold</span><span class="p">,</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">make_slate_validator</span><span class="p">(</span>
         <span class="n">load_slate_items</span><span class="o">=</span><span class="n">load_slate_items</span><span class="p">,</span>
         <span class="n">lookup_gold_id</span><span class="o">=</span><span class="n">get_gold_next_id</span><span class="p">,</span>
         <span class="n">resolve_gold_index</span><span class="o">=</span><span class="n">gold_index_from_items</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">filtered</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">validator</span><span class="p">,</span> <span class="n">fn_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;solution_key&quot;</span><span class="p">:</span> <span class="n">solution_key</span><span class="p">})</span>
     <span class="n">mapped</span> <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-        <span class="n">_row_to_example</span><span class="p">,</span>
+        <span class="n">call_row_to_training_example</span><span class="p">,</span>
         <span class="n">fn_kwargs</span><span class="o">=</span><span class="p">{</span>
             <span class="s2">&quot;system_prompt&quot;</span><span class="p">:</span> <span class="n">training_args</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
-            <span class="s2">&quot;sol_key&quot;</span><span class="p">:</span> <span class="n">solution_key</span><span class="p">,</span>
-            <span class="s2">&quot;max_hist&quot;</span><span class="p">:</span> <span class="n">max_hist</span><span class="p">,</span>
+            <span class="s2">&quot;solution_key&quot;</span><span class="p">:</span> <span class="n">solution_key</span><span class="p">,</span>
+            <span class="s2">&quot;max_history&quot;</span><span class="p">:</span> <span class="n">max_hist</span><span class="p">,</span>
+            <span class="s2">&quot;passthrough_fn&quot;</span><span class="p">:</span> <span class="n">collect_passthrough_fields</span><span class="p">,</span>
         <span class="p">},</span>
         <span class="n">load_from_cache_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
@@ -448,12 +422,6 @@
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="o">/</span> <span class="n">total</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">normalised</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the checkpoint path to resume from when available.&quot;&quot;&quot;</span>
-
-    <span class="k">return</span> <span class="n">shared_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grpo.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
@@ -479,44 +447,22 @@
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">model</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="n">model_args</span><span class="p">,</span> <span class="n">training_args</span><span class="p">)</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">generation_config</span><span class="o">.</span><span class="n">return_dict_in_generate</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">return_dict_in_generate</span> <span class="o">=</span> <span class="kc">True</span>
-
-    <span class="n">train_split</span> <span class="o">=</span> <span class="n">script_args</span><span class="o">.</span><span class="n">dataset_train_split</span>
-    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">shared_prepare_eval_dataset</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="p">,</span>
-        <span class="n">script_args</span><span class="p">,</span>
-        <span class="n">training_args</span><span class="p">,</span>
+    <span class="n">common_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+        <span class="s2">&quot;script_args&quot;</span><span class="p">:</span> <span class="n">script_args</span><span class="p">,</span>
+        <span class="s2">&quot;training_args&quot;</span><span class="p">:</span> <span class="n">training_args</span><span class="p">,</span>
+        <span class="s2">&quot;model_args&quot;</span><span class="p">:</span> <span class="n">model_args</span><span class="p">,</span>
+        <span class="s2">&quot;tokenizer&quot;</span><span class="p">:</span> <span class="n">tokenizer</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span>
+        <span class="n">model_builder</span><span class="o">=</span><span class="n">get_model</span><span class="p">,</span>
+        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
+        <span class="n">trainer_cls</span><span class="o">=</span><span class="n">GRPOTrainer</span><span class="p">,</span>
         <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
         <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">shared_configure_eval</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">eval_ds</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">)</span>
-
-    <span class="n">trainer</span> <span class="o">=</span> <span class="n">GRPOTrainer</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
-        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
-        <span class="n">train_dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">[</span><span class="n">train_split</span><span class="p">],</span>
-        <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
-        <span class="n">peft_config</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">(</span><span class="n">model_args</span><span class="p">),</span>
-        <span class="n">processing_class</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">last_ckpt</span> <span class="o">=</span> <span class="n">_resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">)</span>
-    <span class="n">train_result</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">resume_from_checkpoint</span><span class="o">=</span><span class="n">last_ckpt</span><span class="p">)</span>
-    <span class="n">trainer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">train_result</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span>
-    <span class="n">trainer</span><span class="o">.</span><span class="n">save_metrics</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">train_result</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span>
-    <span class="n">trainer</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
-    <span class="n">trainer</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
-        <span class="n">trainer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">(</span><span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="n">metrics</span><span class="p">)</span>
-        <span class="n">trainer</span><span class="o">.</span><span class="n">save_metrics</span><span class="p">(</span><span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="n">metrics</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;push_to_hub&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="n">trainer</span><span class="o">.</span><span class="n">push_to_hub</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">script_args</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;open-r1&quot;</span><span class="p">])</span></div>
+        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 

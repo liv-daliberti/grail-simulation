@@ -23,12 +23,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import List, Mapping, Optional, Sequence, Tuple
 
+from common.opinion import OpinionCalibrationMetrics
 from common.pipeline_types import (
-    OpinionStudySelection as BaseOpinionStudySelection,
+    BasePipelineSweepOutcome,
     StudySelection as BaseStudySelection,
     StudySpec,
+    narrow_opinion_selection,
+)
+from common.opinion_sweep_types import (
+    BaseOpinionSweepOutcome,
+    BaseOpinionSweepTask,
+    BaseSweepTask,
 )
 
 from .model import XGBoostBoosterParams
@@ -147,70 +154,38 @@ class SweepConfig:
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
-class SweepOutcome:
+class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):
     """
     Metrics captured for a (study, configuration) sweep evaluation.
 
-    :param order_index: Deterministic ordering index assigned to the task.
-    :type order_index: int
-    :param study: Study metadata associated with the sweep.
-    :type study: StudySpec
-    :param config: Evaluated sweep configuration.
-    :type config: SweepConfig
+    Extends :class:`common.pipeline_types.BasePipelineSweepOutcome` with
+    XGBoost-specific evaluation statistics.
+
     :param accuracy: Validation accuracy achieved by the configuration.
     :type accuracy: float
     :param coverage: Validation coverage achieved by the configuration.
     :type coverage: float
     :param evaluated: Number of evaluation rows.
     :type evaluated: int
-    :param metrics_path: Filesystem path to the metrics artefact.
-    :type metrics_path: Path
-    :param metrics: Raw metrics payload loaded from disk.
-    :type metrics: Mapping[str, object]
     """
 
-    order_index: int
-    study: StudySpec
-    config: SweepConfig
     accuracy: float
     coverage: float
     evaluated: int
-    metrics_path: Path
-    metrics: Mapping[str, object]
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
-class SweepTask:
+class SweepTask(  # pylint: disable=too-many-instance-attributes
+    BaseSweepTask["SweepConfig"]
+):
     """
-    Container describing a single sweep execution request.
+    Extend :class:`common.opinion_sweep_types.BaseSweepTask` with XGBoost metadata.
 
-    :param index: Stable index used for ordering and scheduling.
-    :type index: int
-    :param study: Study metadata being evaluated.
-    :type study: StudySpec
-    :param config: Sweep configuration executed for the study.
-    :type config: SweepConfig
-    :param base_cli: Baseline CLI arguments shared across tasks.
-    :type base_cli: Tuple[str, ...]
-    :param extra_cli: Additional passthrough CLI arguments.
-    :type extra_cli: Tuple[str, ...]
-    :param run_root: Directory under which sweep artefacts are stored.
-    :type run_root: Path
     :param tree_method: Tree construction algorithm supplied to XGBoost.
     :type tree_method: str
-    :param metrics_path: Target path for the ``metrics.json`` artefact.
-    :type metrics_path: Path
     """
 
-    index: int
-    study: StudySpec
-    config: SweepConfig
-    base_cli: Tuple[str, ...]
-    extra_cli: Tuple[str, ...]
-    run_root: Path
     tree_method: str
-    metrics_path: Path
 
 
 @dataclass
@@ -319,91 +294,34 @@ class OpinionStageConfig:
     reuse_existing: bool
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass
-class OpinionSweepOutcome:
+class OpinionSweepOutcome(  # pylint: disable=too-many-instance-attributes
+    BaseOpinionSweepOutcome[SweepConfig]
+):
     """
-    Metrics captured for a (study, configuration) combination during opinion sweeps.
+    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepOutcome` with
+    the XGBoost-specific :attr:`r_squared` metric.
 
-    :param order_index: Deterministic ordering index assigned to the task.
-    :type order_index: int
-    :param study: Study metadata associated with the sweep.
-    :type study: StudySpec
-    :param config: Evaluated sweep configuration.
-    :type config: SweepConfig
-    :param mae: Mean absolute error achieved by the configuration.
-    :type mae: float
-    :param rmse: Root mean squared error achieved by the configuration.
-    :type rmse: float
     :param r_squared: Coefficient of determination achieved by the configuration.
     :type r_squared: float
-    :param metrics_path: Filesystem path to the metrics artefact.
-    :type metrics_path: Path
-    :param metrics: Raw metrics payload loaded from disk.
-    :type metrics: Mapping[str, object]
-    :param accuracy: Directional accuracy achieved by the configuration.
-    :type accuracy: Optional[float]
-    :param baseline_accuracy: Directional accuracy achieved by the baseline.
-    :type baseline_accuracy: Optional[float]
-    :param accuracy_delta: Improvement in accuracy over the baseline.
-    :type accuracy_delta: Optional[float]
-    :param eligible: Number of evaluation examples contributing to accuracy metrics.
-    :type eligible: Optional[int]
     """
 
-    order_index: int
-    study: StudySpec
-    config: SweepConfig
-    mae: float
-    rmse: float
     r_squared: float
-    metrics_path: Path
-    metrics: Mapping[str, object]
-    accuracy: Optional[float] = None
-    baseline_accuracy: Optional[float] = None
-    accuracy_delta: Optional[float] = None
-    eligible: Optional[int] = None
 
 
 @dataclass(frozen=True)
-class OpinionSweepTask:
+class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
     """
-    Container describing a single opinion sweep execution request.
+    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepTask` with the
+    keyword arguments required by the XGBoost implementation.
 
-    :param index: Stable index used for ordering and scheduling.
-    :type index: int
-    :param study: Study metadata being evaluated.
-    :type study: StudySpec
-    :param config: Sweep configuration executed for the opinion task.
-    :type config: SweepConfig
     :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.
     :type request_args: Mapping[str, object]
     """
 
-    index: int
-    study: StudySpec
-    config: SweepConfig
     request_args: Mapping[str, object]
-    metrics_path: Path
 
-# pylint: disable=too-few-public-methods
-# Avoid triggering runtime generic parameter validation while still exposing
-# the specialised type to static analyzers.
-if TYPE_CHECKING:
-    OpinionSelectionBase = BaseOpinionStudySelection[OpinionSweepOutcome]
-else:
-    OpinionSelectionBase = BaseOpinionStudySelection
-
-
-class OpinionStudySelection(OpinionSelectionBase):
-    """
-    Selected configuration for the final opinion regression evaluation.
-
-    :param study: Study metadata chosen for final evaluation.
-    :type study: StudySpec
-    :param outcome: Winning opinion sweep outcome leveraged for reporting.
-    :type outcome: OpinionSweepOutcome
-    """
+OpinionStudySelection = narrow_opinion_selection(OpinionSweepOutcome)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -491,26 +409,36 @@ class NextVideoMetricSummary:
 
 # pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
-class OpinionSummary:
+class OpinionSummary(OpinionCalibrationMetrics):
     """
     Normalised view of opinion-regression metrics.
 
     :param mae_after: Mean absolute error achieved by the regressor.
     :type mae_after: Optional[float]
+    :param mae_change: Mean absolute error on the opinion-change signal.
+    :type mae_change: Optional[float]
     :param rmse_after: Root mean squared error achieved by the regressor.
     :type rmse_after: Optional[float]
     :param r2_after: Coefficient of determination achieved by the regressor.
     :type r2_after: Optional[float]
     :param baseline_mae: Baseline MAE using the no-change predictor.
     :type baseline_mae: Optional[float]
+    :param rmse_change: RMSE on the predicted opinion-change signal.
+    :type rmse_change: Optional[float]
+    :param baseline_rmse_change: Baseline RMSE on the opinion-change signal.
+    :type baseline_rmse_change: Optional[float]
     :param mae_delta: Absolute MAE improvement over the baseline.
     :type mae_delta: Optional[float]
     :param accuracy_after: Directional accuracy achieved by the regressor.
     :type accuracy_after: Optional[float]
-    :param baseline_accuracy: Directional accuracy achieved by the baseline.
-    :type baseline_accuracy: Optional[float]
-    :param accuracy_delta: Improvement in directional accuracy over the baseline.
-    :type accuracy_delta: Optional[float]
+    :param calibration_slope: Calibration slope between predicted and actual opinion deltas.
+    :type calibration_slope: Optional[float]
+    :param calibration_intercept: Calibration intercept for predicted deltas.
+    :type calibration_intercept: Optional[float]
+    :param calibration_ece: Expected calibration error for the model.
+    :type calibration_ece: Optional[float]
+    :param kl_divergence_change: KL divergence between predicted and actual change distributions.
+    :type kl_divergence_change: Optional[float]
     :param participants: Number of participants in the evaluation split.
     :type participants: Optional[int]
     :param eligible: Number of evaluation examples contributing to accuracy metrics.
@@ -521,20 +449,23 @@ class OpinionSummary:
     :vartype split: Optional[str]
     :ivar label: Human-readable study label.
     :vartype label: Optional[str]
+    :note: Baseline calibration and accuracy deltas are detailed in
+        :class:`common.opinion.OpinionCalibrationMetrics`.
     """
 
     mae_after: Optional[float] = None
+    mae_change: Optional[float] = None
     rmse_after: Optional[float] = None
     r2_after: Optional[float] = None
     baseline_mae: Optional[float] = None
+    rmse_change: Optional[float] = None
+    baseline_rmse_change: Optional[float] = None
     mae_delta: Optional[float] = None
     accuracy_after: Optional[float] = None
-    baseline_accuracy: Optional[float] = None
-    accuracy_delta: Optional[float] = None
-    participants: Optional[int] = None
-    eligible: Optional[int] = None
-    dataset: Optional[str] = None
-    split: Optional[str] = None
+    calibration_slope: Optional[float] = None
+    calibration_intercept: Optional[float] = None
+    calibration_ece: Optional[float] = None
+    kl_divergence_change: Optional[float] = None
     label: Optional[str] = None
 
 

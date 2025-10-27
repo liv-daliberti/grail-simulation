@@ -18,11 +18,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Mapping, Optional, Sequence, Tuple
-
-from numpy.random import default_rng
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.prompt_docs import PromptDocumentBuilder
+from common.prompt_sampling import collect_selected_examples
 from common.text import canon_text, canon_video_id
 
 
@@ -281,31 +280,15 @@ class PromptSelectionHelper:
         """Prepare prompt documents, labels, and metadata for TF-IDF style training."""
 
         # pylint: disable=too-many-locals
-        n_rows = len(train_ds)  # type: ignore[arg-type]
-        if n_rows == 0:
-            raise RuntimeError("Train split is empty.")
-
-        rng = default_rng(seed)
-        if max_train and max_train > 0:
-            take = min(max_train, n_rows)
-            indices = rng.permutation(n_rows)[:take].tolist()
-        else:
-            indices = list(range(n_rows))
-
-        documents: List[str] = []
-        label_ids: List[str] = []
-        label_titles: List[str] = []
-
-        for index in indices:
-            example = train_ds[int(index)]
+        def _collect(_, example: Mapping[str, object]) -> Tuple[str, str, str] | None:
             document = self.assemble_document(example, extra_fields)
             if not document.strip():
-                continue
+                return None
 
             video_raw = example.get(self.solution_column)
             video_id = canon_video_id(video_raw)
             if not video_id:
-                continue
+                return None
 
             candidates = self.collect_candidate_metadata(example)
             gold_index = _parse_gold_index(example.get("gold_index"))
@@ -316,14 +299,20 @@ class PromptSelectionHelper:
                 if selected.title and not label_title:
                     label_title = selected.title
 
-            documents.append(document)
-            label_ids.append(video_id)
-            label_titles.append(label_title)
+            return document, video_id, label_title
 
-        if not documents:
+        _indices, triples = collect_selected_examples(
+            train_ds,
+            max_train=max_train,
+            seed=seed,
+            collect=_collect,
+        )
+
+        if not triples:
             raise RuntimeError("No eligible documents were generated for training.")
 
-        return documents, label_ids, label_titles
+        documents, label_ids, label_titles = zip(*triples)
+        return list(documents), list(label_ids), list(label_titles)
 
     def prepare_prompt_documents(
         self,
@@ -342,8 +331,132 @@ class PromptSelectionHelper:
         )
 
 
+def _unbound_export(name: str) -> RuntimeError:
+    """Return a helpful error when prompt-selection helpers are not yet bound."""
+
+    return RuntimeError(
+        f"Prompt selection helper '{name}' is not bound. "
+        "Call 'bind_prompt_selection_exports' to attach runtime implementations."
+    )
+
+
+def title_for(_video_id: str) -> Optional[str]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("title_for") from None
+
+
+def viewer_profile_sentence(_example: Mapping[str, object]) -> str:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("viewer_profile_sentence") from None
+
+
+def prompt_from_builder(_example: Mapping[str, object]) -> str:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("prompt_from_builder") from None
+
+
+def extract_now_watching(
+    _example: Mapping[str, object],
+) -> Optional[Tuple[str, str]]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("extract_now_watching") from None
+
+
+def extract_slate_items(_example: Mapping[str, object]) -> List[Tuple[str, str]]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("extract_slate_items") from None
+
+
+def collect_candidate_metadata(_example: Mapping[str, object]) -> List[CandidateMetadata]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("collect_candidate_metadata") from None
+
+
+def selection_feature_tokens(
+    _example: Mapping[str, object],
+    _candidates: Sequence[CandidateMetadata] | None = None,
+) -> List[str]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("selection_feature_tokens") from None
+
+
+def assemble_document(
+    _example: Mapping[str, object],
+    _extra_fields: Sequence[str] | None = None,
+) -> str:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("assemble_document") from None
+
+
+def prepare_training_documents(
+    _train_ds: object,
+    _max_train: int,
+    _seed: int,
+    _extra_fields: Sequence[str] | None = None,
+) -> Tuple[List[str], List[str], List[str]]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("prepare_training_documents") from None
+
+
+def prepare_prompt_documents(
+    _train_ds: object,
+    _max_train: int,
+    _seed: int,
+    _extra_fields: Sequence[str] | None = None,
+) -> Tuple[List[str], List[str], List[str]]:
+    """Placeholder bound via :func:`bind_prompt_selection_exports`."""
+
+    raise _unbound_export("prepare_prompt_documents") from None
+
+
+PROMPT_SELECTION_EXPORT_ATTRS = (
+    "title_for",
+    "viewer_profile_sentence",
+    "prompt_from_builder",
+    "extract_now_watching",
+    "extract_slate_items",
+    "collect_candidate_metadata",
+    "selection_feature_tokens",
+    "assemble_document",
+    "prepare_training_documents",
+    "prepare_prompt_documents",
+)
+
+
+def bind_prompt_selection_exports(
+    helper: PromptSelectionHelper,
+    *,
+    include_candidate_tokens: bool = False,
+) -> Dict[str, object]:
+    """Return a mapping of standard prompt-selection helpers exposed by modules.
+
+    :param helper: Instance wrapping a :class:`PromptDocumentBuilder`.
+    :param include_candidate_tokens: When ``True`` include ``candidate_feature_tokens``.
+    :returns: Dictionary suitable for ``globals().update(...)``.
+    """
+
+    exports: Dict[str, object] = {
+        name: getattr(helper, name) for name in PROMPT_SELECTION_EXPORT_ATTRS
+    }
+    if include_candidate_tokens:
+        exports["candidate_feature_tokens"] = helper.candidate_feature_tokens
+    return exports
+
+
 __all__ = [
     "CandidateMetadata",
+    "PROMPT_SELECTION_EXPORT_ATTRS",
     "PromptSelectionHelper",
+    "bind_prompt_selection_exports",
     "candidate_feature_tokens",
+    *PROMPT_SELECTION_EXPORT_ATTRS,
 ]

@@ -279,12 +279,19 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionCalibrationMetrics</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">OpinionStudySelection</span> <span class="k">as</span> <span class="n">BaseOpinionStudySelection</span><span class="p">,</span>
+    <span class="n">BasePipelineSweepOutcome</span><span class="p">,</span>
     <span class="n">StudySelection</span> <span class="k">as</span> <span class="n">BaseStudySelection</span><span class="p">,</span>
     <span class="n">StudySpec</span><span class="p">,</span>
+    <span class="n">narrow_opinion_selection</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion_sweep_types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseOpinionSweepOutcome</span><span class="p">,</span>
+    <span class="n">BaseOpinionSweepTask</span><span class="p">,</span>
+    <span class="n">BaseSweepTask</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBoostBoosterParams</span>
@@ -417,73 +424,41 @@
 <div class="viewcode-block" id="SweepOutcome">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">SweepOutcome</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SweepOutcome</span><span class="p">(</span><span class="n">BasePipelineSweepOutcome</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Metrics captured for a (study, configuration) sweep evaluation.</span>
 
-<span class="sd">    :param order_index: Deterministic ordering index assigned to the task.</span>
-<span class="sd">    :type order_index: int</span>
-<span class="sd">    :param study: Study metadata associated with the sweep.</span>
-<span class="sd">    :type study: StudySpec</span>
-<span class="sd">    :param config: Evaluated sweep configuration.</span>
-<span class="sd">    :type config: SweepConfig</span>
+<span class="sd">    Extends :class:`common.pipeline_types.BasePipelineSweepOutcome` with</span>
+<span class="sd">    XGBoost-specific evaluation statistics.</span>
+
 <span class="sd">    :param accuracy: Validation accuracy achieved by the configuration.</span>
 <span class="sd">    :type accuracy: float</span>
 <span class="sd">    :param coverage: Validation coverage achieved by the configuration.</span>
 <span class="sd">    :type coverage: float</span>
 <span class="sd">    :param evaluated: Number of evaluation rows.</span>
 <span class="sd">    :type evaluated: int</span>
-<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
-<span class="sd">    :type metrics_path: Path</span>
-<span class="sd">    :param metrics: Raw metrics payload loaded from disk.</span>
-<span class="sd">    :type metrics: Mapping[str, object]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">SweepConfig</span>
     <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">coverage</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">evaluated</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span></div>
+    <span class="n">evaluated</span><span class="p">:</span> <span class="nb">int</span></div>
 
 
 
-<span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <div class="viewcode-block" id="SweepTask">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.SweepTask">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">SweepTask</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SweepTask</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+    <span class="n">BaseSweepTask</span><span class="p">[</span><span class="s2">&quot;SweepConfig&quot;</span><span class="p">]</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Container describing a single sweep execution request.</span>
+<span class="sd">    Extend :class:`common.opinion_sweep_types.BaseSweepTask` with XGBoost metadata.</span>
 
-<span class="sd">    :param index: Stable index used for ordering and scheduling.</span>
-<span class="sd">    :type index: int</span>
-<span class="sd">    :param study: Study metadata being evaluated.</span>
-<span class="sd">    :type study: StudySpec</span>
-<span class="sd">    :param config: Sweep configuration executed for the study.</span>
-<span class="sd">    :type config: SweepConfig</span>
-<span class="sd">    :param base_cli: Baseline CLI arguments shared across tasks.</span>
-<span class="sd">    :type base_cli: Tuple[str, ...]</span>
-<span class="sd">    :param extra_cli: Additional passthrough CLI arguments.</span>
-<span class="sd">    :type extra_cli: Tuple[str, ...]</span>
-<span class="sd">    :param run_root: Directory under which sweep artefacts are stored.</span>
-<span class="sd">    :type run_root: Path</span>
 <span class="sd">    :param tree_method: Tree construction algorithm supplied to XGBoost.</span>
 <span class="sd">    :type tree_method: str</span>
-<span class="sd">    :param metrics_path: Target path for the ``metrics.json`` artefact.</span>
-<span class="sd">    :type metrics_path: Path</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">SweepConfig</span>
-    <span class="n">base_cli</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-    <span class="n">extra_cli</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-    <span class="n">run_root</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span></div>
+    <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span></div>
 
 
 
@@ -605,100 +580,40 @@
 
 
 
-<span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <div class="viewcode-block" id="OpinionSweepOutcome">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSweepOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepOutcome</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepOutcome</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+    <span class="n">BaseOpinionSweepOutcome</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">]</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Metrics captured for a (study, configuration) combination during opinion sweeps.</span>
+<span class="sd">    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepOutcome` with</span>
+<span class="sd">    the XGBoost-specific :attr:`r_squared` metric.</span>
 
-<span class="sd">    :param order_index: Deterministic ordering index assigned to the task.</span>
-<span class="sd">    :type order_index: int</span>
-<span class="sd">    :param study: Study metadata associated with the sweep.</span>
-<span class="sd">    :type study: StudySpec</span>
-<span class="sd">    :param config: Evaluated sweep configuration.</span>
-<span class="sd">    :type config: SweepConfig</span>
-<span class="sd">    :param mae: Mean absolute error achieved by the configuration.</span>
-<span class="sd">    :type mae: float</span>
-<span class="sd">    :param rmse: Root mean squared error achieved by the configuration.</span>
-<span class="sd">    :type rmse: float</span>
 <span class="sd">    :param r_squared: Coefficient of determination achieved by the configuration.</span>
 <span class="sd">    :type r_squared: float</span>
-<span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
-<span class="sd">    :type metrics_path: Path</span>
-<span class="sd">    :param metrics: Raw metrics payload loaded from disk.</span>
-<span class="sd">    :type metrics: Mapping[str, object]</span>
-<span class="sd">    :param accuracy: Directional accuracy achieved by the configuration.</span>
-<span class="sd">    :type accuracy: Optional[float]</span>
-<span class="sd">    :param baseline_accuracy: Directional accuracy achieved by the baseline.</span>
-<span class="sd">    :type baseline_accuracy: Optional[float]</span>
-<span class="sd">    :param accuracy_delta: Improvement in accuracy over the baseline.</span>
-<span class="sd">    :type accuracy_delta: Optional[float]</span>
-<span class="sd">    :param eligible: Number of evaluation examples contributing to accuracy metrics.</span>
-<span class="sd">    :type eligible: Optional[int]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">SweepConfig</span>
-    <span class="n">mae</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">rmse</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">r_squared</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
-    <span class="n">accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">accuracy_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">r_squared</span><span class="p">:</span> <span class="nb">float</span></div>
 
 
 
 <div class="viewcode-block" id="OpinionSweepTask">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSweepTask">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepTask</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSweepTask</span><span class="p">(</span><span class="n">BaseOpinionSweepTask</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Container describing a single opinion sweep execution request.</span>
+<span class="sd">    Extend :class:`common.opinion_sweep_types.BaseOpinionSweepTask` with the</span>
+<span class="sd">    keyword arguments required by the XGBoost implementation.</span>
 
-<span class="sd">    :param index: Stable index used for ordering and scheduling.</span>
-<span class="sd">    :type index: int</span>
-<span class="sd">    :param study: Study metadata being evaluated.</span>
-<span class="sd">    :type study: StudySpec</span>
-<span class="sd">    :param config: Sweep configuration executed for the opinion task.</span>
-<span class="sd">    :type config: SweepConfig</span>
 <span class="sd">    :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.</span>
 <span class="sd">    :type request_args: Mapping[str, object]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">SweepConfig</span>
-    <span class="n">request_args</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
-    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span></div>
+    <span class="n">request_args</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span></div>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
-<span class="c1"># Avoid triggering runtime generic parameter validation while still exposing</span>
-<span class="c1"># the specialised type to static analyzers.</span>
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="n">OpinionSelectionBase</span> <span class="o">=</span> <span class="n">BaseOpinionStudySelection</span><span class="p">[</span><span class="n">OpinionSweepOutcome</span><span class="p">]</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="n">OpinionSelectionBase</span> <span class="o">=</span> <span class="n">BaseOpinionStudySelection</span>
-
-
-<div class="viewcode-block" id="OpinionStudySelection">
-<a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionStudySelection">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionStudySelection</span><span class="p">(</span><span class="n">OpinionSelectionBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Selected configuration for the final opinion regression evaluation.</span>
-
-<span class="sd">    :param study: Study metadata chosen for final evaluation.</span>
-<span class="sd">    :type study: StudySpec</span>
-<span class="sd">    :param outcome: Winning opinion sweep outcome leveraged for reporting.</span>
-<span class="sd">    :type outcome: OpinionSweepOutcome</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
-
+<span class="n">OpinionStudySelection</span> <span class="o">=</span> <span class="n">narrow_opinion_selection</span><span class="p">(</span><span class="n">OpinionSweepOutcome</span><span class="p">)</span>
 
 
 <span class="c1"># pylint: disable=too-many-instance-attributes</span>
@@ -794,26 +709,36 @@
 <div class="viewcode-block" id="OpinionSummary">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.pipeline.OpinionSummary">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSummary</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionSummary</span><span class="p">(</span><span class="n">OpinionCalibrationMetrics</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Normalised view of opinion-regression metrics.</span>
 
 <span class="sd">    :param mae_after: Mean absolute error achieved by the regressor.</span>
 <span class="sd">    :type mae_after: Optional[float]</span>
+<span class="sd">    :param mae_change: Mean absolute error on the opinion-change signal.</span>
+<span class="sd">    :type mae_change: Optional[float]</span>
 <span class="sd">    :param rmse_after: Root mean squared error achieved by the regressor.</span>
 <span class="sd">    :type rmse_after: Optional[float]</span>
 <span class="sd">    :param r2_after: Coefficient of determination achieved by the regressor.</span>
 <span class="sd">    :type r2_after: Optional[float]</span>
 <span class="sd">    :param baseline_mae: Baseline MAE using the no-change predictor.</span>
 <span class="sd">    :type baseline_mae: Optional[float]</span>
+<span class="sd">    :param rmse_change: RMSE on the predicted opinion-change signal.</span>
+<span class="sd">    :type rmse_change: Optional[float]</span>
+<span class="sd">    :param baseline_rmse_change: Baseline RMSE on the opinion-change signal.</span>
+<span class="sd">    :type baseline_rmse_change: Optional[float]</span>
 <span class="sd">    :param mae_delta: Absolute MAE improvement over the baseline.</span>
 <span class="sd">    :type mae_delta: Optional[float]</span>
 <span class="sd">    :param accuracy_after: Directional accuracy achieved by the regressor.</span>
 <span class="sd">    :type accuracy_after: Optional[float]</span>
-<span class="sd">    :param baseline_accuracy: Directional accuracy achieved by the baseline.</span>
-<span class="sd">    :type baseline_accuracy: Optional[float]</span>
-<span class="sd">    :param accuracy_delta: Improvement in directional accuracy over the baseline.</span>
-<span class="sd">    :type accuracy_delta: Optional[float]</span>
+<span class="sd">    :param calibration_slope: Calibration slope between predicted and actual opinion deltas.</span>
+<span class="sd">    :type calibration_slope: Optional[float]</span>
+<span class="sd">    :param calibration_intercept: Calibration intercept for predicted deltas.</span>
+<span class="sd">    :type calibration_intercept: Optional[float]</span>
+<span class="sd">    :param calibration_ece: Expected calibration error for the model.</span>
+<span class="sd">    :type calibration_ece: Optional[float]</span>
+<span class="sd">    :param kl_divergence_change: KL divergence between predicted and actual change distributions.</span>
+<span class="sd">    :type kl_divergence_change: Optional[float]</span>
 <span class="sd">    :param participants: Number of participants in the evaluation split.</span>
 <span class="sd">    :type participants: Optional[int]</span>
 <span class="sd">    :param eligible: Number of evaluation examples contributing to accuracy metrics.</span>
@@ -824,20 +749,23 @@
 <span class="sd">    :vartype split: Optional[str]</span>
 <span class="sd">    :ivar label: Human-readable study label.</span>
 <span class="sd">    :vartype label: Optional[str]</span>
+<span class="sd">    :note: Baseline calibration and accuracy deltas are detailed in</span>
+<span class="sd">        :class:`common.opinion.OpinionCalibrationMetrics`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mae_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mae_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">rmse_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">r2_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">baseline_mae</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rmse_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_rmse_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">mae_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">accuracy_after</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">accuracy_delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">participants</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_slope</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_intercept</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">calibration_ece</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kl_divergence_change</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 

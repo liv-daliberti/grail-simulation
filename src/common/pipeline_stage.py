@@ -18,7 +18,226 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
+from argparse import Namespace
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, Generic, Optional, Sequence, TypeVar
+
+
+TaskT = TypeVar("TaskT")
+OutcomeT = TypeVar("OutcomeT")
+
+
+@dataclass(frozen=True)
+class DryRunSummary:
+    """Summary information for a pipeline dry-run."""
+
+    label: str
+    pending: int
+    cached: int
+
+
+def log_dry_run_summary(logger, entries: Sequence[DryRunSummary]) -> None:
+    """Emit a consistent dry-run summary across pipeline implementations."""
+
+    summary_bits = [
+        f"{entry.label} pending={entry.pending} cached={entry.cached}"
+        for entry in entries
+    ]
+    logger.info(
+        "Dry-run mode. %s.",
+        "; ".join(summary_bits) if summary_bits else "No tasks selected.",
+    )
+
+
+@dataclass(frozen=True)
+class SweepPartitionExecutors(Generic[TaskT, OutcomeT]):
+    """Callable bundle operating on sweep partition tasks."""
+
+    execute_task: Callable[[TaskT], OutcomeT]
+    describe_pending: Callable[[TaskT], str]
+    describe_cached: Callable[[OutcomeT], str]
+
+
+@dataclass(frozen=True)
+class SweepPartitionPaths(Generic[TaskT, OutcomeT]):
+    """Path accessors for sweep partition artifacts."""
+
+    pending: Callable[[TaskT], Path]
+    cached: Callable[[OutcomeT], Path]
+
+
+@dataclass(frozen=True)
+class SweepPartitionIndexers(Generic[TaskT, OutcomeT]):
+    """Index accessors used when normalising sweep partitions."""
+
+    pending: Callable[[TaskT], int]
+    cached: Callable[[OutcomeT], int]
+
+
+@dataclass(frozen=True)
+class SweepPartitionState(Generic[TaskT, OutcomeT]):
+    """Lookup tables representing tasks and cached outcomes."""
+
+    pending_by_index: Dict[int, TaskT]
+    cached_by_index: Dict[int, OutcomeT]
+    total_slots: int
+
+
+@dataclass
+class SweepPartition(Generic[TaskT, OutcomeT]):
+    """Partition of sweep tasks that share execution semantics."""
+
+    label: str
+    state: SweepPartitionState[TaskT, OutcomeT]
+    reuse_existing: bool
+    prefix: str
+    executors: SweepPartitionExecutors[TaskT, OutcomeT]
+    paths: SweepPartitionPaths[TaskT, OutcomeT]
+
+def _default_pending_index(task: TaskT) -> int:
+    return getattr(task, "index")
+
+
+def _default_cached_index(outcome: OutcomeT) -> int:
+    return getattr(outcome, "order_index")
+
+
+def _default_pending_metrics_path(task: TaskT) -> Path:
+    return getattr(task, "metrics_path")
+
+
+def _default_cached_metrics_path(outcome: OutcomeT) -> Path:
+    return getattr(outcome, "metrics_path")
+
+
+_DEFAULT_INDEXERS: SweepPartitionIndexers[TaskT, OutcomeT] = SweepPartitionIndexers(
+    pending=_default_pending_index,
+    cached=_default_cached_index,
+)
+_DEFAULT_PATHS: SweepPartitionPaths[TaskT, OutcomeT] = SweepPartitionPaths(
+    pending=_default_pending_metrics_path,
+    cached=_default_cached_metrics_path,
+)
+
+
+def make_sweep_partition(
+    *,
+    label: str,
+    pending: Sequence[TaskT],
+    cached: Sequence[OutcomeT],
+    reuse_existing: bool,
+    executors: SweepPartitionExecutors[TaskT, OutcomeT],
+    prefix: str = "",
+    indexers: SweepPartitionIndexers[TaskT, OutcomeT] | None = None,
+    paths: SweepPartitionPaths[TaskT, OutcomeT] | None = None,
+) -> SweepPartition[TaskT, OutcomeT]:
+    """Normalise sweep task partitions for distributed execution."""
+
+    indexers = indexers or _DEFAULT_INDEXERS
+    paths = paths or _DEFAULT_PATHS
+    pending_by_index = {indexers.pending(task): task for task in pending}
+    cached_by_index: Dict[int, OutcomeT] = {}
+    for outcome in cached:
+        index = indexers.cached(outcome)
+        if index in pending_by_index:
+            continue
+        cached_by_index[index] = outcome
+    indices = set(pending_by_index).union(cached_by_index)
+    total_slots = (max(indices) + 1) if indices else 0
+    state = SweepPartitionState(
+        pending_by_index=pending_by_index,
+        cached_by_index=cached_by_index,
+        total_slots=total_slots,
+    )
+    return SweepPartition(
+        label=label,
+        reuse_existing=reuse_existing,
+        prefix=prefix,
+        state=state,
+        executors=executors,
+        paths=paths,
+    )
+
+
+def _run_partition_task(
+    partition: SweepPartition[TaskT, OutcomeT],
+    task_index: int,
+    *,
+    logger,
+) -> None:
+    """Execute or skip a single sweep task within ``partition``."""
+
+    prefix = f"{partition.prefix} " if partition.prefix else ""
+    state = partition.state
+    executors = partition.executors
+    task = state.pending_by_index.get(task_index)
+    if task is None:
+        cached = state.cached_by_index.get(task_index)
+        if cached is not None:
+            logger.info(
+                (
+                    "%sSkipping sweep task %d (%s %s); metrics already present "
+                    "at %s."
+                ),
+                prefix,
+                task_index,
+                partition.label,
+                executors.describe_cached(cached),
+                partition.paths.cached(cached),
+            )
+            return
+        logger.warning(
+            "%sNo %s sweep task registered for index %d; skipping.",
+            prefix,
+            partition.label,
+            task_index,
+        )
+        return
+
+    metrics_path = partition.paths.pending(task)
+    if partition.reuse_existing and metrics_path.exists():
+        logger.info(
+            "%sSkipping sweep task %d (%s %s); metrics already present at %s.",
+            prefix,
+            task_index,
+            partition.label,
+            executors.describe_pending(task),
+            metrics_path,
+        )
+        return
+
+    outcome = executors.execute_task(task)
+    order_index = getattr(outcome, "order_index", task_index)
+    logger.info(
+        "%sCompleted sweep task %d (%s %s; order=%d). Metrics stored at %s.",
+        prefix,
+        task_index,
+        partition.label,
+        executors.describe_pending(task),
+        order_index,
+        getattr(outcome, "metrics_path", metrics_path),
+    )
+
+
+def dispatch_sweep_task(
+    partitions: Sequence[SweepPartition[TaskT, OutcomeT]],
+    *,
+    task_id: int,
+    logger,
+) -> None:
+    """Dispatch ``task_id`` to the appropriate sweep partition."""
+
+    offset = 0
+    for partition in partitions:
+        total_slots = partition.state.total_slots
+        if task_id < offset + total_slots:
+            _run_partition_task(partition, task_id - offset, logger=logger)
+            return
+        offset += total_slots
+    raise RuntimeError(
+        f"Sweep task index {task_id} beyond partitioned workload (total={offset})."
+    )
 
 
 def prepare_sweep_execution(
@@ -72,3 +291,58 @@ def prepare_sweep_execution(
             f"Sweep task index {task_id} out of range (0..{total_tasks - 1})."
         )
     return task_id
+
+
+def execute_sweep_partitions(
+    partitions: Sequence[SweepPartition[TaskT, OutcomeT]],
+    *,
+    cli_task_id: Optional[int],
+    cli_task_count: Optional[int],
+    logger,
+    env_var: str = "SLURM_ARRAY_TASK_ID",
+    prepare: Callable[..., Optional[int]] = prepare_sweep_execution,
+) -> Optional[int]:
+    """
+    Resolve the sweep task to run and dispatch it to ``partitions``.
+
+    Replaces the repeated pattern of computing the aggregate task count,
+    invoking :func:`prepare_sweep_execution`, and calling
+    :func:`dispatch_sweep_task`. Returns the concrete task index when a
+    task is executed and ``None`` when no work is required.
+    """
+
+    total_tasks = sum(partition.state.total_slots for partition in partitions)
+    task_id = prepare(
+        total_tasks=total_tasks,
+        cli_task_id=cli_task_id,
+        cli_task_count=cli_task_count,
+        logger=logger,
+        env_var=env_var,
+    )
+    if task_id is None:
+        return None
+    dispatch_sweep_task(partitions, task_id=task_id, logger=logger)
+    return task_id
+
+
+def execute_partitions_for_cli(  # pragma: no cover - thin convenience wrapper
+    partitions: Sequence[SweepPartition[TaskT, OutcomeT]],
+    *,
+    args: Namespace,
+    logger,
+    prepare: Callable[..., Optional[int]] = prepare_sweep_execution,
+) -> Optional[int]:
+    """
+    Convenience wrapper that extracts CLI sweep task arguments from ``args``.
+
+    Reduces duplication across pipelines by forwarding the relevant namespace
+    attributes to :func:`execute_sweep_partitions`.
+    """
+
+    return execute_sweep_partitions(
+        partitions,
+        cli_task_id=getattr(args, "sweep_task_id", None),
+        cli_task_count=getattr(args, "sweep_task_count", None),
+        logger=logger,
+        prepare=prepare,
+    )

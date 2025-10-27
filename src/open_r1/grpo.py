@@ -17,8 +17,7 @@
 
 import logging
 import os
-from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 try:  # pragma: no cover - optional dependency
     from transformers import set_seed
@@ -33,29 +32,24 @@ except ImportError:  # pragma: no cover - optional dependency
     get_peft_config = None  # type: ignore[assignment]
     GRPOTrainer = None  # type: ignore[assignment]
 
+from common.hf_datasets import DatasetDict
+
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
-from open_r1.dataset_utils import drop_marked_rows, slate_has_gold
+from open_r1.dataset_utils import drop_marked_rows, make_slate_validator
 from open_r1.example_utils import (
+    call_row_to_training_example,
     get_gold_next_id,
     gold_index_from_items,
     load_slate_items,
-    row_to_training_example,
 )
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
-    configure_eval as shared_configure_eval,
     parse_and_run,
-    prepare_eval_dataset as shared_prepare_eval_dataset,
-    resolve_checkpoint as shared_resolve_checkpoint,
+    prepare_model_eval_and_run_grpo,
 )
 from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_model, get_tokenizer
-
-if TYPE_CHECKING:  # pragma: no cover - typing-only import
-    from datasets import DatasetDict
-else:  # pragma: no cover - fallback when datasets is unavailable at lint time
-    DatasetDict = Any
 
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
 
@@ -79,26 +73,6 @@ def _ensure_training_dependencies() -> None:
             "trl must be installed to run GRPO training "
             "(pip install trl)."
         )
-
-
-def _row_to_example(
-    ex: Dict[str, Any],
-    system_prompt: Optional[str],
-    sol_key: Optional[str],
-    max_hist: int = 12,
-) -> Optional[Dict[str, Any]]:
-    """
-    Convert a raw dataset row into the prompt/answer payload expected by GRPO.
-
-    Returns None when the slate is empty or the gold label cannot be mapped to it.
-    """
-    return row_to_training_example(
-        ex,
-        system_prompt=system_prompt,
-        solution_key=sol_key,
-        max_history=max_hist,
-        passthrough_fn=collect_passthrough_fields,
-    )
 
 
 def _prune_columns(dataset: DatasetDict) -> DatasetDict:
@@ -131,19 +105,19 @@ def _build_dataset(
     """
 
     raw = get_dataset(script_args)
-    validator = partial(
-        slate_has_gold,
+    validator = make_slate_validator(
         load_slate_items=load_slate_items,
         lookup_gold_id=get_gold_next_id,
         resolve_gold_index=gold_index_from_items,
     )
     filtered = raw.filter(validator, fn_kwargs={"solution_key": solution_key})
     mapped = filtered.map(
-        _row_to_example,
+        call_row_to_training_example,
         fn_kwargs={
             "system_prompt": training_args.system_prompt,
-            "sol_key": solution_key,
-            "max_hist": max_hist,
+            "solution_key": solution_key,
+            "max_history": max_hist,
+            "passthrough_fn": collect_passthrough_fields,
         },
         load_from_cache_file=False,
     )
@@ -192,12 +166,6 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
         training_args.reward_weights = [value / total for value in normalised]
 
 
-def _resolve_checkpoint(training_args: GRPOConfig) -> Optional[str]:
-    """Return the checkpoint path to resume from when available."""
-
-    return shared_resolve_checkpoint(training_args)
-
-
 def main(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
@@ -221,44 +189,22 @@ def main(
         training_args.reward_weights,
     )
 
-    model = get_model(model_args, training_args)
-    model.generation_config.return_dict_in_generate = True
-    model.config.return_dict_in_generate = True
-
-    train_split = script_args.dataset_train_split
-    eval_ds = shared_prepare_eval_dataset(
-        dataset,
-        script_args,
-        training_args,
+    common_kwargs = {
+        "dataset": dataset,
+        "script_args": script_args,
+        "training_args": training_args,
+        "model_args": model_args,
+        "tokenizer": tokenizer,
+    }
+    prepare_model_eval_and_run_grpo(
+        model_builder=get_model,
+        reward_funcs=reward_fns,
+        trainer_cls=GRPOTrainer,
         logger=logger,
         prefix="grpo",
+        peft_config_fn=get_peft_config,
+        **common_kwargs,
     )
-    shared_configure_eval(training_args, eval_ds, logger=logger, prefix="grpo")
-
-    trainer = GRPOTrainer(
-        model=model,
-        args=training_args,
-        reward_funcs=reward_fns,
-        train_dataset=dataset[train_split],
-        eval_dataset=eval_ds,
-        peft_config=get_peft_config(model_args),
-        processing_class=tokenizer,
-    )
-
-    last_ckpt = _resolve_checkpoint(training_args)
-    train_result = trainer.train(resume_from_checkpoint=last_ckpt)
-    trainer.log_metrics("train", train_result.metrics)
-    trainer.save_metrics("train", train_result.metrics)
-    trainer.save_state()
-    trainer.save_model(training_args.output_dir)
-
-    if getattr(training_args, "do_eval", False) and eval_ds is not None:
-        metrics = trainer.evaluate()
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    if getattr(training_args, "push_to_hub", False):
-        trainer.push_to_hub(dataset_name=script_args.dataset_name, tags=["open-r1"])
 
 
 if __name__ == "__main__":

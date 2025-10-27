@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
+from typing import Callable, Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -33,7 +33,11 @@ from common.prompt_docs import (
     EXTRA_FIELD_LABELS as _COMMON_EXTRA_FIELD_LABELS,
     create_prompt_document_builder,
 )
-from common.prompt_selection import CandidateMetadata, PromptSelectionHelper
+from common.prompt_selection import (
+    CandidateMetadata,
+    PROMPT_SELECTION_EXPORT_ATTRS,
+    PromptSelectionHelper,
+)
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
@@ -50,6 +54,7 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
 
 _PROMPT_FEATURES = PromptSelectionHelper(_PROMPT_DOC_BUILDER)
 
+# Explicit re-exports so static analysers see the helper functions.
 title_for = _PROMPT_FEATURES.title_for
 viewer_profile_sentence = _PROMPT_FEATURES.viewer_profile_sentence
 prompt_from_builder = _PROMPT_FEATURES.prompt_from_builder
@@ -60,7 +65,7 @@ selection_feature_tokens = _PROMPT_FEATURES.selection_feature_tokens
 assemble_document = _PROMPT_FEATURES.assemble_document
 prepare_training_documents = _PROMPT_FEATURES.prepare_training_documents
 prepare_prompt_documents = _PROMPT_FEATURES.prepare_prompt_documents
-candidate_feature_tokens = _PROMPT_FEATURES.candidate_feature_tokens
+candidate_feature_tokens: Callable[..., Sequence[str]] = _PROMPT_FEATURES.candidate_feature_tokens
 
 
 # ---------------------------------------------------------------------------
@@ -221,16 +226,8 @@ __all__ = [
     "DEFAULT_TITLE_DIRS",
     "EXTRA_FIELD_LABELS",
     "CandidateMetadata",
-    "candidate_feature_tokens",
-    "collect_candidate_metadata",
-    "selection_feature_tokens",
     "Word2VecConfig",
     "Word2VecFeatureBuilder",
-    "assemble_document",
-    "extract_now_watching",
-    "extract_slate_items",
-    "prepare_training_documents",
-    "prompt_from_builder",
-    "title_for",
-    "viewer_profile_sentence",
+    *PROMPT_SELECTION_EXPORT_ATTRS,
+    "candidate_feature_tokens",
 ]

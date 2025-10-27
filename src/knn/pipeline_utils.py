@@ -21,12 +21,121 @@ from raw metric payloads into structured summaries used by the reports.
 
 from __future__ import annotations
 
+from itertools import product
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar
 
 from common.pipeline_formatters import safe_float, safe_int
 
-from .pipeline_context import MetricSummary, OpinionSummary
+from .pipeline_context import MetricSummary, OpinionSummary, StudySpec
+
+TaskT = TypeVar("TaskT")
+OutcomeT = TypeVar("OutcomeT")
+
+
+def handle_cached_task(
+    task: TaskT,
+    *,
+    reuse_existing: bool,
+    cache_path: Path,
+    load_cached: Callable[[TaskT], Optional[OutcomeT]],
+    pending: List[TaskT],
+    cached: List[OutcomeT],
+) -> bool:
+    """
+    Append ``task`` to ``pending`` unless a cached outcome can be reused.
+
+    :returns: ``True`` when a cached outcome was appended and the caller should skip execution.
+    """
+
+    if reuse_existing and cache_path.exists():
+        cached_result = load_cached(task)
+        if cached_result is not None:
+            cached.append(cached_result)
+            return True
+    pending.append(task)
+    return False
+
+
+def partition_cached_tasks(
+    tasks: Iterable[TaskT],
+    *,
+    reuse_existing: bool,
+    cache_path: Callable[[TaskT], Path],
+    load_cached: Callable[[TaskT], Optional[OutcomeT]],
+) -> Tuple[List[TaskT], List[OutcomeT]]:
+    """
+    Split ``tasks`` into pending work and cached results.
+
+    :returns: Tuple containing pending task list and cached outcomes respectively.
+    """
+
+    pending: List[TaskT] = []
+    cached: List[OutcomeT] = []
+    for task in tasks:
+        was_cached = handle_cached_task(
+            task,
+            reuse_existing=reuse_existing,
+            cache_path=cache_path(task),
+            load_cached=load_cached,
+            pending=pending,
+            cached=cached,
+        )
+        if was_cached:
+            continue
+    return pending, cached
+
+
+def prepare_task_grid(
+    configs: Sequence[Any],
+    studies: Sequence[Any],
+    *,
+    reuse_existing: bool,
+    build_task: Callable[[int, Any, Any], TaskT],
+    load_cached: Callable[[TaskT], Optional[OutcomeT]],
+    cache_path: Callable[[TaskT], Path] | None = None,
+) -> Tuple[List[TaskT], List[OutcomeT]]:
+    """
+    Construct sweep task grid and partition cached outcomes.
+
+    :param configs: Hyper-parameter configurations included in the sweep.
+    :type configs: Sequence[Any]
+    :param studies: Study specifications evaluated by the sweep.
+    :type studies: Sequence[Any]
+    :param reuse_existing: Whether cached metrics should be reused.
+    :type reuse_existing: bool
+    :param build_task: Callable that constructs a task for the given index, config, and study.
+    :type build_task: Callable[[int, Any, Any], TaskT]
+    :param load_cached: Callable used to load cached outcomes for a task.
+    :type load_cached: Callable[[TaskT], Optional[OutcomeT]]
+    :param cache_path: Optional callable returning the cache path for a task.
+    :type cache_path: Callable[[TaskT], Path] | None
+    :returns: Pending tasks and cached outcomes separated according to ``reuse_existing``.
+    :rtype: Tuple[List[TaskT], List[OutcomeT]]
+    """
+
+    tasks = [
+        build_task(task_index, config, study)
+        for task_index, (config, study) in enumerate(product(configs, studies))
+    ]
+    if cache_path is None:
+
+        def cache_path(task: TaskT) -> Path:
+            try:
+                path = getattr(task, "metrics_path")
+            except AttributeError as exc:  # pragma: no cover - defensive only
+                raise AttributeError(
+                    "Task is missing 'metrics_path' required for caching."
+                ) from exc
+            return Path(path)
+
+    return partition_cached_tasks(
+        tasks,
+        reuse_existing=reuse_existing,
+        cache_path=cache_path,
+        load_cached=load_cached,
+    )
+
 
 def ensure_dir(path: Path) -> Path:
     """
@@ -200,53 +309,147 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     """
     best_metrics = data.get("best_metrics", {})
     baseline_metrics = data.get("baseline", {})
-    mae_after = safe_float(best_metrics.get("mae_after"))
-    baseline_mae = safe_float(baseline_metrics.get("mae_using_before"))
-    mae_change = safe_float(best_metrics.get("mae_change"))
-    rmse_after = safe_float(best_metrics.get("rmse_after"))
-    r2_after = safe_float(best_metrics.get("r2_after"))
+    if not isinstance(best_metrics, Mapping):
+        best_metrics = {}
+    if not isinstance(baseline_metrics, Mapping):
+        baseline_metrics = {}
+
+    def metric(source: Mapping[str, Any], key: str) -> Optional[float]:
+        return safe_float(source.get(key))
+
+    def difference(lhs: Optional[float], rhs: Optional[float]) -> Optional[float]:
+        if lhs is None or rhs is None:
+            return None
+        return lhs - rhs
+
     participants = safe_int(data.get("n_participants"))
-    best_k = safe_int(data.get("best_k"))
-    accuracy = safe_float(best_metrics.get("direction_accuracy"))
-    baseline_accuracy = safe_float(baseline_metrics.get("direction_accuracy"))
-    accuracy_delta = (
-        accuracy - baseline_accuracy
-        if accuracy is not None and baseline_accuracy is not None
-        else None
+    eligible = next(
+        (
+            value
+            for value in (
+                safe_int(best_metrics.get("eligible")),
+                safe_int(data.get("eligible")),
+                participants,
+            )
+            if value is not None
+        ),
+        None,
     )
-    eligible = safe_int(
-        best_metrics.get("eligible")
-        if isinstance(best_metrics, Mapping)
-        else None
-    )
-    if eligible is None:
-        eligible = safe_int(data.get("eligible"))
-    if eligible is None:
-        eligible = participants
+
+    accuracy = metric(best_metrics, "direction_accuracy")
+    baseline_accuracy = metric(baseline_metrics, "direction_accuracy")
+    mae_value = metric(best_metrics, "mae_after")
+    baseline_mae_value = metric(baseline_metrics, "mae_using_before")
 
     return OpinionSummary(
-        mae=mae_after,
-        rmse=rmse_after,
-        r2_score=r2_after,
-        mae_change=mae_change,
-        baseline_mae=baseline_mae,
-        mae_delta=(
-            mae_after - baseline_mae
-            if mae_after is not None and baseline_mae is not None
-            else None
-        ),
+        mae=mae_value,
+        rmse=metric(best_metrics, "rmse_after"),
+        r2_score=metric(best_metrics, "r2_after"),
+        mae_change=metric(best_metrics, "mae_change"),
+        rmse_change=metric(best_metrics, "rmse_change"),
+        baseline_mae=baseline_mae_value,
+        baseline_rmse_change=metric(baseline_metrics, "rmse_change_zero"),
+        mae_delta=difference(mae_value, baseline_mae_value),
         accuracy=accuracy,
         baseline_accuracy=baseline_accuracy,
-        accuracy_delta=accuracy_delta,
-        best_k=best_k,
+        accuracy_delta=difference(accuracy, baseline_accuracy),
+        calibration_slope=metric(best_metrics, "calibration_slope"),
+        baseline_calibration_slope=metric(
+            baseline_metrics, "calibration_slope_change_zero"
+        ),
+        calibration_intercept=metric(best_metrics, "calibration_intercept"),
+        baseline_calibration_intercept=metric(
+            baseline_metrics, "calibration_intercept_change_zero"
+        ),
+        calibration_ece=metric(best_metrics, "calibration_ece"),
+        baseline_calibration_ece=metric(
+            baseline_metrics, "calibration_ece_change_zero"
+        ),
+        kl_divergence_change=metric(best_metrics, "kl_divergence_change"),
+        baseline_kl_divergence_change=metric(
+            baseline_metrics, "kl_divergence_change_zero"
+        ),
+        best_k=safe_int(data.get("best_k")),
         participants=participants,
         eligible=eligible,
         dataset=str(data.get("dataset")) if data.get("dataset") else None,
         split=str(data.get("split")) if data.get("split") else None,
     )
 
+
+def ensure_feature_selections(
+    selections: Mapping[str, Mapping[str, Any]],
+    expected_keys: Sequence[str],
+    *,
+    allow_incomplete: bool,
+    logger: Any,
+    missing_descriptor: str,
+    empty_descriptor: str,
+    require_selected: bool,
+) -> None:
+    """
+    Validate that ``selections`` covers all ``expected_keys`` for each feature space.
+
+    Emits a warning when ``allow_incomplete`` is set and some studies are missing.
+    Raises ``RuntimeError`` when data is missing and incomplete results are not allowed.
+    If ``require_selected`` is true and no selections were recorded, a ``RuntimeError``
+    is raised to signal the failure.
+    """
+
+    for feature_space, per_feature in selections.items():
+        missing = [key for key in expected_keys if key not in per_feature]
+        if not missing:
+            continue
+        message = (
+            f"Missing {missing_descriptor} for feature={feature_space}: "
+            f"{', '.join(missing)}"
+        )
+        if allow_incomplete:
+            logger.warning(
+                "%s. Continuing because allow-incomplete mode is enabled.",
+                message,
+            )
+        else:
+            raise RuntimeError(message)
+
+    if not selections and require_selected:
+        raise RuntimeError(
+            f"Failed to select a best configuration for any {empty_descriptor}."
+        )
+
+
+def ensure_selection_coverage(
+    selections: Mapping[str, Mapping[str, Any]],
+    studies: Sequence[StudySpec],
+    *,
+    allow_incomplete: bool,
+    logger: Any,
+    missing_descriptor: str,
+    empty_descriptor: str,
+    require_selected: bool,
+) -> None:
+    """
+    Wrapper that reuses :func:`ensure_feature_selections` for common call sites.
+
+    Derives the expected study keys from ``studies`` to avoid repeating the same
+    boilerplate whenever we validate sweep selections.
+    """
+
+    expected_keys = [study.key for study in studies]
+    ensure_feature_selections(
+        selections,
+        expected_keys,
+        allow_incomplete=allow_incomplete,
+        logger=logger,
+        missing_descriptor=missing_descriptor,
+        empty_descriptor=empty_descriptor,
+        require_selected=require_selected,
+    )
+
 __all__ = [
     "ensure_dir",
+    "ensure_feature_selections",
+    "ensure_selection_coverage",
     "extract_metric_summary",
     "extract_opinion_summary",
     "format_count",
@@ -255,6 +458,9 @@ __all__ = [
     "format_k",
     "format_optional_float",
     "format_uncertainty_details",
+    "handle_cached_task",
+    "prepare_task_grid",
+    "partition_cached_tasks",
     "parse_ci",
     "safe_float",
     "safe_int",

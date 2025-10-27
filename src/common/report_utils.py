@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 
 def start_markdown_report(
@@ -32,6 +32,67 @@ def start_markdown_report(
     path = directory / filename
     lines: List[str] = [f"# {title}", ""]
     return path, lines
+
+
+def append_catalog_sections(
+    lines: List[str],
+    *,
+    include_next_video: bool,
+    include_opinion: bool,
+    reports_prefix: str,
+) -> None:
+    """
+    Append the shared catalog bullets describing downstream report artefacts.
+
+    :param lines: Mutable list of Markdown lines to extend.
+    :param include_next_video: Whether next-video metrics should be mentioned.
+    :param include_opinion: Whether opinion metrics should be mentioned.
+    :param reports_prefix: Directory prefix (``knn`` or ``xgb``) used for report paths.
+    """
+    lines.append(
+        "- `additional_features/README.md` — overview of the extra text fields appended to prompts."
+    )
+    if include_next_video or include_opinion:
+        lines.append("")
+    if include_next_video:
+        lines.append(
+            "- `hyperparameter_tuning/README.md` — sweep leaderboards and the per-study winners."
+        )
+        lines.append(
+            "- `next_video/README.md` — validation accuracy, confidence intervals, baseline deltas,"
+            " and training versus validation accuracy curves for the production slate task."
+        )
+    if include_opinion:
+        lines.append(
+            "- `opinion/README.md` — post-study opinion regression metrics, plus heatmaps under "
+            f"`reports/{reports_prefix}/opinion/`."
+        )
+
+
+def extend_with_catalog_sections(
+    lines: List[str],
+    *,
+    include_next_video: bool,
+    include_opinion: bool,
+    reports_prefix: str,
+) -> None:
+    """
+    Append the shared catalog sections, ensuring a blank line separator first.
+
+    :param lines: Mutable list of Markdown lines to extend.
+    :param include_next_video: Whether next-video metrics should be mentioned.
+    :param include_opinion: Whether opinion metrics should be mentioned.
+    :param reports_prefix: Directory prefix (``knn`` or ``xgb``) used for report paths.
+    """
+
+    if lines and lines[-1] != "":
+        lines.append("")
+    append_catalog_sections(
+        lines,
+        include_next_video=include_next_video,
+        include_opinion=include_opinion,
+        reports_prefix=reports_prefix,
+    )
 
 
 def extract_numeric_series(curve_map: Mapping[str, object]) -> Tuple[List[int], List[float]]:
@@ -50,5 +111,31 @@ def extract_numeric_series(curve_map: Mapping[str, object]) -> Tuple[List[int], 
     step_values, metric_values = zip(*points)
     return (list(step_values), list(metric_values))
 
+def extract_curve_sections(
+    curve_bundle: object,
+) -> Optional[Tuple[Mapping[str, object], Optional[Mapping[str, object]]]]:
+    """
+    Return the validation and training curve mappings from ``curve_bundle``.
 
-__all__ = ["extract_numeric_series", "start_markdown_report"]
+    :returns: Tuple containing the validation mapping and an optional training mapping.
+    """
+
+    if not isinstance(curve_bundle, Mapping):
+        return None
+    eval_curve = curve_bundle.get("eval")
+    if not isinstance(eval_curve, Mapping):
+        return None
+    train_curve = curve_bundle.get("train")
+    train_mapping: Optional[Mapping[str, object]] = (
+        train_curve if isinstance(train_curve, Mapping) else None
+    )
+    return (eval_curve, train_mapping)
+
+
+__all__ = [
+    "append_catalog_sections",
+    "extend_with_catalog_sections",
+    "extract_curve_sections",
+    "extract_numeric_series",
+    "start_markdown_report",
+]

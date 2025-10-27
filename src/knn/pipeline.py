@@ -25,7 +25,14 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
-from common.pipeline_stage import prepare_sweep_execution
+from common.pipeline_stage import (
+    DryRunSummary,
+    execute_partitions_for_cli,
+    log_dry_run_summary,
+    make_sweep_partition,
+    prepare_sweep_execution as _prepare_sweep_execution,
+    SweepPartitionExecutors,
+)
 
 from .pipeline_context import (
     EvaluationContext,
@@ -69,6 +76,7 @@ from .pipeline_evaluate import (
     run_cross_study_evaluations as _run_cross_study_evaluations,
     run_final_evaluations as _run_final_evaluations,
     run_opinion_evaluations as _run_opinion_evaluations,
+    run_opinion_from_next_evaluations as _run_opinion_from_next_evaluations,
 )
 from .pipeline_reports import generate_reports as _generate_reports
 
@@ -90,6 +98,19 @@ __all__ = [
     "main",
     "_build_sweep_configs",
 ]
+
+prepare_sweep_execution = _prepare_sweep_execution
+
+
+def _describe_sweep_outcome(outcome: "SweepOutcome") -> str:
+    """Compose a human-readable descriptor for cached KNN sweep outcomes."""
+    return f"{outcome.feature_space}:{outcome.study.key}:{outcome.config.label()}"
+
+
+def _describe_opinion_sweep_outcome(outcome: "OpinionSweepOutcome") -> str:
+    """Compose a human-readable descriptor for cached opinion sweep outcomes."""
+    return f"{outcome.feature_space}:{outcome.study.key}:{outcome.config.label()}"
+
 
 def _execute_opinion_sweep_task(task: "OpinionSweepTask") -> "OpinionSweepOutcome":
     """Execute a single opinion sweep task via the batch helper."""
@@ -182,115 +203,64 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if args.dry_run:
         _log_dry_run(configs)
-        summary_bits = []
+        summaries: List[DryRunSummary] = []
         if context.run_next_video:
-            summary_bits.append(
-                f"next-video pending={len(planned_tasks)} cached={len(cached_planned)}"
+            summaries.append(
+                DryRunSummary(
+                    label="next-video",
+                    pending=len(planned_tasks),
+                    cached=len(cached_planned),
+                )
             )
         if context.run_opinion:
-            summary_bits.append(
-                f"opinion pending={len(planned_opinion_tasks)} cached={len(cached_planned_opinion)}"
+            summaries.append(
+                DryRunSummary(
+                    label="opinion",
+                    pending=len(planned_opinion_tasks),
+                    cached=len(cached_planned_opinion),
+                )
             )
-        LOGGER.info(
-            "Dry-run mode. %s.",
-            "; ".join(summary_bits) if summary_bits else "No tasks selected.",
-        )
+        log_dry_run_summary(LOGGER, summaries)
         return
 
     if stage == "sweeps":
-        slate_pending_by_index = {task.index: task for task in planned_tasks}
-        slate_cached_by_index = {outcome.order_index: outcome for outcome in cached_planned}
-        opinion_pending_by_index = {task.index: task for task in planned_opinion_tasks}
-        opinion_cached_by_index = {
-            outcome.order_index: outcome for outcome in cached_planned_opinion
-        }
+        partitions = []
+        if context.run_next_video:
+            partitions.append(
+                make_sweep_partition(
+                    label="next-video",
+                    pending=planned_tasks,
+                    cached=cached_planned,
+                    reuse_existing=context.reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=_execute_sweep_task,
+                        describe_pending=_format_sweep_task_descriptor,
+                        describe_cached=_describe_sweep_outcome,
+                    ),
+                )
+            )
+        if context.run_opinion:
+            partitions.append(
+                make_sweep_partition(
+                    label="opinion",
+                    pending=planned_opinion_tasks,
+                    cached=cached_planned_opinion,
+                    reuse_existing=context.reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=_execute_opinion_sweep_task,
+                        describe_pending=_format_opinion_sweep_task_descriptor,
+                        describe_cached=_describe_opinion_sweep_outcome,
+                    ),
+                    prefix="[OPINION]",
+                )
+            )
 
-        slate_total = len(planned_tasks) + len(cached_planned)
-        opinion_total = len(planned_opinion_tasks) + len(cached_planned_opinion)
-        total_tasks = slate_total + opinion_total
-        task_id = prepare_sweep_execution(
-            total_tasks=total_tasks,
-            cli_task_id=args.sweep_task_id,
-            cli_task_count=args.sweep_task_count,
+        execute_partitions_for_cli(
+            partitions,
+            args=args,
             logger=LOGGER,
+            prepare=prepare_sweep_execution,
         )
-        if task_id is None:
-            return
-        if task_id < slate_total:
-            task = slate_pending_by_index.get(task_id)
-            if task is None:
-                cached = slate_cached_by_index.get(task_id)
-                if cached is not None:
-                    LOGGER.info(
-                        "Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
-                        cached.order_index,
-                        cached.study.key,
-                        cached.feature_space,
-                        cached.config.label(),
-                        cached.metrics_path,
-                    )
-                    return
-                LOGGER.warning("Sweep task %d missing from pending plan; skipping.", task_id)
-                return
-            if context.reuse_sweeps and task.metrics_path.exists():
-                LOGGER.info(
-                    "Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
-                    task.index,
-                    task.study.key,
-                    task.config.feature_space,
-                    task.config.label(),
-                    task.metrics_path,
-                )
-                return
-            outcome = _execute_sweep_task(task)
-            LOGGER.info(
-                "Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
-                outcome.order_index,
-                task.study.key,
-                task.config.feature_space,
-                task.config.label(),
-                outcome.metrics_path,
-            )
-        else:
-            opinion_index = task_id - slate_total
-            task = opinion_pending_by_index.get(opinion_index)
-            if task is None:
-                cached = opinion_cached_by_index.get(opinion_index)
-                if cached is not None:
-                    LOGGER.info(
-                        "[OPINION] Skipping sweep task %d (%s | %s | %s); metrics already present at %s.",
-                        cached.order_index,
-                        cached.study.key,
-                        cached.feature_space,
-                        cached.config.label(),
-                        cached.metrics_path,
-                    )
-                    return
-                LOGGER.warning(
-                    "[OPINION] Sweep task %d missing from pending plan; skipping.",
-                    opinion_index,
-                )
-                return
-            if context.reuse_sweeps and task.metrics_path.exists():
-                LOGGER.info(
-                    "Skipping opinion sweep task %d (%s | %s | %s); metrics already present at %s.",
-                    task.index,
-                    task.study.key,
-                    task.config.feature_space,
-                    task.config.label(),
-                    task.metrics_path,
-                )
-                return
-            # Run the single opinion sweep via the single-task adapter for consistent handling.
-            outcome = _execute_opinion_sweep_task(task)
-            LOGGER.info(
-                "[OPINION] Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
-                outcome.order_index,
-                task.study.key,
-                task.config.feature_space,
-                task.config.label(),
-                outcome.metrics_path,
-            )
         return
 
     reuse_for_stage = context.reuse_sweeps
@@ -421,6 +391,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 metrics = _load_opinion_metrics(context.opinion_dir, feature_space)
                 if metrics:
                     opinion_metrics[feature_space] = metrics
+        opinion_from_next_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+        if context.run_next_video:
+            base_dir = context.opinion_dir / "from_next"
+            for feature_space in context.feature_spaces:
+                metrics = _load_opinion_metrics(base_dir, feature_space)
+                if metrics:
+                    opinion_from_next_metrics[feature_space] = metrics
         report_bundle = ReportBundle(
             selections=selections,
             sweep_outcomes=sweep_outcomes,
@@ -429,6 +406,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             studies=studies,
             metrics_by_feature=slate_metrics,
             opinion_metrics=opinion_metrics,
+            opinion_from_next_metrics=opinion_from_next_metrics,
             k_sweep=context.k_sweep,
             loso_metrics=loso_metrics,
             feature_spaces=context.feature_spaces,
@@ -438,6 +416,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             allow_incomplete=context.allow_incomplete,
             include_next_video=context.run_next_video,
             include_opinion=context.run_opinion,
+            include_opinion_from_next=context.run_next_video and bool(opinion_from_next_metrics),
         )
         _generate_reports(root, report_bundle)
         return
@@ -467,6 +446,27 @@ def main(argv: Sequence[str] | None = None) -> None:
             context=eval_context,
         )
 
+    opinion_from_next_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    if context.run_next_video:
+        try:
+            opinion_from_next_metrics = _run_opinion_from_next_evaluations(
+                selections=selections,
+                studies=studies,
+                context=eval_context,
+            )
+        except FileNotFoundError as exc:
+            dataset_hint = getattr(exc, "filename", None)
+            if not dataset_hint and exc.args:
+                dataset_hint = exc.args[0]
+            if context.allow_incomplete:
+                LOGGER.warning(
+                    "Opinion-from-next evaluation skipped; dataset not found at %s. "
+                    "Continuing because allow-incomplete mode is enabled.",
+                    dataset_hint or context.dataset,
+                )
+            else:
+                raise
+
     loso_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     if context.run_next_video:
         loso_metrics = _run_cross_study_evaluations(
@@ -483,6 +483,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         studies=studies,
         metrics_by_feature=slate_metrics,
         opinion_metrics=opinion_metrics,
+        opinion_from_next_metrics=opinion_from_next_metrics,
         k_sweep=context.k_sweep,
         loso_metrics=loso_metrics,
         feature_spaces=context.feature_spaces,
@@ -490,6 +491,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_incomplete=context.allow_incomplete,
         include_next_video=context.run_next_video,
         include_opinion=context.run_opinion,
+        include_opinion_from_next=context.run_next_video and bool(opinion_from_next_metrics),
     )
     _generate_reports(root, report_bundle)
 

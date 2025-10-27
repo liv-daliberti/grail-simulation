@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
@@ -30,17 +29,16 @@ from common.opinion import (
     OpinionExample,
     OpinionSpec,
     float_or_none,
-    opinion_example_kwargs,
+    make_opinion_example,
 )
+from common.opinion_metrics import compute_opinion_metrics
 
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+    from sklearn.metrics import mean_absolute_error
 except ImportError:  # pragma: no cover - optional dependency
     TfidfVectorizer = None  # type: ignore[assignment]
     mean_absolute_error = None  # type: ignore[assignment]
-    mean_squared_error = None  # type: ignore[assignment]
-    r2_score = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
     from xgboost import XGBRegressor  # type: ignore
@@ -173,15 +171,10 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        base_kwargs = opinion_example_kwargs(
-            participant_id=participant_id,
-            participant_study=spec.key,
-            issue=spec.issue,
-            document=document,
-            before=before,
-            after=after,
+        core_args = (spec, participant_id, document, before, after)
+        example = make_opinion_example(
+            *core_args,
         )
-        example = OpinionExample(**base_kwargs)
         existing = per_participant.get(participant_id)
         if existing is None or step_index >= existing[1]:
             per_participant[participant_id] = (example, step_index)
@@ -279,24 +272,6 @@ def _train_regressor(
     return regressor, history
 
 
-def _direction_labels(delta: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
-    """
-    Return categorical labels capturing the direction of opinion change.
-
-    :param delta: Opinion deltas computed as post-study minus pre-study indices.
-    :type delta: numpy.ndarray
-    :param tolerance: Magnitude threshold for treating changes as neutral.
-    :type tolerance: float
-    :returns: Array containing ``-1`` for decreases, ``0`` for neutral, ``1`` for increases.
-    :rtype: numpy.ndarray
-    """
-
-    labels = np.zeros(delta.shape, dtype=np.int8)
-    labels[delta > tolerance] = 1
-    labels[delta < -tolerance] = -1
-    return labels
-
-
 def _baseline_metrics(
     *,
     before: np.ndarray,
@@ -313,21 +288,26 @@ def _baseline_metrics(
     :rtype: Dict[str, float]
     """
 
-    mae = float(mean_absolute_error(after, before))
-    rmse = float(math.sqrt(mean_squared_error(after, before)))
-    r_squared = float(r2_score(after, before))
-    change_truth = after - before
-    direction_truth = _direction_labels(change_truth)
-    direction_accuracy = (
-        float(np.mean(direction_truth == 0))
-        if direction_truth.size
-        else float("nan")
+    metrics = compute_opinion_metrics(
+        truth_after=after,
+        truth_before=before,
+        pred_after=before,
     )
+    direction_accuracy = metrics.get("direction_accuracy")
+    if direction_accuracy is not None:
+        direction_accuracy = float(direction_accuracy)
     return {
-        "mae_before": mae,
-        "rmse_before": rmse,
-        "r2_before": r_squared,
+        "mae_before": float(metrics["mae_after"]),
+        "rmse_before": float(metrics["rmse_after"]),
+        "r2_before": float(metrics["r2_after"]),
         "direction_accuracy": direction_accuracy,
+        "mae_change_zero": float(metrics["mae_change"]),
+        "rmse_change_zero": float(metrics["rmse_change"]),
+        "calibration_slope_change_zero": metrics.get("calibration_slope"),
+        "calibration_intercept_change_zero": metrics.get("calibration_intercept"),
+        "calibration_ece_change_zero": metrics.get("calibration_ece"),
+        "calibration_bins_change_zero": metrics.get("calibration_bins"),
+        "kl_divergence_change_zero": metrics.get("kl_divergence_change"),
     }
 
 
@@ -350,26 +330,11 @@ def _model_metrics(
     :rtype: Dict[str, float]
     """
 
-    mae = float(mean_absolute_error(after, predictions))
-    rmse = float(math.sqrt(mean_squared_error(after, predictions)))
-    r_squared = float(r2_score(after, predictions))
-    change_truth = after - before
-    change_pred = predictions - before
-    direction_truth = _direction_labels(change_truth)
-    direction_pred = _direction_labels(change_pred)
-    direction_accuracy = (
-        float(np.mean(direction_truth == direction_pred))
-        if direction_truth.size
-        else float("nan")
+    return compute_opinion_metrics(
+        truth_after=after,
+        truth_before=before,
+        pred_after=predictions,
     )
-    eligible = int(direction_truth.size)
-    return {
-        "mae_after": mae,
-        "rmse_after": rmse,
-        "r2_after": r_squared,
-        "direction_accuracy": direction_accuracy,
-        "eligible": eligible,
-    }
 
 
 def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:

@@ -23,7 +23,7 @@ import json
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 import numpy as np
 
@@ -293,7 +293,13 @@ def _evaluate_issue(
         )
         return
 
-    model = _load_or_train_model(args, issue_slug, train_ds, context.extra_fields)
+    model = _load_or_train_model(
+        args,
+        issue_slug,
+        train_ds,
+        eval_ds,
+        context.extra_fields,
+    )
 
     eval_config = EvaluationConfig(
         dataset_source=context.dataset_source,
@@ -307,15 +313,23 @@ def _evaluate_issue(
         issue_slug=issue_slug,
         config=eval_config,
     )
-    curve_bundle: Dict[str, Any] = {"eval": eval_curve}
-    train_curve = _curve_metrics_for_split(
-        model=model,
-        dataset=train_ds,
-        extra_fields=tuple(context.extra_fields),
-    )
-    if train_curve.get("n_examples"):
-        curve_bundle["train"] = train_curve
-    metrics.curve_metrics = curve_bundle
+    history_bundle = _curve_metrics_from_training_history(model.training_history)
+    if history_bundle is None:
+        curve_bundle: Dict[str, Any] = {
+            "axis_label": "Evaluated examples",
+            "y_label": "Cumulative accuracy",
+            "eval": eval_curve,
+        }
+        train_curve = _curve_metrics_for_split(
+            model=model,
+            dataset=train_ds,
+            extra_fields=tuple(context.extra_fields),
+        )
+        if train_curve.get("n_examples"):
+            curve_bundle["train"] = train_curve
+        metrics.curve_metrics = curve_bundle
+    else:
+        metrics.curve_metrics = history_bundle
     _write_outputs(args, issue_slug, metrics, predictions)
     logger.info(
         "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",
@@ -330,6 +344,7 @@ def _load_or_train_model(
     args,
     issue_slug: str,
     train_ds,
+    eval_ds,
     extra_fields: Sequence[str],
 ) -> XGBoostSlateModel:
     """Return a trained or loaded XGBoost model for the requested issue.
@@ -337,6 +352,7 @@ def _load_or_train_model(
     :param args: Parsed CLI namespace containing training options.
     :param issue_slug: Normalised issue identifier.
     :param train_ds: Training dataset split.
+    :param eval_ds: Evaluation dataset split used for history capture.
     :param extra_fields: Extra text fields passed to the feature builder.
     :returns: :class:`XGBoostSlateModel` ready for evaluation.
     :raises ValueError: If neither ``--fit-model`` nor ``--load-model`` is specified.
@@ -384,6 +400,8 @@ def _load_or_train_model(
             train_ds,
             config=train_config,
             extra_fields=extra_fields,
+            eval_ds=eval_ds,
+            collect_history=True,
         )
         if args.save_model:
             save_xgboost_model(model, Path(args.save_model) / issue_slug)
@@ -647,6 +665,60 @@ def _accuracy_curve_from_records(
         "accuracy_by_step": checkpoints,
         "n_examples": total,
         "stride": stride,
+    }
+
+
+def _curve_metrics_from_training_history(
+    history: Optional[Mapping[str, Any]]
+) -> Optional[Dict[str, Any]]:
+    """
+    Convert XGBoost evaluation history into round-based accuracy curves.
+
+    :param history: Evaluation history returned by ``XGBClassifier.evals_result``.
+    :type history: Mapping[str, Any] | None
+    :returns: Curve payload containing per-round accuracy, or ``None`` when unavailable.
+    :rtype: Optional[Dict[str, Any]]
+    """
+
+    if not history or not isinstance(history, Mapping):
+        return None
+
+    train_payload = history.get("validation_0")
+    eval_payload = history.get("validation_1")
+    if not isinstance(train_payload, Mapping) or not isinstance(eval_payload, Mapping):
+        return None
+
+    train_errors = train_payload.get("merror")
+    eval_errors = eval_payload.get("merror")
+    if not train_errors or not eval_errors:
+        return None
+
+    def _accuracy_series(error_sequence: Sequence[Any]) -> Dict[str, float]:
+        return {
+            str(idx + 1): float(max(0.0, min(1.0, 1.0 - float(value))))
+            for idx, value in enumerate(error_sequence)
+        }
+
+    def _error_series(error_sequence: Sequence[Any]) -> Dict[str, float]:
+        return {
+            str(idx + 1): float(value)
+            for idx, value in enumerate(error_sequence)
+        }
+
+    return {
+        "metric": "merror",
+        "axis_label": "Boosting rounds",
+        "y_label": "Classification accuracy",
+        "train": {
+            "accuracy_by_round": _accuracy_series(train_errors),
+            "merror_by_round": _error_series(train_errors),
+            "n_rounds": len(train_errors),
+        },
+        "eval": {
+            "accuracy_by_round": _accuracy_series(eval_errors),
+            "merror_by_round": _error_series(eval_errors),
+            "n_rounds": len(eval_errors),
+        },
     }
 
 

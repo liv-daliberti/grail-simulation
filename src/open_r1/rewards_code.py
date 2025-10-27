@@ -39,6 +39,7 @@ __all__ = [
     "extract_code",
     "get_code_format_reward",
     "ioi_code_reward",
+    "match_pattern_reward",
 ]
 
 BINARY_THRESHOLD = 0.99
@@ -263,11 +264,27 @@ def get_code_format_reward(language: str = "python") -> Callable[[list[Any]], li
 
     def code_format_reward(completions, **kwargs):
         _ = kwargs
-        completion_contents = [completion[0]["content"] for completion in completions]
-        matches = [
-            re.match(pattern, content, re.DOTALL | re.MULTILINE)
-            for content in completion_contents
-        ]
-        return [1.0 if match else 0.0 for match in matches]
+        return match_pattern_reward(completions, pattern)
 
     return code_format_reward
+
+
+def match_pattern_reward(
+    completions: list[Any],
+    pattern: str,
+    *,
+    flags: int = re.DOTALL | re.MULTILINE,
+) -> list[float]:
+    """Return 1.0 when the first message content matches ``pattern``."""
+
+    contents: list[str] = []
+    for completion in completions:
+        if (
+            isinstance(completion, list)
+            and completion
+            and isinstance(completion[0], dict)
+        ):
+            contents.append(str(completion[0].get("content", "")))
+        else:
+            contents.append(str(completion))
+    return [1.0 if re.match(pattern, content, flags) else 0.0 for content in contents]

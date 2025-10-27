@@ -279,7 +279,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -558,7 +558,13 @@
         <span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">model</span> <span class="o">=</span> <span class="n">_load_or_train_model</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">train_ds</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">_load_or_train_model</span><span class="p">(</span>
+        <span class="n">args</span><span class="p">,</span>
+        <span class="n">issue_slug</span><span class="p">,</span>
+        <span class="n">train_ds</span><span class="p">,</span>
+        <span class="n">eval_ds</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">eval_config</span> <span class="o">=</span> <span class="n">EvaluationConfig</span><span class="p">(</span>
         <span class="n">dataset_source</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">dataset_source</span><span class="p">,</span>
@@ -572,15 +578,23 @@
         <span class="n">issue_slug</span><span class="o">=</span><span class="n">issue_slug</span><span class="p">,</span>
         <span class="n">config</span><span class="o">=</span><span class="n">eval_config</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">curve_bundle</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="n">eval_curve</span><span class="p">}</span>
-    <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_metrics_for_split</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">),</span>
-    <span class="p">)</span>
-    <span class="k">if</span> <span class="n">train_curve</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_examples&quot;</span><span class="p">):</span>
-        <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve</span>
-    <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span> <span class="o">=</span> <span class="n">curve_bundle</span>
+    <span class="n">history_bundle</span> <span class="o">=</span> <span class="n">_curve_metrics_from_training_history</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">training_history</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">history_bundle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">curve_bundle</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;axis_label&quot;</span><span class="p">:</span> <span class="s2">&quot;Evaluated examples&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;y_label&quot;</span><span class="p">:</span> <span class="s2">&quot;Cumulative accuracy&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="n">eval_curve</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">train_curve</span> <span class="o">=</span> <span class="n">_curve_metrics_for_split</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">train_ds</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">train_curve</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_examples&quot;</span><span class="p">):</span>
+            <span class="n">curve_bundle</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_curve</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span> <span class="o">=</span> <span class="n">curve_bundle</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">curve_metrics</span> <span class="o">=</span> <span class="n">history_bundle</span>
     <span class="n">_write_outputs</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">issue_slug</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;[XGBoost] Issue=</span><span class="si">%s</span><span class="s2"> accuracy=</span><span class="si">%.3f</span><span class="s2"> coverage=</span><span class="si">%.3f</span><span class="s2"> evaluated=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -595,6 +609,7 @@
     <span class="n">args</span><span class="p">,</span>
     <span class="n">issue_slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">eval_ds</span><span class="p">,</span>
     <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XGBoostSlateModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a trained or loaded XGBoost model for the requested issue.</span>
@@ -602,6 +617,7 @@
 <span class="sd">    :param args: Parsed CLI namespace containing training options.</span>
 <span class="sd">    :param issue_slug: Normalised issue identifier.</span>
 <span class="sd">    :param train_ds: Training dataset split.</span>
+<span class="sd">    :param eval_ds: Evaluation dataset split used for history capture.</span>
 <span class="sd">    :param extra_fields: Extra text fields passed to the feature builder.</span>
 <span class="sd">    :returns: :class:`XGBoostSlateModel` ready for evaluation.</span>
 <span class="sd">    :raises ValueError: If neither ``--fit-model`` nor ``--load-model`` is specified.</span>
@@ -649,6 +665,8 @@
             <span class="n">train_ds</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+            <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
+            <span class="n">collect_history</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_model</span><span class="p">:</span>
             <span class="n">save_xgboost_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">save_model</span><span class="p">)</span> <span class="o">/</span> <span class="n">issue_slug</span><span class="p">)</span>
@@ -915,6 +933,60 @@
         <span class="s2">&quot;accuracy_by_step&quot;</span><span class="p">:</span> <span class="n">checkpoints</span><span class="p">,</span>
         <span class="s2">&quot;n_examples&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
         <span class="s2">&quot;stride&quot;</span><span class="p">:</span> <span class="n">stride</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_curve_metrics_from_training_history</span><span class="p">(</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert XGBoost evaluation history into round-based accuracy curves.</span>
+
+<span class="sd">    :param history: Evaluation history returned by ``XGBClassifier.evals_result``.</span>
+<span class="sd">    :type history: Mapping[str, Any] | None</span>
+<span class="sd">    :returns: Curve payload containing per-round accuracy, or ``None`` when unavailable.</span>
+<span class="sd">    :rtype: Optional[Dict[str, Any]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">history</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">train_payload</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;validation_0&quot;</span><span class="p">)</span>
+    <span class="n">eval_payload</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;validation_1&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_payload</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eval_payload</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">train_errors</span> <span class="o">=</span> <span class="n">train_payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merror&quot;</span><span class="p">)</span>
+    <span class="n">eval_errors</span> <span class="o">=</span> <span class="n">eval_payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merror&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">train_errors</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">eval_errors</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_accuracy_series</span><span class="p">(</span><span class="n">error_sequence</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))))</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">error_sequence</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_error_series</span><span class="p">(</span><span class="n">error_sequence</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">error_sequence</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="s2">&quot;merror&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;axis_label&quot;</span><span class="p">:</span> <span class="s2">&quot;Boosting rounds&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;y_label&quot;</span><span class="p">:</span> <span class="s2">&quot;Classification accuracy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;accuracy_by_round&quot;</span><span class="p">:</span> <span class="n">_accuracy_series</span><span class="p">(</span><span class="n">train_errors</span><span class="p">),</span>
+            <span class="s2">&quot;merror_by_round&quot;</span><span class="p">:</span> <span class="n">_error_series</span><span class="p">(</span><span class="n">train_errors</span><span class="p">),</span>
+            <span class="s2">&quot;n_rounds&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_errors</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;eval&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;accuracy_by_round&quot;</span><span class="p">:</span> <span class="n">_accuracy_series</span><span class="p">(</span><span class="n">eval_errors</span><span class="p">),</span>
+            <span class="s2">&quot;merror_by_round&quot;</span><span class="p">:</span> <span class="n">_error_series</span><span class="p">(</span><span class="n">eval_errors</span><span class="p">),</span>
+            <span class="s2">&quot;n_rounds&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_errors</span><span class="p">),</span>
+        <span class="p">},</span>
     <span class="p">}</span>
 
 

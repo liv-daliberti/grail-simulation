@@ -10,6 +10,7 @@ from typing import Dict, List
 import pytest
 
 from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from xgb import pipeline as pipeline_module
 from xgb import pipeline_cli as cli
@@ -413,14 +414,17 @@ def test_select_best_opinion_configs_prefers_mae_then_rmse_then_r2(tmp_path: Pat
             mae=mae,
             rmse=rmse,
             r_squared=r_squared,
-            metrics_path=tmp_path / f"{tag}.json",
-            metrics={
-                "metrics": {
-                    "mae_after": mae,
-                    "rmse_after": rmse,
-                    "r2_after": r_squared,
-                }
-            },
+            artifact=MetricsArtifact(
+                path=tmp_path / f"{tag}.json",
+                payload={
+                    "metrics": {
+                        "mae_after": mae,
+                        "rmse_after": rmse,
+                        "r2_after": r_squared,
+                    }
+                },
+            ),
+            accuracy_summary=AccuracySummary(),
         )
 
     outcomes = [
@@ -551,8 +555,11 @@ def test_run_opinion_stage_invokes_matching_studies(
         mae=0.5,
         rmse=0.7,
         r_squared=0.2,
-        metrics_path=tmp_path / "opinion.json",
-        metrics={"metrics": {"mae_after": 0.5, "rmse_after": 0.7, "r2_after": 0.2}},
+        artifact=MetricsArtifact(
+            path=tmp_path / "opinion.json",
+            payload={"metrics": {"mae_after": 0.5, "rmse_after": 0.7, "r2_after": 0.2}},
+        ),
+        accuracy_summary=AccuracySummary(),
     )
     selections = {study.key: OpinionStudySelection(study=study, outcome=outcome)}
     stage_config = OpinionStageConfig(
@@ -587,8 +594,8 @@ def test_run_opinion_stage_reuses_metrics_and_warns(monkeypatch: pytest.MonkeyPa
             mae=0.5,
             rmse=0.7,
             r_squared=0.2,
-            metrics_path=tmp_path / "cached.json",
-            metrics={},
+            artifact=MetricsArtifact(path=tmp_path / "cached.json", payload={}),
+            accuracy_summary=AccuracySummary(),
         ),
     )
     selections = {study.key: selection}

@@ -273,8 +273,10 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">attrgetter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -315,6 +317,98 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">make_duplicate_warning</span><span class="p">(</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">args_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an ``on_replace`` callback that logs duplicate outcomes consistently.</span>
+
+<span class="sd">    :param logger: Logger used to emit the warning.</span>
+<span class="sd">    :type logger: logging.Logger</span>
+<span class="sd">    :param message: Logging format string passed to :py:meth:`logging.Logger.warning`.</span>
+<span class="sd">    :type message: str</span>
+<span class="sd">    :param args_factory: Optional callable returning the arguments supplied alongside the</span>
+<span class="sd">        format string. When omitted, the message is emitted without additional arguments.</span>
+<span class="sd">    :type args_factory: Callable[[T, T], Sequence[Any]] | None</span>
+<span class="sd">    :returns: Callback suitable for the ``on_replace`` parameter of :func:`merge_ordered`.</span>
+<span class="sd">    :rtype: Callable[[T, T], None]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_replace</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">incoming</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args_factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="o">*</span><span class="n">args_factory</span><span class="p">(</span><span class="n">existing</span><span class="p">,</span> <span class="n">incoming</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">_on_replace</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_ordered_with_warning</span><span class="p">(</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="n">executed</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">order_key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">args_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience wrapper around :func:`merge_ordered` that logs duplicate replacements.</span>
+
+<span class="sd">    :param cached: Previously materialised results (e.g., metrics read from disk).</span>
+<span class="sd">    :type cached: Sequence[T]</span>
+<span class="sd">    :param executed: Newly computed results from the current run.</span>
+<span class="sd">    :type executed: Sequence[T]</span>
+<span class="sd">    :param order_key: Callable returning a deterministic integer position for each result.</span>
+<span class="sd">    :type order_key: Callable[[T], int]</span>
+<span class="sd">    :param logger: Logger used when emitting duplicate warnings.</span>
+<span class="sd">    :type logger: logging.Logger</span>
+<span class="sd">    :param message: Logging format string passed to :py:meth:`logging.Logger.warning`.</span>
+<span class="sd">    :type message: str</span>
+<span class="sd">    :param args_factory: Optional callable returning arguments supplied with the warning.</span>
+<span class="sd">    :type args_factory: Callable[[T, T], Sequence[Any]] | None</span>
+<span class="sd">    :returns: Combined results ordered by ``order_key``.</span>
+<span class="sd">    :rtype: List[T]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">merge_ordered</span><span class="p">(</span>
+        <span class="n">cached</span><span class="p">,</span>
+        <span class="n">executed</span><span class="p">,</span>
+        <span class="n">order_key</span><span class="o">=</span><span class="n">order_key</span><span class="p">,</span>
+        <span class="n">on_replace</span><span class="o">=</span><span class="n">make_duplicate_warning</span><span class="p">(</span>
+            <span class="n">logger</span><span class="p">,</span>
+            <span class="n">message</span><span class="p">,</span>
+            <span class="n">args_factory</span><span class="o">=</span><span class="n">args_factory</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_indexed_outcomes</span><span class="p">(</span>
+    <span class="n">cached</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="n">executed</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">args_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge outcomes ordered by their ``order_index`` attribute.</span>
+
+<span class="sd">    This wraps :func:`merge_ordered_with_warning` with a fixed ``order_key`` based on</span>
+<span class="sd">    ``order_index`` to cut down on repeated boilerplate across pipeline modules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">merge_ordered_with_warning</span><span class="p">(</span>
+        <span class="n">cached</span><span class="p">,</span>
+        <span class="n">executed</span><span class="p">,</span>
+        <span class="n">order_key</span><span class="o">=</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;order_index&quot;</span><span class="p">),</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+        <span class="n">args_factory</span><span class="o">=</span><span class="n">args_factory</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <div class="viewcode-block" id="OpinionStudySelection">
 <a class="viewcode-back" href="../../api/common.html#common.OpinionStudySelection">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -330,7 +424,13 @@
 
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;merge_ordered&quot;</span><span class="p">,</span> <span class="s2">&quot;OpinionStudySelection&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;merge_ordered&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_duplicate_warning&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;merge_ordered_with_warning&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;merge_indexed_outcomes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OpinionStudySelection&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 </pre></div>
         </article>
       </div>

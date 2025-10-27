@@ -24,17 +24,10 @@ import unicodedata
 from pathlib import Path
 from typing import List, Optional, Sequence
 
+from common.matplotlib_utils import plt
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 from ..pipeline_context import OpinionStudySelection, StudySelection
-
-try:  # pragma: no cover - optional dependency
-    import matplotlib
-
-    matplotlib.use("Agg", force=True)
-    from matplotlib import pyplot as plt  # type: ignore[assignment]
-except ImportError:  # pragma: no cover - optional dependency
-    plt = None  # type: ignore[assignment]
 
 LOGGER = logging.getLogger("xgb.pipeline.reports")
 

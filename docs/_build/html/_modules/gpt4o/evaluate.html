@@ -255,21 +255,9 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for gpt4o.evaluate</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
-<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
-<span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="c1"># you may not use this file except in compliance with the License.</span>
-<span class="c1"># You may obtain a copy of the License at</span>
-<span class="c1">#</span>
-<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="c1">#</span>
-<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="c1"># See the License for the specific language governing permissions and</span>
-<span class="c1"># limitations under the License.</span>
-
-<span class="c1"># pylint: disable=duplicate-code</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors. Licensed under the</span>
+<span class="c1"># Apache License, Version 2.0; see the LICENSE file or</span>
+<span class="c1"># https://www.apache.org/licenses/LICENSE-2.0 for details.</span>
 
 <span class="sd">&quot;&quot;&quot;Evaluation routines for the GPT-4o slate-ranking baseline.</span>
 
@@ -277,439 +265,40 @@
 <span class="sd">responses, and aggregates accuracy and formatting metrics for reporting.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code</span>
+<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DownloadConfig</span><span class="p">,</span> <span class="n">load_dataset</span><span class="p">,</span> <span class="n">load_from_disk</span>  <span class="c1"># type: ignore</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-    <span class="n">DownloadConfig</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-    <span class="n">load_dataset</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-    <span class="n">load_from_disk</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_div</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_hf_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset_loaders</span><span class="p">,</span> <span class="n">require_dataset_support</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.slate_eval</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EvaluationAccumulator</span><span class="p">,</span>
+    <span class="n">EvaluationFilters</span><span class="p">,</span>
+    <span class="n">Observation</span><span class="p">,</span>
+    <span class="n">bucket_from_options</span><span class="p">,</span>
+    <span class="n">bucket_from_position</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATASET_NAME</span><span class="p">,</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span> <span class="n">EVAL_SPLIT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.conversation</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_conversation_record</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANS_TAG</span><span class="p">,</span> <span class="n">INDEX_ONLY</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only imports</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Namespace</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - runtime fallback for type hints</span>
+    <span class="n">Namespace</span> <span class="o">=</span> <span class="nb">object</span>  <span class="c1"># type: ignore[misc]</span>
 
-<div class="viewcode-block" id="BucketAccumulator">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">BucketAccumulator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulate per-bucket evaluation counts.&quot;&quot;&quot;</span>
+<span class="n">DownloadConfig</span><span class="p">,</span> <span class="n">load_dataset</span><span class="p">,</span> <span class="n">load_from_disk</span> <span class="o">=</span> <span class="n">get_dataset_loaders</span><span class="p">()</span>
 
-    <span class="n">seen</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">eligible</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">correct</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">parsed</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">formatted</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
 
-<div class="viewcode-block" id="BucketAccumulator.record_seen">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_seen">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">record_seen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the seen counter for ``key``.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.record_formatted">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_formatted">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">record_formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the correctly formatted counter for ``key``.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.record_parsed">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_parsed">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">record_parsed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the parsed counter for ``key``.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">parsed</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.record_eligible">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_eligible">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">record_eligible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the eligible counter for ``key``.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">eligible</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.record_correct">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.record_correct">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">record_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Increment the correct counter for ``key``.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.summary">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.summary">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">skip_empty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated metrics per bucket.&quot;&quot;&quot;</span>
-
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">order</span> <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-            <span class="n">seen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">skip_empty</span> <span class="ow">and</span> <span class="n">seen</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">eligible</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">correct</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">parsed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">formatted</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatted</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;n_seen&quot;</span><span class="p">:</span> <span class="n">seen</span><span class="p">,</span>
-                <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="n">eligible</span><span class="p">,</span>
-                <span class="s2">&quot;correct&quot;</span><span class="p">:</span> <span class="n">correct</span><span class="p">,</span>
-                <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">eligible</span><span class="p">),</span>
-                <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span> <span class="n">seen</span><span class="p">),</span>
-                <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">formatted</span><span class="p">,</span> <span class="n">seen</span><span class="p">),</span>
-            <span class="p">}</span>
-        <span class="k">return</span> <span class="n">result</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.histogram">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.histogram">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return integer histogram for the requested attribute.&quot;&quot;&quot;</span>
-
-        <span class="n">counter</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">order</span><span class="p">}</span></div>
-
-
-<div class="viewcode-block" id="BucketAccumulator.ratio">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.BucketAccumulator.ratio">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numerator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ratios for ``numerator`` divided by ``denominator``.&quot;&quot;&quot;</span>
-
-        <span class="n">num</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numerator</span><span class="p">)</span>
-        <span class="n">denom</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">denominator</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">key</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="n">num</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">denom</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">order</span>
-        <span class="p">}</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="Observation">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.Observation">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Observation</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snapshot of a single evaluation example.&quot;&quot;&quot;</span>
-
-    <span class="n">issue_label</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">study_label</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">position_bucket</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">option_bucket</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">option_count</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">gold_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">parsed_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-    <span class="n">is_formatted</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">eligible</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">is_correct</span><span class="p">:</span> <span class="nb">bool</span></div>
-
-
-
-<div class="viewcode-block" id="EvaluationFilters">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationFilters">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationFilters</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter selections applied during evaluation.&quot;&quot;&quot;</span>
-
-    <span class="n">issues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
-
-
-
-<div class="viewcode-block" id="EvaluationAccumulator">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationAccumulator</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stateful accumulator tracking evaluation metrics across examples.&quot;&quot;&quot;</span>
-
-    <span class="n">position</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
-    <span class="n">issue</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">BucketAccumulator</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BucketAccumulator</span><span class="p">)</span>
-    <span class="n">total_seen</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">format_ok</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">parsed_ok</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">eligible_overall</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">correct_overall</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">seen_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">seen_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">eligible_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">eligible_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">correct_single</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">correct_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">parsed_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">formatted_multi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">gold_hist</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">all_gold_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">option_counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-
-<div class="viewcode-block" id="EvaluationAccumulator.observe">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.observe">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">observe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update aggregates for a single example observation.&quot;&quot;&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_seen</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_formatted</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">format_ok</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_formatted</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parsed_ok</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_parsed</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">seen_single</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_formatted</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">formatted_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parsed_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">eligible</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_eligible</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="p">[</span><span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">all_gold_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">gold_index</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_count</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">is_correct</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">correct_overall</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">position_bucket</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">issue_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">study_label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">record_correct</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">option_bucket</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">option_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">correct_single</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">correct_multi</span> <span class="o">+=</span> <span class="mi">1</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.accuracy">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.accuracy">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return overall accuracy computed over eligible examples.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_overall</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.parsed_rate">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.parsed_rate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">parsed_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return rate of successfully parsed completions.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed_ok</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.format_rate">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.format_rate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">format_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return rate of outputs that matched the expected format.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_ok</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.position_summary">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.position_summary">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">position_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated position metrics.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.options_summary">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.options_summary">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">options_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return aggregated option-count metrics.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;hist_seen&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;hist_eligible&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;eligible&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;hist_correct&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;correct&quot;</span><span class="p">,</span> <span class="s2">&quot;eligible&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
-            <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;parsed&quot;</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
-            <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">ratio</span><span class="p">(</span><span class="s2">&quot;formatted&quot;</span><span class="p">,</span> <span class="s2">&quot;seen&quot;</span><span class="p">,</span> <span class="n">order</span><span class="p">),</span>
-        <span class="p">}</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.group_summary">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.group_summary">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">group_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return per-issue and per-study aggregates.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;by_issue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">skip_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="s2">&quot;by_participant_study&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">skip_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="p">}</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.single_multi_summary">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.single_multi_summary">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">single_multi_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return metrics comparing single-option and multi-option prompts.&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;n_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_single</span><span class="p">),</span>
-            <span class="s2">&quot;n_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">),</span>
-            <span class="s2">&quot;eligible_single&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span><span class="p">),</span>
-            <span class="s2">&quot;eligible_multi&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy_single&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_single</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_single</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correct_multi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eligible_multi</span><span class="p">),</span>
-            <span class="s2">&quot;parsed_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">)),</span>
-            <span class="s2">&quot;format_rate_multi&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatted_multi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_multi</span><span class="p">)),</span>
-        <span class="p">}</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.baseline_metrics">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.baseline_metrics">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">baseline_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return gold index distribution and baseline accuracies.&quot;&quot;&quot;</span>
-
-        <span class="n">distribution</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())}</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">distribution</span><span class="p">:</span>
-            <span class="n">baseline</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;top_index&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
-            <span class="n">expected_random</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">top_index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">baseline</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;top_index&quot;</span><span class="p">:</span> <span class="n">top_index</span><span class="p">,</span>
-                <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gold_hist</span><span class="p">[</span><span class="n">top_index</span><span class="p">]),</span>
-                <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">safe_div</span><span class="p">(</span>
-                    <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_gold_indices</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="n">top_index</span><span class="p">),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">}</span>
-            <span class="n">expected_random</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span><span class="p">]))</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">option_counts</span>
-                <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">distribution</span><span class="p">,</span> <span class="n">baseline</span><span class="p">,</span> <span class="n">expected_random</span></div>
-
-
-<div class="viewcode-block" id="EvaluationAccumulator.metrics_payload">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationAccumulator.metrics_payload">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_payload</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">eval_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">filters</span><span class="p">:</span> <span class="n">EvaluationFilters</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the metrics blob written to disk after evaluation.&quot;&quot;&quot;</span>
-
-        <span class="n">position_order</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">]</span>
-        <span class="n">option_order</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5+&quot;</span><span class="p">]</span>
-        <span class="n">gold_distribution</span><span class="p">,</span> <span class="n">baseline_most_frequent</span><span class="p">,</span> <span class="n">random_baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_metrics</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span>
-            <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset_name</span><span class="p">,</span>
-            <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">eval_split</span><span class="p">,</span>
-            <span class="s2">&quot;n_total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_seen</span><span class="p">),</span>
-            <span class="s2">&quot;n_eligible&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eligible_overall</span><span class="p">),</span>
-            <span class="s2">&quot;accuracy_overall&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(),</span>
-            <span class="s2">&quot;parsed_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">(),</span>
-            <span class="s2">&quot;format_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_rate</span><span class="p">(),</span>
-            <span class="s2">&quot;position_stats&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_summary</span><span class="p">(</span><span class="n">position_order</span><span class="p">),</span>
-            <span class="s2">&quot;by_n_options&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">options_summary</span><span class="p">(</span><span class="n">option_order</span><span class="p">),</span>
-            <span class="s2">&quot;split_single_vs_multi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_multi_summary</span><span class="p">(),</span>
-            <span class="s2">&quot;group_metrics&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_summary</span><span class="p">(),</span>
-            <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">issues</span><span class="p">),</span>
-                <span class="s2">&quot;studies&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">studies</span><span class="p">),</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;gold_index_distribution&quot;</span><span class="p">:</span> <span class="n">gold_distribution</span><span class="p">,</span>
-            <span class="s2">&quot;baseline_most_frequent_gold_index&quot;</span><span class="p">:</span> <span class="n">baseline_most_frequent</span><span class="p">,</span>
-            <span class="s2">&quot;random_baseline_expected_accuracy&quot;</span><span class="p">:</span> <span class="n">random_baseline</span><span class="p">,</span>
-            <span class="s2">&quot;notes&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;Accuracy computed over eligible rows (gold_index&gt;0). Buckets: 1..4, 5+, unknown.&quot;</span>
-            <span class="p">),</span>
-        <span class="p">}</span></div>
-</div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map a zero-based position index to an accuracy bucket label.</span>
-
-<span class="sd">    :param position_index: Predicted slate position (zero-based).</span>
-<span class="sd">    :returns: String bucket identifier used for metrics aggregation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">position_index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
-    <span class="k">if</span> <span class="n">position_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;1&quot;</span>
-    <span class="k">if</span> <span class="n">position_index</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;2&quot;</span>
-    <span class="k">if</span> <span class="n">position_index</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;3&quot;</span>
-    <span class="k">if</span> <span class="n">position_index</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;4&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;5+&quot;</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_bucket_from_options</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise the number of slate options into histogram buckets.</span>
-
-<span class="sd">    :param count: Number of candidate options exposed to the model.</span>
-<span class="sd">    :returns: String bucket identifier used for metrics aggregation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;1&quot;</span>
-    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;2&quot;</span>
-    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;3&quot;</span>
-    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;4&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;5+&quot;</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_parse_index_from_output</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_index_from_output</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the model&#39;s predicted index from raw completion text.</span>
 
 <span class="sd">    :param raw: Completion text returned by the model.</span>
@@ -751,12 +340,12 @@
 
 <div class="viewcode-block" id="run_eval">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.run_eval">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Evaluate GPT-4o on the configured dataset.</span>
 
 <span class="sd">    :param args: Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)</span>
-<span class="sd">    :type args: Any</span>
+<span class="sd">    :type args: Namespace</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DATASET_NAME</span><span class="p">)</span>
@@ -766,27 +355,23 @@
     <span class="n">out_jsonl</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;predictions.jsonl&quot;</span>
     <span class="n">metrics_json</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span>
 
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+    <span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
 
     <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">load_from_disk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">&quot;The &#39;datasets&#39; package with load_from_disk support is required to load local datasets.&quot;</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">load_dataset</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">DownloadConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">&quot;The &#39;datasets&#39; package is required to run GPT-4o evaluations. &quot;</span>
-            <span class="s2">&quot;Install it with `pip install datasets`.&quot;</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">require_dataset_support</span><span class="p">(</span><span class="n">needs_local</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">load_from_disk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrow Optional for type checkers</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">require_dataset_support</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">load_dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">DownloadConfig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
     <span class="n">use_streaming</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Detected local dataset at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dataset_path</span><span class="p">)</span>
-        <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_from_disk</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">))</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_from_disk</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">))</span>  <span class="c1"># type: ignore[arg-type]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">download_config</span> <span class="o">=</span> <span class="n">DownloadConfig</span><span class="p">(</span><span class="n">resume_download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">download_config</span> <span class="o">=</span> <span class="n">DownloadConfig</span><span class="p">(</span><span class="n">resume_download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span>
                 <span class="n">dataset_name</span><span class="p">,</span>
@@ -801,6 +386,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span>
 
+    <span class="k">assert</span> <span class="n">load_dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># for optional dependency imports</span>
     <span class="k">if</span> <span class="n">use_streaming</span><span class="p">:</span>
         <span class="n">eval_split</span> <span class="o">=</span> <span class="n">EVAL_SPLIT</span>
         <span class="k">try</span><span class="p">:</span>
@@ -880,7 +466,7 @@
             <span class="n">option_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
             <span class="n">position_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;position_index&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
-            <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">_bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span>
+            <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">raw_output</span> <span class="o">=</span> <span class="n">ds_call</span><span class="p">(</span>
@@ -894,7 +480,7 @@
 
             <span class="n">is_formatted</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw_output</span><span class="p">))</span>
             <span class="n">parsed_index</span> <span class="o">=</span> <span class="n">_parse_index_from_output</span><span class="p">(</span><span class="n">raw_output</span><span class="p">)</span>
-            <span class="n">option_bucket</span> <span class="o">=</span> <span class="n">_bucket_from_options</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
+            <span class="n">option_bucket</span> <span class="o">=</span> <span class="n">bucket_from_options</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
 
             <span class="n">eligible</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">option_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="n">is_correct</span> <span class="o">=</span> <span class="p">(</span>

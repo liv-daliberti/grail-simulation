@@ -223,11 +223,42 @@ def row_to_training_example(
     )
 
 
+def call_row_to_training_example(
+    example: Mapping[str, Any],
+    *,
+    system_prompt: Optional[str],
+    solution_key: Optional[str],
+    max_history: int = 12,
+    passthrough_fn: Optional[
+        Callable[[Mapping[str, Any]], Mapping[str, Any]]
+    ] = collect_passthrough_fields,
+    extra_fields_fn: Optional[ExtraFieldsFn] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Convenience wrapper around :func:`row_to_training_example`.
+
+    Centralises the keyword arguments setup so higher-level modules can invoke the conversion
+    without repeating identical boilerplate, keeping :mod:`pylint` duplicate-code checks quiet.
+    """
+
+    kwargs: Dict[str, Any] = {
+        "system_prompt": system_prompt,
+        "solution_key": solution_key,
+        "max_history": max_history,
+    }
+    if passthrough_fn is not None:
+        kwargs["passthrough_fn"] = passthrough_fn
+    if extra_fields_fn is not None:
+        kwargs["extra_fields_fn"] = extra_fields_fn
+    return row_to_training_example(example, **kwargs)
+
+
 __all__ = [
     "canon",
     "derive_next_from_history",
     "get_gold_next_id",
     "gold_index_from_items",
     "load_slate_items",
+    "call_row_to_training_example",
     "row_to_training_example",
 ]

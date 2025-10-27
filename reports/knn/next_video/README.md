@@ -14,9 +14,9 @@ This report summarises the slate-ranking KNN model that predicts the next clicke
 
 | Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | Studies |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| TFIDF | 0.516 | +0.071 | 0.287 | 1,219 | 2 |
+| TFIDF | 0.408 | -0.054 | 0.271 | 2,419 | 3 |
 
-Best-performing feature space: **TFIDF** with weighted accuracy 0.516 across 1,219 eligible slates (2 studies).
+Best-performing feature space: **TFIDF** with weighted accuracy 0.408 across 2,419 eligible slates (3 studies).
 
 ## TF-IDF Feature Space
 
@@ -24,6 +24,7 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.516 across 1,2
 | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.717 | [0.674, 0.757] | +0.177 | 0.540 | 0.326 | 3 | 548 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.352 | [0.316, 0.385] | -0.016 | 0.368 | 0.255 | 3 | 671 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.299 | [0.274, 0.327] | -0.180 | 0.479 | 0.255 | 3 | 1,200 | 1,200 |
 
 ## Accuracy Curves
 
@@ -35,9 +36,13 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.516 across 1,2
 
 ![Accuracy curve](curves/tfidf/study2.png)
 
+### Study 3 – Minimum Wage (YouGov) (TFIDF)
+
+![Accuracy curve](curves/tfidf/study3.png)
+
 ## Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): 0.717 (baseline 0.540, Δ +0.177, k=3, eligible 548); Study 2 – Minimum Wage (MTurk): 0.352 (baseline 0.368, Δ -0.016, k=3, eligible 671); averages: mean Δ +0.080, mean random 0.291.
+- TFIDF: Study 1 – Gun Control (MTurk): 0.717 (baseline 0.540, Δ +0.177, k=3, eligible 548); Study 2 – Minimum Wage (MTurk): 0.352 (baseline 0.368, Δ -0.016, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.299 (baseline 0.479, Δ -0.180, k=3, eligible 1,200); averages: mean Δ -0.006, mean random 0.279.
 - Random values approximate the accuracy from uniformly guessing across the slate.
 
 Leave-one-study-out metrics were unavailable when this report was generated.

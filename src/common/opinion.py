@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, TypeVar
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,25 @@ class OpinionSpec:
     before_column: str
     after_column: str
 
+    def build_example_kwargs(
+        self,
+        *,
+        participant_id: str,
+        document: str,
+        before: float,
+        after: float,
+    ) -> dict[str, object]:
+        """Return the standard keyword arguments for an ``OpinionExample``."""
+
+        return opinion_example_kwargs(
+            participant_id=participant_id,
+            participant_study=self.key,
+            issue=self.issue,
+            document=document,
+            before=before,
+            after=after,
+        )
+
 
 @dataclass
 class OpinionExample:
@@ -41,6 +60,97 @@ class OpinionExample:
     document: str
     before: float
     after: float
+
+ExampleT = TypeVar("ExampleT")
+
+
+@dataclass(frozen=True)
+# pylint: disable=too-many-instance-attributes
+class OpinionCalibrationMetrics:
+    """Common calibration and baseline metrics shared across pipelines."""
+
+    baseline_accuracy: Optional[float] = None
+    accuracy_delta: Optional[float] = None
+    calibration_slope: Optional[float] = None
+    baseline_calibration_slope: Optional[float] = None
+    calibration_intercept: Optional[float] = None
+    baseline_calibration_intercept: Optional[float] = None
+    calibration_ece: Optional[float] = None
+    baseline_calibration_ece: Optional[float] = None
+    kl_divergence_change: Optional[float] = None
+    baseline_kl_divergence_change: Optional[float] = None
+    participants: Optional[int] = None
+    eligible: Optional[int] = None
+    dataset: Optional[str] = None
+    split: Optional[str] = None
+
+
+def build_opinion_example(
+    spec: OpinionSpec,
+    *,
+    factory: Callable[..., ExampleT],
+    participant_id: str,
+    document: str,
+    before: float,
+    after: float,
+    **extra_fields: object,
+) -> ExampleT:
+    """
+    Construct an opinion example instance using the provided factory callable.
+
+    :param spec: Opinion specification describing the study identifiers.
+    :type spec: OpinionSpec
+    :param factory: Callable (usually a dataclass) used to instantiate the example.
+    :type factory: Callable[..., ExampleT]
+    :param participant_id: Unique participant identifier sourced from the dataset.
+    :type participant_id: str
+    :param document: Assembled prompt text for the participant.
+    :type document: str
+    :param before: Pre-study opinion index value.
+    :type before: float
+    :param after: Post-study opinion index value.
+    :type after: float
+    :param extra_fields: Additional keyword arguments forwarded to ``factory``.
+    :type extra_fields: object
+    :returns: Instance created by ``factory`` populated with shared fields.
+    :rtype: ExampleT
+    """
+
+    base_kwargs = spec.build_example_kwargs(
+        participant_id=participant_id,
+        document=document,
+        before=before,
+        after=after,
+    )
+    return factory(**base_kwargs, **extra_fields)
+
+
+def make_opinion_example(
+    spec: OpinionSpec,
+    participant_id: str,
+    document: str,
+    before: float,
+    after: float,
+    *,
+    factory: Callable[..., ExampleT] = OpinionExample,
+    **extra_fields: object,
+) -> ExampleT:
+    """
+    Convenience wrapper around :func:`build_opinion_example`.
+
+    Accepts positional arguments for the core fields so callers can invoke it
+    without repeating keyword boilerplate across multiple pipelines.
+    """
+
+    return build_opinion_example(
+        spec,
+        factory=factory,
+        participant_id=participant_id,
+        document=document,
+        before=before,
+        after=after,
+        **extra_fields,
+    )
 
 
 DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
@@ -140,7 +250,10 @@ def opinion_example_kwargs(  # pylint: disable=too-many-arguments
 __all__ = [
     "DEFAULT_SPECS",
     "OpinionExample",
+    "OpinionCalibrationMetrics",
     "OpinionSpec",
+    "build_opinion_example",
+    "make_opinion_example",
     "float_or_none",
     "opinion_example_kwargs",
 ]

@@ -281,7 +281,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_sweep_execution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DryRunSummary</span><span class="p">,</span>
+    <span class="n">execute_partitions_for_cli</span><span class="p">,</span>
+    <span class="n">log_dry_run_summary</span><span class="p">,</span>
+    <span class="n">make_sweep_partition</span><span class="p">,</span>
+    <span class="n">prepare_sweep_execution</span> <span class="k">as</span> <span class="n">_prepare_sweep_execution</span><span class="p">,</span>
+    <span class="n">SweepPartitionExecutors</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -328,6 +335,8 @@
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;xgb.pipeline&quot;</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;main&quot;</span><span class="p">,</span> <span class="s2">&quot;SweepRunContext&quot;</span><span class="p">,</span> <span class="s2">&quot;OpinionStageConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;OpinionSweepRunContext&quot;</span><span class="p">]</span>
+
+<span class="n">prepare_sweep_execution</span> <span class="o">=</span> <span class="n">_prepare_sweep_execution</span>
 
 
 
@@ -510,122 +519,69 @@
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dry_run</span><span class="p">:</span>
-        <span class="n">summary_bits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">summaries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DryRunSummary</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
-            <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;next-video pending=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">summaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DryRunSummary</span><span class="p">(</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
+                    <span class="n">pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">),</span>
+                    <span class="n">cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">),</span>
+                <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
-            <span class="n">summary_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;opinion pending=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cached=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">summaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DryRunSummary</span><span class="p">(</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
+                    <span class="n">pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">),</span>
+                    <span class="n">cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">),</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Dry-run mode. </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">summary_bits</span><span class="p">)</span> <span class="k">if</span> <span class="n">summary_bits</span> <span class="k">else</span> <span class="s2">&quot;No tasks selected.&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">log_dry_run_summary</span><span class="p">(</span><span class="n">LOGGER</span><span class="p">,</span> <span class="n">summaries</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">:</span>
-        <span class="n">slate_pending_by_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">planned_slate_tasks</span><span class="p">}</span>
-        <span class="n">slate_cached_by_index</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">:</span> <span class="n">outcome</span>
-            <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">cached_slate_planned</span>
-            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">slate_pending_by_index</span>
-        <span class="p">}</span>
-        <span class="n">slate_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">slate_pending_by_index</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">slate_cached_by_index</span><span class="p">)</span>
-        <span class="n">slate_total</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">slate_indices</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">slate_indices</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">partitions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">describe_cached</span><span class="p">(</span><span class="n">outcome</span><span class="p">):</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="n">opinion_pending_by_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">planned_opinion_tasks</span><span class="p">}</span>
-        <span class="n">opinion_cached_by_index</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">:</span> <span class="n">outcome</span>
-            <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">cached_opinion_planned</span>
-            <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opinion_pending_by_index</span>
-        <span class="p">}</span>
-        <span class="n">opinion_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">opinion_pending_by_index</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">opinion_cached_by_index</span><span class="p">)</span>
-        <span class="n">opinion_total</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">opinion_indices</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">opinion_indices</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">partitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">make_sweep_partition</span><span class="p">(</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
+                    <span class="n">pending</span><span class="o">=</span><span class="n">planned_slate_tasks</span><span class="p">,</span>
+                    <span class="n">cached</span><span class="o">=</span><span class="n">cached_slate_planned</span><span class="p">,</span>
+                    <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_sweeps</span><span class="p">,</span>
+                    <span class="n">executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
+                        <span class="n">execute_task</span><span class="o">=</span><span class="k">lambda</span> <span class="n">task</span><span class="p">:</span> <span class="n">_execute_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_sweep_task_descriptor</span><span class="p">,</span>
+                        <span class="n">describe_cached</span><span class="o">=</span><span class="n">describe_cached</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">describe_opinion_cached</span><span class="p">(</span><span class="n">outcome</span><span class="p">):</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="n">total_tasks</span> <span class="o">=</span> <span class="n">slate_total</span> <span class="o">+</span> <span class="n">opinion_total</span>
-        <span class="n">task_id</span> <span class="o">=</span> <span class="n">prepare_sweep_execution</span><span class="p">(</span>
-            <span class="n">total_tasks</span><span class="o">=</span><span class="n">total_tasks</span><span class="p">,</span>
-            <span class="n">cli_task_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_task_id</span><span class="p">,</span>
-            <span class="n">cli_task_count</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_task_count</span><span class="p">,</span>
+            <span class="n">partitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">make_sweep_partition</span><span class="p">(</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
+                    <span class="n">pending</span><span class="o">=</span><span class="n">planned_opinion_tasks</span><span class="p">,</span>
+                    <span class="n">cached</span><span class="o">=</span><span class="n">cached_opinion_planned</span><span class="p">,</span>
+                    <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_sweeps</span><span class="p">,</span>
+                    <span class="n">executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
+                        <span class="n">execute_task</span><span class="o">=</span><span class="k">lambda</span> <span class="n">task</span><span class="p">:</span> <span class="n">_execute_opinion_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_opinion_sweep_task_descriptor</span><span class="p">,</span>
+                        <span class="n">describe_cached</span><span class="o">=</span><span class="n">describe_opinion_cached</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">execute_partitions_for_cli</span><span class="p">(</span>
+            <span class="n">partitions</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
+            <span class="n">prepare</span><span class="o">=</span><span class="n">prepare_sweep_execution</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">task_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="k">if</span> <span class="n">task_id</span> <span class="o">&lt;</span> <span class="n">slate_total</span><span class="p">:</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">slate_pending_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">cached_outcome</span> <span class="o">=</span> <span class="n">slate_cached_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cached_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="s2">&quot;Skipping sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                        <span class="n">task_id</span><span class="p">,</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="k">return</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;No sweep task registered for index </span><span class="si">%d</span><span class="s2">; skipping.&quot;</span><span class="p">,</span>
-                    <span class="n">task_id</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-            <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Skipping sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                    <span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-                    <span class="n">_format_sweep_task_descriptor</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
-                    <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-            <span class="n">outcome</span> <span class="o">=</span> <span class="n">_execute_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Completed sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">). Metrics stored at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
-                <span class="n">outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">opinion_index</span> <span class="o">=</span> <span class="n">task_id</span> <span class="o">-</span> <span class="n">slate_total</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">opinion_pending_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opinion_index</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">cached_outcome</span> <span class="o">=</span> <span class="n">opinion_cached_by_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opinion_index</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cached_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="s2">&quot;Skipping opinion sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                        <span class="n">opinion_index</span><span class="p">,</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
-                        <span class="n">cached_outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="k">return</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;No opinion sweep task registered for index </span><span class="si">%d</span><span class="s2">; skipping.&quot;</span><span class="p">,</span>
-                    <span class="n">opinion_index</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-            <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Skipping opinion sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">); metrics already exist at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                    <span class="n">task</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-                    <span class="n">_format_opinion_sweep_task_descriptor</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
-                    <span class="n">task</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-            <span class="n">outcome</span> <span class="o">=</span> <span class="n">_execute_opinion_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Completed opinion sweep task </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%s</span><span class="s2"> | </span><span class="si">%s</span><span class="s2">). Metrics stored at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span>
-                <span class="n">outcome</span><span class="o">.</span><span class="n">order_index</span><span class="p">,</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
-                <span class="n">outcome</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">,</span>
-            <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">reuse_for_stage</span> <span class="o">=</span> <span class="n">reuse_sweeps</span>

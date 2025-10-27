@@ -166,6 +166,73 @@ def run_opinion_evaluations(
     return metrics
 
 # pylint: disable=too-many-locals
+def run_opinion_from_next_evaluations(
+    *,
+    selections: Mapping[str, Mapping[str, StudySelection]],
+    studies: Sequence[StudySpec],
+    context: EvaluationContext,
+) -> Dict[str, Dict[str, Mapping[str, object]]]:
+    """
+    Score opinion change using the next-video configuration.
+
+    :param selections: Winning next-video selections keyed by feature space and study key.
+    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :param studies: Ordered list of opinion studies to evaluate.
+    :type studies: Sequence[StudySpec]
+    :param context: Shared CLI/runtime parameters used for all evaluations.
+    :type context: EvaluationContext
+    :returns: Next-video metrics keyed by ``feature_space`` then ``study_key``.
+    :rtype: Dict[str, Dict[str, Mapping[str, object]]]
+    """
+
+    if not selections:
+        return {}
+
+    base_out_dir = ensure_dir(context.opinion_out_dir / "from_next")
+    metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+
+    for feature_space, per_study in selections.items():
+        LOGGER.info("[OPINION][FROM-NEXT] feature=%s", feature_space)
+        cached_metrics = (
+            load_opinion_metrics(base_out_dir, feature_space)
+            if context.reuse_existing
+            else {}
+        )
+        for study in studies:
+            selection = per_study.get(study.key)
+            if selection is None:
+                continue
+            if context.reuse_existing and study.key in cached_metrics:
+                LOGGER.info(
+                    "[OPINION][FROM-NEXT][SKIP] feature=%s study=%s (metrics cached).",
+                    feature_space,
+                    study.key,
+                )
+                continue
+            LOGGER.info(
+                "[OPINION][FROM-NEXT] study=%s issue=%s",
+                study.key,
+                study.issue,
+            )
+            model_dir = None
+            if feature_space == "word2vec":
+                model_path = context.next_video_word2vec_dir / study.study_slug
+                model_dir = ensure_dir(model_path)
+            cli_args: list[str] = []
+            cli_args.extend(context.base_cli)
+            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
+            cli_args.extend(["--task", "opinion"])
+            cli_args.extend(["--out-dir", str(base_out_dir)])
+            cli_args.extend(["--knn-k", str(selection.best_k)])
+            cli_args.extend(["--opinion-studies", study.key])
+            cli_args.extend(context.extra_cli)
+            run_knn_cli(cli_args)
+        refreshed = load_opinion_metrics(base_out_dir, feature_space)
+        if refreshed:
+            metrics[feature_space] = refreshed
+    return metrics
+
+# pylint: disable=too-many-locals
 def run_cross_study_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],

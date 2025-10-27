@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import List
 
 from common.pipeline_io import write_markdown_lines
+from common.report_utils import extend_with_catalog_sections, start_markdown_report
 
 
 def _write_catalog_report(
@@ -42,11 +43,7 @@ def _write_catalog_report(
     :type include_opinion: bool
     """
 
-    reports_root.mkdir(parents=True, exist_ok=True)
-    path = reports_root / "README.md"
-    lines: List[str] = []
-    lines.append("# XGBoost Report Catalog")
-    lines.append("")
+    path, lines = start_markdown_report(reports_root, title="XGBoost Report Catalog")
     lines.append("Slate-ranking and opinion-regression baselines trained with XGBoost.")
     lines.append(
         "Feature spaces include TF-IDF, Word2Vec, and Sentence-Transformer representations."
@@ -57,23 +54,12 @@ def _write_catalog_report(
     )
     lines.append("Each report captures the current XGBoost baseline performance at a glance.")
     lines.append("")
-    lines.append(
-        "- `additional_features/README.md` — overview of the extra text fields appended to prompts."
+    extend_with_catalog_sections(
+        lines,
+        include_next_video=include_next_video,
+        include_opinion=include_opinion,
+        reports_prefix="xgb",
     )
-    lines.append("")
-    if include_next_video:
-        lines.append(
-            "- `hyperparameter_tuning/README.md` — sweep leaderboards and the per-study winners."
-        )
-        lines.append(
-            "- `next_video/README.md` — validation accuracy, confidence intervals, baseline deltas,"
-            " and training versus validation accuracy curves for the production slate task."
-        )
-    if include_opinion:
-        lines.append(
-            "- `opinion/README.md` — post-study opinion regression metrics, plus heatmaps under "
-            "`reports/xgb/opinion/`."
-        )
     lines.append("")
     artifact_roots: List[str] = []
     if include_next_video:

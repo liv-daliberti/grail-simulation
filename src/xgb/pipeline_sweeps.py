@@ -28,7 +28,8 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_io import load_metrics_json
-from common.pipeline_utils import merge_ordered
+from common.pipeline_utils import merge_indexed_outcomes
+from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from .cli import build_parser as build_xgb_parser
 from .evaluate import run_eval
@@ -208,25 +209,12 @@ def _merge_sweep_outcomes(
     :rtype: List[SweepOutcome]
     """
 
-    def _on_replace(_existing: SweepOutcome, incoming: SweepOutcome) -> None:
-        """
-        Emit a warning when a cached sweep outcome is replaced.
-
-        :param _existing: Previously stored outcome.
-        :type _existing: SweepOutcome
-        :param incoming: Newly merged outcome replacing the cached entry.
-        :type incoming: SweepOutcome
-        """
-        LOGGER.warning(
-            "Duplicate sweep outcome for index=%d; replacing cached result.",
-            incoming.order_index,
-        )
-
-    return merge_ordered(
+    return merge_indexed_outcomes(
         cached,
         executed,
-        order_key=lambda outcome: outcome.order_index,
-        on_replace=_on_replace,
+        logger=LOGGER,
+        message="Duplicate sweep outcome for index=%d; replacing cached result.",
+        args_factory=lambda _existing, incoming: (incoming.order_index,),
     )
 
 
@@ -366,12 +354,13 @@ def _opinion_sweep_outcome_from_metrics(
         mae=_safe_float(metrics_block.get("mae_after")),
         rmse=_safe_float(metrics_block.get("rmse_after")),
         r_squared=_safe_float(metrics_block.get("r2_after")),
-        accuracy=accuracy_value,
-        baseline_accuracy=baseline_value,
-        accuracy_delta=accuracy_delta,
-        eligible=eligible_value,
-        metrics_path=metrics_path,
-        metrics=metrics,
+        artifact=MetricsArtifact(path=metrics_path, payload=metrics),
+        accuracy_summary=AccuracySummary(
+            value=accuracy_value,
+            baseline=baseline_value,
+            delta=accuracy_delta,
+            eligible=eligible_value,
+        ),
     )
 
 
@@ -490,25 +479,12 @@ def _merge_opinion_sweep_outcomes(
     :rtype: List[OpinionSweepOutcome]
     """
 
-    def _on_replace(_existing: OpinionSweepOutcome, incoming: OpinionSweepOutcome) -> None:
-        """
-        Emit a warning when a cached opinion sweep outcome is replaced.
-
-        :param _existing: Previously stored opinion outcome.
-        :type _existing: OpinionSweepOutcome
-        :param incoming: Newly merged outcome replacing the cached entry.
-        :type incoming: OpinionSweepOutcome
-        """
-        LOGGER.warning(
-            "Duplicate opinion sweep outcome for index=%d; replacing cached result.",
-            incoming.order_index,
-        )
-
-    return merge_ordered(
+    return merge_indexed_outcomes(
         cached,
         executed,
-        order_key=lambda outcome: outcome.order_index,
-        on_replace=_on_replace,
+        logger=LOGGER,
+        message="Duplicate opinion sweep outcome for index=%d; replacing cached result.",
+        args_factory=lambda _existing, incoming: (incoming.order_index,),
     )
 
 

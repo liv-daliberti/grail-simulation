@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Mapping, Optional, Sequence, Tuple
 
-from common.report_utils import extract_numeric_series
+from common.report_utils import extract_curve_sections, extract_numeric_series
 
 from .shared import LOGGER, _slugify_label, plt
 
@@ -32,13 +32,15 @@ def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], 
     """
     Extract sorted evaluation steps and accuracies from a curve payload.
 
-    :param curve_block: Curve payload containing an ``accuracy_by_step`` mapping.
+    :param curve_block: Curve payload containing accuracy checkpoints keyed by step or round.
     :type curve_block: Mapping[str, object]
     :returns: Pair of ``(steps, accuracies)`` sorted by evaluation index.
     :rtype: Tuple[List[int], List[float]]
     """
 
-    accuracy_map = curve_block.get("accuracy_by_step")
+    accuracy_map = (
+        curve_block.get("accuracy_by_round") or curve_block.get("accuracy_by_step")
+    )
     if not isinstance(accuracy_map, Mapping):
         return ([], [])
     return extract_numeric_series(accuracy_map)
@@ -46,7 +48,7 @@ def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], 
 
 def _extract_accuracy_curves(
     payload: Mapping[str, object]
-) -> Optional[Tuple[List[int], List[float], List[int], List[float]]]:
+) -> Optional[Tuple[List[int], List[float], List[int], List[float], str, str]]:
     """
     Pull validation and training cumulative accuracy curves from ``payload``.
 
@@ -61,26 +63,26 @@ def _extract_accuracy_curves(
     curve_bundle = _load_curve_bundle(payload)
     if not isinstance(curve_bundle, Mapping):
         return None
-
-    eval_curve = curve_bundle.get("eval")
-    if not isinstance(eval_curve, Mapping):
+    axis_label = str(curve_bundle.get("axis_label") or "Evaluated examples")
+    y_label = str(curve_bundle.get("y_label") or "Cumulative accuracy")
+    sections = extract_curve_sections(curve_bundle)
+    if sections is None:
         return None
+    eval_curve, train_curve = sections
     eval_x, eval_y = _extract_curve_steps(eval_curve)
     if not eval_x:
         return None
 
-    train_x: List[int] = []
-    train_y: List[float] = []
-    train_curve = curve_bundle.get("train")
-    if isinstance(train_curve, Mapping):
-        train_x, train_y = _extract_curve_steps(train_curve)
+    train_x, train_y = (
+        _extract_curve_steps(train_curve) if train_curve is not None else ([], [])
+    )
 
-    return (eval_x, eval_y, train_x, train_y)
+    return (eval_x, eval_y, train_x, train_y, axis_label, y_label)
 
 
 def _extract_mae_curves(
     payload: Mapping[str, object]
-) -> Optional[Tuple[List[int], List[float], List[int], List[float]]]:
+) -> Optional[Tuple[List[int], List[float], List[int], List[float], str, str]]:
     """
     Pull validation and training MAE curves from ``payload``.
 
@@ -95,10 +97,12 @@ def _extract_mae_curves(
     curve_bundle = _load_curve_bundle(payload)
     if not isinstance(curve_bundle, Mapping):
         return None
-
-    eval_curve = curve_bundle.get("eval")
-    if not isinstance(eval_curve, Mapping):
+    axis_label = str(curve_bundle.get("axis_label") or "Boosting rounds")
+    y_label = str(curve_bundle.get("y_label") or "Mean absolute error")
+    sections = extract_curve_sections(curve_bundle)
+    if sections is None:
         return None
+    eval_curve, train_curve = sections
     eval_source = eval_curve.get("mae_by_round") or eval_curve.get("mae_by_step")
     if not isinstance(eval_source, Mapping):
         return None
@@ -106,15 +110,18 @@ def _extract_mae_curves(
     if not eval_x:
         return None
 
-    train_x: List[int] = []
-    train_y: List[float] = []
-    train_curve = curve_bundle.get("train")
-    if isinstance(train_curve, Mapping):
-        train_source = train_curve.get("mae_by_round") or train_curve.get("mae_by_step")
-        if isinstance(train_source, Mapping):
-            train_x, train_y = extract_numeric_series(train_source)
+    train_source = (
+        (train_curve.get("mae_by_round") or train_curve.get("mae_by_step"))
+        if train_curve is not None
+        else None
+    )
+    train_x, train_y = (
+        extract_numeric_series(train_source)
+        if isinstance(train_source, Mapping)
+        else ([], [])
+    )
 
-    return (eval_x, eval_y, train_x, train_y)
+    return (eval_x, eval_y, train_x, train_y, axis_label, y_label)
 
 
 @dataclass
@@ -126,6 +133,8 @@ class _CurveSeries:
     eval_y: List[float]
     train_x: List[int]
     train_y: List[float]
+    x_label: str
+    y_label: str
 
     def has_training(self) -> bool:
         """Return ``True`` when training curves are available."""
@@ -138,7 +147,7 @@ def _build_curve_series(
     payload: Mapping[str, object],
     extractor: Callable[
         [Mapping[str, object]],
-        Optional[Tuple[List[int], List[float], List[int], List[float]]],
+        Optional[Tuple[List[int], List[float], List[int], List[float], str, str]],
     ],
 ) -> Optional[_CurveSeries]:
     """
@@ -153,15 +162,15 @@ def _build_curve_series(
     curves = extractor(payload)
     if curves is None:
         return None
-    eval_x, eval_y, train_x, train_y = curves
-    return _CurveSeries(label, eval_x, eval_y, train_x, train_y)
+    eval_x, eval_y, train_x, train_y, x_label, y_label = curves
+    return _CurveSeries(label, eval_x, eval_y, train_x, train_y, x_label, y_label)
 
 
 def _collect_curve_series(
     entries: Sequence[Tuple[str, Mapping[str, object]]],
     extractor: Callable[
         [Mapping[str, object]],
-        Optional[Tuple[List[int], List[float], List[int], List[float]]],
+        Optional[Tuple[List[int], List[float], List[int], List[float], str, str]],
     ],
 ) -> List[_CurveSeries]:
     """
@@ -184,8 +193,6 @@ def _plot_curve_on_axis(
     axis,
     series: _CurveSeries,
     *,
-    x_label: str,
-    y_label: str,
     legend_loc: str = "best",
 ) -> None:
     """
@@ -193,8 +200,6 @@ def _plot_curve_on_axis(
 
     :param axis: Matplotlib axis receiving the plot.
     :param series: Curve data to render.
-    :param x_label: Caption for the x-axis.
-    :param y_label: Caption for the y-axis.
     :param legend_loc: Preferred legend location.
     """
 
@@ -208,8 +213,8 @@ def _plot_curve_on_axis(
             label="training",
         )
     axis.set_title(series.label)
-    axis.set_xlabel(x_label)
-    axis.set_ylabel(y_label)
+    axis.set_xlabel(series.x_label)
+    axis.set_ylabel(series.y_label)
     axis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
     axis.legend(loc=legend_loc)
 
@@ -275,12 +280,7 @@ def _plot_xgb_curve(
     plot_path = curves_dir / f"{slug}.png"
 
     fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
-    _plot_curve_on_axis(
-        axis,
-        series,
-        x_label="Evaluated examples",
-        y_label="Cumulative accuracy",
-    )
+    _plot_curve_on_axis(axis, series)
     fig.tight_layout()
     fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
     plt.close(fig)  # type: ignore[attr-defined]
@@ -329,13 +329,7 @@ def _plot_xgb_curve_overview(
 
     axes_flat = [axis for row_axes in axes for axis in row_axes]
     for axis, series in zip(axes_flat, series_list):
-        _plot_curve_on_axis(
-            axis,
-            series,
-            x_label="Evaluated examples",
-            y_label="Cumulative accuracy",
-            legend_loc="lower right",
-        )
+        _plot_curve_on_axis(axis, series, legend_loc="lower right")
     for axis in axes_flat[len(series_list):]:
         axis.axis("off")
 
@@ -384,12 +378,7 @@ def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-stat
     plot_path = curves_dir / f"{slug}_mae.png"
 
     fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
-    _plot_curve_on_axis(
-        axis,
-        series,
-        x_label="Boosting rounds",
-        y_label="Mean absolute error",
-    )
+    _plot_curve_on_axis(axis, series)
     fig.tight_layout()
     fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
     plt.close(fig)  # type: ignore[attr-defined]

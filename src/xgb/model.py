@@ -28,7 +28,7 @@ import numpy as np
 
 from ._optional import LabelEncoder, joblib
 
-from .features import assemble_document, extract_slate_items, prepare_prompt_documents, title_for
+from . import features as feature_utils
 from .utils import canon_video_id
 from .vectorizers import (
     BaseTextVectorizer,
@@ -86,6 +86,17 @@ def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
     )
     return any(token in lowered for token in gpu_indicators)
 
+
+def _ensure_float32(matrix: Any) -> Any:
+    """Cast vectoriser outputs to ``float32`` when supported."""
+
+    if hasattr(matrix, "astype"):
+        return matrix.astype(
+            np.float32,
+            copy=False,
+        )  # type: ignore[assignment]
+    return matrix
+
 @dataclass
 class XGBoostSlateModel:
     """
@@ -99,12 +110,15 @@ class XGBoostSlateModel:
     :vartype booster: Any
     :ivar extra_fields: Additional prompt fields captured during training.
     :vartype extra_fields: Tuple[str, ...]
+    :ivar training_history: Optional history captured during fitting (per-round metrics).
+    :vartype training_history: Dict[str, Any] | None
     """
 
     vectorizer: BaseTextVectorizer
     label_encoder: LabelEncoder
     booster: Any
     extra_fields: Tuple[str, ...]
+    training_history: Optional[Dict[str, Any]] = None
 
 
 # pylint: disable=too-many-instance-attributes
@@ -181,6 +195,8 @@ def fit_xgboost_model(
     *,
     config: Optional[XGBoostTrainConfig] = None,
     extra_fields: Sequence[str] | None = None,
+    eval_ds=None,
+    collect_history: bool = False,
 ) -> XGBoostSlateModel:
     """
     Train an XGBoost multi-class classifier over prompt documents.
@@ -192,7 +208,11 @@ def fit_xgboost_model(
     :type config: XGBoostTrainConfig, optional
     :param extra_fields: Optional column names appended to the prompt document.
     :type extra_fields: Sequence[str], optional
-    :returns: Trained model bundle containing vectoriser, label encoder, and booster.
+    :param eval_ds: Optional evaluation split monitored during fitting.
+    :type eval_ds: datasets.Dataset | Sequence[dict] | None
+    :param collect_history: When ``True`` record per-round training metrics.
+    :type collect_history: bool
+    :returns: Trained model bundle containing vectoriser, label encoder, booster, and history.
     :rtype: XGBoostSlateModel
     :raises ImportError: If the upstream :mod:`xgboost` package is unavailable.
     :raises RuntimeError: When the training split is empty or lacks diverse labels.
@@ -210,10 +230,12 @@ def fit_xgboost_model(
         else None
     )
     train_config.tfidf.max_features = capped
-    vectorizer, encoder, booster = _build_model_components(
+    vectorizer, encoder, booster, history = _build_model_components(
         train_ds=train_ds,
         train_config=train_config,
         extra_fields=extra_fields,
+        eval_ds=eval_ds,
+        collect_history=collect_history,
     )
 
     return XGBoostSlateModel(
@@ -221,6 +243,7 @@ def fit_xgboost_model(
         label_encoder=encoder,
         booster=booster,
         extra_fields=tuple(extra_fields or ()),
+        training_history=history,
     )
 
 
@@ -253,6 +276,9 @@ def save_xgboost_model(model: XGBoostSlateModel, out_dir: Path | str) -> None:
             handle,
             indent=2,
         )
+    if model.training_history:
+        with open(directory / "training_history.json", "w", encoding="utf-8") as handle:
+            json.dump(model.training_history, handle, indent=2)
 
 
 def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
@@ -284,11 +310,22 @@ def load_xgboost_model(in_dir: Path | str) -> XGBoostSlateModel:
         extra_fields = tuple(payload.get("extra_fields", []))
     else:
         extra_fields = ()
+    training_history = None
+    history_path = directory / "training_history.json"
+    if history_path.exists():
+        try:
+            with open(history_path, "r", encoding="utf-8") as handle:
+                loaded_history = json.load(handle)
+            if isinstance(loaded_history, dict):
+                training_history = loaded_history
+        except (OSError, json.JSONDecodeError):  # pragma: no cover - defensive
+            LOGGER.warning("Unable to load training history from %s.", history_path)
     return XGBoostSlateModel(
         vectorizer=vectorizer,
         label_encoder=encoder,
         booster=booster,
         extra_fields=extra_fields,
+        training_history=training_history,
     )
 
 
@@ -313,7 +350,7 @@ def predict_among_slate(
     """
 
     extra_fields = tuple(extra_fields) if extra_fields is not None else model.extra_fields
-    document = assemble_document(example, extra_fields)
+    document = feature_utils.assemble_document(example, extra_fields)
     if not document.strip():
         return None, {}
 
@@ -326,7 +363,7 @@ def predict_among_slate(
     classes = model.label_encoder.classes_
     probability_map = {cls: float(prob) for cls, prob in zip(classes, class_probs)}
 
-    slate_pairs = list(extract_slate_items(example))
+    slate_pairs = list(feature_utils.extract_slate_items(example))
     best_index = _select_best_candidate(slate_pairs, probability_map)
     return best_index, probability_map
 
@@ -351,12 +388,67 @@ def _encode_labels(labels_id: Sequence[str]) -> Tuple[LabelEncoder, Any]:
     return encoder, encoded
 
 
+def _instantiate_classifier(
+    train_config: XGBoostTrainConfig,
+    params: XGBoostBoosterParams,
+    tree_method: str,
+    extra_kwargs: Dict[str, Any],
+) -> Any:
+    """Create an :class:`xgboost.XGBClassifier` with shared defaults."""
+
+    cleaned_kwargs = dict(extra_kwargs)
+    cleaned_kwargs.pop("tree_method", None)
+    return XGBClassifier(
+        objective="multi:softprob",
+        eval_metric="mlogloss",
+        n_estimators=params.n_estimators,
+        max_depth=params.max_depth,
+        learning_rate=params.learning_rate,
+        subsample=params.subsample,
+        colsample_bytree=params.colsample_bytree,
+        tree_method=tree_method,
+        reg_lambda=params.reg_lambda,
+        reg_alpha=params.reg_alpha,
+        random_state=train_config.seed,
+        nthread=-1,
+        **cleaned_kwargs,
+    )
+
+
+def _build_fit_kwargs(
+    collect_history: bool,
+    matrix,
+    labels,
+    eval_matrix,
+    eval_labels,
+) -> Dict[str, Any]:
+    """Construct ``fit`` keyword arguments when evaluation tracking is enabled."""
+
+    if not collect_history:
+        return {}
+    eval_set = [(matrix, labels)]
+    if eval_matrix is not None and eval_labels is not None:
+        eval_set.append((eval_matrix, eval_labels))
+    return {"eval_set": eval_set, "eval_metric": ["mlogloss", "merror"], "verbose": False}
+
+
+def _collect_training_history(booster, collect_history: bool) -> Optional[Dict[str, Any]]:
+    """Return evaluation history when requested."""
+
+    if not collect_history:
+        return None
+    return booster.evals_result()
+
+
 def _train_booster(
     *,
     train_config: XGBoostTrainConfig,
     matrix,
     labels,
-) -> Any:
+    eval_matrix=None,
+    eval_labels=None,
+    collect_history: bool = False,
+) -> Tuple[Any, Optional[Dict[str, Any]]]:
     """
     Instantiate and fit the XGBoost booster component.
 
@@ -366,64 +458,59 @@ def _train_booster(
     :type matrix: Any
     :param labels: Numeric labels aligned with ``matrix`` rows.
     :type labels: Any
-    :returns: Fitted XGBoost classifier implementing ``predict_proba``.
-    :rtype: Any
+    :param eval_matrix: Optional evaluation feature matrix monitored during fitting.
+    :type eval_matrix: Any
+    :param eval_labels: Optional evaluation labels aligned with ``eval_matrix`` rows.
+    :type eval_labels: Any
+    :param collect_history: When ``True`` record per-round metrics for plotting.
+    :type collect_history: bool
+    :returns: Tuple of fitted classifier and optional evaluation history.
+    :rtype: Tuple[Any, Dict[str, Any] | None]
     :raises Exception: Propagated when booster training fails on both GPU and CPU.
     """
     params = train_config.booster
     booster_kwargs = dict(params.extra_kwargs or {})
-    unique_labels = int(np.unique(labels).size)
-    booster_kwargs.setdefault("num_class", unique_labels)
+    booster_kwargs.setdefault("num_class", int(np.unique(labels).size))
 
     requested_method = params.tree_method or "hist"
-    use_gpu = requested_method.lower().startswith("gpu") and _gpu_training_state["enabled"]
-    effective_method = requested_method if use_gpu else (
-        "hist" if requested_method.lower().startswith("gpu") else requested_method
+    requested_lower = requested_method.lower()
+    attempt_gpu = requested_lower.startswith("gpu") and _gpu_training_state["enabled"]
+    tree_method = requested_method if attempt_gpu else (
+        "hist" if requested_lower.startswith("gpu") else requested_method
     )
 
-    booster = XGBClassifier(
-        objective="multi:softprob",
-        eval_metric="mlogloss",
-        n_estimators=params.n_estimators,
-        max_depth=params.max_depth,
-        learning_rate=params.learning_rate,
-        subsample=params.subsample,
-        colsample_bytree=params.colsample_bytree,
-        tree_method=effective_method,
-        reg_lambda=params.reg_lambda,
-        reg_alpha=params.reg_alpha,
-        random_state=train_config.seed,
-        nthread=-1,
-        **booster_kwargs,
+    booster = _instantiate_classifier(
+        train_config,
+        params,
+        tree_method,
+        booster_kwargs,
+    )
+    fit_kwargs = _build_fit_kwargs(
+        collect_history,
+        matrix,
+        labels,
+        eval_matrix,
+        eval_labels,
     )
     try:
-        booster.fit(matrix, labels)
-        return booster
+        booster.fit(matrix, labels, **fit_kwargs)
+        return booster, _collect_training_history(booster, collect_history)
     except Exception as exc:  # pragma: no cover - runtime guard
-        if use_gpu and _should_retry_on_cpu(requested_method, exc):
+        if attempt_gpu and _should_retry_on_cpu(requested_method, exc):
             LOGGER.warning(
                 "XGBoost GPU training failed with '%s'. Retrying current task on CPU.",
                 exc,
             )
             _disable_gpu_boosters()
-            cpu_kwargs = _scrub_gpu_kwargs(booster_kwargs)
-            cpu_booster = XGBClassifier(
-                objective="multi:softprob",
-                eval_metric="mlogloss",
-                n_estimators=params.n_estimators,
-                max_depth=params.max_depth,
-                learning_rate=params.learning_rate,
-                subsample=params.subsample,
-                colsample_bytree=params.colsample_bytree,
-                tree_method="hist",
-                reg_lambda=params.reg_lambda,
-                reg_alpha=params.reg_alpha,
-                random_state=train_config.seed,
-                nthread=-1,
-                **cpu_kwargs,
+            return _retry_training_on_cpu(
+                train_config=train_config,
+                params=params,
+                matrix=matrix,
+                labels=labels,
+                fit_kwargs=fit_kwargs,
+                collect_history=collect_history,
+                booster_kwargs=booster_kwargs,
             )
-            cpu_booster.fit(matrix, labels)
-            return cpu_booster
         raise
 
 
@@ -458,12 +545,86 @@ def _scrub_gpu_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned
 
 
+def _retry_training_on_cpu(
+    *,
+    train_config: XGBoostTrainConfig,
+    params: XGBoostBoosterParams,
+    matrix,
+    labels,
+    fit_kwargs: Dict[str, Any],
+    collect_history: bool,
+    booster_kwargs: Dict[str, Any],
+) -> Tuple[Any, Optional[Dict[str, Any]]]:
+    """
+    Retry booster fitting on CPU after a GPU-specific failure.
+
+    :returns: Tuple of fitted classifier and optional evaluation history.
+    :rtype: Tuple[Any, Dict[str, Any] | None]
+    """
+
+    cpu_kwargs = _scrub_gpu_kwargs(booster_kwargs)
+    cpu_booster = _instantiate_classifier(
+        train_config,
+        params,
+        "hist",
+        cpu_kwargs,
+    )
+    cpu_booster.fit(matrix, labels, **fit_kwargs)
+    return cpu_booster, _collect_training_history(cpu_booster, collect_history)
+
+
+def _prepare_eval_artifacts(
+    *,
+    collect_history: bool,
+    eval_ds,
+    vectorizer: BaseTextVectorizer,
+    encoder: LabelEncoder,
+    train_config: XGBoostTrainConfig,
+    extra_fields: Sequence[str] | None,
+) -> Tuple[Any | None, Any | None]:
+    """Prepare evaluation matrices compatible with the fitted encoder."""
+
+    if not collect_history or eval_ds is None:
+        return None, None
+
+    eval_docs, eval_label_ids, _ = feature_utils.prepare_prompt_documents(
+        eval_ds,
+        max_train=0,
+        seed=train_config.seed,
+        extra_fields=extra_fields,
+    )
+    if not eval_docs:
+        return None, None
+
+    known_labels = set(encoder.classes_)
+    filtered_docs: list[str] = []
+    filtered_labels: list[str] = []
+    for doc, label_id in zip(eval_docs, eval_label_ids):
+        if label_id in known_labels:
+            filtered_docs.append(doc)
+            filtered_labels.append(label_id)
+        else:
+            LOGGER.debug(
+                "Omitting evaluation row with unseen label '%s' during "
+                "training history capture.",
+                label_id,
+            )
+
+    if not filtered_docs:
+        return None, None
+
+    eval_matrix = _ensure_float32(vectorizer.transform(filtered_docs))
+    return eval_matrix, encoder.transform(filtered_labels)
+
+
 def _build_model_components(
     *,
     train_ds,
     train_config: XGBoostTrainConfig,
     extra_fields: Sequence[str] | None,
-) -> Tuple[BaseTextVectorizer, LabelEncoder, Any]:
+    eval_ds=None,
+    collect_history: bool = False,
+) -> Tuple[BaseTextVectorizer, LabelEncoder, Any, Optional[Dict[str, Any]]]:
     """
     Construct the model components required for training and inference.
 
@@ -473,12 +634,16 @@ def _build_model_components(
     :type train_config: XGBoostTrainConfig
     :param extra_fields: Additional prompt columns appended during featurisation.
     :type extra_fields: Sequence[str] | None
-    :returns: Tuple of ``(vectorizer, label_encoder, booster)``.
-    :rtype: Tuple[BaseTextVectorizer, LabelEncoder, Any]
+    :param eval_ds: Optional evaluation dataset monitored during training.
+    :type eval_ds: datasets.Dataset | Sequence[dict] | None
+    :param collect_history: Record per-round metrics when ``True``.
+    :type collect_history: bool
+    :returns: Tuple of ``(vectorizer, label_encoder, booster, history)``.
+    :rtype: Tuple[BaseTextVectorizer, LabelEncoder, Any, Dict[str, Any] | None]
     :raises RuntimeError: If no documents are produced for training.
     """
 
-    docs, labels_id, _ = prepare_prompt_documents(
+    docs, labels_id, _ = feature_utils.prepare_prompt_documents(
         train_ds,
         max_train=train_config.max_train,
         seed=train_config.seed,
@@ -493,16 +658,25 @@ def _build_model_components(
         word2vec=train_config.word2vec,
         sentence_transformer=train_config.sentence_transformer,
     )
-    matrix = vectorizer.fit_transform(docs)
-    if hasattr(matrix, "astype"):
-        matrix = matrix.astype(np.float32, copy=False)  # type: ignore[assignment]
+    matrix = _ensure_float32(vectorizer.fit_transform(docs))
     encoder, encoded_labels = _encode_labels(labels_id)
-    booster = _train_booster(
+    eval_matrix, eval_labels = _prepare_eval_artifacts(
+        collect_history=collect_history,
+        eval_ds=eval_ds,
+        vectorizer=vectorizer,
+        encoder=encoder,
+        train_config=train_config,
+        extra_fields=extra_fields,
+    )
+    booster, history = _train_booster(
         train_config=train_config,
         matrix=matrix,
         labels=encoded_labels,
+        eval_matrix=eval_matrix,
+        eval_labels=eval_labels,
+        collect_history=collect_history,
     )
-    return vectorizer, encoder, booster
+    return vectorizer, encoder, booster, history
 
 
 def _select_best_candidate(
@@ -586,7 +760,7 @@ def _fallback_candidate_key(title: str, video_id: str) -> str:
         title_candidate = canon_video_id(title)
         if title_candidate:
             return title_candidate
-    derived = title_for(video_id) or title or ""
+    derived = feature_utils.title_for(video_id) or title or ""
     return canon_video_id(derived) or derived.strip()
 
 

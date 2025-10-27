@@ -16,7 +16,6 @@
 """Dataset loading and mixture utilities for open_r1 training workflows."""
 
 import logging
-from typing import TYPE_CHECKING, Any
 
 try:  # pragma: no cover - optional dependency
     import datasets as _DATASETS  # type: ignore
@@ -28,12 +27,9 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     concatenate_datasets = None  # type: ignore
 
-from ..configs import ScriptArguments
+from common.hf_datasets import DatasetDict
 
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from datasets import DatasetDict
-else:  # pragma: no cover - runtime fallback
-    DatasetDict = Any  # type: ignore
+from ..configs import ScriptArguments
 
 
 logger = logging.getLogger(__name__)

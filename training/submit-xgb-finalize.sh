@@ -26,6 +26,17 @@ COMMON_FLAGS=(
   --export="ALL,TRAINING_REPO_ROOT=${ROOT_DIR}"
 )
 
+flag_present() {
+  local flag=$1
+  shift
+  for token in "$@"; do
+    if [[ "${token}" == "${flag}" || "${token}" == "${flag}"=* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 submit_finalize() {
   local job_name=$1
   shift
@@ -37,10 +48,15 @@ submit_finalize() {
     "$@"
 }
 
-echo "[submit-xgb-finalize] Submitting next-video finalize job..."
-submit_finalize "xgb-next-final" \
-  "${SCRIPT_DIR}/training-xgb-next.sh" finalize --no-reuse-final "$@"
+user_args=("$@")
+if ! flag_present "--reuse-final" "${user_args[@]}" && ! flag_present "--no-reuse-final" "${user_args[@]}"; then
+  user_args+=(--no-reuse-final)
+fi
+if ! flag_present "--tasks" "${user_args[@]}"; then
+  default_tasks=${XGB_FINALIZE_TASKS:-"next_video,opinion"}
+  user_args+=(--tasks "${default_tasks}")
+fi
 
-echo "[submit-xgb-finalize] Submitting opinion finalize job..."
-submit_finalize "xgb-opinion-final" \
-  "${SCRIPT_DIR}/training-xgb-opinion.sh" finalize --no-reuse-final "$@"
+echo "[submit-xgb-finalize] Submitting combined finalize job for XGBoost (next-video + opinion)."
+submit_finalize "xgb-finalize" \
+  "${SCRIPT_DIR}/training-xgb.sh" finalize "${user_args[@]}"

@@ -23,14 +23,13 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from numpy.random import default_rng
-
 from common import canon_text, canon_video_id, get_logger
 from common.prompt_fields import (
     NOW_PLAYING_ID_KEYS,
     NOW_PLAYING_TITLE_KEYS,
     NOW_PLAYING_TITLE_KEYS_WITH_META,
 )
+from common.prompt_sampling import collect_selected_examples
 from common.title_index import TitleResolver
 try:
     from prompt_builder import (
@@ -940,22 +939,12 @@ class PromptDocumentBuilder:
         """
 
 
-        # pylint: disable=too-many-locals
-        n_rows = len(train_ds)  # type: ignore[arg-type]
-        if n_rows == 0:
-            raise RuntimeError("Train split is empty.")
-        rng = default_rng(seed)
-        if max_train and max_train > 0:
-            take = min(max_train, n_rows)
-            order = rng.permutation(n_rows)[:take].tolist()
-        else:
-            order = list(range(n_rows))
-
-        records: List[tuple[str, str, str]] = []
-        for index in order:
-            record = self._record_from_example(train_ds[int(index)], extra_fields)
-            if record:
-                records.append(record)
+        indices, records = collect_selected_examples(
+            train_ds,
+            max_train=max_train,
+            seed=seed,
+            collect=lambda _, example: self._record_from_example(example, extra_fields),
+        )
 
         if not records:
             raise RuntimeError(
@@ -964,14 +953,14 @@ class PromptDocumentBuilder:
                 "Fixes: add slate items/current video text or pass extra text fields via CLI.",
             )
 
-        dropped = len(order) - len(records)
+        dropped = len(indices) - len(records)
         if dropped:
-            self._log("warning", "Dropped %d empty docs out of %d.", dropped, len(order))
+            self._log("warning", "Dropped %d empty docs out of %d.", dropped, len(indices))
 
         filtered_docs = [doc for doc, _, _ in records]
         filtered_labels_id = [label_id for _, label_id, _ in records]
         filtered_labels_title = [label_title for _, _, label_title in records]
-        self._log("info", "Assembled %d documents (kept %d non-empty).", len(order), len(records))
+        self._log("info", "Assembled %d documents (kept %d non-empty).", len(indices), len(records))
         self._log("info", "Example doc: %r", filtered_docs[0][:200])
         return filtered_docs, filtered_labels_id, filtered_labels_title
 

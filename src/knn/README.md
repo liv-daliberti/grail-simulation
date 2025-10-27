@@ -1,217 +1,136 @@
 # KNN Slate Baselines
 
-Modular implementation of the k-nearest-neighbor slate selector. The package
-supersedes the legacy `knn-baseline.py` script while keeping the single-file
-entry point for backwards compatibility.
+Modernised KNN slate selector with reusable feature builders, index helpers, and
+pipeline automation. The package replaces the one-off `knn-baseline.py` script
+while keeping a compatible CLI for ad-hoc experiments and batch jobs.
 
-## Package layout
+## Code Map
 
 ```
 src/knn/
-├── cli.py          # CLI front-end (train/evaluate, issue filtering, exports)
-├── data.py         # dataset loading helpers + issue-aware filtering
-├── evaluate.py     # accuracy + coverage metrics and evaluation loop
-├── features.py     # TF-IDF + optional Word2Vec document builders
-├── index.py        # Faiss / sklearn KNN wrapper with persistence helpers
-├── utils.py        # logging, prompt helpers, and video-id canonicalization
-└── knn-baseline.py # legacy entry point delegating to knn.cli:main
+├── cli.py / knn-baseline.py       # Single-run CLI (train, evaluate, export artefacts)
+├── cli_utils.py                   # Shared argparse helpers (e.g. ST embedding flags)
+├── data.py                        # Dataset loading + issue/study filtering
+├── features.py                    # Prompt document assembly + TF-IDF/Word2Vec glue
+├── index.py                       # Index builders + persistence for TF-IDF/W2V/ST
+├── evaluate.py                    # Training/eval loop, metrics, elbow selection
+├── opinion.py / opinion_sweeps.py # Opinion-regression fit/eval + sweep definitions
+├── pipeline.py                    # End-to-end sweeps, finals, and report generation
+├── pipeline_cli.py                # Top-level pipeline CLI + default paths
+├── pipeline_context.py            # Path resolution + execution configuration
+├── pipeline_data.py               # Study/issue metadata helpers
+├── pipeline_evaluate.py           # Cross-study + opinion evaluation orchestration
+├── pipeline_io.py                 # Sweep/final metrics loading + JSON writers
+├── pipeline_reports/              # Markdown builders for reports/knn/*
+├── pipeline_sweeps.py             # Hyper-parameter grids and task partitioning
+├── pipeline_utils.py              # Fan-out helpers shared across stages
+└── utils.py                       # Logging, canonicalisation, slate utilities
 ```
 
-## Quick start
+Set `PYTHONPATH=src` (or install the package) before invoking any module-level CLI.
 
-Train an index and evaluate on the default cleaned dataset:
+## Quick Start (Single Run)
+
+Train and evaluate a TF-IDF index on the default cleaned dataset:
 
 ```bash
+export PYTHONPATH=src
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out-dir models/knn/run-001 \
+  --out-dir models/knn/example-run \
   --feature-space tfidf \
   --fit-index
 ```
 
-To compare against Word2Vec features and a filtered issue subset:
+Switch the feature space, limit issues, or reuse a persisted index:
 
 ```bash
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out-dir models/knn/run-w2v \
+  --out-dir models/knn/word2vec-demo \
   --feature-space word2vec \
-  --issue minimum_wage \
+  --issues minimum_wage,gun_control \
   --word2vec-size 256 \
-  --eval-max 2000
+  --fit-index \
+  --save-index models/knn/word2vec-demo/index_cache
+
+python -m knn.cli \
+  --dataset data/cleaned_grail \
+  --load-index models/knn/word2vec-demo/index_cache \
+  --feature-space word2vec \
+  --eval-max 2000 \
+  --participant-studies study1,study2
 ```
 
-All CLI switches are documented via `python -m knn.cli --help`. The script writes
-predictions, metrics, and optional embeddings under the specified `out_dir`.
+All switches are documented via `python -m knn.cli --help`, including the
+`sentence_transformer` flags for GPU-backed embeddings.
 
-## Pipeline overview
+## Pipeline Automation
 
-1. **Feature extraction** – `src/knn/features.py` assembles per-issue text documents and can train either TF-IDF vectors or Word2Vec embeddings via `Word2VecFeatureBuilder`.
-2. **Index training** – `src/knn/index.py` fits the requested space (`build_tfidf_index` / `build_word2vec_index`) and persists artifacts so later runs can reuse them.
-3. **Evaluation & elbow selection** – `src/knn/evaluate.py` scores validation examples, logs running accuracies, generates accuracy-by-`k` curves, and picks the elbow-derived `k`.
-4. **Reporting** – evaluation metrics, per-`k` predictions, elbow plots, and curve diagnostics write to `models/` and `reports/`.
+`python -m knn.pipeline` drives the full workflow used in SLURM jobs and CI:
 
-High-level progression (training + evaluation):
+1. Hyper-parameter sweeps for next-video ranking across requested feature spaces
+   (`tfidf`, `word2vec`, `sentence_transformer`).
+2. Final evaluations that reload the winning configuration per study and export
+   metrics, predictions, and elbow curves.
+3. Optional opinion-regression sweeps that reuse the slate configs.
+4. Markdown regeneration under `reports/knn/`.
 
-```
-        Raw Capsule Exports
-                  |
-                  v
-        clean_data.sessions
-                  |
-                  v
-         Prompt Builder (GRPO)
-                  |
-                  v
-        +-----------------------+
-        |  Feature Extraction   |
-        |  - TF-IDF (default)   |
-        |  - Word2Vec (optional)|
-        +-----------+-----------+
-                    |
-            +-------v-------+
-            |  KNN Index   |
-            |  Training    |
-            +-------+------+
-                    |
-      +-------------v--------------+
-      | KNN Evaluation (metrics,   |
-      | elbow curve, acc@k logs)   |
-      +-------------+--------------+
-                    |
-        +-----------+-----------+
-        | Reports & Artifacts  |
-        |  models/, reports/   |
-        +----------------------+
-```
-
-Both the SLURM wrapper (`training/training-knn.sh`, which auto-submits sweeps/finalize jobs) and the Python modules follow this path; setting `--feature-space word2vec` switches the feature block while keeping the rest intact.
-
-Need deeper context on the ingestion step? See `clean_data/sessions/README.md` for the session-log builders that feed the dataset.
-
-## Report generation modules
-
-The report builder that previously lived entirely in `src/knn/pipeline_reports.py` now ships as the
-package `src/knn/pipeline_reports/`. The public entry point remains
-`knn.pipeline_reports.generate_reports(repo_root, report_bundle)` so existing imports and pipeline
-calls continue to work, but the implementation is split into focused modules:
-
-- `__init__.py` – orchestrates the overall workflow and wires the helper modules together.
-- `catalog.py` – creates the top-level `reports/knn/README.md` summary.
-- `hyperparameter.py` – renders sweep leaderboards, per-feature tables, and reproduction commands.
-- `next_video.py` – assembles next-video metrics tables, curve plots, and LOSO summaries.
-- `opinion.py` – produces opinion-regression tables, portfolio stats, and cross-study diagnostics.
-- `shared.py` – reusable helpers such as CLI formatting, feature-space headings, and logging.
-
-When you need to tweak layout or add new sections, update the dedicated module instead of hunting
-through a monolithic file. Each builder writes a single Markdown artifact and accepts the same
-`ReportBundle` produced by the pipeline, so the CLI and training scripts require no changes.
-
-## Feature helpers
-
-`features.py` reuses `prompt_builder.build_user_prompt` to guarantee the same
-PROFILE/HISTORY context seen by other baselines:
-
-- TF-IDF is enabled by default, with optional extra context using
-  `--knn-text-fields`.
-- Word2Vec training (via gensim) can be toggled with `--feature-space word2vec`;
-  models persist under `models/knn/next_video/word2vec_models/` by default, namespaced per issue
-  (and per study when runs originate from the pipeline) so they can be reused.
-- Title lookups pull from metadata CSVs listed by `GRAIL_TITLE_*` environment
-  variables, falling back to the shared network drive defaults.
-
-## Evaluation
-
-`evaluate.py` computes accuracy and slate coverage—the latter surfaces how often
-the gold video appears in the candidate slate. Metrics mirror those reported by
-the XGBoost and GPT-4o baselines so results remain comparable.
-
-Each run also materializes elbow plots and curve summaries:
-
-- Elbow charts are saved to `reports/knn/next_video/<feature-space>/elbow_<issue>.png`.
-- Per-`k` predictions and metrics live under `models/knn/next_video/<feature-space>/<study>/`.
-- Curve diagnostics (accuracy-by-k, AUC, best-k) for both evaluation and training
-  splits are written to `models/knn/next_video/<feature-space>/<study>/<issue>/knn_curves_<issue>.json`.
-  Use `--train-curve-max` to cap the number of training examples analyzed.
-
-## Hyperparameter sweeps
-
-We keep curated next-video sweeps under `models/knn/next_video/sweeps/` and opinion sweeps
-under `models/knn/opinions/sweeps/` (see
-`reports/knn/hyperparameter_tuning/README.md` for the latest summary). Each configuration
-evaluates
-
-- `k ∈ {1,2,3,4,5,10,15,20,25,50,75,100}`
-- distance metrics `cosine` and `l2`
-- default text augmentation combines the prompt builder document with `viewer_profile`
-  and `state_text` (pass `--knn_text_fields` to append more columns)
-- Word2Vec dimensions (`128`, `256`) and windows (`5`, `10`)
-
-Example TF-IDF sweep:
+Common invocations:
 
 ```bash
-export PYTHONPATH=src
-for issue in minimum_wage gun_control; do
-  for metric in cosine l2; do
-    python -m knn.cli \
-      --dataset data/cleaned_grail \
-      --fit-index \
-      --feature-space tfidf \
-      --issues "$issue" \
-      --knn_k 25 \
-      --knn_k_sweep 1,2,3,4,5,10,15,20,25,50,75,100 \
-      --knn_metric "$metric" \
-      --knn_max_train 5000 \
-      --eval_max 200 \
-      --train_curve_max 2000 \
-      --cache_dir hf_cache \
-      --out_dir "models/knn/next_video/sweeps/tfidf/${issue}/metric-${metric}_text-default"
-  done
-done
+# Inspect the plan without scheduling jobs
+python -m knn.pipeline --dry-run
+
+# Run the sweeps stage only (results land under models/knn/next_video/sweeps)
+python -m knn.pipeline --stage sweeps --jobs 8
+
+# Regenerate reports using cached sweeps/finals
+python -m knn.pipeline --stage reports --reuse-sweeps --reuse-final
+
+# Restrict to opinion tasks and sentence-transformer features
+python -m knn.pipeline \
+  --tasks opinion \
+  --feature-spaces sentence_transformer \
+  --sentence-transformer-model sentence-transformers/all-mpnet-base-v2
 ```
-Include `--knn_text_fields field_a,field_b` in the command above to append additional
-columns beyond the default viewer/profile context.
 
-and the corresponding Word2Vec sweep:
+Use `--no-reuse-sweeps` or `--no-reuse-final` to force reruns. The SLURM wrapper
+`training/training-knn.sh` simply orchestrates these stages on the cluster.
 
-```bash
-export PYTHONPATH=src WORD2VEC_WORKERS=40
-for issue in minimum_wage gun_control; do
-  for metric in cosine l2; do
-    for size in 128 256; do
-      for window in 5 10; do
-        python -m knn.cli \
-          --dataset data/cleaned_grail \
-          --fit-index \
-          --feature-space word2vec \
-          --issues "$issue" \
-          --knn_k 25 \
-          --knn_k_sweep 1,2,3,4,5,10,15,20,25,50,75,100 \
-          --knn_metric "$metric" \
-          --knn_max_train 5000 \
-          --eval_max 200 \
-          --train_curve_max 2000 \
-          --cache_dir hf_cache \
-          --word2vec-model-dir models/knn/next_video/word2vec_models/sweeps \
-          --word2vec-size "$size" \
-          --word2vec-window "$window" \
-          --word2vec-min-count 1 \
-          --word2vec-epochs 10 \
-          --word2vec-workers "${WORD2VEC_WORKERS:-40}" \
-          --out_dir "models/knn/next_video/sweeps/word2vec/${issue}/metric-${metric}_text-default_sz${size}_win${window}_min1"
-      done
-    done
-  done
-done
-```
-As with the TF-IDF example, pass `--knn_text_fields` to augment the prompt document
-beyond the default viewer profile fields.
+## Feature Spaces
 
-The loops mirror the runs referenced in the report; feel free to expand the grid
-with additional parameters.
+- **TF-IDF (default)** – `features.prepare_prompt_documents` builds consistent
+  prompt text; vectors are stored alongside trained `sklearn` indexes.
+- **Word2Vec** – optional dependency on `gensim`. Models persist to
+  `models/knn/next_video/word2vec_models/<issue>/<study>` so future runs can skip
+  retraining.
+- **Sentence Transformer** – uses `sentence-transformers` to encode prompts.
+  Configure via `--sentence-transformer-*` flags in both the single-run CLI and
+  pipeline. Normalisation can be toggled with `--sentence-transformer-normalize`.
+
+All spaces share the prompt builder from `common.prompt_docs` to guarantee parity
+with the GPT-4o and XGBoost baselines.
+
+## Evaluation Outputs
+
+`evaluate.py` computes accuracy and slate coverage plus elbow diagnostics. Expect:
+
+- Metrics JSON/CSV under `models/knn/next_video/<feature>/<study>/<issue>/`.
+- Per-`k` curves (`knn_curves_<issue>.json`) and elbow PNGs in the same folder.
+- Opinion pipelines emit regression summaries beneath `models/knn/opinion/*` and
+  populate `reports/knn/opinion/*.md` via the builders in `pipeline_reports/`.
+
+`pipeline_reports/catalog.py` regenerates the top-level README, while the
+issue-specific modules handle table/plot assembly.
 
 ## Testing
 
-Unit tests live under `tests/knn/`. Add or update fixtures when introducing new
-feature builders or storage formats. The CLI smoke tests rely on small synthetic
-datasets generated during CI to avoid pulling the full cleaned corpus.
+Targeted tests live under `tests/knn/`:
+
+- `test_pipeline_modules.py` exercises sweep planning and CLI wiring.
+- `test_sentence_transformer_index.py` validates sentence-transformer caching.
+- Additional fixtures cover opinion regressions and dataset adapters.
+
+Extend these when introducing new feature spaces or storage formats so CI can run
+without downloading the full cleaned corpus.

@@ -317,15 +317,26 @@
 <td class="text-right"><p>671</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
 </tr>
+<tr class="row-even"><td><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text</p></td>
+<td class="text-right"><p>0.299</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.180</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <section id="observations">
 <h3>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.717 (baseline 0.540, Δ +0.177, k=3) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.352 (baseline 0.368, Δ -0.016, k=3) using cosine distance with viewer_profile, state_text.
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.717 (baseline 0.540, Δ +0.177, k=3) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.352 (baseline 0.368, Δ -0.016, k=3) using cosine distance with viewer_profile, state_text; Study 3 – Minimum Wage (YouGov): accuracy 0.299 (baseline 0.479, Δ -0.180, k=3) using cosine distance with viewer_profile, state_text.
 Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code>
-Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
+Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code>
+Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
 </ul>
 </section>
 <section id="id1">
@@ -368,7 +379,18 @@ Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notran
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>3</p></td>
+<tr class="row-even"><td class="text-right"><p>2</p></td>
+<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text</p></td>
+<td class="text-right"><p>0.299</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.180</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>3</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -379,7 +401,7 @@ Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notran
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>4</p></td>
+<tr class="row-even"><td class="text-right"><p>4</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -389,6 +411,17 @@ Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notran
 <td class="text-right"><p>-0.025</p></td>
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>5</p></td>
+<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text</p></td>
+<td class="text-right"><p>0.294</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.185</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>1,200</p></td>
 </tr>
 </tbody>
 </table>

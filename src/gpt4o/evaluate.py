@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: skip-file
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=duplicate-code
-
 """Evaluation routines for the GPT-4o slate-ranking baseline.
 
 Fetches the configured dataset, issues batched GPT-4o requests, parses the
 responses, and aggregates accuracy and formatting metrics for reporting.
 """
 
-# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught
 
 from __future__ import annotations
 

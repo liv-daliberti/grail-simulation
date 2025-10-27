@@ -15,6 +15,8 @@
 
 """Command-line interface for evaluating the GPT-4o baseline model."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 import argparse

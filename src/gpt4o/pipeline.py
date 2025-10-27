@@ -18,6 +18,8 @@
 It assembles sweep planning, evaluation, and report-generation steps for
 the GPT-4o workflow used in Grail Simulation experiments."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 import argparse

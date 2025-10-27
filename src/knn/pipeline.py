@@ -91,6 +91,10 @@ __all__ = [
     "_build_sweep_configs",
 ]
 
+def _execute_opinion_sweep_task(task: "OpinionSweepTask") -> "OpinionSweepOutcome":
+    """Execute a single opinion sweep task via the batch helper."""
+    return _execute_opinion_sweep_tasks([task])[0]
+
 def main(argv: Sequence[str] | None = None) -> None:
     """
     Coordinate sweeps, evaluations, and report generation for the KNN pipeline.
@@ -277,8 +281,8 @@ def main(argv: Sequence[str] | None = None) -> None:
                     task.metrics_path,
                 )
                 return
-            # Run the single opinion sweep via the batch helper for consistent handling.
-            outcome = _execute_opinion_sweep_tasks([task])[0]
+            # Run the single opinion sweep via the single-task adapter for consistent handling.
+            outcome = _execute_opinion_sweep_task(task)
             LOGGER.info(
                 "[OPINION] Completed sweep task %d (%s | %s | %s). Metrics stored at %s.",
                 outcome.order_index,

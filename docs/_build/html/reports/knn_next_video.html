@@ -287,16 +287,16 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>TFIDF</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>0.326</p></td>
-<td class="text-right"><p>548</p></td>
-<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>0.516</p></td>
+<td class="text-right"><p>+0.071</p></td>
+<td class="text-right"><p>0.287</p></td>
+<td class="text-right"><p>1,219</p></td>
+<td class="text-right"><p>2</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Best-performing feature space: <strong>TFIDF</strong> with weighted accuracy 0.717 across 548 eligible slates (1 studies).</p>
+<p>Best-performing feature space: <strong>TFIDF</strong> with weighted accuracy 0.516 across 1,219 eligible slates (2 studies).</p>
 </section>
 <section id="tf-idf-feature-space">
 <h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
@@ -325,6 +325,16 @@
 <td class="text-right"><p>548</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>0.352</p></td>
+<td><p>[0.316, 0.385]</p></td>
+<td class="text-right"><p>-0.016</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -335,11 +345,15 @@
 <h3>Study 1 – Gun Control (MTurk) (TFIDF)<a class="headerlink" href="#study-1-gun-control-mturk-tfidf" title="Link to this heading">¶</a></h3>
 <p><img alt="Accuracy curve" src="../_images/study1.png" /></p>
 </section>
+<section id="study-2-minimum-wage-mturk-tfidf">
+<h3>Study 2 – Minimum Wage (MTurk) (TFIDF)<a class="headerlink" href="#study-2-minimum-wage-mturk-tfidf" title="Link to this heading">¶</a></h3>
+<p><img alt="Accuracy curve" src="../_images/study2.png" /></p>
+</section>
 </section>
 <section id="observations">
 <h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.717 (baseline 0.540, Δ +0.177, k=3, eligible 548); averages: mean Δ +0.177, mean random 0.326.</p></li>
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.717 (baseline 0.540, Δ +0.177, k=3, eligible 548); Study 2 – Minimum Wage (MTurk): 0.352 (baseline 0.368, Δ -0.016, k=3, eligible 671); averages: mean Δ +0.080, mean random 0.291.</p></li>
 <li><p>Random values approximate the accuracy from uniformly guessing across the slate.</p></li>
 </ul>
 <p>Leave-one-study-out metrics were unavailable when this report was generated.</p>
@@ -406,6 +420,7 @@
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#accuracy-curves">Accuracy Curves</a><ul>
 <li><a class="reference internal" href="#study-1-gun-control-mturk-tfidf">Study 1 – Gun Control (MTurk) (TFIDF)</a></li>
+<li><a class="reference internal" href="#study-2-minimum-wage-mturk-tfidf">Study 2 – Minimum Wage (MTurk) (TFIDF)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#observations">Observations</a></li>

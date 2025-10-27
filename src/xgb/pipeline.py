@@ -27,11 +27,10 @@ from typing import Dict, List, Mapping, Sequence
 
 from common.pipeline_stage import (
     DryRunSummary,
+    build_sweep_partition,
     SweepPartitionExecutors,
-    SweepPartitionSpec,
-    execute_partitions_for_cli,
+    dispatch_cli_partitions,
     log_dry_run_summary,
-    make_sweep_partition,
     prepare_sweep_execution as _prepare_sweep_execution,
 )
 from common.prompt_docs import merge_default_extra_fields
@@ -289,41 +288,40 @@ def main(argv: Sequence[str] | None = None) -> None:
                 return f"{outcome.study.key}:{outcome.study.issue}:{outcome.config.label()}"
 
             partitions.append(
-                make_sweep_partition(
-                    SweepPartitionSpec(
-                        label="next-video",
-                        pending=planned_slate_tasks,
-                        cached=cached_slate_planned,
-                        reuse_existing=reuse_sweeps,
-                        executors=SweepPartitionExecutors(
-                            execute_task=lambda task: _execute_sweep_tasks([task], jobs=1)[0],
-                            describe_pending=_format_sweep_task_descriptor,
-                            describe_cached=describe_cached,
-                        ),
-                    )
+                build_sweep_partition(
+                    label="next-video",
+                    pending=planned_slate_tasks,
+                    cached=cached_slate_planned,
+                    reuse_existing=reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=lambda task: _execute_sweep_tasks([task], jobs=1)[0],
+                        describe_pending=_format_sweep_task_descriptor,
+                        describe_cached=describe_cached,
+                    ),
                 )
             )
         if run_opinion:
             def describe_opinion_cached(outcome):
                 return f"{outcome.study.key}:{outcome.study.issue}:{outcome.config.label()}"
 
+            def execute_opinion_task(task):
+                return _execute_opinion_sweep_tasks([task], jobs=1)[0]
+
             partitions.append(
-                make_sweep_partition(
-                    SweepPartitionSpec(
-                        label="opinion",
-                        pending=planned_opinion_tasks,
-                        cached=cached_opinion_planned,
-                        reuse_existing=reuse_sweeps,
-                        executors=SweepPartitionExecutors(
-                            execute_task=lambda task: _execute_opinion_sweep_tasks([task], jobs=1)[0],
-                            describe_pending=_format_opinion_sweep_task_descriptor,
-                            describe_cached=describe_opinion_cached,
-                        ),
-                    )
+                build_sweep_partition(
+                    label="opinion",
+                    pending=planned_opinion_tasks,
+                    cached=cached_opinion_planned,
+                    reuse_existing=reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=execute_opinion_task,
+                        describe_pending=_format_opinion_sweep_task_descriptor,
+                        describe_cached=describe_opinion_cached,
+                    ),
                 )
             )
 
-        execute_partitions_for_cli(
+        dispatch_cli_partitions(
             partitions,
             args=args,
             logger=LOGGER,

@@ -27,10 +27,10 @@ import numpy as np
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample,
-    OpinionExampleInputs,
     OpinionSpec,
     float_or_none,
     make_opinion_example,
+    make_opinion_inputs,
 )
 from common.opinion_metrics import compute_opinion_metrics
 
@@ -172,7 +172,7 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        inputs = OpinionExampleInputs(
+        inputs = make_opinion_inputs(
             participant_id=participant_id,
             document=document,
             before=before,

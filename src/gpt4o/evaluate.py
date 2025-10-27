@@ -16,8 +16,9 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Tuple
 
 from common.eval_utils import ensure_hf_cache
 from common.hf_datasets import get_dataset_loaders, require_dataset_support
@@ -25,6 +26,7 @@ from common.slate_eval import (
     EvaluationAccumulator,
     EvaluationFilters,
     Observation,
+    SlateMetricsRequest,
     bucket_from_options,
     bucket_from_position,
 )
@@ -39,7 +41,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only imports
 else:  # pragma: no cover - runtime fallback for type hints
     Namespace = object  # type: ignore[misc]
 
-DownloadConfig, load_dataset, load_from_disk = get_dataset_loaders()
+DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = get_dataset_loaders()
 
 
 def _parse_index_from_output(raw: str) -> int | None:
@@ -82,75 +84,129 @@ def _ensure_output_dir(output_dir: Path, overwrite: bool) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_eval(args: Namespace) -> None:
-    """
-    Evaluate GPT-4o on the configured dataset.
+@dataclass(frozen=True)
+class ExampleLabels:
+    """Normalised issue/study labels used for filtering and reporting."""
 
-    :param args: Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)
-    :type args: Namespace
-    """
+    issue_label: str
+    issue_key: str
+    study_label: str
+    study_key: str
 
-    dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
-    logging.info("Loading dataset %s", dataset_name)
-    out_dir = Path(args.out_dir)
-    _ensure_output_dir(out_dir, args.overwrite)
-    out_jsonl = out_dir / "predictions.jsonl"
-    metrics_json = out_dir / "metrics.json"
 
-    ensure_hf_cache(args.cache_dir)
+class EvaluationRunner:
+    """Stateful helper that orchestrates GPT-4o evaluation."""
 
-    dataset_path = Path(dataset_name)
-    if dataset_path.exists():
-        require_dataset_support(needs_local=True)
-        assert load_from_disk is not None  # narrow Optional for type checkers
-    else:
-        require_dataset_support()
-        assert load_dataset is not None and DownloadConfig is not None
+    def __init__(self, args: Namespace) -> None:
+        self.args = args
+        self.dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
+        logging.info("Loading dataset %s", self.dataset_name)
 
-    use_streaming = False
-    dataset = None
-    if dataset_path.exists():
-        logging.info("Detected local dataset at %s", dataset_path)
-        dataset = load_from_disk(str(dataset_path))  # type: ignore[arg-type]
-    else:
-        download_config = DownloadConfig(resume_download=True, max_retries=2)  # type: ignore[misc]
-        try:
-            dataset = load_dataset(
-                dataset_name,
-                cache_dir=args.cache_dir,
-                download_config=download_config,
-            )
-        except Exception as exc:
-            message = str(exc)
-            if "Not enough disk space" in message or "Insufficient space" in message:
-                logging.warning("Low disk space detected; falling back to streaming mode.")
-                use_streaming = True
-            else:
-                raise
+        self.out_dir = Path(args.out_dir)
+        _ensure_output_dir(self.out_dir, args.overwrite)
+        self.out_jsonl = self.out_dir / "predictions.jsonl"
+        self.metrics_json = self.out_dir / "metrics.json"
 
-    assert load_dataset is not None  # for optional dependency imports
-    if use_streaming:
+        ensure_hf_cache(args.cache_dir)
+
+        issues_raw = str(getattr(args, "issues", "") or "")
+        studies_raw = str(getattr(args, "studies", "") or "")
+        self.requested_issues, self.issues_filter = self._parse_filter(issues_raw)
+        self.requested_studies, self.studies_filter = self._parse_filter(studies_raw)
+
+        self.eval_max = int(getattr(args, "eval_max", 0) or 0)
+        self.n_eval_target = self.eval_max or None
+        self.eval_split = EVAL_SPLIT
+        self.use_streaming = False
+
+    @staticmethod
+    def _parse_filter(raw: str) -> Tuple[list[str], set[str]]:
+        tokens = [token.strip() for token in raw.split(",") if token.strip()]
+        lowered = {token.lower() for token in tokens if token}
+        if "all" in lowered:
+            lowered.clear()
+        return tokens, lowered
+
+    def _load_dataset_iter(self) -> Iterable[dict[str, object]]:
+        dataset_path = Path(self.dataset_name)
+        dataset = None
+
+        if dataset_path.exists():
+            require_dataset_support(needs_local=True)
+            assert LOAD_FROM_DISK is not None  # narrow Optional for type checkers
+            logging.info("Detected local dataset at %s", dataset_path)
+            dataset = LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
+        else:
+            require_dataset_support()
+            assert LOAD_DATASET is not None and DOWNLOAD_CONFIG_CLS is not None
+            download_config = DOWNLOAD_CONFIG_CLS(
+                resume_download=True,
+                max_retries=2,
+            )  # type: ignore[misc]
+            try:
+                dataset = LOAD_DATASET(
+                    self.dataset_name,
+                    cache_dir=self.args.cache_dir,
+                    download_config=download_config,
+                )
+            except Exception as exc:
+                message = str(exc)
+                if "Not enough disk space" in message or "Insufficient space" in message:
+                    logging.warning(
+                        "Low disk space detected; falling back to streaming mode."
+                    )
+                    self.use_streaming = True
+                else:
+                    raise
+
+        assert LOAD_DATASET is not None
+
+        if self.use_streaming:
+            return self._load_streaming_split()
+        return self._load_materialised_split(dataset)
+
+    def _load_streaming_split(self) -> Iterable[dict[str, object]]:
         eval_split = EVAL_SPLIT
         try:
-            data_iter = load_dataset(dataset_name, split=eval_split, streaming=True)
-        except Exception as exc:
+            data_iter = LOAD_DATASET(  # type: ignore[misc]
+                self.dataset_name,
+                split=eval_split,
+                streaming=True,
+            )
+        except Exception as exc:  # pragma: no cover - fallback path
             for fallback in ("validation", "eval", "test"):
                 try:
-                    data_iter = load_dataset(dataset_name, split=fallback, streaming=True)
+                    data_iter = LOAD_DATASET(  # type: ignore[misc]
+                        self.dataset_name,
+                        split=fallback,
+                        streaming=True,
+                    )
                     eval_split = fallback
                     break
                 except Exception:
                     continue
             else:
-                raise RuntimeError("Unable to load evaluation split in streaming mode.") from exc
-    else:
+                raise RuntimeError(
+                    "Unable to load evaluation split in streaming mode."
+                ) from exc
+
+        self.eval_split = eval_split
+        if self.eval_max:
+            data_iter = data_iter.take(self.eval_max)
+        return data_iter
+
+    def _load_materialised_split(self, dataset: object) -> Iterable[dict[str, object]]:
+        if dataset is None:
+            raise RuntimeError("Expected dataset object when not streaming.")
+
         eval_split = EVAL_SPLIT
         available_splits: list[str] = []
         if hasattr(dataset, "keys"):
             try:
                 available_splits = list(dataset.keys())  # type: ignore[assignment]
-            except Exception:
+            except Exception:  # pragma: no cover - defensive, matches prior behaviour
                 available_splits = []
+
         if available_splits:
             eval_split = next(
                 (
@@ -164,139 +220,169 @@ def run_eval(args: Namespace) -> None:
         else:
             eval_split = getattr(dataset, "split", None) or EVAL_SPLIT  # type: ignore[attr-defined]
             data_iter = dataset
-        if args.eval_max and hasattr(data_iter, "select"):
-            data_iter = data_iter.select(range(min(args.eval_max, len(data_iter))))
 
-    if use_streaming and args.eval_max:
-        data_iter = data_iter.take(args.eval_max)
+        if self.eval_max and hasattr(data_iter, "select"):
+            limit = min(self.eval_max, len(data_iter))  # type: ignore[arg-type]
+            data_iter = data_iter.select(range(limit))
 
-    raw_issues = str(getattr(args, "issues", "") or "")
-    requested_issues = [token.strip() for token in raw_issues.split(",") if token.strip()]
-    issues_filter = {token.lower() for token in requested_issues if token}
-    if "all" in issues_filter:
-        issues_filter.clear()
+        self.eval_split = eval_split
+        return data_iter
 
-    raw_studies = str(getattr(args, "studies", "") or "")
-    requested_studies = [token.strip() for token in raw_studies.split(",") if token.strip()]
-    studies_filter = {token.lower() for token in requested_studies if token}
-    if "all" in studies_filter:
-        studies_filter.clear()
+    @staticmethod
+    def _prepare_labels(example: dict[str, object]) -> ExampleLabels:
+        issue_raw = str(example.get("issue", "") or "").strip()
+        issue_label = issue_raw if issue_raw else "unspecified"
+        study_raw = str(example.get("participant_study", "") or "").strip()
+        study_label = study_raw if study_raw else "unspecified"
+        return ExampleLabels(
+            issue_label=issue_label,
+            issue_key=issue_label.lower(),
+            study_label=study_label,
+            study_key=study_label.lower(),
+        )
 
-    n_eval_target = args.eval_max if args.eval_max else None
-    accumulator = EvaluationAccumulator()
-    start_time = time.time()
-    seen_rows = 0
+    def _passes_filters(self, labels: ExampleLabels) -> bool:
+        if self.issues_filter and labels.issue_key not in self.issues_filter:
+            return False
+        if self.studies_filter and labels.study_key not in self.studies_filter:
+            return False
+        return True
 
-    with open(out_jsonl, "w", encoding="utf-8") as writer:
-        for example in data_iter:
-            issue_raw = str(example.get("issue", "") or "").strip()
-            issue_label = issue_raw if issue_raw else "unspecified"
-            issue_key = issue_label.lower()
-            if issues_filter and issue_key not in issues_filter:
-                continue
-
-            study_raw = str(example.get("participant_study", "") or "").strip()
-            study_label = study_raw if study_raw else "unspecified"
-            study_key = study_label.lower()
-            if studies_filter and study_key not in studies_filter:
-                continue
-
-            seen_rows += 1
-            record = make_conversation_record(example)
-            messages = record["prompt"]
-            gold_index = int(record.get("gold_index", -1))
-            option_count = int(record.get("n_options", 0))
-            position_index = int(record.get("position_index", -1))
-
-            pos_bucket = bucket_from_position(position_index)
-
-            try:
-                raw_output = ds_call(
-                    messages,
-                    max_tokens=args.max_tokens,
-                    temperature=args.temperature,
-                    deployment=getattr(args, "deployment", None),
-                )
-            except Exception as exc:  # pragma: no cover - best effort logging
-                raw_output = f"(error: {exc})"
-
-            is_formatted = bool(ANS_TAG.search(raw_output))
-            parsed_index = _parse_index_from_output(raw_output)
-            option_bucket = bucket_from_options(option_count)
-
-            eligible = gold_index > 0 and option_count > 0
-            is_correct = (
-                eligible and (parsed_index is not None) and (parsed_index == gold_index)
+    def _invoke_model(self, messages: list[dict[str, object]]) -> str:
+        try:
+            return ds_call(
+                messages,
+                max_tokens=self.args.max_tokens,
+                temperature=self.args.temperature,
+                deployment=getattr(self.args, "deployment", None),
             )
+        except Exception as exc:  # pragma: no cover - best effort logging
+            return f"(error: {exc})"
 
-            accumulator.observe(
-                Observation(
-                    issue_label=issue_label,
-                    study_label=study_label,
-                    position_bucket=pos_bucket,
-                    option_bucket=option_bucket,
-                    option_count=option_count,
-                    gold_index=gold_index,
-                    parsed_index=parsed_index,
-                    is_formatted=is_formatted,
-                    eligible=eligible,
-                    is_correct=is_correct,
-                )
-            )
+    def _evaluate_example(
+        self, example: dict[str, object]
+    ) -> Tuple[Observation, dict[str, object]] | None:
+        labels = self._prepare_labels(example)
+        if not self._passes_filters(labels):
+            return None
 
-            writer.write(
-                json.dumps(
-                    {
-                        "messages": messages,
-                        "gpt_output": raw_output,
-                        "parsed_index": parsed_index,
-                        "gold_index": gold_index,
-                        "n_options": option_count,
-                        "correct": bool(is_correct),
-                        "eligible": bool(eligible),
-                        "issue": issue_label,
-                        "participant_study": study_label,
-                        "position_index": position_index,
-                        "position_bucket": pos_bucket,
-                    },
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
+        record = make_conversation_record(example)
+        messages = record["prompt"]
+        gold_index = int(record.get("gold_index", -1))
+        option_count = int(record.get("n_options", 0))
+        position_index = int(record.get("position_index", -1))
 
-            if seen_rows % 25 == 0:
-                elapsed = time.time() - start_time
-                denom = n_eval_target if n_eval_target is not None else seen_rows
-                logging.info(
-                    "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
-                    seen_rows,
-                    denom,
-                    accumulator.accuracy(),
-                    accumulator.parsed_rate(),
-                    accumulator.format_rate(),
-                    elapsed,
-                )
+        raw_output = self._invoke_model(messages)
+        is_formatted = bool(ANS_TAG.search(raw_output))
+        parsed_index = _parse_index_from_output(raw_output)
+        pos_bucket = bucket_from_position(position_index)
+        option_bucket = bucket_from_options(option_count)
+        eligible = gold_index > 0 and option_count > 0
+        is_correct = (
+            eligible and (parsed_index is not None) and (parsed_index == gold_index)
+        )
 
-    metrics = accumulator.metrics_payload(
-        getattr(args, "deployment", None) or DEPLOYMENT_NAME,
-        dataset_name,
-        eval_split,
-        EvaluationFilters(issues=requested_issues, studies=requested_studies),
-    )
+        observation = Observation(
+            issue_label=labels.issue_label,
+            study_label=labels.study_label,
+            position_bucket=pos_bucket,
+            option_bucket=option_bucket,
+            option_count=option_count,
+            gold_index=gold_index,
+            parsed_index=parsed_index,
+            is_formatted=is_formatted,
+            eligible=eligible,
+            is_correct=is_correct,
+        )
+        payload = {
+            "messages": messages,
+            "gpt_output": raw_output,
+            "parsed_index": parsed_index,
+            "gold_index": gold_index,
+            "n_options": option_count,
+            "correct": bool(is_correct),
+            "eligible": bool(eligible),
+            "issue": labels.issue_label,
+            "participant_study": labels.study_label,
+            "position_index": position_index,
+            "position_bucket": pos_bucket,
+        }
+        return observation, payload
 
-    with open(metrics_json, "w", encoding="utf-8") as handle:
-        json.dump(metrics, handle, ensure_ascii=False, indent=2)
+    def _maybe_log_progress(
+        self, seen_rows: int, start_time: float, accumulator: EvaluationAccumulator
+    ) -> None:
+        if seen_rows == 0 or seen_rows % 25:
+            return
+        elapsed = time.time() - start_time
+        denom = self.n_eval_target if self.n_eval_target is not None else seen_rows
+        logging.info(
+            "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
+            seen_rows,
+            denom,
+            accumulator.accuracy(),
+            accumulator.parsed_rate(),
+            accumulator.format_rate(),
+            elapsed,
+        )
 
-    summary_bits = [
-        f"[DONE] dataset={dataset_name}",
-        f"split={eval_split}",
-        f"n={accumulator.total_seen}",
-        f"eligible={accumulator.eligible_overall}",
-        f"accuracy={accumulator.accuracy():.4f}",
-        f"parsed_ok={accumulator.parsed_rate():.3f}",
-        f"format_rate={accumulator.format_rate():.3f}",
-    ]
-    summary = "  ".join(summary_bits)
-    print(summary)
-    print(f"[WROTE] per-example: {out_jsonl}")
-    print(f"[WROTE] metrics:     {metrics_json}")
+    def _metrics_request(self) -> SlateMetricsRequest:
+        model_name = getattr(self.args, "deployment", None) or DEPLOYMENT_NAME
+        return SlateMetricsRequest(
+            model_name=model_name,
+            dataset_name=self.dataset_name,
+            eval_split=self.eval_split,
+            filters=EvaluationFilters(
+                issues=self.requested_issues,
+                studies=self.requested_studies,
+            ),
+        )
+
+    def _print_summary(self, accumulator: EvaluationAccumulator) -> None:
+        summary_bits = [
+            f"[DONE] dataset={self.dataset_name}",
+            f"split={self.eval_split}",
+            f"n={accumulator.total_seen}",
+            f"eligible={accumulator.eligible_overall}",
+            f"accuracy={accumulator.accuracy():.4f}",
+            f"parsed_ok={accumulator.parsed_rate():.3f}",
+            f"format_rate={accumulator.format_rate():.3f}",
+        ]
+        summary = "  ".join(summary_bits)
+        print(summary)
+        print(f"[WROTE] per-example: {self.out_jsonl}")
+        print(f"[WROTE] metrics:     {self.metrics_json}")
+
+    def run(self) -> None:
+        data_iter = self._load_dataset_iter()
+        accumulator = EvaluationAccumulator()
+        start_time = time.time()
+        seen_rows = 0
+
+        with open(self.out_jsonl, "w", encoding="utf-8") as writer:
+            for example in data_iter:
+                result = self._evaluate_example(example)
+                if result is None:
+                    continue
+                observation, payload = result
+                seen_rows += 1
+                accumulator.observe(observation)
+                writer.write(json.dumps(payload, ensure_ascii=False) + "\n")
+                self._maybe_log_progress(seen_rows, start_time, accumulator)
+
+        metrics = accumulator.metrics_payload(self._metrics_request())
+        with open(self.metrics_json, "w", encoding="utf-8") as handle:
+            json.dump(metrics, handle, ensure_ascii=False, indent=2)
+
+        self._print_summary(accumulator)
+
+
+def run_eval(args: Namespace) -> None:
+    """
+    Evaluate GPT-4o on the configured dataset.
+
+    :param args: Namespace with CLI parameters (temperature, max_tokens, eval_max, etc.)
+    :type args: Namespace
+    """
+
+    EvaluationRunner(args).run()

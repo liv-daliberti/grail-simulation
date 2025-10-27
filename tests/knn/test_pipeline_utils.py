@@ -68,7 +68,11 @@ def test_prepare_task_grid_uses_default_metrics_path(tmp_path: Path) -> None:
         studies=studies,
         reuse_existing=True,
         build_task=build_task,
-        load_cached=lambda task: {"cached_index": task.index} if task.index in cached_indices else None,
+        cache=utils.TaskCacheStrategy(
+            load_cached=lambda task: {"cached_index": task.index}
+            if task.index in cached_indices
+            else None
+        ),
     )
 
     assert [task.index for task in pending] == [1]
@@ -89,7 +93,7 @@ def test_prepare_task_grid_without_metrics_path_raises() -> None:
             studies=("study",),
             reuse_existing=False,
             build_task=lambda index, config, study: MissingMetricsTask(index=index),
-            load_cached=lambda task: None,
+            cache=utils.TaskCacheStrategy(load_cached=lambda task: None),
         )
 
 
@@ -213,11 +217,13 @@ def test_ensure_feature_selections_behaviour(caplog: pytest.LogCaptureFixture) -
         utils.ensure_feature_selections(
             selections={"tfidf": {"study_a": object()}},
             expected_keys=("study_a", "study_b"),
-            allow_incomplete=True,
-            logger=logger,
-            missing_descriptor="sweep selections",
-            empty_descriptor="feature spaces",
-            require_selected=False,
+            options=utils.SelectionValidationOptions(
+                allow_incomplete=True,
+                logger=logger,
+                missing_descriptor="sweep selections",
+                empty_descriptor="feature spaces",
+                require_selected=False,
+            ),
         )
     assert "Missing sweep selections for feature=tfidf: study_b" in caplog.text
 
@@ -225,20 +231,24 @@ def test_ensure_feature_selections_behaviour(caplog: pytest.LogCaptureFixture) -
         utils.ensure_feature_selections(
             selections={"tfidf": {"study_a": object()}},
             expected_keys=("study_a", "study_b"),
-            allow_incomplete=False,
-            logger=logger,
-            missing_descriptor="metrics",
-            empty_descriptor="feature spaces",
-            require_selected=False,
+            options=utils.SelectionValidationOptions(
+                allow_incomplete=False,
+                logger=logger,
+                missing_descriptor="metrics",
+                empty_descriptor="feature spaces",
+                require_selected=False,
+            ),
         )
 
     with pytest.raises(RuntimeError, match="Failed to select a best configuration"):
         utils.ensure_feature_selections(
             selections={},
             expected_keys=("study_a",),
-            allow_incomplete=True,
-            logger=logger,
-            missing_descriptor="metrics",
-            empty_descriptor="runs",
-            require_selected=True,
+            options=utils.SelectionValidationOptions(
+                allow_incomplete=True,
+                logger=logger,
+                missing_descriptor="metrics",
+                empty_descriptor="runs",
+                require_selected=True,
+            ),
         )

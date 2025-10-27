@@ -53,9 +53,10 @@ from .pipeline_data import issue_slug_for_study
 from .pipeline_io import load_metrics
 from .pipeline_utils import (
     ensure_dir,
-    ensure_selection_coverage,
+    ensure_sweep_selection_coverage,
     extract_metric_summary,
     prepare_task_grid,
+    TaskCacheStrategy,
 )
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
@@ -93,9 +94,10 @@ def _word2vec_param_grid(context: PipelineContext) -> Dict[str, Tuple[int, ...]]
             if token.strip()
         )
 
+    # Keep defaults intentionally narrow so the sweep stays well under 100 configs.
     return {
         "sizes": _parse_env("WORD2VEC_SWEEP_SIZES", "128,256"),
-        "windows": _parse_env("WORD2VEC_SWEEP_WINDOWS", "5,10"),
+        "windows": _parse_env("WORD2VEC_SWEEP_WINDOWS", "5"),
         "min_counts": _parse_env("WORD2VEC_SWEEP_MIN_COUNTS", "1"),
         "epochs": _parse_env(
             "WORD2VEC_SWEEP_EPOCHS", str(context.word2vec_epochs)
@@ -119,13 +121,40 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     :rtype: List[SweepConfig]
 
     """
-    default_text_fields = merge_default_extra_fields(())
-    text_options: Tuple[Tuple[str, ...], ...] = (default_text_fields,)
+    base_extra_field_sets: Tuple[Tuple[str, ...], ...] = (
+        (),
+        ("ideo1",),
+        ("ideo2",),
+        ("pol_interest",),
+        ("religpew",),
+        ("freq_youtube",),
+        ("youtube_time",),
+        ("newsint",),
+        ("slate_source",),
+        ("educ",),
+        ("employ",),
+        ("child18",),
+        ("inputstate",),
+        ("income",),
+        ("participant_study",),
+    )
+
+    def _materialise_text_options(limit: int) -> Tuple[Tuple[str, ...], ...]:
+        options: List[Tuple[str, ...]] = []
+        seen: set[Tuple[str, ...]] = set()
+        for extra_fields in base_extra_field_sets[:limit]:
+            merged = merge_default_extra_fields(extra_fields)
+            if merged not in seen:
+                options.append(merged)
+                seen.add(merged)
+        return tuple(options)
+
     feature_spaces = context.feature_spaces
 
     configs: List[SweepConfig] = []
 
     if "tfidf" in feature_spaces:
+        text_options = _materialise_text_options(13)
         for metric in ("cosine", "l2"):
             for fields in text_options:
                 configs.append(
@@ -137,6 +166,7 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
                 )
 
     if "word2vec" in feature_spaces:
+        text_options = _materialise_text_options(7)
         word2vec_metrics = ("cosine", "l2")
         param_grid = _word2vec_param_grid(context)
         for metric in word2vec_metrics:
@@ -162,6 +192,7 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
                     )
 
     if "sentence_transformer" in feature_spaces:
+        text_options = _materialise_text_options(13)
         for metric in ("cosine", "l2"):
             for fields in text_options:
                 configs.append(
@@ -272,7 +303,7 @@ def prepare_sweep_tasks(
             context=context,
             cli_args=(base_cli_tuple, extra_cli_tuple),
         ),
-        load_cached=_load_cached_outcome,
+        cache=TaskCacheStrategy(load_cached=_load_cached_outcome),
     )
 
 
@@ -607,14 +638,11 @@ def select_best_configs(
         if current is None or _is_better(outcome, current.outcome):
             per_feature[outcome.study.key] = StudySelection(study=outcome.study, outcome=outcome)
 
-    ensure_selection_coverage(
+    ensure_sweep_selection_coverage(
         selections,
         studies,
         allow_incomplete=allow_incomplete,
         logger=LOGGER,
-        missing_descriptor="sweep selections",
-        empty_descriptor="feature space",
-        require_selected=True,
     )
     return selections
 

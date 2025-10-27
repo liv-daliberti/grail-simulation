@@ -64,6 +64,8 @@ from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
+    GrpoPipelineComponents,
+    GrpoPipelineContext,
     parse_and_run,
     prepare_model_eval_and_run_grpo,
 )
@@ -642,20 +644,23 @@ def main(
 
         return _evaluate_with_gail
 
-    prepare_model_eval_and_run_grpo(
+    components = GrpoPipelineComponents(
         model_builder=get_model,
+        trainer_cls=GRPOTrainer,
+        reward_funcs=reward_fns,
+        tokenizer=tokenizer,
+        peft_config_fn=get_peft_config,
+        evaluate_fn_factory=_gail_eval_factory,
+    )
+    context = GrpoPipelineContext(
         dataset=dataset,
         script_args=script_args,
         training_args=training_args,
         model_args=model_args,
-        tokenizer=tokenizer,
-        reward_funcs=reward_fns,
-        trainer_cls=GRPOTrainer,
         logger=logger,
         prefix="grail",
-        peft_config_fn=get_peft_config,
-        evaluate_fn_factory=_gail_eval_factory,
     )
+    prepare_model_eval_and_run_grpo(components=components, context=context)
 
 
 if __name__ == "__main__":

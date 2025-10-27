@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 try:  # pragma: no cover - optional dependency
@@ -204,36 +205,79 @@ def resolve_checkpoint(training_args: Any) -> Optional[str]:
     return None
 
 
-def build_grpo_trainer(
-    *,
-    trainer_cls: Any,
-    model: Any,
-    training_args: Any,
-    reward_funcs: Sequence[Any],
-    train_dataset: Any,
-    eval_dataset: Optional[Any],
-    model_args: Any,
-    tokenizer: Any,
-    peft_config_fn: Optional[Callable[[Any], Any]] = None,
-) -> Any:  # pylint: disable=too-many-arguments
-    """Instantiate a GRPO trainer with the shared configuration knobs."""
-
-    peft_config = peft_config_fn(model_args) if peft_config_fn is not None else None
-    return trainer_cls(
-        model=model,
-        args=training_args,
-        reward_funcs=list(reward_funcs),
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        peft_config=peft_config,
-        processing_class=tokenizer,
-    )
-
-
 EvalFn = Callable[[], Mapping[str, Any]]
 EvalFnFactory = Callable[[Any], EvalFn]
 
 
+@dataclass(frozen=True)
+class GrpoTrainerSetup:
+    """Immutable bundle describing how to initialise a GRPO trainer."""
+
+    trainer_cls: Any
+    model: Any
+    training_args: Any
+    reward_funcs: Sequence[Any]
+    model_args: Any
+    tokenizer: Any
+    peft_config_fn: Optional[Callable[[Any], Any]] = None
+
+
+@dataclass(frozen=True)
+class GrpoTrainerDatasets:
+    """Datasets passed to the trainer."""
+
+    train_dataset: Any
+    eval_dataset: Optional[Any]
+
+
+@dataclass(frozen=True)
+class GrpoTrainerDataConfig:
+    """Dataset mapping and split selections used to build trainer datasets."""
+
+    dataset: Mapping[str, Any]
+    train_split: str
+    eval_dataset: Optional[Any]
+
+
+@dataclass(frozen=True)
+class GrpoPipelineComponents:
+    """Core objects required to build and run the GRPO training pipeline."""
+
+    model_builder: Callable[[Any, Any], Any]
+    trainer_cls: Any
+    reward_funcs: Sequence[Any]
+    tokenizer: Any
+    peft_config_fn: Optional[Callable[[Any], Any]] = None
+    evaluate_fn_factory: Optional[EvalFnFactory] = None
+
+
+@dataclass(frozen=True)
+class GrpoPipelineContext:
+    """Execution context shared across pipeline stages."""
+
+    dataset: Mapping[str, Any]
+    script_args: Any
+    training_args: Any
+    model_args: Any
+    logger: Any
+    prefix: str
+
+
+def build_grpo_trainer(*, setup: GrpoTrainerSetup, datasets: GrpoTrainerDatasets) -> Any:
+    """Instantiate a GRPO trainer with the shared configuration knobs."""
+
+    peft_config = (
+        setup.peft_config_fn(setup.model_args) if setup.peft_config_fn is not None else None
+    )
+    return setup.trainer_cls(
+        model=setup.model,
+        args=setup.training_args,
+        reward_funcs=list(setup.reward_funcs),
+        train_dataset=datasets.train_dataset,
+        eval_dataset=datasets.eval_dataset,
+        peft_config=peft_config,
+        processing_class=setup.tokenizer,
+    )
 def run_trainer_loop(
     trainer: Any,
     training_args: Any,
@@ -299,33 +343,17 @@ def run_trainer_with_script_args(
 
 def configure_and_run_grpo_trainer(
     *,
-    trainer_cls: Any,
-    model: Any,
-    training_args: Any,
-    reward_funcs: Sequence[Any],
-    dataset: Mapping[str, Any],
-    train_split: str,
-    eval_dataset: Optional[Any],
-    model_args: Any,
-    tokenizer: Any,
+    setup: GrpoTrainerSetup,
+    data_config: GrpoTrainerDataConfig,
     script_args: Any,
-    peft_config_fn: Optional[Callable[[Any], Any]] = None,
     evaluate_fn_factory: Optional[EvalFnFactory] = None,
-) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:  # pylint: disable=too-many-arguments
+) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:
     """
     Build a GRPO trainer using shared defaults and execute the training loop.
 
-    :param trainer_cls: Trainer class (typically ``GRPOTrainer``) to instantiate.
-    :param model: Model instance used for training.
-    :param training_args: Configuration namespace with training hyper-parameters.
-    :param reward_funcs: Sequence of reward callables supplied to the trainer.
-    :param dataset: Dataset mapping containing the configured splits.
-    :param train_split: Key selecting the training split within ``dataset``.
-    :param eval_dataset: Optional evaluation dataset for validation runs.
-    :param model_args: Namespace containing model configuration parameters.
-    :param tokenizer: Tokenizer instance (passed as ``processing_class``).
+    :param setup: Bundle describing how to initialise the trainer.
+    :param data_config: Dataset mapping and split information.
     :param script_args: CLI arguments namespace for logging and metadata.
-    :param peft_config_fn: Optional callable returning the PEFT configuration.
     :param evaluate_fn_factory:
         Optional factory returning an evaluation function when provided the
         constructed trainer. Enables call-sites to inject custom evaluation
@@ -334,90 +362,75 @@ def configure_and_run_grpo_trainer(
     """
 
     trainer = build_grpo_trainer(
-        trainer_cls=trainer_cls,
-        model=model,
-        training_args=training_args,
-        reward_funcs=reward_funcs,
-        train_dataset=dataset[train_split],
-        eval_dataset=eval_dataset,
-        model_args=model_args,
-        tokenizer=tokenizer,
-        peft_config_fn=peft_config_fn,
+        setup=setup,
+        datasets=GrpoTrainerDatasets(
+            train_dataset=data_config.dataset[data_config.train_split],
+            eval_dataset=data_config.eval_dataset,
+        ),
     )
     evaluate_fn = (
         evaluate_fn_factory(trainer) if evaluate_fn_factory is not None else None
     )
     return trainer, run_trainer_with_script_args(
         trainer,
-        training_args,
+        setup.training_args,
         script_args,
-        eval_dataset,
+        data_config.eval_dataset,
         evaluate_fn=evaluate_fn,
     )
 
 
 def prepare_model_eval_and_run_grpo(
     *,
-    model_builder: Callable[[Any, Any], Any],
-    dataset: Mapping[str, Any],
-    script_args: Any,
-    training_args: Any,
-    model_args: Any,
-    tokenizer: Any,
-    reward_funcs: Sequence[Any],
-    trainer_cls: Any,
-    logger: Any,
-    prefix: str,
-    peft_config_fn: Optional[Callable[[Any], Any]] = None,
-    evaluate_fn_factory: Optional[EvalFnFactory] = None,
-) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:  # pylint: disable=too-many-arguments
+    components: GrpoPipelineComponents,
+    context: GrpoPipelineContext,
+) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:
     """
     Build the GRPO model, prepare evaluation state, and run the shared trainer loop.
 
-    :param model_builder: Callable returning a model given ``model_args`` and ``training_args``.
-    :param dataset: Dataset mapping containing the configured splits.
-    :param script_args: CLI arguments namespace for logging and metadata.
-    :param training_args: Configuration namespace with training hyper-parameters.
-    :param model_args: Namespace containing model configuration parameters.
-    :param tokenizer: Tokenizer instance (passed as ``processing_class``).
-    :param reward_funcs: Sequence of reward callables supplied to the trainer.
-    :param trainer_cls: Trainer class (typically ``GRPOTrainer``) to instantiate.
-    :param logger: Logger used for evaluation warnings.
-    :param prefix: Prefix used when logging evaluation messages.
-    :param peft_config_fn: Optional callable returning the PEFT configuration.
-    :param evaluate_fn_factory: Optional factory returning an evaluation wrapper.
+    :param components: Core callables and objects required to construct the trainer.
+    :param context: Dataset, configuration, and logging context.
     :returns: Tuple of the trainer and the result from ``run_trainer_with_script_args``.
     """
 
-    model = model_builder(model_args, training_args)
+    model = components.model_builder(context.model_args, context.training_args)
     if hasattr(model, "generation_config"):
         model.generation_config.return_dict_in_generate = True
     if hasattr(model, "config"):
         model.config.return_dict_in_generate = True
 
-    train_split = getattr(script_args, "dataset_train_split", "train")
+    train_split = getattr(context.script_args, "dataset_train_split", "train")
     eval_dataset = prepare_eval_dataset(
-        dataset,
-        script_args,
-        training_args,
-        logger=logger,
-        prefix=prefix,
+        context.dataset,
+        context.script_args,
+        context.training_args,
+        logger=context.logger,
+        prefix=context.prefix,
     )
-    configure_eval(training_args, eval_dataset, logger=logger, prefix=prefix)
+    configure_eval(
+        context.training_args,
+        eval_dataset,
+        logger=context.logger,
+        prefix=context.prefix,
+    )
 
     return configure_and_run_grpo_trainer(
-        trainer_cls=trainer_cls,
-        model=model,
-        training_args=training_args,
-        reward_funcs=reward_funcs,
-        dataset=dataset,
-        train_split=train_split,
-        eval_dataset=eval_dataset,
-        model_args=model_args,
-        tokenizer=tokenizer,
-        script_args=script_args,
-        peft_config_fn=peft_config_fn,
-        evaluate_fn_factory=evaluate_fn_factory,
+        setup=GrpoTrainerSetup(
+            trainer_cls=components.trainer_cls,
+            model=model,
+            training_args=context.training_args,
+            reward_funcs=components.reward_funcs,
+            model_args=context.model_args,
+            tokenizer=components.tokenizer,
+            peft_config_fn=components.peft_config_fn,
+        ),
+        data_config=GrpoTrainerDataConfig(
+            dataset=context.dataset,
+            train_split=train_split,
+            eval_dataset=eval_dataset,
+        ),
+        script_args=context.script_args,
+        evaluate_fn_factory=components.evaluate_fn_factory,
     )
 
 

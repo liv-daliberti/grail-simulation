@@ -68,6 +68,14 @@ class SweepPartitionPaths(Generic[TaskT, OutcomeT]):
 
 
 @dataclass(frozen=True)
+class SweepPartitionLookups(Generic[TaskT, OutcomeT]):
+    """Optional lookup providers customised by callers."""
+
+    indexers: SweepPartitionIndexers[TaskT, OutcomeT] | None = None
+    paths: SweepPartitionPaths[TaskT, OutcomeT] | None = None
+
+
+@dataclass(frozen=True)
 class SweepPartitionSpec(Generic[TaskT, OutcomeT]):
     """Configuration bundle describing a sweep partition."""
 
@@ -77,8 +85,7 @@ class SweepPartitionSpec(Generic[TaskT, OutcomeT]):
     reuse_existing: bool
     executors: SweepPartitionExecutors[TaskT, OutcomeT]
     prefix: str = ""
-    indexers: SweepPartitionIndexers[TaskT, OutcomeT] | None = None
-    paths: SweepPartitionPaths[TaskT, OutcomeT] | None = None
+    lookups: SweepPartitionLookups[TaskT, OutcomeT] | None = None
 
 
 @dataclass(frozen=True)
@@ -140,8 +147,9 @@ def make_sweep_partition(
 ) -> SweepPartition[TaskT, OutcomeT]:
     """Normalise sweep task partitions for distributed execution."""
 
-    indexers = spec.indexers or _DEFAULT_INDEXERS
-    paths = spec.paths or _DEFAULT_PATHS
+    lookups = spec.lookups or SweepPartitionLookups()
+    indexers = lookups.indexers or _DEFAULT_INDEXERS
+    paths = lookups.paths or _DEFAULT_PATHS
     pending_by_index = {indexers.pending(task): task for task in spec.pending}
     cached_by_index: Dict[int, OutcomeT] = {}
     for outcome in spec.cached:
@@ -164,6 +172,37 @@ def make_sweep_partition(
         executors=spec.executors,
         paths=paths,
     )
+
+
+def build_sweep_partition(  # pylint: disable=too-many-arguments
+    *,
+    label: str,
+    pending: Sequence[TaskT],
+    cached: Sequence[OutcomeT],
+    reuse_existing: bool,
+    executors: SweepPartitionExecutors[TaskT, OutcomeT],
+    prefix: str = "",
+    lookups: SweepPartitionLookups[TaskT, OutcomeT] | None = None,
+) -> SweepPartition[TaskT, OutcomeT]:
+    """
+    Convenience wrapper around :func:`make_sweep_partition` for common pipelines.
+
+    Pipelines frequently construct ``SweepPartitionSpec`` instances with only the
+    standard arguments. Wrapping the boilerplate helps avoid duplicate code in
+    downstream packages while keeping the explicit spec-based API available for
+    advanced use-cases.
+    """
+
+    spec = SweepPartitionSpec(
+        label=label,
+        pending=pending,
+        cached=cached,
+        reuse_existing=reuse_existing,
+        executors=executors,
+        prefix=prefix,
+        lookups=lookups,
+    )
+    return make_sweep_partition(spec)
 
 
 def _run_partition_task(
@@ -361,4 +400,26 @@ def execute_partitions_for_cli(  # pragma: no cover - thin convenience wrapper
             cli_task_count=getattr(args, "sweep_task_count", None),
             prepare=prepare,
         ),
+    )
+
+
+def dispatch_cli_partitions(
+    partitions: Sequence[SweepPartition[TaskT, OutcomeT]],
+    *,
+    args: Namespace,
+    logger,
+    prepare: Callable[..., Optional[int]] = prepare_sweep_execution,
+) -> None:
+    """
+    Execute sweep partitions using CLI arguments without returning a task id.
+
+    Dedicated helper used by pipelines that only need side effects from
+    :func:`execute_partitions_for_cli`, reducing duplicate call scaffolding.
+    """
+
+    execute_partitions_for_cli(
+        partitions,
+        args=args,
+        logger=logger,
+        prepare=prepare,
     )

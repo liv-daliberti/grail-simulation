@@ -36,10 +36,10 @@ from common.embeddings import SentenceTransformerConfig, SentenceTransformerEnco
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample as BaseOpinionExample,
-    OpinionExampleInputs,
     OpinionSpec,
     float_or_none,
     make_opinion_example,
+    make_opinion_inputs,
 )
 from common.opinion_metrics import compute_opinion_metrics
 from common.prompt_docs import merge_default_extra_fields
@@ -105,6 +105,27 @@ class OpinionIndex:  # pylint: disable=too-many-instance-attributes
     targets_before: np.ndarray
     participant_keys: List[Tuple[str, str]]
     neighbors: NearestNeighbors
+
+
+@dataclass(frozen=True)
+class OpinionEmbeddingConfigs:
+    """Optional embedding builders available during evaluation."""
+
+    word2vec: Optional[Word2VecConfig]
+    sentence_transformer: Optional[SentenceTransformerConfig]
+
+
+@dataclass(frozen=True)
+class OpinionEvaluationContext:
+    """Shared configuration for evaluating a single opinion study."""
+
+    args: Any
+    dataset: Mapping[str, Sequence[Any]]
+    extra_fields: Sequence[str]
+    k_values: Sequence[int]
+    feature_space: str
+    embedding_configs: OpinionEmbeddingConfigs
+    outputs_root: Path
 
 def find_spec(key: str) -> OpinionSpec:
     """
@@ -181,7 +202,7 @@ def collect_examples(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         session_id = example.get("session_id")
-        inputs = OpinionExampleInputs(
+        inputs = make_opinion_inputs(
             participant_id=participant_id,
             document=document,
             before=before,
@@ -1266,25 +1287,18 @@ def _select_best_k(
 
 def _evaluate_opinion_study(
     *,
-    args: Any,
-    dataset: Mapping[str, Sequence[Any]],
     spec: OpinionSpec,
-    extra_fields: Sequence[str],
-    k_values: Sequence[int],
-    feature_space: str,
-    word2vec_config: Optional[Word2VecConfig],
-    sentence_config: Optional[SentenceTransformerConfig],
-    outputs_root: Path,
-) -> None:  # pylint: disable=too-many-arguments
+    context: OpinionEvaluationContext,
+) -> None:
     """Run the full evaluation pipeline for a single opinion study."""
 
     LOGGER.info("[OPINION] Study=%s (%s)", spec.key, spec.label)
     train_examples = collect_examples(
-        dataset[TRAIN_SPLIT],
+        context.dataset[TRAIN_SPLIT],
         spec=spec,
-        extra_fields=extra_fields,
-        max_examples=int(getattr(args, "knn_max_train", 0) or 0),
-        seed=int(getattr(args, "knn_seed", 42)),
+        extra_fields=context.extra_fields,
+        max_examples=int(getattr(context.args, "knn_max_train", 0) or 0),
+        seed=int(getattr(context.args, "knn_seed", 42)),
     )
     if not train_examples:
         LOGGER.warning("[OPINION] No training examples found for study=%s", spec.key)
@@ -1292,27 +1306,27 @@ def _evaluate_opinion_study(
 
     index = build_index(
         examples=train_examples,
-        feature_space=feature_space,
+        feature_space=context.feature_space,
         spec=spec,
-        seed=int(getattr(args, "knn_seed", 42)),
-        metric=str(getattr(args, "knn_metric", "cosine")),
-        word2vec_config=word2vec_config,
-        sentence_config=sentence_config,
+        seed=int(getattr(context.args, "knn_seed", 42)),
+        metric=str(getattr(context.args, "knn_metric", "cosine")),
+        word2vec_config=context.embedding_configs.word2vec,
+        sentence_config=context.embedding_configs.sentence_transformer,
     )
 
     eval_examples = collect_examples(
-        dataset[EVAL_SPLIT],
+        context.dataset[EVAL_SPLIT],
         spec=spec,
-        extra_fields=extra_fields,
-        max_examples=int(getattr(args, "eval_max", 0) or 0),
-        seed=int(getattr(args, "knn_seed", 42)),
+        extra_fields=context.extra_fields,
+        max_examples=int(getattr(context.args, "eval_max", 0) or 0),
+        seed=int(getattr(context.args, "knn_seed", 42)),
     )
     if not eval_examples:
         LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)
         return
 
-    predictions = _evaluation_predictions(index, eval_examples, k_values)
-    best_k = _select_best_k(predictions.metrics_by_k, k_values)
+    predictions = _evaluation_predictions(index, eval_examples, context.k_values)
+    best_k = _select_best_k(predictions.metrics_by_k, context.k_values)
     output_payload = _OutputPayload(
         rows=predictions.rows,
         metrics_by_k=predictions.metrics_by_k,
@@ -1321,15 +1335,15 @@ def _evaluate_opinion_study(
         curve_metrics=_curve_metrics_bundle(
             predictions.metrics_by_k,
             eval_examples,
-            _training_curve_metrics(index, train_examples, k_values),
+            _training_curve_metrics(index, train_examples, context.k_values),
         ),
     )
     _write_outputs(
         context=_OutputContext(
-            args=args,
+            args=context.args,
             spec=spec,
             index=index,
-            outputs_root=outputs_root,
+            outputs_root=context.outputs_root,
         ),
         payload=output_payload,
     )
@@ -1372,17 +1386,25 @@ def run_opinion_eval(args) -> None:
     outputs_root = Path(args.out_dir) / "opinion" / feature_space
     outputs_root.mkdir(parents=True, exist_ok=True)
 
+    embedding_configs = OpinionEmbeddingConfigs(
+        word2vec=word2vec_cfg,
+        sentence_transformer=sentence_cfg,
+    )
+
+    evaluation_context = OpinionEvaluationContext(
+        args=args,
+        dataset=dataset,
+        extra_fields=extra_fields,
+        k_values=k_values,
+        feature_space=feature_space,
+        embedding_configs=embedding_configs,
+        outputs_root=outputs_root,
+    )
+
     for spec in specs:
         _evaluate_opinion_study(
-            args=args,
-            dataset=dataset,
             spec=spec,
-            extra_fields=extra_fields,
-            k_values=k_values,
-            feature_space=feature_space,
-            word2vec_config=word2vec_cfg,
-            sentence_config=sentence_cfg,
-            outputs_root=outputs_root,
+            context=evaluation_context,
         )
 
 __all__ = ["run_opinion_eval", "OpinionSpec", "DEFAULT_SPECS"]

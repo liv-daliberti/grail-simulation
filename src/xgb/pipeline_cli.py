@@ -141,37 +141,37 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     add_jobs_argument(parser)
     parser.add_argument(
         "--learning-rate-grid",
-        default="0.03,0.05,0.07,0.1,0.15,0.2",
+        default="0.03,0.05,0.1",
         help="Comma-separated learning rates explored during sweeps.",
     )
     parser.add_argument(
         "--max-depth-grid",
-        default="3,4,6,8",
+        default="3,4",
         help="Comma-separated integer depths explored during sweeps.",
     )
     parser.add_argument(
         "--n-estimators-grid",
-        default="150,250,350,450",
+        default="200,300,400",
         help="Comma-separated boosting round counts explored during sweeps.",
     )
     parser.add_argument(
         "--subsample-grid",
-        default="0.7,0.8,0.9,1.0",
+        default="0.75,0.9",
         help="Comma-separated subsample ratios explored during sweeps.",
     )
     parser.add_argument(
         "--colsample-grid",
-        default="0.6,0.8,1.0",
+        default="0.8",
         help="Comma-separated column subsample ratios explored during sweeps.",
     )
     parser.add_argument(
         "--reg-lambda-grid",
-        default="0.5,1.0,1.5",
+        default="0.5,1.0",
         help="Comma-separated L2 regularisation weights explored during sweeps.",
     )
     parser.add_argument(
         "--reg-alpha-grid",
-        default="0.0,0.1,0.5,1.0",
+        default="0.0",
         help="Comma-separated L1 regularisation weights explored during sweeps.",
     )
     parser.add_argument(

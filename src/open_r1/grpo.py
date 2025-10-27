@@ -46,6 +46,8 @@ from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
     parse_and_run,
+    GrpoPipelineComponents,
+    GrpoPipelineContext,
     prepare_model_eval_and_run_grpo,
 )
 from open_r1.rewards import get_reward_funcs
@@ -189,22 +191,22 @@ def main(
         training_args.reward_weights,
     )
 
-    common_kwargs = {
-        "dataset": dataset,
-        "script_args": script_args,
-        "training_args": training_args,
-        "model_args": model_args,
-        "tokenizer": tokenizer,
-    }
-    prepare_model_eval_and_run_grpo(
+    components = GrpoPipelineComponents(
         model_builder=get_model,
-        reward_funcs=reward_fns,
         trainer_cls=GRPOTrainer,
+        reward_funcs=reward_fns,
+        tokenizer=tokenizer,
+        peft_config_fn=get_peft_config,
+    )
+    context = GrpoPipelineContext(
+        dataset=dataset,
+        script_args=script_args,
+        training_args=training_args,
+        model_args=model_args,
         logger=logger,
         prefix="grpo",
-        peft_config_fn=get_peft_config,
-        **common_kwargs,
     )
+    prepare_model_eval_and_run_grpo(components=components, context=context)
 
 
 if __name__ == "__main__":

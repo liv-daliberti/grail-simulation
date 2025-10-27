@@ -72,6 +72,29 @@ class OpinionExampleInputs:
     after: float
 
 
+def make_opinion_inputs(
+    *,
+    participant_id: str,
+    document: str,
+    before: float,
+    after: float,
+) -> OpinionExampleInputs:
+    """
+    Return a normalised :class:`OpinionExampleInputs` bundle.
+
+    Creating the dataclass via a helper keeps pipeline implementations concise
+    while ensuring duplicate code detected by pylint's similarity checker is
+    consolidated in one location.
+    """
+
+    return OpinionExampleInputs(
+        participant_id=participant_id,
+        document=document,
+        before=before,
+        after=after,
+    )
+
+
 ExampleT = TypeVar("ExampleT")
 
 
@@ -136,8 +159,8 @@ def make_opinion_example(
     """
     Convenience wrapper around :func:`build_opinion_example`.
 
-    Accepts positional arguments for the core fields so callers can invoke it
-    without repeating keyword boilerplate across multiple pipelines.
+    Provides a lightweight helper so pipelines can override the output factory
+    while reusing the standardised opinion inputs bundle.
     """
 
     return build_opinion_example(

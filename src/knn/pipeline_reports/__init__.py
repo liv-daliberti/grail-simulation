@@ -29,7 +29,7 @@ from .hyperparameter import (
     _build_hyperparameter_report,
 )
 from .next_video import NextVideoReportInputs, _build_next_video_report
-from .opinion import _build_opinion_report
+from .opinion import OpinionReportOptions, _build_opinion_report
 from .features import build_feature_report
 from .shared import parse_k_sweep
 
@@ -105,18 +105,22 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
             output_path=reports_root / "opinion" / "README.md",
             metrics=report_bundle.opinion_metrics,
             studies=report_bundle.studies,
-            allow_incomplete=allow_incomplete,
+            options=OpinionReportOptions(
+                allow_incomplete=allow_incomplete,
+            ),
         )
     if report_bundle.include_opinion_from_next:
         _build_opinion_report(
             output_path=reports_root / "opinion_from_next" / "README.md",
             metrics=report_bundle.opinion_from_next_metrics,
             studies=report_bundle.studies,
-            allow_incomplete=allow_incomplete,
-            title="# KNN Opinion Shift Study (Next-Video Config)",
-            description_lines=[
-                "This section reuses the selected next-video recommendation configuration "
-                "to estimate post-study opinion change.",
-            ],
+            options=OpinionReportOptions(
+                allow_incomplete=allow_incomplete,
+                title="# KNN Opinion Shift Study (Next-Video Config)",
+                description_lines=[
+                    "This section reuses the selected next-video recommendation configuration "
+                    "to estimate post-study opinion change.",
+                ],
+            ),
         )
     build_feature_report(repo_root, report_bundle)

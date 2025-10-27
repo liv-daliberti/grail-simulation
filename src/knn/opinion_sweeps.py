@@ -36,9 +36,10 @@ from .pipeline_context import (
 )
 from .pipeline_utils import (
     ensure_dir,
-    ensure_selection_coverage,
+    ensure_opinion_selection_coverage,
     extract_opinion_summary,
     prepare_task_grid,
+    TaskCacheStrategy,
 )
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
@@ -187,7 +188,7 @@ def prepare_opinion_sweep_tasks(
             study=study,
             context=context,
         ),
-        load_cached=_load_cached_opinion_outcome,
+        cache=TaskCacheStrategy(load_cached=_load_cached_opinion_outcome),
     )
 
 
@@ -469,13 +470,11 @@ def select_best_opinion_configs(
                 outcome=outcome,
             )
 
-    ensure_selection_coverage(
+    ensure_opinion_selection_coverage(
         selections,
         studies,
         allow_incomplete=allow_incomplete,
         logger=LOGGER,
-        missing_descriptor="opinion sweep selections",
-        empty_descriptor="opinion feature space",
         require_selected=bool(outcomes),
     )
     return selections

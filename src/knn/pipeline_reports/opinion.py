@@ -441,6 +441,16 @@ class _OpinionPortfolioStats:
         return lines
 
 
+@dataclass(frozen=True)
+class OpinionReportOptions:
+    """Bundle of optional parameters for building the opinion report."""
+
+    allow_incomplete: bool = False
+    title: str = "# KNN Opinion Shift Study"
+    description_lines: Optional[Sequence[str]] = None
+    metrics_line: Optional[str] = None
+
+
 def _opinion_report_intro(
     dataset_name: str,
     split: str,
@@ -836,11 +846,8 @@ def _build_opinion_report(
     output_path: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
-    allow_incomplete: bool = False,
-    title: str = "# KNN Opinion Shift Study",
-    description_lines: Optional[Sequence[str]] = None,
-    metrics_line: Optional[str] = None,
-) -> None:  # pylint: disable=too-many-arguments
+    options: OpinionReportOptions | None = None,
+) -> None:
     """
     Compose the opinion regression report at ``output_path``.
 
@@ -850,15 +857,16 @@ def _build_opinion_report(
     :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param studies: Sequence of study specifications targeted by the workflow.
     :type studies: Sequence[StudySpec]
-    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
-    :type allow_incomplete: bool
+    :param options: Optional bundle controlling report presentation.
+    :type options: OpinionReportOptions | None
     """
+    options = options or OpinionReportOptions()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if not metrics:
-        if not allow_incomplete:
+        if not options.allow_incomplete:
             raise RuntimeError("No opinion metrics available to build the opinion report.")
         placeholder = [
-            title,
+            options.title,
             "",
             (
                 "Opinion regression metrics are not available yet. "
@@ -871,7 +879,7 @@ def _build_opinion_report(
         output_path.write_text("\n".join(placeholder), encoding="utf-8")
         return
     dataset_name, split = _opinion_dataset_info(metrics)
-    intro_lines = description_lines
+    intro_lines = options.description_lines
     if intro_lines is None:
         intro_lines = [
             (
@@ -879,21 +887,17 @@ def _build_opinion_report(
                 "participant's post-study opinion index."
             )
         ]
-    metrics_text = (
-        metrics_line
-        if metrics_line is not None
-        else (
-            "- Metrics: MAE / RMSE / R² / directional accuracy / MAE (change) / "
-            "RMSE (change) / calibration slope & intercept / calibration ECE / "
-            "KL divergence, compared against a no-change baseline."
-        )
+    metrics_text = options.metrics_line or (
+        "- Metrics: MAE / RMSE / R² / directional accuracy / MAE (change) / "
+        "RMSE (change) / calibration slope & intercept / calibration ECE / "
+        "KL divergence, compared against a no-change baseline."
     )
     lines: List[str] = []
     lines.extend(
         _opinion_report_intro(
             dataset_name,
             split,
-            title=title,
+            title=options.title,
             description_lines=intro_lines,
             metrics_line=metrics_text,
         )
@@ -905,4 +909,4 @@ def _build_opinion_report(
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-__all__ = ["_OpinionPortfolioStats", "_build_opinion_report"]
+__all__ = ["_OpinionPortfolioStats", "OpinionReportOptions", "_build_opinion_report"]

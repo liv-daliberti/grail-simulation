@@ -20,6 +20,7 @@ __all__ = [
     "BucketAccumulator",
     "EvaluationAccumulator",
     "EvaluationFilters",
+    "SlateMetricsRequest",
     "Observation",
     "bucket_from_options",
     "bucket_from_position",
@@ -127,6 +128,18 @@ class EvaluationFilters:
 
     issues: Sequence[str]
     studies: Sequence[str]
+
+
+@dataclass(frozen=True)
+class SlateMetricsRequest:
+    """Payload describing the metadata included with evaluation metrics."""
+
+    model_name: str
+    dataset_name: str
+    eval_split: str
+    filters: EvaluationFilters
+    position_order: Sequence[str] = ("1", "2", "3", "4", "5+", "unknown")
+    option_order: Sequence[str] = ("1", "2", "3", "4", "5+")
 
 
 @dataclass
@@ -311,35 +324,26 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
             )
         return distribution, baseline, expected_random
 
-    def metrics_payload(
-        self,
-        model_name: str,
-        dataset_name: str,
-        eval_split: str,
-        filters: EvaluationFilters,
-        *,
-        position_order: Sequence[str] = ("1", "2", "3", "4", "5+", "unknown"),
-        option_order: Sequence[str] = ("1", "2", "3", "4", "5+"),
-    ) -> Dict[str, Any]:
+    def metrics_payload(self, request: SlateMetricsRequest) -> Dict[str, Any]:
         """Return the metrics blob written to disk after evaluation."""
 
         gold_distribution, baseline_most_frequent, random_baseline = self.baseline_metrics()
         return {
-            "model": model_name,
-            "dataset": dataset_name,
-            "split": eval_split,
+            "model": request.model_name,
+            "dataset": request.dataset_name,
+            "split": request.eval_split,
             "n_total": int(self.total_seen),
             "n_eligible": int(self.eligible_overall),
             "accuracy_overall": self.accuracy(),
             "parsed_rate": self.parsed_rate(),
             "format_rate": self.format_rate(),
-            "position_stats": self.position_summary(position_order),
-            "by_n_options": self.options_summary(option_order),
+            "position_stats": self.position_summary(request.position_order),
+            "by_n_options": self.options_summary(request.option_order),
             "split_single_vs_multi": self.single_multi_summary(),
             "group_metrics": self.group_summary(),
             "filters": {
-                "issues": list(filters.issues),
-                "studies": list(filters.studies),
+                "issues": list(request.filters.issues),
+                "studies": list(request.filters.studies),
             },
             "gold_index_distribution": gold_distribution,
             "baseline_most_frequent_gold_index": baseline_most_frequent,

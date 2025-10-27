@@ -450,7 +450,34 @@ def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, 
     eval_set = [(batch.train.matrix, batch.train.labels)]
     if batch.evaluation is not None:
         eval_set.append((batch.evaluation.matrix, batch.evaluation.labels))
-    return {"eval_set": eval_set, "eval_metric": ["mlogloss", "merror"], "verbose": False}
+    return {"eval_set": eval_set, "verbose": False}
+
+
+def _ensure_history_metrics(booster: Any, *, collect_history: bool) -> None:
+    """
+    Ensure the booster tracks accuracy metrics when evaluation history is requested.
+    """
+
+    if not collect_history or not hasattr(booster, "get_xgb_params"):
+        return
+    params = booster.get_xgb_params()
+    metrics = params.get("eval_metric")
+    # Respect callable metrics by leaving them untouched.
+    if callable(metrics):
+        return
+    if metrics is None:
+        booster.set_params(eval_metric=["mlogloss", "merror"])
+        return
+    if isinstance(metrics, str):
+        metrics_list = [metrics]
+    elif isinstance(metrics, (list, tuple)):
+        metrics_list = list(metrics)
+    else:  # Unsupported type; do not modify.
+        return
+    required = ["mlogloss", "merror"]
+    missing = [metric for metric in required if metric not in metrics_list]
+    if missing:
+        booster.set_params(eval_metric=metrics_list + missing)
 
 
 def _collect_training_history(booster, collect_history: bool) -> Optional[Dict[str, Any]]:
@@ -498,6 +525,7 @@ def _train_booster(
         booster_kwargs,
     )
     fit_kwargs = _build_fit_kwargs(collect_history, batch)
+    _ensure_history_metrics(booster, collect_history=collect_history)
     try:
         booster.fit(batch.train.matrix, batch.train.labels, **fit_kwargs)
         return booster, _collect_training_history(booster, bool(fit_kwargs))
@@ -571,6 +599,7 @@ def _retry_training_on_cpu(
         "hist",
         cpu_kwargs,
     )
+    _ensure_history_metrics(cpu_booster, collect_history=bool(fit_kwargs))
     cpu_booster.fit(batch.train.matrix, batch.train.labels, **fit_kwargs)
     return cpu_booster, _collect_training_history(cpu_booster, bool(fit_kwargs))
 
@@ -615,6 +644,48 @@ def _prepare_eval_artifacts(
     return eval_matrix, context.encoder.transform(filtered_labels)
 
 
+def _prepare_training_dataset(
+    train_ds,
+    train_config: XGBoostTrainConfig,
+    extra_fields: Sequence[str] | None,
+) -> Tuple[BaseTextVectorizer, LabelEncoder, EncodedDataset]:
+    """Vectorise ``train_ds`` and return the encoded dataset alongside the encoder."""
+    docs, labels_id, _ = feature_utils.prepare_prompt_documents(
+        train_ds,
+        max_train=train_config.max_train,
+        seed=train_config.seed,
+        extra_fields=extra_fields,
+    )
+    if not docs:
+        raise RuntimeError("No training documents were produced for XGBoost fitting.")
+
+    vectorizer = create_vectorizer(
+        train_config.vectorizer_kind,
+        tfidf=train_config.tfidf,
+        word2vec=train_config.word2vec,
+        sentence_transformer=train_config.sentence_transformer,
+    )
+    matrix = _ensure_float32(vectorizer.fit_transform(docs))
+    encoder, encoded_labels = _encode_labels(labels_id)
+    train_split = EncodedDataset(matrix=matrix, labels=encoded_labels)
+    return vectorizer, encoder, train_split
+
+
+def _prepare_evaluation_dataset(
+    *,
+    collect_history: bool,
+    context: EvaluationArtifactsContext,
+) -> EncodedDataset | None:
+    """Return the optional evaluation split when metrics should be collected."""
+    eval_matrix, eval_labels = _prepare_eval_artifacts(
+        collect_history=collect_history,
+        context=context,
+    )
+    if eval_matrix is None or eval_labels is None:
+        return None
+    return EncodedDataset(matrix=eval_matrix, labels=eval_labels)
+
+
 def _build_model_components(
     *,
     train_ds,
@@ -641,24 +712,10 @@ def _build_model_components(
     :raises RuntimeError: If no documents are produced for training.
     """
 
-    docs, labels_id, _ = feature_utils.prepare_prompt_documents(
-        train_ds,
-        max_train=train_config.max_train,
-        seed=train_config.seed,
-        extra_fields=extra_fields,
+    vectorizer, encoder, train_split = _prepare_training_dataset(
+        train_ds, train_config, extra_fields
     )
-    if not docs:
-        raise RuntimeError("No training documents were produced for XGBoost fitting.")
-
-    vectorizer = create_vectorizer(
-        train_config.vectorizer_kind,
-        tfidf=train_config.tfidf,
-        word2vec=train_config.word2vec,
-        sentence_transformer=train_config.sentence_transformer,
-    )
-    matrix = _ensure_float32(vectorizer.fit_transform(docs))
-    encoder, encoded_labels = _encode_labels(labels_id)
-    eval_matrix, eval_labels = _prepare_eval_artifacts(
+    eval_split = _prepare_evaluation_dataset(
         collect_history=collect_history,
         context=EvaluationArtifactsContext(
             dataset=eval_ds,
@@ -668,13 +725,9 @@ def _build_model_components(
             extra_fields=extra_fields,
         ),
     )
-    eval_split = (
-        EncodedDataset(matrix=eval_matrix, labels=eval_labels)
-        if eval_matrix is not None and eval_labels is not None
-        else None
-    )
+
     batch = TrainingBatch(
-        train=EncodedDataset(matrix=matrix, labels=encoded_labels),
+        train=train_split,
         evaluation=eval_split,
     )
     booster, history = _train_booster(

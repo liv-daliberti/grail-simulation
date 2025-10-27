@@ -21,9 +21,21 @@ from raw metric payloads into structured summaries used by the reports.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 from common.pipeline_formatters import safe_float, safe_int
 
@@ -33,17 +45,32 @@ TaskT = TypeVar("TaskT")
 OutcomeT = TypeVar("OutcomeT")
 
 
+@dataclass
+class TaskCachePartition(Generic[TaskT, OutcomeT]):
+    """Accumulators representing pending and cached tasks."""
+
+    pending: List[TaskT]
+    cached: List[OutcomeT]
+
+
+@dataclass(frozen=True)
+class TaskCacheStrategy(Generic[TaskT, OutcomeT]):
+    """Bundle describing how cached tasks are discovered."""
+
+    load_cached: Callable[[TaskT], Optional[OutcomeT]]
+    cache_path: Callable[[TaskT], Path] | None = None
+
+
 def handle_cached_task(
     task: TaskT,
     *,
     reuse_existing: bool,
     cache_path: Path,
     load_cached: Callable[[TaskT], Optional[OutcomeT]],
-    pending: List[TaskT],
-    cached: List[OutcomeT],
-) -> bool:  # pylint: disable=too-many-arguments
+    partition: TaskCachePartition[TaskT, OutcomeT],
+) -> bool:
     """
-    Append ``task`` to ``pending`` unless a cached outcome can be reused.
+    Append ``task`` to the ``partition`` unless a cached outcome can be reused.
 
     :returns: ``True`` when a cached outcome was appended and the caller should skip execution.
     """
@@ -51,9 +78,9 @@ def handle_cached_task(
     if reuse_existing and cache_path.exists():
         cached_result = load_cached(task)
         if cached_result is not None:
-            cached.append(cached_result)
+            partition.cached.append(cached_result)
             return True
-    pending.append(task)
+    partition.pending.append(task)
     return False
 
 
@@ -70,20 +97,18 @@ def partition_cached_tasks(
     :returns: Tuple containing pending task list and cached outcomes respectively.
     """
 
-    pending: List[TaskT] = []
-    cached: List[OutcomeT] = []
+    partition = TaskCachePartition(pending=[], cached=[])
     for task in tasks:
         was_cached = handle_cached_task(
             task,
             reuse_existing=reuse_existing,
             cache_path=cache_path(task),
             load_cached=load_cached,
-            pending=pending,
-            cached=cached,
+            partition=partition,
         )
         if was_cached:
             continue
-    return pending, cached
+    return partition.pending, partition.cached
 
 
 def prepare_task_grid(
@@ -92,9 +117,8 @@ def prepare_task_grid(
     *,
     reuse_existing: bool,
     build_task: Callable[[int, Any, Any], TaskT],
-    load_cached: Callable[[TaskT], Optional[OutcomeT]],
-    cache_path: Callable[[TaskT], Path] | None = None,
-) -> Tuple[List[TaskT], List[OutcomeT]]:  # pylint: disable=too-many-arguments
+    cache: TaskCacheStrategy[TaskT, OutcomeT],
+) -> Tuple[List[TaskT], List[OutcomeT]]:
     """
     Construct sweep task grid and partition cached outcomes.
 
@@ -106,10 +130,8 @@ def prepare_task_grid(
     :type reuse_existing: bool
     :param build_task: Callable that constructs a task for the given index, config, and study.
     :type build_task: Callable[[int, Any, Any], TaskT]
-    :param load_cached: Callable used to load cached outcomes for a task.
-    :type load_cached: Callable[[TaskT], Optional[OutcomeT]]
-    :param cache_path: Optional callable returning the cache path for a task.
-    :type cache_path: Callable[[TaskT], Path] | None
+    :param cache: Strategy describing how cached outcomes are located and loaded.
+    :type cache: TaskCacheStrategy[TaskT, OutcomeT]
     :returns: Pending tasks and cached outcomes separated according to ``reuse_existing``.
     :rtype: Tuple[List[TaskT], List[OutcomeT]]
     """
@@ -118,9 +140,10 @@ def prepare_task_grid(
         build_task(task_index, config, study)
         for task_index, (config, study) in enumerate(product(configs, studies))
     ]
-    if cache_path is None:
+    cache_path_fn = cache.cache_path
+    if cache_path_fn is None:
 
-        def cache_path(task: TaskT) -> Path:
+        def default_cache_path(task: TaskT) -> Path:
             try:
                 path = getattr(task, "metrics_path")
             except AttributeError as exc:  # pragma: no cover - defensive only
@@ -128,12 +151,13 @@ def prepare_task_grid(
                     "Task is missing 'metrics_path' required for caching."
                 ) from exc
             return Path(path)
+        cache_path_fn = default_cache_path
 
     return partition_cached_tasks(
         tasks,
         reuse_existing=reuse_existing,
-        cache_path=cache_path,
-        load_cached=load_cached,
+        cache_path=cache_path_fn,
+        load_cached=cache.load_cached,
     )
 
 
@@ -377,16 +401,23 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     )
 
 
+@dataclass(frozen=True)
+class SelectionValidationOptions:
+    """Reusable configuration for selection validation helpers."""
+
+    allow_incomplete: bool
+    logger: Any
+    missing_descriptor: str
+    empty_descriptor: str
+    require_selected: bool
+
+
 def ensure_feature_selections(
     selections: Mapping[str, Mapping[str, Any]],
     expected_keys: Sequence[str],
     *,
-    allow_incomplete: bool,
-    logger: Any,
-    missing_descriptor: str,
-    empty_descriptor: str,
-    require_selected: bool,
-) -> None:  # pylint: disable=too-many-arguments
+    options: SelectionValidationOptions,
+) -> None:
     """
     Validate that ``selections`` covers all ``expected_keys`` for each feature space.
 
@@ -401,20 +432,20 @@ def ensure_feature_selections(
         if not missing:
             continue
         message = (
-            f"Missing {missing_descriptor} for feature={feature_space}: "
+            f"Missing {options.missing_descriptor} for feature={feature_space}: "
             f"{', '.join(missing)}"
         )
-        if allow_incomplete:
-            logger.warning(
+        if options.allow_incomplete:
+            options.logger.warning(
                 "%s. Continuing because allow-incomplete mode is enabled.",
                 message,
             )
         else:
             raise RuntimeError(message)
 
-    if not selections and require_selected:
+    if not selections and options.require_selected:
         raise RuntimeError(
-            f"Failed to select a best configuration for any {empty_descriptor}."
+            f"Failed to select a best configuration for any {options.empty_descriptor}."
         )
 
 
@@ -422,12 +453,8 @@ def ensure_selection_coverage(
     selections: Mapping[str, Mapping[str, Any]],
     studies: Sequence[StudySpec],
     *,
-    allow_incomplete: bool,
-    logger: Any,
-    missing_descriptor: str,
-    empty_descriptor: str,
-    require_selected: bool,
-) -> None:  # pylint: disable=too-many-arguments
+    options: SelectionValidationOptions,
+) -> None:
     """
     Wrapper that reuses :func:`ensure_feature_selections` for common call sites.
 
@@ -439,17 +466,61 @@ def ensure_selection_coverage(
     ensure_feature_selections(
         selections,
         expected_keys,
-        allow_incomplete=allow_incomplete,
-        logger=logger,
-        missing_descriptor=missing_descriptor,
-        empty_descriptor=empty_descriptor,
-        require_selected=require_selected,
+        options=options,
+    )
+
+
+def ensure_sweep_selection_coverage(
+    selections: Mapping[str, Mapping[str, Any]],
+    studies: Sequence[StudySpec],
+    *,
+    allow_incomplete: bool,
+    logger: Any,
+    require_selected: bool = True,
+) -> None:
+    """Validate coverage for the core sweep selections produced by the pipeline."""
+
+    ensure_selection_coverage(
+        selections,
+        studies,
+        options=SelectionValidationOptions(
+            allow_incomplete=allow_incomplete,
+            logger=logger,
+            missing_descriptor="sweep selections",
+            empty_descriptor="feature space",
+            require_selected=require_selected,
+        ),
+    )
+
+
+def ensure_opinion_selection_coverage(
+    selections: Mapping[str, Mapping[str, Any]],
+    studies: Sequence[StudySpec],
+    *,
+    allow_incomplete: bool,
+    logger: Any,
+    require_selected: bool,
+) -> None:
+    """Validate coverage for opinion sweep selections with custom descriptors."""
+
+    ensure_selection_coverage(
+        selections,
+        studies,
+        options=SelectionValidationOptions(
+            allow_incomplete=allow_incomplete,
+            logger=logger,
+            missing_descriptor="opinion sweep selections",
+            empty_descriptor="opinion feature space",
+            require_selected=require_selected,
+        ),
     )
 
 __all__ = [
     "ensure_dir",
     "ensure_feature_selections",
     "ensure_selection_coverage",
+    "ensure_sweep_selection_coverage",
+    "ensure_opinion_selection_coverage",
     "extract_metric_summary",
     "extract_opinion_summary",
     "format_count",
@@ -462,6 +533,8 @@ __all__ = [
     "prepare_task_grid",
     "partition_cached_tasks",
     "parse_ci",
+    "SelectionValidationOptions",
+    "TaskCacheStrategy",
     "safe_float",
     "safe_int",
     "snake_to_title",

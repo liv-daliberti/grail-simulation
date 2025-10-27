@@ -27,11 +27,10 @@ from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from common.pipeline_stage import (
     DryRunSummary,
+    build_sweep_partition,
     SweepPartitionExecutors,
-    SweepPartitionSpec,
-    execute_partitions_for_cli,
+    dispatch_cli_partitions,
     log_dry_run_summary,
-    make_sweep_partition,
     prepare_sweep_execution as _prepare_sweep_execution,
 )
 
@@ -228,39 +227,35 @@ def main(argv: Sequence[str] | None = None) -> None:
         partitions = []
         if context.run_next_video:
             partitions.append(
-                make_sweep_partition(
-                    SweepPartitionSpec(
-                        label="next-video",
-                        pending=planned_tasks,
-                        cached=cached_planned,
-                        reuse_existing=context.reuse_sweeps,
-                        executors=SweepPartitionExecutors(
-                            execute_task=_execute_sweep_task,
-                            describe_pending=_format_sweep_task_descriptor,
-                            describe_cached=_describe_sweep_outcome,
-                        ),
-                    )
+                build_sweep_partition(
+                    label="next-video",
+                    pending=planned_tasks,
+                    cached=cached_planned,
+                    reuse_existing=context.reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=_execute_sweep_task,
+                        describe_pending=_format_sweep_task_descriptor,
+                        describe_cached=_describe_sweep_outcome,
+                    ),
                 )
             )
         if context.run_opinion:
             partitions.append(
-                make_sweep_partition(
-                    SweepPartitionSpec(
-                        label="opinion",
-                        pending=planned_opinion_tasks,
-                        cached=cached_planned_opinion,
-                        reuse_existing=context.reuse_sweeps,
-                        executors=SweepPartitionExecutors(
-                            execute_task=_execute_opinion_sweep_task,
-                            describe_pending=_format_opinion_sweep_task_descriptor,
-                            describe_cached=_describe_opinion_sweep_outcome,
-                        ),
-                        prefix="[OPINION]",
-                    )
+                build_sweep_partition(
+                    label="opinion",
+                    pending=planned_opinion_tasks,
+                    cached=cached_planned_opinion,
+                    reuse_existing=context.reuse_sweeps,
+                    executors=SweepPartitionExecutors(
+                        execute_task=_execute_opinion_sweep_task,
+                        describe_pending=_format_opinion_sweep_task_descriptor,
+                        describe_cached=_describe_opinion_sweep_outcome,
+                    ),
+                    prefix="[OPINION]",
                 )
             )
 
-        execute_partitions_for_cli(
+        dispatch_cli_partitions(
             partitions,
             args=args,
             logger=LOGGER,

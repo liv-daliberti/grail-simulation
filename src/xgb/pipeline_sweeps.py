@@ -697,18 +697,22 @@ def _load_opinion_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
+    filename_template = "opinion_xgb_{study}_validation_metrics.json"
     for spec in studies:
-        metrics_path = opinion_dir / spec.key / f"opinion_xgb_{spec.key}_validation_metrics.json"
-        if not metrics_path.exists():
-            legacy_path = (
-                opinion_dir
-                / "opinion"
-                / spec.key
-                / f"opinion_xgb_{spec.key}_validation_metrics.json"
-            )
-            if not legacy_path.exists():
-                continue
-            metrics_path = legacy_path
+        filename = filename_template.format(study=spec.key)
+        candidate_dirs = [
+            opinion_dir / OPINION_FEATURE_SPACE / spec.key,
+            opinion_dir / spec.key,
+            opinion_dir / "opinion" / spec.key,
+        ]
+        metrics_path: Path | None = None
+        for base_dir in candidate_dirs:
+            path = base_dir / filename
+            if path.exists():
+                metrics_path = path
+                break
+        if metrics_path is None:
+            continue
         metrics = dict(_load_metrics(metrics_path))
         results[spec.key] = metrics
     return results

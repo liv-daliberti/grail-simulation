@@ -840,7 +840,7 @@ def _build_opinion_report(
     title: str = "# KNN Opinion Shift Study",
     description_lines: Optional[Sequence[str]] = None,
     metrics_line: Optional[str] = None,
-) -> None:
+) -> None:  # pylint: disable=too-many-arguments
     """
     Compose the opinion regression report at ``output_path``.
 

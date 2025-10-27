@@ -11,6 +11,7 @@ import pytest
 from common.pipeline_stage import (
     DryRunSummary,
     SweepPartitionExecutors,
+    SweepPartitionSpec,
     dispatch_sweep_task,
     log_dry_run_summary,
     make_sweep_partition,
@@ -60,11 +61,13 @@ def test_make_sweep_partition_excludes_cached_overlap(tmp_path: Path) -> None:
     ]
 
     partition = make_sweep_partition(
-        label="Opinion",
-        pending=pending,
-        cached=cached,
-        reuse_existing=False,
-        executors=_executors("Opinion", recorded),
+        SweepPartitionSpec(
+            label="Opinion",
+            pending=pending,
+            cached=cached,
+            reuse_existing=False,
+            executors=_executors("Opinion", recorded),
+        )
     )
 
     assert partition.state.total_slots == 4
@@ -78,25 +81,29 @@ def test_make_sweep_partition_excludes_cached_overlap(tmp_path: Path) -> None:
 def test_dispatch_sweep_task_invokes_expected_partition(tmp_path: Path, caplog) -> None:
     recorded: list[tuple[str, int]] = []
     partition_a = make_sweep_partition(
-        label="First",
-        pending=[
-            DummyTask(index=0, metrics_path=tmp_path / "first-0.json", label="First-0"),
-            DummyTask(index=1, metrics_path=tmp_path / "first-1.json", label="First-1"),
-        ],
-        cached=[],
-        reuse_existing=False,
-        executors=_executors("First", recorded),
-        prefix="first",
+        SweepPartitionSpec(
+            label="First",
+            pending=[
+                DummyTask(index=0, metrics_path=tmp_path / "first-0.json", label="First-0"),
+                DummyTask(index=1, metrics_path=tmp_path / "first-1.json", label="First-1"),
+            ],
+            cached=[],
+            reuse_existing=False,
+            executors=_executors("First", recorded),
+            prefix="first",
+        )
     )
     partition_b = make_sweep_partition(
-        label="Second",
-        pending=[
-            DummyTask(index=0, metrics_path=tmp_path / "second-0.json", label="Second-0"),
-        ],
-        cached=[],
-        reuse_existing=False,
-        executors=_executors("Second", recorded),
-        prefix="second",
+        SweepPartitionSpec(
+            label="Second",
+            pending=[
+                DummyTask(index=0, metrics_path=tmp_path / "second-0.json", label="Second-0"),
+            ],
+            cached=[],
+            reuse_existing=False,
+            executors=_executors("Second", recorded),
+            prefix="second",
+        )
     )
     logger = logging.getLogger("tests.common.pipeline_stage.dispatch")
 
@@ -113,14 +120,16 @@ def test_dispatch_sweep_task_invokes_expected_partition(tmp_path: Path, caplog) 
 
 def test_dispatch_sweep_task_raises_for_out_of_range(tmp_path: Path) -> None:
     partition = make_sweep_partition(
-        label="Only",
-        pending=[
-            DummyTask(index=0, metrics_path=tmp_path / "only-0.json", label="Only-0"),
-            DummyTask(index=1, metrics_path=tmp_path / "only-1.json", label="Only-1"),
-        ],
-        cached=[],
-        reuse_existing=False,
-        executors=_executors("Only", []),
+        SweepPartitionSpec(
+            label="Only",
+            pending=[
+                DummyTask(index=0, metrics_path=tmp_path / "only-0.json", label="Only-0"),
+                DummyTask(index=1, metrics_path=tmp_path / "only-1.json", label="Only-1"),
+            ],
+            cached=[],
+            reuse_existing=False,
+            executors=_executors("Only", []),
+        )
     )
     logger = logging.getLogger("tests.common.pipeline_stage.range")
 

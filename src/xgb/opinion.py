@@ -27,6 +27,7 @@ import numpy as np
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample,
+    OpinionExampleInputs,
     OpinionSpec,
     float_or_none,
     make_opinion_example,
@@ -171,9 +172,15 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        core_args = (spec, participant_id, document, before, after)
+        inputs = OpinionExampleInputs(
+            participant_id=participant_id,
+            document=document,
+            before=before,
+            after=after,
+        )
         example = make_opinion_example(
-            *core_args,
+            spec,
+            inputs,
         )
         existing = per_participant.get(participant_id)
         if existing is None or step_index >= existing[1]:

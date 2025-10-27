@@ -861,6 +861,47 @@ def test_load_final_metrics_from_disk_adds_defaults(tmp_path: Path) -> None:
     assert metrics["study_label"] == study.label
 
 
+def test_load_opinion_metrics_from_disk_supports_feature_space_layout(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    feature_dir = tmp_path / sweeps.OPINION_FEATURE_SPACE / study.key
+    feature_dir.mkdir(parents=True, exist_ok=True)
+    preferred_payload = {"metrics": {"mae_after": 0.42}}
+    metrics_path = (
+        feature_dir / f"opinion_xgb_{study.key}_validation_metrics.json"
+    )
+    metrics_path.write_text(json.dumps(preferred_payload), encoding="utf-8")
+
+    legacy_dir = tmp_path / study.key
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+    legacy_path = legacy_dir / f"opinion_xgb_{study.key}_validation_metrics.json"
+    legacy_path.write_text(json.dumps({"metrics": {"mae_after": 0.99}}), encoding="utf-8")
+
+    result = sweeps._load_opinion_metrics_from_disk(
+        opinion_dir=tmp_path,
+        studies=[study],
+    )
+
+    assert study.key in result
+    assert result[study.key]["metrics"]["mae_after"] == pytest.approx(0.42)
+
+
+def test_load_opinion_metrics_from_disk_falls_back_to_legacy(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    legacy_dir = tmp_path / study.key
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"metrics": {"mae_after": 0.37}}
+    metrics_path = legacy_dir / f"opinion_xgb_{study.key}_validation_metrics.json"
+    metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = sweeps._load_opinion_metrics_from_disk(
+        opinion_dir=tmp_path,
+        studies=[study],
+    )
+
+    assert study.key in result
+    assert result[study.key]["metrics"]["mae_after"] == pytest.approx(0.37)
+
+
 def test_write_reports_handles_disabled_sections(tmp_path: Path) -> None:
     sweep_report = reports.SweepReportData()
     reports._write_reports(

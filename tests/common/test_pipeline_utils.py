@@ -52,9 +52,9 @@ def test_merge_ordered_with_warning_logs_duplicates(caplog) -> None:
             cached,
             executed,
             order_key=lambda item: item.index,
-            logger=logger,
-            message="Replacing %s with %s",
-            args_factory=lambda old, new: (old.label, new.label),
+            duplicate_warning=lambda old, new: logger.warning(
+                "Replacing %s with %s", old.label, new.label
+            ),
         )
 
     assert [item.label for item in merged] == ["executed-five"]

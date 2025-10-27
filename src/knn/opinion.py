@@ -36,6 +36,7 @@ from common.embeddings import SentenceTransformerConfig, SentenceTransformerEnco
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample as BaseOpinionExample,
+    OpinionExampleInputs,
     OpinionSpec,
     float_or_none,
     make_opinion_example,
@@ -180,9 +181,15 @@ def collect_examples(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         session_id = example.get("session_id")
-        core_args = (spec, participant_id, document, before, after)
+        inputs = OpinionExampleInputs(
+            participant_id=participant_id,
+            document=document,
+            before=before,
+            after=after,
+        )
         candidate = make_opinion_example(
-            *core_args,
+            spec,
+            inputs,
             factory=OpinionExample,
             step_index=step_index,
             session_id=str(session_id) if session_id is not None else None,
@@ -1268,7 +1275,7 @@ def _evaluate_opinion_study(
     word2vec_config: Optional[Word2VecConfig],
     sentence_config: Optional[SentenceTransformerConfig],
     outputs_root: Path,
-) -> None:
+) -> None:  # pylint: disable=too-many-arguments
     """Run the full evaluation pipeline for a single opinion study."""
 
     LOGGER.info("[OPINION] Study=%s (%s)", spec.key, spec.label)

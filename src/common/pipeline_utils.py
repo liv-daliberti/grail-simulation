@@ -91,9 +91,7 @@ def merge_ordered_with_warning(
     executed: Sequence[T],
     *,
     order_key: Callable[[T], int],
-    logger: logging.Logger,
-    message: str,
-    args_factory: Callable[[T, T], Sequence[Any]] | None = None,
+    duplicate_warning: Callable[[T, T], None] | None = None,
 ) -> List[T]:
     """
     Convenience wrapper around :func:`merge_ordered` that logs duplicate replacements.
@@ -104,12 +102,8 @@ def merge_ordered_with_warning(
     :type executed: Sequence[T]
     :param order_key: Callable returning a deterministic integer position for each result.
     :type order_key: Callable[[T], int]
-    :param logger: Logger used when emitting duplicate warnings.
-    :type logger: logging.Logger
-    :param message: Logging format string passed to :py:meth:`logging.Logger.warning`.
-    :type message: str
-    :param args_factory: Optional callable returning arguments supplied with the warning.
-    :type args_factory: Callable[[T, T], Sequence[Any]] | None
+    :param duplicate_warning: Optional callback invoked when cached results are replaced.
+    :type duplicate_warning: Callable[[T, T], None] | None
     :returns: Combined results ordered by ``order_key``.
     :rtype: List[T]
     """
@@ -118,11 +112,7 @@ def merge_ordered_with_warning(
         cached,
         executed,
         order_key=order_key,
-        on_replace=make_duplicate_warning(
-            logger,
-            message,
-            args_factory=args_factory,
-        ),
+        on_replace=duplicate_warning,
     )
 
 
@@ -144,9 +134,11 @@ def merge_indexed_outcomes(
         cached,
         executed,
         order_key=attrgetter("order_index"),
-        logger=logger,
-        message=message,
-        args_factory=args_factory,
+        duplicate_warning=make_duplicate_warning(
+            logger,
+            message,
+            args_factory=args_factory,
+        ),
     )
 
 

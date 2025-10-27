@@ -41,7 +41,7 @@ def handle_cached_task(
     load_cached: Callable[[TaskT], Optional[OutcomeT]],
     pending: List[TaskT],
     cached: List[OutcomeT],
-) -> bool:
+) -> bool:  # pylint: disable=too-many-arguments
     """
     Append ``task`` to ``pending`` unless a cached outcome can be reused.
 
@@ -94,7 +94,7 @@ def prepare_task_grid(
     build_task: Callable[[int, Any, Any], TaskT],
     load_cached: Callable[[TaskT], Optional[OutcomeT]],
     cache_path: Callable[[TaskT], Path] | None = None,
-) -> Tuple[List[TaskT], List[OutcomeT]]:
+) -> Tuple[List[TaskT], List[OutcomeT]]:  # pylint: disable=too-many-arguments
     """
     Construct sweep task grid and partition cached outcomes.
 
@@ -386,7 +386,7 @@ def ensure_feature_selections(
     missing_descriptor: str,
     empty_descriptor: str,
     require_selected: bool,
-) -> None:
+) -> None:  # pylint: disable=too-many-arguments
     """
     Validate that ``selections`` covers all ``expected_keys`` for each feature space.
 
@@ -427,7 +427,7 @@ def ensure_selection_coverage(
     missing_descriptor: str,
     empty_descriptor: str,
     require_selected: bool,
-) -> None:
+) -> None:  # pylint: disable=too-many-arguments
     """
     Wrapper that reuses :func:`ensure_feature_selections` for common call sites.
 

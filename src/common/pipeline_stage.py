@@ -68,6 +68,20 @@ class SweepPartitionPaths(Generic[TaskT, OutcomeT]):
 
 
 @dataclass(frozen=True)
+class SweepPartitionSpec(Generic[TaskT, OutcomeT]):
+    """Configuration bundle describing a sweep partition."""
+
+    label: str
+    pending: Sequence[TaskT]
+    cached: Sequence[OutcomeT]
+    reuse_existing: bool
+    executors: SweepPartitionExecutors[TaskT, OutcomeT]
+    prefix: str = ""
+    indexers: SweepPartitionIndexers[TaskT, OutcomeT] | None = None
+    paths: SweepPartitionPaths[TaskT, OutcomeT] | None = None
+
+
+@dataclass(frozen=True)
 class SweepPartitionIndexers(Generic[TaskT, OutcomeT]):
     """Index accessors used when normalising sweep partitions."""
 
@@ -122,23 +136,15 @@ _DEFAULT_PATHS: SweepPartitionPaths[TaskT, OutcomeT] = SweepPartitionPaths(
 
 
 def make_sweep_partition(
-    *,
-    label: str,
-    pending: Sequence[TaskT],
-    cached: Sequence[OutcomeT],
-    reuse_existing: bool,
-    executors: SweepPartitionExecutors[TaskT, OutcomeT],
-    prefix: str = "",
-    indexers: SweepPartitionIndexers[TaskT, OutcomeT] | None = None,
-    paths: SweepPartitionPaths[TaskT, OutcomeT] | None = None,
+    spec: SweepPartitionSpec[TaskT, OutcomeT],
 ) -> SweepPartition[TaskT, OutcomeT]:
     """Normalise sweep task partitions for distributed execution."""
 
-    indexers = indexers or _DEFAULT_INDEXERS
-    paths = paths or _DEFAULT_PATHS
-    pending_by_index = {indexers.pending(task): task for task in pending}
+    indexers = spec.indexers or _DEFAULT_INDEXERS
+    paths = spec.paths or _DEFAULT_PATHS
+    pending_by_index = {indexers.pending(task): task for task in spec.pending}
     cached_by_index: Dict[int, OutcomeT] = {}
-    for outcome in cached:
+    for outcome in spec.cached:
         index = indexers.cached(outcome)
         if index in pending_by_index:
             continue
@@ -151,11 +157,11 @@ def make_sweep_partition(
         total_slots=total_slots,
     )
     return SweepPartition(
-        label=label,
-        reuse_existing=reuse_existing,
-        prefix=prefix,
+        label=spec.label,
+        reuse_existing=spec.reuse_existing,
+        prefix=spec.prefix,
         state=state,
-        executors=executors,
+        executors=spec.executors,
         paths=paths,
     )
 
@@ -293,14 +299,21 @@ def prepare_sweep_execution(
     return task_id
 
 
+@dataclass(frozen=True)
+class SweepExecutionOptions:
+    """Parameters controlling how sweep partitions are dispatched."""
+
+    cli_task_id: Optional[int] = None
+    cli_task_count: Optional[int] = None
+    env_var: str = "SLURM_ARRAY_TASK_ID"
+    prepare: Callable[..., Optional[int]] = prepare_sweep_execution
+
+
 def execute_sweep_partitions(
     partitions: Sequence[SweepPartition[TaskT, OutcomeT]],
     *,
-    cli_task_id: Optional[int],
-    cli_task_count: Optional[int],
     logger,
-    env_var: str = "SLURM_ARRAY_TASK_ID",
-    prepare: Callable[..., Optional[int]] = prepare_sweep_execution,
+    options: SweepExecutionOptions | None = None,
 ) -> Optional[int]:
     """
     Resolve the sweep task to run and dispatch it to ``partitions``.
@@ -311,13 +324,14 @@ def execute_sweep_partitions(
     task is executed and ``None`` when no work is required.
     """
 
+    options = options or SweepExecutionOptions()
     total_tasks = sum(partition.state.total_slots for partition in partitions)
-    task_id = prepare(
+    task_id = options.prepare(
         total_tasks=total_tasks,
-        cli_task_id=cli_task_id,
-        cli_task_count=cli_task_count,
+        cli_task_id=options.cli_task_id,
+        cli_task_count=options.cli_task_count,
         logger=logger,
-        env_var=env_var,
+        env_var=options.env_var,
     )
     if task_id is None:
         return None
@@ -341,8 +355,10 @@ def execute_partitions_for_cli(  # pragma: no cover - thin convenience wrapper
 
     return execute_sweep_partitions(
         partitions,
-        cli_task_id=getattr(args, "sweep_task_id", None),
-        cli_task_count=getattr(args, "sweep_task_count", None),
         logger=logger,
-        prepare=prepare,
+        options=SweepExecutionOptions(
+            cli_task_id=getattr(args, "sweep_task_id", None),
+            cli_task_count=getattr(args, "sweep_task_count", None),
+            prepare=prepare,
+        ),
     )

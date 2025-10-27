@@ -97,6 +97,33 @@ def _ensure_float32(matrix: Any) -> Any:
         )  # type: ignore[assignment]
     return matrix
 
+
+@dataclass(frozen=True)
+class EncodedDataset:
+    """Pair of encoded documents and their aligned labels."""
+
+    matrix: Any
+    labels: Any
+
+
+@dataclass(frozen=True)
+class TrainingBatch:
+    """Container for training data and optional evaluation split."""
+
+    train: EncodedDataset
+    evaluation: EncodedDataset | None = None
+
+
+@dataclass(frozen=True)
+class EvaluationArtifactsContext:
+    """Information required to prepare evaluation matrices."""
+
+    dataset: Any | None
+    vectorizer: BaseTextVectorizer
+    encoder: LabelEncoder
+    train_config: XGBoostTrainConfig
+    extra_fields: Sequence[str] | None = None
+
 @dataclass
 class XGBoostSlateModel:
     """
@@ -415,20 +442,14 @@ def _instantiate_classifier(
     )
 
 
-def _build_fit_kwargs(
-    collect_history: bool,
-    matrix,
-    labels,
-    eval_matrix,
-    eval_labels,
-) -> Dict[str, Any]:
+def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, Any]:
     """Construct ``fit`` keyword arguments when evaluation tracking is enabled."""
 
     if not collect_history:
         return {}
-    eval_set = [(matrix, labels)]
-    if eval_matrix is not None and eval_labels is not None:
-        eval_set.append((eval_matrix, eval_labels))
+    eval_set = [(batch.train.matrix, batch.train.labels)]
+    if batch.evaluation is not None:
+        eval_set.append((batch.evaluation.matrix, batch.evaluation.labels))
     return {"eval_set": eval_set, "eval_metric": ["mlogloss", "merror"], "verbose": False}
 
 
@@ -443,10 +464,7 @@ def _collect_training_history(booster, collect_history: bool) -> Optional[Dict[s
 def _train_booster(
     *,
     train_config: XGBoostTrainConfig,
-    matrix,
-    labels,
-    eval_matrix=None,
-    eval_labels=None,
+    batch: TrainingBatch,
     collect_history: bool = False,
 ) -> Tuple[Any, Optional[Dict[str, Any]]]:
     """
@@ -454,14 +472,8 @@ def _train_booster(
 
     :param train_config: Training configuration containing booster hyper-parameters.
     :type train_config: XGBoostTrainConfig
-    :param matrix: Feature matrix produced by the text vectoriser.
-    :type matrix: Any
-    :param labels: Numeric labels aligned with ``matrix`` rows.
-    :type labels: Any
-    :param eval_matrix: Optional evaluation feature matrix monitored during fitting.
-    :type eval_matrix: Any
-    :param eval_labels: Optional evaluation labels aligned with ``eval_matrix`` rows.
-    :type eval_labels: Any
+    :param batch: Encoded training data and optional evaluation split.
+    :type batch: TrainingBatch
     :param collect_history: When ``True`` record per-round metrics for plotting.
     :type collect_history: bool
     :returns: Tuple of fitted classifier and optional evaluation history.
@@ -470,7 +482,7 @@ def _train_booster(
     """
     params = train_config.booster
     booster_kwargs = dict(params.extra_kwargs or {})
-    booster_kwargs.setdefault("num_class", int(np.unique(labels).size))
+    booster_kwargs.setdefault("num_class", int(np.unique(batch.train.labels).size))
 
     requested_method = params.tree_method or "hist"
     requested_lower = requested_method.lower()
@@ -485,16 +497,10 @@ def _train_booster(
         tree_method,
         booster_kwargs,
     )
-    fit_kwargs = _build_fit_kwargs(
-        collect_history,
-        matrix,
-        labels,
-        eval_matrix,
-        eval_labels,
-    )
+    fit_kwargs = _build_fit_kwargs(collect_history, batch)
     try:
-        booster.fit(matrix, labels, **fit_kwargs)
-        return booster, _collect_training_history(booster, collect_history)
+        booster.fit(batch.train.matrix, batch.train.labels, **fit_kwargs)
+        return booster, _collect_training_history(booster, bool(fit_kwargs))
     except Exception as exc:  # pragma: no cover - runtime guard
         if attempt_gpu and _should_retry_on_cpu(requested_method, exc):
             LOGGER.warning(
@@ -505,11 +511,9 @@ def _train_booster(
             return _retry_training_on_cpu(
                 train_config=train_config,
                 params=params,
-                matrix=matrix,
-                labels=labels,
-                fit_kwargs=fit_kwargs,
-                collect_history=collect_history,
+                batch=batch,
                 booster_kwargs=booster_kwargs,
+                fit_kwargs=fit_kwargs,
             )
         raise
 
@@ -549,11 +553,9 @@ def _retry_training_on_cpu(
     *,
     train_config: XGBoostTrainConfig,
     params: XGBoostBoosterParams,
-    matrix,
-    labels,
-    fit_kwargs: Dict[str, Any],
-    collect_history: bool,
+    batch: TrainingBatch,
     booster_kwargs: Dict[str, Any],
+    fit_kwargs: Dict[str, Any],
 ) -> Tuple[Any, Optional[Dict[str, Any]]]:
     """
     Retry booster fitting on CPU after a GPU-specific failure.
@@ -569,34 +571,30 @@ def _retry_training_on_cpu(
         "hist",
         cpu_kwargs,
     )
-    cpu_booster.fit(matrix, labels, **fit_kwargs)
-    return cpu_booster, _collect_training_history(cpu_booster, collect_history)
+    cpu_booster.fit(batch.train.matrix, batch.train.labels, **fit_kwargs)
+    return cpu_booster, _collect_training_history(cpu_booster, bool(fit_kwargs))
 
 
 def _prepare_eval_artifacts(
     *,
     collect_history: bool,
-    eval_ds,
-    vectorizer: BaseTextVectorizer,
-    encoder: LabelEncoder,
-    train_config: XGBoostTrainConfig,
-    extra_fields: Sequence[str] | None,
+    context: EvaluationArtifactsContext,
 ) -> Tuple[Any | None, Any | None]:
     """Prepare evaluation matrices compatible with the fitted encoder."""
 
-    if not collect_history or eval_ds is None:
+    if not collect_history or context.dataset is None:
         return None, None
 
     eval_docs, eval_label_ids, _ = feature_utils.prepare_prompt_documents(
-        eval_ds,
+        context.dataset,
         max_train=0,
-        seed=train_config.seed,
-        extra_fields=extra_fields,
+        seed=context.train_config.seed,
+        extra_fields=context.extra_fields,
     )
     if not eval_docs:
         return None, None
 
-    known_labels = set(encoder.classes_)
+    known_labels = set(context.encoder.classes_)
     filtered_docs: list[str] = []
     filtered_labels: list[str] = []
     for doc, label_id in zip(eval_docs, eval_label_ids):
@@ -613,8 +611,8 @@ def _prepare_eval_artifacts(
     if not filtered_docs:
         return None, None
 
-    eval_matrix = _ensure_float32(vectorizer.transform(filtered_docs))
-    return eval_matrix, encoder.transform(filtered_labels)
+    eval_matrix = _ensure_float32(context.vectorizer.transform(filtered_docs))
+    return eval_matrix, context.encoder.transform(filtered_labels)
 
 
 def _build_model_components(
@@ -662,18 +660,26 @@ def _build_model_components(
     encoder, encoded_labels = _encode_labels(labels_id)
     eval_matrix, eval_labels = _prepare_eval_artifacts(
         collect_history=collect_history,
-        eval_ds=eval_ds,
-        vectorizer=vectorizer,
-        encoder=encoder,
-        train_config=train_config,
-        extra_fields=extra_fields,
+        context=EvaluationArtifactsContext(
+            dataset=eval_ds,
+            vectorizer=vectorizer,
+            encoder=encoder,
+            train_config=train_config,
+            extra_fields=extra_fields,
+        ),
+    )
+    eval_split = (
+        EncodedDataset(matrix=eval_matrix, labels=eval_labels)
+        if eval_matrix is not None and eval_labels is not None
+        else None
+    )
+    batch = TrainingBatch(
+        train=EncodedDataset(matrix=matrix, labels=encoded_labels),
+        evaluation=eval_split,
     )
     booster, history = _train_booster(
         train_config=train_config,
-        matrix=matrix,
-        labels=encoded_labels,
-        eval_matrix=eval_matrix,
-        eval_labels=eval_labels,
+        batch=batch,
         collect_history=collect_history,
     )
     return vectorizer, encoder, booster, history

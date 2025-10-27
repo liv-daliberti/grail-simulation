@@ -28,6 +28,15 @@ class OpinionMetricsView:  # pylint: disable=too-many-instance-attributes
     baseline_kl_divergence_change: Optional[float]
 
 
+@dataclass(frozen=True)
+class CalibrationBinBounds:
+    """Describes a calibration bin interval."""
+
+    lower: float
+    upper: float
+    include_upper: bool
+
+
 def _pick(summary: Any, *names: Optional[str]) -> Optional[float]:
     """Return the first present attribute on ``summary`` from ``names``."""
 
@@ -133,16 +142,14 @@ class _CalibrationAccumulator:
         self._weighted_error = 0.0
         self._total = 0
 
-    def process(self, lower: float, upper: float, include_upper: bool) -> None:
+    def process(self, *, bounds: CalibrationBinBounds) -> None:
         """Accumulate calibration details for the provided interval."""
 
         count, error = _accumulate_calibration_bin(
             bins=self._bins,
             predicted_change=self._predicted_change,
             actual_change=self._actual_change,
-            lower=lower,
-            upper=upper,
-            include_upper=include_upper,
+            bounds=bounds,
         )
         self._weighted_error += error
         self._total += count
@@ -184,9 +191,11 @@ def _calibration_bins(
 
     for lower, upper in zip(edges[:-1], edges[1:]):
         accumulator.process(
-            lower=float(lower),
-            upper=float(upper),
-            include_upper=bool(upper == edges[-1]),
+            bounds=CalibrationBinBounds(
+                lower=float(lower),
+                upper=float(upper),
+                include_upper=bool(upper == edges[-1]),
+            ),
         )
 
     return accumulator.result()
@@ -197,13 +206,13 @@ def _accumulate_calibration_bin(
     bins: list[dict],
     predicted_change: np.ndarray,
     actual_change: np.ndarray,
-    lower: float,
-    upper: float,
-    include_upper: bool,
+    bounds: CalibrationBinBounds,
 ) -> Tuple[int, float]:
     """Collect summary statistics for observations within a calibration bin."""
 
-    if include_upper:
+    lower = bounds.lower
+    upper = bounds.upper
+    if bounds.include_upper:
         mask = (predicted_change >= lower) & (predicted_change <= upper)
     else:
         mask = (predicted_change >= lower) & (predicted_change < upper)

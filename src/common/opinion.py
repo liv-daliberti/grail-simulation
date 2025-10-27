@@ -61,12 +61,22 @@ class OpinionExample:
     before: float
     after: float
 
+
+@dataclass(frozen=True)
+class OpinionExampleInputs:
+    """Standardised collection of participant identifiers and opinion values."""
+
+    participant_id: str
+    document: str
+    before: float
+    after: float
+
+
 ExampleT = TypeVar("ExampleT")
 
 
 @dataclass(frozen=True)
-# pylint: disable=too-many-instance-attributes
-class OpinionCalibrationMetrics:
+class OpinionCalibrationMetrics:  # pylint: disable=too-many-instance-attributes
     """Common calibration and baseline metrics shared across pipelines."""
 
     baseline_accuracy: Optional[float] = None
@@ -89,10 +99,7 @@ def build_opinion_example(
     spec: OpinionSpec,
     *,
     factory: Callable[..., ExampleT],
-    participant_id: str,
-    document: str,
-    before: float,
-    after: float,
+    inputs: OpinionExampleInputs,
     **extra_fields: object,
 ) -> ExampleT:
     """
@@ -102,14 +109,8 @@ def build_opinion_example(
     :type spec: OpinionSpec
     :param factory: Callable (usually a dataclass) used to instantiate the example.
     :type factory: Callable[..., ExampleT]
-    :param participant_id: Unique participant identifier sourced from the dataset.
-    :type participant_id: str
-    :param document: Assembled prompt text for the participant.
-    :type document: str
-    :param before: Pre-study opinion index value.
-    :type before: float
-    :param after: Post-study opinion index value.
-    :type after: float
+    :param inputs: Structured collection of participant identifiers and values.
+    :type inputs: OpinionExampleInputs
     :param extra_fields: Additional keyword arguments forwarded to ``factory``.
     :type extra_fields: object
     :returns: Instance created by ``factory`` populated with shared fields.
@@ -117,20 +118,17 @@ def build_opinion_example(
     """
 
     base_kwargs = spec.build_example_kwargs(
-        participant_id=participant_id,
-        document=document,
-        before=before,
-        after=after,
+        participant_id=inputs.participant_id,
+        document=inputs.document,
+        before=inputs.before,
+        after=inputs.after,
     )
     return factory(**base_kwargs, **extra_fields)
 
 
 def make_opinion_example(
     spec: OpinionSpec,
-    participant_id: str,
-    document: str,
-    before: float,
-    after: float,
+    inputs: OpinionExampleInputs,
     *,
     factory: Callable[..., ExampleT] = OpinionExample,
     **extra_fields: object,
@@ -145,10 +143,7 @@ def make_opinion_example(
     return build_opinion_example(
         spec,
         factory=factory,
-        participant_id=participant_id,
-        document=document,
-        before=before,
-        after=after,
+        inputs=inputs,
         **extra_fields,
     )
 
@@ -250,6 +245,7 @@ def opinion_example_kwargs(  # pylint: disable=too-many-arguments
 __all__ = [
     "DEFAULT_SPECS",
     "OpinionExample",
+    "OpinionExampleInputs",
     "OpinionCalibrationMetrics",
     "OpinionSpec",
     "build_opinion_example",

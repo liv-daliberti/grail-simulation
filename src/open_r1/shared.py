@@ -215,7 +215,7 @@ def build_grpo_trainer(
     model_args: Any,
     tokenizer: Any,
     peft_config_fn: Optional[Callable[[Any], Any]] = None,
-) -> Any:
+) -> Any:  # pylint: disable=too-many-arguments
     """Instantiate a GRPO trainer with the shared configuration knobs."""
 
     peft_config = peft_config_fn(model_args) if peft_config_fn is not None else None
@@ -311,7 +311,7 @@ def configure_and_run_grpo_trainer(
     script_args: Any,
     peft_config_fn: Optional[Callable[[Any], Any]] = None,
     evaluate_fn_factory: Optional[EvalFnFactory] = None,
-) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:
+) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:  # pylint: disable=too-many-arguments
     """
     Build a GRPO trainer using shared defaults and execute the training loop.
 
@@ -370,7 +370,7 @@ def prepare_model_eval_and_run_grpo(
     prefix: str,
     peft_config_fn: Optional[Callable[[Any], Any]] = None,
     evaluate_fn_factory: Optional[EvalFnFactory] = None,
-) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:
+) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:  # pylint: disable=too-many-arguments
     """
     Build the GRPO model, prepare evaluation state, and run the shared trainer loop.
 

@@ -20,6 +20,9 @@ This report tracks the supplementary text columns appended to the prompt builder
 | Study 3 – Minimum Wage (YouGov) | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
 | Study 1 – Gun Control (MTurk) | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 | Study 2 – Minimum Wage (MTurk) | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | `viewer_profile`, `state_text` |
+| Study 2 – Minimum Wage (MTurk) | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 

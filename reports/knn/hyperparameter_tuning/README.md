@@ -20,14 +20,14 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text | 0.717 | 0.540 | +0.177 | 3 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
-| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | 0.352 | 0.368 | -0.016 | 3 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text, freq_youtube | 0.359 | 0.368 | -0.009 | 3 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube` |
 
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.717 (baseline 0.540, Δ +0.177, k=3) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.352 (baseline 0.368, Δ -0.016, k=3) using cosine distance with viewer_profile, state_text.
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.717 (baseline 0.540, Δ +0.177, k=3) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.359 (baseline 0.368, Δ -0.009, k=3) using cosine distance with viewer_profile, state_text, freq_youtube.
   Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
-  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube`
 
 
 ### Configuration Leaderboards
@@ -45,8 +45,11 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | 12 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, religpew | 0.717 | 0.540 | +0.177 | 3 | 548 |
 | 13 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, religpew | 0.352 | 0.368 | -0.016 | 3 | 671 |
 | 15 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, freq_youtube | 0.692 | 0.540 | +0.151 | 3 | 548 |
+| 16 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, freq_youtube | 0.359 | 0.368 | -0.009 | 3 | 671 |
 | 18 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, youtube_time | 0.717 | 0.540 | +0.177 | 3 | 548 |
+| 19 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, youtube_time | 0.352 | 0.368 | -0.016 | 3 | 671 |
 | 21 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, newsint | 0.717 | 0.540 | +0.177 | 3 | 548 |
+| 24 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, slate_source | 0.697 | 0.540 | +0.157 | 3 | 548 |
 
 
 ## Post-Study Opinion Regression

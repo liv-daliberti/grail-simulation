@@ -17,6 +17,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | 0.987 | 0.991 | 541/546 | 0.996 | 0.930 | 548 |
 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10 | 0.985 | 0.989 | 540/546 | 0.996 | 0.925 | 548 |
 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l21_l10 | 0.985 | 0.989 | 540/546 | 0.996 | 0.914 | 548 |
+| tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | 0.985 | 0.989 | 540/546 | 0.996 | 0.933 | 548 |
 
 ### Study 2 – Minimum Wage (MTurk)
 
@@ -27,6 +28,8 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | **tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10** | 0.993 | 0.993 | 666/671 | 1.000 | 0.960 | 671 |
 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l20p5_l10 | 0.993 | 0.993 | 666/671 | 1.000 | 0.965 | 671 |
 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | 0.993 | 0.993 | 666/671 | 1.000 | 0.962 | 671 |
+| tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | 0.993 | 0.993 | 666/671 | 1.000 | 0.963 | 671 |
+| tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l21_l10 | 0.993 | 0.993 | 666/671 | 1.000 | 0.962 | 671 |
 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l21_l10 | 0.991 | 0.991 | 665/671 | 1.000 | 0.955 | 671 |
 
 ### Study 3 – Minimum Wage (YouGov)
@@ -49,6 +52,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | 2 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | 0.987 | 0.000 | 0.991 | 0.000 | 548 |
 | 3 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10 | 0.985 | 0.002 | 0.989 | 0.002 | 548 |
 | 4 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l21_l10 | 0.985 | 0.002 | 0.989 | 0.002 | 548 |
+| 5 | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | 0.985 | 0.002 | 0.989 | 0.002 | 548 |
 
 #### Study 2 – Minimum Wage (MTurk)
 
@@ -57,7 +61,9 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | 1 | **tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10** | 0.993 | 0.000 | 0.993 | 0.000 | 671 |
 | 2 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l20p5_l10 | 0.993 | 0.000 | 0.993 | 0.000 | 671 |
 | 3 | tfidf_lr0p03_depth3_estim200_sub0p9_col0p8_l21_l10 | 0.993 | 0.000 | 0.993 | 0.000 | 671 |
-| 4 | tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l21_l10 | 0.991 | 0.001 | 0.991 | 0.001 | 671 |
+| 4 | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l20p5_l10 | 0.993 | 0.000 | 0.993 | 0.000 | 671 |
+| 5 | tfidf_lr0p03_depth3_estim300_sub0p75_col0p8_l21_l10 | 0.993 | 0.000 | 0.993 | 0.000 | 671 |
+*Showing top 5 of 6 configurations.*
 
 #### Study 3 – Minimum Wage (YouGov)
 

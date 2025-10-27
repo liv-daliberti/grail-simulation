@@ -20,8 +20,11 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_religpew | `viewer_profile`, `state_text`, `religpew` |
 | tfidf | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_religpew | `viewer_profile`, `state_text`, `religpew` |
 | tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_freqyoutube | `viewer_profile`, `state_text`, `freq_youtube` |
+| tfidf | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_freqyoutube | `viewer_profile`, `state_text`, `freq_youtube` |
 | tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_youtubetime | `viewer_profile`, `state_text`, `youtube_time` |
+| tfidf | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_youtubetime | `viewer_profile`, `state_text`, `youtube_time` |
 | tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_newsint | `viewer_profile`, `state_text`, `newsint` |
+| tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_slatesource | `viewer_profile`, `state_text`, `slate_source` |
 
 ### Final Evaluations
 
@@ -40,4 +43,4 @@ No opinion metrics were recorded.
 ## Summary
 
 - Default extra text fields: `viewer_profile`, `state_text`
-- Additional fields observed: `freq_youtube`, `ideo1`, `ideo2`, `newsint`, `pol_interest`, `religpew`, `youtube_time`
+- Additional fields observed: `freq_youtube`, `ideo1`, `ideo2`, `newsint`, `pol_interest`, `religpew`, `slate_source`, `youtube_time`

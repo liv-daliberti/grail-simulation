@@ -33,6 +33,7 @@ from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 from common.report_fields import (
     NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS,
+    next_video_coverage_mapping as _coverage_map,
 )
 
 from ..pipeline_context import NextVideoMetricSummary, StudySelection
@@ -823,11 +824,7 @@ def _write_metrics_csv(
                     "correct": summary.correct,
                     "evaluated": summary.evaluated,
                     "correct_eligible": summary.correct_eligible,
-                    "coverage": summary.coverage,
-                    "known_hits": summary.known_hits,
-                    "known_total": summary.known_total,
-                    "known_availability": summary.known_availability,
-                    "avg_probability": summary.avg_probability,
+                    **_coverage_map(summary),
                     "baseline_accuracy": summary.baseline_most_frequent_accuracy,
                     "random_baseline_accuracy": summary.random_baseline_accuracy,
                 }

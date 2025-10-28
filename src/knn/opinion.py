@@ -181,6 +181,7 @@ def collect_examples(
         len(dataset),
     )
     per_participant: Dict[Tuple[str, str], OpinionExample] = {}
+    sample_doc: Optional[str] = None
 
     for idx in range(len(dataset)):
         example = dataset[int(idx)]
@@ -193,6 +194,8 @@ def collect_examples(
         document = assemble_document(example, extra_fields)
         if not document:
             continue
+        if sample_doc is None:
+            sample_doc = document
         try:
             step_index = int(example.get("step_index") or -1)
         except (TypeError, ValueError):
@@ -219,6 +222,8 @@ def collect_examples(
         len(collapsed),
         len(dataset),
     )
+    if sample_doc:
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc[:200])
 
     if max_examples and 0 < max_examples < len(collapsed):
         rng = default_rng(seed)
@@ -245,7 +250,7 @@ def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]
     matrix = vectorizer.fit_transform(documents).astype(np.float32)
     return vectorizer, matrix
 
-def build_index(
+def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument
     *,
     examples: Sequence[OpinionExample],
     feature_space: str,
@@ -1315,6 +1320,13 @@ def _evaluate_opinion_study(
         extra_fields=context.extra_fields,
         max_examples=int(getattr(context.args, "eval_max", 0) or 0),
         seed=int(getattr(context.args, "knn_seed", 42)),
+    )
+    # Log participant counts for sweep visibility
+    LOGGER.info(
+        "[OPINION] study=%s train_participants=%d eval_participants=%d",
+        spec.key,
+        len(train_examples),
+        len(eval_examples),
     )
     if not eval_examples:
         LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)

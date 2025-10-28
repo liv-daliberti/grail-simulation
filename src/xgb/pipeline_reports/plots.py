@@ -313,11 +313,11 @@ def _decorate_curve_labels(
     return decorated
 
 
-def _compute_grid(n: int) -> Tuple[int, int]:
+def _compute_grid(num_items: int) -> Tuple[int, int]:
     """Compute a reasonable (rows, cols) grid for ``n`` plots."""
 
-    cols = min(3, max(1, n))
-    rows = int(math.ceil(n / cols))
+    cols = min(3, max(1, num_items))
+    rows = int(math.ceil(num_items / cols))
     return rows, cols
 
 

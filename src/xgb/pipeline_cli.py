@@ -39,6 +39,7 @@ from common.cli_options import (
 )
 
 from .data import issues_in_dataset, load_dataset_source
+from .cli import DEFAULT_XGB_TEXT_FIELDS
 from .opinion import DEFAULT_SPECS
 from .pipeline_context import StudySpec, SweepConfig
 
@@ -100,8 +101,11 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     )
     parser.add_argument(
         "--extra-text-fields",
-        default="",
-        help="Comma-separated extra text fields appended to prompt documents.",
+        default=DEFAULT_XGB_TEXT_FIELDS,
+        help=(
+            "Comma-separated extra text fields appended to prompt documents. "
+            "Defaults mirror the xgb CLI extended text fields."
+        ),
     )
     parser.add_argument(
         "--max-train",

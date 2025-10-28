@@ -378,7 +378,12 @@ def prepare_sweep_tasks(
     """
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
-    all_study_keys = tuple(spec.key for spec in studies)
+
+    # Train on the companion studies (exclude the current hold-in study).
+    study_keys = tuple(spec.key for spec in studies)
+
+    def _train_keys_for(study_key: str) -> tuple[str, ...]:
+        return tuple(key for key in study_keys if key != study_key)
 
     return prepare_task_grid(
         configs,
@@ -390,9 +395,7 @@ def prepare_sweep_tasks(
             study=study,
             context=context,
             cli_args=(base_cli_tuple, extra_cli_tuple),
-            train_study_keys=tuple(
-                key for key in all_study_keys if key != study.key
-            ),
+            train_study_keys=_train_keys_for(study.key),
         ),
         cache=TaskCacheStrategy(load_cached=_load_cached_outcome),
     )
@@ -557,16 +560,14 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
     cli_args.extend(["--out-dir", str(run_root)])
     cli_args.extend(task.extra_cli)
     if task.train_participant_studies:
-        cli_args.extend(
-            [
-                "--train-participant-studies",
-                ",".join(task.train_participant_studies),
-            ]
-        )
+        cli_args.extend([
+            "--train-participant-studies",
+            ",".join(task.train_participant_studies),
+        ])
     else:
-        LOGGER.warning(
-            "[SWEEP] feature=%s study=%s has no alternate training studies; "
-            "falling back to default training cohort.",
+        # Within-study training: do not include alternate studies.
+        LOGGER.info(
+            "[SWEEP] feature=%s study=%s training restricted to within-study only.",
             task.config.feature_space,
             task.study.key,
         )

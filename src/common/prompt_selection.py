@@ -301,7 +301,7 @@ class PromptSelectionHelper:
 
             return document, video_id, label_title
 
-        _indices, triples = collect_selected_examples(
+        indices, triples = collect_selected_examples(
             train_ds,
             max_train=max_train,
             seed=seed,
@@ -312,6 +312,31 @@ class PromptSelectionHelper:
             raise RuntimeError("No eligible documents were generated for training.")
 
         documents, label_ids, label_titles = zip(*triples)
+
+        # Emit a concise summary and an example prompt to aid debugging.
+        try:
+            dropped = len(indices) - len(triples)
+            prefix = f"{self.builder.log_prefix} " if self.builder.log_prefix else ""
+            self.builder.logger.info(
+                "%sAssembled %d selection-aware documents (kept %d non-empty).",
+                prefix,
+                len(indices),
+                len(triples),
+            )
+            if documents:
+                sample = str(documents[0])[:200]
+                self.builder.logger.info("%sExample doc: %r", prefix, sample)
+            if dropped > 0:
+                self.builder.logger.warning(
+                    "%sDropped %d empty docs out of %d.",
+                    prefix,
+                    dropped,
+                    len(indices),
+                )
+        except (TypeError, ValueError, AttributeError, RuntimeError, IndexError):  # pragma: no cover - best-effort logging
+            # Best-effort logging; continue silently if unexpected formatting issues occur.
+            pass
+
         return list(documents), list(label_ids), list(label_titles)
 
     def prepare_prompt_documents(

@@ -22,6 +22,9 @@ from common.prompt_docs import (
     create_prompt_document_builder,
 )
 from common.prompt_selection import PromptSelectionHelper as _PromptSelectionHelper
+from common.prompt_selection import (
+    PROMPT_SELECTION_EXPORT_ATTRS as _PROMPT_EXPORTS,
+)
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
@@ -83,14 +86,6 @@ def prepare_prompt_documents(
         extra_fields,
     )
 
-__all__ = [
-    "DEFAULT_TITLE_DIRS",
-    "title_for",
-    "viewer_profile_sentence",
-    "prompt_from_builder",
-    "extract_now_watching",
-    "extract_slate_items",
-    "assemble_document",
-    "prepare_training_documents",
-    "prepare_prompt_documents",
-]
+# Build exports from the shared selection export list to avoid duplication.
+_CORE_EXPORTS = [name for name in _PROMPT_EXPORTS if name in globals()]
+__all__ = ["DEFAULT_TITLE_DIRS", *_CORE_EXPORTS]

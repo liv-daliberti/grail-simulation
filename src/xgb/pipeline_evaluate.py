@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
+import json
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
@@ -44,7 +45,6 @@ from .pipeline_context import (
 )
 from .pipeline_sweeps import (
     _inject_study_metadata,
-    _load_loso_metrics_from_disk,
     _load_metrics,
     _load_metrics_with_log,
     _load_opinion_from_next_metrics_from_disk,
@@ -106,7 +106,7 @@ def _opinion_vectorizer_config(
 def _run_final_evaluations(
     *,
     selections: Mapping[str, StudySelection],
-    studies: Sequence[StudySpec],
+    studies: Sequence[StudySpec],  # pylint: disable=unused-argument
     context: FinalEvalContext,
 ) -> Dict[str, Mapping[str, object]]:
     """
@@ -151,19 +151,11 @@ def _run_final_evaluations(
         cli_args.extend(selection.config.cli_args(context.tree_method))
         cli_args.extend(["--issues", selection.study.issue])
         cli_args.extend(["--participant_studies", selection.study.key])
-        cli_args.extend(["--out_dir", str(context.out_dir)])
-        train_studies = [
-            spec.key for spec in studies if spec.key != selection.study.key
-        ]
+        # Train on companion studies (exclude the current evaluation study)
+        train_studies = [spec.key for spec in studies if spec.key != selection.study.key]
         if train_studies:
             cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
-        else:
-            LOGGER.warning(
-                "[FINAL] issue=%s study=%s has no alternate training studies; "
-                "falling back to default training cohort.",
-                selection.study.issue,
-                selection.study.key,
-            )
+        cli_args.extend(["--out_dir", str(context.out_dir)])
         if context.save_model_dir is not None:
             cli_args.extend(["--save_model", str(context.save_model_dir)])
         cli_args.extend(context.extra_cli)
@@ -174,7 +166,39 @@ def _run_final_evaluations(
             selection.config.label(),
         )
         _run_xgb_cli(cli_args)
-        metrics = dict(_load_metrics(metrics_path))
+        # Tolerate missing metrics (e.g., evaluator skipped due to empty rows)
+        metrics = _load_metrics_with_log(
+            metrics_path,
+            selection.study,
+            log_level=logging.WARNING,
+            message=(
+                "[FINAL][MISS] issue=%s study=%s missing metrics at %s; "
+                "recording placeholder outcome."
+            ),
+        )
+        if metrics is None:
+            metrics = {
+                "issue": selection.study.evaluation_slug,
+                "participant_studies": [selection.study.key],
+                "evaluated": 0,
+                "correct": 0,
+                "accuracy": 0.0,
+                "known_candidate_hits": 0,
+                "known_candidate_total": 0,
+                "coverage": 0.0,
+                "eligible": 0,
+                "skipped": True,
+                "skip_reason": "No metrics written (evaluation skipped)",
+            }
+            metrics_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(metrics_path, "w", encoding="utf-8") as handle:
+                    json.dump(metrics, handle, indent=2)
+            except OSError:  # pragma: no cover - best-effort breadcrumb
+                LOGGER.debug(
+                    "[FINAL][MISS] Unable to write placeholder metrics at %s",
+                    metrics_path,
+                )
         _inject_study_metadata(metrics, selection.study)
         metrics_by_study[study_key] = metrics
     return metrics_by_study
@@ -186,75 +210,42 @@ def _run_cross_study_evaluations(
     studies: Sequence[StudySpec],
     context: FinalEvalContext,
 ) -> Dict[str, Mapping[str, object]]:
-    """
-    Execute leave-one-study-out evaluations for the selected configurations.
+    """Run leave-one-study-out evaluations for the selected configurations."""
 
-    :param selections: Mapping from study key to chosen sweep outcome.
-    :type selections: Mapping[str, StudySelection]
-    :param studies: Ordered list of studies used to determine hold-out rotations.
-    :type studies: Sequence[StudySpec]
-    :param context: Runtime configuration describing CLI arguments and output paths.
-    :type context: FinalEvalContext
-    :returns: Mapping from hold-out study key to metrics payload.
-    :rtype: Dict[str, Mapping[str, object]]
-    """
-
-    if not selections:
+    if not selections or len(studies) <= 1:
         return {}
 
-    loso_root = context.out_dir / "loso"
-    loso_root.mkdir(parents=True, exist_ok=True)
+    # Ensure output directory exists
+    context.out_dir.mkdir(parents=True, exist_ok=True)
 
-    cached: Dict[str, Mapping[str, object]] = {}
-    if context.reuse_existing:
-        cached = _load_loso_metrics_from_disk(
-            next_video_dir=context.out_dir,
-            studies=studies,
-        )
-    results: Dict[str, Mapping[str, object]] = dict(cached)
-
+    results: Dict[str, Mapping[str, object]] = {}
     for spec in studies:
         selection = selections.get(spec.key)
         if selection is None:
             continue
-        if context.reuse_existing and spec.key in cached:
-            LOGGER.info(
-                "[LOSO][SKIP] issue=%s study=%s (metrics cached).",
-                spec.issue,
-                spec.key,
-            )
-            continue
-        train_studies = [other.key for other in studies if other.key != spec.key]
-        if not train_studies:
-            LOGGER.warning(
-                "[LOSO] Skipping issue=%s study=%s (no alternate training studies).",
-                spec.issue,
-                spec.key,
-            )
-            continue
+        LOGGER.info("[LOSO] holdout=%s issue=%s", spec.key, spec.issue)
+        metrics_path = context.out_dir / spec.evaluation_slug / "metrics.json"
         cli_args: List[str] = []
         cli_args.extend(context.base_cli)
         cli_args.extend(selection.config.cli_args(context.tree_method))
         cli_args.extend(["--issues", spec.issue])
-        cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
         cli_args.extend(["--participant_studies", spec.key])
-        cli_args.extend(["--out_dir", str(loso_root)])
+        # Train on the companion cohort (exclude the holdout)
+        train_studies = [s.key for s in studies if s.key != spec.key]
+        if train_studies:
+            cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
+        cli_args.extend(["--out_dir", str(context.out_dir)])
         cli_args.extend(context.extra_cli)
-        LOGGER.info(
-            "[LOSO] issue=%s holdout=%s train_studies=%s",
-            spec.issue,
-            spec.key,
-            ",".join(train_studies),
-        )
         _run_xgb_cli(cli_args)
-        metrics_path = loso_root / spec.evaluation_slug / "metrics.json"
-        metrics = _load_metrics_with_log(
-            metrics_path,
-            spec,
-            log_level=logging.WARNING,
-            message="[LOSO] issue=%s study=%s missing metrics at %s.",
-        )
-        if metrics is None:
+
+        try:
+            metrics = dict(_load_metrics(metrics_path))
+        except FileNotFoundError:
+            LOGGER.warning(
+                "[LOSO][MISS] holdout=%s expected metrics at %s; skipping.",
+                spec.key,
+                metrics_path,
+            )
             continue
         _inject_study_metadata(metrics, spec)
         results[spec.key] = metrics

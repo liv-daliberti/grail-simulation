@@ -202,8 +202,14 @@ apply_default_sweep_grids() {
 }
 
 check_python_env() {
+  # Build required module list based on configured feature spaces.
+  local -a required=(datasets xgboost sklearn)
+  local text_grid="${XGB_TEXT_VECTORIZER_GRID:-tfidf,word2vec,sentence_transformer}"
+  if [[ ",${text_grid}," == *",sentence_transformer,"* ]]; then
+    required+=(sentence_transformers)
+  fi
   local -a missing=()
-  for module in datasets sentence_transformers; do
+  for module in "${required[@]}"; do
     if ! "${PYTHON_BIN}" - <<PY >/dev/null 2>&1
 import importlib
 import sys

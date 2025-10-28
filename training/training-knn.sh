@@ -218,8 +218,17 @@ ensure_tasks_flag() {
 }
 
 check_python_env() {
+  # Build required module list based on configured feature spaces.
+  local features="${KNN_FEATURE_SPACES:-tfidf,word2vec,sentence_transformer}"
+  local -a required=(datasets sklearn)
+  if [[ ",${features}," == *",sentence_transformer,"* ]]; then
+    required+=(sentence_transformers)
+  fi
+  if [[ ",${features}," == *",word2vec,"* ]]; then
+    required+=(gensim)
+  fi
   local -a missing=()
-  for module in datasets sentence_transformers; do
+  for module in "${required[@]}"; do
     if ! "${PYTHON_BIN}" - <<PY >/dev/null 2>&1
 import importlib
 import sys

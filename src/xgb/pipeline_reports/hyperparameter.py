@@ -34,6 +34,7 @@ from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
 from common.report_fields import (
     NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS,
+    next_video_coverage_mapping as _coverage_map,
 )
 
 from ..pipeline_context import (
@@ -328,11 +329,7 @@ def _write_next_video_sweeps_csv(directory: Path, outcomes: Sequence[SweepOutcom
                     "config_label": outcome.config.label(),
                     "accuracy": summary.accuracy,
                     "accuracy_eligible": summary.accuracy_eligible,
-                    "coverage": summary.coverage,
-                    "known_hits": summary.known_hits,
-                    "known_total": summary.known_total,
-                    "known_availability": summary.known_availability,
-                    "avg_probability": summary.avg_probability,
+                    **_coverage_map(summary),
                     "evaluated": summary.evaluated,
                 }
             )

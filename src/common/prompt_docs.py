@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Utilities for assembling prompt documents from cleaned GRAIL datasets."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from pathlib import Path
 
 from common import canon_text, canon_video_id, get_logger
 from common.prompt_fields import (
@@ -48,10 +50,38 @@ _TITLE_INDEX_ROOT = (
     "/n/fs/similarity/trees/data/results/"
     "capsule-5416997-data/recommendation trees"
 )
-DEFAULT_TITLE_DIRS = [
-    f"{_TITLE_INDEX_ROOT}/trees_gun",
-    f"{_TITLE_INDEX_ROOT}/trees_wage",
-]
+
+def _default_title_dirs() -> List[str]:
+    """Return plausible default directories for title CSVs.
+
+    Includes both cluster-absolute paths and repo-local fallbacks so that
+    titles load in developer environments without extra configuration.
+    """
+    # Absolute (cluster) locations used in shared environments.
+    dirs: List[str] = [
+        f"{_TITLE_INDEX_ROOT}/trees_gun",
+        f"{_TITLE_INDEX_ROOT}/trees_wage",
+    ]
+    # Repo-local fallback: capsule-5416997/data/recommendation trees/trees_*/
+    try:
+        repo_root = Path(__file__).resolve().parents[2]
+        local_base = repo_root / "capsule-5416997" / "data" / "recommendation trees"
+        dirs.append(str(local_base / "trees_gun"))
+        dirs.append(str(local_base / "trees_wage"))
+    except (OSError, RuntimeError, IndexError):  # pragma: no cover - defensive fallback
+        # Resolution/parent traversal may fail on unusual filesystems or layouts.
+        pass
+    # De-duplicate while preserving order.
+    seen: set[str] = set()
+    ordered: List[str] = []
+    for path in dirs:
+        if path not in seen:
+            seen.add(path)
+            ordered.append(path)
+    return ordered
+
+# Materialize at import time so other modules can re-export a concrete list.
+DEFAULT_TITLE_DIRS = _default_title_dirs()
 
 DEFAULT_EXTRA_TEXT_FIELDS: Tuple[str, ...] = ("viewer_profile", "state_text")
 
@@ -77,7 +107,7 @@ EXTRA_FIELD_LABELS: Dict[str, str] = {
 EXTRA_FIELD_LABELS.update(prompt_constants.MIN_WAGE_FIELD_LABELS)
 EXTRA_FIELD_LABELS.update(prompt_constants.GUN_FIELD_LABELS)
 
-_TITLE_RESOLVER_CACHE: Optional[TitleResolver] = None
+_title_resolver_cache: Optional[TitleResolver] = None
 
 
 def merge_default_extra_fields(extra_fields: Sequence[str] | None) -> Tuple[str, ...]:
@@ -122,10 +152,10 @@ def default_title_resolver() -> TitleResolver:
 
     """
 
-    global _TITLE_RESOLVER_CACHE  # pylint: disable=global-statement
-    if _TITLE_RESOLVER_CACHE is None:
-        _TITLE_RESOLVER_CACHE = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
-    return _TITLE_RESOLVER_CACHE
+    global _title_resolver_cache  # pylint: disable=global-statement
+    if _title_resolver_cache is None:
+        _title_resolver_cache = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
+    return _title_resolver_cache
 
 
 def create_prompt_document_builder(

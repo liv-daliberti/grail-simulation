@@ -22,8 +22,11 @@ stages can select the best configurations.
 
 from __future__ import annotations
 
+# pylint: disable=too-many-lines
+
 import logging
 from dataclasses import replace
+import json
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -133,16 +136,14 @@ def _iter_sweep_tasks(
 
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
-    all_study_keys = tuple(spec.key for spec in studies)
+    # Restrict training to the same study: do not include alternates.
     tasks: List[SweepTask] = []
     task_index = 0
     for config in configs:
         for study in studies:
             run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
             metrics_path = run_root / study.evaluation_slug / "metrics.json"
-            train_studies = tuple(
-                key for key in all_study_keys if key != study.key
-            )
+            train_studies: Tuple[str, ...] = tuple()
             tasks.append(
                 SweepTask(
                     index=task_index,
@@ -530,7 +531,38 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     )
     run_opinion_eval(request=request, studies=[task.study.key])
 
-    metrics = _load_metrics(task.metrics_path)
+    # Opinion evaluations may be skipped (e.g., no train/eval rows).
+    # Tolerate missing metrics by logging and returning a placeholder outcome.
+    metrics = _load_metrics_with_log(
+        task.metrics_path,
+        task.study,
+        log_level=logging.WARNING,
+        message=(
+            "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
+            "recording placeholder outcome."
+        ),
+    )
+    if metrics is None:
+        metrics = {
+            "model": "xgb_opinion",
+            "feature_space": task.feature_space,
+            "study": task.study.key,
+            "issue": task.study.issue,
+            "split": "validation",
+            "metrics": {},
+            "baseline": {},
+            "skipped": True,
+        }
+        # Persist a small breadcrumb so reuse/caching can detect the skip later.
+        task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(task.metrics_path, "w", encoding="utf-8") as handle:
+                json.dump(metrics, handle, indent=2)
+        except OSError:  # pragma: no cover - best-effort breadcrumb
+            LOGGER.debug(
+                "[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
+                task.metrics_path,
+            )
     return _opinion_sweep_outcome_from_metrics(task, metrics, task.metrics_path)
 
 
@@ -829,16 +861,14 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     cli_args.extend(["--out_dir", str(run_root)])
     cli_args.extend(task.extra_cli)
     if task.train_participant_studies:
-        cli_args.extend(
-            [
-                "--train_participant_studies",
-                ",".join(task.train_participant_studies),
-            ]
-        )
+        cli_args.extend([
+            "--train_participant_studies",
+            ",".join(task.train_participant_studies),
+        ])
     else:
-        LOGGER.warning(
-            "[SWEEP] issue=%s study=%s has no alternate training studies; "
-            "falling back to default training cohort.",
+        # Within-study training: do not include alternate studies.
+        LOGGER.info(
+            "[SWEEP] issue=%s study=%s training restricted to within-study only.",
             task.study.issue,
             task.study.key,
         )
@@ -875,7 +905,41 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     )
     _run_xgb_cli(cli_args)
 
-    metrics = _load_metrics(task.metrics_path)
+    # Handle runs that were skipped by the evaluator (e.g., no train/eval rows)
+    # by logging and producing a placeholder outcome instead of raising.
+    metrics = _load_metrics_with_log(
+        task.metrics_path,
+        task.study,
+        log_level=logging.WARNING,
+        message=(
+            "[SWEEP][MISS] issue=%s study=%s missing metrics at %s; "
+            "recording placeholder outcome."
+        ),
+    )
+    if metrics is None:
+        metrics = {
+            "issue": task.study.evaluation_slug,
+            "participant_studies": [task.study.key],
+            "evaluated": 0,
+            "correct": 0,
+            "accuracy": 0.0,
+            "known_candidate_hits": 0,
+            "known_candidate_total": 0,
+            "coverage": 0.0,
+            "eligible": 0,
+            "extra_fields": [],
+            "skipped": True,
+        }
+        # Persist a small breadcrumb so reuse/caching can detect the skip later.
+        task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(task.metrics_path, "w", encoding="utf-8") as handle:
+                json.dump(metrics, handle, indent=2)
+        except OSError:  # pragma: no cover - best-effort breadcrumb
+            LOGGER.debug(
+                "[SWEEP][MISS] Unable to write placeholder metrics at %s",
+                task.metrics_path,
+            )
     return SweepOutcome(
         order_index=task.index,
         study=task.study,

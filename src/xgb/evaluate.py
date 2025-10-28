@@ -331,6 +331,16 @@ def _evaluate_issue(
     train_rows = len(train_ds)
     eval_rows = len(eval_ds)
 
+    # Emit dataset sizes up-front for sweep visibility
+    logger.info(
+        "[XGBoost] issue=%s train_rows=%d eval_rows=%d train_studies=%s eval_studies=%s",
+        issue_slug,
+        train_rows,
+        eval_rows,
+        ",".join(train_tokens) or "all",
+        ",".join(eval_tokens) or "all",
+    )
+
     if train_rows == 0 or eval_rows == 0:
         logger.warning(
             "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant "
@@ -341,6 +351,27 @@ def _evaluate_issue(
             ",".join(train_tokens) or "all",
             ",".join(eval_tokens) or "all",
         )
+        # Emit a minimal metrics.json so downstream reuse/caching can detect a skip.
+        out_dir = Path(args.out_dir) / issue_slug
+        ensure_directory(out_dir)
+        skipped_payload = {
+            "issue": issue_slug,
+            "participant_studies": list(eval_tokens),
+            "dataset_source": context.dataset_source,
+            "evaluated": 0,
+            "correct": 0,
+            "accuracy": 0.0,
+            "known_candidate_hits": 0,
+            "known_candidate_total": 0,
+            "coverage": 0.0,
+            "eligible": 0,
+            "timestamp": time.time(),
+            "extra_fields": list(context.extra_fields),
+            "skipped": True,
+            "skip_reason": "No train/eval rows after filters",
+        }
+        with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
+            json.dump(skipped_payload, handle, indent=2)
         return
 
     model = _load_or_train_model(
@@ -644,6 +675,10 @@ def _collect_prediction_records(
     :rtype: List[tuple[int, PredictionOutcome]]
     """
     records: List[tuple[int, PredictionOutcome]] = []
+    correct_so_far = 0
+    elig_seen_so_far = 0
+    elig_correct_so_far = 0
+    last_log = 0
     for index, example in enumerate(eval_ds):
         if config.eval_max and len(records) >= config.eval_max:
             break
@@ -653,6 +688,25 @@ def _collect_prediction_records(
             extra_fields=config.extra_fields,
         )
         records.append((index, outcome))
+        # Periodically log cumulative accuracy and eligible-only accuracy.
+        if outcome.correct:
+            correct_so_far += 1
+        if outcome.eligible:
+            elig_seen_so_far += 1
+            if outcome.correct:
+                elig_correct_so_far += 1
+        if len(records) - last_log >= 50:
+            last_log = len(records)
+            overall_acc = correct_so_far / len(records) if records else 0.0
+            elig_acc = (
+                (elig_correct_so_far / elig_seen_so_far) if elig_seen_so_far else 0.0
+            )
+            logger.info(
+                "[XGBoost][Eval] processed=%d overall_acc=%.4f eligible_acc=%.4f",
+                len(records),
+                overall_acc,
+                elig_acc,
+            )
     return records
 
 

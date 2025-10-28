@@ -11,4 +11,19 @@ NEXT_VIDEO_COVERAGE_FIELDS = (
     "avg_probability",
 )
 
-__all__ = ["NEXT_VIDEO_COVERAGE_FIELDS"]
+def next_video_coverage_mapping(summary) -> dict:
+    """Return a dict of next-video coverage fields for CSV writers.
+
+    The ``summary`` object is expected to expose attributes matching the
+    entries in :data:`NEXT_VIDEO_COVERAGE_FIELDS`.
+    """
+
+    return {
+        "coverage": getattr(summary, "coverage", None),
+        "known_hits": getattr(summary, "known_hits", None),
+        "known_total": getattr(summary, "known_total", None),
+        "known_availability": getattr(summary, "known_availability", None),
+        "avg_probability": getattr(summary, "avg_probability", None),
+    }
+
+__all__ = ["NEXT_VIDEO_COVERAGE_FIELDS", "next_video_coverage_mapping"]

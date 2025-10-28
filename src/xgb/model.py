@@ -21,6 +21,8 @@ import json
 import logging
 import math
 from dataclasses import dataclass, field
+import importlib
+import inspect
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
@@ -451,9 +453,105 @@ def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, 
     if batch.evaluation is not None:
         eval_set.append((batch.evaluation.matrix, batch.evaluation.labels))
     fit_kwargs: Dict[str, Any] = {"eval_set": eval_set, "verbose": False}
-    # Enable early stopping when a validation set is available.
-    if batch.evaluation is not None:
-        fit_kwargs["early_stopping_rounds"] = 50
+
+    # Attach callbacks when available. Prefer the official EarlyStopping callback
+    # (XGBoost >= 2.0) and fall back to logging-only when unavailable. A separate
+    # fallback to the legacy ``early_stopping_rounds`` kwarg is handled in
+    # ``_train_booster`` to keep compatibility with multiple XGBoost versions.
+    try:
+        # Import lazily via importlib to avoid pylint import-error when xgboost
+        # is not installed in the lint environment.
+        callback_mod = importlib.import_module("xgboost.callback")
+        training_callback_cls = getattr(
+            callback_mod, "TrainingCallback"
+        )  # type: ignore[attr-defined]
+        early_stopping_cls = getattr(
+            callback_mod, "EarlyStopping", None
+        )  # type: ignore[attr-defined]
+
+        class _ProgressLogger(training_callback_cls):  # type: ignore
+            # pylint: disable=too-few-public-methods
+            def __init__(self, interval: int = 25) -> None:
+                self._interval = max(1, int(interval))
+
+            def after_iteration(
+                self, _model, epoch: int, evals_log,
+            ) -> bool:  # type: ignore[override]
+                """Emit periodic training/eval metric summaries and continue."""
+                round_idx = int(epoch) + 1
+                if round_idx % self._interval != 0:
+                    return False
+                # Prefer classification error (merror); fall back to logloss.
+                def _metric_text(block: dict) -> str | None:
+                    if not isinstance(block, dict):
+                        return None
+                    if "merror" in block and block["merror"]:
+                        try:
+                            err = float(block["merror"][-1])
+                            return f"acc={1.0 - err:.4f}"
+                        except (
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            IndexError,
+                        ):  # pragma: no cover - defensive
+                            return None
+                    if "mlogloss" in block and block["mlogloss"]:
+                        try:
+                            return f"mlogloss={float(block['mlogloss'][-1]):.4f}"
+                        except (
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            IndexError,
+                        ):  # pragma: no cover - defensive
+                            return None
+                    return None
+
+                train_block = (
+                    evals_log.get("validation_0", {}) if hasattr(evals_log, "get") else {}
+                )
+                eval_block = (
+                    evals_log.get("validation_1", {}) if hasattr(evals_log, "get") else {}
+                )
+                train_text = _metric_text(train_block)
+                eval_text = _metric_text(eval_block)
+                parts = []
+                if train_text:
+                    parts.append(f"train {train_text}")
+                if eval_text:
+                    parts.append(f"eval {eval_text}")
+                if parts:
+                    LOGGER.info(
+                        "[XGB][Train] round=%d  %s",
+                        round_idx,
+                        "  ".join(parts),
+                    )
+                return False
+
+        callbacks: list[Any] = [_ProgressLogger(interval=25)]
+        # When an evaluation split is present, enable EarlyStopping via callback if available.
+        if batch.evaluation is not None and early_stopping_cls is not None:
+            try:
+                # Prefer minimising logloss on the validation split.
+                callbacks.append(
+                    early_stopping_cls(
+                        rounds=50,
+                        metric_name="mlogloss",
+                        data_name="validation_1",
+                    )
+                )
+            except TypeError:
+                # Older callback signature: fall back to just rounds
+                callbacks.append(early_stopping_cls(rounds=50))  # type: ignore[misc]
+        fit_kwargs["callbacks"] = callbacks
+    except (
+        ModuleNotFoundError,
+        ImportError,
+        AttributeError,
+        TypeError,
+    ):  # pragma: no cover - optional dependency or API mismatch
+        pass
     return fit_kwargs
 
 
@@ -530,6 +628,10 @@ def _train_booster(
     )
     fit_kwargs = _build_fit_kwargs(collect_history, batch)
     _ensure_history_metrics(booster, collect_history=collect_history)
+    # Ensure compatibility across XGBoost versions: only pass supported kwargs
+    # and fall back to legacy early_stopping_rounds when callbacks are not
+    # supported on the estimator.
+    _harmonize_classifier_fit_kwargs(booster, batch, fit_kwargs)
     try:
         booster.fit(batch.train.matrix, batch.train.labels, **fit_kwargs)
         return booster, _collect_training_history(booster, bool(fit_kwargs))
@@ -548,6 +650,38 @@ def _train_booster(
                 fit_kwargs=fit_kwargs,
             )
         raise
+
+
+def _harmonize_classifier_fit_kwargs(
+    booster: Any,
+    batch: TrainingBatch,
+    fit_kwargs: Dict[str, Any],
+) -> None:
+    """Prune unsupported kwargs and attach legacy early stopping when needed."""
+
+    try:
+        fit_sig = inspect.signature(getattr(booster, "fit"))
+        supports_callbacks = "callbacks" in fit_sig.parameters
+
+        callbacks = fit_kwargs.get("callbacks") if isinstance(fit_kwargs, dict) else None
+        if not supports_callbacks and isinstance(fit_kwargs, dict):
+            fit_kwargs.pop("callbacks", None)
+
+        has_es_callback = False
+        if supports_callbacks and isinstance(callbacks, (list, tuple)):
+            for cb in callbacks:
+                name = type(cb).__name__
+                if "EarlyStopping" in str(name):
+                    has_es_callback = True
+                    break
+
+        has_eval = batch.evaluation is not None
+        if has_eval and not has_es_callback and (
+            "early_stopping_rounds" in fit_sig.parameters
+        ):
+            fit_kwargs["early_stopping_rounds"] = 50
+    except (ValueError, TypeError, AttributeError):  # pragma: no cover - compatibility
+        return
 
 
 def _disable_gpu_boosters() -> None:

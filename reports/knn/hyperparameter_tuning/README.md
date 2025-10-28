@@ -20,12 +20,14 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text | 0.577 | 0.540 | +0.036 | 10 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | 0.353 | 0.368 | -0.015 | 25 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
 
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.577 (baseline 0.540, Δ +0.036, k=10) using cosine distance with viewer_profile, state_text.
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.577 (baseline 0.540, Δ +0.036, k=10) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.353 (baseline 0.368, Δ -0.015, k=25) using cosine distance with viewer_profile, state_text.
   Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
 
 
 ### Configuration Leaderboards
@@ -33,6 +35,7 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
 | ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | 0 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text | 0.577 | 0.540 | +0.036 | 10 | 548 |
+| 1 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text | 0.353 | 0.368 | -0.015 | 25 | 671 |
 
 
 ## Post-Study Opinion Regression

@@ -68,19 +68,33 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.648 | 0.074 | +0.574 | — | 162 | 0.082 | -0.045 | 0.114 | 0.843 |
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues gun_control --studies study1 --tree-method hist --learning-rate-grid 0.05 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
+### Study 2 – Minimum Wage (MTurk)
+
+*Issue:* Minimum Wage
+
+| Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.764 | 0.061 | +0.703 | — | 165 | 0.045 | +0.051 | 0.056 | 0.960 |
+  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study2 --tree-method hist --learning-rate-grid 0.05 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
+
 ### Portfolio Summary
 
-- Weighted MAE 0.082 across 162 participants.
-- Weighted baseline MAE 0.037 (-0.045 vs. final).
-- Weighted directional accuracy 0.648 across 162 participants.
-- Weighted baseline accuracy 0.074 (+0.574 vs. final).
-- Weighted RMSE (change) 0.114 across 162 participants.
-- Weighted baseline RMSE (change) 0.046 (-0.068 vs. final).
-- Weighted calibration ECE 0.076 across 162 participants.
-- Weighted KL divergence 0.533 across 162 participants.
-- Weighted baseline KL divergence 21.446 (+20.912 vs. final).
-- Largest MAE reduction: Study 1 – Gun Control (MTurk) (-0.045).
-- Highest directional accuracy: Study 1 – Gun Control (MTurk) (0.648).
-- Largest directional-accuracy gain: Study 1 – Gun Control (MTurk) (+0.574).
-- Largest RMSE(change) reduction: Study 1 – Gun Control (MTurk) (-0.068).
+- Weighted MAE 0.063 across 327 participants.
+- Weighted baseline MAE 0.067 (+0.003 vs. final).
+- Weighted directional accuracy 0.706 across 327 participants.
+- Weighted baseline accuracy 0.067 (+0.639 vs. final).
+- Weighted RMSE (change) 0.084 across 327 participants.
+- Weighted baseline RMSE (change) 0.092 (+0.008 vs. final).
+- Weighted calibration ECE 0.046 across 327 participants.
+- Weighted KL divergence 0.355 across 327 participants.
+- Weighted baseline KL divergence 19.893 (+19.538 vs. final).
+- Largest MAE reduction: Study 2 – Minimum Wage (MTurk) (+0.051).
+- Lowest MAE: Study 2 – Minimum Wage (MTurk) (0.045); Highest MAE: Study 1 – Gun Control (MTurk) (0.082).
+- Highest directional accuracy: Study 2 – Minimum Wage (MTurk) (0.764).
+- Lowest directional accuracy: Study 1 – Gun Control (MTurk) (0.648).
+- Largest directional-accuracy gain: Study 2 – Minimum Wage (MTurk) (+0.703).
+- Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (+0.082).
+- Lowest RMSE(change): Study 2 – Minimum Wage (MTurk) (0.056); Highest: Study 1 – Gun Control (MTurk) (0.114).
+- Lowest calibration ECE: Study 2 – Minimum Wage (MTurk) (0.016); Highest: Study 1 – Gun Control (MTurk) (0.076).
 - Largest KL divergence drop: Study 1 – Gun Control (MTurk) (+20.912).
+- Lowest KL divergence: Study 2 – Minimum Wage (MTurk) (0.179); Highest: Study 1 – Gun Control (MTurk) (0.533).

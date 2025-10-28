@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple, Mapping
 
 import numpy as np
 
@@ -26,6 +26,110 @@ class OpinionMetricsView:  # pylint: disable=too-many-instance-attributes
     baseline_calibration_ece: Optional[float]
     kl_divergence_change: Optional[float]
     baseline_kl_divergence_change: Optional[float]
+
+
+# Canonical CSV columns shared by KNN and XGB opinion writers.
+OPINION_CSV_BASE_FIELDS: Tuple[str, ...] = (
+    "study",
+    "participants",
+    "eligible",
+    "accuracy_after",
+    "baseline_accuracy",
+    "accuracy_delta",
+    "mae_after",
+    "baseline_mae",
+    "mae_delta",
+    "rmse_after",
+    "r2_after",
+    "mae_change",
+    "rmse_change",
+    "rmse_change_delta",
+    "calibration_slope",
+    "calibration_intercept",
+    "calibration_ece",
+    "calibration_ece_delta",
+    "kl_divergence_change",
+    "kl_divergence_delta",
+    "dataset",
+    "split",
+)
+
+
+def _first_attr(summary: Any, *names: str) -> Optional[float]:
+    """Return the first present attribute value among ``names`` on ``summary``."""
+
+    for name in names:
+        if hasattr(summary, name):
+            return getattr(summary, name)
+    return None
+
+
+def build_opinion_csv_base_row(summary: Any, *, study_label: str) -> Mapping[str, object]:
+    """
+    Produce a CSV row mapping using a normalised view across model families.
+
+    Bridges differences in attribute names between the KNN and XGB
+    ``OpinionSummary`` types so both writers can share one implementation.
+    """
+
+    # Normalise fields that differ by model family
+    mae_after = _first_attr(summary, "mae", "mae_after")
+    rmse_after = _first_attr(summary, "rmse", "rmse_after")
+    r2_after = _first_attr(summary, "r2_score", "r2_after")
+    accuracy_after = _first_attr(summary, "accuracy", "accuracy_after")
+
+    rmse_change = getattr(summary, "rmse_change", None)
+    baseline_rmse_change = getattr(summary, "baseline_rmse_change", None)
+    calibration_ece = getattr(summary, "calibration_ece", None)
+    baseline_calibration_ece = getattr(summary, "baseline_calibration_ece", None)
+    kl_divergence_change = getattr(summary, "kl_divergence_change", None)
+    baseline_kl_divergence_change = getattr(
+        summary, "baseline_kl_divergence_change", None
+    )
+
+    rmse_change_delta = (
+        baseline_rmse_change - rmse_change
+        if (baseline_rmse_change is not None and rmse_change is not None)
+        else None
+    )
+    calibration_ece_delta = (
+        baseline_calibration_ece - calibration_ece
+        if (baseline_calibration_ece is not None and calibration_ece is not None)
+        else None
+    )
+    kl_divergence_delta = (
+        baseline_kl_divergence_change - kl_divergence_change
+        if (
+            baseline_kl_divergence_change is not None
+            and kl_divergence_change is not None
+        )
+        else None
+    )
+
+    return {
+        "study": study_label,
+        "participants": getattr(summary, "participants", None),
+        "eligible": getattr(summary, "eligible", None),
+        "accuracy_after": accuracy_after,
+        "baseline_accuracy": getattr(summary, "baseline_accuracy", None),
+        "accuracy_delta": getattr(summary, "accuracy_delta", None),
+        "mae_after": mae_after,
+        "baseline_mae": getattr(summary, "baseline_mae", None),
+        "mae_delta": getattr(summary, "mae_delta", None),
+        "rmse_after": rmse_after,
+        "r2_after": r2_after,
+        "mae_change": getattr(summary, "mae_change", None),
+        "rmse_change": rmse_change,
+        "rmse_change_delta": rmse_change_delta,
+        "calibration_slope": getattr(summary, "calibration_slope", None),
+        "calibration_intercept": getattr(summary, "calibration_intercept", None),
+        "calibration_ece": calibration_ece,
+        "calibration_ece_delta": calibration_ece_delta,
+        "kl_divergence_change": kl_divergence_change,
+        "kl_divergence_delta": kl_divergence_delta,
+        "dataset": getattr(summary, "dataset", None),
+        "split": getattr(summary, "split", None),
+    }
 
 
 @dataclass(frozen=True)

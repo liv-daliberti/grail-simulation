@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Opinion regression report helpers for the XGBoost pipeline."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -33,7 +34,11 @@ from common.pipeline_formatters import (
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import append_image_section, start_markdown_report
 
-from common.opinion_metrics import summarise_opinion_metrics
+from common.opinion_metrics import (
+    OPINION_CSV_BASE_FIELDS,
+    build_opinion_csv_base_row,
+    summarise_opinion_metrics,
+)
 
 from ..pipeline_context import OpinionSummary
 from .plots import _plot_opinion_curve, plt
@@ -997,78 +1002,13 @@ def _write_opinion_csv(directory: Path, metrics: Mapping[str, Mapping[str, objec
     if not metrics:
         return
     out_path = directory / "opinion_metrics.csv"
-    fieldnames = [
-        "study",
-        "participants",
-        "eligible",
-        "accuracy_after",
-        "baseline_accuracy",
-        "accuracy_delta",
-        "mae_after",
-        "baseline_mae",
-        "mae_delta",
-        "rmse_after",
-        "r2_after",
-        "mae_change",
-        "rmse_change",
-        "rmse_change_delta",
-        "calibration_slope",
-        "calibration_intercept",
-        "calibration_ece",
-        "calibration_ece_delta",
-        "kl_divergence_change",
-        "kl_divergence_delta",
-        "dataset",
-        "split",
-      ]
+    fieldnames = list(OPINION_CSV_BASE_FIELDS)
     with open(out_path, "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for study_key in sorted(metrics.keys()):
             summary = _extract_opinion_summary(metrics[study_key])
-            rmse_change_delta = None
-            if (
-                summary.baseline_rmse_change is not None
-                and summary.rmse_change is not None
-            ):
-                rmse_change_delta = summary.baseline_rmse_change - summary.rmse_change
-            ece_delta = None
-            if (
-                summary.baseline_calibration_ece is not None
-                and summary.calibration_ece is not None
-            ):
-                ece_delta = summary.baseline_calibration_ece - summary.calibration_ece
-            kl_delta = None
-            if (
-                summary.baseline_kl_divergence_change is not None
-                and summary.kl_divergence_change is not None
-            ):
-                kl_delta = (
-                    summary.baseline_kl_divergence_change - summary.kl_divergence_change
-                )
-            writer.writerow(
-                {
-                    "study": summary.label or study_key,
-                    "participants": summary.participants,
-                    "eligible": summary.eligible,
-                    "accuracy_after": summary.accuracy_after,
-                    "baseline_accuracy": summary.baseline_accuracy,
-                    "accuracy_delta": summary.accuracy_delta,
-                    "mae_after": summary.mae_after,
-                    "baseline_mae": summary.baseline_mae,
-                    "mae_delta": summary.mae_delta,
-                    "rmse_after": summary.rmse_after,
-                    "r2_after": summary.r2_after,
-                    "mae_change": summary.mae_change,
-                    "rmse_change": summary.rmse_change,
-                    "rmse_change_delta": rmse_change_delta,
-                    "calibration_slope": summary.calibration_slope,
-                    "calibration_intercept": summary.calibration_intercept,
-                    "calibration_ece": summary.calibration_ece,
-                    "calibration_ece_delta": ece_delta,
-                    "kl_divergence_change": summary.kl_divergence_change,
-                    "kl_divergence_delta": kl_delta,
-                    "dataset": summary.dataset,
-                    "split": summary.split,
-                }
+            row = build_opinion_csv_base_row(
+                summary, study_label=(summary.label or study_key)
             )
+            writer.writerow(row)

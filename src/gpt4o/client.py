@@ -26,9 +26,9 @@ try:  # pragma: no cover - optional dependency
     from openai import AzureOpenAI as _AzureOpenAI  # type: ignore  # pylint: disable=import-error
 except ImportError as exc:  # pragma: no cover - optional dependency
     _AzureOpenAI = None  # type: ignore[assignment]
-    _azure_openai_import_error = exc
+    _azure_openai_import_error = exc  # pylint: disable=invalid-name
 else:  # pragma: no cover
-    _azure_openai_import_error = None
+    _azure_openai_import_error = None  # pylint: disable=invalid-name
 
 
 def _require_openai() -> Any:

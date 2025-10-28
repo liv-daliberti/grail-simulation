@@ -28,7 +28,9 @@ from common.report_utils import extract_curve_sections, extract_numeric_series
 from .shared import LOGGER, _slugify_label, plt
 
 
-def _extract_eligible_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
+def _extract_eligible_curve_steps(
+    curve_block: Mapping[str, object]
+) -> Tuple[List[int], List[float]]:
     """Extract eligible-only accuracy curve series if present."""
     eligible_map = (
         curve_block.get("eligible_accuracy_by_round")
@@ -48,13 +50,25 @@ def _plot_eligible_overlay(axis, payload: Mapping[str, object]) -> None:
     if sections is None:
         return
     eval_curve, train_curve = sections
-    ex, ey = _extract_eligible_curve_steps(eval_curve)
-    if ex and ey:
-        axis.plot(ex, ey, linestyle=":", marker="o", label="validation (eligible)")
+    eligible_eval_x, eligible_eval_y = _extract_eligible_curve_steps(eval_curve)
+    if eligible_eval_x and eligible_eval_y:
+        axis.plot(
+            eligible_eval_x,
+            eligible_eval_y,
+            linestyle=":",
+            marker="o",
+            label="validation (eligible)",
+        )
     if isinstance(train_curve, Mapping):
-        tx, ty = _extract_eligible_curve_steps(train_curve)
-        if tx and ty:
-            axis.plot(tx, ty, linestyle=":", marker="o", label="training (eligible)")
+        eligible_train_x, eligible_train_y = _extract_eligible_curve_steps(train_curve)
+        if eligible_train_x and eligible_train_y:
+            axis.plot(
+                eligible_train_x,
+                eligible_train_y,
+                linestyle=":",
+                marker="o",
+                label="training (eligible)",
+            )
 
 
 def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
@@ -277,10 +291,10 @@ def _load_curve_bundle(payload: Mapping[str, object]) -> Optional[Mapping[str, o
 def _format_scalar(value: object) -> str:
     """Return a short numeric string for plot labels or an em dash."""
     try:
-        f = float(value)
+        value_float = float(value)
     except (TypeError, ValueError):
         return "—"
-    return f"{f:.3f}"
+    return f"{value_float:.3f}"
 
 
 def _plot_xgb_curve(

@@ -792,6 +792,7 @@ def _write_metrics_csv(
     if not metrics:
         return
     out_path = directory / "metrics.csv"
+    from common.report_fields import NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS
     fieldnames = [
         "study",
         "issue",
@@ -800,11 +801,7 @@ def _write_metrics_csv(
         "correct",
         "evaluated",
         "correct_eligible",
-        "coverage",
-        "known_hits",
-        "known_total",
-        "known_availability",
-        "avg_probability",
+        *_COVERAGE_FNS,
         "baseline_accuracy",
         "random_baseline_accuracy",
     ]

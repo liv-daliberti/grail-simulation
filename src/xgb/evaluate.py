@@ -802,7 +802,12 @@ def _accuracy_curve_from_records(
 
     total = len(records)
     if total == 0:
-        return {"accuracy_by_step": {}, "eligible_accuracy_by_step": {}, "n_examples": 0, "stride": 0}
+        return {
+            "accuracy_by_step": {},
+            "eligible_accuracy_by_step": {},
+            "n_examples": 0,
+            "stride": 0,
+        }
     target_points = max(1, target_points)
     stride = max(1, total // target_points)
     checkpoints: Dict[str, float] = {}

@@ -302,6 +302,7 @@ def _write_next_video_sweeps_csv(directory: Path, outcomes: Sequence[SweepOutcom
     if not outcomes:
         return
     out_path = directory / "next_video_sweeps.csv"
+    from common.report_fields import NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS
     fieldnames = [
         "study_key",
         "study_label",
@@ -309,11 +310,7 @@ def _write_next_video_sweeps_csv(directory: Path, outcomes: Sequence[SweepOutcom
         "config_label",
         "accuracy",
         "accuracy_eligible",
-        "coverage",
-        "known_hits",
-        "known_total",
-        "known_availability",
-        "avg_probability",
+        *_COVERAGE_FNS,
         "evaluated",
     ]
     with open(out_path, "w", encoding="utf-8", newline="") as handle:

@@ -18,6 +18,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+import csv
 from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
 
@@ -170,8 +172,8 @@ PORTFOLIO_HEADER = (
 )
 PORTFOLIO_RULE = "| --- | ---: | ---: | ---: | ---: | ---: |"
 FEATURE_TABLE_HEADER = (
-    "| Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | "
-    "Eligible | Total |"
+    "| Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | "
+    "Baseline ↑ | Random ↑ | Best k | Eligible | Total |"
 )
 FEATURE_TABLE_RULE = (
     "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
@@ -339,7 +341,11 @@ def _next_video_intro(
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
         "- Metric: eligible-only accuracy (gold index present).",
-        "- Note: an all-rows accuracy (including ineligible slates) is also recorded in the per-study metrics as `accuracy_overall_all_rows` to ease comparison with XGB's overall accuracy.",
+        (
+            "- Note: an all-rows accuracy (including ineligible slates) is also recorded in the "
+            "per-study metrics as `accuracy_overall_all_rows` to ease comparison with XGB's "
+            "overall accuracy."
+        ),
         "- Baseline column: accuracy from recommending the most frequent gold index.",
         "- Δ column: improvement over that baseline accuracy.",
         "- Random column: expected accuracy from uniformly sampling one candidate per slate.",
@@ -641,16 +647,18 @@ def _format_feature_inline(space: str) -> str:
     return space.upper()
 
 
-def _load_xgb_metrics_for_study(base_dir: Path, evaluation_slug: str) -> Optional[Mapping[str, object]]:
+def _load_xgb_metrics_for_study(
+    base_dir: Path,
+    evaluation_slug: str,
+) -> Optional[Mapping[str, object]]:
     """Load XGB metrics for a single study when available."""
     metrics_path = base_dir / evaluation_slug / "metrics.json"
     if not metrics_path.exists():
         return None
     try:
-        import json  # local import to avoid global cost
         with open(metrics_path, "r", encoding="utf-8") as handle:
             return json.load(handle)
-    except Exception:  # pragma: no cover - defensive
+    except (OSError, json.JSONDecodeError):  # pragma: no cover - defensive
         return None
 
 
@@ -668,12 +676,17 @@ def _best_knn_summary_for_study(
         summary = extract_metric_summary(payload)
         if summary.accuracy is None:
             continue
-        if best is None or (best[1].accuracy or 0.0) < (summary.accuracy or 0.0):
+        if best is None:
+            best = (space, summary)
+            continue
+        best_accuracy = best[1].accuracy or 0.0
+        current_accuracy = summary.accuracy or 0.0
+        if best_accuracy < current_accuracy:
             best = (space, summary)
     return best
 
 
-def _knn_vs_xgb_section(
+def _knn_vs_xgb_section(  # pylint: disable=too-many-locals
     *,
     xgb_next_video_dir: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
@@ -704,9 +717,11 @@ def _knn_vs_xgb_section(
         xgb_elig = xgb_metrics.get("accuracy_eligible")
         xgb_overall = xgb_metrics.get("accuracy")
         rows.append(
-            f"| {spec.label} | {format_optional_float(knn_elig)} ({_format_feature_inline(space)}) | "
-            f"{format_optional_float(xgb_elig)} | {format_optional_float(knn_all)} | "
-            f"{format_optional_float(xgb_overall)} |"
+            (
+                f"| {spec.label} | {format_optional_float(knn_elig)} "
+                f"({_format_feature_inline(space)}) | {format_optional_float(xgb_elig)} | "
+                f"{format_optional_float(knn_all)} | {format_optional_float(xgb_overall)} |"
+            )
         )
     if not rows:
         return []
@@ -930,6 +945,118 @@ def _build_next_video_report(inputs: NextVideoReportInputs) -> None:
 
     lines.append("")
     readme_path.write_text("\n".join(lines), encoding="utf-8")
+    # Emit CSV dumps for downstream analysis
+    _write_next_video_metrics_csv(
+        inputs.output_dir,
+        inputs.metrics_by_feature,
+        inputs.studies,
+    )
+    if inputs.loso_metrics:
+        _write_next_video_loso_csv(
+            inputs.output_dir,
+            inputs.loso_metrics,
+            inputs.studies,
+        )
 
 
 __all__ = ["NextVideoReportInputs", "_build_next_video_report"]
+
+
+def _write_next_video_metrics_csv(
+    output_dir: Path,
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> None:
+    """Write per-study next-video metrics to metrics.csv for all feature spaces."""
+
+    if not metrics_by_feature:
+        return
+    out_path = output_dir / "metrics.csv"
+    fieldnames = [
+        "feature_space",
+        "study",
+        "accuracy",
+        "accuracy_all_rows",
+        "baseline_accuracy",
+        "random_baseline_accuracy",
+        "best_k",
+        "eligible",
+        "total",
+        "accuracy_ci_low",
+        "accuracy_ci_high",
+    ]
+    study_by_key = {spec.key: spec for spec in studies}
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for feature_space, per_feature in metrics_by_feature.items():
+            for study_key, payload in per_feature.items():
+                spec = study_by_key.get(study_key)
+                if spec is None:
+                    continue
+                summary = extract_metric_summary(payload)
+                ci = summary.accuracy_ci
+                ci_low = ci[0] if ci else None
+                ci_high = ci[1] if ci else None
+                writer.writerow(
+                    {
+                        "feature_space": feature_space,
+                        "study": spec.label,
+                        "accuracy": summary.accuracy,
+                        "accuracy_all_rows": payload.get("accuracy_overall_all_rows"),
+                        "baseline_accuracy": summary.baseline,
+                        "random_baseline_accuracy": summary.random_baseline,
+                        "best_k": summary.best_k,
+                        "eligible": summary.n_eligible,
+                        "total": summary.n_total,
+                        "accuracy_ci_low": ci_low,
+                        "accuracy_ci_high": ci_high,
+                    }
+                )
+
+
+def _write_next_video_loso_csv(
+    output_dir: Path,
+    loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> None:
+    """Write LOSO next-video metrics to loso_metrics.csv for all feature spaces."""
+
+    if not loso_metrics:
+        return
+    out_path = output_dir / "loso_metrics.csv"
+    fieldnames = [
+        "feature_space",
+        "holdout_study",
+        "accuracy",
+        "delta_vs_baseline",
+        "baseline_accuracy",
+        "best_k",
+        "eligible",
+    ]
+    study_by_key = {spec.key: spec for spec in studies}
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for feature_space, per_feature in loso_metrics.items():
+            for study_key, payload in per_feature.items():
+                spec = study_by_key.get(study_key)
+                if spec is None:
+                    continue
+                summary = extract_metric_summary(payload)
+                delta = (
+                    summary.accuracy - summary.baseline
+                    if summary.accuracy is not None and summary.baseline is not None
+                    else None
+                )
+                writer.writerow(
+                    {
+                        "feature_space": feature_space,
+                        "holdout_study": spec.label,
+                        "accuracy": summary.accuracy,
+                        "delta_vs_baseline": delta,
+                        "baseline_accuracy": summary.baseline,
+                        "best_k": summary.best_k,
+                        "eligible": summary.n_eligible,
+                    }
+                )

@@ -19,10 +19,15 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass, field
+import csv
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.opinion_metrics import summarise_opinion_metrics
+from common.opinion_metrics import (
+    OPINION_CSV_BASE_FIELDS,
+    build_opinion_csv_base_row,
+    summarise_opinion_metrics,
+)
 from common.report_utils import append_image_section
 
 from ..pipeline_context import OpinionSummary, StudySpec
@@ -933,6 +938,36 @@ def _build_opinion_report(
     lines.extend(_knn_opinion_cross_study_diagnostics(metrics, studies))
     lines.extend(_opinion_takeaways(metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
+    # Emit CSV dump combining all feature spaces and studies
+    _write_knn_opinion_csv(output_path.parent, metrics, studies)
 
 
 __all__ = ["_OpinionPortfolioStats", "OpinionReportOptions", "_build_opinion_report"]
+
+
+def _write_knn_opinion_csv(
+    output_dir: Path,
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> None:
+    """Write KNN opinion metrics to opinion_metrics.csv across feature spaces."""
+
+    if not metrics:
+        return
+    out_path = output_dir / "opinion_metrics.csv"
+    fieldnames = ["feature_space", *OPINION_CSV_BASE_FIELDS]
+    study_by_key = {spec.key: spec for spec in studies}
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for feature_space, per_feature in metrics.items():
+            for study_key, payload in per_feature.items():
+                spec = study_by_key.get(study_key)
+                if spec is None:
+                    continue
+                summary = extract_opinion_summary(payload)
+                row = dict(
+                    build_opinion_csv_base_row(summary, study_label=spec.label)
+                )
+                row["feature_space"] = feature_space
+                writer.writerow(row)

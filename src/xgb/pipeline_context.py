@@ -406,10 +406,14 @@ class NextVideoMetricSummary:
     :type accuracy: Optional[float]
     :param coverage: Validation coverage capturing known candidate recall.
     :type coverage: Optional[float]
+    :param accuracy_eligible: Accuracy computed on eligible rows only.
+    :type accuracy_eligible: Optional[float]
     :param evaluated: Number of evaluation rows.
     :type evaluated: Optional[int]
     :param correct: Number of correct predictions.
     :type correct: Optional[int]
+    :param correct_eligible: Number of correct predictions among eligible rows.
+    :type correct_eligible: Optional[int]
     :param known_hits: Correct predictions among known candidates.
     :type known_hits: Optional[int]
     :param known_total: Evaluations featuring at least one known candidate.
@@ -436,8 +440,10 @@ class NextVideoMetricSummary:
 
     accuracy: Optional[float] = None
     coverage: Optional[float] = None
+    accuracy_eligible: Optional[float] = None
     evaluated: Optional[int] = None
     correct: Optional[int] = None
+    correct_eligible: Optional[int] = None
     known_hits: Optional[int] = None
     known_total: Optional[int] = None
     known_availability: Optional[float] = None

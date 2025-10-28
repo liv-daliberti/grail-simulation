@@ -4,7 +4,7 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 
 - Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
 - Split: validation
-- Metrics: accuracy, coverage of known candidates, and availability of known neighbors.
+- Metrics: overall accuracy, eligible-only accuracy (gold present in slate), coverage of known candidates, and availability of known neighbors.
 - Table columns capture validation accuracy, counts of correct predictions, known-candidate recall, and probability calibration for the selected slates.
 - `Known hits / total` counts successes among slates that contained a known candidate; `Known availability` is the share of evaluations with any known candidate present.
 - `Avg prob` reports the mean predicted probability assigned to known candidate hits.
@@ -33,8 +33,8 @@ Leave-one-study-out metrics were unavailable when this report was generated.
 
 ## Observations
 
-- Study 1 – Gun Control (MTurk): accuracy 0.987, coverage 0.991, known availability 0.996.
-- Study 2 – Minimum Wage (MTurk): accuracy 0.993, coverage 0.993, known availability 1.000.
+- Study 1 – Gun Control (MTurk): accuracy 0.987, eligible accuracy —, coverage 0.991, known availability 0.996.
+- Study 2 – Minimum Wage (MTurk): accuracy 0.993, eligible accuracy —, coverage 0.993, known availability 1.000.
 - Average accuracy 0.990.
 - Known coverage averages 0.992.
 - Known candidate availability averages 0.998.

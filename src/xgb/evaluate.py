@@ -381,6 +381,23 @@ def _evaluate_issue(
     else:
         metrics.curve_metrics = history_bundle
     _write_outputs(args, issue_slug, metrics, predictions)
+    # Diagnostic: compare eligible-only and known-candidate accuracy slices.
+    try:
+        known_total = int(metrics.known_candidate_total)
+        known_hits = int(metrics.known_candidate_hits)
+    except Exception:  # pragma: no cover - defensive cast
+        known_total = metrics.known_candidate_total
+        known_hits = metrics.known_candidate_hits
+    known_accuracy = safe_div(known_hits, known_total) if known_total else 0.0
+    logger.info(
+        "[XGBoost][Diag] eligible=%d known_total=%d known_hits=%d "
+        "known_accuracy=%.3f eligible_accuracy=%.3f",
+        metrics.eligible,
+        metrics.known_candidate_total,
+        metrics.known_candidate_hits,
+        known_accuracy,
+        metrics.accuracy_eligible,
+    )
     logger.info(
         "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",
         issue_slug,

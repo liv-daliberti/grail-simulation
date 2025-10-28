@@ -263,8 +263,10 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
     return NextVideoMetricSummary(
         accuracy=_safe_float(data.get("accuracy")),
         coverage=_safe_float(data.get("coverage")),
+        accuracy_eligible=_safe_float(data.get("accuracy_eligible")),
         evaluated=evaluated,
         correct=_safe_int(data.get("correct")),
+        correct_eligible=_safe_int(data.get("correct_eligible")),
         known_hits=known_hits,
         known_total=known_total,
         known_availability=(
@@ -313,6 +315,7 @@ def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> Lis
         return []
     lines: List[str] = ["## Observations", ""]
     accuracies: List[float] = []
+    elig_accuracies: List[float] = []
     coverages: List[float] = []
     availabilities: List[float] = []
     for study_key in sorted(
@@ -321,14 +324,18 @@ def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> Lis
     ):
         summary = _extract_next_video_summary(metrics[study_key])
         accuracy_text = _format_optional_float(summary.accuracy)
+        elig_text = _format_optional_float(summary.accuracy_eligible)
         coverage_text = _format_optional_float(summary.coverage)
         availability_text = _format_optional_float(summary.known_availability)
         lines.append(
             f"- {summary.study_label or study_key}: accuracy {accuracy_text}, "
-            f"coverage {coverage_text}, known availability {availability_text}."
+            f"eligible accuracy {elig_text}, coverage {coverage_text}, "
+            f"known availability {availability_text}."
         )
         if summary.accuracy is not None:
             accuracies.append(summary.accuracy)
+        if summary.accuracy_eligible is not None:
+            elig_accuracies.append(summary.accuracy_eligible)
         if summary.coverage is not None:
             coverages.append(summary.coverage)
         if summary.known_availability is not None:
@@ -337,6 +344,11 @@ def _next_video_observations(metrics: Mapping[str, Mapping[str, object]]) -> Lis
         lines.append(
             f"- Average accuracy "
             f"{_format_optional_float(sum(accuracies) / len(accuracies))}."
+        )
+    if elig_accuracies:
+        lines.append(
+            f"- Average eligible-only accuracy "
+            f"{_format_optional_float(sum(elig_accuracies) / len(elig_accuracies))}."
         )
     if coverages:
         lines.append(
@@ -441,8 +453,7 @@ def _next_video_header_lines(
             "",
             f"- Dataset: `{dataset_name}`",
             "- Split: validation",
-            "- Metrics: accuracy, coverage of known candidates, and "
-            "availability of known neighbors.",
+            "- Metrics: overall accuracy, eligible-only accuracy (gold present in slate), coverage of known candidates, and availability of known neighbors.",
             (
                 "- Table columns capture validation accuracy, counts of correct predictions, "
                 "known-candidate recall, and probability calibration for the selected slates."
@@ -612,22 +623,43 @@ def _loso_accuracy_summary(
         for _key, study_label, _issue_label, summary in entries
         if summary.accuracy is not None
     ]
-    if not accuracy_values:
-        return lines
-
-    best_label, best_value = max(accuracy_values, key=lambda item: item[1])
-    lines.append(
-        f"- Highest holdout accuracy: {best_label} "
-        f"({_format_optional_float(best_value)})."
-    )
-    if len(accuracy_values) > 1:
-        worst_label, worst_value = min(accuracy_values, key=lambda item: item[1])
+    if accuracy_values:
+        best_label, best_value = max(accuracy_values, key=lambda item: item[1])
         lines.append(
-            f"- Lowest holdout accuracy: {worst_label} "
-            f"({_format_optional_float(worst_value)})."
+            f"- Highest holdout accuracy: {best_label} "
+            f"({_format_optional_float(best_value)})."
         )
-    mean_value = sum(value for _label, value in accuracy_values) / len(accuracy_values)
-    lines.append(f"- Average holdout accuracy {_format_optional_float(mean_value)}.")
+        if len(accuracy_values) > 1:
+            worst_label, worst_value = min(accuracy_values, key=lambda item: item[1])
+            lines.append(
+                f"- Lowest holdout accuracy: {worst_label} "
+                f"({_format_optional_float(worst_value)})."
+            )
+        mean_value = sum(value for _label, value in accuracy_values) / len(accuracy_values)
+        lines.append(f"- Average holdout accuracy {_format_optional_float(mean_value)}.")
+
+    # Eligible-only accuracy summary
+    elig_values = [
+        (study_label, summary.accuracy_eligible)
+        for _key, study_label, _issue_label, summary in entries
+        if summary.accuracy_eligible is not None
+    ]
+    if elig_values:
+        best_label_e, best_value_e = max(elig_values, key=lambda item: item[1])
+        lines.append(
+            f"- Highest holdout eligible-only accuracy: {best_label_e} "
+            f"({_format_optional_float(best_value_e)})."
+        )
+        if len(elig_values) > 1:
+            worst_label_e, worst_value_e = min(elig_values, key=lambda item: item[1])
+            lines.append(
+                f"- Lowest holdout eligible-only accuracy: {worst_label_e} "
+                f"({_format_optional_float(worst_value_e)})."
+            )
+        mean_value_e = sum(value for _label, value in elig_values) / len(elig_values)
+        lines.append(
+            f"- Average holdout eligible-only accuracy {_format_optional_float(mean_value_e)}."
+        )
     lines.append("")
     return lines
 
@@ -649,15 +681,16 @@ def _next_video_loso_section(
 
     lines.extend(_loso_accuracy_summary(entries))
     lines.append(
-        "| Holdout study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | "
+        "| Holdout study | Issue | Accuracy ↑ | Acc (eligible) ↑ | Correct / evaluated | Coverage ↑ | "
         "Known hits / total | Known availability ↑ | Avg prob ↑ |"
     )
-    lines.append("| --- | --- | ---: | --- | ---: | --- | ---: | ---: |")
+    lines.append("| --- | --- | ---: | ---: | --- | ---: | --- | ---: | ---: |")
     for _, study_label, issue_label, summary in entries:
         row = [
             study_label,
             issue_label,
             _format_optional_float(summary.accuracy),
+            _format_optional_float(summary.accuracy_eligible),
             _format_ratio(summary.correct, summary.evaluated),
             _format_optional_float(summary.coverage),
             _format_ratio(summary.known_hits, summary.known_total),

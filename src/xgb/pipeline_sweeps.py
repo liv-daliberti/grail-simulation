@@ -1005,6 +1005,7 @@ def _select_best_opinion_configs(
 
 
 __all__ = [
+    "DEFAULT_OPINION_FEATURE_SPACE",
     "_run_xgb_cli",
     "_load_metrics",
     "_sweep_outcome_from_metrics",

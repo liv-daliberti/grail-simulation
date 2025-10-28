@@ -241,7 +241,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             reuse_existing=reuse_cached_metrics,
             opinion_prefix="[OPINION]",
         )
-        dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
+        dispatch_cli_partitions(
+            partitions,
+            args=args,
+            logger=LOGGER,
+            prepare=prepare_sweep_execution,
+        )
         return
 
     reuse_for_stage = context.reuse_sweeps

@@ -20,6 +20,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+import csv
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from common.pipeline_formatters import (
@@ -267,6 +268,8 @@ def _write_hyperparameter_report(
             allow_incomplete=allow_incomplete,
         )
         lines.extend(next_video_lines)
+        # CSV dump for next-video sweeps
+        _write_next_video_sweeps_csv(directory, sweeps.outcomes)
         if sorted_study_outcomes:
             lines.extend(
                 _xgb_leaderboard_section(
@@ -291,6 +294,49 @@ def _write_hyperparameter_report(
         )
 
     write_markdown_lines(path, lines)
+
+
+def _write_next_video_sweeps_csv(directory: Path, outcomes: Sequence[SweepOutcome]) -> None:
+    """Write a CSV with next-video sweep outcomes for downstream analysis."""
+
+    if not outcomes:
+        return
+    out_path = directory / "next_video_sweeps.csv"
+    fieldnames = [
+        "study_key",
+        "study_label",
+        "issue",
+        "config_label",
+        "accuracy",
+        "accuracy_eligible",
+        "coverage",
+        "known_hits",
+        "known_total",
+        "known_availability",
+        "avg_probability",
+        "evaluated",
+    ]
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for outcome in outcomes:
+            summary = _extract_next_video_summary(outcome.metrics)
+            writer.writerow(
+                {
+                    "study_key": outcome.study.key,
+                    "study_label": outcome.study.label,
+                    "issue": outcome.study.issue,
+                    "config_label": outcome.config.label(),
+                    "accuracy": summary.accuracy,
+                    "accuracy_eligible": summary.accuracy_eligible,
+                    "coverage": summary.coverage,
+                    "known_hits": summary.known_hits,
+                    "known_total": summary.known_total,
+                    "known_availability": summary.known_availability,
+                    "avg_probability": summary.avg_probability,
+                    "evaluated": summary.evaluated,
+                }
+            )
 
 
 @dataclass

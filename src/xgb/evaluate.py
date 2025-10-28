@@ -385,7 +385,7 @@ def _evaluate_issue(
     try:
         known_total = int(metrics.known_candidate_total)
         known_hits = int(metrics.known_candidate_hits)
-    except Exception:  # pragma: no cover - defensive cast
+    except (TypeError, ValueError):  # pragma: no cover - defensive cast
         known_total = metrics.known_candidate_total
         known_hits = metrics.known_candidate_hits
     known_accuracy = safe_div(known_hits, known_total) if known_total else 0.0

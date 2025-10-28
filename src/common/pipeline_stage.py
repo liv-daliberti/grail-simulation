@@ -50,7 +50,7 @@ def log_dry_run_summary(logger, entries: Sequence[DryRunSummary]) -> None:
     )
 
 
-def emit_stage_dry_run_summary(
+def emit_stage_dry_run_summary(  # pylint: disable=too-many-arguments
     logger,
     *,
     include_next: bool,
@@ -454,7 +454,7 @@ def dispatch_cli_partitions(
     )
 
 
-def build_standard_sweeps_partitions(
+def build_standard_sweeps_partitions(  # pylint: disable=too-many-arguments
     *,
     include_next: bool,
     next_label: str,

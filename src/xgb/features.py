@@ -21,6 +21,7 @@ from common.prompt_docs import (
     DEFAULT_TITLE_DIRS as _DEFAULT_TITLE_DIRS,
     create_prompt_document_builder,
 )
+from common.prompt_selection import PromptSelectionHelper as _PromptSelectionHelper
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
@@ -34,6 +35,8 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
     logger_name="xgb.features",
 )
 
+_PROMPT_SELECTOR = _PromptSelectionHelper(_PROMPT_DOC_BUILDER)
+
 # Re-export builder-backed helpers that do not inject selection tokens.
 title_for = _PROMPT_DOC_BUILDER.title_for
 viewer_profile_sentence = _PROMPT_DOC_BUILDER.viewer_profile_sentence
@@ -43,17 +46,41 @@ extract_slate_items = _PROMPT_DOC_BUILDER.extract_slate_items
 
 
 def assemble_document(example: dict, extra_fields):  # type: ignore[override]
+    """Assemble a prompt document from ``example`` using shared defaults."""
+
     return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
 
 
-def prepare_training_documents(train_ds, max_train: int, seed: int, extra_fields=None):  # type: ignore[override]
-    return _PROMPT_DOC_BUILDER.prepare_training_documents(train_ds, max_train, seed, extra_fields)
+def prepare_training_documents(
+    train_ds,
+    max_train: int,
+    seed: int,
+    extra_fields=None,
+):  # type: ignore[override]
+    """Prepare training documents and labels from ``train_ds``."""
 
-
-def prepare_prompt_documents(train_ds, max_train: int, seed: int, extra_fields=None):  # type: ignore[override]
-    # Backwards-compatible alias for training document preparation
     return _PROMPT_DOC_BUILDER.prepare_training_documents(
-        train_ds, max_train, seed, extra_fields
+        train_ds,
+        max_train,
+        seed,
+        extra_fields,
+    )
+
+
+def prepare_prompt_documents(
+    train_ds,
+    max_train: int,
+    seed: int,
+    extra_fields=None,
+):  # type: ignore[override]
+    """Prepare selection-aware documents using the prompt-selection helper."""
+
+    # Use selection-aware document assembly to mirror KNN behaviour.
+    return _PROMPT_SELECTOR.prepare_training_documents(
+        train_ds,
+        max_train,
+        seed,
+        extra_fields,
     )
 
 __all__ = [

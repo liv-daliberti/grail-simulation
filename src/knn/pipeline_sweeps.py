@@ -294,7 +294,7 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
         )
     return configs
 
-def _build_sweep_task(
+def _build_sweep_task(  # pylint: disable=too-many-arguments
     *,
     index: int,
     config: SweepConfig,

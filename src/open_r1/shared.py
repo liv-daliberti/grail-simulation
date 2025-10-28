@@ -305,7 +305,7 @@ def build_default_component_factory() -> GrpoComponentFactory:
     )
 
 
-def build_grpo_context(
+def build_grpo_context(  # pylint: disable=too-many-arguments
     dataset: Mapping[str, Any],
     script_args: Any,
     training_args: Any,
@@ -326,7 +326,7 @@ def build_grpo_context(
     )
 
 
-def build_grpo_pipeline_bundle(
+def build_grpo_pipeline_bundle(  # pylint: disable=too-many-arguments
     *,
     model_builder: Callable[[Any, Any], Any],
     trainer_cls: Any,
@@ -538,7 +538,7 @@ def prepare_model_eval_and_run_grpo(
     )
 
 
-def execute_grpo_pipeline(
+def execute_grpo_pipeline(  # pylint: disable=too-many-arguments
     *,
     component_factory: GrpoComponentFactory,
     reward_funcs: Sequence[Any],
@@ -573,7 +573,7 @@ def execute_grpo_pipeline(
     return prepare_model_eval_and_run_grpo(components=components, context=context)
 
 
-def make_grpo_execute_kwargs(
+def make_grpo_execute_kwargs(  # pylint: disable=too-many-arguments
     *,
     component_factory: GrpoComponentFactory | None = None,
     reward_funcs: Sequence[Any] | None = None,

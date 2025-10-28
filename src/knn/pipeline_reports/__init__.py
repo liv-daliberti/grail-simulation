@@ -97,6 +97,7 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
                 feature_spaces=feature_spaces,
                 loso_metrics=report_bundle.loso_metrics,
                 allow_incomplete=allow_incomplete,
+                xgb_next_video_dir=(repo_root / "models" / "xgb" / "next_video"),
             )
         )
 

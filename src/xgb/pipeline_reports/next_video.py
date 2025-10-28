@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import csv
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Tuple
 
@@ -453,7 +454,11 @@ def _next_video_header_lines(
             "",
             f"- Dataset: `{dataset_name}`",
             "- Split: validation",
-            "- Metrics: overall accuracy, eligible-only accuracy (gold present in slate), coverage of known candidates, and availability of known neighbors.",
+            (
+                "- Metrics: overall accuracy, eligible-only accuracy "
+                "(gold present in slate), coverage of known candidates, "
+                "and availability of known neighbors."
+            ),
             (
                 "- Table columns capture validation accuracy, counts of correct predictions, "
                 "known-candidate recall, and probability calibration for the selected slates."
@@ -681,8 +686,9 @@ def _next_video_loso_section(
 
     lines.extend(_loso_accuracy_summary(entries))
     lines.append(
-        "| Holdout study | Issue | Accuracy ↑ | Acc (eligible) ↑ | Correct / evaluated | Coverage ↑ | "
-        "Known hits / total | Known availability ↑ | Avg prob ↑ |"
+        "| Holdout study | Issue | Accuracy ↑ | Acc (eligible) ↑ | "
+        "Correct / evaluated | Coverage ↑ | Known hits / total | "
+        "Known availability ↑ | Avg prob ↑ |"
     )
     lines.append("| --- | --- | ---: | ---: | --- | ---: | --- | ---: | ---: |")
     for _, study_label, issue_label, summary in entries:
@@ -762,6 +768,10 @@ def _write_next_video_report(
 
     write_markdown_lines(path, lines)
 
+    # Emit CSV dumps for downstream analysis.
+    _write_metrics_csv(directory, metrics, selections)
+    _write_loso_csv(directory, loso_metrics or {}, selections)
+
 
 __all__ = [
     "_extract_next_video_summary",
@@ -770,3 +780,103 @@ __all__ = [
     "_next_video_portfolio_summary",
     "_write_next_video_report",
 ]
+
+
+def _write_metrics_csv(
+    directory: Path,
+    metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> None:
+    """Write per-study final metrics to metrics.csv under the report directory."""
+
+    if not metrics:
+        return
+    out_path = directory / "metrics.csv"
+    fieldnames = [
+        "study",
+        "issue",
+        "accuracy",
+        "accuracy_eligible",
+        "correct",
+        "evaluated",
+        "correct_eligible",
+        "coverage",
+        "known_hits",
+        "known_total",
+        "known_availability",
+        "avg_probability",
+        "baseline_accuracy",
+        "random_baseline_accuracy",
+    ]
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for study_key in sorted(
+            metrics.keys(), key=lambda k: _report_study_label(k, selections).lower()
+        ):
+            summary = _extract_next_video_summary(metrics[study_key])
+            writer.writerow(
+                {
+                    "study": summary.study_label or _report_study_label(study_key, selections),
+                    "issue": summary.issue_label or summary.issue or "",
+                    "accuracy": summary.accuracy,
+                    "accuracy_eligible": summary.accuracy_eligible,
+                    "correct": summary.correct,
+                    "evaluated": summary.evaluated,
+                    "correct_eligible": summary.correct_eligible,
+                    "coverage": summary.coverage,
+                    "known_hits": summary.known_hits,
+                    "known_total": summary.known_total,
+                    "known_availability": summary.known_availability,
+                    "avg_probability": summary.avg_probability,
+                    "baseline_accuracy": summary.baseline_most_frequent_accuracy,
+                    "random_baseline_accuracy": summary.random_baseline_accuracy,
+                }
+            )
+
+
+def _write_loso_csv(
+    directory: Path,
+    loso_metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> None:
+    """Write LOSO metrics to loso_metrics.csv under the report directory."""
+
+    if not loso_metrics:
+        return
+    out_path = directory / "loso_metrics.csv"
+    fieldnames = [
+        "holdout_study",
+        "issue",
+        "accuracy",
+        "accuracy_eligible",
+        "correct",
+        "evaluated",
+        "correct_eligible",
+        "coverage",
+        "known_hits",
+        "known_total",
+        "known_availability",
+        "avg_probability",
+    ]
+    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        entries = _loso_entries(loso_metrics, selections)
+        for _key, study_label, issue_label, summary in entries:
+            writer.writerow(
+                {
+                    "holdout_study": study_label,
+                    "issue": issue_label,
+                    "accuracy": summary.accuracy,
+                    "accuracy_eligible": summary.accuracy_eligible,
+                    "correct": summary.correct,
+                    "evaluated": summary.evaluated,
+                    "correct_eligible": summary.correct_eligible,
+                    "coverage": summary.coverage,
+                    "known_hits": summary.known_hits,
+                    "known_total": summary.known_total,
+                    "known_availability": summary.known_availability,
+                    "avg_probability": summary.avg_probability,
+                }
+            )

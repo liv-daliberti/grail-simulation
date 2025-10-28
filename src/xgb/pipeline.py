@@ -349,24 +349,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if args.dry_run:
-        summaries: List[DryRunSummary] = []
-        if run_next_video:
-            summaries.append(
-                DryRunSummary(
-                    label="next-video",
-                    pending=len(planned_slate_tasks),
-                    cached=len(cached_slate_planned),
-                )
-            )
-        if run_opinion:
-            summaries.append(
-                DryRunSummary(
-                    label="opinion",
-                    pending=len(planned_opinion_tasks),
-                    cached=len(cached_opinion_planned),
-                )
-            )
-        log_dry_run_summary(LOGGER, summaries)
+        emit_stage_dry_run_summary(
+            LOGGER,
+            include_next=run_next_video,
+            next_label="next-video",
+            next_pending=len(planned_slate_tasks),
+            next_cached=len(cached_slate_planned),
+            include_opinion=run_opinion,
+            opinion_pending=len(planned_opinion_tasks),
+            opinion_cached=len(cached_opinion_planned),
+        )
         return
 
     if stage == "sweeps":
@@ -412,12 +404,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
             )
 
-        dispatch_cli_partitions(
-            partitions,
-            args=args,
-            logger=LOGGER,
-            prepare=prepare_sweep_execution,
-        )
+        dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
         return
 
     reuse_for_stage = reuse_sweeps

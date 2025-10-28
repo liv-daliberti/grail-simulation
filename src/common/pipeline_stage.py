@@ -50,6 +50,35 @@ def log_dry_run_summary(logger, entries: Sequence[DryRunSummary]) -> None:
     )
 
 
+def emit_stage_dry_run_summary(
+    logger,
+    *,
+    include_next: bool,
+    next_label: str,
+    next_pending: int,
+    next_cached: int,
+    include_opinion: bool,
+    opinion_pending: int,
+    opinion_cached: int,
+) -> None:
+    """Convenience wrapper that logs dry-run summaries for next-video and opinion stages."""
+
+    summaries: list[DryRunSummary] = []
+    if include_next:
+        summaries.append(
+            DryRunSummary(label=next_label, pending=next_pending, cached=next_cached)
+        )
+    if include_opinion:
+        summaries.append(
+            DryRunSummary(
+                label="opinion",
+                pending=opinion_pending,
+                cached=opinion_cached,
+            )
+        )
+    log_dry_run_summary(logger, summaries)
+
+
 @dataclass(frozen=True)
 class SweepPartitionExecutors(Generic[TaskT, OutcomeT]):
     """Callable bundle operating on sweep partition tasks."""

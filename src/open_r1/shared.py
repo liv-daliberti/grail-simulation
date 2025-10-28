@@ -542,6 +542,41 @@ def prepare_model_eval_and_run_grpo(
     )
 
 
+def execute_grpo_pipeline(
+    *,
+    component_factory: GrpoComponentFactory,
+    reward_funcs: Sequence[Any],
+    tokenizer: Any,
+    dataset: Mapping[str, Any],
+    script_args: Any,
+    training_args: Any,
+    model_args: Any,
+    logger: Any,
+    prefix: str,
+    evaluate_fn_factory: Optional[EvalFnFactory] = None,
+) -> Tuple[Any, Tuple[Any, Optional[Mapping[str, Any]]]]:
+    """
+    Assemble components via ``component_factory`` and execute the shared GRPO pipeline.
+
+    :returns: Tuple mirroring :func:`prepare_model_eval_and_run_grpo`.
+    """
+
+    components = component_factory.build(
+        reward_funcs=reward_funcs,
+        tokenizer=tokenizer,
+        evaluate_fn_factory=evaluate_fn_factory,
+    )
+    context = build_grpo_context(
+        dataset,
+        script_args,
+        training_args,
+        model_args,
+        logger,
+        prefix=prefix,
+    )
+    return prepare_model_eval_and_run_grpo(components=components, context=context)
+
+
 def parse_and_run(
     main_fn: Callable[[Any, Any, Any], None],
     argument_classes: Tuple[type, type, type],

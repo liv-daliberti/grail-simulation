@@ -218,11 +218,14 @@ class SweepTask(  # pylint: disable=too-many-instance-attributes
     :type issue: str
     :param issue_slug: Normalised slug used for filesystem naming.
     :type issue_slug: str
+    :param train_participant_studies: Participant study keys used for training.
+    :type train_participant_studies: Tuple[str, ...]
     """
 
     word2vec_model_dir: Path | None
     issue: str
     issue_slug: str
+    train_participant_studies: Tuple[str, ...] = field(default_factory=tuple)
 
 @dataclass
 class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-many-instance-attributes

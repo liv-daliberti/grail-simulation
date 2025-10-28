@@ -277,6 +277,7 @@ def _build_sweep_task(
     study: StudySpec,
     context: SweepTaskContext,
     cli_args: Tuple[Tuple[str, ...], Tuple[str, ...]],
+    train_study_keys: Tuple[str, ...],
 ) -> SweepTask:
     """Construct a sweep task for the next-video pipeline."""
 
@@ -300,6 +301,7 @@ def _build_sweep_task(
         issue=study.issue,
         issue_slug=issue_slug,
         metrics_path=metrics_path,
+        train_participant_studies=train_study_keys,
     )
 
 
@@ -352,6 +354,7 @@ def prepare_sweep_tasks(
     """
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
+    all_study_keys = tuple(spec.key for spec in studies)
 
     return prepare_task_grid(
         configs,
@@ -363,6 +366,9 @@ def prepare_sweep_tasks(
             study=study,
             context=context,
             cli_args=(base_cli_tuple, extra_cli_tuple),
+            train_study_keys=tuple(
+                key for key in all_study_keys if key != study.key
+            ),
         ),
         cache=TaskCacheStrategy(load_cached=_load_cached_outcome),
     )
@@ -526,6 +532,20 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
     cli_args.extend(["--participant-studies", task.study.key])
     cli_args.extend(["--out-dir", str(run_root)])
     cli_args.extend(task.extra_cli)
+    if task.train_participant_studies:
+        cli_args.extend(
+            [
+                "--train-participant-studies",
+                ",".join(task.train_participant_studies),
+            ]
+        )
+    else:
+        LOGGER.warning(
+            "[SWEEP] feature=%s study=%s has no alternate training studies; "
+            "falling back to default training cohort.",
+            task.config.feature_space,
+            task.study.key,
+        )
 
     LOGGER.info(
         "[SWEEP] feature=%s study=%s issue=%s label=%s",

@@ -858,6 +858,57 @@ def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
     assert cached_outcome.mae == pytest.approx(0.4)
 
 
+def test_iter_opinion_sweep_tasks_respects_feature_space(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    config = SweepConfig(
+        text_vectorizer="word2vec",
+        vectorizer_tag="w2v256",
+        learning_rate=0.1,
+        max_depth=4,
+        n_estimators=200,
+        subsample=0.9,
+        colsample_bytree=0.8,
+        reg_lambda=1.0,
+        reg_alpha=0.0,
+        vectorizer_cli=(),
+    )
+    context = OpinionSweepRunContext(
+        dataset="dataset",
+        cache_dir="cache",
+        sweep_dir=tmp_path,
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+        max_participants=25,
+        seed=42,
+        max_features=None,
+        tree_method="hist",
+        overwrite=False,
+        tfidf_config=TfidfConfig(max_features=None),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
+    )
+
+    tasks = list(
+        sweeps._iter_opinion_sweep_tasks(
+            studies=[study],
+            configs=[config],
+            context=context,
+        )
+    )
+    assert len(tasks) == 1
+
+    task = tasks[0]
+    assert task.feature_space == "word2vec"
+    assert "word2vec" in task.metrics_path.parts
+
+    request_args = task.request_args
+    vectorizer = request_args["vectorizer"]
+    train_config = request_args["train_config"]
+    assert vectorizer.feature_space == "word2vec"
+    assert vectorizer.word2vec is not None
+    assert train_config.max_features is None
+
+
 def test_prepare_sweep_tasks_reuses_cached_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     study = _make_study_spec()
     config = _make_sweep_config()

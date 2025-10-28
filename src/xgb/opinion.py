@@ -109,22 +109,27 @@ class OpinionEvalRequest:
 
     @property
     def feature_space(self) -> str:
+        """Return the configured feature space identifier."""
         return self.vectorizer.feature_space
 
     @property
     def extra_fields(self) -> Sequence[str]:
+        """Return additional text fields appended during document assembly."""
         return self.vectorizer.extra_fields
 
     @property
     def tfidf_config(self) -> TfidfConfig | None:
+        """Return the TF-IDF configuration used for vectorisation."""
         return self.vectorizer.tfidf
 
     @property
     def word2vec_config(self) -> Word2VecVectorizerConfig | None:
+        """Return the Word2Vec configuration used for vectorisation."""
         return self.vectorizer.word2vec
 
     @property
     def sentence_transformer_config(self) -> SentenceTransformerVectorizerConfig | None:
+        """Return the sentence-transformer configuration used for vectorisation."""
         return self.vectorizer.sentence_transformer
 
 

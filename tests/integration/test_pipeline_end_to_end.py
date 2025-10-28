@@ -34,6 +34,7 @@ from knn.pipeline_context import (
 )
 from knn.pipeline_data import issue_slug_for_study as knn_issue_slug_for_study
 from xgb import pipeline as xgb_pipeline
+from xgb.opinion import OpinionTrainConfig, OpinionVectorizerConfig
 from xgb.pipeline_context import (
     FinalEvalContext,
     OpinionStageConfig,
@@ -82,6 +83,7 @@ def _knn_make_sweep_task(
         issue=study.issue,
         issue_slug=issue_slug,
         metrics_path=metrics_path,
+        train_participant_studies=(),
     )
 
 
@@ -191,7 +193,7 @@ def _xgb_make_opinion_task(
     train_config = OpinionTrainConfig(
         max_participants=context.max_participants,
         seed=context.seed,
-        max_features=context.max_features,
+        max_features=context.max_features if feature_space == "tfidf" else None,
         booster=config.booster_params(context.tree_method),
     )
     vectorizer = OpinionVectorizerConfig(

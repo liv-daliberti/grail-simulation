@@ -63,9 +63,8 @@ from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
     build_default_component_factory,
-    build_grpo_context,
+    execute_grpo_pipeline,
     parse_and_run,
-    prepare_model_eval_and_run_grpo,
 )
 from open_r1.utils import get_dataset, get_tokenizer
 
@@ -644,20 +643,18 @@ def main(
 
         return _evaluate_with_gail
 
-    components = COMPONENT_FACTORY.build(
+    execute_grpo_pipeline(
+        component_factory=COMPONENT_FACTORY,
         reward_funcs=reward_fns,
         tokenizer=tokenizer,
+        dataset=dataset,
+        script_args=script_args,
+        training_args=training_args,
+        model_args=model_args,
+        logger=logger,
+        prefix="grail",
         evaluate_fn_factory=_gail_eval_factory,
     )
-    context = build_grpo_context(
-        dataset,
-        script_args,
-        training_args,
-        model_args,
-        logger,
-        prefix="grail",
-    )
-    prepare_model_eval_and_run_grpo(components=components, context=context)
 
 
 if __name__ == "__main__":

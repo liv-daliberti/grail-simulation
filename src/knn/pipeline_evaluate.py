@@ -102,6 +102,16 @@ def run_final_evaluations(
             cli_args.extend(["--participant-studies", study.key])
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
+            train_studies = [spec.key for spec in studies if spec.key != study.key]
+            if train_studies:
+                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            else:
+                LOGGER.warning(
+                    "[FINAL] feature=%s study=%s has no alternate training studies; "
+                    "falling back to default training cohort.",
+                    feature_space,
+                    study.key,
+                )
             cli_args.extend(context.extra_cli)
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)

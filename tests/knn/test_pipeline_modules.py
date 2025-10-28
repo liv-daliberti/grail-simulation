@@ -262,6 +262,33 @@ def test_prepare_sweep_tasks_word2vec_without_cached_metrics(tmp_path: Path) -> 
 
     assert task.word2vec_model_dir == expected_model_dir
     assert task.metrics_path == expected_metrics_path
+    assert task.train_participant_studies == ()
+
+
+def test_prepare_sweep_tasks_sets_training_cohort(tmp_path: Path) -> None:
+    study_a = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
+    study_b = _make_study("study2", "minimum_wage", "Study 2 – Minimum Wage (YouGov)")
+    config = _make_sweep_config("tfidf")
+    context = SweepTaskContext(
+        base_cli=["--dataset", "stub"],
+        extra_cli=[],
+        sweep_dir=tmp_path,
+        word2vec_model_base=tmp_path / "word2vec",
+    )
+
+    pending, cached = sweeps.prepare_sweep_tasks(
+        studies=[study_a, study_b],
+        configs=[config],
+        context=context,
+        reuse_existing=False,
+    )
+
+    assert cached == []
+    assert len(pending) == 2
+    task_for_a = next(task for task in pending if task.study.key == study_a.key)
+    task_for_b = next(task for task in pending if task.study.key == study_b.key)
+    assert task_for_a.train_participant_studies == (study_b.key,)
+    assert task_for_b.train_participant_studies == (study_a.key,)
 
 
 def test_sweep_outcome_from_metrics_handles_legacy_payload(tmp_path: Path) -> None:
@@ -537,6 +564,68 @@ def test_run_final_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyP
     assert load_calls == [(out_dir / "word2vec" / study.study_slug, issue_slug)]
     assert (context.word2vec_model_dir / study.study_slug).exists()
 
+
+def test_run_final_evaluations_executes_with_training_filters(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
+    companion = _make_study("study2", "minimum_wage", "Study 2 – Minimum Wage (YouGov)")
+    config = _make_sweep_config("tfidf")
+    outcome = SweepOutcome(
+        order_index=0,
+        study=study,
+        feature_space="tfidf",
+        config=config,
+        accuracy=0.7,
+        best_k=9,
+        eligible=64,
+        metrics_path=tmp_path / "dummy.json",
+        metrics={"accuracy_overall": 0.7},
+    )
+    selections = {"tfidf": {study.key: StudySelection(study=study, outcome=outcome)}}
+
+    context = EvaluationContext.from_args(
+        base_cli=["--dataset", "stub"],
+        extra_cli=["--seed", "11"],
+        out_dir=tmp_path / "out",
+        word2vec_model_dir=tmp_path / "word2vec_models",
+        reuse_existing=False,
+    )
+
+    call_args: list[list[str]] = []
+    stub_metrics = {"accuracy_overall": 0.92}
+
+    def fake_run(args: list[str]) -> None:
+        call_args.append(list(args))
+        feature_space = "tfidf"
+        issue_slug = data.issue_slug_for_study(study)
+        metrics_dir = (
+            context.next_video_out_dir
+            / feature_space
+            / study.study_slug
+            / issue_slug
+        )
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        metrics_path = metrics_dir / f"knn_eval_{issue_slug}_validation_metrics.json"
+        metrics_path.write_text(json.dumps(stub_metrics), encoding="utf-8")
+
+    def fake_load(run_dir: Path, slug: str) -> tuple[dict, Path]:
+        return stub_metrics, run_dir / slug / f"knn_eval_{slug}_validation_metrics.json"
+
+    monkeypatch.setattr(evaluate, "run_knn_cli", fake_run)
+    monkeypatch.setattr(evaluate, "load_metrics", fake_load)
+
+    results = evaluate.run_final_evaluations(
+        selections=selections,
+        studies=[study, companion],
+        context=context,
+    )
+
+    assert results == {"tfidf": {study.key: stub_metrics}}
+    assert call_args, "Expected run_knn_cli to be invoked"
+    cli_invocation = call_args[0]
+    train_idx = cli_invocation.index("--train-participant-studies") + 1
+    assert cli_invocation[train_idx] == companion.key
 
 def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")

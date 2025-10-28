@@ -308,8 +308,8 @@ def _resolve_task_flags(tokens: Sequence[str]) -> Tuple[bool, bool]:
     return run_next, run_opinion
 
 
-def _resolve_task_configuration(args: argparse.Namespace) -> Tuple[List[str], bool, bool]:
-    """Return the task tokens plus the derived next-video/opinion toggles."""
+def _resolve_task_configuration(args: argparse.Namespace) -> Tuple[bool, bool]:
+    """Resolve the next-video/opinion task toggles for the run."""
 
     tokens = _split_tokens(
         args.tasks
@@ -317,8 +317,7 @@ def _resolve_task_configuration(args: argparse.Namespace) -> Tuple[List[str], bo
     )
     if not tokens:
         tokens = ["next_video", "opinion"]
-    run_next, run_opinion = _resolve_task_flags(tokens)
-    return tokens, run_next, run_opinion
+    return _resolve_task_flags(tokens)
 
 
 def _resolve_allow_incomplete(args: argparse.Namespace) -> bool:
@@ -367,7 +366,7 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         or os.environ.get("KNN_K_SWEEP")
         or "1,2,3,4,5,10,15,20,25,50,75,100,125,150"
     )
-    task_tokens, run_next_video, run_opinion = _resolve_task_configuration(args)
+    run_next_video, run_opinion = _resolve_task_configuration(args)
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
         or _split_tokens(os.environ.get("KNN_STUDIES", ""))

@@ -26,11 +26,10 @@ import logging
 from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from common.pipeline_stage import (
-    DryRunSummary,
     build_sweep_partition,
     SweepPartitionExecutors,
     dispatch_cli_partitions,
-    log_dry_run_summary,
+    emit_stage_dry_run_summary,
     prepare_sweep_execution as _prepare_sweep_execution,
 )
 
@@ -203,24 +202,16 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if args.dry_run:
         _log_dry_run(configs)
-        summaries: List[DryRunSummary] = []
-        if context.run_next_video:
-            summaries.append(
-                DryRunSummary(
-                    label="next-video",
-                    pending=len(planned_tasks),
-                    cached=len(cached_planned),
-                )
-            )
-        if context.run_opinion:
-            summaries.append(
-                DryRunSummary(
-                    label="opinion",
-                    pending=len(planned_opinion_tasks),
-                    cached=len(cached_planned_opinion),
-                )
-            )
-        log_dry_run_summary(LOGGER, summaries)
+        emit_stage_dry_run_summary(
+            LOGGER,
+            include_next=context.run_next_video,
+            next_label="next-video",
+            next_pending=len(planned_tasks),
+            next_cached=len(cached_planned),
+            include_opinion=context.run_opinion,
+            opinion_pending=len(planned_opinion_tasks),
+            opinion_cached=len(cached_planned_opinion),
+        )
         return
 
     if stage == "sweeps":
@@ -260,12 +251,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
             )
 
-        dispatch_cli_partitions(
-            partitions,
-            args=args,
-            logger=LOGGER,
-            prepare=prepare_sweep_execution,
-        )
+        dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
         return
 
     reuse_for_stage = context.reuse_sweeps

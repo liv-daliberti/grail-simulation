@@ -371,6 +371,9 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if stage == "sweeps":
         partitions = []
+        # Skip execution for cached tasks so the sweeps stage only fills gaps. Removing
+        # the cached artefacts before invocation forces recomputation when needed.
+        reuse_cached_metrics = True
         if run_next_video:
             def describe_cached(outcome):
                 return f"{outcome.study.key}:{outcome.study.issue}:{outcome.config.label()}"
@@ -380,7 +383,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     label="next-video",
                     pending=planned_slate_tasks,
                     cached=cached_slate_planned,
-                    reuse_existing=reuse_sweeps,
+                    reuse_existing=reuse_cached_metrics,
                     executors=SweepPartitionExecutors(
                         execute_task=lambda task: _execute_sweep_tasks([task], jobs=1)[0],
                         describe_pending=_format_sweep_task_descriptor,
@@ -400,7 +403,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     label="opinion",
                     pending=planned_opinion_tasks,
                     cached=cached_opinion_planned,
-                    reuse_existing=reuse_sweeps,
+                    reuse_existing=reuse_cached_metrics,
                     executors=SweepPartitionExecutors(
                         execute_task=execute_opinion_task,
                         describe_pending=_format_opinion_sweep_task_descriptor,
@@ -409,7 +412,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
             )
 
-        return dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
+        dispatch_cli_partitions(
+            partitions,
+            args=args,
+            logger=LOGGER,
+            prepare=prepare_sweep_execution,
+        )
+        return
 
     reuse_for_stage = reuse_sweeps
     if stage in {"finalize", "reports"}:

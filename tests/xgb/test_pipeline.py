@@ -223,6 +223,7 @@ def test_sweeps_stage_skips_cached_indices_without_warning(
         run_root=run_root,
         tree_method="hist",
         metrics_path=run_root / "eval" / "metrics.json",
+        train_participant_studies=(),
     )
 
     monkeypatch.setattr(pipeline_module, "_resolve_study_specs", lambda **_: [study])
@@ -315,6 +316,7 @@ def test_sweeps_stage_executes_pending_task_with_cached_offsets(
         run_root=run_root,
         tree_method="hist",
         metrics_path=run_root / "eval" / "metrics.json",
+        train_participant_studies=(),
     )
 
     monkeypatch.setattr(pipeline_module, "_resolve_study_specs", lambda **_: [study])

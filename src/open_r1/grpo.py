@@ -51,7 +51,7 @@ from open_r1.shared import (
     prepare_model_eval_and_run_grpo,
 )
 from open_r1.rewards import get_reward_funcs
-from open_r1.utils import get_dataset, get_model, get_tokenizer
+from open_r1.utils import get_dataset, get_tokenizer
 
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
 

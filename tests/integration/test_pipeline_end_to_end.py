@@ -143,6 +143,7 @@ def _xgb_make_sweep_task(
         run_root=run_root,
         tree_method=context.tree_method,
         metrics_path=metrics_path,
+        train_participant_studies=(),
     )
 
 

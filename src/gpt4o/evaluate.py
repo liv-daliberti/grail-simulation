@@ -151,6 +151,16 @@ class EvaluationState:
     split: str = _config.EVAL_SPLIT
     streaming: bool = False
 
+    def set_split(self, split: str) -> None:
+        """Update the active evaluation split."""
+
+        self.split = split
+
+    def set_streaming(self, streaming: bool) -> None:
+        """Mark whether streaming mode is active."""
+
+        self.streaming = streaming
+
 
 class EvaluationRunner:
     """Stateful helper that orchestrates GPT-4o evaluation."""
@@ -216,7 +226,7 @@ class EvaluationRunner:
                     logging.warning(
                         "Low disk space detected; falling back to streaming mode."
                     )
-                    self.state.streaming = True
+                    self.state.set_streaming(True)
                 else:
                     raise
 
@@ -251,7 +261,7 @@ class EvaluationRunner:
                     "Unable to load evaluation split in streaming mode."
                 ) from exc
 
-        self.state.split = eval_split
+        self.state.set_split(eval_split)
         if self.limits.eval_max:
             data_iter = data_iter.take(self.limits.eval_max)
         return data_iter
@@ -288,7 +298,7 @@ class EvaluationRunner:
             limit = min(self.limits.eval_max, len(data_iter))  # type: ignore[arg-type]
             data_iter = data_iter.select(range(limit))
 
-        self.state.split = eval_split
+        self.state.set_split(eval_split)
         return data_iter
 
     @staticmethod

@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 else:
     AzureOpenAIType = Any  # type: ignore[assignment]
 
-_azure_openai_import_error: ImportError | None = None
+_azure_openai_import_error: ImportError | None = None  # pylint: disable=invalid-name
 
 try:  # pragma: no cover - optional dependency
     from openai import AzureOpenAI as _AzureOpenAI  # type: ignore  # pylint: disable=import-error

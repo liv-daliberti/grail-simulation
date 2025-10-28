@@ -225,13 +225,18 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if stage == "sweeps":
         partitions = []
+        # Always skip execution for tasks that already produced metrics. The sweeps stage
+        # is intended to fill gaps rather than rerun the entire grid, so cached artefacts
+        # short-circuit regardless of the CLI reuse flag. To force recomputation, clear
+        # the cached metrics before invoking the stage.
+        reuse_cached_metrics = True
         if context.run_next_video:
             partitions.append(
                 build_sweep_partition(
                     label="next-video",
                     pending=planned_tasks,
                     cached=cached_planned,
-                    reuse_existing=context.reuse_sweeps,
+                    reuse_existing=reuse_cached_metrics,
                     executors=SweepPartitionExecutors(
                         execute_task=_execute_sweep_task,
                         describe_pending=_format_sweep_task_descriptor,
@@ -245,7 +250,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                     label="opinion",
                     pending=planned_opinion_tasks,
                     cached=cached_planned_opinion,
-                    reuse_existing=context.reuse_sweeps,
+                    reuse_existing=reuse_cached_metrics,
                     executors=SweepPartitionExecutors(
                         execute_task=_execute_opinion_sweep_task,
                         describe_pending=_format_opinion_sweep_task_descriptor,

@@ -468,20 +468,7 @@ def _prepare_opinion_sweep_tasks(
     context: OpinionSweepRunContext,
     reuse_existing: bool,
 ) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
-    """
-    Determine pending opinion sweep tasks and return cached outcomes.
-
-    :param studies: Participant studies slated for opinion evaluation.
-    :type studies: Sequence[StudySpec]
-    :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
-    :param context: Shared opinion sweep execution context.
-    :type context: OpinionSweepRunContext
-    :param reuse_existing: Flag controlling whether cached artefacts should be reused.
-    :type reuse_existing: bool
-    :returns: Tuple containing pending tasks and cached outcomes.
-    :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
-    """
+    """Return pending opinion sweep tasks and cached outcomes."""
 
     pending: List[OpinionSweepTask] = []
     cached: List[OpinionSweepOutcome] = []
@@ -510,16 +497,7 @@ def _merge_opinion_sweep_outcomes(
     cached: Sequence[OpinionSweepOutcome],
     executed: Sequence[OpinionSweepOutcome],
 ) -> List[OpinionSweepOutcome]:
-    """
-    Combine cached and freshly executed opinion sweep outcomes preserving order.
-
-    :param cached: Previously cached opinion sweep outcomes.
-    :type cached: Sequence[OpinionSweepOutcome]
-    :param executed: Outcomes produced by the current execution.
-    :type executed: Sequence[OpinionSweepOutcome]
-    :returns: Ordered list of merged opinion outcomes.
-    :rtype: List[OpinionSweepOutcome]
-    """
+    """Merge cached and fresh opinion sweep outcomes preserving order."""
 
     return merge_indexed_outcomes(
         cached,
@@ -557,16 +535,7 @@ def _execute_opinion_sweep_tasks(
     *,
     jobs: int,
 ) -> List[OpinionSweepOutcome]:
-    """
-    Execute opinion sweep tasks, optionally in parallel.
-
-    :param tasks: Opinion sweep tasks to execute.
-    :type tasks: Sequence[OpinionSweepTask]
-    :param jobs: Maximum number of parallel workers.
-    :type jobs: int
-    :returns: Ordered list of opinion sweep outcomes.
-    :rtype: List[OpinionSweepOutcome]
-    """
+    """Execute opinion sweep tasks, optionally in parallel."""
 
     return execute_indexed_tasks(
         tasks,
@@ -585,14 +554,7 @@ def _emit_combined_sweep_plan(
     slate_tasks: Sequence[SweepTask],
     opinion_tasks: Sequence[OpinionSweepTask],
 ) -> None:
-    """
-    Print a combined sweep plan covering next-video and opinion tasks.
-
-    :param slate_tasks: Next-video sweep tasks to include.
-    :type slate_tasks: Sequence[SweepTask]
-    :param opinion_tasks: Opinion sweep tasks to include.
-    :type opinion_tasks: Sequence[OpinionSweepTask]
-    """
+    """Print a combined sweep plan covering next-video and opinion tasks."""
 
     total = len(slate_tasks) + len(opinion_tasks)
     sections: List[str] = []
@@ -615,7 +577,11 @@ def _emit_combined_sweep_plan(
         print("### OPINION")
         print("INDEX\tSTUDY\tISSUE\tVECTORIZER\tLABEL")
         for display_index, task in enumerate(opinion_tasks):
-            vectorizer = getattr(task, "feature_space", getattr(task.config, "text_vectorizer", "opinion"))
+            vectorizer = getattr(
+                task,
+                "feature_space",
+                getattr(task.config, "text_vectorizer", "opinion"),
+            )
             print(
                 f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
                 f"{vectorizer}\t{task.config.label()}"

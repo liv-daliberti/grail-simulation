@@ -238,7 +238,11 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     max_features_value = args.max_features if args.max_features > 0 else None
     tfidf_config = TfidfConfig(max_features=max_features_value)
-    word2vec_model_base = Path(args.word2vec_model_dir).resolve() if args.word2vec_model_dir else None
+    word2vec_model_base = (
+        Path(args.word2vec_model_dir).resolve()
+        if args.word2vec_model_dir
+        else None
+    )
     word2vec_config = Word2VecVectorizerConfig(
         vector_size=args.word2vec_size,
         window=args.word2vec_window,

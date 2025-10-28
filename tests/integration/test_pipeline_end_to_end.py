@@ -662,7 +662,7 @@ def test_xgb_pipeline_finalize_writes_reports(monkeypatch: pytest.MonkeyPatch, t
     monkeypatch.setattr(
         xgb_pipeline,
         "_run_final_evaluations",
-        lambda *, selections, context: {study.key: {"accuracy": 0.9}},
+        lambda *, selections, studies, context: {study.key: {"accuracy": 0.9}},
     )
     monkeypatch.setattr(
         xgb_pipeline,
@@ -832,7 +832,7 @@ def test_xgb_pipeline_sweeps_and_finalize(monkeypatch: pytest.MonkeyPatch, tmp_p
     monkeypatch.setattr(
         xgb_pipeline,
         "_run_final_evaluations",
-        lambda *, selections, context: {study.key: {"accuracy": 0.9}},
+        lambda *, selections, studies, context: {study.key: {"accuracy": 0.9}},
     )
     monkeypatch.setattr(
         xgb_pipeline,

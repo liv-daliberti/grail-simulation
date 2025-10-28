@@ -335,14 +335,14 @@ class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
     Extend :class:`common.opinion_sweep_types.BaseOpinionSweepTask` with the
     keyword arguments required by the XGBoost implementation.
 
-    :param feature_space: Feature space evaluated by the sweep task.
-    :type feature_space: str
     :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.
     :type request_args: Mapping[str, object]
+    :param feature_space: Feature space evaluated by the sweep task.
+    :type feature_space: str
     """
 
-    feature_space: str
     request_args: Mapping[str, object]
+    feature_space: str = "tfidf"
 
 OpinionStudySelection = narrow_opinion_selection(OpinionSweepOutcome)
 

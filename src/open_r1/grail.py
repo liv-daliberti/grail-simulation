@@ -62,7 +62,6 @@ from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
-    collect_grpo_pipeline_kwargs,
     make_grpo_execute_kwargs,
     build_default_component_factory,
     execute_grpo_pipeline,
@@ -647,16 +646,9 @@ def main(
 
     execute_grpo_pipeline(
         **make_grpo_execute_kwargs(
-            component_factory=COMPONENT_FACTORY,
-            reward_funcs=reward_fns,
-            tokenizer=tokenizer,
-            dataset=dataset,
-            script_args=script_args,
-            training_args=training_args,
-            model_args=model_args,
-            logger=logger,
             prefix="grail",
             evaluate_fn_factory=_gail_eval_factory,
+            namespace=locals(),
         )
     )
 

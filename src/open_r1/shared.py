@@ -575,16 +575,17 @@ def execute_grpo_pipeline(
 
 def make_grpo_execute_kwargs(
     *,
-    component_factory: GrpoComponentFactory,
-    reward_funcs: Sequence[Any],
-    tokenizer: Any,
-    dataset: Mapping[str, Any],
-    script_args: Any,
-    training_args: Any,
-    model_args: Any,
-    logger: Any,
+    component_factory: GrpoComponentFactory | None = None,
+    reward_funcs: Sequence[Any] | None = None,
+    tokenizer: Any | None = None,
+    dataset: Mapping[str, Any] | None = None,
+    script_args: Any | None = None,
+    training_args: Any | None = None,
+    model_args: Any | None = None,
+    logger: Any | None = None,
     prefix: str,
     evaluate_fn_factory: Optional[EvalFnFactory] = None,
+    namespace: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Return keyword arguments for :func:`execute_grpo_pipeline`.
 
@@ -592,18 +593,24 @@ def make_grpo_execute_kwargs(
     lists, which also helps silence duplicate-code warnings across modules.
     """
 
-    return {
-        "component_factory": component_factory,
-        "reward_funcs": reward_funcs,
-        "tokenizer": tokenizer,
-        "dataset": dataset,
-        "script_args": script_args,
-        "training_args": training_args,
-        "model_args": model_args,
-        "logger": logger,
+    if namespace is not None:
+        payload = collect_grpo_pipeline_kwargs(namespace)
+    else:
+        payload = {
+            "component_factory": component_factory,
+            "reward_funcs": reward_funcs,
+            "tokenizer": tokenizer,
+            "dataset": dataset,
+            "script_args": script_args,
+            "training_args": training_args,
+            "model_args": model_args,
+            "logger": logger,
+        }
+    payload.update({
         "prefix": prefix,
         "evaluate_fn_factory": evaluate_fn_factory,
-    }
+    })
+    return payload
 
 
 GRPO_PIPELINE_SCOPE_KEYS = {
@@ -627,7 +634,6 @@ def collect_grpo_pipeline_kwargs(namespace: Mapping[str, Any]) -> Dict[str, Any]
     return {
         param: namespace[source]
         for param, source in GRPO_PIPELINE_SCOPE_KEYS.items()
-        if source in namespace
     }
 
 

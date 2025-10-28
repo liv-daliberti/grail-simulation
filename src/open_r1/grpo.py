@@ -195,15 +195,8 @@ def main(
 
     execute_grpo_pipeline(
         **make_grpo_execute_kwargs(
-            component_factory=COMPONENT_FACTORY,
-            reward_funcs=reward_fns,
-            tokenizer=tokenizer,
-            dataset=dataset,
-            script_args=script_args,
-            training_args=training_args,
-            model_args=model_args,
-            logger=logger,
             prefix="grpo",
+            namespace=locals(),
         )
     )
 

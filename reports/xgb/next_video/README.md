@@ -11,15 +11,17 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 
 ## Portfolio Summary
 
-- Weighted accuracy 0.987 across 548 evaluated slates.
-- Weighted known-candidate coverage 0.991 over 546 eligible slates.
-- Known-candidate availability 0.996 relative to all evaluated slates.
-- Mean predicted probability on known candidates 0.940 (across 1 study with recorded probabilities).
-- Highest study accuracy: Study 1 – Gun Control (MTurk) (0.987).
+- Weighted accuracy 0.990 across 1,219 evaluated slates.
+- Weighted known-candidate coverage 0.992 over 1,217 eligible slates.
+- Known-candidate availability 0.998 relative to all evaluated slates.
+- Mean predicted probability on known candidates 0.953 (across 2 studies with recorded probabilities).
+- Highest study accuracy: Study 2 – Minimum Wage (MTurk) (0.993).
+- Lowest study accuracy: Study 1 – Gun Control (MTurk) (0.987).
 
 | Study | Issue | Accuracy ↑ | Baseline ↑ | Random ↑ | Correct / evaluated | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ |
 | --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | Gun Control | 0.987 | 0.540 | 0.326 | 541/548 | 0.991 | 541/546 | 0.996 | 0.940 |
+| Study 2 – Minimum Wage (MTurk) | Minimum Wage | 0.993 | 0.368 | 0.255 | 666/671 | 0.993 | 666/671 | 1.000 | 0.966 |
 
 ## Accuracy Curves
 
@@ -32,6 +34,7 @@ Leave-one-study-out metrics were unavailable when this report was generated.
 ## Observations
 
 - Study 1 – Gun Control (MTurk): accuracy 0.987, coverage 0.991, known availability 0.996.
-- Average accuracy 0.987.
-- Known coverage averages 0.991.
-- Known candidate availability averages 0.996.
+- Study 2 – Minimum Wage (MTurk): accuracy 0.993, coverage 0.993, known availability 1.000.
+- Average accuracy 0.990.
+- Known coverage averages 0.992.
+- Known candidate availability averages 0.998.

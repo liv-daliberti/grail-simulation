@@ -28,6 +28,8 @@ import json
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
+from common.pipeline_utils import make_placeholder_metrics
+
 from .opinion import (
     DEFAULT_SPECS,
     OpinionEvalRequest,
@@ -50,7 +52,7 @@ from .pipeline_sweeps import (
     _load_opinion_from_next_metrics_from_disk,
     _run_xgb_cli,
 )
-from common.pipeline_utils import make_placeholder_metrics
+ 
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")
 

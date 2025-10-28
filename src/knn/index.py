@@ -29,7 +29,7 @@ import numpy as np
 from scipy import sparse
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
-from common.matrix_summary import summarize_vector, log_embedding_previews
+from common.matrix_summary import log_embedding_previews
 from common.vectorizers import create_tfidf_vectorizer
 
 from .features import (
@@ -261,26 +261,15 @@ def build_sentence_transformer_index(  # pylint: disable=too-many-locals
     if not hasattr(encoder, "transform"):
         setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
     matrix = encoder.encode(docs).astype(np.float32, copy=False)
-    # Log an embedding summary for the first document
+    # Log an embedding summary for the first document using common helper
     try:
-        if docs:
-            sample_doc = str(docs[0])
-            base_doc = sample_doc.split("\n", 1)[0]
-            base_vec = encoder.encode([base_doc]).astype(np.float32, copy=False)
-            base_summary = summarize_vector(base_vec)
-            full_summary = summarize_vector(matrix[0])
-            LOGGER.info(
-                "[KNN][Embed][ST] base_doc dim=%s nnz=%s preview=%s",
-                base_summary.get("dim"),
-                base_summary.get("nnz"),
-                base_summary.get("preview"),
-            )
-            LOGGER.info(
-                "[KNN][Embed][ST] doc+tokens dim=%s nnz=%s preview=%s",
-                full_summary.get("dim"),
-                full_summary.get("nnz"),
-                full_summary.get("preview"),
-            )
+        log_embedding_previews(
+            encoder,
+            docs,
+            matrix[0] if len(matrix) else matrix,
+            logger=LOGGER,
+            tag="[KNN][Embed][ST]",
+        )
     except Exception:  # pylint: disable=broad-except
         pass
     return {

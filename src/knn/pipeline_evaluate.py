@@ -274,9 +274,73 @@ def run_cross_study_evaluations(
             )
             return cached
 
-    # Execution path not required by unit tests; keep disabled to avoid heavy runs.
-    LOGGER.info("[LOSO] No cached metrics available; execution path disabled in this build.")
-    return {}
+    # Execute LOSO runs: train on companion studies, evaluate on the holdout.
+    cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
+    for feature_space, per_study in selections.items():
+        LOGGER.info("[LOSO] feature=%s", feature_space)
+        per_holdout: Dict[str, Mapping[str, object]] = {}
+        for holdout in studies:
+            selection = per_study.get(holdout.key)
+            if selection is None:
+                continue
+            loso_root = ensure_dir(context.next_video_out_dir / feature_space / "loso" / holdout.study_slug)
+            model_dir = None
+            if feature_space == "word2vec":
+                model_dir = ensure_dir(context.next_video_word2vec_dir / holdout.study_slug)
+            issue_slug = issue_slug_for_study(holdout)
+            metrics_path = loso_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
+            if context.reuse_existing and metrics_path.exists():
+                try:
+                    metrics, _ = load_metrics(loso_root, issue_slug)
+                except FileNotFoundError:
+                    LOGGER.warning(
+                        "[LOSO][MISS] feature=%s holdout=%s expected cached metrics at %s but none found.",
+                        feature_space,
+                        holdout.key,
+                        metrics_path,
+                    )
+                else:
+                    per_holdout[holdout.key] = metrics
+                    LOGGER.info(
+                        "[LOSO][SKIP] feature=%s holdout=%s (metrics cached).",
+                        feature_space,
+                        holdout.key,
+                    )
+                    continue
+            LOGGER.info(
+                "[LOSO] feature=%s holdout=%s issue=%s best_k=%d",
+                feature_space,
+                holdout.key,
+                holdout.issue,
+                int(selection.best_k),
+            )
+            cli_args: list[str] = []
+            cli_args.extend(context.base_cli)
+            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
+            cli_args.extend(["--issues", holdout.issue])
+            # Evaluate on the holdout only
+            cli_args.extend(["--participant-studies", holdout.key])
+            # Train on all other studies
+            train_studies = [spec.key for spec in studies if spec.key != holdout.key]
+            if train_studies:
+                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            cli_args.extend(["--out-dir", str(loso_root)])
+            cli_args.extend(["--knn-k", str(selection.best_k)])
+            cli_args.extend(context.extra_cli)
+            run_knn_cli(cli_args)
+            try:
+                metrics, _ = load_metrics(loso_root, issue_slug)
+                per_holdout[holdout.key] = metrics
+            except FileNotFoundError:
+                LOGGER.warning(
+                    "[LOSO][MISS] feature=%s holdout=%s failed to produce metrics at %s",
+                    feature_space,
+                    holdout.key,
+                    metrics_path,
+                )
+        if per_holdout:
+            cross_metrics[feature_space] = per_holdout
+    return cross_metrics
 
 __all__ = [
     "run_final_evaluations",

@@ -400,6 +400,12 @@ def predict_among_slate(
 
     slate_pairs = list(feature_utils.extract_slate_items(example))
     best_index = _select_best_candidate(slate_pairs, probability_map)
+    if best_index is None and slate_pairs:
+        # Open-set fallback using vector-space similarity between prompt and candidate title.
+        try:
+            best_index = _open_set_best_index(model.vectorizer, document, slate_pairs)
+        except Exception:  # pragma: no cover - defensive
+            best_index = None
     return best_index, probability_map
 
 
@@ -864,6 +870,57 @@ def _fallback_candidate_key(title: str, video_id: str) -> str:
             return title_candidate
     derived = feature_utils.title_for(video_id) or title or ""
     return canon_video_id(derived) or derived.strip()
+
+
+def _open_set_best_index(
+    vectorizer: BaseTextVectorizer,
+    document: str,
+    slate_pairs: Sequence[tuple[str, str]],
+) -> Optional[int]:
+    """Return the index of the most similar candidate by cosine similarity.
+
+    Encodes the prompt document and each candidate title/id using the same
+    vectoriser and selects the highest cosine similarity. Falls back to a raw
+    dot product when norms are zero or unavailable.
+    """
+    try:
+        doc_vec = vectorizer.transform([document])
+    except Exception:
+        return None
+
+    def _l2_norm(mat) -> float:
+        try:
+            if hasattr(mat, "multiply") and hasattr(mat, "sum"):
+                return float(np.sqrt(mat.multiply(mat).sum()))
+            arr = np.asarray(mat).ravel()
+            return float(np.sqrt(float(np.dot(arr, arr))))
+        except Exception:
+            return 0.0
+
+    doc_norm = _l2_norm(doc_vec)
+    best_idx: Optional[int] = None
+    best_score = -float("inf")
+    for idx, (title, vid) in enumerate(slate_pairs, start=1):
+        text = feature_utils.title_for(vid) or title or ""
+        if not text.strip():
+            continue
+        try:
+            cand_vec = vectorizer.transform([text])
+        except Exception:
+            continue
+        try:
+            if hasattr(doc_vec, "multiply") and hasattr(cand_vec, "sum"):
+                num = float(doc_vec.multiply(cand_vec).sum())
+            else:
+                num = float(np.dot(np.asarray(doc_vec).ravel(), np.asarray(cand_vec).ravel()))
+            denom = doc_norm * _l2_norm(cand_vec)
+            sim = (num / denom) if denom > 0 else num
+        except Exception:
+            sim = -float("inf")
+        if sim > best_score:
+            best_score = sim
+            best_idx = idx
+    return best_idx
 
 
 __all__ = [

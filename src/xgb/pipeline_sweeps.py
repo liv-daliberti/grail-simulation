@@ -32,7 +32,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_io import load_metrics_json
-from common.pipeline_utils import merge_indexed_outcomes
+from common.pipeline_utils import merge_indexed_outcomes, make_placeholder_metrics
 from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from .cli import build_parser as build_xgb_parser
@@ -917,7 +917,6 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
         ),
     )
     if metrics is None:
-        from common.pipeline_utils import make_placeholder_metrics
         metrics = make_placeholder_metrics(
             task.study.evaluation_slug,
             [task.study.key],

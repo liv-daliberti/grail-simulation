@@ -47,7 +47,8 @@ class _PortfolioAccumulator:
     Accumulate portfolio-level statistics across studies.
 
     :ivar total_correct: Sum of correctly ranked slates across studies (eligible-only).
-    :ivar total_evaluated: Total number of evaluated slates with accuracy metrics (kept for availability).
+    :ivar total_evaluated: Total number of evaluated slates with accuracy metrics
+        (kept for availability).
     :ivar total_correct_eligible: Sum of correctly ranked slates among eligible rows.
     :ivar total_eligible: Total number of eligible slates contributing to eligible-only accuracy.
     :ivar total_known_hits: Sum of known-candidate hits across all studies.
@@ -474,10 +475,12 @@ def _next_video_header_lines(
             "- Split: validation",
             (
                 "- Metrics include overall accuracy, eligible-only accuracy "
-                "(gold present in slate), coverage of known candidates, and availability of known neighbors."
+                "(gold present in slate), coverage of known candidates, and "
+                "availability of known neighbors."
             ),
             (
-                "- In the summary table below, the Accuracy column reports eligible-only accuracy to match KNN reports."
+                "- In the summary table below, the Accuracy column reports "
+                "eligible-only accuracy to match KNN reports."
             ),
             (
                 "- `Known hits / total` counts successes among slates that contained a known "
@@ -520,8 +523,11 @@ def _next_video_table_lines(
     """
 
     lines = [
-        "| Study | Issue | Acc (eligible) ↑ | Baseline ↑ | Random ↑ | Correct / evaluated | Coverage ↑ | "
-        "Known hits / total | Known availability ↑ | Avg prob ↑ |",
+        (
+            "| Study | Issue | Acc (eligible) ↑ | Baseline ↑ | Random ↑ | "
+            "Correct / evaluated | Coverage ↑ | "
+            "Known hits / total | Known availability ↑ | Avg prob ↑ |"
+        ),
         "| --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: |",
     ]
     ordered_keys = sorted(

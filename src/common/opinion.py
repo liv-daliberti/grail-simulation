@@ -171,6 +171,38 @@ def make_opinion_example(
     )
 
 
+def make_opinion_example_from_values(
+    spec: OpinionSpec,
+    *,
+    participant_id: str,
+    document: str,
+    before: float,
+    after: float,
+    factory: Callable[..., ExampleT] = OpinionExample,
+    **extra_fields: object,
+) -> ExampleT:
+    """
+    Construct an opinion example directly from raw participant values.
+
+    Consolidates the recurring ``make_opinion_inputs`` + ``make_opinion_example``
+    pattern across opinion pipelines into a single helper, eliminating duplicate
+    code blocks flagged by pylint.
+    """
+
+    inputs = make_opinion_inputs(
+        participant_id=participant_id,
+        document=document,
+        before=before,
+        after=after,
+    )
+    return make_opinion_example(
+        spec,
+        inputs,
+        factory=factory,
+        **extra_fields,
+    )
+
+
 DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
     OpinionSpec(
         key="study1",

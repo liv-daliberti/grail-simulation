@@ -29,8 +29,7 @@ from common.opinion import (
     OpinionExample,
     OpinionSpec,
     float_or_none,
-    make_opinion_example,
-    make_opinion_inputs,
+    make_opinion_example_from_values,
 )
 from common.opinion_metrics import compute_opinion_metrics
 
@@ -172,15 +171,12 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        inputs = make_opinion_inputs(
+        example = make_opinion_example_from_values(
+            spec,
             participant_id=participant_id,
             document=document,
             before=before,
             after=after,
-        )
-        example = make_opinion_example(
-            spec,
-            inputs,
         )
         existing = per_participant.get(participant_id)
         if existing is None or step_index >= existing[1]:

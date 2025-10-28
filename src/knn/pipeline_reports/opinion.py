@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.opinion_metrics import summarise_opinion_metrics
+from common.report_utils import append_image_section
 
 from ..pipeline_context import OpinionSummary, StudySpec
 from ..pipeline_utils import (
@@ -712,13 +713,11 @@ def _opinion_heatmap_section(
         sections.append(f"#### {feature_space.upper()}")
         sections.append("")
         for image in images:
-            try:
-                rel_path = image.relative_to(output_path.parent).as_posix()
-            except ValueError:
-                rel_path = image.as_posix()
-            label = image.stem.replace("_", " ").title()
-            sections.append(f"![{label}]({rel_path})")
-            sections.append("")
+            append_image_section(
+                sections,
+                image=image,
+                relative_root=output_path.parent,
+            )
     if not found:
         sections.extend(
             [

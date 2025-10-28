@@ -30,7 +30,7 @@ from common.pipeline_formatters import (
     safe_int as _safe_int,
 )
 from common.pipeline_io import write_markdown_lines
-from common.report_utils import start_markdown_report
+from common.report_utils import append_image_section, start_markdown_report
 
 from common.opinion_metrics import summarise_opinion_metrics
 
@@ -820,13 +820,11 @@ def _opinion_feature_plot_section(directory: Path) -> List[str]:
         sections.append(f"### {feature_space.upper()} Opinion Plots")
         sections.append("")
         for image in unique_images:
-            try:
-                rel_path = image.relative_to(directory.parent).as_posix()
-            except ValueError:
-                rel_path = image.as_posix()
-            label = image.stem.replace("_", " ").title()
-            sections.append(f"![{label}]({rel_path})")
-            sections.append("")
+            append_image_section(
+                sections,
+                image=image,
+                relative_root=directory.parent,
+            )
     return sections
 
 

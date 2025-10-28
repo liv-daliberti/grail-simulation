@@ -247,6 +247,15 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     )
     add_overwrite_argument(parser)
     parser.add_argument(
+        "--reuse-sweeps",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Reuse cached sweep artefacts when available "
+            "(disabled by default; pass --reuse-sweeps to enable)."
+        ),
+    )
+    parser.add_argument(
         "--reuse-final",
         action=argparse.BooleanOptionalAction,
         default=None,

@@ -47,9 +47,7 @@ from transformers import (  # pylint: disable=import-error
     AutoTokenizer,
     set_seed,
 )
-from trl import ModelConfig, get_peft_config  # pylint: disable=import-error
-from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
-
+from trl import ModelConfig  # pylint: disable=import-error
 from common.hf_datasets import DatasetDict
 from prompt_builder import as_list_json
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
@@ -64,7 +62,7 @@ from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
-    GrpoComponentFactory,
+    build_default_component_factory,
     build_grpo_context,
     parse_and_run,
     prepare_model_eval_and_run_grpo,
@@ -73,11 +71,7 @@ from open_r1.utils import get_dataset, get_model, get_tokenizer
 
 logger = logging.getLogger(__name__)
 
-COMPONENT_FACTORY = GrpoComponentFactory(
-    model_builder=get_model,
-    trainer_cls=GRPOTrainer,
-    peft_config_fn=get_peft_config,
-)
+COMPONENT_FACTORY = build_default_component_factory()
 
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
@@ -655,7 +649,14 @@ def main(
         tokenizer=tokenizer,
         evaluate_fn_factory=_gail_eval_factory,
     )
-    context = build_grpo_context(dataset, script_args, training_args, model_args, logger, prefix="grail")
+    context = build_grpo_context(
+        dataset,
+        script_args,
+        training_args,
+        model_args,
+        logger,
+        prefix="grail",
+    )
     prepare_model_eval_and_run_grpo(components=components, context=context)
 
 

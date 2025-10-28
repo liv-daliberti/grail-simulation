@@ -255,13 +255,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
             )
 
-        dispatch_cli_partitions(
-            partitions,
-            args=args,
-            logger=LOGGER,
-            prepare=prepare_sweep_execution,
-        )
-        return
+        return dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
 
     reuse_for_stage = context.reuse_sweeps
     if stage in {"finalize", "reports"}:

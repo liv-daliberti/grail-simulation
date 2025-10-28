@@ -290,6 +290,25 @@ class GrpoComponentFactory:
         )
 
 
+def build_default_component_factory() -> GrpoComponentFactory:
+    """Return the default :class:`GrpoComponentFactory` used by GRPO entrypoints."""
+
+    from open_r1.utils import get_model
+
+    try:  # pragma: no cover - optional dependency
+        from trl import get_peft_config  # pylint: disable=import-error
+        from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
+    except ImportError:  # pragma: no cover - optional dependency
+        get_peft_config = None  # type: ignore[assignment]
+        GRPOTrainer = None  # type: ignore[assignment]
+
+    return GrpoComponentFactory(
+        model_builder=get_model,
+        trainer_cls=GRPOTrainer,
+        peft_config_fn=get_peft_config,
+    )
+
+
 def build_grpo_context(
     dataset: Mapping[str, Any],
     script_args: Any,

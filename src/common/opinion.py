@@ -186,6 +186,8 @@ def make_opinion_example_from_values(
     Consolidates the recurring ``make_opinion_inputs`` + ``make_opinion_example``
     pattern across opinion pipelines into a single helper, eliminating duplicate
     code blocks flagged by pylint.
+
+    :param scores: Tuple containing the ``before`` and ``after`` opinion scores.
     """
 
     before, after = scores

@@ -206,13 +206,35 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     configs = _build_sweep_configs(args)
     stage = getattr(args, "stage", "full")
-    reuse_sweeps = not args.overwrite
+    reuse_sweeps = bool(getattr(args, "reuse_sweeps", False))
+    reuse_sweeps_source: str | None = "--reuse-sweeps" if reuse_sweeps else None
+    reuse_sweeps_env = os.environ.get("XGB_REUSE_SWEEPS")
+    if reuse_sweeps_env is not None:
+        reuse_sweeps = reuse_sweeps_env.lower() not in {"0", "false", "no"}
+        reuse_sweeps_source = "XGB_REUSE_SWEEPS"
+    if reuse_sweeps:
+        detail = f" ({reuse_sweeps_source})" if reuse_sweeps_source else ""
+        LOGGER.warning(
+            "Cached sweep metrics reuse enabled%s; stale artefacts will be used when present.",
+            detail,
+        )
+    else:
+        LOGGER.info("Cached sweep metrics reuse disabled; sweeps will recompute results.")
     reuse_final = reuse_sweeps
+    reuse_final_source: str | None = "sweep reuse default" if reuse_final else None
     if args.reuse_final is not None:
         reuse_final = args.reuse_final
+        reuse_final_source = "--reuse-final"
     reuse_final_env = os.environ.get("XGB_REUSE_FINAL")
     if reuse_final_env is not None:
         reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
+        reuse_final_source = "XGB_REUSE_FINAL"
+    if reuse_final:
+        detail = f" ({reuse_final_source})" if reuse_final_source else ""
+        LOGGER.warning(
+            "Finalize-stage reuse enabled%s; cached evaluation artefacts may be consumed.",
+            detail,
+        )
 
     max_features_value = args.max_features if args.max_features > 0 else None
     tfidf_config = TfidfConfig(max_features=max_features_value)
@@ -383,13 +405,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 )
             )
 
-        dispatch_cli_partitions(
-            partitions,
-            args=args,
-            logger=LOGGER,
-            prepare=prepare_sweep_execution,
-        )
-        return
+        return dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
 
     reuse_for_stage = reuse_sweeps
     if stage in {"finalize", "reports"}:
@@ -618,7 +634,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     final_metrics: Dict[str, Mapping[str, object]] = {}
     loso_metrics: Dict[str, Mapping[str, object]] = {}
     if run_next_video and final_eval_context is not None:
-        final_metrics = _run_final_evaluations(selections=selections, context=final_eval_context)
+        final_metrics = _run_final_evaluations(
+            selections=selections,
+            studies=study_specs,
+            context=final_eval_context,
+        )
         loso_metrics = _run_cross_study_evaluations(
             selections=selections,
             studies=study_specs,

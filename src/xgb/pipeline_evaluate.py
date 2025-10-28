@@ -24,9 +24,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
+from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
-from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
+from .opinion import (
+    DEFAULT_SPECS,
+    OpinionEvalRequest,
+    OpinionTrainConfig,
+    OpinionVectorizerConfig,
+    run_opinion_eval,
+)
+from .vectorizers import Word2VecVectorizerConfig
 from .pipeline_context import (
     FinalEvalContext,
     OpinionStageConfig,
@@ -50,9 +58,9 @@ def _word2vec_eval_config(
     *,
     config: OpinionStageConfig,
     feature_space: str,
-    default_dir,
+    default_dir: Path,
     override_parts: tuple[str, ...],
-) -> object | None:
+) -> Word2VecVectorizerConfig | None:
     """Return the word2vec configuration for opinion evaluations."""
 
     if feature_space != "word2vec":
@@ -68,9 +76,37 @@ def _word2vec_eval_config(
     )
 
 
+def _opinion_vectorizer_config(
+    *,
+    config: OpinionStageConfig,
+    feature_space: str,
+    default_dir: Path,
+    override_parts: tuple[str, ...],
+) -> OpinionVectorizerConfig:
+    """Build the vectoriser configuration for an opinion evaluation."""
+
+    return OpinionVectorizerConfig(
+        feature_space=feature_space,
+        extra_fields=config.extra_fields,
+        tfidf=config.tfidf_config if feature_space == "tfidf" else None,
+        word2vec=_word2vec_eval_config(
+            config=config,
+            feature_space=feature_space,
+            default_dir=default_dir,
+            override_parts=override_parts,
+        ),
+        sentence_transformer=(
+            config.sentence_transformer_config
+            if feature_space == "sentence_transformer"
+            else None
+        ),
+    )
+
+
 def _run_final_evaluations(
     *,
     selections: Mapping[str, StudySelection],
+    studies: Sequence[StudySpec],
     context: FinalEvalContext,
 ) -> Dict[str, Mapping[str, object]]:
     """
@@ -78,6 +114,8 @@ def _run_final_evaluations(
 
     :param selections: Mapping from study key to selected configuration.
     :type selections: Mapping[str, StudySelection]
+    :param studies: Ordered list of study specifications available for training.
+    :type studies: Sequence[StudySpec]
     :param context: Runtime configuration describing CLI arguments and output paths.
     :type context: FinalEvalContext
     :returns: Mapping from study key to the loaded metrics payload.
@@ -114,6 +152,18 @@ def _run_final_evaluations(
         cli_args.extend(["--issues", selection.study.issue])
         cli_args.extend(["--participant_studies", selection.study.key])
         cli_args.extend(["--out_dir", str(context.out_dir)])
+        train_studies = [
+            spec.key for spec in studies if spec.key != selection.study.key
+        ]
+        if train_studies:
+            cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
+        else:
+            LOGGER.warning(
+                "[FINAL] issue=%s study=%s has no alternate training studies; "
+                "falling back to default training cohort.",
+                selection.study.issue,
+                selection.study.key,
+            )
         if context.save_model_dir is not None:
             cli_args.extend(["--save_model", str(context.save_model_dir)])
         cli_args.extend(context.extra_cli)
@@ -266,41 +316,31 @@ def _run_opinion_stage(
                 )
                 continue
 
+        train_config = OpinionTrainConfig(
+            max_participants=config.max_participants,
+            seed=config.seed,
+            max_features=config.max_features if feature_space == "tfidf" else None,
+            booster=selection.config.booster_params(config.tree_method),
+        )
+        vectorizer = _opinion_vectorizer_config(
+            config=config,
+            feature_space=feature_space,
+            default_dir=study_dir / "word2vec_model",
+            override_parts=(
+                "opinion_stage",
+                feature_space,
+                selection.study.issue_slug,
+                study_key,
+            ),
+        )
         results.update(
             run_opinion_eval(
                 request=OpinionEvalRequest(
                     dataset=str(config.dataset) if config.dataset else None,
                     cache_dir=str(config.cache_dir) if config.cache_dir else None,
                     out_dir=opinion_out_dir,
-                    feature_space=feature_space,
-                    extra_fields=config.extra_fields,
-                    train_config=OpinionTrainConfig(
-                        max_participants=config.max_participants,
-                        seed=config.seed,
-                        max_features=(
-                            config.max_features if feature_space == "tfidf" else None
-                        ),
-                        booster=selection.config.booster_params(config.tree_method),
-                    ),
-                    tfidf_config=(
-                        config.tfidf_config if feature_space == "tfidf" else None
-                    ),
-                    word2vec_config=_word2vec_eval_config(
-                        config=config,
-                        feature_space=feature_space,
-                        default_dir=study_dir / "word2vec_model",
-                        override_parts=(
-                            "opinion_stage",
-                            feature_space,
-                            selection.study.issue_slug,
-                            study_key,
-                        ),
-                    ),
-                    sentence_transformer_config=(
-                        config.sentence_transformer_config
-                        if feature_space == "sentence_transformer"
-                        else None
-                    ),
+                    train_config=train_config,
+                    vectorizer=vectorizer,
                     overwrite=config.overwrite,
                 ),
                 studies=[study_key],
@@ -371,35 +411,23 @@ def _evaluate_opinion_from_next_spec(
         return None
 
     base_out_dir = config.base_out_dir / "from_next"
-    opinion_config = OpinionTrainConfig(
+    train_config = OpinionTrainConfig(
         max_participants=config.max_participants,
         seed=config.seed,
         max_features=config.max_features if feature_space == "tfidf" else None,
         booster=selection.config.booster_params(config.tree_method),
     )
-    tfidf_config = config.tfidf_config if feature_space == "tfidf" else None
-    word2vec_config = None
-    if feature_space == "word2vec":
-        base_cfg = config.word2vec_config
-        if config.word2vec_model_base is not None:
-            model_dir = (
-                config.word2vec_model_base
-                / "opinion_from_next"
-                / feature_space
-                / spec.issue_slug
-                / spec.key
-            )
-        else:
-            model_dir = base_out_dir / feature_space / spec.key / "word2vec_model"
-        word2vec_config = replace(
-            base_cfg,
-            model_dir=str(model_dir),
-            seed=config.seed,
-        )
-    sentence_config = (
-        config.sentence_transformer_config
-        if feature_space == "sentence_transformer"
-        else None
+    word2vec_fallback = base_out_dir / feature_space / spec.key / "word2vec_model"
+    vectorizer = _opinion_vectorizer_config(
+        config=config,
+        feature_space=feature_space,
+        default_dir=word2vec_fallback,
+        override_parts=(
+            "opinion_from_next",
+            feature_space,
+            spec.issue_slug,
+            spec.key,
+        ),
     )
     try:
         return run_opinion_eval(
@@ -407,12 +435,8 @@ def _evaluate_opinion_from_next_spec(
                 dataset=str(config.dataset) if config.dataset else None,
                 cache_dir=str(config.cache_dir) if config.cache_dir else None,
                 out_dir=base_out_dir,
-                feature_space=feature_space,
-                extra_fields=config.extra_fields,
-                train_config=opinion_config,
-                tfidf_config=tfidf_config,
-                word2vec_config=word2vec_config,
-                sentence_transformer_config=sentence_config,
+                train_config=train_config,
+                vectorizer=vectorizer,
                 overwrite=config.overwrite,
             ),
             studies=[spec.key],

@@ -61,6 +61,87 @@ from .pipeline_utils import (
 
 LOGGER = logging.getLogger("knn.pipeline.sweeps")
 
+BASE_EXTRA_FIELD_SETS: Tuple[Tuple[str, ...], ...] = (
+    (),
+    ("ideo1",),
+    ("ideo2",),
+    ("pol_interest",),
+    ("religpew",),
+    ("freq_youtube",),
+    ("youtube_time",),
+    ("newsint",),
+    ("slate_source",),
+    ("educ",),
+    ("employ",),
+    ("child18",),
+    ("inputstate",),
+    ("income",),
+    ("participant_study",),
+)
+
+DEFAULT_TEXT_OPTION_LIMIT: int = len(BASE_EXTRA_FIELD_SETS)
+
+
+def _materialise_text_options(limit: int) -> Tuple[Tuple[str, ...], ...]:
+    """Return the merged text options capped at ``limit``."""
+
+    options: List[Tuple[str, ...]] = []
+    seen: set[Tuple[str, ...]] = set()
+    for extra_fields in BASE_EXTRA_FIELD_SETS[:limit]:
+        merged = merge_default_extra_fields(extra_fields)
+        if merged not in seen:
+            options.append(merged)
+            seen.add(merged)
+    return tuple(options)
+
+
+def _parse_metric_env(name: str, default: Tuple[str, ...]) -> Tuple[str, ...]:
+    """Parse comma-separated metrics from ``name`` while filtering unsupported values."""
+
+    raw = os.environ.get(name, "")
+    if not raw:
+        return default
+    allowed = {"cosine", "l2"}
+    tokens: List[str] = []
+    for token in (part.strip().lower() for part in raw.split(",")):
+        if not token:
+            continue
+        if token not in allowed:
+            LOGGER.warning("Ignoring unsupported metric '%s' in %s override.", token, name)
+            continue
+        if token not in tokens:
+            tokens.append(token)
+    if not tokens:
+        LOGGER.warning(
+            "Ignoring %s override '%s' because no valid metrics were provided.",
+            name,
+            raw,
+        )
+        return default
+    return tuple(tokens)
+
+
+def _parse_limit_env(name: str, default: int) -> int:
+    """Parse an integer environment override ensuring a positive value."""
+
+    raw = os.environ.get(name, "")
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        LOGGER.warning("Ignoring non-integer %s override '%s'.", name, raw)
+        return default
+    if value <= 0:
+        LOGGER.warning(
+            "Ignoring %s override '%s' because the limit must be positive.",
+            name,
+            raw,
+        )
+        return default
+    return value
+
+
 def run_knn_cli(argv: Sequence[str]) -> None:
     """
     Execute the KNN CLI entry point with ``argv``.
@@ -121,89 +202,18 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     :rtype: List[SweepConfig]
 
     """
-    base_extra_field_sets: Tuple[Tuple[str, ...], ...] = (
-        (),
-        ("ideo1",),
-        ("ideo2",),
-        ("pol_interest",),
-        ("religpew",),
-        ("freq_youtube",),
-        ("youtube_time",),
-        ("newsint",),
-        ("slate_source",),
-        ("educ",),
-        ("employ",),
-        ("child18",),
-        ("inputstate",),
-        ("income",),
-        ("participant_study",),
-    )
-
-    def _materialise_text_options(limit: int) -> Tuple[Tuple[str, ...], ...]:
-        options: List[Tuple[str, ...]] = []
-        seen: set[Tuple[str, ...]] = set()
-        for extra_fields in base_extra_field_sets[:limit]:
-            merged = merge_default_extra_fields(extra_fields)
-            if merged not in seen:
-                options.append(merged)
-                seen.add(merged)
-        return tuple(options)
-
     feature_spaces = context.feature_spaces
 
     configs: List[SweepConfig] = []
-
-    def _parse_metric_env(name: str, default: Tuple[str, ...]) -> Tuple[str, ...]:
-        raw = os.environ.get(name, "")
-        if not raw:
-            return default
-        allowed = {"cosine", "l2"}
-        tokens = []
-        for token in (part.strip().lower() for part in raw.split(",")):
-            if not token:
-                continue
-            if token not in allowed:
-                LOGGER.warning(
-                    "Ignoring unsupported metric '%s' in %s override.", token, name
-                )
-                continue
-            if token not in tokens:
-                tokens.append(token)
-        if not tokens:
-            LOGGER.warning(
-                "Ignoring %s override '%s' because no valid metrics were provided.",
-                name,
-                raw,
-            )
-            return default
-        return tuple(tokens)
-
-    def _parse_limit_env(name: str, default: int) -> int:
-        raw = os.environ.get(name, "")
-        if not raw:
-            return default
-        try:
-            value = int(raw)
-        except ValueError:
-            LOGGER.warning("Ignoring non-integer %s override '%s'.", name, raw)
-            return default
-        if value <= 0:
-            LOGGER.warning(
-                "Ignoring %s override '%s' because the limit must be positive.",
-                name,
-                raw,
-            )
-            return default
-        return value
 
     tfidf_metrics = _parse_metric_env("KNN_TFIDF_METRICS", ("cosine", "l2"))
     word2vec_metrics = _parse_metric_env("KNN_WORD2VEC_METRICS", ("cosine", "l2"))
     sentence_metrics = _parse_metric_env(
         "KNN_SENTENCE_METRICS", ("cosine", "l2")
     )
-    tfidf_limit = _parse_limit_env("KNN_TFIDF_TEXT_LIMIT", 13)
-    word2vec_limit = _parse_limit_env("KNN_WORD2VEC_TEXT_LIMIT", 7)
-    sentence_limit = _parse_limit_env("KNN_SENTENCE_TEXT_LIMIT", 13)
+    tfidf_limit = _parse_limit_env("KNN_TFIDF_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
+    word2vec_limit = _parse_limit_env("KNN_WORD2VEC_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
+    sentence_limit = _parse_limit_env("KNN_SENTENCE_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
 
     if "tfidf" in feature_spaces:
         text_options = _materialise_text_options(tfidf_limit)

@@ -443,10 +443,18 @@ def test_select_best_opinion_configs_prefers_mae_then_rmse_then_r2(tmp_path: Pat
 
 
 def test_run_final_evaluations_reads_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    train_study = StudySpec(
+        key="study2",
+        issue="minimum_wage",
+        label="Study 2 – Minimum Wage (YouGov)",
+    )
+
     def fake_run_xgb_cli(args: List[str]) -> None:
         out_dir = Path(args[args.index("--out_dir") + 1])
         issue_name = args[args.index("--issues") + 1]
         study_name = args[args.index("--participant_studies") + 1]
+        train_arg = args[args.index("--train_participant_studies") + 1]
+        assert train_arg == train_study.key
         evaluation_slug = f"{issue_name.replace(' ', '_')}_{study_name.replace(' ', '_')}"
         metrics_path = out_dir / evaluation_slug / "metrics.json"
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
@@ -478,7 +486,11 @@ def test_run_final_evaluations_reads_metrics(monkeypatch: pytest.MonkeyPatch, tm
         reuse_existing=False,
     )
 
-    metrics = evaluate._run_final_evaluations(selections=selections, context=context)
+    metrics = evaluate._run_final_evaluations(
+        selections=selections,
+        studies=[study, train_study],
+        context=context,
+    )
     assert metrics[study.key]["accuracy"] == 0.77
     assert metrics[study.key]["evaluated"] == 128
 
@@ -498,6 +510,11 @@ def test_run_final_evaluations_uses_save_model_and_sets_metadata(monkeypatch: py
     )
     selections = {study.key: StudySelection(study=study, outcome=outcome)}
     save_model_dir = tmp_path / "models"
+    train_study = StudySpec(
+        key="study2",
+        issue="minimum_wage",
+        label="Study 2 – Minimum Wage (YouGov)",
+    )
     context = FinalEvalContext(
         base_cli=["--dataset", "stub"],
         extra_cli=["--extra", "flag"],
@@ -523,7 +540,11 @@ def test_run_final_evaluations_uses_save_model_and_sets_metadata(monkeypatch: py
 
     monkeypatch.setattr(evaluate, "_run_xgb_cli", fake_run)
 
-    metrics = evaluate._run_final_evaluations(selections=selections, context=context)
+    metrics = evaluate._run_final_evaluations(
+        selections=selections,
+        studies=[study, train_study],
+        context=context,
+    )
 
     assert metrics == {
         study.key: {
@@ -537,6 +558,7 @@ def test_run_final_evaluations_uses_save_model_and_sets_metadata(monkeypatch: py
     assert save_model_dir.exists()
     assert "--save_model" in call_details["args"]
     assert str(save_model_dir) in call_details["args"]
+    assert "--train_participant_studies" in call_details["args"]
 
 
 def test_run_opinion_stage_invokes_matching_studies(

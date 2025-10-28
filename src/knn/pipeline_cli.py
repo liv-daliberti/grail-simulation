@@ -206,6 +206,129 @@ def default_out_dir(root: Path) -> str:
     """
     return str(root / "models" / "knn")
 
+
+def _bool_from_env(value: str | None, default: bool) -> bool:
+    """Interpret ``value`` as a boolean, falling back to ``default`` when unset."""
+
+    if value is None:
+        return default
+    return value.lower() not in {"0", "false", "no"}
+
+
+def _resolve_reuse_flag(default: bool, env_key: str) -> bool:
+    """Resolve a reuse flag by merging CLI, environment, and defaults."""
+
+    return _bool_from_env(os.environ.get(env_key), default)
+
+
+def _resolve_sentence_settings(
+    args: argparse.Namespace,
+) -> Tuple[str, str | None, int, bool]:
+    """Normalise sentence-transformer configuration across CLI and environment."""
+
+    model = (
+        args.sentence_transformer_model
+        or os.environ.get("SENTENCE_TRANSFORMER_MODEL")
+        or "sentence-transformers/all-mpnet-base-v2"
+    )
+    device_raw = (
+        args.sentence_transformer_device
+        or os.environ.get("SENTENCE_TRANSFORMER_DEVICE")
+        or ""
+    )
+    device = device_raw or None
+    batch_size = int(
+        args.sentence_transformer_batch_size
+        or os.environ.get("SENTENCE_TRANSFORMER_BATCH_SIZE", "32")
+    )
+    normalize_env = os.environ.get("SENTENCE_TRANSFORMER_NORMALIZE")
+    if normalize_env is not None and getattr(args, "sentence_transformer_normalize", None) is not False:
+        normalize = normalize_env.lower() not in {"0", "false", "no"}
+    else:
+        normalize = bool(getattr(args, "sentence_transformer_normalize", True))
+    return model, device, batch_size, normalize
+
+
+def _resolve_feature_spaces(args: argparse.Namespace) -> Tuple[str, ...]:
+    """Resolve the feature spaces requested for KNN sweeps."""
+
+    tokens = (
+        _split_tokens(getattr(args, "feature_spaces", ""))
+        or _split_tokens(os.environ.get("KNN_FEATURE_SPACES", ""))
+    )
+    allowed = {"tfidf", "word2vec", "sentence_transformer"}
+    resolved = tuple(
+        space
+        for space in (token.lower() for token in tokens)
+        if space in allowed
+    )
+    return resolved or ("tfidf", "word2vec", "sentence_transformer")
+
+
+def _resolve_jobs(args: argparse.Namespace) -> int:
+    """Resolve the parallel job count, respecting environment overrides."""
+
+    jobs_value = getattr(args, "jobs", 1) or 1
+    env_jobs = os.environ.get("KNN_JOBS")
+    if env_jobs:
+        try:
+            jobs_value = int(env_jobs)
+        except ValueError:
+            LOGGER.warning("Ignoring invalid KNN_JOBS value '%s'.", env_jobs)
+    return max(1, jobs_value)
+
+
+def _resolve_task_flags(tokens: Sequence[str]) -> Tuple[bool, bool]:
+    """Return the pipeline task toggles derived from ``tokens``."""
+
+    next_aliases = {"next_video", "next", "next-video", "nextvideo", "slate"}
+    opinion_aliases = {"opinion", "opinion_stage", "opinion-stage"}
+    run_next = False
+    run_opinion = False
+    unknown: List[str] = []
+    for token in tokens:
+        normalised = token.strip().lower()
+        if normalised in next_aliases:
+            run_next = True
+        elif normalised in opinion_aliases:
+            run_opinion = True
+        elif normalised:
+            unknown.append(token.strip() or token)
+    if unknown:
+        LOGGER.warning(
+            "Ignoring unknown pipeline task token(s): %s",
+            ", ".join(sorted(set(unknown))),
+        )
+    if not run_next and not run_opinion:
+        LOGGER.warning(
+            "No recognised pipeline tasks provided; defaulting to next_video and opinion."
+        )
+        run_next = True
+        run_opinion = True
+    return run_next, run_opinion
+
+
+def _resolve_task_configuration(args: argparse.Namespace) -> Tuple[List[str], bool, bool]:
+    """Return the task tokens plus the derived next-video/opinion toggles."""
+
+    tokens = _split_tokens(
+        args.tasks
+        or os.environ.get("KNN_PIPELINE_TASKS", "")
+    )
+    if not tokens:
+        tokens = ["next_video", "opinion"]
+    run_next, run_opinion = _resolve_task_flags(tokens)
+    return tokens, run_next, run_opinion
+
+
+def _resolve_allow_incomplete(args: argparse.Namespace) -> bool:
+    """Resolve allow-incomplete behaviour from CLI and environment."""
+
+    return _bool_from_env(
+        os.environ.get("KNN_ALLOW_INCOMPLETE"),
+        getattr(args, "allow_incomplete", True),
+    )
+
 def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineContext:
     """
     Normalise CLI flags and environment overrides into a :class:`PipelineContext`.
@@ -244,39 +367,7 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         or os.environ.get("KNN_K_SWEEP")
         or "1,2,3,4,5,10,15,20,25,50,75,100,125,150"
     )
-    task_tokens = _split_tokens(
-        args.tasks
-        or os.environ.get("KNN_PIPELINE_TASKS", "")
-    )
-    if not task_tokens:
-        task_tokens = ["next_video", "opinion"]
-
-    next_aliases = {"next_video", "next", "next-video", "nextvideo", "slate"}
-    opinion_aliases = {"opinion", "opinion_stage", "opinion-stage"}
-    run_next_video = False
-    run_opinion = False
-    unknown_tasks: List[str] = []
-    for token in task_tokens:
-        normalised = token.strip().lower()
-        if normalised in next_aliases:
-            run_next_video = True
-        elif normalised in opinion_aliases:
-            run_opinion = True
-        elif normalised:
-            unknown_tasks.append(token.strip() or token)
-
-    if unknown_tasks:
-        LOGGER.warning(
-            "Ignoring unknown pipeline task token(s): %s",
-            ", ".join(sorted(set(unknown_tasks))),
-        )
-    if not run_next_video and not run_opinion:
-        LOGGER.warning(
-            "No recognised pipeline tasks provided; defaulting to next_video and opinion."
-        )
-        run_next_video = True
-        run_opinion = True
-
+    task_tokens, run_next_video, run_opinion = _resolve_task_configuration(args)
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
         or _split_tokens(os.environ.get("KNN_STUDIES", ""))
@@ -285,66 +376,17 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
     )
     word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
     word2vec_workers = _default_word2vec_workers()
-    sentence_model = (
-        args.sentence_transformer_model
-        or os.environ.get("SENTENCE_TRANSFORMER_MODEL")
-        or "sentence-transformers/all-mpnet-base-v2"
-    )
-    sentence_device_raw = (
-        args.sentence_transformer_device
-        or os.environ.get("SENTENCE_TRANSFORMER_DEVICE")
-        or ""
-    )
-    sentence_device = sentence_device_raw or None
-    sentence_batch_size = int(
-        args.sentence_transformer_batch_size
-        or os.environ.get("SENTENCE_TRANSFORMER_BATCH_SIZE", "32")
-    )
-    if (
-        "SENTENCE_TRANSFORMER_NORMALIZE" in os.environ
-        and getattr(args, "sentence_transformer_normalize", None) is not False
-    ):
-        sentence_normalize_env = os.environ.get("SENTENCE_TRANSFORMER_NORMALIZE", "1")
-        sentence_normalize = sentence_normalize_env.lower() not in {"0", "false", "no"}
-    else:
-        sentence_normalize = bool(getattr(args, "sentence_transformer_normalize", True))
-
-    feature_spaces_tokens = (
-        _split_tokens(getattr(args, "feature_spaces", ""))
-        or _split_tokens(os.environ.get("KNN_FEATURE_SPACES", ""))
-    )
-    allowed_spaces = {"tfidf", "word2vec", "sentence_transformer"}
-    resolved_feature_spaces = tuple(
-        space
-        for space in (token.lower() for token in feature_spaces_tokens)
-        if space in allowed_spaces
-    )
-    if not resolved_feature_spaces:
-        resolved_feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
-
-    reuse_sweeps = getattr(args, "reuse_sweeps", False)
-    reuse_env = os.environ.get("KNN_REUSE_SWEEPS")
-    if reuse_env is not None:
-        reuse_sweeps = reuse_env.lower() not in {"0", "false", "no"}
-
-    reuse_final = getattr(args, "reuse_final", False)
-    reuse_final_env = os.environ.get("KNN_REUSE_FINAL")
-    if reuse_final_env is not None:
-        reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
-
-    jobs_value = getattr(args, "jobs", 1) or 1
-    env_jobs = os.environ.get("KNN_JOBS")
-    if env_jobs:
-        try:
-            jobs_value = int(env_jobs)
-        except ValueError:
-            LOGGER.warning("Ignoring invalid KNN_JOBS value '%s'.", env_jobs)
-    jobs = max(1, jobs_value)
-
-    allow_incomplete = getattr(args, "allow_incomplete", True)
-    allow_env = os.environ.get("KNN_ALLOW_INCOMPLETE")
-    if allow_env is not None:
-        allow_incomplete = allow_env.lower() not in {"0", "false", "no"}
+    (
+        sentence_model,
+        sentence_device,
+        sentence_batch_size,
+        sentence_normalize,
+    ) = _resolve_sentence_settings(args)
+    resolved_feature_spaces = _resolve_feature_spaces(args)
+    reuse_sweeps = _resolve_reuse_flag(getattr(args, "reuse_sweeps", False), "KNN_REUSE_SWEEPS")
+    reuse_final = _resolve_reuse_flag(getattr(args, "reuse_final", False), "KNN_REUSE_FINAL")
+    jobs = _resolve_jobs(args)
+    allow_incomplete = _resolve_allow_incomplete(args)
 
     return PipelineContext(
         dataset=dataset,

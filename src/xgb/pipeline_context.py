@@ -188,9 +188,12 @@ class SweepTask(  # pylint: disable=too-many-instance-attributes
 
     :param tree_method: Tree construction algorithm supplied to XGBoost.
     :type tree_method: str
+    :param train_participant_studies: Participant study keys used for training.
+    :type train_participant_studies: Tuple[str, ...]
     """
 
     tree_method: str
+    train_participant_studies: Tuple[str, ...] = field(default_factory=tuple)
 
 
 @dataclass

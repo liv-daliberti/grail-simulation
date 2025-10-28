@@ -129,12 +129,16 @@ def _iter_sweep_tasks(
 
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
+    all_study_keys = tuple(spec.key for spec in studies)
     tasks: List[SweepTask] = []
     task_index = 0
     for config in configs:
         for study in studies:
             run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
             metrics_path = run_root / study.evaluation_slug / "metrics.json"
+            train_studies = tuple(
+                key for key in all_study_keys if key != study.key
+            )
             tasks.append(
                 SweepTask(
                     index=task_index,
@@ -145,6 +149,7 @@ def _iter_sweep_tasks(
                     run_root=run_root,
                     tree_method=context.tree_method,
                     metrics_path=metrics_path,
+                    train_participant_studies=train_studies,
                 )
             )
             task_index += 1
@@ -405,70 +410,42 @@ def _iter_opinion_sweep_tasks(
     configs: Sequence[SweepConfig],
     context: OpinionSweepRunContext,
 ) -> Sequence[OpinionSweepTask]:
-    """
-    Yield opinion sweep tasks in a deterministic order.
+    """Yield opinion sweep tasks in a deterministic order."""
 
-    :param studies: Participant studies slated for opinion evaluation.
-    :type studies: Sequence[StudySpec]
-    :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
-    :param context: Shared opinion sweep execution context.
-    :type context: OpinionSweepRunContext
-    :returns: Sequence of opinion sweep tasks.
-    :rtype: Sequence[OpinionSweepTask]
-    """
-
+    dataset = str(context.dataset) if context.dataset else None
+    cache_dir = str(context.cache_dir) if context.cache_dir else None
     extra_fields = tuple(context.extra_fields)
     tasks: List[OpinionSweepTask] = []
     task_index = 0
     for config in configs:
         for study in studies:
             run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
-            feature_space = config.text_vectorizer.lower()
+            vectorizer = _build_opinion_vectorizer_config(
+                config=config,
+                context=context,
+                run_root=run_root,
+                study=study,
+                extra_fields=extra_fields,
+            )
+            feature_space = vectorizer.feature_space
             metrics_path = (
                 run_root
                 / feature_space
                 / study.key
                 / f"opinion_xgb_{study.key}_validation_metrics.json"
             )
-            tfidf_config = context.tfidf_config if feature_space == "tfidf" else None
-            word2vec_config = None
-            if feature_space == "word2vec":
-                base_cfg = context.word2vec_config
-                if context.word2vec_model_base is not None:
-                    model_dir = (
-                        context.word2vec_model_base
-                        / "opinion_sweeps"
-                        / study.issue_slug
-                        / study.study_slug
-                        / config.label()
-                    )
-                else:
-                    model_dir = run_root / feature_space / "word2vec_model"
-                word2vec_config = replace(
-                    base_cfg,
-                    model_dir=str(model_dir),
-                    seed=context.seed,
-                )
-            sentence_config = (
-                context.sentence_transformer_config
-                if feature_space == "sentence_transformer"
-                else None
-            )
             request_args: Dict[str, object] = {
-                "dataset": context.dataset,
-                "cache_dir": context.cache_dir,
-                "out_dir": str(run_root),
-                "feature_space": feature_space,
-                "extra_fields": extra_fields,
-                "max_participants": int(context.max_participants),
-                "seed": int(context.seed),
-                "max_features": context.max_features,
-                "tree_method": context.tree_method,
+                "dataset": dataset,
+                "cache_dir": cache_dir,
+                "out_dir": run_root,
+                "train_config": OpinionTrainConfig(
+                    max_participants=context.max_participants,
+                    seed=context.seed,
+                    max_features=context.max_features,
+                    booster=config.booster_params(context.tree_method),
+                ),
+                "vectorizer": vectorizer,
                 "overwrite": True,
-                "tfidf_config": tfidf_config,
-                "word2vec_config": word2vec_config,
-                "sentence_transformer_config": sentence_config,
             }
             tasks.append(
                 OpinionSweepTask(
@@ -554,56 +531,19 @@ def _merge_opinion_sweep_outcomes(
 
 
 def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
-    """
-    Execute a single opinion sweep task and return the resulting metrics.
-
-    :param task: Opinion sweep task to execute.
-    :type task: OpinionSweepTask
-    :returns: Opinion sweep outcome populated with metrics.
-    :rtype: OpinionSweepOutcome
-    """
+    """Execute a single opinion sweep task and return the resulting metrics."""
 
     args = dict(task.request_args)
-    out_dir = Path(str(args.get("out_dir", "")))
+    out_dir = Path(args["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    dataset = args.get("dataset")
-    cache_dir = args.get("cache_dir")
-    feature_space = str(args.get("feature_space", DEFAULT_OPINION_FEATURE_SPACE)).lower()
-    extra_fields = tuple(args.get("extra_fields", ()))
-    max_participants = int(args.get("max_participants", 0))
-    seed = int(args.get("seed", 42))
-    max_features = args.get("max_features")
-    tree_method = str(args.get("tree_method", "hist"))
-    overwrite = bool(args.get("overwrite", True))
-    tfidf_config = args.get("tfidf_config")
-    word2vec_config = args.get("word2vec_config")
-    sentence_config = args.get("sentence_transformer_config")
-
-    train_config = OpinionTrainConfig(
-        max_participants=max_participants,
-        seed=seed,
-        max_features=max_features,
-        booster=task.config.booster_params(tree_method),
-    )
-    request = OpinionEvalRequest(
-        dataset=str(dataset) if dataset else None,
-        cache_dir=str(cache_dir) if cache_dir else None,
-        out_dir=out_dir,
-        feature_space=feature_space,
-        extra_fields=extra_fields,
-        train_config=train_config,
-        tfidf_config=tfidf_config,
-        word2vec_config=word2vec_config,
-        sentence_transformer_config=sentence_config,
-        overwrite=overwrite,
-    )
+    args["out_dir"] = out_dir
+    request = OpinionEvalRequest(**args)
 
     LOGGER.info(
         "[OPINION][SWEEP] study=%s issue=%s feature=%s config=%s",
         task.study.key,
         task.study.issue,
-        feature_space,
+        request.feature_space,
         task.config.label(),
     )
     run_opinion_eval(request=request, studies=[task.study.key])
@@ -918,6 +858,20 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     cli_args.extend(["--participant_studies", task.study.key])
     cli_args.extend(["--out_dir", str(run_root)])
     cli_args.extend(task.extra_cli)
+    if task.train_participant_studies:
+        cli_args.extend(
+            [
+                "--train_participant_studies",
+                ",".join(task.train_participant_studies),
+            ]
+        )
+    else:
+        LOGGER.warning(
+            "[SWEEP] issue=%s study=%s has no alternate training studies; "
+            "falling back to default training cohort.",
+            task.study.issue,
+            task.study.key,
+        )
 
     evaluation_dir = task.metrics_path.parent
     has_existing_outputs = evaluation_dir.exists()

@@ -132,7 +132,28 @@ def extract_curve_sections(
     return (eval_curve, train_mapping)
 
 
+def append_image_section(
+    lines: List[str],
+    *,
+    image: Path,
+    relative_root: Optional[Path] = None,
+) -> None:
+    """Append Markdown for ``image`` using a path relative to ``relative_root`` when possible."""
+
+    try:
+        if relative_root is not None:
+            rel_path = image.relative_to(relative_root).as_posix()
+        else:
+            rel_path = image.as_posix()
+    except ValueError:
+        rel_path = image.as_posix()
+    label = image.stem.replace("_", " ").title()
+    lines.append(f"![{label}]({rel_path})")
+    lines.append("")
+
+
 __all__ = [
+    "append_image_section",
     "append_catalog_sections",
     "extend_with_catalog_sections",
     "extract_curve_sections",

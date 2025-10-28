@@ -13,11 +13,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.
 
 from __future__ import annotations
 
-import json, logging, time, pathlib
-import typing
+import json
+import logging
+import pathlib
+import time
+from dataclasses import dataclass
 from importlib import import_module
-
-t = typing
+import typing as t
 
 import common.eval_utils as _eval_utils
 import common.hf_datasets as _hf_datasets
@@ -142,14 +144,12 @@ class EvaluationLimits(t.NamedTuple):
         return cls(eval_max=eval_max, target=target)
 
 
+@dataclass
 class EvaluationState:
     """Mutable state tracked during evaluation."""
 
-    __slots__ = ("split", "streaming")
-
-    def __init__(self, *, split: str = _config.EVAL_SPLIT, streaming: bool = False) -> None:
-        self.split = split
-        self.streaming = streaming
+    split: str = _config.EVAL_SPLIT
+    streaming: bool = False
 
 
 class EvaluationRunner:
@@ -279,7 +279,9 @@ class EvaluationRunner:
             )
             data_iter = dataset[eval_split]  # type: ignore[index]
         else:
-            eval_split = getattr(dataset, "split", None) or _config.EVAL_SPLIT  # type: ignore[attr-defined]
+            eval_split = (
+                getattr(dataset, "split", None) or _config.EVAL_SPLIT
+            )  # type: ignore[attr-defined]
             data_iter = dataset
 
         if self.limits.eval_max and hasattr(data_iter, "select"):

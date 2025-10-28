@@ -9,6 +9,7 @@ generation wiring.
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any, Dict, List, Sequence, Tuple
 
@@ -48,6 +49,7 @@ from xgb.pipeline_context import (
     SweepTask as XgbSweepTask,
 )
 from xgb.pipeline_sweeps import DEFAULT_OPINION_FEATURE_SPACE
+from xgb.opinion import OpinionTrainConfig, OpinionVectorizerConfig
 
 
 # ---------------------------------------------------------------------------
@@ -148,34 +150,69 @@ def _xgb_make_opinion_task(
     *,
     study: XgbStudySpec,
     config: XgbSweepConfig,
-    context: OpinionSweepRunContext,
+    context: OpinionStageConfig,
     index: int = 0,
 ) -> XgbOpinionSweepTask:
     run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
+    feature_space = config.text_vectorizer.lower()
     metrics_path = (
         run_root
-        / DEFAULT_OPINION_FEATURE_SPACE
+        / feature_space
         / study.key
         / f"opinion_xgb_{study.key}_validation_metrics.json"
     )
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.write_text("{}", encoding="utf-8")
+    tfidf_config = context.tfidf_config if feature_space == "tfidf" else None
+    word2vec_config = None
+    if feature_space == "word2vec":
+        base_cfg = context.word2vec_config
+        if context.word2vec_model_base is not None:
+            model_dir = (
+                context.word2vec_model_base
+                / "opinion_stage"
+                / feature_space
+                / study.issue_slug
+                / study.key
+            )
+        else:
+            model_dir = run_root / feature_space / "word2vec_model"
+        word2vec_config = replace(
+            base_cfg,
+            model_dir=str(model_dir),
+            seed=context.seed,
+        )
+    sentence_config = (
+        context.sentence_transformer_config
+        if feature_space == "sentence_transformer"
+        else None
+    )
+    train_config = OpinionTrainConfig(
+        max_participants=context.max_participants,
+        seed=context.seed,
+        max_features=context.max_features,
+        booster=config.booster_params(context.tree_method),
+    )
+    vectorizer = OpinionVectorizerConfig(
+        feature_space=feature_space,
+        extra_fields=tuple(context.extra_fields),
+        tfidf=tfidf_config,
+        word2vec=word2vec_config,
+        sentence_transformer=sentence_config,
+    )
     request_args: Dict[str, object] = {
         "dataset": context.dataset,
         "cache_dir": context.cache_dir,
-        "out_dir": str(run_root),
-        "feature_space": DEFAULT_OPINION_FEATURE_SPACE,
-        "extra_fields": tuple(context.extra_fields),
-        "max_participants": int(context.max_participants),
-        "seed": int(context.seed),
-        "max_features": context.max_features,
-        "tree_method": context.tree_method,
+        "out_dir": run_root,
+        "train_config": train_config,
+        "vectorizer": vectorizer,
         "overwrite": True,
     }
     return XgbOpinionSweepTask(
         index=index,
         study=study,
         config=config,
+        feature_space=feature_space,
         request_args=request_args,
         metrics_path=metrics_path,
     )

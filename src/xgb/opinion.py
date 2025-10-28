@@ -190,7 +190,12 @@ def collect_examples(
             step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             step_index = -1
-        example = make_opinion_example_from_values(spec, participant_id, document, before, after)
+        example = make_opinion_example_from_values(
+            spec,
+            participant_id,
+            document,
+            scores=(before, after),
+        )
         existing = per_participant.get(participant_id)
         if existing is None or step_index >= existing[1]:
             per_participant[participant_id] = (example, step_index)

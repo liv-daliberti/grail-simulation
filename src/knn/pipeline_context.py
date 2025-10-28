@@ -793,6 +793,8 @@ class MetricSummary:  # pylint: disable=too-many-instance-attributes
     :type n_total: Optional[int]
     :param n_eligible: Number of rows eligible for the final metric.
     :type n_eligible: Optional[int]
+    :param accuracy_all_rows: Accuracy over all rows (eligible and ineligible).
+    :type accuracy_all_rows: Optional[float]
     """
     accuracy: Optional[float] = None
     accuracy_ci: Optional[Tuple[float, float]] = None
@@ -802,6 +804,7 @@ class MetricSummary:  # pylint: disable=too-many-instance-attributes
     best_k: Optional[int] = None
     n_total: Optional[int] = None
     n_eligible: Optional[int] = None
+    accuracy_all_rows: Optional[float] = None
 
 @dataclass(frozen=True)
 class OpinionSummary(OpinionCalibrationMetrics):  # pylint: disable=too-many-instance-attributes

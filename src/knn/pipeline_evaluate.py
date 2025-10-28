@@ -112,6 +112,9 @@ def run_final_evaluations(
                     feature_space,
                     study.key,
                 )
+            # Align training issue scope with LOSO by training on all issues
+            # and evaluating on the study issue only.
+            cli_args.extend(["--train-issues", "all"])
             cli_args.extend(context.extra_cli)
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)

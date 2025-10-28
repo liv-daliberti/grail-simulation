@@ -802,20 +802,32 @@ def _accuracy_curve_from_records(
 
     total = len(records)
     if total == 0:
-        return {"accuracy_by_step": {}, "n_examples": 0, "stride": 0}
+        return {"accuracy_by_step": {}, "eligible_accuracy_by_step": {}, "n_examples": 0, "stride": 0}
     target_points = max(1, target_points)
     stride = max(1, total // target_points)
     checkpoints: Dict[str, float] = {}
+    elig_checkpoints: Dict[str, float] = {}
     correct = 0
+    elig_correct = 0
+    elig_seen = 0
     for idx, (_index, outcome) in enumerate(records, start=1):
         if outcome.correct:
             correct += 1
+        if outcome.eligible:
+            elig_seen += 1
+            if outcome.correct:
+                elig_correct += 1
         if idx == total or idx % stride == 0:
             checkpoints[str(idx)] = safe_div(correct, idx)
+            if elig_seen > 0:
+                elig_checkpoints[str(idx)] = safe_div(elig_correct, elig_seen)
     if str(total) not in checkpoints:
         checkpoints[str(total)] = safe_div(correct, total)
+        if elig_seen > 0:
+            elig_checkpoints[str(total)] = safe_div(elig_correct, elig_seen)
     return {
         "accuracy_by_step": checkpoints,
+        "eligible_accuracy_by_step": elig_checkpoints,
         "n_examples": total,
         "stride": stride,
     }

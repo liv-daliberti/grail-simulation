@@ -44,6 +44,46 @@ from clean_data.filters import compute_issue_counts, filter_prompt_ready
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
 from clean_data.prompting import row_to_example
 
+def _ensure_torch_env_compat() -> None:
+    """Patch an installed or stubbed torch module for HF datasets compatibility.
+
+    Some test environments install extremely lightweight torch stubs that
+    don't expose class-like ``Tensor`` or required submodules. The Hugging Face
+    ``datasets`` pickler checks for ``torch`` and calls ``issubclass(..., torch.Tensor)``,
+    which raises a ``TypeError`` if ``torch.Tensor`` is not a class. This helper
+    ensures the minimal attributes exist when a ``torch`` module is present.
+    """
+
+    try:  # pragma: no cover - environment dependent safeguard
+        import sys
+        import types
+        import torch  # type: ignore
+    except Exception:  # noqa: BLE001 - best-effort guard
+        return
+
+    # Guarantee class-like attributes expected by datasets' dill integration
+    if not isinstance(getattr(torch, "Tensor", type), type):
+        setattr(torch, "Tensor", type("Tensor", (), {}))
+    if not hasattr(torch, "Generator"):
+        setattr(torch, "Generator", type("Generator", (), {}))
+    # Provide torch.nn.Module for isinstance checks if missing
+    if not hasattr(torch, "nn"):
+        nn_mod = types.ModuleType("torch.nn")
+        nn_mod.Module = type("Module", (), {})  # type: ignore[attr-defined]
+        torch.nn = nn_mod  # type: ignore[attr-defined]
+        sys.modules.setdefault("torch.nn", nn_mod)
+    else:
+        sys.modules.setdefault("torch.nn", torch.nn)
+    # Provide a distributed stub with is_available flag
+    dist_mod = getattr(torch, "distributed", types.ModuleType("torch.distributed"))
+    if not hasattr(dist_mod, "is_available"):
+        dist_mod.is_available = lambda: False  # type: ignore[attr-defined]
+    torch.distributed = dist_mod  # type: ignore[attr-defined]
+    sys.modules.setdefault("torch.distributed", torch.distributed)
+
+
+_ensure_torch_env_compat()
+
 try:
     import datasets
     from datasets import Dataset, DatasetDict, Features, Sequence as HFSequence, Value

@@ -900,7 +900,12 @@ def _write_issue_outputs(
     :param curve_metrics: Serialised evaluation/train curve diagnostics.
     """
     best_accuracy = accuracy_by_k.get(best_k, 0.0)
-    eligible_overall = int(per_k_stats.get(best_k, {}).get("eligible", 0))
+    best_k_stats = per_k_stats.get(int(best_k), {})
+    eligible_overall = int(best_k_stats.get("eligible", 0))
+    # Compute an all-rows accuracy to mirror XGB's overall "accuracy" metric
+    # (correct over total rows, counting ineligible rows as incorrect).
+    correct_eligible_best = int(best_k_stats.get("correct", 0))
+    accuracy_all_rows = safe_div(correct_eligible_best, len(rows))
 
     issue_dir = Path(args.out_dir) / issue_slug
     issue_dir.mkdir(parents=True, exist_ok=True)
@@ -972,7 +977,10 @@ def _write_issue_outputs(
         "split": EVAL_SPLIT,
         "n_total": int(len(rows)),
         "n_eligible": int(eligible_overall),
+        # Eligible-only accuracy (gold present in slate)
         "accuracy_overall": best_accuracy,
+        # Accuracy over all rows (eligible and ineligible)
+        "accuracy_overall_all_rows": float(accuracy_all_rows),
         "accuracy_by_k": accuracy_by_k_serializable,
         "best_k": int(best_k),
         "position_stats": pos_stats_out,

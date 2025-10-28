@@ -28,6 +28,35 @@ from common.report_utils import extract_curve_sections, extract_numeric_series
 from .shared import LOGGER, _slugify_label, plt
 
 
+def _extract_eligible_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
+    """Extract eligible-only accuracy curve series if present."""
+    eligible_map = (
+        curve_block.get("eligible_accuracy_by_round")
+        or curve_block.get("eligible_accuracy_by_step")
+    )
+    if not isinstance(eligible_map, Mapping):
+        return ([], [])
+    return extract_numeric_series(eligible_map)
+
+
+def _plot_eligible_overlay(axis, payload: Mapping[str, object]) -> None:
+    """Overlay eligible-only accuracy curves onto an existing axis when available."""
+    bundle = _load_curve_bundle(payload)
+    if not isinstance(bundle, Mapping):
+        return
+    sections = extract_curve_sections(bundle)
+    if sections is None:
+        return
+    eval_curve, train_curve = sections
+    ex, ey = _extract_eligible_curve_steps(eval_curve)
+    if ex and ey:
+        axis.plot(ex, ey, linestyle=":", marker="o", label="validation (eligible)")
+    if isinstance(train_curve, Mapping):
+        tx, ty = _extract_eligible_curve_steps(train_curve)
+        if tx and ty:
+            axis.plot(tx, ty, linestyle=":", marker="o", label="training (eligible)")
+
+
 def _extract_curve_steps(curve_block: Mapping[str, object]) -> Tuple[List[int], List[float]]:
     """
     Extract sorted evaluation steps and accuracies from a curve payload.
@@ -245,6 +274,15 @@ def _load_curve_bundle(payload: Mapping[str, object]) -> Optional[Mapping[str, o
     return None
 
 
+def _format_scalar(value: object) -> str:
+    """Return a short numeric string for plot labels or an em dash."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return "—"
+    return f"{f:.3f}"
+
+
 def _plot_xgb_curve(
     *,
     directory: Path,
@@ -269,7 +307,10 @@ def _plot_xgb_curve(
 
     if plt is None:  # pragma: no cover - optional dependency
         return None
-    label = study_label or study_key or "study"
+    label_base = study_label or study_key or "study"
+    acc = _format_scalar(payload.get("accuracy"))
+    elig = _format_scalar(payload.get("accuracy_eligible"))
+    label = f"{label_base} (acc {acc}, elig {elig})"
     series = _build_curve_series(label, payload, _extract_accuracy_curves)
     if series is None:
         return None
@@ -281,6 +322,8 @@ def _plot_xgb_curve(
 
     fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
     _plot_curve_on_axis(axis, series)
+    # Overlay eligible-only series when available
+    _plot_eligible_overlay(axis, payload)
     fig.tight_layout()
     fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
     plt.close(fig)  # type: ignore[attr-defined]
@@ -309,7 +352,14 @@ def _plot_xgb_curve_overview(
     if plt is None:  # pragma: no cover - optional dependency
         return None
 
-    series_list = _collect_curve_series(entries, _extract_accuracy_curves)
+    # Decorate labels with scalar metrics for quick comparison.
+    decorated: List[Tuple[str, Mapping[str, object]]] = []
+    for label, payload in entries:
+        acc = _format_scalar(payload.get("accuracy"))
+        elig = _format_scalar(payload.get("accuracy_eligible"))
+        decorated.append((f"{label} (acc {acc}, elig {elig})", payload))
+
+    series_list = _collect_curve_series(decorated, _extract_accuracy_curves)
     if not series_list:
         return None
 
@@ -328,8 +378,10 @@ def _plot_xgb_curve_overview(
     )
 
     axes_flat = [axis for row_axes in axes for axis in row_axes]
-    for axis, series in zip(axes_flat, series_list):
+    for axis, series, entry in zip(axes_flat, series_list, entries):
         _plot_curve_on_axis(axis, series, legend_loc="lower right")
+        # entry is (label, payload)
+        _plot_eligible_overlay(axis, entry[1])
     for axis in axes_flat[len(series_list):]:
         axis.axis("off")
 

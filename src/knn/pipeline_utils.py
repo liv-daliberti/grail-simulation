@@ -294,6 +294,7 @@ def extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
     :rtype: MetricSummary
     """
     accuracy = safe_float(data.get("accuracy_overall"))
+    accuracy_all_rows = safe_float(data.get("accuracy_overall_all_rows"))
     best_k = safe_int(data.get("best_k"))
     n_total = safe_int(data.get("n_total"))
     n_eligible = safe_int(data.get("n_eligible"))
@@ -320,6 +321,7 @@ def extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
         best_k=best_k,
         n_total=n_total,
         n_eligible=n_eligible,
+        accuracy_all_rows=accuracy_all_rows,
     )
 
 def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:

@@ -579,7 +579,34 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
         task.config.label(),
     )
     run_knn_cli(cli_args)
-    metrics, metrics_path = load_metrics(run_root, task.issue_slug)
+    try:
+        metrics, metrics_path = load_metrics(run_root, task.issue_slug)
+    except FileNotFoundError:
+        # The evaluation may be legitimately skipped (e.g. no training rows with --fit-index
+        # or no eligible evaluation rows after filters). In that case, the CLI does not
+        # emit a metrics file. Fall back to a zeroed-out metrics payload so the sweep can
+        # proceed and downstream selection logic can operate in allow-incomplete mode.
+        LOGGER.warning(
+            "[SWEEP][SKIP] feature=%s study=%s label=%s (no metrics written; likely skipped by filters)",
+            task.config.feature_space,
+            task.study.key,
+            task.config.label(),
+        )
+        metrics_path = task.metrics_path
+        metrics = {
+            "model": "knn",
+            "feature_space": task.config.feature_space,
+            "issue": task.issue_slug,
+            "split": "validation",
+            # Provide minimal fields consumed by extract_metric_summary/sweep selection.
+            "accuracy_overall": 0.0,
+            "accuracy_overall_all_rows": 0.0,
+            "best_k": 0,
+            "n_total": 0,
+            "n_eligible": 0,
+            "skipped": True,
+            "skip_reason": "No metrics written (evaluation skipped)",
+        }
     return sweep_outcome_from_metrics(task, metrics, metrics_path)
 
 def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:

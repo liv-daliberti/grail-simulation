@@ -141,10 +141,10 @@ def _render_next_video_table(view: _NextVideoStudyView) -> List[str]:
 
     lines: List[str] = [f"### {view.label}", "", f"*Issue:* {view.issue_label}", ""]
     lines.append(
-        "| Config | Accuracy ↑ | Coverage ↑ | Known hits / total | "
+        "| Config | Accuracy ↑ | Acc (eligible) ↑ | Coverage ↑ | Known hits / total | "
         "Known availability ↑ | Avg prob ↑ | Evaluated |"
     )
-    lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: |")
+    lines.append("| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |")
     for outcome in view.displayed:
         label = outcome.config.label()
         formatted = (
@@ -155,6 +155,7 @@ def _render_next_video_table(view: _NextVideoStudyView) -> List[str]:
         summary = _extract_next_video_summary(outcome.metrics)
         lines.append(
             f"| {formatted} | {_format_optional_float(summary.accuracy)} | "
+            f"{_format_optional_float(summary.accuracy_eligible)} | "
             f"{_format_optional_float(summary.coverage)} | "
             f"{_format_ratio(summary.known_hits, summary.known_total)} | "
             f"{_format_optional_float(summary.known_availability)} | "
@@ -248,6 +249,7 @@ def _write_hyperparameter_report(
             f"- Next-video tables highlight up to {HYPERPARAM_TABLE_TOP_N} "
             "configurations per study ranked by validation accuracy."
         )
+        lines.append("- Eligible-only accuracy is shown for comparison next to overall accuracy.")
     include_opinion = opinion is not None
     if include_opinion:
         lines.append(

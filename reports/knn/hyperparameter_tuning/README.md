@@ -15,65 +15,18 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 ### Configuration Leaderboards
 
-## TF-IDF Feature Space
-
-| Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text | 0.577 | 0.540 | +0.036 | 10 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
-| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | 0.353 | 0.368 | -0.015 | 25 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
-| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | 0.317 | 0.479 | -0.163 | 25 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
-
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.577 (baseline 0.540, Δ +0.036, k=10) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.353 (baseline 0.368, Δ -0.015, k=25) using cosine distance with viewer_profile, state_text; Study 3 – Minimum Wage (YouGov): accuracy 0.317 (baseline 0.479, Δ -0.163, k=25) using cosine distance with viewer_profile, state_text.
-  Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
-  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
-  Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
 
 
 ### Configuration Leaderboards
 
-| Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
-| ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| 0 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text | 0.577 | 0.540 | +0.036 | 10 | 548 |
-| 1 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text | 0.353 | 0.368 | -0.015 | 25 | 671 |
-| 2 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text | 0.317 | 0.479 | -0.163 | 25 | 1,200 |
+No sweep outcomes were recorded for this run.
 
 
 ## Post-Study Opinion Regression
 
-Configurations are ranked by validation MAE (lower is better). Bold rows indicate the selections promoted to the finalize stage.
-
-## TF-IDF Feature Space
-
-| Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text | — | — | — | — | 0.704 | 0.074 | +0.630 | 25 | 162 | 0.031 | -0.006 | 0.038 | 0.982 | 162 |
-| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | — | — | — | — | 0.533 | 0.061 | +0.473 | 25 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | — | — | — | — | 0.518 | 0.058 | +0.459 | 25 | 257 | 0.088 | +0.004 | 0.126 | 0.766 | 257 |
-
-### Portfolio Summary
-
-- Weighted MAE 0.074 across 584 participants.
-- Weighted baseline MAE 0.074 (+0.001 vs. final).
-- Weighted directional accuracy 0.574 across 584 participants.
-- Weighted baseline accuracy 0.063 (+0.510 vs. final).
-- Weighted RMSE (change) 0.102 (+0.004 vs. baseline).
-- Weighted calibration ECE 0.023 (— vs. baseline).
-- Weighted KL divergence 7.518 (+10.917 vs. baseline).
-- Largest MAE reduction: TFIDF – Study 3 – Minimum Wage (YouGov) (+0.004).
-- Largest RMSE(change) reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+0.010).
-- Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.031); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).
-- Biggest KL divergence reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+11.930).
-- Highest directional accuracy: TFIDF – Study 1 – Gun Control (MTurk) (0.704).
-- Lowest directional accuracy: TFIDF – Study 3 – Minimum Wage (YouGov) (0.518).
-- Largest accuracy gain vs. baseline: TFIDF – Study 1 – Gun Control (MTurk) (+0.630).
-
-### Opinion Reproduction Commands
-
-- TFIDF:
-  - Study 1 – Gun Control (MTurk): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
-  - Study 2 – Minimum Wage (MTurk): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
-  - Study 3 – Minimum Wage (YouGov): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+No opinion sweeps were available when this report was generated.
+Run the KNN pipeline with `--stage sweeps` or `--stage full` once artifacts are ready.
 

@@ -51,7 +51,10 @@ def prepare_training_documents(train_ds, max_train: int, seed: int, extra_fields
 
 
 def prepare_prompt_documents(train_ds, max_train: int, seed: int, extra_fields=None):  # type: ignore[override]
-    return _PROMPT_DOC_BUILDER.prepare_prompt_documents(train_ds, max_train, seed, extra_fields)
+    # Backwards-compatible alias for training document preparation
+    return _PROMPT_DOC_BUILDER.prepare_training_documents(
+        train_ds, max_train, seed, extra_fields
+    )
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",

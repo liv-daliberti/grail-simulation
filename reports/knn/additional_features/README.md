@@ -7,30 +7,17 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 
 ### Sweep Configurations
 
-| Feature space | Study | Configuration | Extra text fields |
-| --- | --- | --- | --- |
-| tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
-| tfidf | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
-| tfidf | Study 3 – Minimum Wage (YouGov) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
+No sweep metrics were supplied.
 
 ### Final Evaluations
 
-| Feature space | Study | Extra text fields |
-| --- | --- | --- |
-| tfidf | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
-| tfidf | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
-| word2vec | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
-| word2vec | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
+No final evaluation metrics were supplied.
 
 ## Opinion Regression
 
 ### Sweep Configurations
 
-| Feature space | Study | Configuration | Extra text fields |
-| --- | --- | --- | --- |
-| tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
-| tfidf | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
-| tfidf | Study 3 – Minimum Wage (YouGov) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
+No opinion sweep metrics were supplied.
 
 ### Final Evaluations
 

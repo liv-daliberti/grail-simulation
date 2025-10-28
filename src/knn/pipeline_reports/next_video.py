@@ -169,10 +169,12 @@ PORTFOLIO_HEADER = (
 )
 PORTFOLIO_RULE = "| --- | ---: | ---: | ---: | ---: | ---: |"
 FEATURE_TABLE_HEADER = (
-    "| Study | Accuracy ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | "
+    "| Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | "
     "Eligible | Total |"
 )
-FEATURE_TABLE_RULE = "| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+FEATURE_TABLE_RULE = (
+    "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+)
 LOSO_TABLE_HEADER = (
     "| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |"
 )
@@ -335,7 +337,8 @@ def _next_video_intro(
         "",
         f"- Dataset: `{dataset_name}`",
         f"- Split: {split}",
-        "- Metric: accuracy on eligible slates (gold index present).",
+        "- Metric: eligible-only accuracy (gold index present).",
+        "- Note: an all-rows accuracy (including ineligible slates) is also recorded in the per-study metrics as `accuracy_overall_all_rows` to ease comparison with XGB's overall accuracy.",
         "- Baseline column: accuracy from recommending the most frequent gold index.",
         "- Δ column: improvement over that baseline accuracy.",
         "- Random column: expected accuracy from uniformly sampling one candidate per slate.",
@@ -535,6 +538,7 @@ def _next_video_feature_section(
         )
         lines.append(
             f"| {study.label} | {format_optional_float(summary.accuracy)} | "
+            f"{format_optional_float(getattr(summary, 'accuracy_all_rows', None))} | "
             f"{_format_ci(summary.accuracy_ci)} | {format_delta(delta)} | "
             f"{format_optional_float(summary.baseline)} | "
             f"{format_optional_float(summary.random_baseline)} | "

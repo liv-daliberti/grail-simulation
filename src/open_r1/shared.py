@@ -263,6 +263,54 @@ class GrpoPipelineContext:
     prefix: str
 
 
+@dataclass(frozen=True)
+class GrpoComponentFactory:
+    """Factory that constructs :class:`GrpoPipelineComponents` with shared defaults."""
+
+    model_builder: Callable[[Any, Any], Any]
+    trainer_cls: Any
+    peft_config_fn: Optional[Callable[[Any], Any]] = None
+
+    def build(
+        self,
+        *,
+        reward_funcs: Sequence[Any],
+        tokenizer: Any,
+        evaluate_fn_factory: Optional[EvalFnFactory] = None,
+    ) -> GrpoPipelineComponents:
+        """Return a :class:`GrpoPipelineComponents` instance with cached defaults."""
+
+        return GrpoPipelineComponents(
+            model_builder=self.model_builder,
+            trainer_cls=self.trainer_cls,
+            reward_funcs=reward_funcs,
+            tokenizer=tokenizer,
+            peft_config_fn=self.peft_config_fn,
+            evaluate_fn_factory=evaluate_fn_factory,
+        )
+
+
+def build_grpo_context(
+    dataset: Mapping[str, Any],
+    script_args: Any,
+    training_args: Any,
+    model_args: Any,
+    logger: Any,
+    *,
+    prefix: str,
+) -> GrpoPipelineContext:
+    """Return a :class:`GrpoPipelineContext` populated with the supplied arguments."""
+
+    return GrpoPipelineContext(
+        dataset=dataset,
+        script_args=script_args,
+        training_args=training_args,
+        model_args=model_args,
+        logger=logger,
+        prefix=prefix,
+    )
+
+
 def build_grpo_pipeline_bundle(
     *,
     model_builder: Callable[[Any, Any], Any],

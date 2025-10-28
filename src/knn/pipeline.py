@@ -143,7 +143,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     _log_run_configuration(studies, context)
 
-    base_cli = _build_base_cli(context)
+    base_cli = _build_base_cli(context, extra_cli)
     configs = _build_sweep_configs(context)
     stage = getattr(args, "stage", "full")
 

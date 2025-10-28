@@ -173,7 +173,6 @@ def make_opinion_example(
 
 def make_opinion_example_from_values(
     spec: OpinionSpec,
-    *,
     participant_id: str,
     document: str,
     before: float,

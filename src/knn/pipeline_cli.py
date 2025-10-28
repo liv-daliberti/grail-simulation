@@ -250,9 +250,32 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
     )
     if not task_tokens:
         task_tokens = ["next_video", "opinion"]
-    task_flags = {token.lower() for token in task_tokens}
-    run_next_video = "next_video" in task_flags or "next" in task_flags
-    run_opinion = "opinion" in task_flags
+
+    next_aliases = {"next_video", "next", "next-video", "nextvideo", "slate"}
+    opinion_aliases = {"opinion", "opinion_stage", "opinion-stage"}
+    run_next_video = False
+    run_opinion = False
+    unknown_tasks: List[str] = []
+    for token in task_tokens:
+        normalised = token.strip().lower()
+        if normalised in next_aliases:
+            run_next_video = True
+        elif normalised in opinion_aliases:
+            run_opinion = True
+        elif normalised:
+            unknown_tasks.append(token.strip() or token)
+
+    if unknown_tasks:
+        LOGGER.warning(
+            "Ignoring unknown pipeline task token(s): %s",
+            ", ".join(sorted(set(unknown_tasks))),
+        )
+    if not run_next_video and not run_opinion:
+        LOGGER.warning(
+            "No recognised pipeline tasks provided; defaulting to next_video and opinion."
+        )
+        run_next_video = True
+        run_opinion = True
 
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
@@ -350,7 +373,7 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         run_opinion=run_opinion,
     )
 
-def build_base_cli(context: PipelineContext) -> List[str]:
+def build_base_cli(context: PipelineContext, extra_cli: Sequence[str] | None = None) -> List[str]:
     """
     Construct the CLI argument prefix reused across KNN pipeline invocations.
 
@@ -359,14 +382,27 @@ def build_base_cli(context: PipelineContext) -> List[str]:
     :returns: Argument list containing dataset/cache flags plus other shared options.
     :rtype: List[str]
     """
-    base_cli = [
+    base_cli: List[str] = [
         "--dataset",
         context.dataset,
         "--cache-dir",
         context.cache_dir,
     ]
+    extra_cli = tuple(extra_cli or ())
     if context.run_next_video:
-        base_cli.extend(["--fit-index"])
+        suppress_fit = any(
+            flag in extra_cli
+            for flag in (
+                "--fit-index",
+                "--fit_index",
+                "--load-index",
+                "--load_index",
+                "--no-fit-index",
+                "--no_fit_index",
+            )
+        )
+        if not suppress_fit:
+            base_cli.extend(["--fit-index"])
     base_cli.extend(["--overwrite"])
     if context.k_sweep:
         base_cli.extend(["--knn-k-sweep", context.k_sweep])

@@ -46,7 +46,8 @@ from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
     parse_and_run,
-    build_grpo_pipeline_bundle,
+    GrpoComponentFactory,
+    build_grpo_context,
     prepare_model_eval_and_run_grpo,
 )
 from open_r1.rewards import get_reward_funcs
@@ -55,6 +56,12 @@ from open_r1.utils import get_dataset, get_model, get_tokenizer
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
 
 logger = logging.getLogger(__name__)
+
+COMPONENT_FACTORY = GrpoComponentFactory(
+    model_builder=get_model,
+    trainer_cls=GRPOTrainer,
+    peft_config_fn=get_peft_config,
+)
 
 
 def _ensure_training_dependencies() -> None:
@@ -190,19 +197,8 @@ def main(
         training_args.reward_weights,
     )
 
-    components, context = build_grpo_pipeline_bundle(
-        model_builder=get_model,
-        trainer_cls=GRPOTrainer,
-        reward_funcs=reward_fns,
-        tokenizer=tokenizer,
-        dataset=dataset,
-        script_args=script_args,
-        training_args=training_args,
-        model_args=model_args,
-        logger=logger,
-        prefix="grpo",
-        peft_config_fn=get_peft_config,
-    )
+    components = COMPONENT_FACTORY.build(reward_funcs=reward_fns, tokenizer=tokenizer)
+    context = build_grpo_context(dataset, script_args, training_args, model_args, logger, prefix="grpo")
     prepare_model_eval_and_run_grpo(components=components, context=context)
 
 

@@ -202,11 +202,7 @@ def collect_examples(
         existing = per_participant.get(key)
         session_id = example.get("session_id")
         candidate = make_opinion_example_from_values(
-            spec,
-            participant_id=participant_id,
-            document=document,
-            before=before,
-            after=after,
+            spec, participant_id, document, before, after,
             factory=OpinionExample,
             step_index=step_index,
             session_id=str(session_id) if session_id is not None else None,

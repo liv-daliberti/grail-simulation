@@ -176,6 +176,42 @@ def test_build_pipeline_context_env_overrides(monkeypatch: pytest.MonkeyPatch, t
     assert context.feature_spaces == ("tfidf", "word2vec", "sentence_transformer")
 
 
+def test_build_pipeline_context_task_aliases(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    for key in (
+        "DATASET",
+        "OUT_DIR",
+        "CACHE_DIR",
+        "KNN_PIPELINE_TASKS",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    args, _ = pipeline_cli.parse_args(["--tasks", "slate"])
+    context = pipeline_cli.build_pipeline_context(args, repo_root)
+
+    assert context.run_next_video is True
+    assert context.run_opinion is False
+
+
+def test_build_base_cli_skips_fit_when_loading_indexes(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    args, _ = pipeline_cli.parse_args([])
+    context = pipeline_cli.build_pipeline_context(args, repo_root)
+
+    default_base = pipeline_cli.build_base_cli(context)
+    assert "--fit-index" in default_base
+
+    overridden_base = pipeline_cli.build_base_cli(
+        context,
+        ["--load-index", str(tmp_path / "indices")],
+    )
+    assert "--fit-index" not in overridden_base
+
+
 def test_prepare_sweep_tasks_word2vec_without_cached_metrics(tmp_path: Path) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
     config = SweepConfig(

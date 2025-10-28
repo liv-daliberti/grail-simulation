@@ -39,6 +39,11 @@ from common.opinion_sweep_types import (
 )
 
 from .model import XGBoostBoosterParams
+from .vectorizers import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -277,6 +282,14 @@ class OpinionStageConfig:
     :type tree_method: str
     :param overwrite: Flag controlling whether existing artefacts may be overwritten.
     :type overwrite: bool
+    :param tfidf_config: TF-IDF vectoriser configuration applied during evaluation.
+    :type tfidf_config: TfidfConfig
+    :param word2vec_config: Word2Vec vectoriser configuration applied during evaluation.
+    :type word2vec_config: Word2VecVectorizerConfig
+    :param sentence_transformer_config: Sentence-transformer configuration for evaluations.
+    :type sentence_transformer_config: SentenceTransformerVectorizerConfig
+    :param word2vec_model_base: Optional base directory for Word2Vec model artefacts.
+    :type word2vec_model_base: Optional[Path]
     :param reuse_existing: Flag enabling reuse of cached results.
     :type reuse_existing: bool
     """
@@ -291,6 +304,10 @@ class OpinionStageConfig:
     max_features: int | None
     tree_method: str
     overwrite: bool
+    tfidf_config: TfidfConfig
+    word2vec_config: Word2VecVectorizerConfig
+    sentence_transformer_config: SentenceTransformerVectorizerConfig
+    word2vec_model_base: Path | None
     reuse_existing: bool
 
 
@@ -315,10 +332,13 @@ class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
     Extend :class:`common.opinion_sweep_types.BaseOpinionSweepTask` with the
     keyword arguments required by the XGBoost implementation.
 
+    :param feature_space: Feature space evaluated by the sweep task.
+    :type feature_space: str
     :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.
     :type request_args: Mapping[str, object]
     """
 
+    feature_space: str
     request_args: Mapping[str, object]
 
 OpinionStudySelection = narrow_opinion_selection(OpinionSweepOutcome)
@@ -348,6 +368,14 @@ class OpinionSweepRunContext:
     :type tree_method: str
     :param overwrite: Flag controlling whether existing artefacts may be overwritten.
     :type overwrite: bool
+    :param tfidf_config: TF-IDF vectoriser configuration applied during sweeps.
+    :type tfidf_config: TfidfConfig
+    :param word2vec_config: Word2Vec configuration applied during sweeps.
+    :type word2vec_config: Word2VecVectorizerConfig
+    :param sentence_transformer_config: Sentence-transformer configuration for sweeps.
+    :type sentence_transformer_config: SentenceTransformerVectorizerConfig
+    :param word2vec_model_base: Optional root directory for Word2Vec artefacts.
+    :type word2vec_model_base: Optional[Path]
     """
 
     dataset: str
@@ -359,6 +387,10 @@ class OpinionSweepRunContext:
     max_features: int | None
     tree_method: str
     overwrite: bool
+    tfidf_config: TfidfConfig
+    word2vec_config: Word2VecVectorizerConfig
+    sentence_transformer_config: SentenceTransformerVectorizerConfig
+    word2vec_model_base: Path | None
 
 
 # pylint: disable=too-many-instance-attributes

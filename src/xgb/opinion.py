@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -53,6 +53,12 @@ from .data import (
 )
 from .features import assemble_document
 from .model import XGBoostBoosterParams
+from .vectorizers import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+    create_vectorizer,
+)
 from .utils import get_logger
 
 LOGGER = get_logger("xgb.opinion")
@@ -96,6 +102,12 @@ class OpinionEvalRequest:
     :vartype extra_fields: Sequence[str]
     :ivar train_config: Configuration applied during regressor training.
     :vartype train_config: OpinionTrainConfig
+    :ivar tfidf_config: Optional TF-IDF vectoriser configuration.
+    :vartype tfidf_config: Optional[TfidfConfig]
+    :ivar word2vec_config: Optional Word2Vec configuration describing embedding training.
+    :vartype word2vec_config: Optional[Word2VecVectorizerConfig]
+    :ivar sentence_transformer_config: Optional sentence-transformer configuration.
+    :vartype sentence_transformer_config: Optional[SentenceTransformerVectorizerConfig]
     :ivar overwrite: Flag controlling whether existing artefacts may be replaced.
     :vartype overwrite: bool
     """
@@ -106,6 +118,9 @@ class OpinionEvalRequest:
     feature_space: str
     extra_fields: Sequence[str]
     train_config: OpinionTrainConfig
+    tfidf_config: TfidfConfig | None = None
+    word2vec_config: Word2VecVectorizerConfig | None = None
+    sentence_transformer_config: SentenceTransformerVectorizerConfig | None = None
     overwrite: bool = True
 
 
@@ -185,32 +200,6 @@ def collect_examples(
         collapsed = [collapsed[i] for i in order]
         LOGGER.info("[OPINION] Sampled %d participants.", len(collapsed))
     return collapsed
-
-
-def _fit_vectorizer(
-    documents: Sequence[str],
-    *,
-    max_features: Optional[int],
-) -> TfidfVectorizer:
-    """
-    Fit a TF-IDF vectoriser on the provided documents.
-
-    :param documents: Corpus used to estimate TF-IDF statistics.
-    :type documents: Sequence[str]
-    :param max_features: Optional cap on the TF-IDF vocabulary size.
-    :type max_features: Optional[int]
-    :returns: Fitted scikit-learn TF-IDF vectoriser.
-    :rtype: TfidfVectorizer
-    """
-
-    vectorizer = TfidfVectorizer(
-        lowercase=True,
-        strip_accents="unicode",
-        min_df=1,
-        max_features=max_features,
-    )
-    vectorizer.fit(documents)
-    return vectorizer
 
 
 def _train_regressor(
@@ -453,12 +442,38 @@ def _evaluate_spec(
         )
         return None
 
-    vectorizer = _fit_vectorizer(
-        [example.document for example in train_examples],
-        max_features=request.train_config.max_features,
-    )
-    train_features = vectorizer.transform([ex.document for ex in train_examples])
-    eval_features = vectorizer.transform([ex.document for ex in eval_examples])
+    feature_space = request.feature_space.lower()
+    train_docs = [example.document for example in train_examples]
+    eval_docs = [example.document for example in eval_examples]
+
+    if feature_space == "word2vec":
+        base_word2vec_config = request.word2vec_config or Word2VecVectorizerConfig()
+        model_dir = base_word2vec_config.model_dir
+        if not model_dir:
+            model_dir = str((base_dir / spec.key / "word2vec_model").resolve())
+        word2vec_config = replace(
+            base_word2vec_config,
+            model_dir=model_dir,
+            seed=request.train_config.seed,
+        )
+        vectorizer = create_vectorizer("word2vec", word2vec=word2vec_config)
+    elif feature_space == "sentence_transformer":
+        sentence_config = (
+            request.sentence_transformer_config or SentenceTransformerVectorizerConfig()
+        )
+        vectorizer = create_vectorizer(
+            "sentence_transformer",
+            sentence_transformer=sentence_config,
+        )
+    else:
+        feature_space = "tfidf"
+        tfidf_config = request.tfidf_config or TfidfConfig(
+            max_features=request.train_config.max_features,
+        )
+        vectorizer = create_vectorizer("tfidf", tfidf=tfidf_config)
+
+    train_features = vectorizer.fit_transform(train_docs)
+    eval_features = vectorizer.transform(eval_docs)
 
     train_targets = np.array([ex.after for ex in train_examples], dtype=float)
     eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
@@ -489,7 +504,7 @@ def _evaluate_spec(
 
     payload: Dict[str, Any] = {
         "model": "xgb_opinion",
-        "feature_space": request.feature_space,
+        "feature_space": feature_space,
         "dataset": dataset_source,
         "study": spec.key,
         "issue": spec.issue,
@@ -566,7 +581,8 @@ def run_opinion_eval(
     selected_specs = _resolve_studies(studies or ())
     results: Dict[str, Dict[str, Any]] = {}
 
-    base_dir = request.out_dir / request.feature_space
+    feature_space = request.feature_space.lower()
+    base_dir = request.out_dir / feature_space
     base_dir.mkdir(parents=True, exist_ok=True)
 
     for spec in selected_specs:

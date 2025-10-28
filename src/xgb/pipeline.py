@@ -81,6 +81,11 @@ from .pipeline_evaluate import (
     _run_opinion_from_next_stage,
     _run_opinion_stage,
 )
+from .vectorizers import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+)
 from .pipeline_reports import (
     OpinionReportData,
     ReportSections,
@@ -209,6 +214,25 @@ def main(argv: Sequence[str] | None = None) -> None:
     if reuse_final_env is not None:
         reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}
 
+    max_features_value = args.max_features if args.max_features > 0 else None
+    tfidf_config = TfidfConfig(max_features=max_features_value)
+    word2vec_model_base = Path(args.word2vec_model_dir).resolve() if args.word2vec_model_dir else None
+    word2vec_config = Word2VecVectorizerConfig(
+        vector_size=args.word2vec_size,
+        window=args.word2vec_window,
+        min_count=args.word2vec_min_count,
+        epochs=args.word2vec_epochs,
+        workers=args.word2vec_workers,
+        seed=args.seed,
+        model_dir=None,
+    )
+    sentence_transformer_config = SentenceTransformerVectorizerConfig(
+        model_name=args.sentence_transformer_model,
+        device=args.sentence_transformer_device or None,
+        batch_size=args.sentence_transformer_batch_size,
+        normalize=args.sentence_transformer_normalize,
+    )
+
     sweep_dir.mkdir(parents=True, exist_ok=True)
     sweep_context: SweepRunContext | None = None
     if run_next_video:
@@ -229,9 +253,13 @@ def main(argv: Sequence[str] | None = None) -> None:
             extra_fields=extra_fields_tuple,
             max_participants=args.opinion_max_participants,
             seed=args.seed,
-            max_features=args.max_features if args.max_features > 0 else None,
+            max_features=max_features_value,
             tree_method=args.tree_method,
             overwrite=args.overwrite,
+            tfidf_config=tfidf_config,
+            word2vec_config=word2vec_config,
+            sentence_transformer_config=sentence_transformer_config,
+            word2vec_model_base=word2vec_model_base,
         )
         opinion_sweep_context.sweep_dir.mkdir(parents=True, exist_ok=True)
 
@@ -245,9 +273,13 @@ def main(argv: Sequence[str] | None = None) -> None:
             studies=study_tokens_tuple,
             max_participants=args.opinion_max_participants,
             seed=args.seed,
-            max_features=args.max_features if args.max_features > 0 else None,
+            max_features=max_features_value,
             tree_method=args.tree_method,
             overwrite=args.overwrite or not reuse_final,
+            tfidf_config=tfidf_config,
+            word2vec_config=word2vec_config,
+            sentence_transformer_config=sentence_transformer_config,
+            word2vec_model_base=word2vec_model_base,
             reuse_existing=reuse_final,
         )
 

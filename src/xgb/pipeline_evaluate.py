@@ -23,6 +23,8 @@ settings configured by ``xgb.pipeline``.
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
+from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
 from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
@@ -34,7 +36,7 @@ from .pipeline_context import (
     StudySpec,
 )
 from .pipeline_sweeps import (
-    OPINION_FEATURE_SPACE,
+    DEFAULT_OPINION_FEATURE_SPACE,
     _inject_study_metadata,
     _load_loso_metrics_from_disk,
     _load_metrics,
@@ -223,7 +225,8 @@ def _run_opinion_stage(
                 study_key,
             )
             continue
-        feature_dir = opinion_out_dir / "tfidf"
+        feature_space = selection.outcome.config.text_vectorizer.lower()
+        feature_dir = opinion_out_dir / feature_space
         study_dir = feature_dir / study_key
         metrics_path = study_dir / f"opinion_xgb_{study_key}_validation_metrics.json"
         if config.reuse_existing and metrics_path.exists():
@@ -237,25 +240,53 @@ def _run_opinion_stage(
             else:
                 results[study_key] = payload
                 LOGGER.info(
-                    "[OPINION][SKIP] study=%s issue=%s (metrics cached).",
+                    "[OPINION][SKIP] study=%s issue=%s feature=%s (metrics cached).",
                     study_key,
                     selection.study.issue,
+                    feature_space,
                 )
                 continue
         opinion_config = OpinionTrainConfig(
             max_participants=config.max_participants,
             seed=config.seed,
-            max_features=config.max_features,
+            max_features=config.max_features if feature_space == "tfidf" else None,
             booster=selection.config.booster_params(config.tree_method),
+        )
+        tfidf_config = config.tfidf_config if feature_space == "tfidf" else None
+        word2vec_config = None
+        if feature_space == "word2vec":
+            base_cfg = config.word2vec_config
+            if config.word2vec_model_base is not None:
+                model_dir = (
+                    config.word2vec_model_base
+                    / "opinion_stage"
+                    / feature_space
+                    / selection.study.issue_slug
+                    / study_key
+                )
+            else:
+                model_dir = study_dir / "word2vec_model"
+            word2vec_config = replace(
+                base_cfg,
+                model_dir=str(model_dir),
+                seed=config.seed,
+            )
+        sentence_config = (
+            config.sentence_transformer_config
+            if feature_space == "sentence_transformer"
+            else None
         )
         payload = run_opinion_eval(
             request=OpinionEvalRequest(
-                dataset=config.dataset,
-                cache_dir=config.cache_dir,
+                dataset=str(config.dataset) if config.dataset else None,
+                cache_dir=str(config.cache_dir) if config.cache_dir else None,
                 out_dir=opinion_out_dir,
-                feature_space="tfidf",
+                feature_space=feature_space,
                 extra_fields=config.extra_fields,
                 train_config=opinion_config,
+                tfidf_config=tfidf_config,
+                word2vec_config=word2vec_config,
+                sentence_transformer_config=sentence_config,
                 overwrite=config.overwrite,
             ),
             studies=[study_key],
@@ -316,10 +347,12 @@ def _evaluate_opinion_from_next_spec(
             spec.key,
         )
         return None
+    feature_space = selection.config.text_vectorizer.lower()
     if config.reuse_existing and spec.key in cached_keys:
         LOGGER.info(
-            "[OPINION][FROM-NEXT][SKIP] study=%s (metrics cached).",
+            "[OPINION][FROM-NEXT][SKIP] study=%s feature=%s (metrics cached).",
             spec.key,
+            feature_space,
         )
         return None
 
@@ -327,18 +360,45 @@ def _evaluate_opinion_from_next_spec(
     opinion_config = OpinionTrainConfig(
         max_participants=config.max_participants,
         seed=config.seed,
-        max_features=config.max_features,
+        max_features=config.max_features if feature_space == "tfidf" else None,
         booster=selection.config.booster_params(config.tree_method),
+    )
+    tfidf_config = config.tfidf_config if feature_space == "tfidf" else None
+    word2vec_config = None
+    if feature_space == "word2vec":
+        base_cfg = config.word2vec_config
+        if config.word2vec_model_base is not None:
+            model_dir = (
+                config.word2vec_model_base
+                / "opinion_from_next"
+                / feature_space
+                / spec.issue_slug
+                / spec.key
+            )
+        else:
+            model_dir = base_out_dir / feature_space / spec.key / "word2vec_model"
+        word2vec_config = replace(
+            base_cfg,
+            model_dir=str(model_dir),
+            seed=config.seed,
+        )
+    sentence_config = (
+        config.sentence_transformer_config
+        if feature_space == "sentence_transformer"
+        else None
     )
     try:
         return run_opinion_eval(
             request=OpinionEvalRequest(
-                dataset=config.dataset,
-                cache_dir=config.cache_dir,
+                dataset=str(config.dataset) if config.dataset else None,
+                cache_dir=str(config.cache_dir) if config.cache_dir else None,
                 out_dir=base_out_dir,
-                feature_space=OPINION_FEATURE_SPACE,
+                feature_space=feature_space,
                 extra_fields=config.extra_fields,
                 train_config=opinion_config,
+                tfidf_config=tfidf_config,
+                word2vec_config=word2vec_config,
+                sentence_transformer_config=sentence_config,
                 overwrite=config.overwrite,
             ),
             studies=[spec.key],

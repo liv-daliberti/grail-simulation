@@ -211,6 +211,12 @@ def test_build_base_cli_skips_fit_when_loading_indexes(tmp_path: Path) -> None:
     )
     assert "--fit-index" not in overridden_base
 
+    inline_base = pipeline_cli.build_base_cli(
+        context,
+        [f"--load-index={tmp_path / 'indices2'}"],
+    )
+    assert "--fit-index" not in inline_base
+
 
 def test_prepare_sweep_tasks_word2vec_without_cached_metrics(tmp_path: Path) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")

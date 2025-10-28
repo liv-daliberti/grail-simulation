@@ -23,6 +23,7 @@ stages can select the best configurations.
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -52,7 +53,7 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     xgboost = None  # type: ignore[assignment]
 
-OPINION_FEATURE_SPACE = "tfidf"
+DEFAULT_OPINION_FEATURE_SPACE = "tfidf"
 LOGGER = logging.getLogger("xgb.pipeline.sweeps")
 
 
@@ -380,29 +381,58 @@ def _iter_opinion_sweep_tasks(
     for config in configs:
         for study in studies:
             run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
+            feature_space = config.text_vectorizer.lower()
             metrics_path = (
                 run_root
-                / OPINION_FEATURE_SPACE
+                / feature_space
                 / study.key
                 / f"opinion_xgb_{study.key}_validation_metrics.json"
+            )
+            tfidf_config = context.tfidf_config if feature_space == "tfidf" else None
+            word2vec_config = None
+            if feature_space == "word2vec":
+                base_cfg = context.word2vec_config
+                if context.word2vec_model_base is not None:
+                    model_dir = (
+                        context.word2vec_model_base
+                        / "opinion_sweeps"
+                        / study.issue_slug
+                        / study.study_slug
+                        / config.label()
+                    )
+                else:
+                    model_dir = run_root / feature_space / "word2vec_model"
+                word2vec_config = replace(
+                    base_cfg,
+                    model_dir=str(model_dir),
+                    seed=context.seed,
+                )
+            sentence_config = (
+                context.sentence_transformer_config
+                if feature_space == "sentence_transformer"
+                else None
             )
             request_args: Dict[str, object] = {
                 "dataset": context.dataset,
                 "cache_dir": context.cache_dir,
                 "out_dir": str(run_root),
-                "feature_space": OPINION_FEATURE_SPACE,
+                "feature_space": feature_space,
                 "extra_fields": extra_fields,
                 "max_participants": int(context.max_participants),
                 "seed": int(context.seed),
                 "max_features": context.max_features,
                 "tree_method": context.tree_method,
                 "overwrite": True,
+                "tfidf_config": tfidf_config,
+                "word2vec_config": word2vec_config,
+                "sentence_transformer_config": sentence_config,
             }
             tasks.append(
                 OpinionSweepTask(
                     index=task_index,
                     study=study,
                     config=config,
+                    feature_space=feature_space,
                     request_args=request_args,
                     metrics_path=metrics_path,
                 )
@@ -443,9 +473,10 @@ def _prepare_opinion_sweep_tasks(
         metrics_path = task.metrics_path
         if reuse_existing and metrics_path.exists():
             LOGGER.info(
-                "[OPINION][SWEEP][SKIP] study=%s issue=%s config=%s (cached).",
+                "[OPINION][SWEEP][SKIP] study=%s issue=%s feature=%s config=%s (cached).",
                 task.study.key,
                 task.study.issue,
+                task.feature_space,
                 task.config.label(),
             )
             metrics = _load_metrics(metrics_path)
@@ -495,13 +526,16 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     dataset = args.get("dataset")
     cache_dir = args.get("cache_dir")
-    feature_space = str(args.get("feature_space", OPINION_FEATURE_SPACE))
+    feature_space = str(args.get("feature_space", DEFAULT_OPINION_FEATURE_SPACE)).lower()
     extra_fields = tuple(args.get("extra_fields", ()))
     max_participants = int(args.get("max_participants", 0))
     seed = int(args.get("seed", 42))
     max_features = args.get("max_features")
     tree_method = str(args.get("tree_method", "hist"))
     overwrite = bool(args.get("overwrite", True))
+    tfidf_config = args.get("tfidf_config")
+    word2vec_config = args.get("word2vec_config")
+    sentence_config = args.get("sentence_transformer_config")
 
     train_config = OpinionTrainConfig(
         max_participants=max_participants,
@@ -516,13 +550,17 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
         feature_space=feature_space,
         extra_fields=extra_fields,
         train_config=train_config,
+        tfidf_config=tfidf_config,
+        word2vec_config=word2vec_config,
+        sentence_transformer_config=sentence_config,
         overwrite=overwrite,
     )
 
     LOGGER.info(
-        "[OPINION][SWEEP] study=%s issue=%s config=%s",
+        "[OPINION][SWEEP] study=%s issue=%s feature=%s config=%s",
         task.study.key,
         task.study.issue,
+        feature_space,
         task.config.label(),
     )
     run_opinion_eval(request=request, studies=[task.study.key])
@@ -594,7 +632,7 @@ def _emit_combined_sweep_plan(
         print("### OPINION")
         print("INDEX\tSTUDY\tISSUE\tVECTORIZER\tLABEL")
         for display_index, task in enumerate(opinion_tasks):
-            vectorizer = getattr(task.config, "text_vectorizer", "opinion")
+            vectorizer = getattr(task, "feature_space", getattr(task.config, "text_vectorizer", "opinion"))
             print(
                 f"{display_index}\t{task.study.key}\t{task.study.issue}\t"
                 f"{vectorizer}\t{task.config.label()}"
@@ -611,7 +649,7 @@ def _format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:
     :rtype: str
     """
 
-    return f"{task.study.key}:{task.study.issue}:{task.config.label()}"
+    return f"{task.study.key}:{task.study.issue}:{task.feature_space}:{task.config.label()}"
 
 
 def _gpu_tree_method_supported() -> bool:

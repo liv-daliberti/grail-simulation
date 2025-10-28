@@ -389,9 +389,22 @@ def build_base_cli(context: PipelineContext, extra_cli: Sequence[str] | None = N
         context.cache_dir,
     ]
     extra_cli = tuple(extra_cli or ())
+
+    def _has_flag(flag: str) -> bool:
+        flag_aliases = {flag}
+        if "_" in flag:
+            flag_aliases.add(flag.replace("_", "-"))
+        else:
+            flag_aliases.add(flag.replace("-", "_"))
+        return any(
+            token in flag_aliases
+            or any(token.startswith(alias + "=") for alias in flag_aliases)
+            for token in extra_cli
+        )
+
     if context.run_next_video:
         suppress_fit = any(
-            flag in extra_cli
+            _has_flag(flag)
             for flag in (
                 "--fit-index",
                 "--fit_index",

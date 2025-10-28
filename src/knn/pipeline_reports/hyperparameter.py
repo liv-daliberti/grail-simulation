@@ -306,6 +306,10 @@ def _hyperparameter_report_intro(
         "Tables bold the configurations promoted to the finalize stage. "
         "Commands beneath each table reproduce the selected configuration."
     )
+    lines.append(
+        "Accuracy values reflect eligible-only accuracy on the validation split "
+        "at the selected best k (per the configured k-selection method)."
+    )
     lines.append("")
     return lines
 
@@ -426,7 +430,7 @@ def _hyperparameter_table_section(
         lines.append(_feature_space_heading(feature_space))
         lines.append("")
         header = (
-            "| Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | "
+            "| Study | Metric | Text fields | Acc (best k) ↑ | Baseline ↑ | "
             "Δ vs baseline ↑ | Best k | Eligible | Command |"
         )
         divider = "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |"
@@ -462,7 +466,7 @@ def _hyperparameter_leaderboard_section(
         return lines
 
     header = (
-        "| Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | "
+        "| Order | Study | Feature space | Metric | Text fields | Acc (best k) ↑ | "
         "Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |"
     )
     divider = (

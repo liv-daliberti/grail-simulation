@@ -9,6 +9,7 @@ Key settings:
 - Sentence-transformer baseline: `sentence-transformers/all-mpnet-base-v2`
 
 Tables bold the configurations promoted to the finalize stage. Commands beneath each table reproduce the selected configuration.
+Accuracy values reflect eligible-only accuracy on the validation split at the selected best k (per the configured k-selection method).
 
 
 ## Slate-Ranking Sweep Leaders
@@ -17,7 +18,7 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 ## TF-IDF Feature Space
 
-| Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
+| Study | Metric | Text fields | Acc (best k) ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | 0.324 | 0.479 | -0.155 | 50 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
 
@@ -30,7 +31,7 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 ### Configuration Leaderboards
 
-| Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
+| Order | Study | Feature space | Metric | Text fields | Acc (best k) ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
 | ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | 2 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text | 0.324 | 0.479 | -0.155 | 50 | 1,200 |
 

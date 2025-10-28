@@ -773,15 +773,21 @@ class PromptDocumentBuilder:
         """
 
 
+        # Prefer generating the full prompt via prompt_builder to ensure
+        # consistency across pipelines. Fall back to any existing prompt only
+        # if prompt generation fails.
+        try:
+            built = build_user_prompt(example, max_hist=self.max_history)
+            if isinstance(built, str) and built.strip():
+                return built.strip()
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            pass
         existing = example.get(self.prompt_column) or example.get("prompt")
         if isinstance(existing, str):
             stripped = existing.strip()
             if stripped and not _looks_like_legacy_prompt(stripped):
                 return stripped
-        try:
-            return build_user_prompt(example, max_hist=self.max_history)
-        except (TypeError, ValueError):  # pragma: no cover - defensive
-            return ""
+        return ""
 
     def extract_now_watching(self, example: dict) -> Optional[Tuple[str, str]]:
         """
@@ -874,6 +880,15 @@ class PromptDocumentBuilder:
             prompt_text = next((value for value in fallback_candidates if _good(value)), "")
         if prompt_text:
             parts.append(prompt_text)
+            # Emit a one-time log of the full prompt text to aid debugging.
+            try:
+                if not hasattr(self, "_logged_full_prompt_example") or not getattr(
+                    self, "_logged_full_prompt_example"
+                ):
+                    self._log("info", "Full prompt example: %s", prompt_text)
+                    setattr(self, "_logged_full_prompt_example", True)
+            except Exception:  # pylint: disable=broad-except  # pragma: no cover - best-effort logging
+                pass
 
         now_watching = self.extract_now_watching(example)
         if now_watching:
@@ -991,7 +1006,7 @@ class PromptDocumentBuilder:
         filtered_labels_id = [label_id for _, label_id, _ in records]
         filtered_labels_title = [label_title for _, _, label_title in records]
         self._log("info", "Assembled %d documents (kept %d non-empty).", len(indices), len(records))
-        self._log("info", "Example doc: %r", filtered_docs[0][:200])
+        self._log("info", "Example doc: %r", filtered_docs[0])
         return filtered_docs, filtered_labels_id, filtered_labels_title
 
 

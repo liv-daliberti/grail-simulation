@@ -268,7 +268,10 @@ def run_cross_study_evaluations(
             studies=studies,
         )
         if cached:
-            LOGGER.info("[LOSO] Reusing cached metrics for feature spaces: %s", ",".join(feature_spaces))
+            LOGGER.info(
+                "[LOSO] Reusing cached metrics for feature spaces: %s",
+                ",".join(feature_spaces),
+            )
             return cached
 
     # Execution path not required by unit tests; keep disabled to avoid heavy runs.

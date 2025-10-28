@@ -113,6 +113,7 @@ export KNN_REUSE_FINAL
 DEFAULT_KNN_PIPELINE_TASKS="next_video,opinion"
 : "${KNN_PIPELINE_TASKS:=${DEFAULT_KNN_PIPELINE_TASKS}}"
 KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
+: "${KNN_K_SELECT_METHOD:=max}"
 : "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
 : "${KNN_K_SWEEP:=10}"
 : "${KNN_TFIDF_METRICS:=cosine}"
@@ -182,6 +183,7 @@ Environment overrides:
   KNN_FINAL_SBATCH_FLAGS Additional sbatch flags appended to the finalize submission
   KNN_SLURM_ACCOUNT      SLURM account used for all submissions (default: mltheory)
   KNN_SLURM_PARTITION    SLURM partition used for CPU/finalize submissions (default: mltheory)
+  KNN_K_SELECT_METHOD    Default K selection method for next-video (max|elbow, default: max)
 EOF
 }
 
@@ -195,6 +197,32 @@ append_flag_once() {
     fi
   done
   target_ref+=("${flag}" "${value}")
+}
+
+has_any_flag() {
+  # Usage: has_any_flag array_name "--flag1" "--flag2" ...
+  local -n arr_ref=$1
+  shift
+  local flag
+  for flag in "$@"; do
+    for ((i = 0; i < ${#arr_ref[@]}; ++i)); do
+      if [[ "${arr_ref[i]}" == "${flag}" || "${arr_ref[i]}" == ${flag}=* ]]; then
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
+ensure_k_select_flag() {
+  # Ensures a k-selection method is present for KNN (default: env KNN_K_SELECT_METHOD or 'max').
+  local -n target_ref=$1
+  local default_value=${2:-"${KNN_K_SELECT_METHOD}"}
+  local -a aliases=("--knn-k-select" "--knn_k_select" "--k-select-method" "--k_select_method")
+  if has_any_flag target_ref "${aliases[@]}"; then
+    return
+  fi
+  target_ref+=("--knn-k-select" "${default_value}")
 }
 
 ensure_tasks_flag() {
@@ -337,12 +365,14 @@ run_plan() {
   local -a args=("$@")
   ensure_reuse_final_flag args
   ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
+  ensure_k_select_flag args "${KNN_K_SELECT_METHOD}"
   "${PYTHON_BIN}" -m knn.pipeline --stage plan "${args[@]}"
 }
 
 submit_jobs() {
   local -a pipeline_args=("$@")
   ensure_reuse_final_flag pipeline_args
+  ensure_k_select_flag pipeline_args "${KNN_K_SELECT_METHOD}"
   local pipeline_tasks_raw
   pipeline_tasks_raw=$(ensure_tasks_flag pipeline_args "${KNN_PIPELINE_TASKS}")
   IFS=',' read -r -a pipeline_task_tokens <<<"${pipeline_tasks_raw}"
@@ -769,6 +799,7 @@ run_finalize() {
   echo "[knn] Running finalize stage locally."
   check_python_env
   ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
+  ensure_k_select_flag args "${KNN_K_SELECT_METHOD}"
   "${PYTHON_BIN}" -m knn.pipeline --stage finalize "${args[@]}"
 }
 
@@ -795,6 +826,7 @@ run_sweeps_worker() {
   fi
   check_python_env
   ensure_tasks_flag args "${KNN_PIPELINE_TASKS}"
+  ensure_k_select_flag args "${KNN_K_SELECT_METHOD}"
   "${PYTHON_BIN}" -m knn.pipeline --stage sweeps "${sweep_args[@]}" "${args[@]}"
 }
 

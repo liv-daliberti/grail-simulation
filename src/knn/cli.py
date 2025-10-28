@@ -103,6 +103,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated list of additional k values to evaluate.",
     )
     parser.add_argument(
+        "--knn-k-select",
+        "--knn_k_select",
+        "--k-select-method",
+        "--k_select_method",
+        choices=["max", "elbow"],
+        default="max",
+        dest="k_select_method",
+        help=(
+            "Method for selecting best k: 'max' chooses the accuracy-maximising k "
+            "(eligible-only accuracy), 'elbow' applies a diminishing-returns heuristic."
+        ),
+    )
+    parser.add_argument(
         "--knn-metric",
         "--knn_metric",
         default="l2",

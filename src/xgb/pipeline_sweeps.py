@@ -917,19 +917,12 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
         ),
     )
     if metrics is None:
-        metrics = {
-            "issue": task.study.evaluation_slug,
-            "participant_studies": [task.study.key],
-            "evaluated": 0,
-            "correct": 0,
-            "accuracy": 0.0,
-            "known_candidate_hits": 0,
-            "known_candidate_total": 0,
-            "coverage": 0.0,
-            "eligible": 0,
-            "extra_fields": [],
-            "skipped": True,
-        }
+        from common.pipeline_utils import make_placeholder_metrics
+        metrics = make_placeholder_metrics(
+            task.study.evaluation_slug,
+            [task.study.key],
+            extra_fields=[],
+        )
         # Persist a small breadcrumb so reuse/caching can detect the skip later.
         task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
         try:

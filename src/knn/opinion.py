@@ -33,6 +33,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.neighbors import NearestNeighbors
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+from common.opinion import log_participant_counts
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample as BaseOpinionExample,
@@ -223,7 +224,7 @@ def collect_examples(
         len(dataset),
     )
     if sample_doc:
-        LOGGER.info("[OPINION] Example prompt: %r", sample_doc[:200])
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
 
     if max_examples and 0 < max_examples < len(collapsed):
         rng = default_rng(seed)
@@ -250,7 +251,7 @@ def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]
     matrix = vectorizer.fit_transform(documents).astype(np.float32)
     return vectorizer, matrix
 
-def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument
+def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument,too-many-statements
     *,
     examples: Sequence[OpinionExample],
     feature_space: str,
@@ -317,6 +318,31 @@ def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-ar
         vectorizer = None
     else:
         raise ValueError(f"Unsupported feature space '{feature_space}'.")
+
+    # Emit a concise embedding summary for the first training document
+    try:
+        if documents:
+            sample_doc = str(documents[0])
+            if feature_space == "tfidf" and vectorizer is not None:
+                vec = vectorizer.transform([sample_doc])
+                row = vec[0]
+                nnz = int(row.nnz)
+                dim = int(row.shape[1])
+                indices = getattr(row, "indices", [])
+                data = getattr(row, "data", [])
+                preview = [f"{int(i)}:{float(v):.4f}" for i, v in zip(indices[:8], data[:8])]
+                LOGGER.info("[OPINION][Embed][TFIDF] dim=%s nnz=%s preview=%s", dim, nnz, preview)
+            elif feature_space in {"word2vec", "sentence_transformer"} and embeds is not None:
+                arr = np.asarray(
+                    embeds.transform([sample_doc])
+                ).ravel()  # type: ignore[attr-defined]
+                dim = int(arr.shape[0])
+                nnz = int(np.count_nonzero(arr))
+                preview = [f"{float(x):.4f}" for x in arr[:8]]
+                tag = "W2V" if feature_space == "word2vec" else "ST"
+                LOGGER.info("[OPINION][Embed][%s] dim=%s nnz=%s preview=%s", tag, dim, nnz, preview)
+    except (ValueError, TypeError, AttributeError, IndexError):
+        pass
 
     targets_after = np.asarray([example.after for example in examples], dtype=np.float32)
     targets_before = np.asarray([example.before for example in examples], dtype=np.float32)
@@ -433,7 +459,7 @@ def _weighted_mean(values: np.ndarray, weights: np.ndarray) -> float:
         return float(values.mean()) if values.size else float("nan")
     return float(np.dot(values, weights) / total)
 
-def predict_post_indices(
+def predict_post_indices(  # pylint: disable=too-many-locals
     *,
     index: OpinionIndex,
     eval_examples: Sequence[OpinionExample],
@@ -1322,11 +1348,9 @@ def _evaluate_opinion_study(
         seed=int(getattr(context.args, "knn_seed", 42)),
     )
     # Log participant counts for sweep visibility
-    LOGGER.info(
-        "[OPINION] study=%s train_participants=%d eval_participants=%d",
-        spec.key,
-        len(train_examples),
-        len(eval_examples),
+    log_participant_counts(
+        LOGGER, study_key=spec.key,
+        train_count=len(train_examples), eval_count=len(eval_examples)
     )
     if not eval_examples:
         LOGGER.warning("[OPINION] No evaluation examples found for study=%s", spec.key)

@@ -46,8 +46,10 @@ class _PortfolioAccumulator:
     """
     Accumulate portfolio-level statistics across studies.
 
-    :ivar total_correct: Sum of correctly ranked slates across studies.
-    :ivar total_evaluated: Total number of evaluated slates with accuracy metrics.
+    :ivar total_correct: Sum of correctly ranked slates across studies (eligible-only).
+    :ivar total_evaluated: Total number of evaluated slates with accuracy metrics (kept for availability).
+    :ivar total_correct_eligible: Sum of correctly ranked slates among eligible rows.
+    :ivar total_eligible: Total number of eligible slates contributing to eligible-only accuracy.
     :ivar total_known_hits: Sum of known-candidate hits across all studies.
     :ivar total_known_total: Total known candidates encountered in evaluations.
     :ivar accuracy_entries: Per-study accuracy values paired with study labels.
@@ -56,6 +58,8 @@ class _PortfolioAccumulator:
 
     total_correct: int = 0
     total_evaluated: int = 0
+    total_correct_eligible: int = 0
+    total_eligible: int = 0
     total_known_hits: int = 0
     total_known_total: int = 0
     accuracy_entries: List[Tuple[float, str]] = field(default_factory=list)
@@ -84,10 +88,16 @@ class _PortfolioAccumulator:
         :type summary: NextVideoMetricSummary
         """
 
-        if summary.correct is None or summary.evaluated is None:
-            return
-        self.total_correct += summary.correct
-        self.total_evaluated += summary.evaluated
+        if summary.correct is not None and summary.evaluated is not None:
+            self.total_correct += summary.correct
+            self.total_evaluated += summary.evaluated
+        # Track eligible-only tallies for parity with KNN.
+        if summary.correct_eligible is not None and summary.eligible is not None:
+            try:
+                self.total_correct_eligible += int(summary.correct_eligible)
+                self.total_eligible += int(summary.eligible)
+            except (TypeError, ValueError):
+                pass
 
     def _record_known(self, summary: "NextVideoMetricSummary") -> None:
         """
@@ -112,6 +122,10 @@ class _PortfolioAccumulator:
         :type label: str
         """
 
+        # Prefer eligible-only accuracy when available.
+        if summary.accuracy_eligible is not None:
+            self.accuracy_entries.append((summary.accuracy_eligible, label))
+            return
         if summary.accuracy is None:
             return
         self.accuracy_entries.append((summary.accuracy, label))
@@ -143,8 +157,8 @@ class _PortfolioAccumulator:
         weighted_accuracy = self._weighted_accuracy()
         if weighted_accuracy is not None:
             lines.append(
-                f"- Weighted accuracy {_format_optional_float(weighted_accuracy)} "
-                f"across {_format_count(self.total_evaluated)} evaluated slates."
+                f"- Weighted eligible-only accuracy {_format_optional_float(weighted_accuracy)} "
+                f"across {_format_count(self.total_eligible)} eligible slates."
             )
 
         weighted_coverage = self._weighted_coverage()
@@ -195,9 +209,9 @@ class _PortfolioAccumulator:
         :rtype: Optional[float]
         """
 
-        if not self.total_evaluated:
+        if not self.total_eligible:
             return None
-        return self.total_correct / self.total_evaluated
+        return self.total_correct_eligible / self.total_eligible
 
     def _weighted_coverage(self) -> Optional[float]:
         """
@@ -459,13 +473,11 @@ def _next_video_header_lines(
             f"- Dataset: `{dataset_name}`",
             "- Split: validation",
             (
-                "- Metrics: overall accuracy, eligible-only accuracy "
-                "(gold present in slate), coverage of known candidates, "
-                "and availability of known neighbors."
+                "- Metrics include overall accuracy, eligible-only accuracy "
+                "(gold present in slate), coverage of known candidates, and availability of known neighbors."
             ),
             (
-                "- Table columns capture validation accuracy, counts of correct predictions, "
-                "known-candidate recall, and probability calibration for the selected slates."
+                "- In the summary table below, the Accuracy column reports eligible-only accuracy to match KNN reports."
             ),
             (
                 "- `Known hits / total` counts successes among slates that contained a known "
@@ -508,7 +520,7 @@ def _next_video_table_lines(
     """
 
     lines = [
-        "| Study | Issue | Accuracy ↑ | Baseline ↑ | Random ↑ | Correct / evaluated | Coverage ↑ | "
+        "| Study | Issue | Acc (eligible) ↑ | Baseline ↑ | Random ↑ | Correct / evaluated | Coverage ↑ | "
         "Known hits / total | Known availability ↑ | Avg prob ↑ |",
         "| --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: |",
     ]
@@ -533,7 +545,7 @@ def _next_video_table_lines(
         row_cells = [
             study_label,
             resolved_issue,
-            _format_optional_float(summary.accuracy),
+            _format_optional_float(summary.accuracy_eligible),
             _format_optional_float(summary.baseline_most_frequent_accuracy),
             _format_optional_float(summary.random_baseline_accuracy),
             _format_ratio(summary.correct, summary.evaluated),

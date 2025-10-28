@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass, field
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
@@ -113,6 +114,9 @@ class IssueMetrics:
     random_baseline_expected_accuracy: Optional[float] = None
     curve_metrics: Optional[Dict[str, Any]] = None
     curve_metrics_path: Optional[str] = None
+    # Optional participant-bootstrap confidence intervals (eligible-only accuracy)
+    accuracy_ci_95: Optional[Dict[str, float]] = None
+    accuracy_uncertainty: Optional[Dict[str, Any]] = None
 
 
 @dataclass(frozen=True)
@@ -571,6 +575,37 @@ def evaluate_issue(
     metrics = _summarise_records(records, config, issue_slug, model)
     predictions = _records_to_predictions(records, issue_slug)
     curve_payload = _accuracy_curve_from_records(records)
+    # Compute participant-bootstrap CIs for eligible-only accuracy.
+    try:
+        group_keys = _compute_group_keys(eval_ds, len(records))
+    except Exception:  # pragma: no cover - defensive fallback
+        group_keys = [f"row::{i}" for i in range(len(records))]
+    baseline_index = None
+    try:
+        payload = metrics.baseline_most_frequent_gold_index or {}
+        baseline_index = payload.get("top_index")
+    except Exception:
+        baseline_index = None
+    try:
+        replicates = int(os.environ.get("XGB_BOOTSTRAP_REPLICATES", "500"))
+    except ValueError:
+        replicates = 500
+    try:
+        bootstrap_seed = int(os.environ.get("XGB_BOOTSTRAP_SEED", "2024"))
+    except ValueError:
+        bootstrap_seed = 2024
+    uncertainty = _bootstrap_uncertainty(
+        records=records,
+        group_keys=group_keys,
+        baseline_index=baseline_index,
+        replicates=replicates,
+        seed=bootstrap_seed,
+    )
+    if uncertainty and isinstance(uncertainty, Mapping):
+        model_uncertainty = uncertainty.get("model")
+        if isinstance(model_uncertainty, Mapping):
+            metrics.accuracy_ci_95 = model_uncertainty.get("ci95")  # type: ignore[assignment]
+            metrics.accuracy_uncertainty = uncertainty  # type: ignore[assignment]
     return metrics, predictions, curve_payload
 
 
@@ -708,6 +743,112 @@ def _collect_prediction_records(
                 elig_acc,
             )
     return records
+
+
+def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
+    """Derive a stable grouping key for bootstrap resampling.
+
+    Priority order mirrors the KNN pipeline: urlid > participant_id > session_id > row index.
+    """
+    urlid = str(example.get("urlid") or "").strip()
+    if urlid and urlid.lower() != "nan":
+        return f"urlid::{urlid}"
+    participant = str(example.get("participant_id") or "").strip()
+    if participant and participant.lower() != "nan":
+        return f"participant::{participant}"
+    session = str(example.get("session_id") or "").strip()
+    if session and session.lower() != "nan":
+        return f"session::{session}"
+    return f"row::{fallback_index}"
+
+
+def _compute_group_keys(eval_ds, limit: int) -> List[str]:
+    """Compute group keys for the first ``limit`` examples in ``eval_ds``."""
+    keys: List[str] = []
+    for idx, row in enumerate(eval_ds):
+        if idx >= limit:
+            break
+        try:
+            keys.append(_group_key_for_example(row, idx))
+        except Exception:
+            keys.append(f"row::{idx}")
+    return keys
+
+
+def _bootstrap_uncertainty(
+    *,
+    records: Sequence[tuple[int, "PredictionOutcome"]],
+    group_keys: Sequence[str],
+    baseline_index: Optional[int],
+    replicates: int,
+    seed: int,
+) -> Optional[Dict[str, Any]]:
+    """Participant-bootstrap uncertainty for eligible-only accuracy.
+
+    Returns a payload mirroring KNN's structure with ``model`` and optional ``baseline``
+    keys, each containing ``mean`` and ``ci95`` bounds.
+    """
+    if replicates <= 0 or not records:
+        return None
+    # Build per-group collections of eligible rows.
+    grouped: Dict[str, List[int]] = {}
+    elig_indices: List[int] = []
+    for idx, (_index, outcome) in enumerate(records):
+        key = group_keys[idx] if idx < len(group_keys) else f"row::{idx}"
+        if outcome.eligible:
+            grouped.setdefault(key, []).append(idx)
+            elig_indices.append(idx)
+    if len(grouped) < 2 or not elig_indices:
+        return None
+    keys = list(grouped.keys())
+    rng = np.random.default_rng(seed)
+    def _acc_for_indices(indices: Sequence[int]) -> float:
+        correct = sum(1 for i in indices if records[i][1].correct)
+        return correct / len(indices) if indices else 0.0
+    def _baseline_acc_for_indices(indices: Sequence[int]) -> float:
+        if baseline_index is None:
+            return 0.0
+        correct = 0
+        for i in indices:
+            outcome = records[i][1]
+            if outcome.gold_index == baseline_index:
+                correct += 1
+        return correct / len(indices) if indices else 0.0
+    model_samples: List[float] = []
+    baseline_samples: List[float] = []
+    for _ in range(replicates):
+        sampled_rows: List[int] = []
+        sampled_group_indices = rng.integers(0, len(keys), size=len(keys))
+        for gidx in sampled_group_indices:
+            sampled_rows.extend(grouped[keys[gidx]])
+        model_samples.append(_acc_for_indices(sampled_rows))
+        if baseline_index is not None:
+            baseline_samples.append(_baseline_acc_for_indices(sampled_rows))
+    model_ci = {
+        "low": float(np.percentile(model_samples, 2.5)),
+        "high": float(np.percentile(model_samples, 97.5)),
+    }
+    result: Dict[str, Any] = {
+        "method": "participant_bootstrap",
+        "n_groups": len(grouped),
+        "n_rows": len(elig_indices),
+        "n_bootstrap": int(replicates),
+        "seed": int(seed),
+        "model": {
+            "mean": float(np.mean(model_samples)),
+            "ci95": model_ci,
+        },
+    }
+    if baseline_samples:
+        baseline_ci = {
+            "low": float(np.percentile(baseline_samples, 2.5)),
+            "high": float(np.percentile(baseline_samples, 97.5)),
+        }
+        result["baseline"] = {
+            "mean": float(np.mean(baseline_samples)),
+            "ci95": baseline_ci,
+        }
+    return result
 
 
 def _summarise_records(

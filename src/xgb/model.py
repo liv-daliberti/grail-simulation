@@ -21,13 +21,14 @@ import json
 import logging
 import math
 from dataclasses import dataclass, field
-import importlib
-import inspect
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
+from common.xgb_callbacks import build_fit_callbacks
+from common.xgb_fit_utils import harmonize_fit_kwargs
+from common.matrix_summary import log_embedding_previews, log_single_embedding
 from ._optional import LabelEncoder, joblib
 
 from . import features as feature_utils
@@ -61,6 +62,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 LOGGER = logging.getLogger("xgb.model")
 _gpu_training_state = {"enabled": True}
+_embed_log_state = {"printed_online": False}
 
 
 def _should_retry_on_cpu(tree_method: str, exc: Exception) -> bool:
@@ -384,6 +386,10 @@ def predict_among_slate(
         return None, {}
 
     row_matrix = model.vectorizer.transform([document])
+    # Log an embedding summary at inference time (covers the load_model path).
+    if not _embed_log_state["printed_online"]:
+        log_single_embedding(row_matrix, logger=LOGGER, tag="[XGB][Embed][Online]")
+        _embed_log_state["printed_online"] = True
     proba = model.booster.predict_proba(row_matrix)
     if proba.ndim != 2 or proba.shape[0] == 0:
         return None, {}
@@ -458,99 +464,19 @@ def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, 
     # (XGBoost >= 2.0) and fall back to logging-only when unavailable. A separate
     # fallback to the legacy ``early_stopping_rounds`` kwarg is handled in
     # ``_train_booster`` to keep compatibility with multiple XGBoost versions.
+    # Attach logging and EarlyStopping via shared helpers when available.
     try:
-        # Import lazily via importlib to avoid pylint import-error when xgboost
-        # is not installed in the lint environment.
-        callback_mod = importlib.import_module("xgboost.callback")
-        training_callback_cls = getattr(
-            callback_mod, "TrainingCallback"
-        )  # type: ignore[attr-defined]
-        early_stopping_cls = getattr(
-            callback_mod, "EarlyStopping", None
-        )  # type: ignore[attr-defined]
-
-        class _ProgressLogger(training_callback_cls):  # type: ignore
-            # pylint: disable=too-few-public-methods
-            def __init__(self, interval: int = 25) -> None:
-                self._interval = max(1, int(interval))
-
-            def after_iteration(
-                self, _model, epoch: int, evals_log,
-            ) -> bool:  # type: ignore[override]
-                """Emit periodic training/eval metric summaries and continue."""
-                round_idx = int(epoch) + 1
-                if round_idx % self._interval != 0:
-                    return False
-                # Prefer classification error (merror); fall back to logloss.
-                def _metric_text(block: dict) -> str | None:
-                    if not isinstance(block, dict):
-                        return None
-                    if "merror" in block and block["merror"]:
-                        try:
-                            err = float(block["merror"][-1])
-                            return f"acc={1.0 - err:.4f}"
-                        except (
-                            ValueError,
-                            TypeError,
-                            KeyError,
-                            IndexError,
-                        ):  # pragma: no cover - defensive
-                            return None
-                    if "mlogloss" in block and block["mlogloss"]:
-                        try:
-                            return f"mlogloss={float(block['mlogloss'][-1]):.4f}"
-                        except (
-                            ValueError,
-                            TypeError,
-                            KeyError,
-                            IndexError,
-                        ):  # pragma: no cover - defensive
-                            return None
-                    return None
-
-                train_block = (
-                    evals_log.get("validation_0", {}) if hasattr(evals_log, "get") else {}
-                )
-                eval_block = (
-                    evals_log.get("validation_1", {}) if hasattr(evals_log, "get") else {}
-                )
-                train_text = _metric_text(train_block)
-                eval_text = _metric_text(eval_block)
-                parts = []
-                if train_text:
-                    parts.append(f"train {train_text}")
-                if eval_text:
-                    parts.append(f"eval {eval_text}")
-                if parts:
-                    LOGGER.info(
-                        "[XGB][Train] round=%d  %s",
-                        round_idx,
-                        "  ".join(parts),
-                    )
-                return False
-
-        callbacks: list[Any] = [_ProgressLogger(interval=25)]
-        # When an evaluation split is present, enable EarlyStopping via callback if available.
-        if batch.evaluation is not None and early_stopping_cls is not None:
-            try:
-                # Prefer minimising logloss on the validation split.
-                callbacks.append(
-                    early_stopping_cls(
-                        rounds=50,
-                        metric_name="mlogloss",
-                        data_name="validation_1",
-                    )
-                )
-            except TypeError:
-                # Older callback signature: fall back to just rounds
-                callbacks.append(early_stopping_cls(rounds=50))  # type: ignore[misc]
-        fit_kwargs["callbacks"] = callbacks
-    except (
-        ModuleNotFoundError,
-        ImportError,
-        AttributeError,
-        TypeError,
-    ):  # pragma: no cover - optional dependency or API mismatch
+        callbacks = build_fit_callbacks(
+            objective="classification",
+            logger=LOGGER,
+            prefix="[XGB][Train]",
+            has_eval=batch.evaluation is not None,
+            interval=25,
+            early_stopping_metric="mlogloss",
+        )
+        if callbacks:
+            fit_kwargs["callbacks"] = callbacks
+    except Exception:  # pylint: disable=broad-except  # pragma: no cover - optional dependency or API mismatch
         pass
     return fit_kwargs
 
@@ -658,30 +584,7 @@ def _harmonize_classifier_fit_kwargs(
     fit_kwargs: Dict[str, Any],
 ) -> None:
     """Prune unsupported kwargs and attach legacy early stopping when needed."""
-
-    try:
-        fit_sig = inspect.signature(getattr(booster, "fit"))
-        supports_callbacks = "callbacks" in fit_sig.parameters
-
-        callbacks = fit_kwargs.get("callbacks") if isinstance(fit_kwargs, dict) else None
-        if not supports_callbacks and isinstance(fit_kwargs, dict):
-            fit_kwargs.pop("callbacks", None)
-
-        has_es_callback = False
-        if supports_callbacks and isinstance(callbacks, (list, tuple)):
-            for cb in callbacks:
-                name = type(cb).__name__
-                if "EarlyStopping" in str(name):
-                    has_es_callback = True
-                    break
-
-        has_eval = batch.evaluation is not None
-        if has_eval and not has_es_callback and (
-            "early_stopping_rounds" in fit_sig.parameters
-        ):
-            fit_kwargs["early_stopping_rounds"] = 50
-    except (ValueError, TypeError, AttributeError):  # pragma: no cover - compatibility
-        return
+    harmonize_fit_kwargs(booster, fit_kwargs, has_eval=batch.evaluation is not None)
 
 
 def _disable_gpu_boosters() -> None:
@@ -782,7 +685,7 @@ def _prepare_eval_artifacts(
     return eval_matrix, context.encoder.transform(filtered_labels)
 
 
-def _prepare_training_dataset(
+def _prepare_training_dataset(  # pylint: disable=too-many-locals
     train_ds,
     train_config: XGBoostTrainConfig,
     extra_fields: Sequence[str] | None,
@@ -804,6 +707,8 @@ def _prepare_training_dataset(
         sentence_transformer=train_config.sentence_transformer,
     )
     matrix = _ensure_float32(vectorizer.fit_transform(docs))
+    # Emit a concise embedding summary for the first training document to aid debugging.
+    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[XGB][Embed]")
     encoder, encoded_labels = _encode_labels(labels_id)
     train_split = EncodedDataset(matrix=matrix, labels=encoded_labels)
     return vectorizer, encoder, train_split

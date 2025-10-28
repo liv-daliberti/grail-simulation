@@ -411,17 +411,34 @@ def parse_k_values(k_default: int, sweep: str) -> List[int]:
     k_vals = sorted(k for k in values if k > 0)
     return k_vals or [int(k_default) if k_default else 25]
 
-def select_best_k(k_values: Sequence[int], accuracy_by_k: Dict[int, float]) -> int:
-    """Choose an appropriate ``k`` by applying a simple elbow heuristic.
+def select_best_k(
+    k_values: Sequence[int],
+    accuracy_by_k: Dict[int, float],
+    *,
+    method: str = "elbow",
+) -> int:
+    """Select ``k`` using either max-accuracy or an elbow heuristic.
 
     Args:
         k_values: Sorted sequence of evaluated ``k`` values.
-        accuracy_by_k: Observed accuracy for each ``k`` on the validation split.
+        accuracy_by_k: Observed eligible-only accuracy for each ``k`` on the
+            validation split.
+        method: Selection strategy (default: ``"elbow"``). ``"max"`` picks the accuracy-maximising
+            ``k``. ``"elbow"`` picks the first ``k`` where marginal gains fall
+            below half the initial slope, falling back to max-accuracy when
+            the heuristic is not applicable.
 
     Returns:
-        int: ``k`` where marginal gains fall below half of the initial slope, or the
-            accuracy-maximising ``k`` when the heuristic cannot be applied.
+        int: Selected ``k`` per the requested method.
     """
+    method_norm = (method or "max").strip().lower()
+    if method_norm not in {"max", "elbow"}:
+        method_norm = "max"
+
+    if method_norm == "max":
+        return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
+
+    # Elbow heuristic
     if len(k_values) <= 2:
         return max(k_values, key=lambda k: accuracy_by_k.get(k, 0.0))
     accuracies = [accuracy_by_k.get(k, 0.0) for k in k_values]
@@ -891,7 +908,7 @@ def _write_issue_outputs(
     :param rows: Per-example records produced during evaluation.
     :param k_values: Sequence of ``k`` values scored for the issue.
     :param accuracy_by_k: Accuracy measured for each ``k``.
-    :param best_k: Elbow-selected ``k`` value.
+    :param best_k: Selected ``k`` value.
     :param bucket_stats: Aggregated slate-position statistics.
     :param single_multi_stats: Aggregated single vs multi option metrics.
     :param gold_hist: Histogram of gold indices encountered.
@@ -983,6 +1000,7 @@ def _write_issue_outputs(
         "accuracy_overall_all_rows": float(accuracy_all_rows),
         "accuracy_by_k": accuracy_by_k_serializable,
         "best_k": int(best_k),
+        "k_select_method": str(getattr(args, "k_select_method", "max")),
         "position_stats": pos_stats_out,
         "by_n_options": {
             bucket: {
@@ -1304,7 +1322,7 @@ def _update_correct_counts(
     """Update bucket-level correctness tallies for the selected ``best_k``.
 
     :param rows: Iterable of per-example prediction records.
-    :param best_k: Elbow-selected ``k`` used to judge correctness.
+    :param best_k: Selected ``k`` used to judge correctness.
     :param bucket_stats: Mutable dictionary storing per-bucket correctness.
     :param single_multi_stats: Mutable dictionary tracking single vs multi counts.
     """
@@ -1434,7 +1452,11 @@ def evaluate_issue(
         k: safe_div(per_k_stats[k]["correct"], per_k_stats[k]["eligible"])
         for k in k_values_int
     }
-    best_k = select_best_k(k_values_int, accuracy_by_k)
+    best_k = select_best_k(
+        k_values_int,
+        accuracy_by_k,
+        method=getattr(args, "k_select_method", "max"),
+    )
     _update_correct_counts(rows, best_k, bucket_stats, single_multi_stats)
     eval_curve = _curve_summary(
         k_values=k_values_int,
@@ -1463,7 +1485,11 @@ def evaluate_issue(
             k: safe_div(train_summary["per_k_stats"][k]["correct"], train_summary["per_k_stats"][k]["eligible"])
             for k in k_values_int
         }
-        train_best_k = select_best_k(k_values_int, train_accuracy_by_k)
+        train_best_k = select_best_k(
+            k_values_int,
+            train_accuracy_by_k,
+            method=getattr(args, "k_select_method", "max"),
+        )
         train_curve = _curve_summary(
             k_values=k_values_int,
             accuracy_by_k=train_accuracy_by_k,

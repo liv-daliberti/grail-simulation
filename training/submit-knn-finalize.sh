@@ -16,6 +16,14 @@ LOG_DIR=${LOG_DIR:-"${ROOT_DIR}/logs/knn"}
 
 mkdir -p "${LOG_DIR}"
 
+# Surface optional environment overrides to the finalize job.
+# Always include TRAINING_REPO_ROOT, and pass through KNN_K_SELECT_METHOD when set
+# so training-knn.sh can default to the requested k-selection strategy.
+EXPORT_ENV="ALL,TRAINING_REPO_ROOT=${ROOT_DIR}"
+if [[ -n "${KNN_K_SELECT_METHOD:-}" ]]; then
+  EXPORT_ENV+="\,KNN_K_SELECT_METHOD=${KNN_K_SELECT_METHOD}"
+fi
+
 COMMON_FLAGS=(
   --account="${ACCOUNT}"
   --partition="${PARTITION}"
@@ -23,7 +31,7 @@ COMMON_FLAGS=(
   --cpus-per-task="${CPUS}"
   --time="${TIME_LIMIT}"
   --mem="${MEMORY}"
-  --export="ALL,TRAINING_REPO_ROOT=${ROOT_DIR}"
+  --export="${EXPORT_ENV}"
 )
 
 flag_present() {

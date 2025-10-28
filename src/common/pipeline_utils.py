@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from operator import attrgetter
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Generic, List, Sequence, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Sequence, TypeVar, Optional
 
 
 T = TypeVar("T")
@@ -160,4 +160,38 @@ __all__ = [
     "merge_ordered_with_warning",
     "merge_indexed_outcomes",
     "OpinionStudySelection",
+    "make_placeholder_metrics",
 ]
+
+
+def make_placeholder_metrics(
+    issue: str,
+    participant_studies: Sequence[str],
+    *,
+    extra_fields: Optional[Sequence[str]] = None,
+    skip_reason: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Return a standard placeholder metrics payload for skipped runs.
+
+    Consolidates duplicated inline dictionaries across pipeline modules when a run is
+    skipped (e.g., due to missing train/eval rows). Zero-initialises known fields and
+    includes optional ``extra_fields`` and ``skip_reason`` when provided.
+    """
+
+    payload: Dict[str, Any] = {
+        "issue": issue,
+        "participant_studies": list(participant_studies),
+        "evaluated": 0,
+        "correct": 0,
+        "accuracy": 0.0,
+        "known_candidate_hits": 0,
+        "known_candidate_total": 0,
+        "coverage": 0.0,
+        "eligible": 0,
+        "skipped": True,
+    }
+    if extra_fields is not None:
+        payload["extra_fields"] = list(extra_fields)
+    if skip_reason is not None:
+        payload["skip_reason"] = skip_reason
+    return payload

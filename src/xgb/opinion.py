@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, replace
-import importlib
-import inspect
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
@@ -33,7 +31,11 @@ from common.opinion import (
     float_or_none,
     make_opinion_example_from_values,
 )
+from common.opinion import log_participant_counts
 from common.opinion_metrics import compute_opinion_metrics
+from common.xgb_callbacks import build_fit_callbacks
+from common.xgb_fit_utils import harmonize_fit_kwargs
+from common.matrix_summary import log_single_embedding
 
 try:  # pragma: no cover - optional dependency
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -213,7 +215,7 @@ def collect_examples(
     collapsed = [example for example, _ in per_participant.values()]
     LOGGER.info("[OPINION] Retained %d unique participants.", len(collapsed))
     if sample_doc:
-        LOGGER.info("[OPINION] Example prompt: %r", sample_doc[:200])
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
 
     if max_participants and len(collapsed) > max_participants:
         rng = np.random.default_rng(seed)
@@ -289,97 +291,19 @@ def _train_regressor(
 def _attach_regression_callbacks(fit_kwargs: Dict[str, Any]) -> None:
     """Attach logging and EarlyStopping callbacks when available.
 
-    Best effort: silently no-op when the callback API is unavailable.
+    Best effort: if callbacks are unavailable, no-op.
     """
 
-    try:
-        callback_mod = importlib.import_module("xgboost.callback")
-        training_callback_cls = getattr(
-            callback_mod, "TrainingCallback"
-        )  # type: ignore[attr-defined]
-        early_stopping_cls = getattr(
-            callback_mod, "EarlyStopping", None
-        )  # type: ignore[attr-defined]
-
-        class _RegressProgressLogger(training_callback_cls):  # type: ignore
-            # pylint: disable=too-few-public-methods
-            def __init__(self, interval: int = 25) -> None:
-                self._interval = max(1, int(interval))
-
-            def after_iteration(self, _model, epoch: int, evals_log):  # type: ignore[override]
-                """Emit periodic training/eval metric summaries and continue."""
-                round_idx = int(epoch) + 1
-                if round_idx % self._interval != 0:
-                    return False
-
-                def _metric_text(block: dict) -> str | None:
-                    if not isinstance(block, dict):
-                        return None
-                    # Prefer MAE; fall back to RMSE when unavailable.
-                    if "mae" in block and block["mae"]:
-                        try:
-                            return f"mae={float(block['mae'][-1]):.4f}"
-                        except (
-                            ValueError,
-                            TypeError,
-                            KeyError,
-                            IndexError,
-                        ):  # pragma: no cover - defensive
-                            return None
-                    if "rmse" in block and block["rmse"]:
-                        try:
-                            return f"rmse={float(block['rmse'][-1]):.4f}"
-                        except (
-                            ValueError,
-                            TypeError,
-                            KeyError,
-                            IndexError,
-                        ):  # pragma: no cover - defensive
-                            return None
-                    return None
-
-                train_block = (
-                    evals_log.get("validation_0", {}) if hasattr(evals_log, "get") else {}
-                )
-                eval_block = (
-                    evals_log.get("validation_1", {}) if hasattr(evals_log, "get") else {}
-                )
-                train_text = _metric_text(train_block)
-                eval_text = _metric_text(eval_block)
-                parts: list[str] = []
-                if train_text:
-                    parts.append(f"train {train_text}")
-                if eval_text:
-                    parts.append(f"eval {eval_text}")
-                if parts:
-                    LOGGER.info(
-                        "[OPINION][Train] round=%d  %s",
-                        round_idx,
-                        "  ".join(parts),
-                    )
-                return False
-
-        callbacks: list[Any] = [_RegressProgressLogger(interval=25)]
-        if early_stopping_cls is not None:
-            try:
-                callbacks.append(
-                    early_stopping_cls(
-                        rounds=50,
-                        metric_name="mae",
-                        data_name="validation_1",
-                    )
-                )
-            except TypeError:
-                callbacks.append(early_stopping_cls(rounds=50))  # type: ignore[misc]
+    callbacks = build_fit_callbacks(
+        objective="regression",
+        logger=LOGGER,
+        prefix="[OPINION][Train]",
+        has_eval=True,
+        interval=25,
+        early_stopping_metric="mae",
+    )
+    if callbacks:
         fit_kwargs["callbacks"] = callbacks
-    except (
-        ModuleNotFoundError,
-        ImportError,
-        AttributeError,
-        TypeError,
-    ):  # pragma: no cover - optional dependency or API mismatch
-        # Best effort: keep training even if callbacks are unavailable.
-        return
 
 
 def _harmonize_regressor_fit_kwargs(
@@ -389,37 +313,7 @@ def _harmonize_regressor_fit_kwargs(
     has_eval: bool,
 ) -> None:
     """Prune unsupported kwargs and add legacy early stopping when appropriate."""
-
-    try:
-        fit_sig = inspect.signature(getattr(regressor, "fit"))
-        supports_callbacks = "callbacks" in fit_sig.parameters
-
-        callbacks = fit_kwargs.get("callbacks")
-        if not supports_callbacks:
-            fit_kwargs.pop("callbacks", None)
-
-        has_es_callback = False
-        if supports_callbacks and isinstance(callbacks, (list, tuple)):
-            for cb in callbacks:
-                name = type(cb).__name__
-                if "EarlyStopping" in str(name):
-                    has_es_callback = True
-                    break
-
-        if has_eval and (not has_es_callback) and (
-            "early_stopping_rounds" in fit_sig.parameters
-        ):
-            fit_kwargs["early_stopping_rounds"] = 50
-
-        # Finally, drop keys not supported by the installed signature or None values.
-        supported_params = set(fit_sig.parameters)
-        for key in list(fit_kwargs.keys()):
-            if fit_kwargs.get(key) is None or key not in supported_params:
-                fit_kwargs.pop(key, None)
-    except (ValueError, TypeError, AttributeError):  # pragma: no cover - defensive
-        # Best effort; if inspection fails, at least avoid passing None values.
-        for key in [k for k, v in list(fit_kwargs.items()) if v is None]:
-            fit_kwargs.pop(key, None)
+    harmonize_fit_kwargs(regressor, fit_kwargs, has_eval=has_eval)
 
 
 def _baseline_metrics(
@@ -556,8 +450,7 @@ def _curve_metrics_from_history(eval_history: Mapping[str, Any]) -> Optional[Dic
     return curve_metrics
 
 
-# pylint: disable=too-many-locals
-def _evaluate_spec(
+def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     *,
     dataset,
     spec: OpinionSpec,
@@ -598,11 +491,9 @@ def _evaluate_spec(
         seed=request.train_config.seed,
     )
     # Log participant counts for sweep visibility
-    LOGGER.info(
-        "[OPINION] study=%s train_participants=%d eval_participants=%d",
-        spec.key,
-        len(train_examples),
-        len(eval_examples),
+    log_participant_counts(
+        LOGGER, study_key=spec.key,
+        train_count=len(train_examples), eval_count=len(eval_examples)
     )
     if not train_examples or not eval_examples:
         LOGGER.warning(
@@ -645,6 +536,10 @@ def _evaluate_spec(
 
     train_features = vectorizer.fit_transform(train_docs)
     eval_features = vectorizer.transform(eval_docs)
+    # Emit a concise embedding summary for visibility (opinion docs have no selection tokens).
+    if train_docs:
+        # log_single_embedding is defensive and swallows its own errors.
+        log_single_embedding(train_features[0], logger=LOGGER, tag="[OPINION][Embed]")
 
     train_targets = np.array([ex.after for ex in train_examples], dtype=float)
     eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)

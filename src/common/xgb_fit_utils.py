@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+"""
+Helpers to harmonise XGBoost estimator.fit kwargs across versions.
+"""
+
+from __future__ import annotations
+
+import inspect
+from typing import Any, Dict
+
+
+def harmonize_fit_kwargs(
+    estimator: Any,
+    fit_kwargs: Dict[str, Any],
+    *,
+    has_eval: bool,
+    early_stopping_rounds: int = 50,
+) -> None:
+    """
+    Prune unsupported kwargs and attach legacy early stopping when applicable.
+
+    - Removes "callbacks" when the installed estimator does not support it.
+    - Adds "early_stopping_rounds" as a fallback when callbacks aren't available.
+    - Drops None-valued and unsupported keys based on the signature.
+    """
+
+    try:
+        fit_sig = inspect.signature(getattr(estimator, "fit"))
+        supports_callbacks = "callbacks" in fit_sig.parameters
+
+        callbacks = fit_kwargs.get("callbacks")
+        if not supports_callbacks:
+            fit_kwargs.pop("callbacks", None)
+
+        has_es_callback = False
+        if supports_callbacks and isinstance(callbacks, (list, tuple)):
+            for cb in callbacks:
+                name = type(cb).__name__
+                if "EarlyStopping" in str(name):
+                    has_es_callback = True
+                    break
+
+        if has_eval and (not has_es_callback) and (
+            "early_stopping_rounds" in fit_sig.parameters
+        ):
+            fit_kwargs["early_stopping_rounds"] = early_stopping_rounds
+
+        # Finally, drop keys not supported by the installed signature or None values.
+        supported_params = set(fit_sig.parameters)
+        for key in list(fit_kwargs.keys()):
+            if fit_kwargs.get(key) is None or key not in supported_params:
+                fit_kwargs.pop(key, None)
+    except (ValueError, TypeError, AttributeError):  # pragma: no cover - defensive
+        # Best effort; if inspection fails, at least avoid passing None values.
+        for key in [k for k, v in list(fit_kwargs.items()) if v is None]:
+            fit_kwargs.pop(key, None)
+
+
+__all__ = ["harmonize_fit_kwargs"]

@@ -1105,7 +1105,7 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path, sample_png: Pa
     next_video = (tmp_path / "next_video" / "README.md").read_text(encoding="utf-8")
     assert "XGBoost Next-Video Baseline" in next_video
     assert "Study 1 – Gun Control (MTurk)" in next_video
-    assert "| Study | Issue | Accuracy ↑ | Baseline ↑ | Random ↑ |" in next_video
+    assert "| Study | Issue | Acc (eligible) ↑ | Baseline ↑ | Random ↑ |" in next_video
     assert "Cross-Study Holdouts" in next_video
 
     opinion = (tmp_path / "opinion" / "README.md").read_text(encoding="utf-8")

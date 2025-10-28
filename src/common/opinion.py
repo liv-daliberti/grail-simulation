@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Tuple, TypeVar
+import logging
 
 
 @dataclass(frozen=True)
@@ -228,6 +229,26 @@ DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
         after_column="mw_index_w2",
     ),
 )
+
+
+def log_participant_counts(
+    logger: logging.Logger,
+    *,
+    study_key: str,
+    train_count: int,
+    eval_count: int,
+    prefix: str = "[OPINION]",
+) -> None:
+    """Emit a standardised log line for train/eval participant counts."""
+
+    logger.info(
+        "%s study=%s train_participants=%d eval_participants=%d",
+        prefix,
+        study_key,
+        train_count,
+        eval_count,
+    )
+
 
 
 def float_or_none(value: Any) -> Optional[float]:

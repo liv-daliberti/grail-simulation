@@ -324,7 +324,7 @@ class PromptSelectionHelper:
                 len(triples),
             )
             if documents:
-                sample = str(documents[0])[:200]
+                sample = str(documents[0])
                 self.builder.logger.info("%sExample doc: %r", prefix, sample)
             if dropped > 0:
                 self.builder.logger.warning(
@@ -333,7 +333,14 @@ class PromptSelectionHelper:
                     dropped,
                     len(indices),
                 )
-        except (TypeError, ValueError, AttributeError, RuntimeError, IndexError):  # pragma: no cover - best-effort logging
+        except (
+            TypeError,
+            ValueError,
+            AttributeError,
+            RuntimeError,
+            IndexError,
+        ):
+            # pragma: no cover - best-effort logging
             # Best-effort logging; continue silently if unexpected formatting issues occur.
             pass
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -28,6 +29,7 @@ import numpy as np
 from scipy import sparse
 
 from common.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+from common.matrix_summary import summarize_vector, log_embedding_previews
 from common.vectorizers import create_tfidf_vectorizer
 
 from .features import (
@@ -41,6 +43,8 @@ from .features import (
     Word2VecFeatureBuilder,
     title_for,
 )
+
+LOGGER = logging.getLogger("knn.index")
 
 @dataclass(frozen=True)
 class SlateQueryConfig:
@@ -144,7 +148,7 @@ class CandidateScorer:
         )
         return _aggregate_scores(score_vector, self.unique_k)
 
-def build_tfidf_index(
+def build_tfidf_index(  # pylint: disable=too-many-locals
     train_ds,
     *,
     max_train: int = 100_000,
@@ -171,6 +175,8 @@ def build_tfidf_index(
 
     vectorizer = create_tfidf_vectorizer(max_features=max_features)
     matrix = vectorizer.fit_transform(docs).astype(np.float32)
+    # Log an embedding summary for the first document
+    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][TFIDF]")
 
     return {
         "feature_space": "tfidf",
@@ -180,7 +186,7 @@ def build_tfidf_index(
         "labels_title": labels_title,
     }
 
-def build_word2vec_index(
+def build_word2vec_index(  # pylint: disable=too-many-locals
     train_ds,
     *,
     max_train: int = 100_000,
@@ -214,6 +220,8 @@ def build_word2vec_index(
         ) from exc
 
     matrix = builder.transform(docs)
+    # Log an embedding summary for the first document
+    log_embedding_previews(builder, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][W2V]")
 
     return {
         "feature_space": "word2vec",
@@ -224,7 +232,7 @@ def build_word2vec_index(
         "word2vec_config": builder.config,
     }
 
-def build_sentence_transformer_index(
+def build_sentence_transformer_index(  # pylint: disable=too-many-locals
     train_ds,
     *,
     max_train: int = 100_000,
@@ -253,6 +261,28 @@ def build_sentence_transformer_index(
     if not hasattr(encoder, "transform"):
         setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
     matrix = encoder.encode(docs).astype(np.float32, copy=False)
+    # Log an embedding summary for the first document
+    try:
+        if docs:
+            sample_doc = str(docs[0])
+            base_doc = sample_doc.split("\n", 1)[0]
+            base_vec = encoder.encode([base_doc]).astype(np.float32, copy=False)
+            base_summary = summarize_vector(base_vec)
+            full_summary = summarize_vector(matrix[0])
+            LOGGER.info(
+                "[KNN][Embed][ST] base_doc dim=%s nnz=%s preview=%s",
+                base_summary.get("dim"),
+                base_summary.get("nnz"),
+                base_summary.get("preview"),
+            )
+            LOGGER.info(
+                "[KNN][Embed][ST] doc+tokens dim=%s nnz=%s preview=%s",
+                full_summary.get("dim"),
+                full_summary.get("nnz"),
+                full_summary.get("preview"),
+            )
+    except Exception:  # pylint: disable=broad-except
+        pass
     return {
         "feature_space": "sentence_transformer",
         "vectorizer": encoder,

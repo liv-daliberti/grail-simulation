@@ -660,8 +660,9 @@ def test_xgb_pipeline_finalize_writes_reports(monkeypatch: pytest.MonkeyPatch, t
     assert captured_reports["dir"] == reports_dir
     sweeps_report = captured_reports["kwargs"]["sweeps"]
     assert sweeps_report.final_metrics[study.key]["accuracy"] == 0.9
-    opinion_report = captured_reports["kwargs"]["opinion"]
-    assert opinion_report.metrics[study.key]["mae_after"] == 0.34
+    sections = captured_reports["kwargs"]["sections"]
+    assert sections.opinion is not None
+    assert sections.opinion.metrics[study.key]["mae_after"] == 0.34
 
 
 def test_xgb_pipeline_sweeps_and_finalize(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:

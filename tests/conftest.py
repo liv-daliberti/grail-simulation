@@ -1,25 +1,22 @@
-"""Pytest configuration ensuring project modules are importable."""
+"""Shared pytest fixtures."""
 
 from __future__ import annotations
 
-import os
-import sys
+import base64
+from pathlib import Path
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC_DIR = os.path.join(ROOT_DIR, "src")
+import pytest
 
-for path in (ROOT_DIR, SRC_DIR):
-    if path not in sys.path:
-        sys.path.insert(0, path)
+# Single transparent 1x1 PNG (base64-encoded)
+_PNG_DATA = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="
+)
 
-from tests.helpers.datasets_stub import ensure_datasets_stub  # noqa: E402
-from tests.helpers.graphviz_stub import ensure_graphviz_stub  # noqa: E402
-from tests.helpers.openai_stub import ensure_openai_stub  # noqa: E402
-from tests.helpers.pandas_stub import ensure_pandas_stub  # noqa: E402
-from tests.helpers.torch_stub import ensure_torch_stub  # noqa: E402
 
-ensure_datasets_stub()
-ensure_pandas_stub()
-ensure_graphviz_stub()
-ensure_openai_stub()
-ensure_torch_stub()
+@pytest.fixture
+def sample_png(tmp_path: Path) -> Path:
+    """Return the path to a tiny PNG image for embedding in reports."""
+
+    path = tmp_path / "sample.png"
+    path.write_bytes(_PNG_DATA)
+    return path

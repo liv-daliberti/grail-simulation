@@ -27,7 +27,7 @@ from common.pipeline_formatters import (
 
 from .next_video import _extract_next_video_summary
 from .opinion import _extract_opinion_summary
-from .runner import OpinionReportData, SweepReportData, _write_reports
+from .runner import OpinionReportData, ReportSections, SweepReportData, _write_reports
 from .shared import _write_disabled_report
 
 __all__ = [
@@ -41,5 +41,6 @@ __all__ = [
     "_write_reports",
     "SweepReportData",
     "OpinionReportData",
+    "ReportSections",
     "_write_disabled_report",
 ]

@@ -28,7 +28,7 @@ def test_parse_k_sweep_handles_strings_and_iterables() -> None:
     assert parse_k_sweep([3, "7", 9.0]) == (3, 7, 9)
 
 
-def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
+def test_generate_reports_writes_expected_markdown(tmp_path: Path, sample_png: Path) -> None:
     """End-to-end report generation should emit the expected Markdown skeleton."""
     repo_root = tmp_path
 
@@ -115,6 +115,12 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     )
     opinion_selection = OpinionStudySelection(study=study, outcome=opinion_outcome)
 
+    plots_dir = repo_root / "reports" / "knn" / "tfidf" / "opinion"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    png_bytes = sample_png.read_bytes()
+    for stem in ("mae_study_a", "r2_study_a", "change_heatmap_study_a"):
+        (plots_dir / f"{stem}.png").write_bytes(png_bytes)
+
     bundle = ReportBundle(
         selections={"tfidf": {study.key: study_selection}},
         sweep_outcomes=[sweep_outcome],
@@ -165,6 +171,7 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path) -> None:
     assert "Study A" in opinion_text
     assert "RMSE (change)" in opinion_text
     assert "calibration slope &" in opinion_text
+    assert "![Mae Study A]" in opinion_text
 
     opinion_next_text = opinion_next_path.read_text()
     assert "Next-Video Config" in opinion_next_text

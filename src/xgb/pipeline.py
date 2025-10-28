@@ -69,12 +69,24 @@ from .pipeline_sweeps import (
     _format_sweep_task_descriptor,
     _gpu_tree_method_supported,
     _load_final_metrics_from_disk,
+    _load_loso_metrics_from_disk,
     _load_opinion_metrics_from_disk,
+    _load_opinion_from_next_metrics_from_disk,
     _select_best_configs,
     _select_best_opinion_configs,
 )
-from .pipeline_evaluate import _run_final_evaluations, _run_opinion_stage
-from .pipeline_reports import OpinionReportData, SweepReportData, _write_reports
+from .pipeline_evaluate import (
+    _run_cross_study_evaluations,
+    _run_final_evaluations,
+    _run_opinion_from_next_stage,
+    _run_opinion_stage,
+)
+from .pipeline_reports import (
+    OpinionReportData,
+    ReportSections,
+    SweepReportData,
+    _write_reports,
+)
 
 LOGGER = logging.getLogger("xgb.pipeline")
 
@@ -136,6 +148,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     issue_tokens = _split_tokens(args.issues)
     study_tokens = _split_tokens(args.studies)
+    study_tokens_tuple = tuple(study_tokens)
     study_specs = _resolve_study_specs(
         dataset=dataset,
         cache_dir=cache_dir,
@@ -144,6 +157,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_incomplete=allow_incomplete,
     )
     extra_fields = merge_default_extra_fields(_split_tokens(args.extra_text_fields))
+    extra_fields_tuple = tuple(extra_fields)
 
     task_log: List[str] = []
     if run_next_video:
@@ -212,7 +226,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             dataset=dataset,
             cache_dir=cache_dir,
             sweep_dir=opinion_sweep_dir,
-            extra_fields=tuple(extra_fields),
+            extra_fields=extra_fields_tuple,
             max_participants=args.opinion_max_participants,
             seed=args.seed,
             max_features=args.max_features if args.max_features > 0 else None,
@@ -220,6 +234,22 @@ def main(argv: Sequence[str] | None = None) -> None:
             overwrite=args.overwrite,
         )
         opinion_sweep_context.sweep_dir.mkdir(parents=True, exist_ok=True)
+
+    opinion_stage_config: OpinionStageConfig | None = None
+    if run_opinion or run_next_video:
+        opinion_stage_config = OpinionStageConfig(
+            dataset=dataset,
+            cache_dir=cache_dir,
+            base_out_dir=opinion_dir,
+            extra_fields=extra_fields_tuple,
+            studies=study_tokens_tuple,
+            max_participants=args.opinion_max_participants,
+            seed=args.seed,
+            max_features=args.max_features if args.max_features > 0 else None,
+            tree_method=args.tree_method,
+            overwrite=args.overwrite or not reuse_final,
+            reuse_existing=reuse_final,
+        )
 
     planned_slate_tasks: List[SweepTask] = []
     cached_slate_planned: List[SweepOutcome] = []
@@ -498,9 +528,21 @@ def main(argv: Sequence[str] | None = None) -> None:
                     )
                 else:
                     raise RuntimeError(message)
+        loso_metrics: Dict[str, Mapping[str, object]] = {}
+        if run_next_video and final_eval_context is not None:
+            loso_metrics = _load_loso_metrics_from_disk(
+                next_video_dir=final_eval_context.out_dir,
+                studies=study_specs,
+            )
         opinion_metrics: Dict[str, Dict[str, object]] = {}
         if run_opinion:
             opinion_metrics = _load_opinion_metrics_from_disk(
+                opinion_dir=opinion_dir,
+                studies=study_specs,
+            )
+        opinion_from_next_metrics: Dict[str, Dict[str, object]] = {}
+        if run_next_video and opinion_stage_config is not None:
+            opinion_from_next_metrics = _load_opinion_from_next_metrics_from_disk(
                 opinion_dir=opinion_dir,
                 studies=study_specs,
             )
@@ -508,6 +550,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             outcomes=outcomes,
             selections=selections,
             final_metrics=final_metrics,
+            loso_metrics=loso_metrics,
         )
         opinion_report = (
             OpinionReportData(
@@ -518,43 +561,59 @@ def main(argv: Sequence[str] | None = None) -> None:
             if run_opinion
             else None
         )
+        opinion_from_next_report = None
+        if run_next_video and (opinion_from_next_metrics or allow_incomplete):
+            description_lines = [
+                "This section reuses the selected next-video configuration to "
+                "estimate post-study opinion change."
+            ]
+            opinion_from_next_report = OpinionReportData(
+                metrics=opinion_from_next_metrics,
+                title="XGBoost Opinion Regression (Next-Video Config)",
+                description_lines=description_lines,
+            )
         _write_reports(
             reports_dir=reports_dir,
             sweeps=sweep_report,
             allow_incomplete=allow_incomplete,
-            include_next_video=run_next_video,
-            opinion=opinion_report,
+            sections=ReportSections(
+                include_next_video=run_next_video,
+                opinion=opinion_report,
+                opinion_from_next=opinion_from_next_report,
+            ),
         )
         return
-
     final_metrics: Dict[str, Mapping[str, object]] = {}
+    loso_metrics: Dict[str, Mapping[str, object]] = {}
     if run_next_video and final_eval_context is not None:
         final_metrics = _run_final_evaluations(selections=selections, context=final_eval_context)
+        loso_metrics = _run_cross_study_evaluations(
+            selections=selections,
+            studies=study_specs,
+            context=final_eval_context,
+        )
 
     opinion_metrics: Dict[str, Dict[str, object]] = {}
-    if run_opinion:
-        opinion_stage_config = OpinionStageConfig(
-            dataset=dataset,
-            cache_dir=cache_dir,
-            base_out_dir=opinion_dir,
-            extra_fields=extra_fields,
-            studies=study_tokens,
-            max_participants=args.opinion_max_participants,
-            seed=args.seed,
-            max_features=args.max_features if args.max_features > 0 else None,
-            tree_method=args.tree_method,
-            overwrite=args.overwrite or not reuse_final,
-            reuse_existing=reuse_final,
-        )
+    if run_opinion and opinion_stage_config is not None:
         opinion_metrics = _run_opinion_stage(
             selections=opinion_selections,
             config=opinion_stage_config,
+        )
+
+    opinion_from_next_metrics: Dict[str, Dict[str, object]] = {}
+    if run_next_video and opinion_stage_config is not None:
+        opinion_from_next_metrics = _run_opinion_from_next_stage(
+            selections=selections,
+            studies=study_specs,
+            config=opinion_stage_config,
+            allow_incomplete=allow_incomplete,
         )
 
     sweep_report = SweepReportData(
         outcomes=outcomes,
         selections=selections,
         final_metrics=final_metrics,
+        loso_metrics=loso_metrics,
     )
     opinion_report = (
         OpinionReportData(
@@ -565,12 +624,26 @@ def main(argv: Sequence[str] | None = None) -> None:
         if run_opinion
         else None
     )
+    opinion_from_next_report = None
+    if run_next_video and opinion_from_next_metrics:
+        description_lines = [
+            "This section reuses the selected next-video configuration to "
+            "estimate post-study opinion change."
+        ]
+        opinion_from_next_report = OpinionReportData(
+            metrics=opinion_from_next_metrics,
+            title="XGBoost Opinion Regression (Next-Video Config)",
+            description_lines=description_lines,
+        )
     _write_reports(
         reports_dir=reports_dir,
         sweeps=sweep_report,
         allow_incomplete=allow_incomplete,
-        include_next_video=run_next_video,
-        opinion=opinion_report,
+        sections=ReportSections(
+            include_next_video=run_next_video,
+            opinion=opinion_report,
+            opinion_from_next=opinion_from_next_report,
+        ),
     )
 
 

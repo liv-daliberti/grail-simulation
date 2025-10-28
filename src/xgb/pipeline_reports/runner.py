@@ -42,6 +42,7 @@ class SweepReportData:
     outcomes: Sequence[SweepOutcome] = ()
     selections: Mapping[str, StudySelection] = field(default_factory=dict)
     final_metrics: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
+    loso_metrics: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,17 @@ class OpinionReportData:
     metrics: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
     outcomes: Sequence[OpinionSweepOutcome] = ()
     selections: Mapping[str, OpinionStudySelection] = field(default_factory=dict)
+    title: str = "XGBoost Opinion Regression"
+    description_lines: Sequence[str] | None = None
+
+
+@dataclass(frozen=True)
+class ReportSections:
+    """Describe which report sections should be generated."""
+
+    include_next_video: bool = True
+    opinion: OpinionReportData | None = None
+    opinion_from_next: OpinionReportData | None = None
 
 
 def _write_reports(
@@ -58,8 +70,7 @@ def _write_reports(
     reports_dir: Path,
     sweeps: SweepReportData,
     allow_incomplete: bool,
-    include_next_video: bool = True,
-    opinion: OpinionReportData | None = None,
+    sections: ReportSections = ReportSections(),
 ) -> None:
     """
     Write the full report bundle capturing sweep and evaluation artefacts.
@@ -78,6 +89,9 @@ def _write_reports(
 
     reports_dir.mkdir(parents=True, exist_ok=True)
 
+    include_next_video = sections.include_next_video
+    opinion = sections.opinion
+    opinion_from_next = sections.opinion_from_next
     include_opinion = opinion is not None
     legacy_hyper_file = reports_dir / "hyperparameter_tuning.md"
     legacy_next_file = reports_dir / "next_video.md"
@@ -111,6 +125,7 @@ def _write_reports(
             sweeps.final_metrics,
             sweeps.selections,
             allow_incomplete=allow_incomplete,
+            loso_metrics=sweeps.loso_metrics,
         )
     else:
         _write_disabled_report(
@@ -123,12 +138,22 @@ def _write_reports(
             reports_dir / "opinion",
             opinion.metrics,
             allow_incomplete=allow_incomplete,
+            title=opinion.title,
+            description_lines=opinion.description_lines,
         )
     else:
         _write_disabled_report(
             reports_dir / "opinion",
             "Opinion Regression",
             "Opinion sweeps were disabled for this run.",
+        )
+    if opinion_from_next is not None:
+        _write_opinion_report(
+            reports_dir / "opinion_from_next",
+            opinion_from_next.metrics,
+            allow_incomplete=allow_incomplete,
+            title=opinion_from_next.title,
+            description_lines=opinion_from_next.description_lines,
         )
     _write_feature_report(
         reports_dir / "additional_features",
@@ -138,4 +163,4 @@ def _write_reports(
     )
 
 
-__all__ = ["OpinionReportData", "SweepReportData", "_write_reports"]
+__all__ = ["OpinionReportData", "SweepReportData", "ReportSections", "_write_reports"]

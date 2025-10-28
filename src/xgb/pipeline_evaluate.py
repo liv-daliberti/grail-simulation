@@ -23,7 +23,7 @@ settings configured by ``xgb.pipeline``.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Sequence, Set
 
 from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
 from .pipeline_context import (
@@ -31,8 +31,17 @@ from .pipeline_context import (
     OpinionStageConfig,
     OpinionStudySelection,
     StudySelection,
+    StudySpec,
 )
-from .pipeline_sweeps import _run_xgb_cli, _load_metrics
+from .pipeline_sweeps import (
+    OPINION_FEATURE_SPACE,
+    _inject_study_metadata,
+    _load_loso_metrics_from_disk,
+    _load_metrics,
+    _load_metrics_with_log,
+    _load_opinion_from_next_metrics_from_disk,
+    _run_xgb_cli,
+)
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")
 
@@ -69,10 +78,7 @@ def _run_final_evaluations(
                     metrics_path,
                 )
             else:
-                metrics.setdefault("issue", selection.study.issue)
-                metrics.setdefault("issue_label", selection.study.issue.replace("_", " ").title())
-                metrics.setdefault("study", selection.study.key)
-                metrics.setdefault("study_label", selection.study.label)
+                _inject_study_metadata(metrics, selection.study)
                 metrics_by_study[study_key] = metrics
                 LOGGER.info(
                     "[FINAL][SKIP] issue=%s study=%s (metrics cached).",
@@ -97,12 +103,90 @@ def _run_final_evaluations(
         )
         _run_xgb_cli(cli_args)
         metrics = dict(_load_metrics(metrics_path))
-        metrics.setdefault("issue", selection.study.issue)
-        metrics.setdefault("issue_label", selection.study.issue.replace("_", " ").title())
-        metrics.setdefault("study", selection.study.key)
-        metrics.setdefault("study_label", selection.study.label)
+        _inject_study_metadata(metrics, selection.study)
         metrics_by_study[study_key] = metrics
     return metrics_by_study
+
+
+def _run_cross_study_evaluations(
+    *,
+    selections: Mapping[str, StudySelection],
+    studies: Sequence[StudySpec],
+    context: FinalEvalContext,
+) -> Dict[str, Mapping[str, object]]:
+    """
+    Execute leave-one-study-out evaluations for the selected configurations.
+
+    :param selections: Mapping from study key to chosen sweep outcome.
+    :type selections: Mapping[str, StudySelection]
+    :param studies: Ordered list of studies used to determine hold-out rotations.
+    :type studies: Sequence[StudySpec]
+    :param context: Runtime configuration describing CLI arguments and output paths.
+    :type context: FinalEvalContext
+    :returns: Mapping from hold-out study key to metrics payload.
+    :rtype: Dict[str, Mapping[str, object]]
+    """
+
+    if not selections:
+        return {}
+
+    loso_root = context.out_dir / "loso"
+    loso_root.mkdir(parents=True, exist_ok=True)
+
+    cached: Dict[str, Mapping[str, object]] = {}
+    if context.reuse_existing:
+        cached = _load_loso_metrics_from_disk(
+            next_video_dir=context.out_dir,
+            studies=studies,
+        )
+    results: Dict[str, Mapping[str, object]] = dict(cached)
+
+    for spec in studies:
+        selection = selections.get(spec.key)
+        if selection is None:
+            continue
+        if context.reuse_existing and spec.key in cached:
+            LOGGER.info(
+                "[LOSO][SKIP] issue=%s study=%s (metrics cached).",
+                spec.issue,
+                spec.key,
+            )
+            continue
+        train_studies = [other.key for other in studies if other.key != spec.key]
+        if not train_studies:
+            LOGGER.warning(
+                "[LOSO] Skipping issue=%s study=%s (no alternate training studies).",
+                spec.issue,
+                spec.key,
+            )
+            continue
+        cli_args: List[str] = []
+        cli_args.extend(context.base_cli)
+        cli_args.extend(selection.config.cli_args(context.tree_method))
+        cli_args.extend(["--issues", spec.issue])
+        cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
+        cli_args.extend(["--participant_studies", spec.key])
+        cli_args.extend(["--out_dir", str(loso_root)])
+        cli_args.extend(context.extra_cli)
+        LOGGER.info(
+            "[LOSO] issue=%s holdout=%s train_studies=%s",
+            spec.issue,
+            spec.key,
+            ",".join(train_studies),
+        )
+        _run_xgb_cli(cli_args)
+        metrics_path = loso_root / spec.evaluation_slug / "metrics.json"
+        metrics = _load_metrics_with_log(
+            metrics_path,
+            spec,
+            log_level=logging.WARNING,
+            message="[LOSO] issue=%s study=%s missing metrics at %s.",
+        )
+        if metrics is None:
+            continue
+        _inject_study_metadata(metrics, spec)
+        results[spec.key] = metrics
+    return results
 
 
 def _run_opinion_stage(
@@ -179,4 +263,160 @@ def _run_opinion_stage(
         results.update(payload)
     return results
 
-__all__ = ['_run_final_evaluations','_run_opinion_stage']
+
+def _requested_opinion_specs(
+    studies: Sequence[StudySpec],
+    config: OpinionStageConfig,
+) -> List[StudySpec]:
+    """Resolve the ordered studies that should run opinion-from-next."""
+
+    tokens = [token for token in config.studies if token and token.lower() != "all"]
+    if not tokens:
+        return list(studies)
+
+    study_by_key = {spec.key: spec for spec in studies}
+    selected: List[StudySpec] = []
+    for token in tokens:
+        spec = study_by_key.get(token)
+        if spec is None:
+            LOGGER.warning("Skipping opinion-from-next for study=%s (unknown study).", token)
+            continue
+        selected.append(spec)
+    return selected
+
+
+def _cached_opinion_from_next_metrics(
+    config: OpinionStageConfig,
+    studies: Sequence[StudySpec],
+) -> Dict[str, Dict[str, object]]:
+    """Load cached opinion-from-next metrics when reuse is enabled."""
+
+    if not config.reuse_existing:
+        return {}
+    return _load_opinion_from_next_metrics_from_disk(
+        opinion_dir=config.base_out_dir,
+        studies=studies,
+    )
+
+
+def _evaluate_opinion_from_next_spec(
+    *,
+    spec: StudySpec,
+    selections: Mapping[str, StudySelection],
+    config: OpinionStageConfig,
+    cached_keys: Set[str],
+    allow_incomplete: bool,
+) -> Dict[str, Dict[str, object]] | None:
+    """Run the opinion regression for a specific study selection."""
+
+    selection = selections.get(spec.key)
+    if selection is None:
+        LOGGER.warning(
+            "Skipping opinion-from-next for study=%s (no next-video selection).",
+            spec.key,
+        )
+        return None
+    if config.reuse_existing and spec.key in cached_keys:
+        LOGGER.info(
+            "[OPINION][FROM-NEXT][SKIP] study=%s (metrics cached).",
+            spec.key,
+        )
+        return None
+
+    base_out_dir = config.base_out_dir / "from_next"
+    opinion_config = OpinionTrainConfig(
+        max_participants=config.max_participants,
+        seed=config.seed,
+        max_features=config.max_features,
+        booster=selection.config.booster_params(config.tree_method),
+    )
+    try:
+        return run_opinion_eval(
+            request=OpinionEvalRequest(
+                dataset=config.dataset,
+                cache_dir=config.cache_dir,
+                out_dir=base_out_dir,
+                feature_space=OPINION_FEATURE_SPACE,
+                extra_fields=config.extra_fields,
+                train_config=opinion_config,
+                overwrite=config.overwrite,
+            ),
+            studies=[spec.key],
+        )
+    except FileNotFoundError as exc:
+        if allow_incomplete:
+            LOGGER.warning(
+                "[OPINION][FROM-NEXT][SKIP] study=%s dataset missing (%s). "
+                "Continuing because allow-incomplete mode is enabled.",
+                spec.key,
+                exc,
+            )
+            return None
+        raise
+    except ImportError as exc:
+        if allow_incomplete:
+            LOGGER.warning(
+                "[OPINION][FROM-NEXT][SKIP] study=%s missing dependency (%s). "
+                "Continuing because allow-incomplete mode is enabled.",
+                spec.key,
+                exc,
+            )
+            return None
+        raise
+
+
+def _run_opinion_from_next_stage(
+    *,
+    selections: Mapping[str, StudySelection],
+    studies: Sequence[StudySpec],
+    config: OpinionStageConfig,
+    allow_incomplete: bool = False,
+) -> Dict[str, Dict[str, object]]:
+    """
+    Execute the opinion-regression stage using next-video sweep selections.
+
+    :param selections: Mapping from study key to next-video selection.
+    :type selections: Mapping[str, StudySelection]
+    :param studies: Ordered list of study specifications considered by the pipeline.
+    :type studies: Sequence[StudySpec]
+    :param config: Opinion stage configuration describing dataset and feature options.
+    :type config: OpinionStageConfig
+    :param allow_incomplete: When true, skips missing datasets instead of raising.
+    :type allow_incomplete: bool
+    :returns: Mapping from study key to metrics payload generated by the stage.
+    :rtype: Dict[str, Dict[str, object]]
+    """
+
+    if not selections:
+        LOGGER.warning("Skipping opinion-from-next stage; no selections available.")
+        return {}
+
+    requested_specs = _requested_opinion_specs(studies, config)
+    if not requested_specs:
+        return {}
+
+    cached = _cached_opinion_from_next_metrics(config, requested_specs)
+    cached_keys: Set[str] = set(cached)
+    base_out_dir = config.base_out_dir / "from_next"
+    base_out_dir.mkdir(parents=True, exist_ok=True)
+    results: Dict[str, Dict[str, object]] = dict(cached)
+
+    for spec in requested_specs:
+        payload = _evaluate_opinion_from_next_spec(
+            spec=spec,
+            selections=selections,
+            config=config,
+            cached_keys=cached_keys,
+            allow_incomplete=allow_incomplete,
+        )
+        if payload:
+            results.update(payload)
+    return results
+
+
+__all__ = [
+    "_run_cross_study_evaluations",
+    "_run_final_evaluations",
+    "_run_opinion_from_next_stage",
+    "_run_opinion_stage",
+]

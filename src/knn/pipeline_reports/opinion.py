@@ -692,18 +692,45 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
     return "| " + " | ".join(columns) + " |"
 
 
-def _opinion_heatmap_section() -> List[str]:
+def _opinion_heatmap_section(
+    output_path: Path,
+    metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+) -> List[str]:
     """Return the Markdown section referencing opinion heatmaps."""
-    return [
-        "### Opinion Change Heatmaps",
-        "",
-        (
-            "Plots are refreshed under `reports/knn/<feature-space>/opinion/` "
-            "including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), "
-            "and change heatmaps (`change_heatmap_<study>.png`)."
-        ),
-        "",
-    ]
+
+    base_dir = output_path.parent.parent
+    sections: List[str] = ["### Opinion Change Heatmaps", ""]
+    found = False
+    for feature_space in sorted(metrics.keys()):
+        feature_dir = base_dir / feature_space / "opinion"
+        if not feature_dir.exists():
+            continue
+        images = sorted(feature_dir.glob("*.png"))
+        if not images:
+            continue
+        found = True
+        sections.append(f"#### {feature_space.upper()}")
+        sections.append("")
+        for image in images:
+            try:
+                rel_path = image.relative_to(output_path.parent).as_posix()
+            except ValueError:
+                rel_path = image.as_posix()
+            label = image.stem.replace("_", " ").title()
+            sections.append(f"![{label}]({rel_path})")
+            sections.append("")
+    if not found:
+        sections.extend(
+            [
+                (
+                    "Plots are refreshed under `reports/knn/<feature-space>/opinion/` "
+                    "including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), "
+                    "and change heatmaps (`change_heatmap_<study>.png`)."
+                ),
+                "",
+            ]
+        )
+    return sections
 
 
 def _opinion_takeaways(
@@ -903,7 +930,7 @@ def _build_opinion_report(
         )
     )
     lines.extend(_opinion_feature_sections(metrics, studies))
-    lines.extend(_opinion_heatmap_section())
+    lines.extend(_opinion_heatmap_section(output_path, metrics))
     lines.extend(_knn_opinion_cross_study_diagnostics(metrics, studies))
     lines.extend(_opinion_takeaways(metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")

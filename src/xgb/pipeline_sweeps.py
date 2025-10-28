@@ -56,13 +56,33 @@ OPINION_FEATURE_SPACE = "tfidf"
 LOGGER = logging.getLogger("xgb.pipeline.sweeps")
 
 
-def _run_xgb_cli(args: Sequence[str]) -> None:
-    """
-    Execute the :mod:`xgb.cli` entry point with the supplied arguments.
+def _inject_study_metadata(metrics: Dict[str, object], spec: StudySpec) -> None:
+    """Ensure study metadata fields exist in a metrics payload."""
 
-    :param args: Command-line arguments forwarded to :mod:`xgb.cli`.
-    :type args: Sequence[str]
-    """
+    metrics.setdefault("issue", spec.issue)
+    metrics.setdefault("issue_label", spec.issue.replace("_", " ").title())
+    metrics.setdefault("study", spec.key)
+    metrics.setdefault("study_label", spec.label)
+
+
+def _load_metrics_with_log(
+    metrics_path: Path,
+    spec: StudySpec,
+    *,
+    log_level: int,
+    message: str,
+) -> Dict[str, object] | None:
+    """Load metrics, logging a message when they cannot be retrieved."""
+
+    try:
+        return dict(_load_metrics(metrics_path))
+    except FileNotFoundError:
+        LOGGER.log(log_level, message, spec.issue, spec.key, metrics_path)
+        return None
+
+
+def _run_xgb_cli(args: Sequence[str]) -> None:
+    """Execute the :mod:`xgb.cli` entry point with the supplied arguments."""
 
     parser = build_xgb_parser()
     namespace = parser.parse_args(list(args))
@@ -70,14 +90,7 @@ def _run_xgb_cli(args: Sequence[str]) -> None:
 
 
 def _load_metrics(path: Path) -> Mapping[str, object]:
-    """
-    Load the metrics JSON emitted by a sweep or evaluation task.
-
-    :param path: Filesystem path pointing at the ``metrics.json`` artefact.
-    :type path: Path
-    :returns: Parsed metrics payload.
-    :rtype: Mapping[str, object]
-    """
+    """Load the metrics JSON emitted by a sweep or evaluation task."""
 
     return load_metrics_json(path)
 
@@ -86,18 +99,7 @@ def _sweep_outcome_from_metrics(
     metrics: Mapping[str, object],
     metrics_path: Path,
 ) -> SweepOutcome:
-    """
-    Convert cached sweep metrics into an outcome instance.
-
-    :param task: Sweep task metadata associated with the metrics.
-    :type task: SweepTask
-    :param metrics: Metrics dictionary loaded from disk.
-    :type metrics: Mapping[str, object]
-    :param metrics_path: Filesystem path to the metrics artefact.
-    :type metrics_path: Path
-    :returns: Sweep outcome capturing accuracy, coverage, and metadata.
-    :rtype: SweepOutcome
-    """
+    """Convert cached sweep metrics into an outcome instance."""
 
     return SweepOutcome(
         order_index=task.index,
@@ -117,18 +119,7 @@ def _iter_sweep_tasks(
     configs: Sequence[SweepConfig],
     context: SweepRunContext,
 ) -> Sequence[SweepTask]:
-    """
-    Yield sweep tasks with deterministic ordering.
-
-    :param studies: Participant studies slated for evaluation.
-    :type studies: Sequence[StudySpec]
-    :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
-    :param context: Shared sweep execution context.
-    :type context: SweepRunContext
-    :returns: Sequence of sweep tasks in deterministic order.
-    :rtype: Sequence[SweepTask]
-    """
+    """Yield sweep tasks with deterministic ordering."""
 
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
@@ -672,10 +663,44 @@ def _load_final_metrics_from_disk(
         if not metrics_path.exists():
             continue
         metrics = dict(_load_metrics(metrics_path))
-        metrics.setdefault("issue", spec.issue)
-        metrics.setdefault("issue_label", spec.issue.replace("_", " ").title())
-        metrics.setdefault("study", spec.key)
-        metrics.setdefault("study_label", spec.label)
+        _inject_study_metadata(metrics, spec)
+        metrics_by_study[spec.key] = metrics
+    return metrics_by_study
+
+
+def _load_loso_metrics_from_disk(
+    *,
+    next_video_dir: Path,
+    studies: Sequence[StudySpec],
+) -> Dict[str, Mapping[str, object]]:
+    """
+    Load leave-one-study-out evaluation metrics for each study.
+
+    :param next_video_dir: Directory containing next-video evaluation artefacts.
+    :type next_video_dir: Path
+    :param studies: Participant studies to load.
+    :type studies: Sequence[StudySpec]
+    :returns: Mapping from study key to LOSO metrics payloads.
+    :rtype: Dict[str, Mapping[str, object]]
+    """
+
+    metrics_by_study: Dict[str, Mapping[str, object]] = {}
+    loso_root = next_video_dir / "loso"
+    if not loso_root.exists():
+        return metrics_by_study
+    for spec in studies:
+        metrics_path = loso_root / spec.evaluation_slug / "metrics.json"
+        if not metrics_path.exists():
+            continue
+        metrics = _load_metrics_with_log(
+            metrics_path,
+            spec,
+            log_level=logging.DEBUG,
+            message="[LOSO][MISS] issue=%s study=%s expected metrics at %s but none found.",
+        )
+        if metrics is None:
+            continue
+        _inject_study_metadata(metrics, spec)
         metrics_by_study[spec.key] = metrics
     return metrics_by_study
 
@@ -701,7 +726,9 @@ def _load_opinion_metrics_from_disk(
     for spec in studies:
         filename = filename_template.format(study=spec.key)
         candidate_dirs = [
-            opinion_dir / OPINION_FEATURE_SPACE / spec.key,
+            opinion_dir / space / spec.key
+            for space in ("tfidf", "word2vec", "sentence_transformer")
+        ] + [
             opinion_dir / spec.key,
             opinion_dir / "opinion" / spec.key,
         ]
@@ -714,6 +741,51 @@ def _load_opinion_metrics_from_disk(
         if metrics_path is None:
             continue
         metrics = dict(_load_metrics(metrics_path))
+        results[spec.key] = metrics
+    return results
+
+
+def _load_opinion_from_next_metrics_from_disk(
+    *,
+    opinion_dir: Path,
+    studies: Sequence[StudySpec],
+) -> Dict[str, Dict[str, object]]:
+    """
+    Load opinion regression metrics produced using next-video configurations.
+
+    :param opinion_dir: Directory containing opinion artefacts.
+    :type opinion_dir: Path
+    :param studies: Participant studies to load.
+    :type studies: Sequence[StudySpec]
+    :returns: Mapping from study key to opinion-from-next metrics payload.
+    :rtype: Dict[str, Dict[str, object]]
+    """
+
+    results: Dict[str, Dict[str, object]] = {}
+    base_dirs = [
+        opinion_dir / "from_next" / OPINION_FEATURE_SPACE,
+        opinion_dir / "from_next",
+    ]
+    filename_template = "opinion_xgb_{study}_validation_metrics.json"
+    for spec in studies:
+        filename = filename_template.format(study=spec.key)
+        metrics_path: Path | None = None
+        for base_dir in base_dirs:
+            path = base_dir / spec.key / filename
+            if path.exists():
+                metrics_path = path
+                break
+        if metrics_path is None:
+            continue
+        try:
+            metrics = dict(_load_metrics(metrics_path))
+        except FileNotFoundError:
+            LOGGER.debug(
+                "[OPINION-NEXT][MISS] study=%s expected metrics at %s but none found.",
+                spec.key,
+                metrics_path,
+            )
+            continue
         results[spec.key] = metrics
     return results
 

@@ -20,7 +20,7 @@ from __future__ import annotations
 import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple
+from typing import List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_formatters import (
     format_count as _format_count,
@@ -61,13 +61,7 @@ class _WeightedMetricAccumulator:
         baseline: Optional[float],
         weight: Optional[float],
     ) -> None:
-        """
-        Incorporate a new measurement into the weighted aggregates.
-
-        :param value: Metric value recorded for the study.
-        :param baseline: Baseline value comparable to ``value``.
-        :param weight: Participant count or other weighting factor.
-        """
+        """Add a weighted measurement to the aggregate."""
 
         if value is None or weight in (None, 0):
             return
@@ -195,14 +189,7 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         )
 
     def record(self, summary: OpinionSummary, label: str) -> None:
-        """
-        Track metrics for a single study or selection.
-
-        :param summary: Opinion regression metrics captured for the study.
-        :type summary: OpinionSummary
-        :param label: Human-readable identifier for the study.
-        :type label: str
-        """
+        """Track metrics for a single study or selection."""
 
         metrics = summarise_opinion_metrics(summary, prefer_after_fields=True)
         participants = metrics.participants
@@ -287,14 +274,7 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         )
 
     def to_lines(self, heading_level: str = "####") -> List[str]:
-        """
-        Render the aggregated metrics as Markdown bullet points.
-
-        :param heading_level: Markdown heading prefix (e.g. ``"###"``) for the section.
-        :type heading_level: str
-        :returns: Markdown lines summarising weighted MAE and deltas.
-        :rtype: List[str]
-        """
+        """Render the aggregated metrics as Markdown bullet points."""
 
         if not self.mae_entries:
             return []
@@ -546,14 +526,7 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
 
 
 def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
-    """
-    Normalise opinion regression metrics into a reusable summary structure.
-
-    :param data: Raw metrics dictionary emitted by the opinion pipeline.
-    :type data: Mapping[str, object]
-    :returns: Dataclass containing typed fields for opinion reporting.
-    :rtype: OpinionSummary
-    """
+    """Normalise opinion regression metrics into a reusable summary structure."""
 
     metrics_block = data.get("metrics") or {}
     baseline_raw = data.get("baseline") or {}
@@ -619,14 +592,7 @@ def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
 
 
 def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[str]:
-    """
-    Generate bullet-point observations comparing opinion metrics.
-
-    :param metrics: Mapping from study key to opinion metrics dictionaries.
-    :type metrics: Mapping[str, Mapping[str, object]]
-    :returns: Markdown bullet list of opinion-focused observations.
-    :rtype: List[str]
-    """
+    """Generate bullet-point observations comparing opinion metrics."""
 
     if not metrics:
         return []
@@ -701,13 +667,7 @@ def _opinion_observations(metrics: Mapping[str, Mapping[str, object]]) -> List[s
 
 
 def _metric_distribution_line(values: List[float], label: str) -> Optional[str]:
-    """
-    Produce a formatted distribution line for a numeric metric.
-
-    :param values: Numeric measurements collected across studies.
-    :param label: Prefix to describe the metric being summarised.
-    :returns: Markdown bullet line or ``None`` when ``values`` is empty.
-    """
+    """Return a formatted distribution line for a numeric metric."""
 
     if not values:
         return None
@@ -827,17 +787,53 @@ def _opinion_curve_lines(
     return curve_lines
 
 
+def _opinion_feature_plot_section(directory: Path) -> List[str]:
+    """Embed static PNG assets produced outside the primary report."""
+
+    primary_base = directory.parent
+    candidate_bases = [primary_base]
+    secondary_base = primary_base.parent
+    if secondary_base != primary_base:
+        candidate_bases.append(secondary_base)
+    seen_paths: set[Path] = set()
+    sections: List[str] = []
+    for feature_space in ("tfidf", "word2vec", "sentence_transformer"):
+        images: List[Path] = []
+        for base_dir in candidate_bases:
+            feature_dir = base_dir / feature_space / "opinion"
+            if not feature_dir.exists():
+                continue
+            images.extend(sorted(feature_dir.glob("*.png")))
+        unique_images: List[Path] = []
+        for image in images:
+            try:
+                canonical = image.resolve()
+            except FileNotFoundError:
+                # Skip files that vanished since discovery.
+                continue
+            if canonical in seen_paths:
+                continue
+            seen_paths.add(canonical)
+            unique_images.append(image)
+        if not unique_images:
+            continue
+        sections.append(f"### {feature_space.upper()} Opinion Plots")
+        sections.append("")
+        for image in unique_images:
+            try:
+                rel_path = image.relative_to(directory.parent).as_posix()
+            except ValueError:
+                rel_path = image.as_posix()
+            label = image.stem.replace("_", " ").title()
+            sections.append(f"![{label}]({rel_path})")
+            sections.append("")
+    return sections
+
+
 def _opinion_cross_study_diagnostics(
     metrics: Mapping[str, Mapping[str, object]],
 ) -> List[str]:
-    """
-    Summarise cross-study statistics for opinion metrics.
-
-    :param metrics: Mapping from study key to metrics dictionaries.
-    :type metrics: Mapping[str, Mapping[str, object]]
-    :returns: Markdown lines containing cross-study observations.
-    :rtype: List[str]
-    """
+    """Summarise cross-study statistics for opinion metrics."""
 
     if not metrics:
         return []
@@ -923,19 +919,12 @@ def _write_opinion_report(
     metrics: Mapping[str, Mapping[str, object]],
     *,
     allow_incomplete: bool,
+    title: str = "XGBoost Opinion Regression",
+    description_lines: Sequence[str] | None = None,
 ) -> None:
-    """
-    Create the opinion regression summary document.
+    """Create the opinion regression summary document."""
 
-    :param directory: Directory where the report and assets are written.
-    :type directory: Path
-    :param metrics: Mapping from study key to opinion metrics.
-    :type metrics: Mapping[str, Mapping[str, object]]
-    :param allow_incomplete: Flag controlling placeholder messaging when artefacts are missing.
-    :type allow_incomplete: bool
-    """
-
-    path, lines = start_markdown_report(directory, title="XGBoost Opinion Regression")
+    path, lines = start_markdown_report(directory, title=title)
     if not metrics:
         lines.append("No opinion runs were produced during this pipeline invocation.")
         if allow_incomplete:
@@ -946,31 +935,51 @@ def _write_opinion_report(
         lines.append("")
         write_markdown_lines(path, lines)
         return
-    lines.append(
-        "MAE / RMSE / R² / directional accuracy / MAE (change) / RMSE (change) / "
-        "calibration slope & intercept / calibration ECE / KL divergence, all compared "
-        "against a no-change baseline (pre-study opinion)."
-    )
-    lines.append("")
+    if description_lines is None:
+        description_lines = [
+            "This summary captures the opinion-regression baselines trained with XGBoost "
+            "for the selected participant studies."
+        ]
+    if description_lines:
+        lines.extend(description_lines)
+        if description_lines[-1].strip():
+            lines.append("")
     dataset_name, split_name = _dataset_and_split(metrics)
-    lines.append(f"- Dataset: `{dataset_name}`")
-    lines.append(f"- Split: {split_name}")
-    lines.append(
-        "- Metrics: MAE, RMSE, R², directional accuracy, MAE(change), RMSE(change), "
-        "calibration slope & intercept, calibration ECE, and KL divergence."
+    lines.extend(
+        [
+            f"- Dataset: `{dataset_name}`",
+            f"- Split: {split_name}",
+            (
+                "- Metrics track MAE, RMSE, R², directional accuracy, MAE(change), "
+                "RMSE(change), calibration slope/intercept, calibration ECE, and KL "
+                "divergence versus the no-change baseline."
+            ),
+            "- Δ columns capture improvements relative to that baseline when available.",
+            "",
+        ]
     )
-    lines.append("")
     lines.extend(_opinion_table_header())
     lines.extend(_opinion_table_rows(metrics))
     lines.append("")
     curve_lines = _opinion_curve_lines(directory, metrics)
     if curve_lines:
         lines.extend(curve_lines)
+    elif plt is None:  # pragma: no cover - optional dependency
+        lines.extend(
+            [
+                "## Training Curves",
+                "",
+                (
+                    "Matplotlib is unavailable in this environment, so training curves "
+                    "were not rendered."
+                ),
+                "",
+            ]
+        )
+    lines.extend(_opinion_feature_plot_section(directory))
     lines.extend(_opinion_cross_study_diagnostics(metrics))
     lines.extend(_opinion_observations(metrics))
     write_markdown_lines(path, lines)
-
-
 __all__ = [
     "_OpinionPortfolioAccumulator",
     "_WeightedMetricAccumulator",

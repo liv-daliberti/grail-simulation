@@ -94,6 +94,75 @@ class ExampleLabels:
     study_key: str
 
 
+@dataclass(frozen=True)
+class FilterSet:
+    """Container for requested filters and their lower-cased match set."""
+
+    requested: list[str]
+    active_keys: set[str]
+
+    def allows(self, candidate: str) -> bool:
+        """Return ``True`` when the candidate is not filtered out."""
+        return not self.active_keys or candidate in self.active_keys
+
+
+@dataclass(frozen=True)
+class FilterState:
+    """Aggregate filters for issues and participant studies."""
+
+    issues: FilterSet
+    studies: FilterSet
+
+    def allows(self, labels: ExampleLabels) -> bool:
+        """Check whether an example passes the configured filters."""
+        return self.issues.allows(labels.issue_key) and self.studies.allows(
+            labels.study_key
+        )
+
+
+@dataclass(frozen=True)
+class OutputPaths:
+    """Resolved filesystem locations for evaluation artifacts."""
+
+    root: Path
+    predictions: Path
+    metrics: Path
+
+    @classmethod
+    def build(cls, out_dir: str | Path, overwrite: bool) -> "OutputPaths":
+        """Validate and construct the output directory structure."""
+        root = Path(out_dir)
+        _ensure_output_dir(root, overwrite)
+        return cls(
+            root=root,
+            predictions=root / "predictions.jsonl",
+            metrics=root / "metrics.json",
+        )
+
+
+@dataclass(frozen=True)
+class EvaluationLimits:
+    """Encapsulates evaluation row limits for progress reporting."""
+
+    eval_max: int
+    target: int | None
+
+    @classmethod
+    def from_arg(cls, raw_eval_max: int) -> "EvaluationLimits":
+        """Create limits from the CLI ``eval_max`` argument."""
+        eval_max = int(raw_eval_max or 0)
+        target = eval_max or None
+        return cls(eval_max=eval_max, target=target)
+
+
+@dataclass
+class EvaluationState:
+    """Mutable state tracked during evaluation."""
+
+    split: str = EVAL_SPLIT
+    streaming: bool = False
+
+
 class EvaluationRunner:
     """Stateful helper that orchestrates GPT-4o evaluation."""
 
@@ -102,22 +171,21 @@ class EvaluationRunner:
         self.dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
         logging.info("Loading dataset %s", self.dataset_name)
 
-        self.out_dir = Path(args.out_dir)
-        _ensure_output_dir(self.out_dir, args.overwrite)
-        self.out_jsonl = self.out_dir / "predictions.jsonl"
-        self.metrics_json = self.out_dir / "metrics.json"
+        self.output = OutputPaths.build(args.out_dir, args.overwrite)
 
         ensure_hf_cache(args.cache_dir)
 
         issues_raw = str(getattr(args, "issues", "") or "")
         studies_raw = str(getattr(args, "studies", "") or "")
-        self.requested_issues, self.issues_filter = self._parse_filter(issues_raw)
-        self.requested_studies, self.studies_filter = self._parse_filter(studies_raw)
+        requested_issues, issues_filter = self._parse_filter(issues_raw)
+        requested_studies, studies_filter = self._parse_filter(studies_raw)
+        self.filters = FilterState(
+            issues=FilterSet(requested=requested_issues, active_keys=issues_filter),
+            studies=FilterSet(requested=requested_studies, active_keys=studies_filter),
+        )
 
-        self.eval_max = int(getattr(args, "eval_max", 0) or 0)
-        self.n_eval_target = self.eval_max or None
-        self.eval_split = EVAL_SPLIT
-        self.use_streaming = False
+        self.limits = EvaluationLimits.from_arg(getattr(args, "eval_max", 0))
+        self.state = EvaluationState()
 
     @staticmethod
     def _parse_filter(raw: str) -> Tuple[list[str], set[str]]:
@@ -155,13 +223,13 @@ class EvaluationRunner:
                     logging.warning(
                         "Low disk space detected; falling back to streaming mode."
                     )
-                    self.use_streaming = True
+                    self.state.streaming = True
                 else:
                     raise
 
         assert LOAD_DATASET is not None
 
-        if self.use_streaming:
+        if self.state.streaming:
             return self._load_streaming_split()
         return self._load_materialised_split(dataset)
 
@@ -190,9 +258,9 @@ class EvaluationRunner:
                     "Unable to load evaluation split in streaming mode."
                 ) from exc
 
-        self.eval_split = eval_split
-        if self.eval_max:
-            data_iter = data_iter.take(self.eval_max)
+        self.state.split = eval_split
+        if self.limits.eval_max:
+            data_iter = data_iter.take(self.limits.eval_max)
         return data_iter
 
     def _load_materialised_split(self, dataset: object) -> Iterable[dict[str, object]]:
@@ -221,11 +289,11 @@ class EvaluationRunner:
             eval_split = getattr(dataset, "split", None) or EVAL_SPLIT  # type: ignore[attr-defined]
             data_iter = dataset
 
-        if self.eval_max and hasattr(data_iter, "select"):
-            limit = min(self.eval_max, len(data_iter))  # type: ignore[arg-type]
+        if self.limits.eval_max and hasattr(data_iter, "select"):
+            limit = min(self.limits.eval_max, len(data_iter))  # type: ignore[arg-type]
             data_iter = data_iter.select(range(limit))
 
-        self.eval_split = eval_split
+        self.state.split = eval_split
         return data_iter
 
     @staticmethod
@@ -242,11 +310,7 @@ class EvaluationRunner:
         )
 
     def _passes_filters(self, labels: ExampleLabels) -> bool:
-        if self.issues_filter and labels.issue_key not in self.issues_filter:
-            return False
-        if self.studies_filter and labels.study_key not in self.studies_filter:
-            return False
-        return True
+        return self.filters.allows(labels)
 
     def _invoke_model(self, messages: list[dict[str, object]]) -> str:
         try:
@@ -315,7 +379,7 @@ class EvaluationRunner:
         if seen_rows == 0 or seen_rows % 25:
             return
         elapsed = time.time() - start_time
-        denom = self.n_eval_target if self.n_eval_target is not None else seen_rows
+        denom = self.limits.target if self.limits.target is not None else seen_rows
         logging.info(
             "[eval] %d/%s  acc=%.3f  parsed=%.3f  fmt=%.3f  %.1fs",
             seen_rows,
@@ -326,22 +390,23 @@ class EvaluationRunner:
             elapsed,
         )
 
-    def _metrics_request(self) -> SlateMetricsRequest:
+    def metrics_request(self) -> SlateMetricsRequest:
+        """Construct the payload used when serialising evaluation metrics."""
         model_name = getattr(self.args, "deployment", None) or DEPLOYMENT_NAME
         return SlateMetricsRequest(
             model_name=model_name,
             dataset_name=self.dataset_name,
-            eval_split=self.eval_split,
+            eval_split=self.state.split,
             filters=EvaluationFilters(
-                issues=self.requested_issues,
-                studies=self.requested_studies,
+                issues=self.filters.issues.requested,
+                studies=self.filters.studies.requested,
             ),
         )
 
     def _print_summary(self, accumulator: EvaluationAccumulator) -> None:
         summary_bits = [
             f"[DONE] dataset={self.dataset_name}",
-            f"split={self.eval_split}",
+            f"split={self.state.split}",
             f"n={accumulator.total_seen}",
             f"eligible={accumulator.eligible_overall}",
             f"accuracy={accumulator.accuracy():.4f}",
@@ -350,16 +415,17 @@ class EvaluationRunner:
         ]
         summary = "  ".join(summary_bits)
         print(summary)
-        print(f"[WROTE] per-example: {self.out_jsonl}")
-        print(f"[WROTE] metrics:     {self.metrics_json}")
+        print(f"[WROTE] per-example: {self.output.predictions}")
+        print(f"[WROTE] metrics:     {self.output.metrics}")
 
     def run(self) -> None:
+        """Execute the full evaluation workflow."""
         data_iter = self._load_dataset_iter()
         accumulator = EvaluationAccumulator()
         start_time = time.time()
         seen_rows = 0
 
-        with open(self.out_jsonl, "w", encoding="utf-8") as writer:
+        with open(self.output.predictions, "w", encoding="utf-8") as writer:
             for example in data_iter:
                 result = self._evaluate_example(example)
                 if result is None:
@@ -370,8 +436,8 @@ class EvaluationRunner:
                 writer.write(json.dumps(payload, ensure_ascii=False) + "\n")
                 self._maybe_log_progress(seen_rows, start_time, accumulator)
 
-        metrics = accumulator.metrics_payload(self._metrics_request())
-        with open(self.metrics_json, "w", encoding="utf-8") as handle:
+        metrics = accumulator.metrics_payload(self.metrics_request())
+        with open(self.output.metrics, "w", encoding="utf-8") as handle:
             json.dump(metrics, handle, ensure_ascii=False, indent=2)
 
         self._print_summary(accumulator)

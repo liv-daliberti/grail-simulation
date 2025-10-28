@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional, Tuple
+from typing import List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline_formatters import (
     format_count as _format_count,
@@ -432,6 +432,16 @@ def _next_video_header_lines(
             "- Split: validation",
             "- Metrics: accuracy, coverage of known candidates, and "
             "availability of known neighbors.",
+            (
+                "- Table columns capture validation accuracy, counts of correct predictions, "
+                "known-candidate recall, and probability calibration for the selected slates."
+            ),
+            (
+                "- `Known hits / total` counts successes among slates that contained a known "
+                "candidate; `Known availability` is the share of evaluations with any known "
+                "candidate present."
+            ),
+            "- `Avg prob` reports the mean predicted probability assigned to known candidate hits.",
             "",
         ]
         lines.extend(_next_video_portfolio_summary(metrics))
@@ -559,12 +569,100 @@ def _next_video_curve_lines(
     return lines
 
 
+def _loso_entries(
+    loso_metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> List[tuple[str, str, str, NextVideoMetricSummary]]:
+    ordered_keys = sorted(
+        loso_metrics.keys(),
+        key=lambda key: _report_study_label(key, selections).lower(),
+    )
+    entries: List[tuple[str, str, str, NextVideoMetricSummary]] = []
+    for study_key in ordered_keys:
+        summary = _extract_next_video_summary(loso_metrics[study_key])
+        study_label = summary.study_label or _report_study_label(study_key, selections)
+        issue_label = summary.issue_label or _report_issue_label(
+            study_key,
+            summary.issue or "",
+            selections,
+        )
+        entries.append((study_key, study_label, issue_label, summary))
+    return entries
+
+
+def _loso_accuracy_summary(
+    entries: Sequence[tuple[str, str, str, NextVideoMetricSummary]]
+) -> List[str]:
+    lines: List[str] = []
+    accuracy_values = [
+        (study_label, summary.accuracy)
+        for _key, study_label, _issue_label, summary in entries
+        if summary.accuracy is not None
+    ]
+    if not accuracy_values:
+        return lines
+
+    best_label, best_value = max(accuracy_values, key=lambda item: item[1])
+    lines.append(
+        f"- Highest holdout accuracy: {best_label} "
+        f"({_format_optional_float(best_value)})."
+    )
+    if len(accuracy_values) > 1:
+        worst_label, worst_value = min(accuracy_values, key=lambda item: item[1])
+        lines.append(
+            f"- Lowest holdout accuracy: {worst_label} "
+            f"({_format_optional_float(worst_value)})."
+        )
+    mean_value = sum(value for _label, value in accuracy_values) / len(accuracy_values)
+    lines.append(f"- Average holdout accuracy {_format_optional_float(mean_value)}.")
+    lines.append("")
+    return lines
+
+
+def _next_video_loso_section(
+    loso_metrics: Mapping[str, Mapping[str, object]],
+    selections: Mapping[str, StudySelection],
+) -> List[str]:
+    """Render leave-one-study-out markdown when metrics are available."""
+
+    if not loso_metrics:
+        return []
+
+    entries = _loso_entries(loso_metrics, selections)
+    if not entries:
+        return []
+
+    lines: List[str] = ["## Cross-Study Holdouts", ""]
+
+    lines.extend(_loso_accuracy_summary(entries))
+    lines.append(
+        "| Holdout study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | "
+        "Known hits / total | Known availability ↑ | Avg prob ↑ |"
+    )
+    lines.append("| --- | --- | ---: | --- | ---: | --- | ---: | ---: |")
+    for _, study_label, issue_label, summary in entries:
+        row = [
+            study_label,
+            issue_label,
+            _format_optional_float(summary.accuracy),
+            _format_ratio(summary.correct, summary.evaluated),
+            _format_optional_float(summary.coverage),
+            _format_ratio(summary.known_hits, summary.known_total),
+            _format_optional_float(summary.known_availability),
+            _format_optional_float(summary.avg_probability),
+        ]
+        lines.append("| " + " | ".join(row) + " |")
+    lines.append("")
+    return lines
+
+
 def _write_next_video_report(
     directory: Path,
     metrics: Mapping[str, Mapping[str, object]],
     selections: Mapping[str, StudySelection],
     *,
     allow_incomplete: bool,
+    loso_metrics: Mapping[str, Mapping[str, object]] | None = None,
 ) -> None:
     """
     Create the next-video evaluation summary document.
@@ -587,7 +685,33 @@ def _write_next_video_report(
         return
 
     lines.extend(_next_video_table_lines(metrics, selections))
-    lines.extend(_next_video_curve_lines(directory, metrics, selections))
+    curve_lines = _next_video_curve_lines(directory, metrics, selections)
+    if curve_lines:
+        lines.extend(curve_lines)
+    elif plt is None:  # pragma: no cover - optional dependency
+        lines.extend(
+            [
+                "## Accuracy Curves",
+                "",
+                (
+                    "Matplotlib is unavailable in this environment, so accuracy curves "
+                    "were not rendered."
+                ),
+                "",
+            ]
+        )
+    loso_section = _next_video_loso_section(loso_metrics or {}, selections)
+    if loso_section:
+        lines.extend(loso_section)
+    elif allow_incomplete:
+        lines.extend(
+            [
+                "## Cross-Study Holdouts",
+                "",
+                "Leave-one-study-out metrics were unavailable when this report was generated.",
+                "",
+            ]
+        )
     lines.extend(_next_video_observations(metrics))
 
     write_markdown_lines(path, lines)

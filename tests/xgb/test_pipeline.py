@@ -582,6 +582,68 @@ def test_run_opinion_stage_invokes_matching_studies(
     assert "study1" in results
 
 
+def test_run_opinion_from_next_stage_uses_slate_booster(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    study = _make_study_spec()
+    selection = StudySelection(
+        study=study,
+        outcome=SweepOutcome(
+            order_index=0,
+            study=study,
+            config=_make_sweep_config(),
+            accuracy=0.72,
+            coverage=0.63,
+            evaluated=512,
+            metrics_path=tmp_path / "metrics.json",
+            metrics={"accuracy": 0.72},
+        ),
+    )
+    selections = {study.key: selection}
+
+    stage_config = OpinionStageConfig(
+        dataset="dataset",
+        cache_dir="cache",
+        base_out_dir=tmp_path / "opinions",
+        extra_fields=DEFAULT_EXTRA_TEXT_FIELDS,
+        studies=(study.key,),
+        max_participants=100,
+        seed=42,
+        max_features=None,
+        tree_method="hist",
+        overwrite=True,
+        reuse_existing=False,
+    )
+
+    captured: Dict[str, object] = {}
+
+    def fake_run_opinion_eval(*, request, studies):
+        captured["studies"] = list(studies)
+        captured["learning_rate"] = request.train_config.booster.learning_rate
+        metrics_path = (
+            stage_config.base_out_dir
+            / "from_next"
+            / "tfidf"
+            / studies[0]
+            / f"opinion_xgb_{studies[0]}_validation_metrics.json"
+        )
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.write_text(json.dumps({"metrics": {}}), encoding="utf-8")
+        return {study.key: {"label": study.label}}
+
+    monkeypatch.setattr(evaluate, "run_opinion_eval", fake_run_opinion_eval)
+
+    results = evaluate._run_opinion_from_next_stage(
+        selections=selections,
+        studies=[study],
+        config=stage_config,
+    )
+
+    assert captured["studies"] == [study.key]
+    assert captured["learning_rate"] == pytest.approx(0.1)
+    assert study.key in results
+
+
 def test_run_opinion_stage_reuses_metrics_and_warns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     study = _make_study_spec()
     config = _make_sweep_config()
@@ -634,6 +696,73 @@ def test_run_opinion_stage_reuses_metrics_and_warns(monkeypatch: pytest.MonkeyPa
     assert results == {study.key: cached_metrics}
     assert call_counter["count"] == 0
     assert any("Skipping opinion study for study=missing_study" in message for message in caplog.messages)
+
+
+def test_run_cross_study_evaluations_executes_loso(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    study_a = _make_study_spec()
+    study_b = StudySpec(key="study2", issue="gun_control", label="Study 2 – Gun Control")
+    config = _make_sweep_config()
+    selections = {
+        study_a.key: StudySelection(
+            study=study_a,
+            outcome=SweepOutcome(
+                order_index=0,
+                study=study_a,
+                config=config,
+                accuracy=0.8,
+                coverage=0.6,
+                evaluated=200,
+                metrics_path=tmp_path / "a.json",
+                metrics={},
+            ),
+        ),
+        study_b.key: StudySelection(
+            study=study_b,
+            outcome=SweepOutcome(
+                order_index=1,
+                study=study_b,
+                config=config,
+                accuracy=0.75,
+                coverage=0.55,
+                evaluated=180,
+                metrics_path=tmp_path / "b.json",
+                metrics={},
+            ),
+        ),
+    }
+
+    context = FinalEvalContext(
+        base_cli=["--dataset", "stub"],
+        extra_cli=[],
+        out_dir=tmp_path,
+        tree_method="hist",
+        save_model_dir=None,
+        reuse_existing=False,
+    )
+
+    call_args: list[list[str]] = []
+
+    def fake_run(args: List[str]) -> None:
+        call_args.append(list(args))
+        out_dir = Path(args[args.index("--out_dir") + 1])
+        issue = args[args.index("--issues") + 1]
+        study_key = args[args.index("--participant_studies") + 1]
+        spec = study_a if study_key == study_a.key else study_b
+        metrics_path = out_dir / spec.evaluation_slug / "metrics.json"
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.write_text(json.dumps({"accuracy": 0.65}), encoding="utf-8")
+
+    monkeypatch.setattr(evaluate, "_run_xgb_cli", fake_run)
+
+    results = evaluate._run_cross_study_evaluations(
+        selections=selections,
+        studies=[study_a, study_b],
+        context=context,
+    )
+
+    assert set(results.keys()) == {study_a.key, study_b.key}
+    assert all(payload["accuracy"] == 0.65 for payload in results.values())
+    assert any("--train_participant_studies" in args for args in call_args)
 
 
 def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
@@ -778,7 +907,7 @@ def test_format_float_three_decimal_precision() -> None:
     assert reports._format_float(0.12354) == "0.124"
 
 
-def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
+def test_write_reports_generates_expected_readmes(tmp_path: Path, sample_png: Path) -> None:
     study = _make_study_spec()
     outcome = SweepOutcome(
         order_index=0,
@@ -811,18 +940,63 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
             "split": "validation",
         }
     }
+    opinion_from_next_metrics = {
+        "study1": {
+            "label": "Study One",
+            "n_participants": 98,
+            "metrics": {"mae_after": 1.1, "rmse_after": 1.6, "r2_after": 0.45},
+            "baseline": {"mae_before": 1.45},
+            "dataset": "sim_dataset",
+            "split": "validation",
+        }
+    }
+
+    loso_metrics = {
+        study.key: {
+            "accuracy": 0.78,
+            "coverage": 0.60,
+            "evaluated": 150,
+            "correct": 117,
+            "known_candidate_hits": 80,
+            "known_candidate_total": 110,
+            "avg_probability": 0.52,
+            "issue": study.issue,
+            "issue_label": "Gun Control",
+            "study": study.key,
+            "study_label": study.label,
+        }
+    }
+
+    plots_dir = tmp_path / "tfidf" / "opinion"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    png_bytes = sample_png.read_bytes()
+    for stem in ("mae_study1", "r2_study1", "change_heatmap_study1"):
+        (plots_dir / f"{stem}.png").write_bytes(png_bytes)
 
     sweep_report = reports.SweepReportData(
         outcomes=[outcome],
         selections=selections,
         final_metrics=final_metrics,
+        loso_metrics=loso_metrics,
     )
     opinion_report = reports.OpinionReportData(metrics=opinion_metrics)
+    opinion_next_report = reports.OpinionReportData(
+        metrics=opinion_from_next_metrics,
+        title="XGBoost Opinion Regression (Next-Video Config)",
+        description_lines=[
+            "This section reuses the selected next-video configuration to "
+            "estimate post-study opinion change."
+        ],
+    )
     reports._write_reports(
         reports_dir=tmp_path,
         sweeps=sweep_report,
         allow_incomplete=False,
-        opinion=opinion_report,
+        sections=reports.ReportSections(
+            include_next_video=True,
+            opinion=opinion_report,
+            opinion_from_next=opinion_next_report,
+        ),
     )
 
     catalog = (tmp_path / "README.md").read_text(encoding="utf-8")
@@ -835,9 +1009,14 @@ def test_write_reports_generates_expected_readmes(tmp_path: Path) -> None:
     next_video = (tmp_path / "next_video" / "README.md").read_text(encoding="utf-8")
     assert "XGBoost Next-Video Baseline" in next_video
     assert "Study 1 – Gun Control (MTurk)" in next_video
+    assert "Cross-Study Holdouts" in next_video
 
     opinion = (tmp_path / "opinion" / "README.md").read_text(encoding="utf-8")
     assert "Study One" in opinion
+    assert "![Mae Study1]" in opinion
+    opinion_next = (tmp_path / "opinion_from_next" / "README.md").read_text(encoding="utf-8")
+    assert "Next-Video Config" in opinion_next
+    assert "reuses the selected next-video configuration" in opinion_next
 
 
 def test_load_final_metrics_from_disk_adds_defaults(tmp_path: Path) -> None:
@@ -902,14 +1081,44 @@ def test_load_opinion_metrics_from_disk_falls_back_to_legacy(tmp_path: Path) -> 
     assert result[study.key]["metrics"]["mae_after"] == pytest.approx(0.37)
 
 
+def test_load_opinion_from_next_metrics_from_disk(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    base_dir = tmp_path / "from_next" / sweeps.OPINION_FEATURE_SPACE / study.key
+    base_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"metrics": {"mae_after": 0.44}}
+    metrics_path = base_dir / f"opinion_xgb_{study.key}_validation_metrics.json"
+    metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = sweeps._load_opinion_from_next_metrics_from_disk(
+        opinion_dir=tmp_path,
+        studies=[study],
+    )
+
+    assert result == {study.key: payload}
+
+
+def test_load_loso_metrics_from_disk(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    loso_dir = tmp_path / "loso" / study.evaluation_slug
+    loso_dir.mkdir(parents=True, exist_ok=True)
+    metrics = {"accuracy": 0.59}
+    (loso_dir / "metrics.json").write_text(json.dumps(metrics), encoding="utf-8")
+
+    result = sweeps._load_loso_metrics_from_disk(
+        next_video_dir=tmp_path,
+        studies=[study],
+    )
+
+    assert result[study.key]["accuracy"] == pytest.approx(0.59)
+
+
 def test_write_reports_handles_disabled_sections(tmp_path: Path) -> None:
     sweep_report = reports.SweepReportData()
     reports._write_reports(
         reports_dir=tmp_path,
         sweeps=sweep_report,
         allow_incomplete=False,
-        include_next_video=False,
-        opinion=None,
+        sections=reports.ReportSections(include_next_video=False),
     )
 
     catalog = (tmp_path / "README.md").read_text(encoding="utf-8")

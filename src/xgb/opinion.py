@@ -262,12 +262,13 @@ def _train_regressor(
         eval_set = [(features, targets), (eval_features, eval_targets)]
     if eval_set:
         regressor.set_params(eval_metric=["mae", "rmse"])
-    regressor.fit(
-        features,
-        targets,
-        eval_set=eval_set if eval_set else None,
-        verbose=False,
-    )
+    fit_kwargs = {
+        "eval_set": eval_set if eval_set else None,
+        "verbose": False,
+    }
+    if eval_set:
+        fit_kwargs["early_stopping_rounds"] = 50
+    regressor.fit(features, targets, **fit_kwargs)
     history = regressor.evals_result() if eval_set else {}
     return regressor, history
 

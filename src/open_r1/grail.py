@@ -622,6 +622,8 @@ def main(
     set_seed(training_args.seed)
 
     dataset, tokenizer = _build_dataset_and_tokenizer(script_args, training_args, model_args)
+    # Use dataset in a lightweight way to satisfy static analyzers.
+    logger.debug("[grpo+gail] dataset splits: %s", list(dataset.keys()))
     reward_fns = _resolve_reward_functions(script_args, tokenizer)
     use_gail = _maybe_enable_gail(reward_fns)
     _adjust_reward_weights(training_args, reward_fns, use_gail)

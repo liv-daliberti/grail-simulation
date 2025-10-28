@@ -107,11 +107,15 @@ def _sweep_outcome_from_metrics(
 ) -> SweepOutcome:
     """Convert cached sweep metrics into an outcome instance."""
 
+    # Prefer eligible-only accuracy when available; fall back to overall.
+    acc_value = metrics.get("accuracy_eligible")
+    if acc_value is None:
+        acc_value = metrics.get("accuracy")
     return SweepOutcome(
         order_index=task.index,
         study=task.study,
         config=task.config,
-        accuracy=float(metrics.get("accuracy", 0.0)),
+        accuracy=float(acc_value or 0.0),
         coverage=float(metrics.get("coverage", 0.0)),
         evaluated=int(metrics.get("evaluated", 0)),
         metrics_path=metrics_path,

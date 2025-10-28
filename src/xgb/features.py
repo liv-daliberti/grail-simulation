@@ -21,13 +21,6 @@ from common.prompt_docs import (
     DEFAULT_TITLE_DIRS as _DEFAULT_TITLE_DIRS,
     create_prompt_document_builder,
 )
-from common.prompt_selection import (
-    CandidateMetadata,
-    PROMPT_SELECTION_EXPORT_ATTRS,
-    PromptSelectionHelper,
-    candidate_feature_tokens,
-    bind_prompt_selection_exports,
-)
 
 from .data import PROMPT_COLUMN, PROMPT_MAX_HISTORY, SOLUTION_COLUMN
 
@@ -41,24 +34,33 @@ _PROMPT_DOC_BUILDER = create_prompt_document_builder(
     logger_name="xgb.features",
 )
 
-_PROMPT_FEATURES = PromptSelectionHelper(_PROMPT_DOC_BUILDER)
-_PROMPT_EXPORTS = bind_prompt_selection_exports(_PROMPT_FEATURES)
+# Re-export builder-backed helpers that do not inject selection tokens.
+title_for = _PROMPT_DOC_BUILDER.title_for
+viewer_profile_sentence = _PROMPT_DOC_BUILDER.viewer_profile_sentence
+prompt_from_builder = _PROMPT_DOC_BUILDER.prompt_from_builder
+extract_now_watching = _PROMPT_DOC_BUILDER.extract_now_watching
+extract_slate_items = _PROMPT_DOC_BUILDER.extract_slate_items
 
-# Explicit re-exports keep static analysis tools such as pylint happy.
-title_for = _PROMPT_EXPORTS["title_for"]
-viewer_profile_sentence = _PROMPT_EXPORTS["viewer_profile_sentence"]
-prompt_from_builder = _PROMPT_EXPORTS["prompt_from_builder"]
-extract_now_watching = _PROMPT_EXPORTS["extract_now_watching"]
-extract_slate_items = _PROMPT_EXPORTS["extract_slate_items"]
-collect_candidate_metadata = _PROMPT_EXPORTS["collect_candidate_metadata"]
-selection_feature_tokens = _PROMPT_EXPORTS["selection_feature_tokens"]
-assemble_document = _PROMPT_EXPORTS["assemble_document"]
-prepare_training_documents = _PROMPT_EXPORTS["prepare_training_documents"]
-prepare_prompt_documents = _PROMPT_EXPORTS["prepare_prompt_documents"]
+
+def assemble_document(example: dict, extra_fields):  # type: ignore[override]
+    return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
+
+
+def prepare_training_documents(train_ds, max_train: int, seed: int, extra_fields=None):  # type: ignore[override]
+    return _PROMPT_DOC_BUILDER.prepare_training_documents(train_ds, max_train, seed, extra_fields)
+
+
+def prepare_prompt_documents(train_ds, max_train: int, seed: int, extra_fields=None):  # type: ignore[override]
+    return _PROMPT_DOC_BUILDER.prepare_prompt_documents(train_ds, max_train, seed, extra_fields)
 
 __all__ = [
     "DEFAULT_TITLE_DIRS",
-    "CandidateMetadata",
-    "candidate_feature_tokens",
-    *PROMPT_SELECTION_EXPORT_ATTRS,
+    "title_for",
+    "viewer_profile_sentence",
+    "prompt_from_builder",
+    "extract_now_watching",
+    "extract_slate_items",
+    "assemble_document",
+    "prepare_training_documents",
+    "prepare_prompt_documents",
 ]

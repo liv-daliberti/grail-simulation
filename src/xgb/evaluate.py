@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,too-many-lines
 
 import json
 import time
@@ -76,8 +76,13 @@ def _split_tokens(raw: Optional[str]) -> List[str]:
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class IssueMetrics:
-    """Container describing evaluation metrics for a single issue."""
+    """Container describing evaluation metrics for a single issue.
 
+    Note: In dataclasses, all non-default fields must precede any fields with
+    defaults. The ordering here ensures that rule is respected.
+    """
+
+    # Non-default fields
     issue: str
     participant_studies: Sequence[str]
     dataset_source: str
@@ -92,6 +97,18 @@ class IssueMetrics:
     timestamp: float
     extra_fields: Sequence[str]
     xgboost_params: Dict[str, Any]
+
+    # Defaulted fields (must come after non-default fields)
+    # Eligible-only accuracy (gold present in slate)
+    correct_eligible: int = 0
+    accuracy_eligible: float = 0.0
+    # Accuracy restricted to cases where at least one candidate was known
+    known_accuracy: Optional[float] = None
+    # Fraction of evaluations with at least one known candidate
+    known_availability: Optional[float] = None
+    # Accuracy among rows where a prediction was produced
+    evaluated_predicted: int = 0
+    accuracy_predicted: float = 0.0
     baseline_most_frequent_gold_index: Dict[str, Any] = field(default_factory=dict)
     random_baseline_expected_accuracy: Optional[float] = None
     curve_metrics: Optional[Dict[str, Any]] = None
@@ -551,8 +568,9 @@ def _evaluate_single_example(
                 gold_index = idx
                 break
 
-    if prediction_idx is None and slate:
-        prediction_idx = 1
+    # Do not default to an arbitrary index when the model abstains.
+    # Keeping prediction_idx as None allows metrics to report unknown cases
+    # without counting them as incorrect predictions.
 
     if prediction_idx is not None and 1 <= prediction_idx <= option_count:
         predicted_id = slate[prediction_idx - 1][1]
@@ -662,6 +680,39 @@ def _summarise_records(
     if baseline_top_index is not None:
         baseline_payload["top_index"] = baseline_top_index
         baseline_payload["count"] = baseline_count
+    # Eligible-only accuracy (gold present in slate)
+    correct_eligible = sum(
+        outcome.correct for _, outcome in records if outcome.eligible
+    )
+    accuracy_eligible = (
+        safe_div(correct_eligible, summary.eligible)
+        if summary.eligible
+        else 0.0
+    )
+    # Known-candidate diagnostics
+    known_accuracy = (
+        safe_div(summary.known_hits, summary.known_total)
+        if summary.known_total
+        else None
+    )
+    known_availability = (
+        safe_div(summary.known_total, summary.evaluated)
+        if summary.evaluated
+        else None
+    )
+    # Accuracy among rows where the model produced a prediction
+    evaluated_predicted = sum(
+        outcome.prediction_index is not None for _, outcome in records
+    )
+    correct_predicted = sum(
+        outcome.correct and outcome.prediction_index is not None for _, outcome in records
+    )
+    accuracy_predicted = (
+        safe_div(correct_predicted, evaluated_predicted)
+        if evaluated_predicted
+        else 0.0
+    )
+
     return IssueMetrics(
         issue=issue_slug,
         participant_studies=tuple(config.participant_studies),
@@ -669,9 +720,15 @@ def _summarise_records(
         evaluated=summary.evaluated,
         correct=summary.correct,
         accuracy=safe_div(summary.correct, summary.evaluated),
+        correct_eligible=int(correct_eligible),
+        accuracy_eligible=float(accuracy_eligible),
         known_candidate_hits=summary.known_hits,
         known_candidate_total=summary.known_total,
         coverage=safe_div(summary.known_hits, summary.known_total),
+        known_accuracy=known_accuracy,
+        known_availability=known_availability,
+        evaluated_predicted=evaluated_predicted,
+        accuracy_predicted=accuracy_predicted,
         avg_probability=summary.avg_probability,
         eligible=summary.eligible,
         timestamp=time.time(),

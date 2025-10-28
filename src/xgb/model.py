@@ -450,7 +450,11 @@ def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, 
     eval_set = [(batch.train.matrix, batch.train.labels)]
     if batch.evaluation is not None:
         eval_set.append((batch.evaluation.matrix, batch.evaluation.labels))
-    return {"eval_set": eval_set, "verbose": False}
+    fit_kwargs: Dict[str, Any] = {"eval_set": eval_set, "verbose": False}
+    # Enable early stopping when a validation set is available.
+    if batch.evaluation is not None:
+        fit_kwargs["early_stopping_rounds"] = 50
+    return fit_kwargs
 
 
 def _ensure_history_metrics(booster: Any, *, collect_history: bool) -> None:

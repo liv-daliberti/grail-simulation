@@ -28,6 +28,16 @@ from common.cli_options import add_log_level_argument, add_overwrite_argument
 
 from .evaluate import run_eval
 
+# Align default extra text fields with KNN to reduce signal disparity.
+# These fields augment the base viewer_profile/state_text from prompt_docs.
+DEFAULT_XGB_TEXT_FIELDS = (
+    "pid1,pid2,ideo1,ideo2,pol_interest,religpew,educ,employ,child18,inputstate,"
+    "freq_youtube,youtube_time,newsint,q31,participant_study,slate_source,"
+    "minwage_text_w2,minwage_text_w1,mw_support_w2,mw_support_w1,minwage15_w2,"
+    "minwage15_w1,mw_index_w2,mw_index_w1,gun_importance,gun_index,gun_enthusiasm,"
+    "gun_identity"
+)
+
 
 def build_parser() -> argparse.ArgumentParser:
     """
@@ -79,8 +89,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--extra_text_fields",
-        default="",
-        help="Comma-separated additional columns appended to the prompt document.",
+        default=DEFAULT_XGB_TEXT_FIELDS,
+        help=(
+            "Comma-separated additional columns appended to the prompt document. "
+            "Defaults mirror KNN's extended text fields."
+        ),
     )
     parser.add_argument(
         "--text_vectorizer",

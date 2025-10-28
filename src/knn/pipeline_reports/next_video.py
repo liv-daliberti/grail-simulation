@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Next-video report builders for the modular KNN pipeline."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -971,7 +972,6 @@ def _write_next_video_metrics_csv(
 
     if not metrics_by_feature:
         return
-    out_path = output_dir / "metrics.csv"
     fieldnames = [
         "feature_space",
         "study",
@@ -985,19 +985,16 @@ def _write_next_video_metrics_csv(
         "accuracy_ci_low",
         "accuracy_ci_high",
     ]
-    study_by_key = {spec.key: spec for spec in studies}
-    with open(out_path, "w", encoding="utf-8", newline="") as handle:
+    with open(output_dir / "metrics.csv", "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for feature_space, per_feature in metrics_by_feature.items():
             for study_key, payload in per_feature.items():
-                spec = study_by_key.get(study_key)
+                spec = next((s for s in studies if s.key == study_key), None)
                 if spec is None:
                     continue
                 summary = extract_metric_summary(payload)
-                ci = summary.accuracy_ci
-                ci_low = ci[0] if ci else None
-                ci_high = ci[1] if ci else None
+                confidence_interval = summary.accuracy_ci
                 writer.writerow(
                     {
                         "feature_space": feature_space,
@@ -1009,8 +1006,12 @@ def _write_next_video_metrics_csv(
                         "best_k": summary.best_k,
                         "eligible": summary.n_eligible,
                         "total": summary.n_total,
-                        "accuracy_ci_low": ci_low,
-                        "accuracy_ci_high": ci_high,
+                        "accuracy_ci_low": (
+                            confidence_interval[0] if confidence_interval else None
+                        ),
+                        "accuracy_ci_high": (
+                            confidence_interval[1] if confidence_interval else None
+                        ),
                     }
                 )
 

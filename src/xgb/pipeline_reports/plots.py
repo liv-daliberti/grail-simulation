@@ -297,6 +297,30 @@ def _format_scalar(value: object) -> str:
     return f"{value_float:.3f}"
 
 
+def _decorate_curve_labels(
+    entries: Sequence[Tuple[str, Mapping[str, object]]]
+) -> List[Tuple[str, Mapping[str, object]]]:
+    """Return entries with labels decorated by scalar metrics.
+
+    This helper reduces locals in callers that need to build decorated lists.
+    """
+
+    decorated: List[Tuple[str, Mapping[str, object]]] = []
+    for label, payload in entries:
+        acc = _format_scalar(payload.get("accuracy"))
+        elig = _format_scalar(payload.get("accuracy_eligible"))
+        decorated.append((f"{label} (acc {acc}, elig {elig})", payload))
+    return decorated
+
+
+def _compute_grid(n: int) -> Tuple[int, int]:
+    """Compute a reasonable (rows, cols) grid for ``n`` plots."""
+
+    cols = min(3, max(1, n))
+    rows = int(math.ceil(n / cols))
+    return rows, cols
+
+
 def _plot_xgb_curve(
     *,
     directory: Path,
@@ -367,11 +391,7 @@ def _plot_xgb_curve_overview(
         return None
 
     # Decorate labels with scalar metrics for quick comparison.
-    decorated: List[Tuple[str, Mapping[str, object]]] = []
-    for label, payload in entries:
-        acc = _format_scalar(payload.get("accuracy"))
-        elig = _format_scalar(payload.get("accuracy_eligible"))
-        decorated.append((f"{label} (acc {acc}, elig {elig})", payload))
+    decorated = _decorate_curve_labels(entries)
 
     series_list = _collect_curve_series(decorated, _extract_accuracy_curves)
     if not series_list:
@@ -380,11 +400,10 @@ def _plot_xgb_curve_overview(
     curves_dir = directory / "curves"
     curves_dir.mkdir(parents=True, exist_ok=True)
 
-    cols = min(3, len(series_list))
-    rows = math.ceil(len(series_list) / cols)
+    rows, cols = _compute_grid(len(series_list))
     fig, axes = plt.subplots(  # type: ignore[attr-defined]
-        rows,
-        cols,
+        rows,  # type: ignore[arg-type]
+        cols,  # type: ignore[arg-type]
         figsize=(4.6 * cols, 3.2 * rows),
         squeeze=False,
         sharex=False,

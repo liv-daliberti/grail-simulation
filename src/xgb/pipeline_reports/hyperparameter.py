@@ -32,6 +32,9 @@ from common.pipeline_formatters import (
 )
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
+from common.report_fields import (
+    NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS,
+)
 
 from ..pipeline_context import (
     OpinionStudySelection,
@@ -302,7 +305,6 @@ def _write_next_video_sweeps_csv(directory: Path, outcomes: Sequence[SweepOutcom
     if not outcomes:
         return
     out_path = directory / "next_video_sweeps.csv"
-    from common.report_fields import NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS
     fieldnames = [
         "study_key",
         "study_label",

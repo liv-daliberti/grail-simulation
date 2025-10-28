@@ -31,6 +31,9 @@ from common.pipeline_formatters import (
 )
 from common.pipeline_io import write_markdown_lines
 from common.report_utils import start_markdown_report
+from common.report_fields import (
+    NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS,
+)
 
 from ..pipeline_context import NextVideoMetricSummary, StudySelection
 from .plots import _plot_xgb_curve, _plot_xgb_curve_overview
@@ -792,7 +795,6 @@ def _write_metrics_csv(
     if not metrics:
         return
     out_path = directory / "metrics.csv"
-    from common.report_fields import NEXT_VIDEO_COVERAGE_FIELDS as _COVERAGE_FNS
     fieldnames = [
         "study",
         "issue",
@@ -850,11 +852,7 @@ def _write_loso_csv(
         "correct",
         "evaluated",
         "correct_eligible",
-        "coverage",
-        "known_hits",
-        "known_total",
-        "known_availability",
-        "avg_probability",
+        *_COVERAGE_FNS,
     ]
     with open(out_path, "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)

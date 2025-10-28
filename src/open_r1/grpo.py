@@ -196,6 +196,7 @@ def main(
     execute_grpo_pipeline(
         **make_grpo_execute_kwargs(
             prefix="grpo",
+            dataset=dataset,
             namespace=locals(),
         )
     )

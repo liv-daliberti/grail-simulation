@@ -648,6 +648,7 @@ def main(
         **make_grpo_execute_kwargs(
             prefix="grail",
             evaluate_fn_factory=_gail_eval_factory,
+            dataset=dataset,
             namespace=locals(),
         )
     )

@@ -596,16 +596,21 @@ def make_grpo_execute_kwargs(
     if namespace is not None:
         payload = collect_grpo_pipeline_kwargs(namespace)
     else:
-        payload = {
-            "component_factory": component_factory,
-            "reward_funcs": reward_funcs,
-            "tokenizer": tokenizer,
-            "dataset": dataset,
-            "script_args": script_args,
-            "training_args": training_args,
-            "model_args": model_args,
-            "logger": logger,
-        }
+        payload = {}
+
+    explicit_overrides = {
+        "component_factory": component_factory,
+        "reward_funcs": reward_funcs,
+        "tokenizer": tokenizer,
+        "dataset": dataset,
+        "script_args": script_args,
+        "training_args": training_args,
+        "model_args": model_args,
+        "logger": logger,
+    }
+    for key, value in explicit_overrides.items():
+        if value is not None:
+            payload[key] = value
     payload.update({
         "prefix": prefix,
         "evaluate_fn_factory": evaluate_fn_factory,

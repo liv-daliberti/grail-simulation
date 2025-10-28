@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
 
 from common.pipeline_stage import (
-    build_sweep_partition,
     SweepPartitionExecutors,
     dispatch_cli_partitions,
     emit_stage_dry_run_summary,

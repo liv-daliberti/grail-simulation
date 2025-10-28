@@ -9,23 +9,29 @@ This report tracks the supplementary text columns appended to the prompt builder
 
 | Study | Configuration | Extra text fields |
 | --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 | Study 2 – Minimum Wage (MTurk) | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 
 | Study | Issue | Extra text fields |
 | --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | gun_control | `viewer_profile`, `state_text` |
 | Study 2 – Minimum Wage (MTurk) | minimum_wage | `viewer_profile`, `state_text` |
 
 ## Opinion Regression
 
 ### Sweep Configurations
 
-No opinion sweep metrics were provided.
+| Study | Configuration | Extra text fields |
+| --- | --- | --- |
+| Study 1 – Gun Control (MTurk) | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 
-Opinion final metrics were not generated.
+| Study | Extra text fields |
+| --- | --- |
+| Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
 
 ## Summary
 

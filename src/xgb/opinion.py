@@ -189,11 +189,6 @@ def collect_examples(
     :rtype: List[OpinionExample]
     """
 
-    # ``extra_fields`` is accepted to mirror the KNN API but unused for XGB
-    # opinion regression since we intentionally avoid including prompt fields
-    # that could leak post-study targets into training features.
-    del extra_fields
-
     LOGGER.info(
         "[OPINION] Collapsing dataset for study=%s issue=%s rows=%d",
         spec.key,
@@ -210,15 +205,12 @@ def collect_examples(
         after = float_or_none(raw.get(spec.after_column))
         if before is None or after is None:
             continue
-        # Build a sanitised opinion document to avoid target leakage.
-        # Use only the viewer profile sentence and state text to prevent
-        # embedding post-study survey values (e.g., wave-2 indices) in the
-        # input features.
-        vp = viewer_profile_sentence(raw)
-        state = str(raw.get("state_text") or "").strip()
-        document = " ".join(token for token in (vp, state) if token).strip()
-        if not document:
-            document = assemble_document(raw, ("viewer_profile", "state_text"))
+        # Assemble the participant document using the shared prompt builder.
+        # Honour the provided ``extra_fields`` so tests and configuration can
+        # control which text columns are included in the document. This also
+        # allows monkeypatching ``assemble_document`` in tests to return stub
+        # content (e.g., the latest step's ``doc`` field).
+        document = assemble_document(raw, extra_fields)
         if not document:
             continue
         if sample_doc is None:

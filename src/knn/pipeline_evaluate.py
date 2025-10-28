@@ -104,10 +104,11 @@ def run_final_evaluations(
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", study.issue])
             cli_args.extend(["--participant-studies", study.key])
-            # Within-study training for final evaluations (do not add
-            # --train-participant-studies). The evaluation already passes
-            # --participant-studies=<study.key>, so training defaults to the
-            # same study as well.
+            # Train on companion studies (exclude the evaluation study itself)
+            # so the index does not include evaluation participants.
+            train_studies = [spec.key for spec in studies if spec.key != study.key]
+            if train_studies:
+                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             # Restrict training to the same study and its issue only.

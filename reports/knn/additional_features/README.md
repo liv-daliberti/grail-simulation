@@ -87,7 +87,11 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | tfidf | Study 1 – Gun Control (MTurk) | metric-l2_text-viewerprofile_statetext_inputstate | `viewer_profile`, `state_text`, `inputstate` |
 | tfidf | Study 2 – Minimum Wage (MTurk) | metric-l2_text-viewerprofile_statetext_inputstate | `viewer_profile`, `state_text`, `inputstate` |
 | tfidf | Study 3 – Minimum Wage (YouGov) | metric-l2_text-viewerprofile_statetext_inputstate | `viewer_profile`, `state_text`, `inputstate` |
+| word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_sz256_win5_min1 | `viewer_profile`, `state_text` |
+| word2vec | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_sz256_win5_min1 | `viewer_profile`, `state_text` |
 | word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo1_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo1` |
+| word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo2_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo2` |
+| word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_polinterest_sz256_win5_min1 | `viewer_profile`, `state_text`, `pol_interest` |
 
 ### Final Evaluations
 

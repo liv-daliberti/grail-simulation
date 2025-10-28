@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json, logging, time, pathlib
 import typing
+from importlib import import_module
 
 t = typing
 
@@ -22,12 +23,10 @@ import common.eval_utils as _eval_utils
 import common.hf_datasets as _hf_datasets
 from common import slate_eval
 
-from . import (
-    client as _client,
-    config as _config,
-    conversation as _conversation,
-    utils as _utils,
-)
+_client = import_module("gpt4o.client")
+_config = import_module("gpt4o.config")
+_conversation = import_module("gpt4o.conversation")
+_utils = import_module("gpt4o.utils")
 
 if t.TYPE_CHECKING:  # pragma: no cover - typing only imports
     from argparse import Namespace

@@ -213,6 +213,24 @@ def build_parser() -> argparse.ArgumentParser:
         dest="participant_studies",
         help_text="Comma-separated participant study keys to evaluate (defaults to all).",
     )
+    add_comma_separated_argument(
+        parser,
+        flags=("--train-participant-studies", "--train_participant_studies"),
+        dest="train_participant_studies",
+        help_text=(
+            "Comma-separated participant study keys used for TRAINING. "
+            "Defaults to --participant-studies when unset."
+        ),
+    )
+    add_comma_separated_argument(
+        parser,
+        flags=("--eval-participant-studies", "--eval_participant_studies"),
+        dest="eval_participant_studies",
+        help_text=(
+            "Comma-separated participant study keys used for EVALUATION. "
+            "Defaults to --participant-studies when unset."
+        ),
+    )
     parser.add_argument(
         "--cache_dir",
         default=str(Path.cwd() / "hf_cache"),

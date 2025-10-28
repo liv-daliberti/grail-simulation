@@ -82,6 +82,9 @@ def test_cli_parser_defaults() -> None:
     args = parser.parse_args([])
     assert args.out_dir.endswith("xgb")
     assert args.fit_model is False
+    assert args.participant_studies == ""
+    assert args.train_participant_studies == ""
+    assert args.eval_participant_studies == ""
 
 
 def test_cli_parser_vectorizer_args() -> None:
@@ -100,6 +103,23 @@ def test_cli_parser_vectorizer_args() -> None:
     assert args.text_vectorizer == "sentence_transformer"
     assert args.sentence_transformer_normalize is False
     assert args.sentence_transformer_model.endswith("all-distilroberta-v1")
+
+
+def test_cli_parser_participant_study_overrides() -> None:
+    parser = cli.build_parser()
+    args = parser.parse_args(
+        [
+            "--participant_studies",
+            "eval_only",
+            "--train_participant_studies",
+            "study_a,study_b",
+            "--eval_participant_studies",
+            "study_eval",
+        ]
+    )
+    assert args.participant_studies == "eval_only"
+    assert args.train_participant_studies == "study_a,study_b"
+    assert args.eval_participant_studies == "study_eval"
 
 
 def test_sentence_transformer_vectorizer_metadata(monkeypatch, tmp_path: Path) -> None:

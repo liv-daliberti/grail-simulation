@@ -133,7 +133,10 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | 99 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, pol_interest | 0.274 | 0.540 | -0.266 | 3 | 548 |
 | 100 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, pol_interest | 0.306 | 0.368 | -0.063 | 5 | 671 |
 | 105 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, religpew | 0.276 | 0.540 | -0.265 | 3 | 548 |
+| 106 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, religpew | 0.317 | 0.368 | -0.051 | 10 | 671 |
 | 111 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, freq_youtube | 0.272 | 0.540 | -0.268 | 3 | 548 |
+| 112 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, freq_youtube | 0.301 | 0.368 | -0.067 | 3 | 671 |
+| 117 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, youtube_time | 0.274 | 0.540 | -0.266 | 3 | 548 |
 
 
 ## Post-Study Opinion Regression

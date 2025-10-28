@@ -36,7 +36,7 @@ from .data import (
     SOLUTION_COLUMN,
     TRAIN_SPLIT,
     filter_dataset_for_issue,
-    filter_dataset_for_participant_studies,
+    filter_split_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
@@ -125,7 +125,8 @@ class IssueEvaluationContext:
 
     dataset_source: str
     extra_fields: Sequence[str]
-    study_tokens: Sequence[str]
+    train_study_tokens: Sequence[str]
+    eval_study_tokens: Sequence[str]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -254,7 +255,13 @@ def run_eval(args) -> None:
     else:
         issues = available_issues
 
-    study_tokens = _split_tokens(getattr(args, "participant_studies", ""))
+    joint_study_tokens = _split_tokens(getattr(args, "participant_studies", ""))
+    train_study_tokens = (
+        _split_tokens(getattr(args, "train_participant_studies", "")) or joint_study_tokens
+    )
+    eval_study_tokens = (
+        _split_tokens(getattr(args, "eval_participant_studies", "")) or joint_study_tokens
+    )
 
     extra_fields = merge_default_extra_fields(_split_tokens(args.extra_text_fields))
 
@@ -266,7 +273,8 @@ def run_eval(args) -> None:
             context=IssueEvaluationContext(
                 dataset_source=dataset_source,
                 extra_fields=tuple(extra_fields),
-                study_tokens=tuple(study_tokens),
+                train_study_tokens=tuple(train_study_tokens),
+                eval_study_tokens=tuple(eval_study_tokens),
             ),
         )
 
@@ -284,25 +292,24 @@ def _evaluate_issue(
     :param args: Parsed CLI namespace controlling training/evaluation options.
     :param issue: Issue label (human-readable) requested for evaluation.
     :param base_ds: Loaded dataset dictionary containing train/eval splits.
-    :param dataset_source: String describing the data source (path or hub id).
-    :param extra_fields: Additional text fields appended to the feature document.
-    :param study_tokens: Participant study filters applied to train/eval splits.
+    :param context: Static context describing dataset metadata and participant filters.
+    :type context: IssueEvaluationContext
     """
 
-    tokens = [token for token in context.study_tokens if token]
-    issue_slug = compose_issue_slug(issue, tokens)
+    train_tokens = [token for token in context.train_study_tokens if token]
+    eval_tokens = [token for token in context.eval_study_tokens if token]
+    issue_slug = compose_issue_slug(issue, eval_tokens)
 
     logger.info(
-        "[XGBoost] Evaluating issue=%s participant_studies=%s",
+        "[XGBoost] Evaluating issue=%s train_studies=%s eval_studies=%s",
         issue_slug,
-        ",".join(tokens) or "all",
+        ",".join(train_tokens) or "all",
+        ",".join(eval_tokens) or "all",
     )
 
     issue_dataset = filter_dataset_for_issue(base_ds, issue)
-    if tokens:
-        issue_dataset = filter_dataset_for_participant_studies(issue_dataset, tokens)
-    train_ds = issue_dataset[TRAIN_SPLIT]
-    eval_ds = issue_dataset[EVAL_SPLIT]
+    train_ds = filter_split_for_participant_studies(issue_dataset[TRAIN_SPLIT], train_tokens)
+    eval_ds = filter_split_for_participant_studies(issue_dataset[EVAL_SPLIT], eval_tokens)
 
     train_rows = len(train_ds)
     eval_rows = len(eval_ds)
@@ -310,10 +317,12 @@ def _evaluate_issue(
     if train_rows == 0 or eval_rows == 0:
         logger.warning(
             "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant "
-            "study filter.",
+            "study filters (train=%s eval=%s).",
             issue_slug,
             train_rows,
             eval_rows,
+            ",".join(train_tokens) or "all",
+            ",".join(eval_tokens) or "all",
         )
         return
 
@@ -329,7 +338,7 @@ def _evaluate_issue(
         dataset_source=context.dataset_source,
         extra_fields=tuple(context.extra_fields),
         eval_max=args.eval_max,
-        participant_studies=tuple(tokens),
+        participant_studies=tuple(eval_tokens),
     )
     metrics, predictions, eval_curve = evaluate_issue(
         model=model,

@@ -6,6 +6,7 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import pytest
 
+from xgb import cli
 from xgb.evaluate import (
     PredictionOutcome,
     _accuracy_curve_from_records,
@@ -15,6 +16,7 @@ from xgb.evaluate import (
     _records_to_predictions,
     _split_tokens,
     _summarise_outcomes,
+    run_eval,
 )
 
 pytestmark = pytest.mark.xgb
@@ -24,6 +26,44 @@ def test_split_tokens_trims_and_filters() -> None:
     assert _split_tokens(" alpha , beta,, gamma , ") == ["alpha", "beta", "gamma"]
     assert _split_tokens("") == []
     assert _split_tokens(None) == []
+
+
+def test_run_eval_uses_train_and_eval_participant_filters(monkeypatch) -> None:
+    parser = cli.build_parser()
+    args = parser.parse_args(
+        [
+            "--issues",
+            "gun_control",
+            "--participant_studies",
+            "study_holdout",
+            "--train_participant_studies",
+            "study_a,study_b",
+        ]
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_prepare_dataset(**_kwargs):
+        return (
+            "dataset_source",
+            {"train": object(), "eval": object()},
+            ["gun_control"],
+        )
+
+    def fake_evaluate_issue(args_ns, issue, base_ds, *, context):
+        captured["args"] = args_ns
+        captured["issue"] = issue
+        captured["base_ds"] = base_ds
+        captured["context"] = context
+
+    monkeypatch.setattr("xgb.evaluate.prepare_dataset", fake_prepare_dataset)
+    monkeypatch.setattr("xgb.evaluate._evaluate_issue", fake_evaluate_issue)
+
+    run_eval(args)
+
+    context = captured["context"]
+    assert context.train_study_tokens == ("study_a", "study_b")
+    assert context.eval_study_tokens == ("study_holdout",)
 
 
 def test_candidate_probabilities_canonicalises_ids() -> None:

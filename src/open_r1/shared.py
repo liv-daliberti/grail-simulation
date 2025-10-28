@@ -21,6 +21,8 @@ import os
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
+from open_r1.utils import get_model
+
 try:  # pragma: no cover - optional dependency
     from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
 except ImportError:  # pragma: no cover - optional dependency
@@ -43,9 +45,12 @@ except ImportError:  # pragma: no cover - optional dependency
         )
 
 try:  # pragma: no cover - optional dependency
-    from trl import TrlParser
+    from trl import TrlParser, get_peft_config  # pylint: disable=import-error
+    from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
 except ImportError:  # pragma: no cover - optional dependency
     TrlParser = None  # type: ignore[assignment]
+    get_peft_config = None  # type: ignore[assignment]
+    GRPOTrainer = None  # type: ignore[assignment]
 
 # Common prompt and column definitions -----------------------------------------------------------
 
@@ -292,15 +297,6 @@ class GrpoComponentFactory:
 
 def build_default_component_factory() -> GrpoComponentFactory:
     """Return the default :class:`GrpoComponentFactory` used by GRPO entrypoints."""
-
-    from open_r1.utils import get_model
-
-    try:  # pragma: no cover - optional dependency
-        from trl import get_peft_config  # pylint: disable=import-error
-        from trl.trainer.grpo_trainer import GRPOTrainer  # pylint: disable=import-error
-    except ImportError:  # pragma: no cover - optional dependency
-        get_peft_config = None  # type: ignore[assignment]
-        GRPOTrainer = None  # type: ignore[assignment]
 
     return GrpoComponentFactory(
         model_builder=get_model,
@@ -575,6 +571,64 @@ def execute_grpo_pipeline(
         prefix=prefix,
     )
     return prepare_model_eval_and_run_grpo(components=components, context=context)
+
+
+def make_grpo_execute_kwargs(
+    *,
+    component_factory: GrpoComponentFactory,
+    reward_funcs: Sequence[Any],
+    tokenizer: Any,
+    dataset: Mapping[str, Any],
+    script_args: Any,
+    training_args: Any,
+    model_args: Any,
+    logger: Any,
+    prefix: str,
+    evaluate_fn_factory: Optional[EvalFnFactory] = None,
+) -> Dict[str, Any]:
+    """Return keyword arguments for :func:`execute_grpo_pipeline`.
+
+    Small helper used by entrypoints to avoid repeating long keyword argument
+    lists, which also helps silence duplicate-code warnings across modules.
+    """
+
+    return {
+        "component_factory": component_factory,
+        "reward_funcs": reward_funcs,
+        "tokenizer": tokenizer,
+        "dataset": dataset,
+        "script_args": script_args,
+        "training_args": training_args,
+        "model_args": model_args,
+        "logger": logger,
+        "prefix": prefix,
+        "evaluate_fn_factory": evaluate_fn_factory,
+    }
+
+
+GRPO_PIPELINE_SCOPE_KEYS = {
+    "component_factory": "COMPONENT_FACTORY",
+    "reward_funcs": "reward_fns",
+    "tokenizer": "tokenizer",
+    "dataset": "dataset",
+    "script_args": "script_args",
+    "training_args": "training_args",
+    "model_args": "model_args",
+    "logger": "logger",
+}
+
+
+def collect_grpo_pipeline_kwargs(namespace: Mapping[str, Any]) -> Dict[str, Any]:
+    """Extract shared pipeline keyword arguments from ``namespace``.
+
+    Expected to be used with a module's ``locals()`` mapping.
+    """
+
+    return {
+        param: namespace[source]
+        for param, source in GRPO_PIPELINE_SCOPE_KEYS.items()
+        if source in namespace
+    }
 
 
 def parse_and_run(

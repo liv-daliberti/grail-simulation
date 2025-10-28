@@ -189,6 +189,78 @@ def _word2vec_param_grid(context: PipelineContext) -> Dict[str, Tuple[int, ...]]
     }
 
 
+def _build_tfidf_configs(metrics: Tuple[str, ...], limit: int) -> List[SweepConfig]:
+    """Return TF-IDF sweep configs for the given ``metrics`` and text option ``limit``."""
+
+    configs: List[SweepConfig] = []
+    text_options = _materialise_text_options(limit)
+    for metric in metrics:
+        for fields in text_options:
+            configs.append(
+                SweepConfig(
+                    feature_space="tfidf",
+                    metric=metric,
+                    text_fields=fields,
+                )
+            )
+    return configs
+
+
+def _build_word2vec_configs(
+    context: PipelineContext, metrics: Tuple[str, ...], limit: int
+) -> List[SweepConfig]:
+    """Return Word2Vec sweep configs using ``context`` defaults and ``metrics``."""
+
+    configs: List[SweepConfig] = []
+    text_options = _materialise_text_options(limit)
+    param_grid = _word2vec_param_grid(context)
+    for metric in metrics:
+        for fields in text_options:
+            for size, window, min_count, epochs, workers in product(
+                param_grid["sizes"],
+                param_grid["windows"],
+                param_grid["min_counts"],
+                param_grid["epochs"],
+                param_grid["workers"],
+            ):
+                configs.append(
+                    SweepConfig(
+                        feature_space="word2vec",
+                        metric=metric,
+                        text_fields=fields,
+                        word2vec_size=size,
+                        word2vec_window=window,
+                        word2vec_min_count=min_count,
+                        word2vec_epochs=epochs,
+                        word2vec_workers=workers,
+                    )
+                )
+    return configs
+
+
+def _build_sentence_transformer_configs(
+    context: PipelineContext, metrics: Tuple[str, ...], limit: int
+) -> List[SweepConfig]:
+    """Return SentenceTransformer sweep configs from ``context`` and ``metrics``."""
+
+    configs: List[SweepConfig] = []
+    text_options = _materialise_text_options(limit)
+    for metric in metrics:
+        for fields in text_options:
+            configs.append(
+                SweepConfig(
+                    feature_space="sentence_transformer",
+                    metric=metric,
+                    text_fields=fields,
+                    sentence_transformer_model=context.sentence_model,
+                    sentence_transformer_device=context.sentence_device,
+                    sentence_transformer_batch_size=context.sentence_batch_size,
+                    sentence_transformer_normalize=context.sentence_normalize,
+                )
+            )
+    return configs
+
+
 def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     """
     Return the grid of configurations evaluated during sweeps.
@@ -204,70 +276,22 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
     """
     feature_spaces = context.feature_spaces
 
-    configs: List[SweepConfig] = []
-
     tfidf_metrics = _parse_metric_env("KNN_TFIDF_METRICS", ("cosine", "l2"))
     word2vec_metrics = _parse_metric_env("KNN_WORD2VEC_METRICS", ("cosine", "l2"))
-    sentence_metrics = _parse_metric_env(
-        "KNN_SENTENCE_METRICS", ("cosine", "l2")
-    )
+    sentence_metrics = _parse_metric_env("KNN_SENTENCE_METRICS", ("cosine", "l2"))
     tfidf_limit = _parse_limit_env("KNN_TFIDF_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
     word2vec_limit = _parse_limit_env("KNN_WORD2VEC_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
     sentence_limit = _parse_limit_env("KNN_SENTENCE_TEXT_LIMIT", DEFAULT_TEXT_OPTION_LIMIT)
 
+    configs: List[SweepConfig] = []
     if "tfidf" in feature_spaces:
-        text_options = _materialise_text_options(tfidf_limit)
-        for metric in tfidf_metrics:
-            for fields in text_options:
-                configs.append(
-                    SweepConfig(
-                        feature_space="tfidf",
-                        metric=metric,
-                        text_fields=fields,
-                    )
-                )
-
+        configs.extend(_build_tfidf_configs(tfidf_metrics, tfidf_limit))
     if "word2vec" in feature_spaces:
-        text_options = _materialise_text_options(word2vec_limit)
-        param_grid = _word2vec_param_grid(context)
-        for metric in word2vec_metrics:
-            for fields in text_options:
-                for size, window, min_count, epochs, workers in product(
-                    param_grid["sizes"],
-                    param_grid["windows"],
-                    param_grid["min_counts"],
-                    param_grid["epochs"],
-                    param_grid["workers"],
-                ):
-                    configs.append(
-                        SweepConfig(
-                            feature_space="word2vec",
-                            metric=metric,
-                            text_fields=fields,
-                            word2vec_size=size,
-                            word2vec_window=window,
-                            word2vec_min_count=min_count,
-                            word2vec_epochs=epochs,
-                            word2vec_workers=workers,
-                        )
-                    )
-
+        configs.extend(_build_word2vec_configs(context, word2vec_metrics, word2vec_limit))
     if "sentence_transformer" in feature_spaces:
-        text_options = _materialise_text_options(sentence_limit)
-        for metric in sentence_metrics:
-            for fields in text_options:
-                configs.append(
-                    SweepConfig(
-                        feature_space="sentence_transformer",
-                        metric=metric,
-                        text_fields=fields,
-                        sentence_transformer_model=context.sentence_model,
-                        sentence_transformer_device=context.sentence_device,
-                        sentence_transformer_batch_size=context.sentence_batch_size,
-                        sentence_transformer_normalize=context.sentence_normalize,
-                    )
-                )
-
+        configs.extend(
+            _build_sentence_transformer_configs(context, sentence_metrics, sentence_limit)
+        )
     return configs
 
 def _build_sweep_task(

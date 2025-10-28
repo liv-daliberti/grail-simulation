@@ -242,7 +242,8 @@ def _resolve_sentence_settings(
         or os.environ.get("SENTENCE_TRANSFORMER_BATCH_SIZE", "32")
     )
     normalize_env = os.environ.get("SENTENCE_TRANSFORMER_NORMALIZE")
-    if normalize_env is not None and getattr(args, "sentence_transformer_normalize", None) is not False:
+    normalize_flag = getattr(args, "sentence_transformer_normalize", None)
+    if normalize_env is not None and normalize_flag is not False:
         normalize = normalize_env.lower() not in {"0", "false", "no"}
     else:
         normalize = bool(getattr(args, "sentence_transformer_normalize", True))

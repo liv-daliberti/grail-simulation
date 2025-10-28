@@ -402,10 +402,7 @@ def predict_among_slate(
     best_index = _select_best_candidate(slate_pairs, probability_map)
     if best_index is None and slate_pairs:
         # Open-set fallback using vector-space similarity between prompt and candidate title.
-        try:
-            best_index = _open_set_best_index(model.vectorizer, document, slate_pairs)
-        except Exception:  # pragma: no cover - defensive
-            best_index = None
+        best_index = _open_set_best_index(model.vectorizer, document, slate_pairs)
     return best_index, probability_map
 
 
@@ -872,6 +869,20 @@ def _fallback_candidate_key(title: str, video_id: str) -> str:
     return canon_video_id(derived) or derived.strip()
 
 
+def _l2_norm(mat) -> float:
+    """Return the L2 norm for dense or sparse vectors, safely.
+
+    Falls back to ``0.0`` when inputs are malformed or operations fail.
+    """
+    try:
+        if hasattr(mat, "multiply") and hasattr(mat, "sum"):
+            return float(np.sqrt(mat.multiply(mat).sum()))
+        arr = np.asarray(mat).ravel()
+        return float(np.sqrt(float(np.dot(arr, arr))))
+    except (TypeError, ValueError, AttributeError):
+        return 0.0
+
+
 def _open_set_best_index(
     vectorizer: BaseTextVectorizer,
     document: str,
@@ -885,42 +896,37 @@ def _open_set_best_index(
     """
     try:
         doc_vec = vectorizer.transform([document])
-    except Exception:
+    except (ValueError, TypeError, AttributeError, RuntimeError):
         return None
 
-    def _l2_norm(mat) -> float:
-        try:
-            if hasattr(mat, "multiply") and hasattr(mat, "sum"):
-                return float(np.sqrt(mat.multiply(mat).sum()))
-            arr = np.asarray(mat).ravel()
-            return float(np.sqrt(float(np.dot(arr, arr))))
-        except Exception:
-            return 0.0
-
     doc_norm = _l2_norm(doc_vec)
-    best_idx: Optional[int] = None
-    best_score = -float("inf")
+    best: Optional[tuple[float, int]] = None
     for idx, (title, vid) in enumerate(slate_pairs, start=1):
         text = feature_utils.title_for(vid) or title or ""
         if not text.strip():
             continue
         try:
             cand_vec = vectorizer.transform([text])
-        except Exception:
+        except (ValueError, TypeError, AttributeError, RuntimeError):
             continue
         try:
             if hasattr(doc_vec, "multiply") and hasattr(cand_vec, "sum"):
-                num = float(doc_vec.multiply(cand_vec).sum())
+                score = float(doc_vec.multiply(cand_vec).sum())
             else:
-                num = float(np.dot(np.asarray(doc_vec).ravel(), np.asarray(cand_vec).ravel()))
-            denom = doc_norm * _l2_norm(cand_vec)
-            sim = (num / denom) if denom > 0 else num
-        except Exception:
-            sim = -float("inf")
-        if sim > best_score:
-            best_score = sim
-            best_idx = idx
-    return best_idx
+                score = float(
+                    np.dot(np.asarray(doc_vec).ravel(), np.asarray(cand_vec).ravel())
+                )
+            norm = doc_norm * _l2_norm(cand_vec)
+            score = (score / norm) if norm > 0 else score
+        except (ValueError, TypeError, AttributeError):
+            # Treat failures as worst similarity to avoid selecting this candidate.
+            score = -float("inf")
+        # Avoid subscripting when best is None to satisfy type checkers/pylint.
+        if best is None:
+            best = (score, idx)
+        elif score > best[0]:
+            best = (score, idx)
+    return None if best is None else best[1]
 
 
 __all__ = [

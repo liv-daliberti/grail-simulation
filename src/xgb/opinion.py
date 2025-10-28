@@ -23,6 +23,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
+try:  # pragma: no cover - optional sparse support for feature stacking
+    from scipy import sparse as SP  # type: ignore,invalid-name
+except ImportError:  # pragma: no cover - optional fallback when scipy is unavailable
+    SP = None  # type: ignore,invalid-name
 
 from common.opinion import (
     DEFAULT_SPECS,
@@ -55,7 +59,7 @@ from .data import (
     TRAIN_SPLIT,
     load_dataset_source,
 )
-from .features import assemble_document
+from .features import assemble_document, viewer_profile_sentence
 from .model import XGBoostBoosterParams
 from .vectorizers import (
     SentenceTransformerVectorizerConfig,
@@ -81,12 +85,21 @@ class OpinionTrainConfig:
     :vartype max_features: Optional[int]
     :ivar booster: Booster hyper-parameters reused for the regressor.
     :vartype booster: XGBoostBoosterParams
+    :ivar predict_change: Train on opinion change (after - before) and anchor
+        predictions by adding back the initial opinion. When False, trains to
+        predict the post-study index directly.
+    :vartype predict_change: bool
+    :ivar include_before_feature: Append the numeric pre-study opinion index as
+        an additional input feature column.
+    :vartype include_before_feature: bool
     """
 
     max_participants: int = 0
     seed: int = 42
     max_features: Optional[int] = None
     booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
+    predict_change: bool = True
+    include_before_feature: bool = True
 
 
 @dataclass(frozen=True)
@@ -176,6 +189,11 @@ def collect_examples(
     :rtype: List[OpinionExample]
     """
 
+    # ``extra_fields`` is accepted to mirror the KNN API but unused for XGB
+    # opinion regression since we intentionally avoid including prompt fields
+    # that could leak post-study targets into training features.
+    del extra_fields
+
     LOGGER.info(
         "[OPINION] Collapsing dataset for study=%s issue=%s rows=%d",
         spec.key,
@@ -192,7 +210,15 @@ def collect_examples(
         after = float_or_none(raw.get(spec.after_column))
         if before is None or after is None:
             continue
-        document = assemble_document(raw, extra_fields)
+        # Build a sanitised opinion document to avoid target leakage.
+        # Use only the viewer profile sentence and state text to prevent
+        # embedding post-study survey values (e.g., wave-2 indices) in the
+        # input features.
+        vp = viewer_profile_sentence(raw)
+        state = str(raw.get("state_text") or "").strip()
+        document = " ".join(token for token in (vp, state) if token).strip()
+        if not document:
+            document = assemble_document(raw, ("viewer_profile", "state_text"))
         if not document:
             continue
         if sample_doc is None:
@@ -541,22 +567,67 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
         # log_single_embedding is defensive and swallows its own errors.
         log_single_embedding(train_features[0], logger=LOGGER, tag="[OPINION][Embed]")
 
-    train_targets = np.array([ex.after for ex in train_examples], dtype=float)
-    eval_targets = np.array([ex.after for ex in eval_examples], dtype=float)
+    # Prepare targets and optionally append the initial opinion index as a feature.
+    train_after = np.array([ex.after for ex in train_examples], dtype=float)
+    train_before = np.array([ex.before for ex in train_examples], dtype=float)
+    eval_after = np.array([ex.after for ex in eval_examples], dtype=float)
     eval_before = np.array([ex.before for ex in eval_examples], dtype=float)
+
+    if request.train_config.include_before_feature:
+        train_before_col = train_before.reshape(-1, 1)
+        eval_before_col = eval_before.reshape(-1, 1)
+        try:
+            if SP is not None and hasattr(train_features, "shape"):
+                if hasattr(SP, "issparse") and SP.issparse(
+                    train_features
+                ):  # type: ignore[attr-defined]
+                    train_features = SP.hstack(  # type: ignore[attr-defined]
+                        [train_features, SP.csr_matrix(train_before_col)]
+                    )
+                else:
+                    train_features = np.hstack(
+                        [np.asarray(train_features), train_before_col]
+                    )
+                if hasattr(SP, "issparse") and SP.issparse(
+                    eval_features
+                ):  # type: ignore[attr-defined]
+                    eval_features = SP.hstack(  # type: ignore[attr-defined]
+                        [eval_features, SP.csr_matrix(eval_before_col)]
+                    )
+                else:
+                    eval_features = np.hstack(
+                        [np.asarray(eval_features), eval_before_col]
+                    )
+            else:
+                train_features = np.hstack([np.asarray(train_features), train_before_col])
+                eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+        except (TypeError, ValueError, AttributeError):  # pragma: no cover - defensive
+            train_features = np.hstack([np.asarray(train_features), train_before_col])
+            eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+
+    if request.train_config.predict_change:
+        train_targets = train_after - train_before
+        eval_targets_for_fit = eval_after - eval_before
+    else:
+        train_targets = train_after
+        eval_targets_for_fit = eval_after
+
     regressor, eval_history = _train_regressor(
         features=train_features,
         targets=train_targets,
         config=request.train_config,
         eval_features=eval_features,
-        eval_targets=eval_targets,
+        eval_targets=eval_targets_for_fit,
     )
 
-    predictions = regressor.predict(eval_features)
-    metrics = _model_metrics(predictions=predictions, after=eval_targets, before=eval_before)
+    raw_predictions = regressor.predict(eval_features)
+    predictions_after = (
+        eval_before + raw_predictions if request.train_config.predict_change else raw_predictions
+    )
+    metrics = _model_metrics(predictions=predictions_after, after=eval_after, before=eval_before)
     baseline = _baseline_metrics(
         before=eval_before,
-        after=eval_targets,
+        after=eval_after,
     )
 
     study_dir = base_dir / spec.key
@@ -591,6 +662,8 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
             "reg_lambda": request.train_config.booster.reg_lambda,
             "reg_alpha": request.train_config.booster.reg_alpha,
             "tree_method": request.train_config.booster.tree_method,
+            "predict_change": request.train_config.predict_change,
+            "include_before_feature": request.train_config.include_before_feature,
         },
     }
     if curve_metrics:
@@ -605,7 +678,9 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
 
     predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
     with open(predictions_path, "w", encoding="utf-8") as handle:
-        for example, prediction in zip(eval_examples, predictions, strict=False):
+        for idx, example in enumerate(eval_examples):
+            pred_after = float(predictions_after[idx])
+            pred_change = float(pred_after - example.before)
             handle.write(
                 json.dumps(
                     {
@@ -614,8 +689,9 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
                         "issue": spec.issue,
                         "before": example.before,
                         "after": example.after,
-                        "prediction": float(prediction),
-                        "error": float(abs(prediction - example.after)),
+                        "prediction": pred_after,
+                        "prediction_change": pred_change,
+                        "error": float(abs(pred_after - example.after)),
                     }
                 )
                 + "\n"

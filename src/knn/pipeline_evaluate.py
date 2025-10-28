@@ -104,10 +104,10 @@ def run_final_evaluations(
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", study.issue])
             cli_args.extend(["--participant-studies", study.key])
-            # Train on companion studies (exclude the current evaluation study).
-            train_studies = [spec.key for spec in studies if spec.key != study.key]
-            if train_studies:
-                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            # Within-study training for final evaluations (do not add
+            # --train-participant-studies). The evaluation already passes
+            # --participant-studies=<study.key>, so training defaults to the
+            # same study as well.
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             # Restrict training to the same study and its issue only.
@@ -261,18 +261,21 @@ def run_cross_study_evaluations(
         return {}
 
     feature_spaces = tuple(selections.keys())
-    if context.reuse_existing:
-        cached = load_loso_metrics_from_disk(
+    cached = (
+        load_loso_metrics_from_disk(
             out_dir=context.next_video_out_dir,
             feature_spaces=feature_spaces,
             studies=studies,
         )
-        if cached:
-            LOGGER.info(
-                "[LOSO] Reusing cached metrics for feature spaces: %s",
-                ",".join(feature_spaces),
-            )
-            return cached
+        if context.reuse_existing
+        else None
+    )
+    if cached:
+        LOGGER.info(
+            "[LOSO] Reusing cached metrics for feature spaces: %s",
+            ",".join(feature_spaces),
+        )
+        return cached
 
     # Execute LOSO runs: train on companion studies, evaluate on the holdout.
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
@@ -283,10 +286,14 @@ def run_cross_study_evaluations(
             selection = per_study.get(holdout.key)
             if selection is None:
                 continue
-            loso_root = ensure_dir(context.next_video_out_dir / feature_space / "loso" / holdout.study_slug)
-            model_dir = None
-            if feature_space == "word2vec":
-                model_dir = ensure_dir(context.next_video_word2vec_dir / holdout.study_slug)
+            loso_root = ensure_dir(
+                context.next_video_out_dir / feature_space / "loso" / holdout.study_slug
+            )
+            model_dir = (
+                ensure_dir(context.next_video_word2vec_dir / holdout.study_slug)
+                if feature_space == "word2vec"
+                else None
+            )
             issue_slug = issue_slug_for_study(holdout)
             metrics_path = loso_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             if context.reuse_existing and metrics_path.exists():
@@ -294,7 +301,10 @@ def run_cross_study_evaluations(
                     metrics, _ = load_metrics(loso_root, issue_slug)
                 except FileNotFoundError:
                     LOGGER.warning(
-                        "[LOSO][MISS] feature=%s holdout=%s expected cached metrics at %s but none found.",
+                        (
+                            "[LOSO][MISS] feature=%s holdout=%s expected cached metrics at %s "
+                            "but none found."
+                        ),
                         feature_space,
                         holdout.key,
                         metrics_path,
@@ -320,8 +330,12 @@ def run_cross_study_evaluations(
             cli_args.extend(["--issues", holdout.issue])
             # Evaluate on the holdout only
             cli_args.extend(["--participant-studies", holdout.key])
-            # Train on all other studies
-            train_studies = [spec.key for spec in studies if spec.key != holdout.key]
+            # Train on other studies that share the SAME issue as the holdout.
+            train_studies = [
+                spec.key
+                for spec in studies
+                if spec.key != holdout.key and spec.issue == holdout.issue
+            ]
             if train_studies:
                 cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
             cli_args.extend(["--out-dir", str(loso_root)])

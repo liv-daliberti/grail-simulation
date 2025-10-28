@@ -379,11 +379,10 @@ def prepare_sweep_tasks(
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
 
-    # Train on the companion studies (exclude the current hold-in study).
-    study_keys = tuple(spec.key for spec in studies)
-
-    def _train_keys_for(study_key: str) -> tuple[str, ...]:
-        return tuple(key for key in study_keys if key != study_key)
+    # Restrict training to within-study only for sweeps. This avoids cross-study
+    # leakage and guarantees we never mix gun/minimum_wage data across studies.
+    def _train_keys_for(_study_key: str) -> tuple[str, ...]:
+        return tuple()
 
     return prepare_task_grid(
         configs,

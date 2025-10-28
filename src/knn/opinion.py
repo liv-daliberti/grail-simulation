@@ -53,7 +53,12 @@ from .data import (
     load_dataset_source,
 )
 from .evaluate import parse_k_values, resolve_reports_dir
-from .features import Word2VecConfig, Word2VecFeatureBuilder, assemble_document
+from .features import (
+    Word2VecConfig,
+    Word2VecFeatureBuilder,
+    assemble_document,
+    viewer_profile_sentence,
+)
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -175,6 +180,10 @@ def collect_examples(
     """
     # pylint: disable=too-many-locals
 
+    # The KNN opinion pipeline accepts ``extra_fields`` for parity with prompt
+    # builders but deliberately avoids using them to reduce target leakage.
+    del extra_fields
+
     LOGGER.info(
         "[OPINION] Collapsing dataset split for study=%s issue=%s rows=%d",
         spec.key,
@@ -192,7 +201,19 @@ def collect_examples(
         after = float_or_none(example.get(spec.after_column))
         if before is None or after is None:
             continue
-        document = assemble_document(example, extra_fields)
+        # Build a sanitised opinion document to avoid target leakage.
+        # For opinion regression, avoid using the full prompt_builder output
+        # since it can include post-study survey fields (e.g., wave-2 indices)
+        # that directly encode the regression target. Instead, restrict the
+        # document to the viewer profile sentence and state text.
+        vp = viewer_profile_sentence(example)
+        state = str(example.get("state_text") or "").strip()
+        document = " ".join(token for token in (vp, state) if token).strip()
+        if not document:
+            # Fallback to the generic assembler (still avoids extra_fields that
+            # may include target values) to reduce empty-doc drops if inputs
+            # are unexpectedly sparse.
+            document = assemble_document(example, ("viewer_profile", "state_text"))
         if not document:
             continue
         if sample_doc is None:

@@ -201,6 +201,49 @@ apply_default_sweep_grids() {
   append_flag_once target --text-vectorizer-grid "${XGB_TEXT_VECTORIZER_GRID}"
 }
 
+# Return 0 if GPU boosters are supported by the currently installed xgboost.
+_xgb_gpu_supported() {
+  "${PYTHON_BIN}" - <<'PY' >/dev/null 2>&1 || return 1
+try:
+    import xgboost as _xgb  # type: ignore
+    core = _xgb.core  # type: ignore[attr-defined]
+    maybe = getattr(core, "_has_cuda_support", None)
+    if callable(maybe):
+        supported = bool(maybe())
+    else:
+        lib = getattr(core, "_LIB", None)
+        supported = hasattr(lib, "XGBoosterPredictFromDeviceDMatrix")
+    raise SystemExit(0 if supported else 1)
+except Exception:
+    raise SystemExit(1)
+PY
+}
+
+# Append --tree-method hist when GPU is disabled or unsupported and the flag
+# is not already present in the CLI args array passed by name.
+ensure_tree_method_default() {
+  local -n arr_ref=$1
+  # If user already provided an explicit tree method, respect it.
+  for ((i = 0; i < ${#arr_ref[@]}; ++i)); do
+    if [[ "${arr_ref[i]}" == "--tree-method" ]]; then
+      return
+    fi
+  done
+  # Determine if GPU is desired by env (default on) and supported by xgboost.
+  local want_gpu=1
+  case "${XGB_USE_GPU:-1}" in
+    0|false|no|off|disabled) want_gpu=0 ;;
+  esac
+  if (( want_gpu )); then
+    if ! _xgb_gpu_supported; then
+      echo "[xgb] XGBoost without GPU support detected; forcing --tree-method hist." >&2
+      arr_ref+=("--tree-method" "hist")
+    fi
+  else
+    arr_ref+=("--tree-method" "hist")
+  fi
+}
+
 check_python_env() {
   # Build required module list based on configured feature spaces.
   local -a required=(datasets xgboost sklearn)
@@ -222,10 +265,37 @@ PY
       missing+=("${module}")
     fi
   done
-  if (( ${#missing[@]} > 0 )); then
-    echo "[xgb] Missing Python modules: ${missing[*]}" >&2
+  # Best-effort auto-install for xgboost only (others still reported).
+  local -a remaining=()
+  for mod in "${missing[@]}"; do
+    if [[ "${mod}" == "xgboost" ]]; then
+      echo "[xgb] xgboost missing; attempting pip install ..." >&2
+      if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+        if ! "${PYTHON_BIN}" -m pip install -q --upgrade xgboost >/dev/null 2>&1; then
+          echo "[xgb] Warning: failed to install xgboost into active venv." >&2
+        fi
+      else
+        if ! "${PYTHON_BIN}" -m pip install -q --user --upgrade xgboost >/dev/null 2>&1; then
+          echo "[xgb] Warning: failed to install xgboost with --user." >&2
+        fi
+      fi
+      # Re-check import after attempted install.
+      if ! "${PYTHON_BIN}" - <<'PY' >/dev/null 2>&1
+import sys
+import importlib
+sys.exit(0 if importlib.util.find_spec('xgboost') is not None else 1)
+PY
+      then
+        remaining+=("xgboost")
+      fi
+    else
+      remaining+=("${mod}")
+    fi
+  done
+  if (( ${#remaining[@]} > 0 )); then
+    echo "[xgb] Missing Python modules: ${remaining[*]}" >&2
     echo "[xgb] Install them in your environment, e.g.:" >&2
-    echo "       ${PYTHON_BIN} -m pip install ${missing[*]}" >&2
+    echo "       ${PYTHON_BIN} -m pip install ${remaining[*]}" >&2
     exit 1
   fi
 }
@@ -316,6 +386,7 @@ ensure_reuse_final_flag() {
 run_plan() {
   check_python_env
   local -a args=("$@")
+  ensure_tree_method_default args
   ensure_reuse_final_flag args
   apply_default_sweep_grids args
   ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
@@ -728,6 +799,7 @@ run_finalize_local() {
   apply_default_sweep_grids args
   echo "[xgb] Running finalize stage locally."
   check_python_env
+  ensure_tree_method_default args
   ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage finalize "${args[@]}"
 }
@@ -755,6 +827,7 @@ run_sweeps_worker() {
   fi
   check_python_env
   apply_default_sweep_grids args
+  ensure_tree_method_default args
   ensure_tasks_flag args "${XGB_PIPELINE_TASKS}"
   "${PYTHON_BIN}" -m xgb.pipeline --stage sweeps "${sweep_args[@]}" "${args[@]}"
 }

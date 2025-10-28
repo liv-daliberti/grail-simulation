@@ -42,7 +42,7 @@ from .shared import plt
 
 
 @dataclass
-class _PortfolioAccumulator:
+class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
     """
     Accumulate portfolio-level statistics across studies.
 

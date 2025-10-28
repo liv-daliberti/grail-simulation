@@ -24,6 +24,14 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.219 | 0.219 | 0.219 | 147/671 | 1.000 | 0.027 | 671 |
 
+### Study 3 – Minimum Wage (YouGov)
+
+*Issue:* Minimum Wage
+
+| Config | Accuracy ↑ | Acc (eligible) ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
+| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.220 | 0.220 | 0.220 | 264/1,200 | 1.000 | 0.020 | 1,200 |
+
 ### Configuration Leaderboards
 
 #### Study 1 – Gun Control (MTurk)
@@ -38,25 +46,33 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
 | 1 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.219 | 0.000 | 0.219 | 0.000 | 671 |
 
+#### Study 3 – Minimum Wage (YouGov)
+
+| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.220 | 0.000 | 0.220 | 0.000 | 1,200 |
+
 ### Selection Summary
 
 - **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.786 (coverage 0.789) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
   Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues gun_control --participant_studies study1 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
 - **Study 2 – Minimum Wage (MTurk) (issue Minimum Wage)**: accuracy 0.219 (coverage 0.219) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
   Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues minimum_wage --participant_studies study2 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
+- **Study 3 – Minimum Wage (YouGov) (issue Minimum Wage)**: accuracy 0.220 (coverage 0.220) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
+  Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues minimum_wage --participant_studies study3 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
 
 ### Parameter Frequency Across Selected Configurations
 
 | Parameter | Preferred values (count) |
 | --- | --- |
-| Vectorizer | tfidf ×2 |
-| Learning rate | 0.05 ×2 |
-| Max depth | 4 ×2 |
-| Estimators | 300 ×2 |
-| Subsample | 0.9 ×2 |
-| Column subsample | 0.8 ×2 |
-| L2 regularisation | 1 ×2 |
-| L1 regularisation | 0 ×2 |
+| Vectorizer | tfidf ×3 |
+| Learning rate | 0.05 ×3 |
+| Max depth | 4 ×3 |
+| Estimators | 300 ×3 |
+| Subsample | 0.9 ×3 |
+| Column subsample | 0.8 ×3 |
+| L2 regularisation | 1 ×3 |
+| L1 regularisation | 0 ×3 |
 
 ## Opinion Regression Sweeps
 

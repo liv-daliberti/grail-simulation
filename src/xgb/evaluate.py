@@ -579,14 +579,12 @@ def evaluate_issue(
     # Compute participant-bootstrap CIs for eligible-only accuracy.
     try:
         group_keys = _compute_group_keys(eval_ds, len(records))
-    except Exception:  # pragma: no cover - defensive fallback
+    except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
         group_keys = [f"row::{i}" for i in range(len(records))]
     baseline_index = None
-    try:
-        payload = metrics.baseline_most_frequent_gold_index or {}
+    payload = metrics.baseline_most_frequent_gold_index or {}
+    if isinstance(payload, Mapping):
         baseline_index = payload.get("top_index")
-    except Exception:
-        baseline_index = None
     try:
         replicates = int(os.environ.get("XGB_BOOTSTRAP_REPLICATES", "500"))
     except ValueError:
@@ -771,7 +769,7 @@ def _compute_group_keys(eval_ds, limit: int) -> List[str]:
             break
         try:
             keys.append(_group_key_for_example(row, idx))
-        except Exception:
+        except (TypeError, AttributeError):
             keys.append(f"row::{idx}")
     return keys
 

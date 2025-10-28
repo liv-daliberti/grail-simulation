@@ -52,7 +52,7 @@ from .pipeline_sweeps import (
     _load_opinion_from_next_metrics_from_disk,
     _run_xgb_cli,
 )
- 
+
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")
 

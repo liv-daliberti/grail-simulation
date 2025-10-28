@@ -19,12 +19,14 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 | Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | 0.340 | 0.368 | -0.028 | 10 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
 | **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | 0.322 | 0.479 | -0.158 | 25 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
 
 
 ### Observations
 
-- TFIDF: Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=25) using cosine distance with viewer_profile, state_text.
+- TFIDF: Study 2 – Minimum Wage (MTurk): accuracy 0.340 (baseline 0.368, Δ -0.028, k=10) using cosine distance with viewer_profile, state_text; Study 3 – Minimum Wage (YouGov): accuracy 0.322 (baseline 0.479, Δ -0.158, k=25) using cosine distance with viewer_profile, state_text.
+  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
   Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 25 --knn-k-sweep 25 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
 
 
@@ -32,6 +34,7 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 | Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
 | ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text | 0.340 | 0.368 | -0.028 | 10 | 671 |
 | 2 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text | 0.322 | 0.479 | -0.158 | 25 | 1,200 |
 
 

@@ -162,6 +162,7 @@ class NextVideoReportInputs:
     feature_spaces: Sequence[str]
     loso_metrics: Optional[Mapping[str, Mapping[str, Mapping[str, object]]]] = None
     allow_incomplete: bool = False
+    xgb_next_video_dir: Optional[Path] = None
 
 PORTFOLIO_HEADER = (
     "| Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | "
@@ -633,6 +634,95 @@ def _next_video_observations(
     return lines
 
 
+def _format_feature_inline(space: str) -> str:
+    """Return a compact inline label for a feature space."""
+    if space == "sentence_transformer":
+        return "ST"
+    return space.upper()
+
+
+def _load_xgb_metrics_for_study(base_dir: Path, evaluation_slug: str) -> Optional[Mapping[str, object]]:
+    """Load XGB metrics for a single study when available."""
+    metrics_path = base_dir / evaluation_slug / "metrics.json"
+    if not metrics_path.exists():
+        return None
+    try:
+        import json  # local import to avoid global cost
+        with open(metrics_path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:  # pragma: no cover - defensive
+        return None
+
+
+def _best_knn_summary_for_study(
+    *,
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    study_key: str,
+) -> Optional[Tuple[str, "MetricSummary"]]:
+    """Select the best KNN feature-space summary for ``study_key`` by eligible-only accuracy."""
+    best: Optional[Tuple[str, MetricSummary]] = None
+    for space, per_study in metrics_by_feature.items():
+        payload = per_study.get(study_key)
+        if not payload:
+            continue
+        summary = extract_metric_summary(payload)
+        if summary.accuracy is None:
+            continue
+        if best is None or (best[1].accuracy or 0.0) < (summary.accuracy or 0.0):
+            best = (space, summary)
+    return best
+
+
+def _knn_vs_xgb_section(
+    *,
+    xgb_next_video_dir: Path,
+    metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
+    studies: Sequence[StudySpec],
+) -> List[str]:
+    """Build a comparison section for matched KNN/XGB studies when XGB metrics are present."""
+    if not xgb_next_video_dir.exists():
+        return []
+    header = (
+        "| Study | KNN (feature) eligible-only ↑ | XGB eligible-only ↑ | "
+        "KNN all-rows ↑ | XGB overall ↑ |"
+    )
+    rule = "| --- | ---: | ---: | ---: | ---: |"
+    rows: List[str] = []
+    for spec in studies:
+        xgb_metrics = _load_xgb_metrics_for_study(xgb_next_video_dir, spec.evaluation_slug)
+        if not isinstance(xgb_metrics, Mapping):
+            continue
+        best_knn = _best_knn_summary_for_study(
+            metrics_by_feature=metrics_by_feature,
+            study_key=spec.key,
+        )
+        if best_knn is None:
+            continue
+        space, knn_summary = best_knn
+        knn_elig = knn_summary.accuracy
+        knn_all = getattr(knn_summary, "accuracy_all_rows", None)
+        xgb_elig = xgb_metrics.get("accuracy_eligible")
+        xgb_overall = xgb_metrics.get("accuracy")
+        rows.append(
+            f"| {spec.label} | {format_optional_float(knn_elig)} ({_format_feature_inline(space)}) | "
+            f"{format_optional_float(xgb_elig)} | {format_optional_float(knn_all)} | "
+            f"{format_optional_float(xgb_overall)} |"
+        )
+    if not rows:
+        return []
+    lines: List[str] = ["## KNN vs XGB (Matched Studies)", ""]
+    lines.append(
+        "This section compares the eligible-only accuracy for KNN and XGB, and also shows "
+        "an all-rows accuracy for KNN alongside XGB's overall accuracy."
+    )
+    lines.append("")
+    lines.append(header)
+    lines.append(rule)
+    lines.extend(rows)
+    lines.append("")
+    return lines
+
+
 def _ordered_loso_feature_spaces(
     loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
 ) -> List[str]:
@@ -820,6 +910,15 @@ def _build_next_video_report(inputs: NextVideoReportInputs) -> None:
         lines.extend(curve_sections)
 
     lines.extend(_next_video_observations(inputs.metrics_by_feature, inputs.studies))
+
+    if inputs.xgb_next_video_dir is not None:
+        compare = _knn_vs_xgb_section(
+            xgb_next_video_dir=inputs.xgb_next_video_dir,
+            metrics_by_feature=inputs.metrics_by_feature,
+            studies=inputs.studies,
+        )
+        if compare:
+            lines.extend(compare)
 
     if inputs.loso_metrics:
         lines.extend(_next_video_loso_section(inputs.loso_metrics, inputs.studies))

@@ -18,14 +18,16 @@ import typing
 
 t = typing
 
-from common import eval_utils as _eval_utils
-from common import hf_datasets as _hf_datasets
+import common.eval_utils as _eval_utils
+import common.hf_datasets as _hf_datasets
 from common import slate_eval
 
-from .client import ds_call
-from .config import DATASET_NAME, DEPLOYMENT_NAME, EVAL_SPLIT
-from .conversation import make_conversation_record
-from .utils import ANS_TAG, INDEX_ONLY
+from . import (
+    client as _client,
+    config as _config,
+    conversation as _conversation,
+    utils as _utils,
+)
 
 if t.TYPE_CHECKING:  # pragma: no cover - typing only imports
     from argparse import Namespace
@@ -41,10 +43,10 @@ def _parse_index_from_output(raw: str) -> int | None:
     :param raw: Completion text returned by the model.
     :returns: Parsed integer index (1-based) or ``None`` when absent.
     """
-    match = ANS_TAG.search(raw)
+    match = _utils.ANS_TAG.search(raw)
     if match:
         candidate = match.group(1).strip()
-        numeric = INDEX_ONLY.match(candidate)
+        numeric = _utils.INDEX_ONLY.match(candidate)
         if numeric:
             try:
                 return int(numeric.group(1))
@@ -52,7 +54,7 @@ def _parse_index_from_output(raw: str) -> int | None:
                 return None
     tail = "\n".join(raw.strip().splitlines()[-4:])
     for line in reversed(tail.splitlines()):
-        numeric = INDEX_ONLY.match(line.strip())
+        numeric = _utils.INDEX_ONLY.match(line.strip())
         if numeric:
             try:
                 return int(numeric.group(1))
@@ -146,7 +148,7 @@ class EvaluationState:
 
     __slots__ = ("split", "streaming")
 
-    def __init__(self, *, split: str = EVAL_SPLIT, streaming: bool = False) -> None:
+    def __init__(self, *, split: str = _config.EVAL_SPLIT, streaming: bool = False) -> None:
         self.split = split
         self.streaming = streaming
 
@@ -156,7 +158,7 @@ class EvaluationRunner:
 
     def __init__(self, args: Namespace) -> None:
         self.args = args
-        self.dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
+        self.dataset_name = str(getattr(args, "dataset", "") or _config.DATASET_NAME)
         logging.info("Loading dataset %s", self.dataset_name)
 
         self.output = OutputPaths.build(args.out_dir, args.overwrite)
@@ -226,7 +228,7 @@ class EvaluationRunner:
         return self._load_materialised_split(dataset)
 
     def _load_streaming_split(self) -> t.Iterable[dict[str, object]]:
-        eval_split = EVAL_SPLIT
+        eval_split = _config.EVAL_SPLIT
         try:
             data_iter = LOAD_DATASET(  # type: ignore[misc]
                 self.dataset_name,
@@ -259,7 +261,7 @@ class EvaluationRunner:
         if dataset is None:
             raise RuntimeError("Expected dataset object when not streaming.")
 
-        eval_split = EVAL_SPLIT
+        eval_split = _config.EVAL_SPLIT
         available_splits: list[str] = []
         if hasattr(dataset, "keys"):
             try:
@@ -271,14 +273,14 @@ class EvaluationRunner:
             eval_split = next(
                 (
                     split
-                    for split in (EVAL_SPLIT, "validation", "eval", "test")
+                    for split in (_config.EVAL_SPLIT, "validation", "eval", "test")
                     if split in available_splits
                 ),
                 available_splits[0],
             )
             data_iter = dataset[eval_split]  # type: ignore[index]
         else:
-            eval_split = getattr(dataset, "split", None) or EVAL_SPLIT  # type: ignore[attr-defined]
+            eval_split = getattr(dataset, "split", None) or _config.EVAL_SPLIT  # type: ignore[attr-defined]
             data_iter = dataset
 
         if self.limits.eval_max and hasattr(data_iter, "select"):
@@ -306,7 +308,7 @@ class EvaluationRunner:
 
     def _invoke_model(self, messages: list[dict[str, object]]) -> str:
         try:
-            return ds_call(
+            return _client.ds_call(
                 messages,
                 max_tokens=self.args.max_tokens,
                 temperature=self.args.temperature,
@@ -322,14 +324,14 @@ class EvaluationRunner:
         if not self._passes_filters(labels):
             return None
 
-        record = make_conversation_record(example)
+        record = _conversation.make_conversation_record(example)
         messages = record["prompt"]
         gold_index = int(record.get("gold_index", -1))
         option_count = int(record.get("n_options", 0))
         position_index = int(record.get("position_index", -1))
 
         raw_output = self._invoke_model(messages)
-        is_formatted = bool(ANS_TAG.search(raw_output))
+        is_formatted = bool(_utils.ANS_TAG.search(raw_output))
         parsed_index = _parse_index_from_output(raw_output)
         pos_bucket = slate_eval.bucket_from_position(position_index)
         option_bucket = slate_eval.bucket_from_options(option_count)
@@ -388,7 +390,7 @@ class EvaluationRunner:
 
     def metrics_request(self) -> slate_eval.SlateMetricsRequest:
         """Construct the payload used when serialising evaluation metrics."""
-        model_name = getattr(self.args, "deployment", None) or DEPLOYMENT_NAME
+        model_name = getattr(self.args, "deployment", None) or _config.DEPLOYMENT_NAME
         return slate_eval.SlateMetricsRequest(
             model_name=model_name,
             dataset_name=self.dataset_name,

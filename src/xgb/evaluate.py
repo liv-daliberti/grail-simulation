@@ -549,6 +549,7 @@ def _write_outputs(
             handle.write(json.dumps(row) + "\n")
 
 
+# pylint: disable=too-many-locals
 def evaluate_issue(
     *,
     model: XGBoostSlateModel,

@@ -170,7 +170,7 @@ def test_build_pipeline_context_env_overrides(monkeypatch: pytest.MonkeyPatch, t
     assert context.run_next_video is False
     assert context.run_opinion is True
     assert context.reuse_sweeps is False
-    assert context.reuse_final is True
+    assert context.reuse_final is False
     assert context.out_dir == repo_root / "models" / "knn"
     assert context.dataset == str(repo_root / "data" / "cleaned_grail")
     assert context.feature_spaces == ("tfidf", "word2vec", "sentence_transformer")

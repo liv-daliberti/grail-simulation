@@ -120,19 +120,19 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
     parser.add_argument(
         "--reuse-sweeps",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=False,
         help=(
             "Reuse existing sweep metrics when present instead of rerunning the full grid "
-            "(use --no-reuse-sweeps to force a full rerun)."
+            "(disabled by default; pass --reuse-sweeps to enable)."
         ),
     )
     parser.add_argument(
         "--reuse-final",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=False,
         help=(
             "Reuse cached finalize-stage artefacts when present instead of rerunning evaluations "
-            "(use --no-reuse-final to force recomputation)."
+            "(disabled by default; pass --reuse-final to enable)."
         ),
     )
     parser.add_argument(
@@ -299,12 +299,12 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
     if not resolved_feature_spaces:
         resolved_feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
 
-    reuse_sweeps = getattr(args, "reuse_sweeps", True)
+    reuse_sweeps = getattr(args, "reuse_sweeps", False)
     reuse_env = os.environ.get("KNN_REUSE_SWEEPS")
     if reuse_env is not None:
         reuse_sweeps = reuse_env.lower() not in {"0", "false", "no"}
 
-    reuse_final = getattr(args, "reuse_final", True)
+    reuse_final = getattr(args, "reuse_final", False)
     reuse_final_env = os.environ.get("KNN_REUSE_FINAL")
     if reuse_final_env is not None:
         reuse_final = reuse_final_env.lower() not in {"0", "false", "no"}

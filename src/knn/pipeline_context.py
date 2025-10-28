@@ -95,6 +95,10 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
         text_label = "none"
         if self.text_fields:
             text_label = "_".join(field.replace("_", "") for field in self.text_fields)
+        def _sanitize_token(value: str) -> str:
+            """Collapse problematic characters so tokens stay filesystem friendly."""
+            return "".join(char for char in value if char.isalnum())
+
         parts = [f"metric-{self.metric}", f"text-{text_label}"]
         if self.feature_space == "word2vec":
             parts.extend(
@@ -104,10 +108,20 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
                     f"min{self.word2vec_min_count}",
                 ]
             )
+            if self.word2vec_epochs is not None:
+                parts.append(f"epochs{self.word2vec_epochs}")
+            if self.word2vec_workers is not None:
+                parts.append(f"workers{self.word2vec_workers}")
         if self.feature_space == "sentence_transformer" and self.sentence_transformer_model:
             model_name = Path(self.sentence_transformer_model).name or self.sentence_transformer_model
-            cleaned = "".join(token for token in model_name if token.isalnum())
+            cleaned = _sanitize_token(model_name)
             parts.append(f"model-{cleaned or 'st'}")
+            if self.sentence_transformer_device:
+                parts.append(f"device-{_sanitize_token(self.sentence_transformer_device)}")
+            if self.sentence_transformer_batch_size is not None:
+                parts.append(f"bs{self.sentence_transformer_batch_size}")
+            if self.sentence_transformer_normalize is not None:
+                parts.append("norm" if self.sentence_transformer_normalize else "nonorm")
         return "_".join(parts)
 
     def cli_args(self, *, word2vec_model_dir: Path | None) -> list[str]:
@@ -689,7 +703,7 @@ class PipelineContext:  # pylint: disable=too-many-instance-attributes
     feature_spaces: Tuple[str, ...]
     jobs: int
     reuse_sweeps: bool = False
-    reuse_final: bool = True
+    reuse_final: bool = False
     allow_incomplete: bool = False
     run_next_video: bool = True
     run_opinion: bool = True

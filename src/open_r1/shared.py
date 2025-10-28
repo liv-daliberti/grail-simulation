@@ -263,6 +263,47 @@ class GrpoPipelineContext:
     prefix: str
 
 
+def build_grpo_pipeline_bundle(
+    *,
+    model_builder: Callable[[Any, Any], Any],
+    trainer_cls: Any,
+    reward_funcs: Sequence[Any],
+    tokenizer: Any,
+    dataset: Mapping[str, Any],
+    script_args: Any,
+    training_args: Any,
+    model_args: Any,
+    logger: Any,
+    prefix: str,
+    peft_config_fn: Optional[Callable[[Any], Any]] = None,
+    evaluate_fn_factory: Optional[EvalFnFactory] = None,
+) -> Tuple[GrpoPipelineComponents, GrpoPipelineContext]:
+    """
+    Assemble the shared GRPO pipeline components and execution context.
+
+    Centralises the repeated constructor invocations used by the GRPO entry
+    points so that pylint's duplicate-code check sees a single implementation.
+    """
+
+    components = GrpoPipelineComponents(
+        model_builder=model_builder,
+        trainer_cls=trainer_cls,
+        reward_funcs=reward_funcs,
+        tokenizer=tokenizer,
+        peft_config_fn=peft_config_fn,
+        evaluate_fn_factory=evaluate_fn_factory,
+    )
+    context = GrpoPipelineContext(
+        dataset=dataset,
+        script_args=script_args,
+        training_args=training_args,
+        model_args=model_args,
+        logger=logger,
+        prefix=prefix,
+    )
+    return components, context
+
+
 def build_grpo_trainer(*, setup: GrpoTrainerSetup, datasets: GrpoTrainerDatasets) -> Any:
     """Instantiate a GRPO trainer with the shared configuration knobs."""
 

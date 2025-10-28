@@ -22,7 +22,7 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.pipeline_executor import execute_sequential_tasks
+from common.pipeline_executor import execute_indexed_tasks
 from common.pipeline_utils import merge_indexed_outcomes
 from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
@@ -339,31 +339,31 @@ def merge_opinion_sweep_outcomes(
 def execute_opinion_sweep_tasks(
     tasks: Sequence[OpinionSweepTask],
     *,
+    jobs: int = 1,
     cli_runner: CliRunner,
 ) -> List[OpinionSweepOutcome]:
     """
-    Run the supplied opinion sweep tasks sequentially.
+    Run the supplied opinion sweep tasks, optionally in parallel.
 
     :param tasks: Collection of sweep tasks scheduled for execution.
-
     :type tasks: Sequence[OpinionSweepTask]
-
+    :param jobs: Maximum number of parallel workers allowed.
+    :type jobs: int
     :param cli_runner: Callable used to invoke the CLI for each task.
-
     :type cli_runner: Callable[[Sequence[str]], None]
-
     :returns: List of opinion sweep outcomes generated from the provided tasks.
-
     :rtype: List[OpinionSweepOutcome]
-
     """
     if not tasks:
         return []
 
-    def _worker(task: OpinionSweepTask) -> OpinionSweepOutcome:
-        return execute_opinion_sweep_task(task, cli_runner=cli_runner)
-
-    return execute_sequential_tasks(tasks, _worker)
+    return execute_indexed_tasks(
+        tasks,
+        lambda task: execute_opinion_sweep_task(task, cli_runner=cli_runner),
+        jobs=jobs,
+        logger=LOGGER,
+        label="opinion sweep",
+    )
 
 
 def execute_opinion_sweep_task(

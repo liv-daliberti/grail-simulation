@@ -114,7 +114,7 @@ def _describe_opinion_sweep_outcome(outcome: "OpinionSweepOutcome") -> str:
 
 def _execute_opinion_sweep_task(task: "OpinionSweepTask") -> "OpinionSweepOutcome":
     """Execute a single opinion sweep task via the batch helper."""
-    return _execute_opinion_sweep_tasks([task])[0]
+    return _execute_opinion_sweep_tasks([task], jobs=1)[0]
 
 def main(argv: Sequence[str] | None = None) -> None:
     """
@@ -323,7 +323,10 @@ def main(argv: Sequence[str] | None = None) -> None:
         if context.run_next_video:
             executed_outcomes = _execute_sweep_tasks(pending_tasks, jobs=context.jobs)
         if context.run_opinion:
-            executed_opinion_outcomes = _execute_opinion_sweep_tasks(pending_opinion_tasks)
+            executed_opinion_outcomes = _execute_opinion_sweep_tasks(
+                pending_opinion_tasks,
+                jobs=context.jobs,
+            )
 
     sweep_outcomes: List[SweepOutcome] = []
     selections: Dict[str, Dict[str, StudySelection]] = {}

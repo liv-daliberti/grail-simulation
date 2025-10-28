@@ -153,9 +153,61 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
 
     configs: List[SweepConfig] = []
 
+    def _parse_metric_env(name: str, default: Tuple[str, ...]) -> Tuple[str, ...]:
+        raw = os.environ.get(name, "")
+        if not raw:
+            return default
+        allowed = {"cosine", "l2"}
+        tokens = []
+        for token in (part.strip().lower() for part in raw.split(",")):
+            if not token:
+                continue
+            if token not in allowed:
+                LOGGER.warning(
+                    "Ignoring unsupported metric '%s' in %s override.", token, name
+                )
+                continue
+            if token not in tokens:
+                tokens.append(token)
+        if not tokens:
+            LOGGER.warning(
+                "Ignoring %s override '%s' because no valid metrics were provided.",
+                name,
+                raw,
+            )
+            return default
+        return tuple(tokens)
+
+    def _parse_limit_env(name: str, default: int) -> int:
+        raw = os.environ.get(name, "")
+        if not raw:
+            return default
+        try:
+            value = int(raw)
+        except ValueError:
+            LOGGER.warning("Ignoring non-integer %s override '%s'.", name, raw)
+            return default
+        if value <= 0:
+            LOGGER.warning(
+                "Ignoring %s override '%s' because the limit must be positive.",
+                name,
+                raw,
+            )
+            return default
+        return value
+
+    tfidf_metrics = _parse_metric_env("KNN_TFIDF_METRICS", ("cosine", "l2"))
+    word2vec_metrics = _parse_metric_env("KNN_WORD2VEC_METRICS", ("cosine", "l2"))
+    sentence_metrics = _parse_metric_env(
+        "KNN_SENTENCE_METRICS", ("cosine", "l2")
+    )
+    tfidf_limit = _parse_limit_env("KNN_TFIDF_TEXT_LIMIT", 13)
+    word2vec_limit = _parse_limit_env("KNN_WORD2VEC_TEXT_LIMIT", 7)
+    sentence_limit = _parse_limit_env("KNN_SENTENCE_TEXT_LIMIT", 13)
+
     if "tfidf" in feature_spaces:
-        text_options = _materialise_text_options(13)
-        for metric in ("cosine", "l2"):
+        text_options = _materialise_text_options(tfidf_limit)
+        for metric in tfidf_metrics:
             for fields in text_options:
                 configs.append(
                     SweepConfig(
@@ -166,8 +218,7 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
                 )
 
     if "word2vec" in feature_spaces:
-        text_options = _materialise_text_options(7)
-        word2vec_metrics = ("cosine", "l2")
+        text_options = _materialise_text_options(word2vec_limit)
         param_grid = _word2vec_param_grid(context)
         for metric in word2vec_metrics:
             for fields in text_options:
@@ -192,8 +243,8 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
                     )
 
     if "sentence_transformer" in feature_spaces:
-        text_options = _materialise_text_options(13)
-        for metric in ("cosine", "l2"):
+        text_options = _materialise_text_options(sentence_limit)
+        for metric in sentence_metrics:
             for fields in text_options:
                 configs.append(
                     SweepConfig(
@@ -387,11 +438,26 @@ def merge_sweep_outcomes(
         ),
     )
 
-def execute_opinion_sweep_tasks(tasks: Sequence[OpinionSweepTask]) -> List[OpinionSweepOutcome]:
+def execute_opinion_sweep_tasks(
+    tasks: Sequence[OpinionSweepTask],
+    *,
+    jobs: int,
+) -> List[OpinionSweepOutcome]:
     """
-    Run the supplied opinion sweep tasks sequentially via the shared CLI runner.
+    Run the supplied opinion sweep tasks via the shared CLI runner.
+
+    :param tasks: Opinion sweep tasks scheduled for execution.
+    :type tasks: Sequence[OpinionSweepTask]
+    :param jobs: Maximum number of parallel workers.
+    :type jobs: int
+    :returns: Ordered list of opinion sweep outcomes.
+    :rtype: List[OpinionSweepOutcome]
     """
-    return _opinion_sweeps.execute_opinion_sweep_tasks(tasks, cli_runner=run_knn_cli)
+    return _opinion_sweeps.execute_opinion_sweep_tasks(
+        tasks,
+        jobs=jobs,
+        cli_runner=run_knn_cli,
+    )
 
 
 def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:

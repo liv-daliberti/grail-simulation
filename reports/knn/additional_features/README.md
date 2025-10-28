@@ -7,7 +7,9 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 
 ### Sweep Configurations
 
-No sweep metrics were supplied.
+| Feature space | Study | Configuration | Extra text fields |
+| --- | --- | --- | --- |
+| tfidf | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext | `viewer_profile`, `state_text` |
 
 ### Final Evaluations
 

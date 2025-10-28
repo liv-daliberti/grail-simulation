@@ -38,8 +38,7 @@ from common.opinion import (
     OpinionExample as BaseOpinionExample,
     OpinionSpec,
     float_or_none,
-    make_opinion_example,
-    make_opinion_inputs,
+    make_opinion_example_from_values,
 )
 from common.opinion_metrics import compute_opinion_metrics
 from common.prompt_docs import merge_default_extra_fields
@@ -202,15 +201,12 @@ def collect_examples(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         session_id = example.get("session_id")
-        inputs = make_opinion_inputs(
+        candidate = make_opinion_example_from_values(
+            spec,
             participant_id=participant_id,
             document=document,
             before=before,
             after=after,
-        )
-        candidate = make_opinion_example(
-            spec,
-            inputs,
             factory=OpinionExample,
             step_index=step_index,
             session_id=str(session_id) if session_id is not None else None,
